@@ -2,7 +2,7 @@
 import { tr, LANG } from '../i18n.js';
 import { loadAccount, socialApi } from '../account-entry.js';
 import { linkDeConvite } from '../nos.js';
-import { origemPublica, linkCompartilhavel } from '../compartilhar.js';
+import { origemCompartilhamento, linkCompartilhavel } from '../compartilhar.js';
 import { qrSvg } from './qr.js';
 import { retratoFontes } from '../data/retratos.js';
 
@@ -517,7 +517,7 @@ function ligarConvidar() {
     linkBase.textContent = `${new URL(link).host}/sala/`;
     linkCod.textContent = conv;
     linkCaixa.title = link;
-    const publico = linkDeConvite(conv, origemPublica());
+    const publico = linkDeConvite(conv, origemCompartilhamento());
     const chamada = tr('Bora uma treta no CORO SOLTO? Entra na minha sala.');
     telegram.href = `https://t.me/share/url?url=${encodeURIComponent(publico)}&text=${encodeURIComponent(chamada)}`;
     discord.onclick = async () => {

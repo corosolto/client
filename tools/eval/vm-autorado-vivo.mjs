@@ -39,7 +39,7 @@ const arg = (n, d) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `=${
   .split('=').slice(1).join('=');
 const PORTA = arg('porta', '4361');
 const MUTANTE = arg('mutante', '');
-if (MUTANTE && !['semfiacao', 'maos-ocultas', 'cano-lateral', 'boot-catalogo', 'boot-mp-local'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
+if (MUTANTE && !['semfiacao', 'maos-ocultas', 'cano-lateral', 'boot-catalogo'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 const SO = arg('armas', '').split(',').filter(Boolean);
 const TODAS = process.argv.includes('--todas');
 const SEM_FLAGS = process.argv.includes('--sem-flags');
@@ -96,13 +96,6 @@ if (MOBILE && SEM_FLAGS) await pag.route('**/js/main.js*', async (route) => {
   }
   await route.fulfill({ response: res, body: source });
 });
-if (MUTANTE === 'boot-mp-local') {
-  const before = fs.readFileSync('public/js/game.js', 'utf8');
-  const source = before.replace('const cw = (this.online && WEAPONS[rosterWeapon] ? rosterWeapon : null) || charWeapon(this.playerCharId);', 'const cw = charWeapon(this.playerCharId);');
-  if (source === before) throw new Error('boot-mp-local não aplicou');
-  await pag.route('**/js/game.js*', (r) => r.fulfill({ contentType: 'application/javascript', body: source }));
-}
-
 await pag.route(/\.astro\/eval-vite|dev-toolbar|@vite\/client/, (r) => r.fulfill({ contentType: 'text/javascript', body: 'export default {};export const createHotContext=()=>({accept(){},dispose(){},prune(){},on(){},off(){},send(){},invalidate(){},data:{}});export const updateStyle=()=>{};export const removeStyle=()=>{};export const injectQuery=u=>u;export class ErrorOverlay{}' }));
 const erros = [];
 pag.on('pageerror', (e) => { const text = String(e).split('\n')[0].slice(0, 140); erros.push(text); console.error(text); });
@@ -163,15 +156,27 @@ if (!ALVO.length) {
 let bootOk = true;
 let nextOk = true;
 if (MOBILE && SEM_FLAGS) {
-  const boot = await pag.evaluate(async () => { const g = window.__game; const weapon = g.online ? g._mp.net.meta.roster.find((r) => r.id === g._mp.net.yourEnt).weapon : g.player.weapon; return { keys: globalThis.__vmBootKeys?.[0], weapon, equipped: g.player.weapon, source: (await import('/js/authoredvm.js')).vmFonteDe(weapon) }; });
+  const boot = await pag.evaluate(async () => {
+    const g = window.__game;
+    const weapon = g.online ? g._mp.net.meta.roster.find((r) => r.id === g._mp.net.yourEnt).weapon : g.player.weapon;
+    const authored = await import('/js/authoredvm.js');
+    const characters = await import('/js/characters.js');
+    return {
+      keys: globalThis.__vmBootKeys?.[0], weapon, equipped: g.player.weapon, economia: !!g._ecoLigada,
+      source: authored.vmFonteDe(weapon),
+      pistolSource: authored.vmFonteDe(characters.charWeapon(g.playerCharId)),
+    };
+  });
   const manifest = JSON.parse(fs.readFileSync('tools/viewmodels/vm-assets.manifest.json'));
   const root = manifest.servedRoot + '/';
-  const allowed = new Map(manifest.files.filter((f) => /^(?:shared\/|melee\/|grenade\/|recoil\.json$)/.test(f.path) || root + f.path === new URL(boot.source.url, BASE).pathname)
+  const armasPermitidas = new Set([new URL(boot.source.url, BASE).pathname]);
+  armasPermitidas.add(new URL(boot.pistolSource.url, BASE).pathname);
+  const allowed = new Map(manifest.files.filter((f) => /^(?:shared\/|melee\/|grenade\/|recoil\.json$)/.test(f.path) || armasPermitidas.has(root + f.path))
     .map((f) => [root + f.path, f.bytes]));
   const unrelated = [...bootPaths].filter((p) => !allowed.has(p));
   const bytes = [...bootPaths].reduce((sum, p) => sum + (manifest.files.find((f) => root + f.path === p)?.bytes || 0), 0);
   const budget = [...allowed.values()].reduce((a, b) => a + b, 0);
-  bootOk = boot.weapon === boot.equipped && boot.keys?.length === 2 && boot.keys.includes(boot.source.chave)
+  bootOk = (!MP || boot.weapon === 'awp') && boot.weapon === boot.equipped && boot.keys?.length === 2 && boot.keys.includes(boot.source.chave)
     && boot.keys.includes('grenade') && !unrelated.length && bytes > 0 && bytes <= budget;
   console.log(`VMH boot mobile: ${JSON.stringify({ ...boot, bytes, budget, unrelated, ok: bootOk })}`);
   if (MP) {
@@ -342,7 +347,7 @@ console.log(`\n  ${bons}/${ALVO.length} armas montam o viewmodel autorado COM m�
 if (legado.length) console.log(`  caíram no legado: ${legado.join(' ')}`);
 if (semMao.length) console.log(`  autoradas mas SEM mão: ${semMao.join(' ')}`);
 if (erros.length) console.log(`  erros de página: ${[...new Set(erros)].slice(0, 3).join(' | ')}`);
-const ok = nextOk && (['boot-catalogo', 'boot-mp-local'].includes(MUTANTE) ? !bootOk && bons === ALVO.length : MUTANTE ? bootOk && bons === 0 && linhas.every((l) => MUTANTE === 'semfiacao' ? !l.chave
+const ok = nextOk && (MUTANTE === 'boot-catalogo' ? !bootOk && bons === ALVO.length : MUTANTE ? bootOk && bons === 0 && linhas.every((l) => MUTANTE === 'semfiacao' ? !l.chave
   : MUTANTE === 'cano-lateral' ? l.ligada && l.visiveis > 0 && l.emQuadro && l.canoEmQuadro && l.autorada && !l.fallback && l.mobile === MOBILE && Number.isFinite(l.rastroPx) && l.rastroPx > 1
   : l.ligada && l.paisVisiveis && Boolean(l.chave?.includes('#')) && l.maos > 0
     && l.autorada && !l.fallback && l.mobile === MOBILE && !l.visiveis) : bootOk && bons === ALVO.length);

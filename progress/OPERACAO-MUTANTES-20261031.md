@@ -1,6 +1,8 @@
+> Registro histórico. As pendências do revisor legado abaixo não são exigências atuais; siga [o ciclo vigente de revisão](../.claude/skills/estragacodigo-loop/SKILL.md).
+
 # Continuação — prova dos mutantes1169
 
-Objetivo completo: Flávio/47PRs/HQ/media, GLM peloOMP e crítico independente. Javaporcos outroowner intocável; CodeRabbit dispensado explicitamente. Esta lane cobre falsoverde de teste em1169externamenteintegrada, sem runtime/UI/publicação.
+Objetivo completo: Flávio/47PRs/HQ/media, GLM peloOMP e crítico independente. Javaporcos outroowner intocável; revisor legado dispensado explicitamente. Esta lane cobre falsoverde de teste em1169externamenteintegrada, sem runtime/UI/publicação.
 
 2026-10-31T11:25:35.165645+00:00 — WTfix-1169-mutantes-20261031 branchrepair/1169-mutantes,antes7cca05e41limpo; main00e746 integradoLOCALsemconflitos em10a7a256625d4f3498131abebacd4d32ca5012e6. FFnãoaplicava porque1169foisquash602c. Réguacommunityretry-new-key atual executou23/25REDsemântico; NÃO há driftliteralobservado. Risco!nodeaceitaqualquererro/setup precisa demonstração negativa própria/driverstrict. Próximo capturarsetupdeliberadopararepro, GLM132 ecrítico, semmerge/deploy/DDL.
 

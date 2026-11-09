@@ -68,7 +68,7 @@ multiplayer beta, direto na aba. Sem download ou instalação para jogar.
 > procura por ele.
 
 > Este jogo nasceu gerado por IA a partir de um único prompt —
-> [o prompt original está em `docs/historico/PROMPT.md`](docs/historico/PROMPT.md).
+> o prompt original está em `PROMPT.md` do repo privado `progress`.
 
 ---
 
@@ -224,14 +224,12 @@ para múltiplos adapters:
 
 - Claude Code
 - Codex
-- OpenCode
-- Kimi
-- adapters compatíveis com `agent skills` via `.agents/`
+- adapters compatíveis com `agent skills` via `.agents/` (as configs de OpenCode e Kimi saíram da árvore em 11/2026)
 
 Arquivos principais:
 
 - `AGENTS.md` e `CLAUDE.md`: instruções de uso do grafo
-- `.codex/`, `.claude/`, `.opencode/`, `.kimi/`, `.agents/`: skills/config por adapter
+- `.codex/`, `.claude/`, `.agents/`: skills/config por adapter
 - `graphify-out/graph.json`: grafo consultável
 - `graphify-out/GRAPH_REPORT.md`: resumo navegável
 - `graphify-out/graph.html`: visualização local do grafo
@@ -376,7 +374,7 @@ são distribuídos aqui.
 
 - `site` com `www` no `astro.config.mjs` — todo canonical sai daí
 - `/sitemap.xml` **dinâmico**, cobrindo uma URL por jogador
-- `public/robots.txt` e `public/llms.txt`
+- `public/robots.txt` e `/llms.txt` (gerado por `src/pages/llms.txt.ts`)
 - JSON-LD: um único nó `VideoGame` com `@id` estável, mais `ItemList`,
   `ProfilePage`/`Person`, `HowTo`, `FAQPage` e `BreadcrumbList` por página
 - `Cache-Control` de CDN em `/ranking`, `/u/*` e `/mapa`

@@ -1,3 +1,5 @@
+> Registro histórico. As pendências do revisor legado abaixo não são exigências atuais; siga [o ciclo vigente de revisão](../../.claude/skills/estragacodigo-loop/SKILL.md).
+
 # Continuação — Javaporcos, 30/10/2026
 
 ## Objetivo e aceite
@@ -197,7 +199,7 @@ portanto não alterar luz sem diagnóstico. Pedidos5/6/7 continuam obrigatórios
 
 
 Revisão de PR somente leitura: remoto4acda7bf2 tem0reviews/0threads e nenhum
-comentário CodeRabbit acionável (8comentários gerais auditados com paginação).
+comentário revisor legado acionável (8comentários gerais auditados com paginação).
 Resumo `/tmp/pr1160-review-summary.json`. CI remoto tem falhas classify/invariantes/build,
 causas ainda não investigadas; não declarar PR pronto nem revisão do HEAD local.
 
@@ -635,7 +637,7 @@ limitesSP/MP,refúgios,mataexpandida/entradas,bandos,morteslaterais,8aparências
 loading/intro/placares implementados. Armas26aparecem localmente; bug remoto semURL
 não reproduzido, não declarar corrigido em produção. Preview novo e MP com dois
 clientes reais pendentes. Backendfixture verde não equivale a WSpublicado; cliente
-v7J e backend devem sair coordenados. CodeRabbit/CI atuais só após push autorizado.
+v7J e backend devem sair coordenados. revisor legado/CI atuais só após push autorizado.
 Sketchfab26aguarda token por ambiente;NCnão usado. Não ler .env.
 Próximo: apresentar checkpoint e pedir autorização de push conforme promptlinha8;
 se autorizado executarhooknormal, acompanharpreview/CI e validar armas/MP de verdade.
@@ -716,7 +718,7 @@ EgoTaskSpace8 concluído com keep=[]; não tentar retomar espaço encerrado.
 
 Última consulta do CI: reguas-e-site, build, DCO, smoke/chat-desktop e classify
 verdes; invariantes, serta o portao-browser (jobs sertao/portao) ainda pendentes,
-sem falhas observadas. PR reviews=[] nesta consulta: CodeRabbit não revisou o HEAD.
+sem falhas observadas. PR reviews=[] nesta consulta: revisor legado não revisou o HEAD.
 Não declarar PR pronto ou multiplayer publicado. Próximo passo: consultar os jobs
 41147454413/41147454327 e corrigir somente falhas comprovadas; depois obter revisão
 no HEAD. Backend objetivo/NPC e teste real WS de dois clientes seguem pendentes.
@@ -1081,7 +1083,7 @@ Vercel READY: `dpl_Cynq1YHuas6LWP2JK2NEiKbqE67i`, projeto csbrasil, target previ
 
 Uma única nova medição de CPU foi justificada pela mudança observada de política de execução: shell próprio em foreground (`taskpolicy -B -p $$`), mantendo limites e código. `npm run eval:javaporcosperf` terminou exit0: 64 vivos, média0.516ms/p95 0.928ms, dentro dos limites0.75/1.5; mutante teto-furado256 vivos reprovou p95 5.865ms como esperado. Log persistente `integracao/perf-foreground-final.log`. RED anteriores sob restrição de background permanecem na evidência; esta conclusão vale para o arnês sintético de CPU do modo, não FPS/render/rede em máquina de jogador.
 
-Limites visuais: o espaço Ego29 desapareceu ao tentar abrir o preview publicado. Não foi recriado, adotado outro espaço nem houve fallback de navegador. Guia `ego-browser skill` exige “stop and ask the user” para substituir espaço inesperado. Capturas e interações locais reais já descritas continuam válidas; abertura visual no preview remoto, escada/rampas em múltiplas vistas, fluidez integral e aprovação humana do dono permanecem pendentes. Regressão headless de passada ficou bloqueada pelo lock global de outra tarefa (não removido). Não declarar Gauntlet visual inteiro ou PR pronto para merge; CodeRabbit do novo HEAD também não está concluído.
+Limites visuais: o espaço Ego29 desapareceu ao tentar abrir o preview publicado. Não foi recriado, adotado outro espaço nem houve fallback de navegador. Guia `ego-browser skill` exige “stop and ask the user” para substituir espaço inesperado. Capturas e interações locais reais já descritas continuam válidas; abertura visual no preview remoto, escada/rampas em múltiplas vistas, fluidez integral e aprovação humana do dono permanecem pendentes. Regressão headless de passada ficou bloqueada pelo lock global de outra tarefa (não removido). Não declarar Gauntlet visual inteiro ou PR pronto para merge; revisor legado do novo HEAD também não está concluído.
 
 Servidor: runtime backend c03b85f; plano/ledger com CLIENT_REF final a8892e1e2 no checkpoint documental932be8e. GCP autenticado, inventário somente leitura; canário pago (~US$26.06/730h mais tráfego/logs/build/impostos) aguardando autorização explícita já solicitada na UI. Não houve VM, DNS, API, DDL ou deploy de backend. Próximo passo dependente: autorização do canário, então seguir plano revisado e validação real de4clientes. Próximo passo visual: dono testa o preview; para retomar automação Ego, solicitar autorização de substituição do espaço desaparecido conforme guia.
 
@@ -1091,11 +1093,11 @@ Pedido explícito de checagem autorizou substituir o espaço desaparecido. Previ
 
 ### Release autorizada após gates — 31/10
 
-Dono autorizou merge e release condicionados à aprovação das pendências. PR1160 foi redirecionado de fix/boot-gate-cause-20261028 (PR1157 fechado sem merge) para main. Integração local 58a13cfba preserva 17 commits atuais da main, versão alpha.130, client-id e diagnóstico de boot; conflitos resolvidos só em version.js e boot-orcamento-check. Não houve merge remoto/release ainda. CodeRabbit não tinha reviews/comments/threads; solicitada revisão completa em issuecomment6541263396, ainda aguardando.
+Dono autorizou merge e release condicionados à aprovação das pendências. PR1160 foi redirecionado de fix/boot-gate-cause-20261028 (PR1157 fechado sem merge) para main. Integração local 58a13cfba preserva 17 commits atuais da main, versão alpha.130, client-id e diagnóstico de boot; conflitos resolvidos só em version.js e boot-orcamento-check. Não houve merge remoto/release ainda. revisor legado não tinha reviews/comments/threads; solicitada revisão completa em issuecomment6541263396, ainda aguardando.
 
 CI remoto a8892e1e2 está RED em MAPAUD: subprocesso map-check morto em900.1s sem relatório fresco. Não é falha geométrica identificada. Revisor readonly confirmou freshReport correto e ausência de perfil. Instrumentação mínima início/fim por mapa adicionada localmente; perfil completo em execução sessão86134, log artifacts/javaporcos-release-20261031/map-profile.log, backup do consolidado map_check-before-profile.json. Não executar outro escritor desse relatório em paralelo. Não aumentar timeout sem medição nem reduzir critérios.
 
-Novo espaço Ego31 exclusivo da release (Ego30 foi finalizado normalmente), p1 no preview atual a8892e1e2. Capturas válidas 01-loading.png com avatar Javaporcos e 02-intro-automatica.png, entrada automática comprovada antes de existir window.__game com debug=1&hordeintro=1. Debug sozinho pula introdução por design. Amostragem contínua do movimento em curso; primeira tentativa não tinha boars ainda e foi rejeitada, sem aprovação. Espaço31 ativo, reutilizar. Próximo: concluir perfil e movimento, corrigir CI, push integral sem bypass, CodeRabbit no HEAD final e crítico adversarial do diff inteiro; só então merge e release pelo workflow release.yml com main verde. Canário pago GCP continua sem autorização financeira específica e sem ação.
+Novo espaço Ego31 exclusivo da release (Ego30 foi finalizado normalmente), p1 no preview atual a8892e1e2. Capturas válidas 01-loading.png com avatar Javaporcos e 02-intro-automatica.png, entrada automática comprovada antes de existir window.__game com debug=1&hordeintro=1. Debug sozinho pula introdução por design. Amostragem contínua do movimento em curso; primeira tentativa não tinha boars ainda e foi rejeitada, sem aprovação. Espaço31 ativo, reutilizar. Próximo: concluir perfil e movimento, corrigir CI, push integral sem bypass, revisor legado no HEAD final e crítico adversarial do diff inteiro; só então merge e release pelo workflow release.yml com main verde. Canário pago GCP continua sem autorização financeira específica e sem ação.
 
 Milestone visual adicional: loading e introdução reais capturados e vistos. Retrato Bandeirante terminou carregado no fallback avatars256px; captura anterior apanhou o carregamento transitório. Movimento real mostrou ataque, dano100→5→morte e respawn100; não prova fluidez completa. Ícone de rifle no ataque PRESA foi reproduzido no jogo e na régua nova javaporcos-killfeed-check (RED preservado); corrigido para duas presas em SVG, baselineGREEN e mutante arma-de-fogoRED esperado. Navegador local4333 confirmou HTML e captura03-presas-feed-local.png; servidor3152 pertence a esta worktree. SIM_HASH regenerado c3c81fa7eb7f3da7; contrato backend congelado anterior está agora obsoleto, deve ser atualizado antes de qualquer build multiplayer. Push inicial foi cancelado por root para incluir correção visual; nenhum bypass de hooks. Perfil geométrico continua ativo e exclusivo.
 
@@ -1105,15 +1107,15 @@ Régua no Ego31 reproduziu deslizamento XZ ao parar nas quatro variantes (0.0000
 
 Jogo real local: quatro variantes × baseline e três mutantes, todas as baselines com apoio240/240, retomada120/120, acomodação verdadeira e deslocamento parado <4e-15m; todos os mutantes detectados, incluindo parada-desliza que restaura o defeito anterior. Mais oito cenários com passos0.005/0.013 passaram, máximo4.45e-15m. Evidências: artifacts/javaporcos-release-20261031/passada-{red-corrigida,cache,fases,perf}.json. CPU visual sintética de64: mediana0.1ms/p950.2ms, igual ao comparador rígido nessa resolução; não representa FPS completo. SIM_HASH novo b42d756be1b220ca, backend congelado continua obsoleto.
 
-Correção da evidência anterior: 03-presas-feed-local.png foi rejeitada por transição verde; 04-presas-feed-local.png comprova apenas o ícone UI, com cena preta porque o render foi pausado cedo. Não usar essas imagens como aprovação visual integral. Perfil MAPAUD continua ativo e exclusivo em lajes; nenhum merge ou release enquanto CI/revisões estiverem pendentes. Próximo: terminar perfil, corrigir gargalo com critérios preservados, push completo, CodeRabbit e crítico adversarial, CI/preview e release autorizada. Canário pago continua pendente de autorização financeira.
+Correção da evidência anterior: 03-presas-feed-local.png foi rejeitada por transição verde; 04-presas-feed-local.png comprova apenas o ícone UI, com cena preta porque o render foi pausado cedo. Não usar essas imagens como aprovação visual integral. Perfil MAPAUD continua ativo e exclusivo em lajes; nenhum merge ou release enquanto CI/revisões estiverem pendentes. Próximo: terminar perfil, corrigir gargalo com critérios preservados, push completo, revisor legado e crítico adversarial, CI/preview e release autorizada. Canário pago continua pendente de autorização financeira.
 
 ### Push das correções e nova CI
 
-Remoto confirmado ff0a520973d176f64664a40950e6f50ee39a6d8f após hook completo552s, sem bypass. Log push-passada.log. Nova Vercel dpl_F62MdYwg3B3yfy5jvdzt2Md8BGLj em build; nova CI em execução. Revisão CodeRabbit solicitada novamente no HEAD em issuecomment6541470257, ainda sem resposta. PR1160 atualizado para o escopo Cidade Invadida e limites de multiplayer/validação atuais.
+Remoto confirmado ff0a520973d176f64664a40950e6f50ee39a6d8f após hook completo552s, sem bypass. Log push-passada.log. Nova Vercel dpl_F62MdYwg3B3yfy5jvdzt2Md8BGLj em build; nova CI em execução. Revisão revisor legado solicitada novamente no HEAD em issuecomment6541470257, ainda sem resposta. PR1160 atualizado para o escopo Cidade Invadida e limites de multiplayer/validação atuais.
 
 Perfil remoto da main364be45bb: CI41184913064 verde e map-check687.1s (exit1 geométrico existente, invariantes verde). Perfil local ainda executando: Lajes921.37s de relógio nesta máquina sob carga; amostra CPU apontou raycasts do MAP4, linha586. Experimento isolado calcula boundingBox de malhas estáticas, sem mexer no código versionado ou no relatório compartilhado: map-bbox-candidate.mjs lajes, saída map-bbox-lajes.json em artifacts/javaporcos-release-20261031. Não adotar antes de comparar resultados. Perfil original6322 continua único escritor do consolidado. Inspector local9229 foi aberto só no PID próprio para obter stack/CPU, sem alterar estado do jogo auditado.
 
-Capturas controladas de passada-aberta-{0,1,2,3}.png vistas: javaporco reconhecível, poses de patas distintas e apoio estável na rua, 1320×880. As tentativas passada-real e passada-controlada tiveram câmera coberta pela casa ou reposicionada pelo loop e foram rejeitadas para aprovar a animação. São poses controladas, não prova de fluidez contínua. Ego31 local está pausado; recarregar antes de jogo normal. Próximo: concluir auditorias, CI e revisão atual, crítico adversarial completo após CodeRabbit, então merge e release autorizados.
+Capturas controladas de passada-aberta-{0,1,2,3}.png vistas: javaporco reconhecível, poses de patas distintas e apoio estável na rua, 1320×880. As tentativas passada-real e passada-controlada tiveram câmera coberta pela casa ou reposicionada pelo loop e foram rejeitadas para aprovar a animação. São poses controladas, não prova de fluidez contínua. Ego31 local está pausado; recarregar antes de jogo normal. Próximo: concluir auditorias, CI e revisão atual, crítico adversarial completo após revisor legado, então merge e release autorizados.
 
 ### Arsenal em primeira pessoa verificado
 
@@ -1121,17 +1123,17 @@ No jogo real local4333, API de QA existente equipou cada uma das26 armas do cat�
 
 Preview do SHA ff0a520973d176f64664a40950e6f50ee39a6d8f está READY em dpl_F62MdYwg3B3yfy5jvdzt2Md8BGLj, alias habitual. CI41187084729 iniciou invariantes e réguas/site. Nenhum merge/release ainda. Próximo: comprovar o mesmo preview e concluir MAPAUD/CI/revisões.
 
-Preview ff0a52097 foi aberto no mesmo Ego31/p1 e executou o jogo com24 javaporcos. Import real version.js confirmou SIM_HASH b42d756be1b220ca. Repetida a régua com GLBs reais no preview: quatro variantes, apoio240/240, retomada120/120, acomodação verdadeira, deslizamento parado máximo2.67e-15m. Evidência passada-preview.json. O callback da régua pausou e substituiu g.update; recarregar p1 antes de jogar normal. CodeRabbit ainda tem0 reviews e não respondeu às duas solicitações; nenhum sinal verde inferido dessa ausência.
+Preview ff0a52097 foi aberto no mesmo Ego31/p1 e executou o jogo com24 javaporcos. Import real version.js confirmou SIM_HASH b42d756be1b220ca. Repetida a régua com GLBs reais no preview: quatro variantes, apoio240/240, retomada120/120, acomodação verdadeira, deslizamento parado máximo2.67e-15m. Evidência passada-preview.json. O callback da régua pausou e substituiu g.update; recarregar p1 antes de jogar normal. revisor legado ainda tem0 reviews e não respondeu às duas solicitações; nenhum sinal verde inferido dessa ausência.
 
 ### Comparador MAPAUD estático sem afrouxar critérios
 
 Experimento de boundingBox em Lajes terminou exit0:725.09s de auditoria/725.98s real,170.23s CPU, contra921.37s real na execução original sob carga. Não é benchmark isolado de runner. O objeto inteiro do relatório de Lajes é idêntico ao consolidado anterior (isDeepStrictEqual=true,0campos diferentes). Adotado apenas o cálculo de boundingBox para Mesh estático sem skin/morph antes das sondas; isso ativa o descarte exato que Mesh.raycast do Three já implementa. Sem trocar triângulos, diminuir sondas ou mudar tolerâncias. Perfil original continua usando a versão já carregada, em Cidade, e é o único escritor do consolidado. Evidências map-bbox-lajes.{json,log}, candidato isolado e map-hotspot.cpuprofile.
 
-Revisor adversarial readonly /root/reviewer começou cobertura integral de276 arquivos e limites do PR enquanto CodeRabbit está sem itens/resposta. Essa antecipação não representa review do CodeRabbit e deve ser atualizada depois de eventuais achados novos; entrega ainda exige as duas etapas. Réguas/site da CI41187084729 já verde; invariantes em execução.
+Revisor adversarial readonly /root/reviewer começou cobertura integral de276 arquivos e limites do PR enquanto revisor legado está sem itens/resposta. Essa antecipação não representa review do revisor legado e deve ser atualizada depois de eventuais achados novos; entrega ainda exige as duas etapas. Réguas/site da CI41187084729 já verde; invariantes em execução.
 
 ### Revisão adversarial integral: seis achados confirmados
 
-/root/reviewer cobriu todo inventário/diff e limites (276 arquivos), incluindo consumidores/proveniência dos binários. Achados: P1 HUD MP congelado; P2 mordida atravessava parede; P2 marcha ignorava master; P2 filtros CTF omitiam Praça/Piscina; P2 mutante intro-race caía em ReferenceError da fixture; P2 OBJ3 confundia estado local com snapshot recebido. Nenhum sétimo achado. Sem execução própria de testes/browser; isso não substitui CodeRabbit, ainda sem review. Solicitarei rechecagem das correções finais.
+/root/reviewer cobriu todo inventário/diff e limites (276 arquivos), incluindo consumidores/proveniência dos binários. Achados: P1 HUD MP congelado; P2 mordida atravessava parede; P2 marcha ignorava master; P2 filtros CTF omitiam Praça/Piscina; P2 mutante intro-race caía em ReferenceError da fixture; P2 OBJ3 confundia estado local com snapshot recebido. Nenhum sétimo achado. Sem execução própria de testes/browser; isso não substitui revisor legado, ainda sem review. Solicitarei rechecagem das correções finais.
 
 HUD: updatePresentation online agora atualiza HUD sem passoHorda. RED em teste e preview (state38%/7, DOM17%/3); GREEN em teste e navegador local (DOM38%/7, aguardando3/4, barra38%, estado inalterado). Mutante hud-rede-congelado detectado. Capturas hud-rede-corrigido/render comprovam UI somente: cena preta após resize com update pausado, não aprovação de render integral.
 
@@ -1153,7 +1155,7 @@ Sondas no Ego31 local, SIM97f50aeceda56123: parede sólida da primeira casa bloq
 
 ### Orçamento da auditoria completa
 
-CIff0 gastou358.62s só em Lajes e morreu aos900.2s durante Cidade; main17mapas levou687.1s. Perfil original local também confirmou novos custos separados (Cidade627.91s, Rural468.22s, Vila ainda executando sob carga compartilhada). Ampliado apenas timeout do subprocesso para1500s e job de invariantes para30min (teto da casa), mantendo todos21mapas, amostras, limiares e falha de relatório ausente. AABBs estáticos já comparados sem nenhuma diferença em Lajes. Testes fresh-report5/5 e workflow-timeout verdes. CI real no novo HEAD decidirá se orçamento basta; não inferir verde local. CodeRabbit ainda sem review.
+CIff0 gastou358.62s só em Lajes e morreu aos900.2s durante Cidade; main17mapas levou687.1s. Perfil original local também confirmou novos custos separados (Cidade627.91s, Rural468.22s, Vila ainda executando sob carga compartilhada). Ampliado apenas timeout do subprocesso para1500s e job de invariantes para30min (teto da casa), mantendo todos21mapas, amostras, limiares e falha de relatório ausente. AABBs estáticos já comparados sem nenhuma diferença em Lajes. Testes fresh-report5/5 e workflow-timeout verdes. CI real no novo HEAD decidirá se orçamento basta; não inferir verde local. revisor legado ainda sem review.
 
 ### Régua da horda no CI e mutante de contorno atualizado
 
@@ -1171,21 +1173,21 @@ Correção do diagnóstico inicial de MAP4: não eram caixas invisíveis além d
 
 MAP2: último slotE da Vila z17→16.4, só ambientevila, preserva Cidade/Rural. Baseline tres-mapasGREEN e mutante spawn-desnivelado restabelecendo17 detectado no teto.30m, exit0 após checar causa esperada. fresh-report5/5 verdes. Revisor readonly não encontrou achado no delta inteiro. Tentativa de URL de Vila no navegador redirecionou para Praça, como esperado porque mapas extras continuam indisponíveis no produto; não declarar aprovação visual da Vila. Perfil isolado pósfix34778 em execução, escreve somente artifact map-vila-corrigida.json.
 
-Suíte integral da horda no HEAD30aadb487 terminou exit0: baseline,28mutantes e OBJ3 (horda-final-completa-4.log). Novo delta contém só spawn condicionado/instrumento e seus testes; CI repetirá o comando integral. Push de30 foi cancelado antes de enviar porque a auditoria revelou esses bloqueios. Nenhum merge/release; próximo push completo, perfil pósfix/CI/CodeRabbit/preview, depois merge/release autorizados. Canário financeiro permanece pendente.
+Suíte integral da horda no HEAD30aadb487 terminou exit0: baseline,28mutantes e OBJ3 (horda-final-completa-4.log). Novo delta contém só spawn condicionado/instrumento e seus testes; CI repetirá o comando integral. Push de30 foi cancelado antes de enviar porque a auditoria revelou esses bloqueios. Nenhum merge/release; próximo push completo, perfil pósfix/CI/revisor legado/preview, depois merge/release autorizados. Canário financeiro permanece pendente.
 
 ### Release: checkout limpo e auditoria corrigida (31/10)
 
 - Push `3a268b87b` publicado após hook completo de 549 s. MAPAUD corrigido da Vila terminou com zero bloqueios invisíveis e desnível máximo de respawn E 0,29 m/B 0,18 m. Relatórios preservados em `artifacts/javaporcos-release-20261031/map-vila-corrigida.json` e `geometria-posfix-vereditos.json`; esta combinação local não substitui CI integral.
 - CI `41190783773` expôs `ERR_MODULE_NOT_FOUND: three` no novo passo da horda: checkout limpo não tinha a ponte vendorizada criada anteriormente por outras réguas. O preparo foi extraído do arnês para `tools/eval/three-node.mjs`, compartilhado pelo arnês e pelas duas réguas que precisam dele. Sem mudança em runtime, mapas ou protocolo.
 - Baseline da horda, OBJ3, amostras MAP4 e importação do arnês com 21 mapas passaram após a extração. Cópia isolada em `/private/var/tmp`, previamente confirmada sem resolução de `three`, iniciou a suíte completa com sucesso; aguardar seu resultado em `artifacts/javaporcos-release-20261031/horda-clean-completa.log`.
-- Revisor independente leu o delta do bootstrap e a compatibilidade com `main` em `bee715af8`, sem achados. CodeRabbit solicitado em `3a268b87b`, ainda sem revisão. Próximo: publicar correção, conferir CI/preview no novo HEAD, resolver revisão e só então merge/release autorizados. Canário pago e multiplayer remoto continuam separados e pendentes.
+- Revisor independente leu o delta do bootstrap e a compatibilidade com `main` em `bee715af8`, sem achados. revisor legado solicitado em `3a268b87b`, ainda sem revisão. Próximo: publicar correção, conferir CI/preview no novo HEAD, resolver revisão e só então merge/release autorizados. Canário pago e multiplayer remoto continuam separados e pendentes.
 
 - CI `41190783773`: job `invariantes` aprovado, incluindo MAPAUD amplo; `portao-browser` também aprovado. A falha no passo da horda já tem correção em `af3aefa5f` e suíte integral isolada exit0.
 - Push de `af3aefa5f` foi bloqueado pelo hook: splash da régua híbrida não abriu em 180 s. Reprodução isolada confirmou a falha. Ela servia código local com status/MIME 404 da produção e omitira dependências novas (`maps`, equipe e áudio), misturando APIs de versões diferentes. A régua agora serve os dez módulos locais necessários com status 200/MIME JavaScript. Continua excluindo os mesmos módulos dos bytes de ambos os lados e mantém os tetos/ordem.
-- Baseline corrigido: splash via assets em 3.879 ms, 7,16 MB/321 requisições, dentro de 7,82 MB/340. Referência baixou 22 cartazes contra zero sob demanda. Ambos os mutantes foram detectados nas cláusulas pretendidas: `cartaz-ansioso` ORC1/ORC2, `fauna-cedo` ORC1/ORC3. Log `artifacts/javaporcos-release-20261031/boot-localmod-final.log`, exit0. Revisor leu os dez módulos e não encontrou novo risco. Próximo: repetir push completo, CI e preview finais; revisão CodeRabbit segue pendente.
+- Baseline corrigido: splash via assets em 3.879 ms, 7,16 MB/321 requisições, dentro de 7,82 MB/340. Referência baixou 22 cartazes contra zero sob demanda. Ambos os mutantes foram detectados nas cláusulas pretendidas: `cartaz-ansioso` ORC1/ORC2, `fauna-cedo` ORC1/ORC3. Log `artifacts/javaporcos-release-20261031/boot-localmod-final.log`, exit0. Revisor leu os dez módulos e não encontrou novo risco. Próximo: repetir push completo, CI e preview finais; revisão revisor legado segue pendente.
 
 - O hook seguinte aprovou boot e demais checagens, mas PG1 bloqueou o novo helper: o fecho de imports do portão passou a incluir `three-node.mjs`. Incluído no gatilho do portão em `scripts/ci/gatilho.mjs`. Reprodução PG1 vermelha antes; baseline verde depois (261 arquivos do portão/235 do smoke), controle `tira-caminho` continua vermelho PG1/PG2.
-- A `main` avançou para `00e746b5` via PR1180: removeu configuração CodeRabbit e restaurou `estraga-codigo` como reviewer padrão. Seguir a skill do projeto `.claude/skills/estragacodigo-loop/SKILL.md` do novo `main`: revisão real do HEAD, zero threads válidas e checks verdes. A solicitação de `estraga-codigo` já existe no PR1160; renovar após push. Crítico independente permanece como verificação adicional após revisão limpa.
+- A `main` avançou para `00e746b5` via PR1180: removeu configuração revisor legado e restaurou `estraga-codigo` como reviewer padrão. Seguir a skill do projeto `.claude/skills/estragacodigo-loop/SKILL.md` do novo `main`: revisão real do HEAD, zero threads válidas e checks verdes. A solicitação de `estraga-codigo` já existe no PR1160; renovar após push. Crítico independente permanece como verificação adicional após revisão limpa.
 
 ## Revisão estraga-codigo 5722378083: publicação NC
 

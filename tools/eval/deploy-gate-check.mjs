@@ -31,6 +31,9 @@
          qualquer resultado não for `success`. Sem o `always()`, job necessário vermelho
          deixa o agregador SKIPPED, e o ruleset aceita contexto obrigatório pulado como
          verde: o PR passaria com as invariantes vermelhas.
+   DG6 · os caches de áudio/decalques usam tag extraída da URL default e checksum de
+         áudio quando disponível. Nenhum `restore-keys` parcial pode misturar packs;
+         os fetchers, early exits e asserts continuam no caminho.
 
    Uso: node tools/eval/deploy-gate-check.mjs [--mutante=<nome>]
    ============================================================================ */
@@ -40,6 +43,7 @@ const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('
 const MUTANTES = {
   'ci-sem-build': 'DG1', 'download-sem-retry': 'DG2', 'preview-sem-par': 'DG3', 'preview-vira-build': 'DG4',
   'agregador-sem-job': 'DG5', 'agregador-pula': 'DG5', 'agregador-cego': 'DG5', 'build-sem-agregador': 'DG5',
+  'soundscape-fora-build': 'DG5', 'cache-restaura-parcial': 'DG6', 'cache-audio-sem-checksum': 'DG6', 'cache-decals-tag-incerta': 'DG6',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -134,6 +138,7 @@ const corposDeJob = (fonte) => {
     .map(([n]) => n);
   let build = corpos.build || '';
   if (MUT === 'agregador-sem-job') build = build.replace(/^( {4}needs:\s*\[)([^\]]*)\]/m, (_, a, b) => `${a}${b.split(',').map((x) => x.trim()).slice(1).join(', ')}]`);
+  if (MUT === 'soundscape-fora-build') build = build.replace(/, soundscape(?=[,\]])/, '');
   if (MUT === 'agregador-pula') build = build.replace(/^ {4}if: always\(\)\s*\n/m, '');
   /* O alvo é a checagem DENTRO do laço: é ela que reprova o resultado ruim. */
   if (MUT === 'agregador-cego') build = build.replace(/(\[ "\$r" = success \] \|\| \{[^}\n]*)exit 1; \}/, '$1exit 0; }');
@@ -147,6 +152,54 @@ const corposDeJob = (fonte) => {
       falhas.push('DG5 o `build` agregador não reprova quando algum `needs.*.result` não é `success`');
     }
   }
+}
+
+/* ---- DG6: cache de assets só reutiliza a tag/checksum exatos ---- */
+{
+  let preview = temBuild;
+  let browser = ler('.github/workflows/portao-browser.yml');
+  const CHAVE_AUDIO = 'key: audio-pack-${{ steps.packs.outputs.audio_tag }}-${{ steps.packs.outputs.audio_sha }}';
+  const CHAVE_DECALS = 'key: decals-pack-${{ steps.packs.outputs.decals_tag }}';
+  if (MUT === 'cache-restaura-parcial') preview = preview.replace(CHAVE_AUDIO, `${CHAVE_AUDIO}\n          restore-keys: audio-pack-`);
+  if (MUT === 'cache-audio-sem-checksum') preview = preview.replace(CHAVE_AUDIO, 'key: audio-pack-${{ steps.packs.outputs.audio_tag }}');
+  if (MUT === 'cache-decals-tag-incerta') {
+    preview = preview.replace(CHAVE_DECALS, 'key: decals-pack-latest');
+    browser = browser.replace(CHAVE_DECALS, 'key: decals-pack-latest');
+  }
+  const passosDe = (corpo) => corpo.split(/^ {6}- /m).slice(1);
+  const conferir = (fonte, arquivo, jobNome, esperados) => {
+    const job = corposDeJob(fonte)[jobNome] || '';
+    const passos = passosDe(job);
+    if (!passos.length) { falhas.push(`DG6 ${arquivo}:${jobNome} ausente ou sem passos`); return; }
+    const tags = passos.find((p) => /^ {8}id: packs\s*$/m.test(p)) || '';
+    for (const token of ['scripts/fetch-decals.sh', 'DECALS_PACK_URL', 'decals_tag', 'GITHUB_OUTPUT', '\\/download\\/']) {
+      if (!tags.includes(token)) falhas.push(`DG6 ${arquivo}: passo packs não extrai ${token} da URL default`);
+    }
+    const caches = passos.filter((p) => /uses: actions\/cache@[0-9a-f]{40}/.test(p));
+    if (caches.length !== esperados.length) falhas.push(`DG6 ${arquivo}:${jobNome}: esperados ${esperados.length} caches, encontrados ${caches.length}`);
+    for (const esperado of esperados) {
+      const cache = caches.find((p) => p.includes(`path: ${esperado.path}`)) || '';
+      if (!cache) { falhas.push(`DG6 ${arquivo}: cache de ${esperado.path} ausente ou action sem SHA`); continue; }
+      if (!cache.includes(esperado.key)) falhas.push(`DG6 ${arquivo}: ${esperado.path} não usa a chave exata ${esperado.key}`);
+      if (/^\s+restore-keys:/m.test(cache)) falhas.push(`DG6 ${arquivo}: ${esperado.path} aceita restore-keys parcial/antigo`);
+      const fetch = passos.findIndex((p) => p.includes(esperado.fetch));
+      if (fetch < 0 || passos.indexOf(cache) > fetch) falhas.push(`DG6 ${arquivo}: cache de ${esperado.path} precisa preceder ${esperado.fetch}`);
+    }
+  };
+  conferir(preview, 'preview-build.yml', 'preview', [
+    { path: 'public/audio', key: CHAVE_AUDIO, fetch: 'bash scripts/fetch-audio.sh' },
+    { path: 'public/img/decals', key: CHAVE_DECALS, fetch: 'bash scripts/fetch-decals.sh' },
+  ]);
+  conferir(browser, 'portao-browser.yml', 'portao-core', [
+    { path: 'public/img/decals', key: CHAVE_DECALS, fetch: 'bash scripts/fetch-decals.sh' },
+  ]);
+  const previewTags = passosDe(corposDeJob(preview).preview || '').find((p) => /^ {8}id: packs\s*$/m.test(p)) || '';
+  for (const token of ['scripts/fetch-audio.sh', 'AUDIO_PACK_URL', 'audio_tag', 'AUDIO_PACK_SHA256', 'audio_sha']) {
+    if (!previewTags.includes(token)) falhas.push(`DG6 preview-build.yml: passo packs não deriva ${token} para a chave`);
+  }
+  const assets = passosDe(corposDeJob(preview).preview || '').find((p) => p.includes('bash scripts/fetch-audio.sh')) || '';
+  if (!assets.includes('AUDIO_PACK_SHA256: ${{ vars.AUDIO_PACK_SHA256 }}')) falhas.push('DG6 preview-build.yml: checksum da chave não chega ao fetch de áudio');
+  if (!/npm run assert:assets/.test(assets)) falhas.push('DG6 preview-build.yml: assert nominal de assets foi removido do bootstrap cacheado');
 }
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);

@@ -46,6 +46,7 @@ const MUTANTES = {
   'sem-miniatura': ['/js/tp/servidores.js', (t) => t.replace("img.src = posterDoMapa(r.map);", ''), 'SV2'],
   'filtro-cego': ['/js/tp/servidores.js', (t) => t.replace("if (filtro.modo === 'ctf' && !r.ctf) return false;", ''), 'SV3'],
   'dois-primarios': ['/js/tp/servidores.js', (t) => t.replace("amigos.className = 'tp-btn tp-srv__criar';", "amigos.className = 'tp-btn tp-btn--primario tp-srv__criar';"), 'SV4'],
+  'acoes-desfeitas': ['/js/main.js', (t) => t.replace("if (!mpPanel.querySelector('.tp-srv')) {", 'if (true) {'), 'SV20'],
   'erro-triplo': ['/css/tp/servidores.css', (t) => t.replace(':root[data-ui="v3"] .tp-srv[data-fora="todos"] #mp-erro{display:none}', ''), 'SV5'],
   'sem-tr': ['/js/i18n.js', (t) => t.replace("'SALAS ABERTAS': 'OPEN ROOMS',", ''), 'SV6'],
   'transborda': ['/css/tp/servidores.css', (t) => t.replaceAll('grid-template-columns:var(--tp-srv-colunas)', 'grid-template-columns:92px 420px 260px 110px 70px 260px'), 'SV7'],
@@ -95,14 +96,31 @@ async function contexto(mutante, opcoes = {}, nos = NOS_OK) {
   return ctx;
 }
 
-async function entrar(page, caminho) {
-  await page.goto(`${BASE}${caminho}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+async function entrar(page, caminho, geoDepoisDosServidores = false) {
+  let liberarGeo;
+  if (geoDepoisDosServidores) {
+    const geoLiberado = new Promise((resolve) => { liberarGeo = resolve; });
+    await page.route('**/api/geo-lang', async (rt) => {
+      await geoLiberado;
+      await rt.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ lang: 'pt' }) });
+    });
+  }
+  const navegando = page.goto(`${BASE}${caminho}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  if (geoDepoisDosServidores) {
+    await page.waitForSelector('.tp-srv', { state: 'attached', timeout: 90000 });
+    liberarGeo();
+  }
+  await navegando;
   await page.waitForFunction(() => window.__CS_MAIN_READY__ === true, null, { timeout: 90000 });
   for (let i = 0; i < 60 && await page.$('#boot-splash'); i++) {
     await page.evaluate(() => document.getElementById('boot-splash')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
     await page.waitForTimeout(400);
   }
-  await page.evaluate(() => { for (const d of document.querySelectorAll('dialog[open]')) d.close(); });
+  await page.evaluate(() => {
+    const fechar = () => { for (const d of document.querySelectorAll('dialog[open]')) d.close(); };
+    fechar();
+    new MutationObserver(fechar).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['open'] });
+  });
   await page.waitForTimeout(2500);
 }
 
@@ -254,6 +272,32 @@ async function servidores(mutante) {
   const vagaCasa = (x) => x.chipVaga && x.sits.some((t) => t.toLowerCase().startsWith(x.chipVaga.toLowerCase()));
 
   await ctx.close();
+
+  /* SV20: sem ?lang=pt o main espera o geo; os servidores montam primeiro e o boot
+     legado não pode devolver os CTAs e as opções ao markup oculto. */
+  const cc = await contexto(mutante);
+  const pc = await cc.newPage();
+  await entrar(pc, '/jogar/multiplayer?ui=v3', true);
+  await pc.click('#hub-mp-private');
+  await pc.evaluate(() => {
+    window.__criarCorrida = false;
+    document.getElementById('mp-amigos')?.addEventListener('click', (event) => {
+      window.__criarCorrida = true;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, { capture: true, once: true });
+  });
+  const clicouCriar = await pc.locator('#mp-amigos').click({ timeout: 2000 }).then(() => true, () => false);
+  const corrida = await pc.evaluate(() => ({
+    criar: document.getElementById('mp-amigos')?.checkVisibility() && !!document.getElementById('mp-amigos')?.closest('.tp-srv__acoes'),
+    rapido: document.getElementById('mp-quick')?.checkVisibility() && !!document.getElementById('mp-quick')?.closest('.tp-srv__acoes'),
+    opcoes: (() => { const opcoes = document.querySelector('.tp-srv__lado > .mp-criar[open]'); return !!opcoes?.checkVisibility(); })(),
+    evento: window.__criarCorrida,
+  }));
+  if (!mutante) await pc.screenshot({ path: `${OUT}/servidores-corrida-geo.png` });
+  await cc.close();
+  add('SV20', clicouCriar && corrida.criar && corrida.rapido && corrida.opcoes && corrida.evento,
+    `geo depois dos servidores: CRIAR visível/no cabeçalho ${corrida.criar}, clique ${clicouCriar && corrida.evento}, JOGO RÁPIDO ${corrida.rapido}, opções privadas abertas na lateral ${corrida.opcoes}`);
 
   /* SV5: tudo fora do ar vira UM aviso, com retentativa e treino contra bots, e nada em vermelho. */
   const cf = await contexto(mutante, {}, NOS_FORA);
