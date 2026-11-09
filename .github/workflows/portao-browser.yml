@@ -409,10 +409,22 @@ jobs:
           python3 -c 'import json,sys; n=json.loads(sys.argv[1]); bad=[k+" terminou em "+v["result"] for k,v in sorted(n.items()) if v["result"]!="success"]; print("\n".join(bad) if bad else "portao: os 4 portões paralelos verdes"); sys.exit(bool(bad))' "$STRING"
 
   sertao:
+    name: Sertão — ${{ matrix.shard.nome }}
     needs: decide
     if: needs.decide.outputs.rodar == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      # Um shard ruim não cancela os IDs independentes do outro.
+      fail-fast: false
+      matrix:
+        shard:
+          # Criação: uma simulação média, com deformação, percurso e evidência visual.
+          - nome: criacao
+            checks: LG1,LG2,LG3
+          # Ciclo de vida: médio+bajo compartilham report/reset/contato/disposal.
+          - nome: ciclo-vida
+            checks: LG4,LG5,LG6,LG7,LG8
     env:
       BASE: http://localhost:8123
       PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
@@ -448,20 +460,22 @@ jobs:
           exit 1
 
       - name: Criação do Sertão (GLBs servidos, caminhada, percurso e contato)
-        run: npm run eval:sertao-livestock-runtime
+        env:
+          ARTIFACT_DIR: artifacts/sertao-astra/livestock-runtime-${{ matrix.shard.nome }}
+        run: npm run eval:sertao-livestock-runtime -- --checks=${{ matrix.shard.checks }}
 
       - name: Evidência visual da criação do Sertão
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: sertao-livestock-runtime
-          path: artifacts/sertao-astra/livestock-runtime/
+          name: sertao-livestock-runtime-${{ matrix.shard.nome }}
+          path: artifacts/sertao-astra/livestock-runtime-${{ matrix.shard.nome }}/
           if-no-files-found: warn
 
       - name: Log do servidor (só em falha)
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: portao-sertao-serve-log
+          name: portao-sertao-serve-log-${{ matrix.shard.nome }}
           path: /tmp/eval-serve.log
           if-no-files-found: ignore
