@@ -261,10 +261,8 @@ const m = await page.evaluate(async () => {
   }
   if (!medidos.length) return { erro: 'sem bot com arma de 2 mãos' };
   const escolhe = (pred) => medidos.find(pred) || medidos[0];
-  /* Aproximação ao pente em cm, não "base − 10": o idle assado já segura a mão esquerda ~3 cm
-     mais perto do pente (mediana 23,3 → 20,4 cm) e a recarga chega ao mesmo ponto (11,9 → 11,6 cm). */
-  const an1ok = (a) => a.foiCm >= 8 && a.basePenteCm - a.aoPenteCm >= 8 && a.voltouCm <= 2 && a.kMeio > 0.9 && a.durFim === 0;
-  const m1 = escolhe((x) => an1ok(x.an1));
+  const m1 = escolhe((x) => x.an1.foiCm >= 8 && x.an1.aoPenteCm <= x.an1.basePenteCm - 10
+    && x.an1.voltouCm <= 2 && x.an1.kMeio > 0.9 && x.an1.durFim === 0);
   const m2 = escolhe((x) => x.an2.frenteCm >= 5 && x.an2.voltaCm <= 1.5);
   const m3 = escolhe((x) => x.an3.leanK > 0.07 && x.an3.deslocCm >= 4
     && x.an3.voltaCm <= 1.5 && x.an3.mortoDeslocCm <= 0.5);
@@ -368,7 +366,7 @@ if (m.erro) {
   cobra('AN2', false, `AN2 · ${m.erro}`);
   cobra('AN3', false, `AN3 · ${m.erro}`);
 } else {
-  cobra('AN1', m.an1.foiCm >= 8 && m.an1.basePenteCm - m.an1.aoPenteCm >= 8 && m.an1.voltouCm <= 2 && m.an1.kMeio > 0.9 && m.an1.durFim === 0,
+  cobra('AN1', m.an1.foiCm >= 8 && m.an1.aoPenteCm <= m.an1.basePenteCm - 10 && m.an1.voltouCm <= 2 && m.an1.kMeio > 0.9 && m.an1.durFim === 0,
     `AN1 · ${m.charId}: mão esquerda foi ${m.an1.foiCm.toFixed(1)} cm, de ${m.an1.basePenteCm.toFixed(1)} cm do pente a ${m.an1.aoPenteCm.toFixed(1)} cm, e voltou a ${m.an1.voltouCm.toFixed(2)} cm do controle sem recarga (idle ${m.an1.derivaIdleCm.toFixed(2)} cm)`);
   cobra('AN2', m.an2.frenteCm >= 5 && m.an2.voltaCm <= 1.5,
     `AN2 · o mergulho levou a cabeça ${m.an2.frenteCm.toFixed(1)} cm à frente (e ${m.an2.quedaCm.toFixed(1)} cm abaixo) no pico, e ela voltou a ${m.an2.voltaCm.toFixed(2)} cm da posição original`);
