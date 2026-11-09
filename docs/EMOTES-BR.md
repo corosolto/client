@@ -109,8 +109,10 @@ O casamento de uma entidade limpa o tick anterior; o tick da Room continua entre
 em Node. Mede clip/altura de crouch, envelope de reload, fase/rampa/movimento de juntas,
 cancelamento no import, troca de controlador, morte/respawn, fallback v8, datagramas
 fora de ordem e input/heartbeat com stop explícito. Onze mutantes alteram a implementação
-em memória, sem escrever no disco;
-o runner exige falha na cláusula causal e rejeita erro de infraestrutura como prova.
+em memória, sem escrever no disco. O controlador primeiro exige nominal verde completo,
+depois cobra o conjunto exato de falhas de cada mutação. Uma prova em cópia temporária
+quebra o instrumento de altura e exige reprovação do controlador; base vermelha não
+compra aprovação dos mutantes. Erro de infraestrutura também não serve como prova.
 
 ## Porta fechada em produção (23/10)
 
