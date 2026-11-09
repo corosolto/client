@@ -1,5 +1,5 @@
 {
- "gerado": "2026-10-07T05:41:43.728Z",
+ "gerado": "2026-11-09T09:55:50.217Z",
  "protocolo": "node puro; DOM stubado + three vendorizado (mesmo protocolo de botsim.mjs/pickup-check.mjs); GLB lido por tp-mount-probe.mjs",
  "fontes": {
   "glb": 63,
@@ -74,52 +74,16 @@
     "folga": 0.02
    },
    {
-    "id": "cadequinha",
-    "raioPalma": 0.179,
-    "raioCorpo": 0.178,
-    "folga": 0.001
-   },
-   {
-    "id": "caminhoneiro",
-    "raioPalma": 0.22,
-    "raioCorpo": 0.213,
-    "folga": 0.007
-   },
-   {
     "id": "dama",
     "raioPalma": 0.168,
     "raioCorpo": 0.166,
     "folga": 0.002
    },
    {
-    "id": "farialimer",
-    "raioPalma": 0.21,
-    "raioCorpo": 0.192,
-    "folga": 0.018
-   },
-   {
     "id": "fluxo",
     "raioPalma": 0.183,
     "raioCorpo": 0.2,
     "folga": -0.017
-   },
-   {
-    "id": "gotinha",
-    "raioPalma": 0.193,
-    "raioCorpo": 0.208,
-    "folga": -0.015
-   },
-   {
-    "id": "mariabonita",
-    "raioPalma": 0.192,
-    "raioCorpo": 0.186,
-    "folga": 0.006
-   },
-   {
-    "id": "trapfunk",
-    "raioPalma": 0.199,
-    "raioCorpo": 0.218,
-    "folga": -0.02
    }
   ],
   "nota": "medido por tools/eval/tp-mount-probe.mjs (seção 3: palma dentro da silhueta do corpo)"
@@ -129,190 +93,98 @@
   "porMapa": [
    {
     "mapa": "campomorro",
-    "materiais": 56,
-    "map": 13,
-    "normalMap": 5,
-    "roughnessMap": 5,
-    "aoMap": 0,
-    "meshes": 648,
-    "triangulos": 29674
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "mansao",
-    "materiais": 563,
-    "map": 26,
-    "normalMap": 0,
-    "roughnessMap": 0,
-    "aoMap": 0,
-    "meshes": 1193,
-    "triangulos": 51175
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "amazonia",
-    "materiais": 53,
-    "map": 16,
-    "normalMap": 1,
-    "roughnessMap": 1,
-    "aoMap": 0,
-    "meshes": 347,
-    "triangulos": 36828
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "escadao",
-    "materiais": 203,
-    "map": 83,
-    "normalMap": 8,
-    "roughnessMap": 8,
-    "aoMap": 0,
-    "meshes": 1187,
-    "triangulos": 31690
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "praca_poderes",
-    "materiais": 116,
-    "map": 87,
-    "normalMap": 18,
-    "roughnessMap": 18,
-    "aoMap": 0,
-    "meshes": 275,
-    "triangulos": 8341
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "piscina_treta",
-    "materiais": 144,
-    "map": 117,
-    "normalMap": 0,
-    "roughnessMap": 0,
-    "aoMap": 0,
-    "meshes": 467,
-    "triangulos": 4698
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "loja_h",
-    "materiais": 262,
-    "map": 84,
-    "normalMap": 21,
-    "roughnessMap": 21,
-    "aoMap": 0,
-    "meshes": 519,
-    "triangulos": 21712
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "ferro_velho",
-    "materiais": 284,
-    "map": 235,
-    "normalMap": 9,
-    "roughnessMap": 9,
-    "aoMap": 0,
-    "meshes": 745,
-    "triangulos": 25378
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "quebrada",
-    "materiais": 323,
-    "map": 182,
-    "normalMap": 10,
-    "roughnessMap": 10,
-    "aoMap": 0,
-    "meshes": 1717,
-    "triangulos": 29160
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "corrego",
-    "materiais": 162,
-    "map": 98,
-    "normalMap": 9,
-    "roughnessMap": 9,
-    "aoMap": 0,
-    "meshes": 486,
-    "triangulos": 28356
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "lajes",
-    "materiais": 124,
-    "map": 62,
-    "normalMap": 7,
-    "roughnessMap": 6,
-    "aoMap": 0,
-    "meshes": 627,
-    "triangulos": 173830
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "posto_treta",
-    "materiais": 218,
-    "map": 89,
-    "normalMap": 0,
-    "roughnessMap": 0,
-    "aoMap": 0,
-    "meshes": 359,
-    "triangulos": 4992
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "upa_24h",
-    "materiais": 97,
-    "map": 53,
-    "normalMap": 0,
-    "roughnessMap": 0,
-    "aoMap": 0,
-    "meshes": 476,
-    "triangulos": 7192
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "obras_prefeitura",
-    "materiais": 65,
-    "map": 39,
-    "normalMap": 0,
-    "roughnessMap": 0,
-    "aoMap": 0,
-    "meshes": 403,
-    "triangulos": 15842
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "atacadao_treta",
-    "materiais": 177,
-    "map": 122,
-    "normalMap": 0,
-    "roughnessMap": 0,
-    "aoMap": 0,
-    "meshes": 651,
-    "triangulos": 8386
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "parque_treta",
-    "materiais": 75,
-    "map": 60,
-    "normalMap": 0,
-    "roughnessMap": 0,
-    "aoMap": 0,
-    "meshes": 558,
-    "triangulos": 29097
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "velho_oeste",
-    "materiais": 83,
-    "map": 48,
-    "normalMap": 0,
-    "roughnessMap": 0,
-    "aoMap": 0,
-    "meshes": 765,
-    "triangulos": 49936
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
+   },
+   {
+    "mapa": "invasao_javaporcos",
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
+   },
+   {
+    "mapa": "distrito_rural",
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
+   },
+   {
+    "mapa": "vila_da_mata",
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
+   },
+   {
+    "mapa": "operacao_flavio",
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    },
    {
     "mapa": "penitenciaria",
-    "materiais": 44,
-    "map": 18,
-    "normalMap": 0,
-    "roughnessMap": 0,
-    "aoMap": 0,
-    "meshes": 502,
-    "triangulos": 24236
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-assados-corpos-20261109/tools/eval/char-probe.mjs:674:26)\n    at async file:///Volumes/Zenith/Projects/game/corosolto/csbrasil/client/worktrees/estados-a"
    }
   ],
   "total": {
-   "materiais": 3049,
-   "map": 1432,
-   "normalMap": 88,
-   "roughnessMap": 87,
+   "materiais": 0,
+   "map": 0,
+   "normalMap": 0,
+   "roughnessMap": 0,
    "aoMap": 0
   }
  },
@@ -562,37 +434,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.008316929613471982,
-     "walk": -0.029132433950694828,
-     "run": -0.03154027120148644,
-     "shoot": 0.012532486692915758,
-     "crouch": -0.00025239950708372613
+     "idle": -0.0024644722426564983,
+     "walk": 0.005605909518016125,
+     "run": -0.005427070609677454,
+     "shoot": -0.005205759810371715,
+     "crouch": -0.003983302736953687
     },
     "faixaPorPose": {
      "idle": [
-      0.007666180661191496,
-      0.008316929613471982
+      -0.0024644722426564983,
+      -0.002426167694339751
      ],
      "walk": [
-      -0.029132433950694828,
-      0.025840459959858626
+      -0.002868471043491505,
+      0.005605909518016125
      ],
      "run": [
-      -0.03154027120148644,
-      0.017326122437793513
+      -0.005427070609677454,
+      -0.0012752192942078033
      ],
      "shoot": [
-      0.01175109096962741,
-      0.012532486692915758
+      -0.005205759810371715,
+      -0.0050355481207050344
      ],
      "crouch": [
-      -0.00025239950708372613,
-      -0.00010307464418925524
+      -0.003983302736953687,
+      -0.0039829420342517305
      ]
     },
-    "afunda": -0.03154027120148644,
-    "flutua": 0.012532486692915758,
-    "piorDesvio": -0.03154027120148644
+    "afunda": -0.005427070609677454,
+    "flutua": 0.005605909518016125,
+    "piorDesvio": 0.005605909518016125
    },
    "C5": {
     "materiais": 1,
@@ -710,37 +582,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.02420231891880496,
-     "walk": 0.042809858228644936,
-     "run": -0.036079217246451835,
-     "shoot": 0.02896698985268674,
-     "crouch": 0.04151151735879354
+     "idle": -0.0018555105839760336,
+     "walk": 0.008176746369761017,
+     "run": -0.003512598687641584,
+     "shoot": 0.0004922189876296757,
+     "crouch": -0.0043051227094225
     },
     "faixaPorPose": {
      "idle": [
-      0.0236048148833098,
-      0.02420231891880496
+      -0.0018555105839760336,
+      -0.0016726599406017304
      ],
      "walk": [
-      -0.039605496967714725,
-      0.042809858228644936
+      -0.0026795548938691447,
+      0.008176746369761017
      ],
      "run": [
-      -0.036079217246451835,
-      0.034380078932082135
+      -0.003512598687641584,
+      -0.00009726524133161504
      ],
      "shoot": [
-      0.027291899267173403,
-      0.02896698985268674
+      0.00045108745164589747,
+      0.0004922189876296757
      ],
      "crouch": [
-      0.04122215635711974,
-      0.04151151735879354
+      -0.0043051227094225,
+      -0.0043045693944368585
      ]
     },
-    "afunda": -0.036079217246451835,
-    "flutua": 0.042809858228644936,
-    "piorDesvio": 0.042809858228644936
+    "afunda": -0.0043051227094225,
+    "flutua": 0.008176746369761017,
+    "piorDesvio": 0.008176746369761017
    },
    "C5": {
     "materiais": 1,
@@ -858,37 +730,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.010947900955162538,
-     "walk": -0.028055773844301492,
-     "run": -0.018371309485569892,
-     "shoot": 0.015396573184316744,
-     "crouch": 0.01757691744343904
+     "idle": -0.00391242266190744,
+     "walk": 0.003969967903621911,
+     "run": 0.015271253982510575,
+     "shoot": -0.005004038165472753,
+     "crouch": -0.00338563992284877
     },
     "faixaPorPose": {
      "idle": [
-      0.010338274885604364,
-      0.010947900955162538
+      -0.00391242266190744,
+      0.0011624612544502016
      ],
      "walk": [
-      -0.028055773844301492,
-      0.017890941899757175
+      -0.0027441037437429916,
+      0.003969967903621911
      ],
      "run": [
-      -0.018371309485569892,
-      0.012547346947442112
+      -0.004775120399957788,
+      0.015271253982510575
      ],
      "shoot": [
-      0.014511986221456613,
-      0.015396573184316744
+      -0.005004038165472753,
+      -0.0033872162902921594
      ],
      "crouch": [
-      0.017384208973820477,
-      0.01757691744343904
+      -0.00338563992284877,
+      -0.003384209517075
      ]
     },
-    "afunda": -0.028055773844301492,
-    "flutua": 0.01757691744343904,
-    "piorDesvio": -0.028055773844301492
+    "afunda": -0.005004038165472753,
+    "flutua": 0.015271253982510575,
+    "piorDesvio": 0.015271253982510575
    },
    "C5": {
     "materiais": 1,
@@ -1006,37 +878,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.0049032120329217,
-     "walk": -0.02654986425933912,
-     "run": -0.03399281311110309,
-     "shoot": 0.007533423229415867,
-     "crouch": -0.010348201982437997
+     "idle": -0.0009867977278400892,
+     "walk": 0.004620200310840811,
+     "run": -0.004786375952117179,
+     "shoot": -0.000390739564369149,
+     "crouch": -0.002547316729357035
     },
     "faixaPorPose": {
      "idle": [
-      0.004359889861548179,
-      0.0049032120329217
+      -0.0009867977278400892,
+      -0.0009423233094386707
      ],
      "walk": [
-      -0.02654986425933912,
-      0.01554777179421539
+      -0.0029787551541248613,
+      0.004620200310840811
      ],
      "run": [
-      -0.03399281311110309,
-      0.0066034787591813925
+      -0.004786375952117179,
+      -0.000369644571666418
      ],
      "shoot": [
-      0.006878717056995096,
-      0.007533423229415867
+      -0.000390739564369149,
+      -0.00029879160227875754
      ],
      "crouch": [
-      -0.010348201982437997,
-      -0.010270943108049156
+      -0.002547316729357035,
+      -0.002546650315511246
      ]
     },
-    "afunda": -0.03399281311110309,
-    "flutua": 0.007533423229415867,
-    "piorDesvio": -0.03399281311110309
+    "afunda": -0.004786375952117179,
+    "flutua": 0.004620200310840811,
+    "piorDesvio": -0.004786375952117179
    },
    "C5": {
     "materiais": 1,
@@ -1154,37 +1026,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.006467423800177343,
-     "walk": -0.04952212426955486,
-     "run": -0.07377220802012804,
-     "shoot": 0.012874327652775882,
-     "crouch": -0.01043658468695372
+     "idle": -0.007514123571843419,
+     "walk": 0.00993793225021903,
+     "run": -0.010143923578627725,
+     "shoot": -0.011367818187736125,
+     "crouch": -0.0031670105597428233
     },
     "faixaPorPose": {
      "idle": [
-      0.005531701349701905,
-      0.006467423800177343
+      -0.007514123571843419,
+      -0.0068188152706710956
      ],
      "walk": [
-      -0.04952212426955486,
-      0.015902953141235646
+      -0.003483294547495655,
+      0.00993793225021903
      ],
      "run": [
-      -0.07377220802012804,
-      0.01901965537135845
+      -0.010143923578627725,
+      -0.000566109709471979
      ],
      "shoot": [
-      0.011533742687175741,
-      0.012874327652775882
+      -0.011367818187736125,
+      -0.01060443828421114
      ],
      "crouch": [
-      -0.01043658468695372,
-      -0.010314889237446053
+      -0.0031670105597428233,
+      -0.003159764527687079
      ]
     },
-    "afunda": -0.07377220802012804,
-    "flutua": 0.012874327652775882,
-    "piorDesvio": -0.07377220802012804
+    "afunda": -0.011367818187736125,
+    "flutua": 0.00993793225021903,
+    "piorDesvio": -0.011367818187736125
    },
    "C5": {
     "materiais": 1,
@@ -1450,37 +1322,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.006170124804559854,
-     "walk": -0.024424691119568718,
-     "run": -0.025670312821715623,
-     "shoot": 0.007740877994697872,
-     "crouch": 0.0010015665771676994
+     "idle": -0.004652361685145639,
+     "walk": 0.004906803913636582,
+     "run": -0.003270814273639853,
+     "shoot": -0.002984406111795112,
+     "crouch": -0.0028130109660881304
     },
     "faixaPorPose": {
      "idle": [
-      0.005665068440470575,
-      0.006170124804559854
+      -0.004652361685145639,
+      -0.003964663120139493
      ],
      "walk": [
-      -0.024424691119568718,
-      0.0167978869102881
+      -0.004285085077093732,
+      0.004906803913636582
      ],
      "run": [
-      -0.025670312821715623,
-      0.014709534012432083
+      -0.003270814273639853,
+      0.00025736534461070506
      ],
      "shoot": [
-      0.0071209598139837195,
-      0.007740877994697872
+      -0.002984406111795112,
+      -0.002822303154079728
      ],
      "crouch": [
-      0.0009360005508366101,
-      0.0010015665771676994
+      -0.0028130109660881304,
+      -0.0028127637061493883
      ]
     },
-    "afunda": -0.025670312821715623,
-    "flutua": 0.007740877994697872,
-    "piorDesvio": -0.025670312821715623
+    "afunda": -0.004652361685145639,
+    "flutua": 0.004906803913636582,
+    "piorDesvio": 0.004906803913636582
    },
    "C5": {
     "materiais": 1,
@@ -1598,37 +1470,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": -0.005136033477871332,
-     "walk": -0.0378075668717366,
-     "run": -0.047006712764590945,
-     "shoot": 0.00016528334655447886,
-     "crouch": -0.05157070312055962
+     "idle": -0.002345663390029731,
+     "walk": -0.009188031051137831,
+     "run": -0.006409998713889508,
+     "shoot": -0.003310905182258046,
+     "crouch": -0.0016992456852826445
     },
     "faixaPorPose": {
      "idle": [
-      -0.005136033477871332,
-      -0.004646499493637039
+      -0.002345663390029731,
+      -0.0023094648780121185
      ],
      "walk": [
-      -0.0378075668717366,
-      -0.005060210660969691
+      -0.009188031051137831,
+      0.0045202233745285265
      ],
      "run": [
-      -0.047006712764590945,
-      -0.015003253744056881
+      -0.006409998713889508,
+      0.0005739804497655917
      ],
      "shoot": [
-      -0.00016042768059612995,
-      0.00016528334655447886
+      -0.003310905182258046,
+      -0.0028280585867931857
      ],
      "crouch": [
-      -0.05157070312055962,
-      -0.05112347886260115
+      -0.0016992456852826445,
+      -0.0016976493364144792
      ]
     },
-    "afunda": -0.05157070312055962,
-    "flutua": 0.00016528334655447886,
-    "piorDesvio": -0.05157070312055962
+    "afunda": -0.009188031051137831,
+    "flutua": 0,
+    "piorDesvio": -0.009188031051137831
    },
    "C5": {
     "materiais": 1,
@@ -1746,37 +1618,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.007287734568377686,
-     "walk": 0.02824870146618769,
-     "run": 0.020814649251806813,
-     "shoot": 0.008518481454202162,
-     "crouch": -0.00036417036851618033
+     "idle": -0.0026456827955571405,
+     "walk": 0.005000908107979481,
+     "run": 0.004833594595515164,
+     "shoot": -0.0012936883852976832,
+     "crouch": -0.0021080624034553433
     },
     "faixaPorPose": {
      "idle": [
-      0.006683691269196719,
-      0.007287734568377686
+      -0.0026456827955571405,
+      -0.002599065592123795
      ],
      "walk": [
-      -0.023319482344695424,
-      0.02824870146618769
+      0.0006567932321092632,
+      0.005000908107979481
      ],
      "run": [
-      -0.008955988845234866,
-      0.020814649251806813
+      -0.004440743108639781,
+      0.004833594595515164
      ],
      "shoot": [
-      0.0077896278622123895,
-      0.008518481454202162
+      -0.0012936883852976832,
+      -0.0011817083696443666
      ],
      "crouch": [
-      -0.00036417036851618033,
-      -0.00010562817053174203
+      -0.0021080624034553433,
+      -0.0021078571274861873
      ]
     },
-    "afunda": -0.00036417036851618033,
-    "flutua": 0.02824870146618769,
-    "piorDesvio": 0.02824870146618769
+    "afunda": -0.0026456827955571405,
+    "flutua": 0.005000908107979481,
+    "piorDesvio": 0.005000908107979481
    },
    "C5": {
     "materiais": 1,
@@ -1894,37 +1766,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": -0.006324473660224632,
-     "walk": -0.04294067292751666,
-     "run": -0.02966266695798289,
-     "shoot": -0.0072760936940534544,
-     "crouch": -0.049294241692285884
+     "idle": -0.0020716204837134787,
+     "walk": 0.009451882009326958,
+     "run": 0.01203727947955121,
+     "shoot": -0.0013613999820993082,
+     "crouch": -0.0027435707398430365
     },
     "faixaPorPose": {
      "idle": [
-      -0.006324473660224632,
-      -0.0058062250486842016
+      -0.0020716204837134787,
+      -0.0018618584592775083
      ],
      "walk": [
-      -0.04294067292751666,
-      0.008609332921657387
+      -0.0027104816484186966,
+      0.009451882009326958
      ],
      "run": [
-      -0.02966266695798289,
-      0.017609248301339614
+      -0.005083165794298992,
+      0.01203727947955121
      ],
      "shoot": [
-      -0.0072760936940534544,
-      -0.006389457684827933
+      -0.0013613999820993082,
+      -0.0011976257489702685
      ],
      "crouch": [
-      -0.049294241692285884,
-      -0.048879500694277635
+      -0.0027435707398430365,
+      -0.002742549273237948
      ]
     },
-    "afunda": -0.049294241692285884,
-    "flutua": 0,
-    "piorDesvio": -0.049294241692285884
+    "afunda": -0.0027435707398430365,
+    "flutua": 0.01203727947955121,
+    "piorDesvio": 0.01203727947955121
    },
    "C5": {
     "materiais": 1,
@@ -2042,37 +1914,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": -0.0003795606337237875,
-     "walk": -0.021278426195022612,
-     "run": -0.021517914559841908,
-     "shoot": 0.0013730280516338024,
-     "crouch": -0.03781412902051248
+     "idle": -0.0015354250363836248,
+     "walk": 0.006828579619129585,
+     "run": 0.033955587918292625,
+     "shoot": -0.0007611635898091584,
+     "crouch": 0.00017816942188589058
     },
     "faixaPorPose": {
      "idle": [
-      -0.0003795606337237875,
-      0.00006945331887760145
+      -0.0015354250363836248,
+      -0.0014668051025764949
      ],
      "walk": [
-      -0.021278426195022612,
-      0.010283184537800413
+      -0.004882492015992681,
+      0.006828579619129585
      ],
      "run": [
-      -0.021517914559841908,
-      0.005087208994443644
+      -0.0019685633740292694,
+      0.033955587918292625
      ],
      "shoot": [
-      0.0009441260510804315,
-      0.0013730280516338024
+      -0.0007611635898091584,
+      -0.0006528145594710263
      ],
      "crouch": [
-      -0.03781412902051248,
-      -0.03769779235381274
+      0.0001763779468204888,
+      0.00017816942188589058
      ]
     },
-    "afunda": -0.03781412902051248,
-    "flutua": 0.0013730280516338024,
-    "piorDesvio": -0.03781412902051248
+    "afunda": -0.0015354250363836248,
+    "flutua": 0.033955587918292625,
+    "piorDesvio": 0.033955587918292625
    },
    "C5": {
     "materiais": 1,
@@ -2190,37 +2062,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.0007323460205837913,
-     "walk": -0.051255014450175794,
-     "run": -0.03863526044171324,
-     "shoot": -0.0037750885231862814,
-     "crouch": -0.09807997181344545
+     "idle": -0.003835915986909706,
+     "walk": 0.016876734309536023,
+     "run": 0.024964991767332325,
+     "shoot": -0.005393656989785174,
+     "crouch": -0.004474130067927092
     },
     "faixaPorPose": {
      "idle": [
-      0.00043277743837757417,
-      0.0007323460205837913
+      -0.003835915986909706,
+      -0.0024853151645578787
      ],
      "walk": [
-      -0.051255014450175794,
-      -0.0028813751304211056
+      -0.0010992989755551133,
+      0.016876734309536023
      ],
      "run": [
-      -0.03863526044171324,
-      -0.001787037249231735
+      -0.005789071002524171,
+      0.024964991767332325
      ],
      "shoot": [
-      -0.0037750885231862814,
-      -0.0030869441109751352
+      -0.005393656989785174,
+      -0.004896555796437817
      ],
      "crouch": [
-      -0.09807997181344545,
-      -0.09708180410383713
+      -0.004474130067927092,
+      -0.004442004377975986
      ]
     },
-    "afunda": -0.09807997181344545,
-    "flutua": 0.0007323460205837913,
-    "piorDesvio": -0.09807997181344545
+    "afunda": -0.005393656989785174,
+    "flutua": 0.024964991767332325,
+    "piorDesvio": 0.024964991767332325
    },
    "C5": {
     "materiais": 1,
@@ -2338,37 +2210,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.012901918419898368,
-     "walk": 0.03616703492433275,
-     "run": 0.043328054009019484,
-     "shoot": 0.0069287074071826965,
-     "crouch": -0.007480601513867178
+     "idle": -0.000007361340470423375,
+     "walk": 0.004022084880997355,
+     "run": 0.034147267359723385,
+     "shoot": 0.00022416953359905782,
+     "crouch": -0.0014258829590657821
     },
     "faixaPorPose": {
      "idle": [
-      0.012529814766873794,
-      0.012901918419898368
+      -0.000007361340470423375,
+      -9.85143902541835e-7
      ],
      "walk": [
-      -0.027875331313205767,
-      0.03616703492433275
+      0.002249052631023869,
+      0.004022084880997355
      ],
      "run": [
-      -0.008696328164696836,
-      0.043328054009019484
+      -0.0014524315051196355,
+      0.034147267359723385
      ],
      "shoot": [
-      0.0056132384320047995,
-      0.0069287074071826965
+      0.0001731785554503485,
+      0.00022416953359905782
      ],
      "crouch": [
-      -0.007480601513867178,
-      -0.006934924835991124
+      -0.0014258829590657821,
+      -0.0014253288016440422
      ]
     },
-    "afunda": -0.007480601513867178,
-    "flutua": 0.043328054009019484,
-    "piorDesvio": 0.043328054009019484
+    "afunda": -0.0014258829590657821,
+    "flutua": 0.034147267359723385,
+    "piorDesvio": 0.034147267359723385
    },
    "C5": {
     "materiais": 1,
@@ -2576,9 +2448,9 @@
     "ossosInvertidos": [],
     "raioSkinP50": 0.103,
     "raioSkinP95": 0.229,
-    "desalinhamentoRMS": 0.1586,
+    "desalinhamentoRMS": 0.1425,
     "piorJunta": "Hips",
-    "piorDesalinhamento": 0.403,
+    "piorDesalinhamento": 0.265,
     "antebraco": 0.216,
     "dPalmaOsso": 0.095,
     "alavancaPalma": 0.44,
@@ -2634,40 +2506,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.011723854396732064,
-     "walk": -0.0385454256575833,
-     "run": 0.019822758175144842,
-     "shoot": 0.014697606881911223,
-     "crouch": -0.006927013614839462
+     "idle": -0.000033686941417072935,
+     "walk": 0.01455160170757682,
+     "run": 0.006222848815881529,
+     "shoot": -0.00018543042200850444,
+     "crouch": 0.00008470229481622633
     },
     "faixaPorPose": {
      "idle": [
-      0.011145928862207805,
-      0.011723854396732064
+      -0.000033686941417072935,
+      -0.000022207604137603804
      ],
      "walk": [
-      -0.0385454256575833,
-      0.03193385927062315
+      0.0006230480185731656,
+      0.01455160170757682
      ],
      "run": [
-      -0.01725702910169846,
-      0.019822758175144842
+      -0.00362619067509066,
+      0.006222848815881529
      ],
      "shoot": [
-      0.013717658093595793,
-      0.014697606881911223
+      -0.00018543042200850444,
+      -0.00016654433182548205
      ],
      "crouch": [
-      -0.006927013614839462,
-      -0.0066555309452140336
+      0.0000842367554783439,
+      0.00008470229481622633
      ]
     },
-    "corpoPorPose": {
-     "crouch": -0.36689130282801924
-    },
-    "afunda": -0.0385454256575833,
-    "flutua": 0.019822758175144842,
-    "piorDesvio": -0.0385454256575833
+    "afunda": -0.00018543042200850444,
+    "flutua": 0.01455160170757682,
+    "piorDesvio": 0.01455160170757682
    },
    "C5": {
     "materiais": 1,
@@ -2684,7 +2553,7 @@
     "mapasDeSuperficie": 2
    },
    "C6": {
-    "piorIoU": 0.6559455982356185,
+    "piorIoU": 0.6701088997371386,
     "contra": "jozo"
    }
   },
@@ -2936,37 +2805,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.008069301093981674,
-     "walk": 0.026697743299181717,
-     "run": -0.04850842946484041,
-     "shoot": 0.009510439308696696,
-     "crouch": -0.013076410720041697
+     "idle": -0.0066318897992404,
+     "walk": 0.008784943932780384,
+     "run": -0.008614531747112497,
+     "shoot": -0.006419385713440593,
+     "crouch": -0.0027734006656322014
     },
     "faixaPorPose": {
      "idle": [
-      0.007512504056282074,
-      0.008069301093981674
+      -0.0066318897992404,
+      -0.006062091048019943
      ],
      "walk": [
-      -0.02419902766618421,
-      0.026697743299181717
+      -0.0036496712472945383,
+      0.008784943932780384
      ],
      "run": [
-      -0.04850842946484041,
-      0.01659624555383877
+      -0.008614531747112497,
+      -0.0007529556864532618
      ],
      "shoot": [
-      0.008131557265381107,
-      0.009510439308696696
+      -0.006419385713440593,
+      -0.006097913750124652
      ],
      "crouch": [
-      -0.013076410720041697,
-      -0.012986298411534663
+      -0.0027734006656322014,
+      -0.0027631753291133656
      ]
     },
-    "afunda": -0.04850842946484041,
-    "flutua": 0.026697743299181717,
-    "piorDesvio": -0.04850842946484041
+    "afunda": -0.008614531747112497,
+    "flutua": 0.008784943932780384,
+    "piorDesvio": 0.008784943932780384
    },
    "C5": {
     "materiais": 1,
@@ -3084,40 +2953,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.0003465727500321043,
-     "walk": -0.04689969439984336,
-     "run": -0.03580718914872488,
-     "shoot": 0.008242383888596203,
-     "crouch": -0.0065392787666912625
+     "idle": -0.009683347602946433,
+     "walk": 0.007442742438717714,
+     "run": 0.01649004716724197,
+     "shoot": -0.008582939381777458,
+     "crouch": 0.02506299203520323
     },
     "faixaPorPose": {
      "idle": [
-      0.0001695529099233809,
-      0.0003465727500321043
+      -0.009683347602946433,
+      -0.008538511262275054
      ],
      "walk": [
-      -0.04689969439984336,
-      0.015184995075580557
+      -0.005166706349113261,
+      0.007442742438717714
      ],
      "run": [
-      -0.03580718914872488,
-      0.010978443452615038
+      -0.009788630398072066,
+      0.01649004716724197
      ],
      "shoot": [
-      0.007641791695740946,
-      0.008242383888596203
+      -0.008582939381777458,
+      -0.008096811257270917
      ],
      "crouch": [
-      -0.0065392787666912625,
-      -0.0063752187787753335
+      0.022833602223895823,
+      0.02506299203520323
      ]
     },
-    "corpoPorPose": {
-     "crouch": -0.06580394400141479
-    },
-    "afunda": -0.04689969439984336,
-    "flutua": 0.008242383888596203,
-    "piorDesvio": -0.04689969439984336
+    "afunda": -0.009683347602946433,
+    "flutua": 0.02506299203520323,
+    "piorDesvio": 0.02506299203520323
    },
    "C5": {
     "materiais": 1,
@@ -3235,37 +3101,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.0030854482374184657,
-     "walk": -0.045044343404998015,
-     "run": -0.02857087510707452,
-     "shoot": -0.00258495302180936,
-     "crouch": -0.026255066651072825
+     "idle": -0.002754600928953434,
+     "walk": 0.004644040870118464,
+     "run": -0.004596720445889661,
+     "shoot": -0.0036291988812081548,
+     "crouch": -0.0021827948382131513
     },
     "faixaPorPose": {
      "idle": [
-      0.0024413796961663997,
-      0.0030854482374184657
+      -0.002754600928953434,
+      -0.002322272419896356
      ],
      "walk": [
-      -0.045044343404998015,
-      0.024689438828618973
+      -0.0014330795202262142,
+      0.004644040870118464
      ],
      "run": [
-      -0.02857087510707452,
-      0.027204989205778414
+      -0.004596720445889661,
+      0.0006832930600864338
      ],
      "shoot": [
-      -0.00258495302180936,
-      -0.0009291628068079759
+      -0.0036291988812081548,
+      -0.003395052007270734
      ],
      "crouch": [
-      -0.026255066651072825,
-      -0.0258804689823404
+      -0.0021827948382131513,
+      -0.0021823704652739807
      ]
     },
-    "afunda": -0.045044343404998015,
-    "flutua": 0.0030854482374184657,
-    "piorDesvio": -0.045044343404998015
+    "afunda": -0.004596720445889661,
+    "flutua": 0.004644040870118464,
+    "piorDesvio": 0.004644040870118464
    },
    "C5": {
     "materiais": 1,
@@ -3679,37 +3545,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.002295568919919054,
-     "walk": -0.04009685440138127,
-     "run": -0.041924506312188685,
-     "shoot": 0.00526450806470912,
-     "crouch": -0.03616353547789551
+     "idle": -0.001759299486733101,
+     "walk": 0.00594219969087818,
+     "run": -0.004873979936602591,
+     "shoot": -0.005031177770078975,
+     "crouch": -0.004598348161872571
     },
     "faixaPorPose": {
      "idle": [
-      0.0017544256360370282,
-      0.002295568919919054
+      -0.001759299486733101,
+      -0.0017280380499848222
      ],
      "walk": [
-      -0.04009685440138127,
-      0.006411713821195209
+      -0.002418733632236893,
+      0.00594219969087818
      ],
      "run": [
-      -0.041924506312188685,
-      -0.005320368634470595
+      -0.004873979936602591,
+      -0.0009699571611915074
      ],
      "shoot": [
-      0.0042552074109266985,
-      0.00526450806470912
+      -0.005031177770078975,
+      -0.003505570015153215
      ],
      "crouch": [
-      -0.03616353547789551,
-      -0.03606826046459836
+      -0.004598348161872571,
+      -0.004597497657648254
      ]
     },
-    "afunda": -0.041924506312188685,
-    "flutua": 0.00526450806470912,
-    "piorDesvio": -0.041924506312188685
+    "afunda": -0.005031177770078975,
+    "flutua": 0.00594219969087818,
+    "piorDesvio": 0.00594219969087818
    },
    "C5": {
     "materiais": 1,
@@ -3827,37 +3693,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.0015129938083515483,
-     "walk": -0.043593853032634286,
-     "run": -0.07168896925990106,
-     "shoot": -0.002061963983868693,
-     "crouch": -0.026568912940242526
+     "idle": -0.007898217494874899,
+     "walk": 0.013732009887113273,
+     "run": -0.00793127977778297,
+     "shoot": -0.007085417590326397,
+     "crouch": -0.004274483298162909
     },
     "faixaPorPose": {
      "idle": [
-      0.000973048587360415,
-      0.0015129938083515483
+      -0.007898217494874899,
+      -0.007292408500919236
      ],
      "walk": [
-      -0.043593853032634286,
-      0.003922149755233651
+      -0.004495330738637077,
+      0.013732009887113273
      ],
      "run": [
-      -0.07168896925990106,
-      0.01649290341052225
+      -0.00793127977778297,
+      0.002500236949775407
      ],
      "shoot": [
-      -0.002061963983868693,
-      -0.0005947014739679633
+      -0.007085417590326397,
+      -0.006758330939743467
      ],
      "crouch": [
-      -0.026568912940242526,
-      -0.026379011317673232
+      -0.004274483298162909,
+      -0.004274108368664935
      ]
     },
-    "afunda": -0.07168896925990106,
-    "flutua": 0.0015129938083515483,
-    "piorDesvio": -0.07168896925990106
+    "afunda": -0.00793127977778297,
+    "flutua": 0.013732009887113273,
+    "piorDesvio": 0.013732009887113273
    },
    "C5": {
     "materiais": 1,
@@ -3975,37 +3841,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.011105137021867635,
-     "walk": -0.03719468846427664,
-     "run": -0.054152963958831964,
-     "shoot": 0.015428046771110928,
-     "crouch": -0.007021691506758578
+     "idle": -0.002960960246369611,
+     "walk": -0.004968869388334384,
+     "run": 0.017951682057979486,
+     "shoot": -0.0018035791694805752,
+     "crouch": 0.007280091666288984
     },
     "faixaPorPose": {
      "idle": [
-      0.010538492055143487,
-      0.011105137021867635
+      -0.002960960246369611,
+      -0.002801268097436915
      ],
      "walk": [
-      -0.03719468846427664,
-      0.030349634712145735
+      -0.004968869388334384,
+      0.004174189800919638
      ],
      "run": [
-      -0.054152963958831964,
-      0.025995568686515317
+      -0.0028080999966802046,
+      0.017951682057979486
      ],
      "shoot": [
-      0.014866476839507644,
-      0.015428046771110928
+      -0.0018035791694805752,
+      -0.0017819175573997904
      ],
      "crouch": [
-      -0.007021691506758578,
-      -0.006660832144923705
+      -0.0024755024997069517,
+      0.007280091666288984
      ]
     },
-    "afunda": -0.054152963958831964,
-    "flutua": 0.015428046771110928,
-    "piorDesvio": -0.054152963958831964
+    "afunda": -0.004968869388334384,
+    "flutua": 0.017951682057979486,
+    "piorDesvio": 0.017951682057979486
    },
    "C5": {
     "materiais": 1,
@@ -4123,37 +3989,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": -0.006813221922587145,
-     "walk": -0.04904710638197295,
-     "run": -0.033093715923363506,
-     "shoot": -0.00580162774942637,
-     "crouch": -0.042229404794001245
+     "idle": -0.004514683727091335,
+     "walk": 0.005115810180291198,
+     "run": -0.004862746628927257,
+     "shoot": -0.004454805515655029,
+     "crouch": -0.0032128780301353957
     },
     "faixaPorPose": {
      "idle": [
-      -0.006813221922587145,
-      -0.00601842468711249
+      -0.004514683727091335,
+      -0.004298847320417875
      ],
      "walk": [
-      -0.04904710638197295,
-      0.022214168245758607
+      -0.004785343585903466,
+      0.005115810180291198
      ],
      "run": [
-      -0.033093715923363506,
-      0.023491867990838276
+      -0.004862746628927257,
+      0.002783765729535589
      ],
      "shoot": [
-      -0.00580162774942637,
-      -0.004578280446818145
+      -0.004454805515655029,
+      -0.004255726084704927
      ],
      "crouch": [
-      -0.042229404794001245,
-      -0.042108928220485786
+      -0.0032128780301353957,
+      -0.003206891182180014
      ]
     },
-    "afunda": -0.04904710638197295,
-    "flutua": 0,
-    "piorDesvio": -0.04904710638197295
+    "afunda": -0.004862746628927257,
+    "flutua": 0.005115810180291198,
+    "piorDesvio": 0.005115810180291198
    },
    "C5": {
     "materiais": 1,
@@ -4271,37 +4137,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": -0.0015050959129386588,
-     "walk": -0.02164988647151098,
-     "run": -0.013268153049543697,
-     "shoot": -0.0013259701850926039,
-     "crouch": -0.03498883018319843
+     "idle": -0.0020983437636261397,
+     "walk": -0.0036371845671286755,
+     "run": 0.03411605250222665,
+     "shoot": -0.000974985418026716,
+     "crouch": -0.002172042265981997
     },
     "faixaPorPose": {
      "idle": [
-      -0.0015050959129386588,
-      -0.0010088410386983368
+      -0.0020983437636261397,
+      -0.0020279576238486506
      ],
      "walk": [
-      -0.02164988647151098,
-      0.007551778056731731
+      -0.0036371845671286755,
+      0.0027860735082619924
      ],
      "run": [
-      -0.013268153049543697,
-      0.008596989516750298
+      -0.003082881357744303,
+      0.03411605250222665
      ],
      "shoot": [
-      -0.0013259701850926039,
-      -0.0008641633034734478
+      -0.000974985418026716,
+      -0.000853228518429259
      ],
      "crouch": [
-      -0.03498883018319843,
-      -0.03476911899650063
+      -0.002172042265981997,
+      -0.002171340294264063
      ]
     },
-    "afunda": -0.03498883018319843,
-    "flutua": 0,
-    "piorDesvio": -0.03498883018319843
+    "afunda": -0.0036371845671286755,
+    "flutua": 0.03411605250222665,
+    "piorDesvio": 0.03411605250222665
    },
    "C5": {
     "materiais": 1,
@@ -4419,37 +4285,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.0004071543255572681,
-     "walk": -0.04299121951547723,
-     "run": -0.04927917717508582,
-     "shoot": 0.002885496266395374,
-     "crouch": -0.03722058528334727
+     "idle": -0.005996510386058979,
+     "walk": 0.012034840688724064,
+     "run": -0.004929747983048604,
+     "shoot": -0.004112390680933792,
+     "crouch": -0.0022073714904625795
     },
     "faixaPorPose": {
      "idle": [
-      -0.00011913475398601479,
-      0.0004071543255572681
+      -0.005996510386058979,
+      -0.005554509457895577
      ],
      "walk": [
-      -0.04299121951547723,
-      -0.0004808237768842349
+      -0.004818745443257655,
+      0.012034840688724064
      ],
      "run": [
-      -0.04927917717508582,
-      -0.007358419987383523
+      -0.004929747983048604,
+      -0.0009433708932424623
      ],
      "shoot": [
-      0.002381944759640309,
-      0.002885496266395374
+      -0.004112390680933792,
+      -0.003857573536746953
      ],
      "crouch": [
-      -0.03722058528334727,
-      -0.03711339842231332
+      -0.0022073714904625795,
+      -0.0022068676466701766
      ]
     },
-    "afunda": -0.04927917717508582,
-    "flutua": 0.002885496266395374,
-    "piorDesvio": -0.04927917717508582
+    "afunda": -0.005996510386058979,
+    "flutua": 0.012034840688724064,
+    "piorDesvio": 0.012034840688724064
    },
    "C5": {
     "materiais": 1,
@@ -4567,37 +4433,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.0028927510186964643,
-     "walk": -0.03576999186812699,
-     "run": 0.024803035264476407,
-     "shoot": 0.0034850675442071066,
-     "crouch": -0.03415837894859855
+     "idle": -0.0035729996214269796,
+     "walk": 0.004535673502925598,
+     "run": 0.021938403231691554,
+     "shoot": -0.0049689645931899765,
+     "crouch": -0.0016635655643896284
     },
     "faixaPorPose": {
      "idle": [
-      0.0023258035235368584,
-      0.0028927510186964643
+      -0.0035729996214269796,
+      -0.0034807570656409854
      ],
      "walk": [
-      -0.03576999186812699,
-      0.017304369575418997
+      -0.0037919020324342183,
+      0.004535673502925598
      ],
      "run": [
-      -0.020860702736538565,
-      0.024803035264476407
+      -0.004221243213815693,
+      0.021938403231691554
      ],
      "shoot": [
-      0.0026232830902051863,
-      0.0034850675442071066
+      -0.0049689645931899765,
+      -0.004689838533488549
      ],
      "crouch": [
-      -0.03415837894859855,
-      -0.03397023402751207
+      -0.0016635655643896284,
+      -0.0016556324530879183
      ]
     },
-    "afunda": -0.03576999186812699,
-    "flutua": 0.024803035264476407,
-    "piorDesvio": -0.03576999186812699
+    "afunda": -0.0049689645931899765,
+    "flutua": 0.021938403231691554,
+    "piorDesvio": 0.021938403231691554
    },
    "C5": {
     "materiais": 1,
@@ -4715,37 +4581,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": -0.0025443461763526858,
-     "walk": -0.03851705277079074,
-     "run": -0.022043495530161526,
-     "shoot": -0.0020108881782763726,
-     "crouch": -0.03453303975308615
+     "idle": -0.004331261101174806,
+     "walk": 0.011033642625456704,
+     "run": 0.030988337730224545,
+     "shoot": -0.003566438385253196,
+     "crouch": -0.005035383645800225
     },
     "faixaPorPose": {
      "idle": [
-      -0.0025443461763526858,
-      -0.001965840980211559
+      -0.004331261101174806,
+      -0.004252971840847456
      ],
      "walk": [
-      -0.03851705277079074,
-      0.011339849469028765
+      -0.003162423240344141,
+      0.011033642625456704
      ],
      "run": [
-      -0.022043495530161526,
-      0.007327359974095507
+      -0.0050506686051303784,
+      0.030988337730224545
      ],
      "shoot": [
-      -0.0020108881782763726,
-      -0.0011441026436140372
+      -0.003566438385253196,
+      -0.0033010419166573505
      ],
      "crouch": [
-      -0.03453303975308615,
-      -0.03446586858414915
+      -0.005035383645800225,
+      -0.005033225448019542
      ]
     },
-    "afunda": -0.03851705277079074,
-    "flutua": 0,
-    "piorDesvio": -0.03851705277079074
+    "afunda": -0.005035383645800225,
+    "flutua": 0.030988337730224545,
+    "piorDesvio": 0.030988337730224545
    },
    "C5": {
     "materiais": 1,
@@ -4863,37 +4729,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.007394163316770221,
-     "walk": -0.025325632622837373,
-     "run": 0.016511125297575764,
-     "shoot": 0.009255651784878518,
-     "crouch": -0.024065567453823888
+     "idle": -0.003711693512536995,
+     "walk": 0.0032589388021087105,
+     "run": 0.038115962321244916,
+     "shoot": -0.002826564413464381,
+     "crouch": -0.0006204478625988437
     },
     "faixaPorPose": {
      "idle": [
-      0.006761773857986964,
-      0.007394163316770221
+      -0.003711693512536995,
+      -0.0035775629397197606
      ],
      "walk": [
-      -0.025325632622837373,
-      0.024555682041679835
+      -0.0008976036239548274,
+      0.0032589388021087105
      ],
      "run": [
-      -0.016109455011677314,
-      0.016511125297575764
+      -0.002278151721105741,
+      0.038115962321244916
      ],
      "shoot": [
-      0.008241972421019277,
-      0.009255651784878518
+      -0.002826564413464381,
+      -0.0026726818212624574
      ],
      "crouch": [
-      -0.024065567453823888,
-      -0.023429135887326553
+      -0.0006204478625988437,
+      -0.0006120453336523859
      ]
     },
-    "afunda": -0.025325632622837373,
-    "flutua": 0.016511125297575764,
-    "piorDesvio": -0.025325632622837373
+    "afunda": -0.003711693512536995,
+    "flutua": 0.038115962321244916,
+    "piorDesvio": 0.038115962321244916
    },
    "C5": {
     "materiais": 1,
@@ -5011,37 +4877,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.002120285656919644,
-     "walk": -0.03159154164817798,
-     "run": -0.01733231723557979,
-     "shoot": 0.005049472048219999,
-     "crouch": -0.03832016720409476
+     "idle": -0.0030595919988294106,
+     "walk": 0.003929457544490246,
+     "run": 0.04025787464046819,
+     "shoot": -0.0019547715836390066,
+     "crouch": -0.00042172154706932626
     },
     "faixaPorPose": {
      "idle": [
-      0.0015962660869426393,
-      0.002120285656919644
+      -0.0030595919988294106,
+      -0.002982650502295187
      ],
      "walk": [
-      -0.03159154164817798,
-      0.011961311802523576
+      -0.0033552997571802546,
+      0.003929457544490246
      ],
      "run": [
-      -0.01733231723557979,
-      0.003931823172465856
+      -0.0022285525590954674,
+      0.04025787464046819
      ],
      "shoot": [
-      0.004364662482363724,
-      0.005049472048219999
+      -0.0019547715836390066,
+      -0.0018248354122731563
      ],
      "crouch": [
-      -0.03832016720409476,
-      -0.0381389730738056
+      -0.00042172154706932626,
+      -0.00041807107801303787
      ]
     },
-    "afunda": -0.03832016720409476,
-    "flutua": 0.005049472048219999,
-    "piorDesvio": -0.03832016720409476
+    "afunda": -0.0030595919988294106,
+    "flutua": 0.04025787464046819,
+    "piorDesvio": 0.04025787464046819
    },
    "C5": {
     "materiais": 1,
@@ -5159,37 +5025,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.01780771166132111,
-     "walk": -0.04106856564069778,
-     "run": -0.030687805728909882,
-     "shoot": 0.022918403321159162,
-     "crouch": 0.0024196175909429836
+     "idle": -0.0014277323292366526,
+     "walk": 0.014335380776872865,
+     "run": 0.00505731524728161,
+     "shoot": -0.0012597908814085902,
+     "crouch": 0.0002527899942557448
     },
     "faixaPorPose": {
      "idle": [
-      0.01697165561614563,
-      0.01780771166132111
+      -0.0014277323292366526,
+      -0.001350153471332106
      ],
      "walk": [
-      -0.04106856564069778,
-      0.039410379903565065
+      -0.0024827609666326976,
+      0.014335380776872865
      ],
      "run": [
-      -0.030687805728909882,
-      0.024639649359653782
+      -0.004045420249563479,
+      0.00505731524728161
      ],
      "shoot": [
-      0.021557967009028567,
-      0.022918403321159162
+      -0.0012597908814085902,
+      -0.0011626727301645538
      ],
      "crouch": [
-      0.002218079165941781,
-      0.0024196175909429836
+      0.00025010336735165626,
+      0.0002527899942557448
      ]
     },
-    "afunda": -0.04106856564069778,
-    "flutua": 0.022918403321159162,
-    "piorDesvio": -0.04106856564069778
+    "afunda": -0.0014277323292366526,
+    "flutua": 0.014335380776872865,
+    "piorDesvio": 0.014335380776872865
    },
    "C5": {
     "materiais": 1,
@@ -5309,37 +5175,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.007729885247305299,
-     "walk": -0.04110328816686575,
-     "run": -0.053995793108075014,
-     "shoot": 0.012432855345403589,
-     "crouch": -0.028156411591289447
+     "idle": -0.00044285133597678634,
+     "walk": 0.0047659296888248204,
+     "run": 0.003348535165064176,
+     "shoot": -0.00008739037504177064,
+     "crouch": -0.0021930431658295684
     },
     "faixaPorPose": {
      "idle": [
-      0.00716889621055714,
-      0.007729885247305299
+      -0.00044285133597678634,
+      -0.00040787549602027735
      ],
      "walk": [
-      -0.04110328816686575,
-      0.006952295470341929
+      -0.002644855627127008,
+      0.0047659296888248204
      ],
      "run": [
-      -0.053995793108075014,
-      -0.004312300626014878
+      -0.002762862254245215,
+      0.003348535165064176
      ],
      "shoot": [
-      0.011906166323587456,
-      0.012432855345403589
+      -0.00008739037504177064,
+      -0.0000702240980319768
      ],
      "crouch": [
-      -0.028156411591289447,
-      -0.027978056100961823
+      -0.0021930431658295684,
+      -0.0021925103478384073
      ]
     },
-    "afunda": -0.053995793108075014,
-    "flutua": 0.012432855345403589,
-    "piorDesvio": -0.053995793108075014
+    "afunda": -0.0021930431658295684,
+    "flutua": 0.0047659296888248204,
+    "piorDesvio": 0.0047659296888248204
    },
    "C5": {
     "materiais": 1,
@@ -5457,37 +5323,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.005428305311369731,
-     "walk": -0.020965125231235154,
-     "run": -0.047746549273922835,
-     "shoot": 0.012483411074230087,
-     "crouch": -0.011173254839945988
+     "idle": -0.0015820542791524855,
+     "walk": 0.007731042330901911,
+     "run": 0.004613330342753784,
+     "shoot": -0.0018149893275960429,
+     "crouch": -0.004388824401472224
     },
     "faixaPorPose": {
      "idle": [
-      0.004742186644383529,
-      0.005428305311369731
+      -0.0015820542791524855,
+      -0.0005550440069103511
      ],
      "walk": [
-      -0.020965125231235154,
-      0.01933230058109417
+      -0.0022261825501469347,
+      0.007731042330901911
      ],
      "run": [
-      -0.047746549273922835,
-      0.009817621360342714
+      -0.0038377720130705413,
+      0.004613330342753784
      ],
      "shoot": [
-      0.011156379247392495,
-      0.012483411074230087
+      -0.0018149893275960429,
+      -0.0015457777335027819
      ],
      "crouch": [
-      -0.011173254839945988,
-      -0.011049319517674072
+      -0.004388824401472224,
+      -0.004388461863845626
      ]
     },
-    "afunda": -0.047746549273922835,
-    "flutua": 0.012483411074230087,
-    "piorDesvio": -0.047746549273922835
+    "afunda": -0.004388824401472224,
+    "flutua": 0.007731042330901911,
+    "piorDesvio": 0.007731042330901911
    },
    "C5": {
     "materiais": 1,
@@ -5605,37 +5471,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.016894590717594454,
-     "walk": 0.04263363155310488,
-     "run": 0.07378753990041868,
-     "shoot": 0.01527911566084883,
-     "crouch": -0.003878016559973537
+     "idle": -0.00009054638386914514,
+     "walk": 0.011326579733559706,
+     "run": 0.03188381104687568,
+     "shoot": -0.00010503923728841417,
+     "crouch": 0.0005447530112322135
     },
     "faixaPorPose": {
      "idle": [
-      0.01670499425892382,
-      0.016894590717594454
+      -0.00009054638386914514,
+      -0.00007560673857435499
      ],
      "walk": [
-      -0.025899534213211912,
-      0.04263363155310488
+      -7.500422526466688e-8,
+      0.011326579733559706
      ],
      "run": [
-      0.002631052518353231,
-      0.07378753990041868
+      -0.0011413251256820896,
+      0.03188381104687568
      ],
      "shoot": [
-      0.014566164372239844,
-      0.01527911566084883
+      -0.00010503923728841417,
+      -0.00008694604821529233
      ],
      "crouch": [
-      -0.003878016559973537,
-      -0.0037019568018531426
+      0.0005430961268550194,
+      0.0005447530112322135
      ]
     },
-    "afunda": -0.003878016559973537,
-    "flutua": 0.07378753990041868,
-    "piorDesvio": 0.07378753990041868
+    "afunda": -0.00010503923728841417,
+    "flutua": 0.03188381104687568,
+    "piorDesvio": 0.03188381104687568
    },
    "C5": {
     "materiais": 1,
@@ -5753,37 +5619,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.0010277513031157742,
-     "walk": -0.032435304401159916,
-     "run": -0.04903867105173553,
-     "shoot": 0.0035145548376231605,
-     "crouch": -0.01831700598568412
+     "idle": -0.002019748561492267,
+     "walk": 0.003606631995664048,
+     "run": -0.0046362419028836204,
+     "shoot": -0.004851101184588317,
+     "crouch": -0.002433351764089588
     },
     "faixaPorPose": {
      "idle": [
-      0.0004045953820932357,
-      0.0010277513031157742
+      -0.002019748561492267,
+      -0.001940211478109614
      ],
      "walk": [
-      -0.032435304401159916,
-      0.0118644622773895
+      -0.002627404699446191,
+      0.003606631995664048
      ],
      "run": [
-      -0.04903867105173553,
-      0.011894182089503937
+      -0.0046362419028836204,
+      0.00046772297967288714
      ],
      "shoot": [
-      0.0029942832071573563,
-      0.0035145548376231605
+      -0.004851101184588317,
+      -0.004637572670769153
      ],
      "crouch": [
-      -0.01831700598568412,
-      -0.01796341018075832
+      -0.002433351764089588,
+      -0.0023735728039167947
      ]
     },
-    "afunda": -0.04903867105173553,
-    "flutua": 0.0035145548376231605,
-    "piorDesvio": -0.04903867105173553
+    "afunda": -0.004851101184588317,
+    "flutua": 0.003606631995664048,
+    "piorDesvio": -0.004851101184588317
    },
    "C5": {
     "materiais": 1,
@@ -6049,37 +5915,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": -0.004263513920853012,
-     "walk": -0.044355324404760796,
-     "run": -0.030004252366170565,
-     "shoot": -0.005073323098567305,
-     "crouch": -0.04090396661872096
+     "idle": -0.0010172578736879175,
+     "walk": 0.004442613074610942,
+     "run": 0.018613229498946088,
+     "shoot": -0.0014721075313579698,
+     "crouch": -0.0020795053970332385
     },
     "faixaPorPose": {
      "idle": [
-      -0.004263513920853012,
-      -0.0036932679965495166
+      -0.0010172578736879175,
+      -0.0006944071182553014
      ],
      "walk": [
-      -0.044355324404760796,
-      0.011423028400018399
+      -0.0025067453881289126,
+      0.004442613074610942
      ],
      "run": [
-      -0.030004252366170565,
-      0.014928019519774172
+      -0.0031779907534449825,
+      0.018613229498946088
      ],
      "shoot": [
-      -0.005073323098567305,
-      -0.003847337165708787
+      -0.0014721075313579698,
+      -0.001269411969926439
      ],
      "crouch": [
-      -0.04090396661872096,
-      -0.04057246930611092
+      -0.0020795053970332385,
+      -0.0020789487518186583
      ]
     },
-    "afunda": -0.044355324404760796,
-    "flutua": 0,
-    "piorDesvio": -0.044355324404760796
+    "afunda": -0.0020795053970332385,
+    "flutua": 0.018613229498946088,
+    "piorDesvio": 0.018613229498946088
    },
    "C5": {
     "materiais": 1,
@@ -6197,37 +6063,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.005235409131264124,
-     "walk": -0.02585559273410146,
-     "run": -0.01903073990707274,
-     "shoot": 0.005696669430785313,
-     "crouch": -0.005802525666831169
+     "idle": -0.004093706927112654,
+     "walk": 0.00412203970502352,
+     "run": -0.00407081345698301,
+     "shoot": -0.003760333362688966,
+     "crouch": -0.0008777442497971062
     },
     "faixaPorPose": {
      "idle": [
-      0.004630140542006678,
-      0.005235409131264124
+      -0.004093706927112654,
+      -0.00389854608914107
      ],
      "walk": [
-      -0.02585559273410146,
-      0.022062685430117197
+      -0.0023552873634290128,
+      0.00412203970502352
      ],
      "run": [
-      -0.01903073990707274,
-      0.01234480088499617
+      -0.00407081345698301,
+      -8.182389960236842e-8
      ],
      "shoot": [
-      0.004457065771857932,
-      0.005696669430785313
+      -0.003760333362688966,
+      -0.0035613617725659096
      ],
      "crouch": [
-      -0.005802525666831169,
-      -0.00558750679875026
+      -0.0008777442497971062,
+      -0.0008701404828374086
      ]
     },
-    "afunda": -0.02585559273410146,
-    "flutua": 0.005696669430785313,
-    "piorDesvio": -0.02585559273410146
+    "afunda": -0.004093706927112654,
+    "flutua": 0.00412203970502352,
+    "piorDesvio": 0.00412203970502352
    },
    "C5": {
     "materiais": 1,
@@ -6345,37 +6211,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.010316337743927649,
-     "walk": 0.03981233008801457,
-     "run": 0.03911178578056534,
-     "shoot": 0.012114141600522288,
-     "crouch": 0.015426770420220077
+     "idle": -0.003936062009856637,
+     "walk": 0.007291263569809365,
+     "run": 0.013740679639249447,
+     "shoot": -0.003669891227623914,
+     "crouch": -0.0008317873008721449
     },
     "faixaPorPose": {
      "idle": [
-      0.009551690538904874,
-      0.010316337743927649
+      -0.003936062009856637,
+      -0.0037619464195580436
      ],
      "walk": [
-      -0.033974670749507385,
-      0.03981233008801457
+      -0.0017051463362355774,
+      0.007291263569809365
      ],
      "run": [
-      -0.010996667571336856,
-      0.03911178578056534
+      -0.003983421045372035,
+      0.013740679639249447
      ],
      "shoot": [
-      0.010415237141068987,
-      0.012114141600522288
+      -0.003669891227623914,
+      -0.0035405476101007275
      ],
      "crouch": [
-      0.015092446199075987,
-      0.015426770420220077
+      -0.0008317873008721449,
+      -0.0008239433147639641
      ]
     },
-    "afunda": 0,
-    "flutua": 0.03981233008801457,
-    "piorDesvio": 0.03981233008801457
+    "afunda": -0.003936062009856637,
+    "flutua": 0.013740679639249447,
+    "piorDesvio": 0.013740679639249447
    },
    "C5": {
     "materiais": 1,
@@ -6493,37 +6359,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.0036935961301079005,
-     "walk": -0.034146500120569745,
-     "run": -0.009274195817418888,
-     "shoot": 0.009153055462131078,
-     "crouch": -0.009395732442764001
+     "idle": -0.002220915829532433,
+     "walk": 0.006051979304955092,
+     "run": 0.005680663405477651,
+     "shoot": -0.00009520622973076194,
+     "crouch": 0.00032643593963693486
     },
     "faixaPorPose": {
      "idle": [
-      0.002950440854428446,
-      0.0036935961301079005
+      -0.002220915829532433,
+      -0.0020392201300572753
      ],
      "walk": [
-      -0.034146500120569745,
-      0.019783843320571252
+      -0.001724785490351197,
+      0.006051979304955092
      ],
      "run": [
-      -0.009274195817418888,
-      0.003321489295144194
+      -0.003948425427641833,
+      0.005680663405477651
      ],
      "shoot": [
-      0.008264808667614403,
-      0.009153055462131078
+      -0.00009520622973076194,
+      -0.00007552633370164431
      ],
      "crouch": [
-      -0.009395732442764001,
-      -0.009271589934710282
+      0.00032496327346366924,
+      0.00032643593963693486
      ]
     },
-    "afunda": -0.034146500120569745,
-    "flutua": 0.009153055462131078,
-    "piorDesvio": -0.034146500120569745
+    "afunda": -0.002220915829532433,
+    "flutua": 0.006051979304955092,
+    "piorDesvio": 0.006051979304955092
    },
    "C5": {
     "materiais": 1,
@@ -6789,37 +6655,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.003293165328972081,
-     "walk": -0.03395970447871949,
-     "run": -0.017853619892301692,
-     "shoot": 0.005988605603319329,
-     "crouch": -0.02098659941715166
+     "idle": -0.0008400072147651447,
+     "walk": 0.008316577558547571,
+     "run": 0.022978043095338456,
+     "shoot": -0.00008156026023808263,
+     "crouch": 0.0007487452191641805
     },
     "faixaPorPose": {
      "idle": [
-      0.0026934351385967076,
-      0.003293165328972081
+      -0.0008400072147651447,
+      -0.000733257656120853
      ],
      "walk": [
-      -0.03395970447871949,
-      0.016154819441822836
+      -0.003814202690899885,
+      0.008316577558547571
      ],
      "run": [
-      -0.017853619892301692,
-      0.004878178989195371
+      -0.0015783647294235223,
+      0.022978043095338456
      ],
      "shoot": [
-      0.005243241829076575,
-      0.005988605603319329
+      -0.00008156026023808263,
+      -0.00005392040538478262
      ],
      "crouch": [
-      -0.02098659941715166,
-      -0.020783646929996093
+      0.0007462592270511715,
+      0.0007487452191641805
      ]
     },
-    "afunda": -0.03395970447871949,
-    "flutua": 0.005988605603319329,
-    "piorDesvio": -0.03395970447871949
+    "afunda": -0.0008400072147651447,
+    "flutua": 0.022978043095338456,
+    "piorDesvio": 0.022978043095338456
    },
    "C5": {
     "materiais": 1,
@@ -6937,40 +6803,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.003365918661943424,
-     "walk": 0.03355917777768363,
-     "run": 0.036065311027621415,
-     "shoot": 0.006770860566686391,
-     "crouch": 0.007733154623632338
+     "idle": 0.004625712066149969,
+     "walk": 0.01755785793213129,
+     "run": 0.06080652884285287,
+     "shoot": 0.0064785520208629176,
+     "crouch": -1.019677331923415e-7
     },
     "faixaPorPose": {
      "idle": [
-      0.0033658978672062015,
-      0.003365918661943424
+      0.004624124298631087,
+      0.004625712066149969
      ],
      "walk": [
-      0.006085899863318763,
-      0.03355917777768363
+      0.005769628207715409,
+      0.01755785793213129
      ],
      "run": [
-      -8.130606288200204e-8,
-      0.036065311027621415
+      0.0062193168299563934,
+      0.06080652884285287
      ],
      "shoot": [
-      0.0067475597108277025,
-      0.006770860566686391
+      0.006451414850208121,
+      0.0064785520208629176
      ],
      "crouch": [
-      0.007609666142826916,
-      0.007733154623632338
+      -1.019677331923415e-7,
+      -3.382797589161051e-8
      ]
     },
-    "corpoPorPose": {
-     "crouch": -0.10976565457449643
-    },
-    "afunda": 0,
-    "flutua": 0.036065311027621415,
-    "piorDesvio": 0.036065311027621415
+    "afunda": -1.019677331923415e-7,
+    "flutua": 0.06080652884285287,
+    "piorDesvio": 0.06080652884285287
    },
    "C5": {
     "materiais": 1,
@@ -7088,37 +6951,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.000893700162153192,
-     "walk": 0.0024717614778039087,
-     "run": 4.86842021698921e-8,
-     "shoot": 0.0002583414248223731,
-     "crouch": -7.382301101630797e-9
+     "idle": -0.0033831577792380755,
+     "walk": 0.004958503539001266,
+     "run": 0.03906432684117213,
+     "shoot": -0.003405945820819753,
+     "crouch": 3.066904268230522e-8
     },
     "faixaPorPose": {
      "idle": [
-      0.0008457602064930275,
-      0.000893700162153192
+      -0.0033831577792380755,
+      -0.0032159932346124
      ],
      "walk": [
-      1.4559776482787013e-8,
-      0.0024717614778039087
+      -0.002790942596459903,
+      0.004958503539001266
      ],
      "run": [
-      -2.9303878462501413e-8,
-      4.86842021698921e-8
+      -0.0042550134154244355,
+      0.03906432684117213
      ],
      "shoot": [
-      0.00007821984211132297,
-      0.0002583414248223731
+      -0.003405945820819753,
+      -0.003251143219531182
      ],
      "crouch": [
-      -7.382301101630797e-9,
-      4.299636760464162e-9
+      -2.1556304020762854e-8,
+      3.066904268230522e-8
      ]
     },
-    "afunda": -7.382301101630797e-9,
-    "flutua": 0.0024717614778039087,
-    "piorDesvio": 0.0024717614778039087
+    "afunda": -0.003405945820819753,
+    "flutua": 0.03906432684117213,
+    "piorDesvio": 0.03906432684117213
    },
    "C5": {
     "materiais": 1,
@@ -7236,37 +7099,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.0001436527198750652,
-     "walk": 0.008405554539393548,
-     "run": 0.011847514978113443,
-     "shoot": -2.0711240406740473e-8,
-     "crouch": 0.00037116820821399347
+     "idle": -0.0048038602391139214,
+     "walk": 0.013723096662909787,
+     "run": -0.003180644710549546,
+     "shoot": -0.004497418428046496,
+     "crouch": -0.00027447587895209523
     },
     "faixaPorPose": {
      "idle": [
-      0.00008776692649607937,
-      0.0001436527198750652
+      -0.0048038602391139214,
+      -0.0009461938206639853
      ],
      "walk": [
-      -1.008911540724647e-8,
-      0.008405554539393548
+      -0.004138157133946081,
+      0.013723096662909787
      ],
      "run": [
-      -2.8565766890641615e-8,
-      0.011847514978113443
+      -0.003180644710549546,
+      0.0012885168720232782
      ],
      "shoot": [
-      -2.0711240406740473e-8,
-      1.5147373972736286e-8
+      -0.004497418428046496,
+      -0.0042780610707996046
      ],
      "crouch": [
-      0.00035222398153798374,
-      0.00037116820821399347
+      -0.00027447587895209523,
+      -0.0002727621752029284
      ]
     },
-    "afunda": -2.0711240406740473e-8,
-    "flutua": 0.011847514978113443,
-    "piorDesvio": 0.011847514978113443
+    "afunda": -0.0048038602391139214,
+    "flutua": 0.013723096662909787,
+    "piorDesvio": 0.013723096662909787
    },
    "C5": {
     "materiais": 1,
@@ -7382,37 +7245,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": -3.6787544660225706e-8,
-     "walk": 0.005497464231035777,
-     "run": 0.01614678759182268,
-     "shoot": 0.00024022354102916742,
-     "crouch": 0.0008534578139028227
+     "idle": -0.0031665387420819315,
+     "walk": 0.010729544578311717,
+     "run": -0.005023261294344863,
+     "shoot": -0.002492341730798733,
+     "crouch": -0.004152492986623872
     },
     "faixaPorPose": {
      "idle": [
-      -3.6787544660225706e-8,
-      3.197429974459264e-8
+      -0.0031665387420819315,
+      -0.0028075715896948247
      ],
      "walk": [
-      1.5116095720667902e-8,
-      0.005497464231035777
+      -0.001548655909199463,
+      0.010729544578311717
      ],
      "run": [
-      -3.549451206021802e-8,
-      0.01614678759182268
+      -0.005023261294344863,
+      -0.0006335501446633237
      ],
      "shoot": [
-      -3.291505522640137e-8,
-      0.00024022354102916742
+      -0.002492341730798733,
+      -0.0023085977445559637
      ],
      "crouch": [
-      0.0008467779811497233,
-      0.0008534578139028227
+      -0.004152492986623872,
+      -0.004151937994181232
      ]
     },
-    "afunda": -3.6787544660225706e-8,
-    "flutua": 0.01614678759182268,
-    "piorDesvio": 0.01614678759182268
+    "afunda": -0.005023261294344863,
+    "flutua": 0.010729544578311717,
+    "piorDesvio": 0.010729544578311717
    },
    "C5": {
     "materiais": 1,
@@ -7530,37 +7393,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 3.227016110027441e-8,
-     "walk": 0.002899329475255701,
-     "run": 0.009071706741298228,
-     "shoot": 0.00024265524651660827,
-     "crouch": 1.806989394824007e-8
+     "idle": -0.003444206021671225,
+     "walk": 0.004535457514247481,
+     "run": 0.02057810701136068,
+     "shoot": -0.003760530804415675,
+     "crouch": -0.002743026081647763
     },
     "faixaPorPose": {
      "idle": [
-      -2.121188677666997e-8,
-      3.227016110027441e-8
+      -0.003444206021671225,
+      -0.0031214651903644364
      ],
      "walk": [
-      -3.445545281641109e-8,
-      0.002899329475255701
+      -0.00366418313502412,
+      0.004535457514247481
      ],
      "run": [
-      -3.736698918260003e-8,
-      0.009071706741298228
+      -0.004350636154102389,
+      0.02057810701136068
      ],
      "shoot": [
-      0.00009145390437825811,
-      0.00024265524651660827
+      -0.003760530804415675,
+      -0.003569729277700667
      ],
      "crouch": [
-      -1.2741626579068177e-8,
-      1.806989394824007e-8
+      -0.002743026081647763,
+      -0.002740466725495789
      ]
     },
-    "afunda": 0,
-    "flutua": 0.009071706741298228,
-    "piorDesvio": 0.009071706741298228
+    "afunda": -0.003760530804415675,
+    "flutua": 0.02057810701136068,
+    "piorDesvio": 0.02057810701136068
    },
    "C5": {
     "materiais": 1,
@@ -7824,37 +7687,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": -3.6733081398837e-8,
-     "walk": 0.0031804549883387117,
-     "run": 0.0024261650522421504,
-     "shoot": 0.000052258282303774006,
-     "crouch": 0.0000883211040820136
+     "idle": -0.0005574433385908873,
+     "walk": 0.011455000146812385,
+     "run": 0.0253850608352372,
+     "shoot": -0.0005504598147531728,
+     "crouch": 0.00013639636989256585
     },
     "faixaPorPose": {
      "idle": [
-      -3.6733081398837e-8,
-      3.109671636133077e-8
+      -0.0005574433385908873,
+      -0.0005106891573674334
      ],
      "walk": [
-      1.4779186071924335e-8,
-      0.0031804549883387117
+      0.0005159674207671285,
+      0.011455000146812385
      ],
      "run": [
-      1.0944271651607728e-8,
-      0.0024261650522421504
+      -0.002926596571850005,
+      0.0253850608352372
      ],
      "shoot": [
-      -2.8282173497426435e-8,
-      0.000052258282303774006
+      -0.0005504598147531728,
+      -0.0004878686725797595
      ],
      "crouch": [
-      0.000044571155511843946,
-      0.0000883211040820136
+      0.00013583422992916107,
+      0.00013639636989256585
      ]
     },
-    "afunda": -3.6733081398837e-8,
-    "flutua": 0.0031804549883387117,
-    "piorDesvio": 0.0031804549883387117
+    "afunda": -0.0005574433385908873,
+    "flutua": 0.0253850608352372,
+    "piorDesvio": 0.0253850608352372
    },
    "C5": {
     "materiais": 1,
@@ -7871,7 +7734,7 @@
     "mapasDeSuperficie": 2
    },
    "C6": {
-    "piorIoU": 0.577986577181208,
+    "piorIoU": 0.580226904376013,
     "contra": "canarinho"
    }
   },
@@ -8120,37 +7983,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 3.8376198503420714e-8,
-     "walk": 3.5362522607402685e-8,
-     "run": 0.008256313915148788,
-     "shoot": 3.487939434276467e-8,
-     "crouch": 0.0001001886512933694
+     "idle": -0.0000919759344650204,
+     "walk": 0.012925158046536878,
+     "run": 0.04108383418249122,
+     "shoot": -0.000020576940353936216,
+     "crouch": -0.00007194044496969486
     },
     "faixaPorPose": {
      "idle": [
-      -8.656643498388606e-10,
-      3.8376198503420714e-8
+      -0.0000919759344650204,
+      -0.00007549742083744936
      ],
      "walk": [
-      2.7670032571462775e-9,
-      3.5362522607402685e-8
+      -0.001873874998667457,
+      0.012925158046536878
      ],
      "run": [
-      -3.614334736832919e-8,
-      0.008256313915148788
+      0.0007859602703183695,
+      0.04108383418249122
      ],
      "shoot": [
-      -7.521252334407177e-9,
-      3.487939434276467e-8
+      -0.000020576940353936216,
+      0.0000013551435426692574
      ],
      "crouch": [
-      0.0000939016681670268,
-      0.0001001886512933694
+      -0.00007194044496969486,
+      -0.00007066136178097399
      ]
     },
-    "afunda": 0,
-    "flutua": 0.008256313915148788,
-    "piorDesvio": 0.008256313915148788
+    "afunda": -0.0000919759344650204,
+    "flutua": 0.04108383418249122,
+    "piorDesvio": 0.04108383418249122
    },
    "C5": {
     "materiais": 1,
@@ -8266,37 +8129,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.02917153003247877,
-     "walk": -0.06803381696888078,
-     "run": -0.052001234048030774,
-     "shoot": 0.03163838156402843,
-     "crouch": 0.019092809768156006
+     "idle": -0.01696254867794704,
+     "walk": 0.011381992300078926,
+     "run": -0.016599067141531563,
+     "shoot": -0.01701008920940765,
+     "crouch": -0.004119152306441126
     },
     "faixaPorPose": {
      "idle": [
-      0.028228905336005878,
-      0.02917153003247877
+      -0.01696254867794704,
+      -0.01616870060834456
      ],
      "walk": [
-      -0.06803381696888078,
-      0.037180643416634296
+      -0.002444140743375523,
+      0.011381992300078926
      ],
      "run": [
-      -0.052001234048030774,
-      0.034635054404276104
+      -0.016599067141531563,
+      0.002606052862212277
      ],
      "shoot": [
-      0.03109590312079746,
-      0.03163838156402843
+      -0.01701008920940765,
+      -0.016756088078779614
      ],
      "crouch": [
-      0.01859643726445178,
-      0.019092809768156006
+      -0.004119152306441126,
+      -0.0040778084364968695
      ]
     },
-    "afunda": -0.06803381696888078,
-    "flutua": 0.03163838156402843,
-    "piorDesvio": -0.06803381696888078
+    "afunda": -0.01701008920940765,
+    "flutua": 0.011381992300078926,
+    "piorDesvio": -0.01701008920940765
    },
    "C5": {
     "materiais": 1,
@@ -8710,37 +8573,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.02100895815725749,
-     "walk": 0.04476134225603005,
-     "run": 0.03529766022843973,
-     "shoot": 0.018655143322770504,
-     "crouch": 0.031924996100210254
+     "idle": -0.004660359537827388,
+     "walk": 0.0045662647282517415,
+     "run": 0.04972194180807934,
+     "shoot": -0.0037303660707749407,
+     "crouch": -0.0002878224441293765
     },
     "faixaPorPose": {
      "idle": [
-      0.02042834838636006,
-      0.02100895815725749
+      -0.004660359537827388,
+      -0.004456820597469121
      ],
      "walk": [
-      -0.01398300573951859,
-      0.04476134225603005
+      0.000019190155421801278,
+      0.0045662647282517415
      ],
      "run": [
-      0.013563744578230898,
-      0.03529766022843973
+      -0.004598371801819312,
+      0.04972194180807934
      ],
      "shoot": [
-      0.01699284178514588,
-      0.018655143322770504
+      -0.0037303660707749407,
+      -0.0035659002196639614
      ],
      "crouch": [
-      0.031226218879387594,
-      0.031924996100210254
+      -0.0002878224441293765,
+      -0.0002825156331999683
      ]
     },
-    "afunda": 0,
-    "flutua": 0.04476134225603005,
-    "piorDesvio": 0.04476134225603005
+    "afunda": -0.004660359537827388,
+    "flutua": 0.04972194180807934,
+    "piorDesvio": 0.04972194180807934
    },
    "C5": {
     "materiais": 1,
@@ -9006,37 +8869,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.013550525017240682,
-     "walk": -0.04862004959083312,
-     "run": 0.04574583960171117,
-     "shoot": 0.014236811845376876,
-     "crouch": -0.004587191342886407
+     "idle": -0.023941670796085265,
+     "walk": 0.014145320887221657,
+     "run": 0.042005207019634686,
+     "shoot": -0.024329286730048204,
+     "crouch": 6.250328915186564e-8
     },
     "faixaPorPose": {
      "idle": [
-      0.012634295947085417,
-      0.013550525017240682
+      -0.023941670796085265,
+      -0.021339084716261298
      ],
      "walk": [
-      -0.04862004959083312,
-      0.03944854975375992
+      -0.0031738027577270195,
+      0.014145320887221657
      ],
      "run": [
-      -0.006120564465345529,
-      0.04574583960171117
+      -0.02417202134140117,
+      0.042005207019634686
      ],
      "shoot": [
-      0.011421933741270028,
-      0.014236811845376876
+      -0.024329286730048204,
+      -0.023456886591227487
      ],
      "crouch": [
-      -0.004587191342886407,
-      -0.004398788985978264
+      -4.404309919372018e-8,
+      6.250328915186564e-8
      ]
     },
-    "afunda": -0.04862004959083312,
-    "flutua": 0.04574583960171117,
-    "piorDesvio": -0.04862004959083312
+    "afunda": -0.024329286730048204,
+    "flutua": 0.042005207019634686,
+    "piorDesvio": 0.042005207019634686
    },
    "C5": {
     "materiais": 1,
@@ -9302,37 +9165,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.02468549313148308,
-     "walk": -0.047237513261827305,
-     "run": 0.032328432256924465,
-     "shoot": 0.025159110111448165,
-     "crouch": 0.02261970105100506
+     "idle": -0.0010740663187638365,
+     "walk": 0.00915325642104426,
+     "run": -0.003772748321585938,
+     "shoot": -4.14301299188984e-8,
+     "crouch": -0.0036412895953732943
     },
     "faixaPorPose": {
      "idle": [
-      0.02401797741942925,
-      0.02468549313148308
+      -0.0010740663187638365,
+      -0.0010451658439701904
      ],
      "walk": [
-      -0.047237513261827305,
-      0.042078268311352036
+      -0.0022812199982657675,
+      0.00915325642104426
      ],
      "run": [
-      -0.016305304772430862,
-      0.032328432256924465
+      -0.003772748321585938,
+      0.0032684172009373896
      ],
      "shoot": [
-      0.02301941247072086,
-      0.025159110111448165
+      -4.14301299188984e-8,
+      2.3959482184972608e-8
      ],
      "crouch": [
-      0.022385485015170174,
-      0.02261970105100506
+      -0.0036412895953732943,
+      -0.0036407792982293898
      ]
     },
-    "afunda": -0.047237513261827305,
-    "flutua": 0.032328432256924465,
-    "piorDesvio": -0.047237513261827305
+    "afunda": -0.003772748321585938,
+    "flutua": 0.00915325642104426,
+    "piorDesvio": 0.00915325642104426
    },
    "C5": {
     "materiais": 1,
@@ -9355,7 +9218,7 @@
   },
   {
    "id": "julia-zanatta",
-   "nome": "Julia Zanatta",
+   "nome": "Deputada da Tiara",
    "time": "P",
    "tribo": null,
    "fonte": "glb",
@@ -9450,37 +9313,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.009272709457504311,
-     "walk": 0.021640956864545407,
-     "run": 0.017083225032738732,
-     "shoot": 0.008399620259189878,
-     "crouch": 0.0020823858959067077
+     "idle": -0.0006741610520083609,
+     "walk": 0.0061427056958397565,
+     "run": 0.04195303675877984,
+     "shoot": -0.00048668807696172,
+     "crouch": -0.00025690740416889514
     },
     "faixaPorPose": {
      "idle": [
-      0.008913425096492362,
-      0.009272709457504311
+      -0.0006741610520083609,
+      -0.0005484524759682466
      ],
      "walk": [
-      -0.009072640624588601,
-      0.021640956864545407
+      0.0008757040901654645,
+      0.0061427056958397565
      ],
      "run": [
-      -0.004878883794403239,
-      0.017083225032738732
+      0.000012606100146579561,
+      0.04195303675877984
      ],
      "shoot": [
-      0.0075179781673756175,
-      0.008399620259189878
+      -0.00048668807696172,
+      -0.00037638710001906226
      ],
      "crouch": [
-      0.0016446197544681812,
-      0.0020823858959067077
+      -0.00025690740416889514,
+      -0.00023678374108928178
      ]
     },
-    "afunda": 0,
-    "flutua": 0.021640956864545407,
-    "piorDesvio": 0.021640956864545407
+    "afunda": -0.0006741610520083609,
+    "flutua": 0.04195303675877984,
+    "piorDesvio": 0.04195303675877984
    },
    "C5": {
     "materiais": 1,
@@ -9503,7 +9366,7 @@
   },
   {
    "id": "marina-silva",
-   "nome": "Marina Silva",
+   "nome": "Dona Floresta",
    "time": "P",
    "tribo": null,
    "fonte": "glb",
@@ -9600,37 +9463,37 @@
    "C3": {
     "porPose": {
      "bind": 0,
-     "idle": 0.0026081077829130128,
-     "walk": -0.026254656995246893,
-     "run": 0.0252719680585631,
-     "shoot": 0.005930901710727553,
-     "crouch": 0.008679863355178855
+     "idle": -0.006301057825842453,
+     "walk": 0.008889895390320118,
+     "run": 0.05990967214341742,
+     "shoot": -0.003593782441300836,
+     "crouch": 0.0028899333930832334
     },
     "faixaPorPose": {
      "idle": [
-      0.002488293876288755,
-      0.0026081077829130128
+      -0.006301057825842453,
+      -0.006081546295481178
      ],
      "walk": [
-      -0.026254656995246893,
-      0.025650953650086385
+      0.0008834231833440711,
+      0.008889895390320118
      ],
      "run": [
-      -0.011786126513317462,
-      0.0252719680585631
+      -0.004665621004255946,
+      0.05990967214341742
      ],
      "shoot": [
-      0.005205561357500732,
-      0.005930901710727553
+      -0.003593782441300836,
+      -0.0032748419804654373
      ],
      "crouch": [
-      0.008536494324380535,
-      0.008679863355178855
+      0.0028433009365427943,
+      0.0028899333930832334
      ]
     },
-    "afunda": -0.026254656995246893,
-    "flutua": 0.0252719680585631,
-    "piorDesvio": -0.026254656995246893
+    "afunda": -0.006301057825842453,
+    "flutua": 0.05990967214341742,
+    "piorDesvio": 0.05990967214341742
    },
    "C5": {
     "materiais": 1,
