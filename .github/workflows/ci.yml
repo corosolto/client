@@ -241,6 +241,9 @@ jobs:
       - name: Dependências (npm ci)
         id: deps
         run: npm ci
+      - name: Shim local de Three para os contratos de grafite
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node --input-type=module -e "await import('./tools/eval/three-node.mjs')"
       - name: Contratos visuais de gameplay e grafite
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:grafite-curation eval:match-pickups eval:net-flash-disable eval:grafite-atual:prova eval:piscina-graffiti-batch --json-out=tools/eval/out/contratos-visuais-gameplay-grafite.json
