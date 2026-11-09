@@ -176,6 +176,20 @@ test('sem diff ou com documentação, o pre-push mantém os checks centrais bara
   }
 });
 
+test('skills de agente, markdown em qualquer pasta e mídia de lançamento são só core (09/11: caíam no deploy completo)', () => {
+  for (const arquivo of ['.agents/skills/game-3d-assets/SKILL.md', '.claude/agents/revisor.md', 'public/docs/estado/nota.md', 'launch-media/2026-11-09/post.png', 'plans/landing-app.md']) {
+    const r = selecionarPorArquivos([arquivo]);
+    assert.equal(r.fallback, false, arquivo);
+    assert.deepEqual(r.suites, ['core'], arquivo);
+  }
+});
+
+test('contagem de borda é network, não fallback', () => {
+  const r = selecionarPorArquivos(['src/lib/server-traffic.mjs', 'tools/eval/server-traffic-check.mjs']);
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core', 'network']);
+});
+
 const CASOS = [
   ['public/js/map_campo.js', 'maps', 'eval:mapcontrato'],
   ['src/components/Lobby.astro', 'ui', 'eval:ui-v3'],
