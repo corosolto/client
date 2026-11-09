@@ -320,7 +320,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       if (a.some((l) => !l.arestas)) falhas.push('RM1: sintético rigado sem aresta pesada na mão — nada foi medido');
       else if (a.some((l) => l.pior > LIMITE)) falhas.push(`RM1: mão do sintético rigado estica ${Math.max(...a.map((l) => l.pior)).toFixed(2)}× > ${LIMITE}×`);
       if (a[0].bindMax > BIND_MAX) falhas.push(`RM3: em bind o skin desloca a malha ${(a[0].bindMax * 1000).toFixed(1)} mm > ${BIND_MAX * 1000} mm (IBM incoerente com a junta)`);
-      if (veredito(b, LIMITE)) falhas.push('RM2: transplante cru passou — a régua não enxerga o defeito do piloto');
+      if (!mutante && veredito(b, LIMITE)) falhas.push('RM2: transplante cru passou — a régua não enxerga o defeito do piloto');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
       if (de) rmSync(ferramenta, { force: true });
