@@ -25,8 +25,25 @@ const copy = (source, target) => {
 };
 
 function glbJSON(bytes) {
-  if (bytes.readUInt32LE(0) !== 0x46546c67 || bytes.readUInt32LE(16) !== 0x4e4f534a) throw new Error('GLB inválido');
+  if (bytes.length < 20 || bytes.readUInt32LE(0) !== 0x46546c67 || bytes.readUInt32LE(16) !== 0x4e4f534a) throw new Error('GLB inválido');
+  if (bytes.readUInt32LE(8) !== bytes.length) throw new Error(`GLB truncado: cabeçalho declara ${bytes.readUInt32LE(8)} bytes, arquivo tem ${bytes.length}`);
   return JSON.parse(bytes.subarray(20, 20 + bytes.readUInt32LE(12)).toString('utf8'));
+}
+/* O manifest do Studio não publica hash por `_baked/<estado>.glb`; a procedência do
+   fallback vem da própria estrutura: GLB íntegro, um clipe com o nome do estado e a
+   duração declarada no manifest. Só depois disso o hash entra no índice. */
+function assertFallback(bytes, id, state, manifest) {
+  let doc;
+  try { doc = glbJSON(bytes); } catch (error) { throw new Error(`${id}/${state}: fallback ${error.message}`); }
+  const anims = doc.animations || [];
+  if (anims.length !== 1 || anims[0].name !== state) throw new Error(`${id}/${state}: fallback deveria ter só o clipe ${state}, tem ${anims.map((a) => a.name).join(', ') || 'nenhum'}`);
+  const expected = manifest.clips[state]?.duration;
+  if (!(expected > 0)) throw new Error(`${id}/${state}: duração ausente no manifest`);
+  const duration = Math.max(...anims[0].samplers.map((s) => doc.accessors[s.input]?.max?.[0] ?? -Infinity));
+  if (!(Math.abs(duration - expected) <= 1e-3)) throw new Error(`${id}/${state}: fallback dura ${duration}s, manifest declara ${expected}s`);
+  const buffers = doc.buffers || [];
+  const binLength = bytes.readUInt32LE(20 + bytes.readUInt32LE(12));
+  if (buffers.length !== 1 || buffers[0].byteLength > binLength) throw new Error(`${id}/${state}: buffer binário incompleto`);
 }
 function assertPacked(bytes, id) {
   const doc = glbJSON(bytes);
@@ -118,7 +135,11 @@ for (const entry of bodies) {
   const declared = manifest.files['states.glb'];
   if (sha(packed) !== declared.sha256 || packed.length !== declared.bytes) throw new Error(`${id}: hash/bytes divergem do manifest`);
   const fallbacks = new Map();
-  for (const state of STATES) fallbacks.set(state, copy(path.join(NEW_ROOT, id, '_baked', `${state}.glb`), path.join(ANIMS, id, `${state}.glb`)));
+  for (const state of STATES) {
+    const source = path.join(NEW_ROOT, id, '_baked', `${state}.glb`);
+    assertFallback(fs.readFileSync(source), id, state, manifest);
+    fallbacks.set(state, copy(source, path.join(ANIMS, id, `${state}.glb`)));
+  }
 
   const refs = {};
   for (const state of ['walk', 'run', 'crouchwalk', 'walk1h', 'walkfire']) {
