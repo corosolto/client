@@ -126,6 +126,12 @@ jobs:
         run: npm run eval:capturecodex
       - name: Aba da loja no hub diz só LOJA
         run: npm run eval:hub-loja
+      # Mede só o que o PR ADICIONA; o checkout é raso, então a base vem do evento
+      # (PR ou lote) e a régua a busca com --depth=1. Push na main: base = o próprio SHA.
+      - name: PR não nasce com lixo (diário, raiz, régua órfã, doc histórico, asset sem dono)
+        env:
+          FILA_BASE: ${{ github.event.merge_group.base_sha || github.event.pull_request.base.sha || github.sha }}
+        run: npm run eval:lixo
       - name: TRETA$ da partida segue o CS e não toca a carteira do menu
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:economia
