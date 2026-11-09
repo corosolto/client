@@ -94,6 +94,10 @@ cancelamento e duração; a câmera local e a roda continuam nos caminhos existe
 e segundos decorridos. O corpo GLB recebe `setCrouch`; a borda de recarga chama
 `reload(restante)` uma vez, e a queda chama `cancelReload`. Repetir pacotes não reinicia
 o envelope. Trocar o controlador reaplica o restante, não a duração inicial.
+O fim da recarga no relógio do servidor separa dois ciclos positivos quando os
+snapshots intermediários de troca de arma se perdem. Oscilação de até um décimo
+pela quantização e jitter de chegada não reiniciam o ciclo; `Game.t` reiniciado
+reancora esse fim sem descartar o tick monotônico da Room.
 
 A primeira dança remota chama `Game._emoteMods()` dinamicamente; o callback instala só
 o driver, nunca toca uma dança. Assim, stop/morte durante o import não ressuscitam emote.
@@ -108,7 +112,8 @@ O casamento de uma entidade limpa o tick anterior; o tick da Room continua entre
 `eval:rede3p` atravessa o codec binário, o Netcode e o CharController com rig/clipes reais
 em Node. Mede clip/altura de crouch, envelope de reload, fase/rampa/movimento de juntas,
 cancelamento no import, troca de controlador, morte/respawn, fallback v8, datagramas
-fora de ordem e input/heartbeat com stop explícito. Onze mutantes alteram a implementação
+fora de ordem, recargas consecutivas com perda de pacotes, jitter e input/heartbeat
+com stop explícito. Doze mutantes alteram a implementação
 em memória, sem escrever no disco. O controlador primeiro exige nominal verde completo,
 depois cobra o conjunto exato de falhas de cada mutação. Uma prova em cópia temporária
 quebra o instrumento de altura e exige reprovação do controlador; base vermelha não

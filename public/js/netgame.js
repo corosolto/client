@@ -520,7 +520,20 @@ class Netcode {
       if (estadoNovo) {
         ent._netCrouch = !!e.crouch;
         ent.crouchF = ent._netCrouch ? 1 : 0;
-        ent._netReloadUntilMs = e.alive ? nowMs + Math.max(0, Number(e.reloadIn) || 0) * 1000 : 0;
+        const reloadIn = e.alive ? Math.max(0, Number(e.reloadIn) || 0) : 0;
+        // O fim no relógio autoritativo distingue ciclos mesmo se os zeros da troca
+        // de arma se perderem. Um ciclo oscila até 0,1 s pela quantização v9; chegada
+        // com jitter não participa. Game.t novo reancora, sem confundir tick da Room.
+        const reloadEndT = snap.t + reloadIn;
+        const reloadEndAntes = ent._netStateTick == null || snap.t < ent._netReloadAtT
+          ? null : ent._netReloadEndT;
+        const novoCicloReload = reloadIn > 0 && reloadEndAntes != null && reloadEndT - reloadEndAntes > 0.100001;
+        if (novoCicloReload) ent._netReloadActive = false;
+        ent._netReloadEndT = reloadIn > 0
+          ? reloadEndAntes == null || novoCicloReload ? reloadEndT : Math.min(reloadEndAntes, reloadEndT)
+          : null;
+        ent._netReloadAtT = snap.t;
+        ent._netReloadUntilMs = reloadIn > 0 ? nowMs + reloadIn * 1000 : 0;
         ent._netEmote = e.alive && game.state === 'live' && emoteInfo(e.emote) ? e.emote : null;
         ent._netEmoteElapsed = Math.max(0, Number(e.emoteElapsed) || 0);
         ent._netStateAtMs = nowMs;

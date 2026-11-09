@@ -4,8 +4,9 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const targets = {
   'sem-crouch': ['R3P1', 'R3P9', 'R3P15'],
-  'reload-reinicia': ['R3P2'],
+  'reload-reinicia': ['R3P2', 'R3P17', 'R3P18'],
   'reload-nao-cancela': ['R3P3', 'R3P14'],
+  'reload-perde-ciclo': ['R3P17'],
   'fase-zero': ['R3P4', 'R3P8', 'R3P9'],
   'rampa-reinicia': ['R3P5'],
   'stop-ignorado': ['R3P7', 'R3P12', 'R3P14'],
@@ -26,7 +27,7 @@ function run(mutant = '') {
 const nominal = run();
 assert.equal(nominal.result.status, 0, `base nominal deve passar\n${nominal.result.stdout}\n${nominal.result.stderr}`);
 assert.equal(nominal.observed.mutant, '');
-assert.equal(nominal.observed.clauses, 20);
+assert.equal(nominal.observed.clauses, 22);
 assert.deepEqual(nominal.observed.failed, []);
 console.log(nominal.result.stdout.trimEnd());
 for (const [mutant, clauses] of Object.entries(targets)) {

@@ -15,6 +15,7 @@ const mutations = {
   'sem-crouch': ['ctrl.setCrouch?.(b.alive && !!b._netCrouch);', 'ctrl.setCrouch?.(false);'],
   'reload-reinicia': ['restante > 0 && !b._netReloadActive', 'restante > 0'],
   'reload-nao-cancela': ['restante === 0 && b._netReloadActive', 'false'],
+  'reload-perde-ciclo': ['if (novoCicloReload) ent._netReloadActive = false;', 'if (false) ent._netReloadActive = false;'],
   'fase-zero': ['info.laco ? elapsed % info.dur : elapsed', '0'],
   'rampa-reinicia': ['else ctrl.emote?.(info.id, info.laco ? elapsed % info.dur : elapsed);', 'else { ctrl._emoteK = 0; ctrl.emote?.(info.id, info.laco ? elapsed % info.dur : elapsed); }'],
   'stop-ignorado': ['ctrl.pararEmote?.(); b._netEmoteAppliedTick = null;', 'b._netEmoteAppliedTick = null;'],
@@ -76,8 +77,8 @@ const rows = [];
 const check = (id, pass, observed = null) => rows.push({ id, pass: !!pass, observed });
 const frame = (dt = 1 / 60) => { now += dt * 1000; mp.updateRemoteBot(b, dt); };
 const frames = n => { for (let i = 0; i < n; i++) frame(); };
-const send = (fields = {}, version = 9) => {
-  const snap = { type: 'snapshot', room: 'rede3p', tick: ++tick, t: now / 1000,
+const send = (fields = {}, version = 9, serverTime = now / 1000) => {
+  const snap = { type: 'snapshot', room: 'rede3p', tick: ++tick, t: serverTime,
     state: 'live', owner: '', players: 2, spectators: 0, livre: { E: 0, B: 0 },
     timeLeft: 300, roundNum: game.roundNum, scoreE: 0, scoreB: 0, roundKillsE: 0, roundKillsB: 0,
     ents: [{ id: 2, name: 'REMOTO', team: 'B', bot: false, alive: true,
@@ -104,6 +105,33 @@ try {
     { antes: reloadTime, depois: b.mesh.ctrl._reloadT, peso: reloadWeight });
   send();
   check('R3P3', b.mesh.ctrl._reloadDur === 0 && b.mesh.ctrl.reloadK === 0);
+
+  // Os snapshots de troca para faca/volta à AK (reloadIn=0) se perderam.
+  // A mesma arma e o mesmo controller recebem positivo -> positivo de OUTRO ciclo.
+  send({ reloadIn: 1 }); frames(24);
+  const cycleCtrl = b.mesh.ctrl, oldCycleTime = cycleCtrl._reloadT;
+  send({ reloadIn: 2 });
+  const restartedCycle = cycleCtrl._reloadT === 0 && cycleCtrl._reloadDur > 1.9;
+  frames(45);
+  check('R3P17', b.mesh.ctrl === cycleCtrl && b.weapon === 'ak' && oldCycleTime > .3
+    && restartedCycle && cycleCtrl._reloadDur > 0 && cycleCtrl.reloadK > .1,
+    { reiniciou: restartedCycle, dur: cycleCtrl._reloadDur, peso: cycleCtrl.reloadK });
+  send();
+
+  // O fim autoritativo oscila até um décimo pela quantização; chegada atrasada
+  // não altera o ciclo. O tick continua fresco mesmo quando o Game.t reinicia.
+  send({ reloadIn: 2 }, 9, 50); frames(3);
+  let preservedCycle = true;
+  for (const [serverTime, remaining, delay] of [[50.04, 1.96, 180], [50.09, 1.91, 5], [50.14, 1.86, 120], [0, 1.8, 10], [.04, 1.76, 90]]) {
+    const before = b.mesh.ctrl._reloadT;
+    now += delay;
+    send({ reloadIn: remaining }, 9, serverTime);
+    preservedCycle &&= b.mesh.ctrl._reloadT === before;
+    frames(2);
+  }
+  check('R3P18', preservedCycle && b.mesh.ctrl._reloadT > .2 && b.mesh.ctrl.reloadK > .1,
+    { preservou: preservedCycle, fase: b.mesh.ctrl._reloadT, peso: b.mesh.ctrl.reloadK });
+  send();
 
   // Import pendente, depois stop: resolver o módulo não pode recolocar a dança.
   const load = game._emoteMods.bind(game);
