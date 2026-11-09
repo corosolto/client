@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-/* Régua do card da Operação Flávio no lobby (dono, 07/11: "tirar o card resenha, colocar o card do
-   Flávio e um modal com a história e uma imagem"). Node puro, roda no check:fast e no ci.yml; a
-   geometria real no Chrome é tools/eval/lobby-flavio-browser.mjs.
-   O módulo do card (tp/flavio.js) e o diálogo (mode-announcements.js) rodam DE VERDADE num DOM
+/* Régua do painel da Operação Flávio no lobby (dono, 07/11: card do Flávio com a história; 08/11: o
+   card vira o primeiro painel da esquerda, acima da caça ao Javaporco). Node puro, roda no check:fast
+   e no ci.yml; a geometria real no Chrome é tools/eval/lobby-flavio-browser.mjs.
+   O módulo do painel (tp/flavio.js) e o diálogo (mode-announcements.js) rodam DE VERDADE num DOM
    linkedom; os mutantes trocam o fonte servido ao import, nunca o arquivo em disco.
-     LF1 o canto do lobby é o card da Operação Flávio, não mais o botão Resenha
-     LF2 o card abre a história: título, texto, fatos do modo e a arte real (webp revisado)
-     LF3 FECHAR/Escape fecham o diálogo e devolvem o foco ao card
+     LF1 o painel é a Operação Flávio, com o desenho da invasão, e o clique abre a história
+     LF2 a história: título, texto, fatos do modo e a arte real (webp revisado), a mesma do painel
+     LF3 FECHAR/Escape fecham o diálogo e devolvem o foco ao painel
      LF4 JOGAR leva ao VS BOTS no mapa operacao_flavio e só então aperta o JOGAR do lobby
      LF5 a história existe em EN (nenhuma frase PT vaza com ?lang=en)
    Mutantes (operacao-flavio-proof-check.mjs lobby): card-resenha, modal-sem-imagem,
@@ -22,7 +22,7 @@ const RAIZ = join(import.meta.dirname, '../..');
 const JS = join(RAIZ, 'public/js');
 const mutante = process.argv.find((a) => a.startsWith('--mutante='))?.split('=')[1] || '';
 const MUTANTES = {
-  'card-resenha': ['tp/flavio.js', "titulo.append(no('span', 'tp-ital', tr('OPERAÇÃO FLÁVIO')));", "titulo.append(no('span', 'tp-ital', tr('Resenha')));"],
+  'card-resenha': ['tp/flavio.js', "no('strong', 'tp-disp', tr('OPERAÇÃO FLÁVIO'))", "no('strong', 'tp-disp', tr('Resenha'))"],
   'modal-sem-imagem': ['mode-announcements.js', "bg.src = imagem;", "bg.src = '';"],
   'esc-sem-foco': ['mode-announcements.js', 'else if (c.foco?.isConnected) c.foco.focus({ preventScroll: true });', ''],
   'jogar-mapa-errado': ['tp/flavio.js', 'modos.irMapa(MAPA_FLAVIO);', "modos.irMapa('piscina_treta');"],
@@ -53,7 +53,7 @@ async function importa(rel, trocas = {}) {
 }
 const urlDe = (rel) => pathToFileURL(join(JS, rel)).href;
 
-/* DOM do lobby: só o que o card e o JOGAR tocam (#main-menu, #hub-sp, #btn-jogar). */
+/* DOM do lobby: só o que o painel e o JOGAR tocam (#main-menu, #hub-sp, #btn-jogar). */
 function dom(lang) {
   const { window, document } = parseHTML('<!doctype html><html data-ui="v3"><head></head><body><div id="main-menu"><button id="hub-sp"></button><button id="btn-jogar"></button></div></body></html>');
   const proto = window.HTMLElement.prototype;
@@ -78,22 +78,25 @@ const clausula = (id, fn) => { try { fn(); console.log(`✓ ${id}`); } catch (e)
 const pt = await carregar('pt');
 const { document } = pt;
 const menu = document.getElementById('main-menu');
-let pedidos = 0;
-const card = pt.flavio.montarCardFlavio(menu, (origem) => { pedidos++; assert.equal(origem, card); });
-const social = readFileSync(join(JS, 'tp/social.js'), 'utf8') + readFileSync(join(RAIZ, 'public/css/tp/social.css'), 'utf8');
-const lobbyCss = readFileSync(join(RAIZ, 'public/css/tp/lobby.css'), 'utf8');
+const card = pt.flavio.montarPainelFlavio();
+menu.append(card);
+card.click();
+/* o clique importa o diálogo sob demanda: espera o import antes de ler */
+for (let i = 0; i < 50 && !document.querySelector('dialog.cs-modes-dialog'); i++) await new Promise((r) => setTimeout(r, 20));
+const doClique = document.querySelector('dialog.cs-modes-dialog');
 
-clausula('LF1 o canto do lobby é o card da Operação Flávio, não o botão Resenha', () => {
+clausula('LF1 o painel é a Operação Flávio, com o desenho da invasão, e o clique abre a história', () => {
+  const social = readFileSync(join(JS, 'tp/social.js'), 'utf8') + readFileSync(join(RAIZ, 'public/css/tp/social.css'), 'utf8');
   assert.ok(!/tp-resenha-botao/.test(social), 'LF1: o botão Resenha voltou ao lobby (tp/social.js ou social.css)');
-  assert.equal(card.id, 'tp-lobby-flavio', 'LF1: card sem o id do canto');
-  assert.equal(card.parentNode, menu, 'LF1: card fora do #main-menu');
+  assert.equal(card?.id, 'tp-lobby-flavio', 'LF1: painel sem o id tp-lobby-flavio');
+  assert.ok(card.classList.contains('tp-lobby-painel') && card.classList.contains('tp-lobby-invasao'), `LF1: painel fora do desenho da invasão (${card.className})`);
   const rotulo = card.textContent.replace(/\s+/g, ' ');
-  assert.ok(/OPERAÇÃO FLÁVIO/.test(rotulo) && !/resenha/i.test(rotulo), `LF1: o card diz "${rotulo}"`);
-  /* mesmo canto e altura do botão Resenha: 32/16 px e 60 px; deitado 16 px, 12+154 px e 44 px */
-  assert.ok(/\.tp-lobby-flavio\{--tp-flavio-chao:16px;position:fixed;left:32px;bottom:var\(--tp-flavio-chao\)/.test(lobbyCss) && /\n  height:60px;/.test(lobbyCss.split('.tp-lobby-flavio{')[1] || ''), 'LF1: card fora do canto do antigo botão Resenha');
-  assert.ok(/\.tp-lobby-flavio\{--tp-flavio-chao:12px;left:16px;bottom:calc\(var\(--tp-flavio-chao\) \+ 154px\);height:44px;/.test(lobbyCss), 'LF1: card deitado fora do canto do antigo botão Resenha');
-  card.click();
-  assert.equal(pedidos, 1, 'LF1: clique no card não pede a história');
+  try {
+    assert.ok(/OPERAÇÃO FLÁVIO/.test(rotulo) && /A HISTÓRIA/.test(rotulo) && !/resenha/i.test(rotulo), `LF1: o painel diz "${rotulo}"`);
+    assert.equal(doClique?.dataset.historia, 'operacao_flavio', 'LF1: clique no painel não abriu a história');
+  } finally {
+    doClique?.close();
+  }
 });
 
 /* Arte: arquivo real em public/, URL com o hash de conteúdo do assetver.js. */
@@ -108,7 +111,7 @@ const arte = async (url, w, h) => {
   return '';
 };
 const h = pt.flavio.historiaFlavio();
-const problemaArte = await arte(h.imagem, 1920, 1080), problemaMini = await arte(card.querySelector('img').getAttribute('src'), 192, 168);
+const problemaArte = await arte(h.imagem, 1920, 1080), problemaPainel = await arte(card.querySelector('img').getAttribute('src'), 1920, 1080);
 let foco = 0, jogou = [];
 document.getElementById('hub-sp').addEventListener('click', () => jogou.push('hub-sp'));
 document.getElementById('btn-jogar').addEventListener('click', () => jogou.push('btn-jogar'));
@@ -129,7 +132,7 @@ clausula('LF2 o card abre a história com texto e a arte real do embarque', () =
   assert.ok(bg?.getAttribute('src') && bg.getAttribute('src') === h.imagem, `LF2: diálogo sem a imagem da história (src "${bg?.getAttribute('src') || ''}")`);
   assert.ok(bg.getAttribute('alt'), 'LF2: imagem da história sem texto alternativo');
   assert.equal(problemaArte, '', `LF2: arte da história: ${problemaArte}`);
-  assert.equal(problemaMini, '', `LF2: miniatura do card: ${problemaMini}`);
+  assert.equal(problemaPainel, '', `LF2: arte do painel: ${problemaPainel}`);
 });
 
 clausula('LF3 FECHAR e Escape fecham e devolvem o foco ao card', () => {

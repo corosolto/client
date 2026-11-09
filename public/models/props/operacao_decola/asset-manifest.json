@@ -144,6 +144,19 @@
       "runtime": "public/models/props/operacao_decola/jardineira.glb",
       "bytes": 1408840,
       "sha256": "839bb29a2466a2dd0a71cb07adba5ac201835a6a8c249e4db982efeaf9d2fa37"
+    },
+    {
+      "id": "caixote-carga",
+      "provider": "Poly Haven wooden_crate_01 (CC0) · derivado local: caixa de 12 tris com bake projetado",
+      "source": "public/models/props/caixote_madeira.glb",
+      "sourceSHA256": "3e652df1c0f8b4244b5fb4455095c32eab5b82a4d4b01952e72257a0c5fdf888",
+      "runtime": "public/models/props/operacao_decola/caixote_carga.glb",
+      "bytes": 107896,
+      "sha256": "f2bfe21943e47618b925d843697f64a10864dfba5b574edf77a20974c9def3e8",
+      "trianglesBefore": 6576,
+      "trianglesAfter": 12,
+      "textures": "1024×512 webp (cor, normal, ORM)",
+      "tool": "tools/operacao-flavio-caixote-asset.mjs"
     }
   ]
 }

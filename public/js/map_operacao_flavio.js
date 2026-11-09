@@ -8,6 +8,8 @@ import { AMB_LOOPS } from './soundscape.js';
 import { detailFor } from './textures.js';
 
 const PROP_ROOT = 'models/props/operacao_decola/';
+// Caminhos relativos a operacao_decola/; '../' reaproveita o acervo comum de props (ônibus) sem
+// cópia: o headless do backend resolve o mesmo caminho relativo.
 export const PROP_FILES = {
   aviao_executivo: 'aviao_executivo.glb',
   trator_bagagem: 'trator_bagagem.glb',
@@ -26,7 +28,10 @@ export const PROP_FILES = {
   estacao_manutencao: 'estacao_manutencao.glb',
   containers_carga: 'containers_carga.glb',
   jardineira: 'jardineira.glb',
+  onibus_patio: '../bus.glb',
+  caixote_carga: 'caixote_carga.glb',
 };
+const caminhoProp = (file) => new URL(file, `https://x/${PROP_ROOT}`).pathname.slice(1);
 // Medidas reais [x, y, z] no eixo nativo do GLB (antes do yaw), contra o personagem de 1,72 m;
 // o mesmo array dimensiona render e collider. Procedência: docs/maps/operacao-decola.md.
 const MEDIDA_REAL = {
@@ -42,12 +47,27 @@ const MEDIDA_REAL = {
   balcao_recepcao: [3.5, 1.25, 2.2],
   escada_embarque: [1.68, 2.22, 4],   // altura da escada leva a plataforma à soleira da porta (1,57 m)
   barreiras_aeroporto: [4.5, 1.4, 1.2],
+  // Ônibus de pátio (apron bus) já alinhado ao eixo x; caixote de carga de 1,6 m (2 níveis =
+  // 1,44 m agachado, 3 = 2,16 m em pé), 12 tris com o detalhe assado em textura.
+  onibus_patio: [10.5, 3.3, 2.6],
+  caixote_carga: [1.6, 0.72, 0.8],
 };
+// O ônibus vem girado 18,4° no GLB (caixa mínima dos vértices): o giro é assado na malha, senão a
+// escala por eixo cisalha e a caixa rápida do three (nó girado) deixa o render menor que o colisor.
+const ALINHAMENTO_NATIVO = { onibus_patio: -0.3211 };
 const real = (id, x, z, yaw, solid = true) => [id, x, z, MEDIDA_REAL[id], yaw, ...MEDIDA_REAL[id], solid];
 const templates = new Map();
 let preloadPromise = null;
-// Registro confiável interno por id: o servidor headless injeta os 17 GLB antes da sala existir.
-export const registerOperacaoFlavioTemplate = (id, scene) => templates.set(id, scene);
+const registrarTemplate = (id, scene) => {
+  if (scene && ALINHAMENTO_NATIVO[id] && !scene.userData.alinhadoNativo) {
+    const giro = new THREE.Matrix4().makeRotationY(ALINHAMENTO_NATIVO[id]);
+    scene.traverse((o) => { if (o.isMesh) o.geometry.applyMatrix4(giro); });
+    scene.userData.alinhadoNativo = true;
+  }
+  return templates.set(id, scene);
+};
+// Registro confiável interno por id: o servidor headless injeta os 19 GLB antes da sala existir.
+export const registerOperacaoFlavioTemplate = registrarTemplate;
 
 // Porta real da cinemática (GEO-boarding-threshold) fica no lado +x da fuselagem. Topo nativo
 // da escada é -z: yaw +90° o encosta na porta; as rotas sobem do pé (6,2;52) à plataforma (2,3;52).
@@ -88,6 +108,46 @@ const ESCORT_PATHS = [ESCORT_PATH, ESCORT_PATH_OESTE, ESCORT_PATH_LESTE];
 // Iscas por variante (índices de serviceRoutes: 0 externa O, 2 externa L, 3 interna O,
 // 4 interna L): o 1º flanqueador vai pelo lado oposto ao VIP, o 2º cobre o flanco dele.
 const ESCORT_DECOY_ROUTES = [[3, 4, 0, 2], [2, 0, 4], [0, 2, 3]];
+// Pilhas de caixotes de carga [nome, x, z, yaw, colunas, níveis, fileiras]: a AABB da pilha é o
+// colisor. As seis táticas trocam as caixas lisas na mesma posição e altura (2 níveis = 1,44 m).
+const PILHAS_CAIXOTES = [
+  ['cobertura-tatica-servico-oeste', -23, 3, 0, 3, 2, 1],
+  ['cobertura-tatica-servico-leste', 23, 3, 0, 3, 2, 1],
+  ['cobertura-tatica-acesso-oeste', -12, 5, 0, 2, 2, 1],
+  ['cobertura-tatica-acesso-leste', 12, 4, 0, 2, 2, 1],
+  ['cobertura-tatica-hangar', -3, 37, 0, 3, 2, 1],
+  ['cobertura-tatica-hangar-leste', 10, 37, 0, 2, 2, 1],
+  // Laterais (playtest 08/11 "nas laterais não tem onde se proteger"): cadeia a cada ~8–12 m
+  // do terminal ao apron, intercalada com ônibus e ULDs em `equipamentos`.
+  ['pilha-caixotes-terminal-sul-oeste', -39.5, -48.5, 0, 2, 2, 1],
+  ['pilha-caixotes-terminal-sul-leste', 39.5, -48.5, 0, 2, 2, 1],
+  ['pilha-caixotes-terminal-norte-oeste', -39, -20.5, 0, 2, 3, 1],
+  ['pilha-caixotes-terminal-norte-leste', 40, -20.5, 0, 2, 3, 1],
+  ['pilha-caixotes-terminal-leste', 33.5, -31.5, Math.PI / 2, 2, 3, 1],
+  ['pilha-caixotes-guarita-oeste', -41.6, 1, Math.PI / 2, 2, 2, 1],
+  ['pilha-caixotes-guarita-leste', 41.6, 1, Math.PI / 2, 2, 2, 1],
+  // Vielas externas de serviço (x ±19…23): agachado entre o separador e a rota, sem tocá-la.
+  ['pilha-caixotes-servico-sul-oeste', -20.6, -6, Math.PI / 2, 2, 2, 1],
+  ['pilha-caixotes-servico-sul-leste', 20.6, -6, Math.PI / 2, 2, 2, 1],
+  ['pilha-caixotes-patio-oeste', -31, 15.5, 0, 2, 3, 2],
+  // Corredor externo do hangar: pilhas de 2,16 m alternam cerca e parede e se sobrepõem 0,1 m em x.
+  ['pilha-caixotes-corredor-cerca-sul-oeste', -41.05, 28.5, 0, 2, 3, 3],
+  ['pilha-caixotes-corredor-cerca-sul-leste', 41.05, 28.5, 0, 2, 3, 3],
+  ['pilha-caixotes-corredor-parede-oeste', -37.95, 37, 0, 2, 3, 3],
+  ['pilha-caixotes-corredor-parede-leste', 37.95, 37, 0, 2, 3, 3],
+  ['pilha-caixotes-corredor-cerca-norte-oeste', -41.05, 45.5, 0, 2, 3, 3],
+  ['pilha-caixotes-corredor-cerca-norte-leste', 41.05, 45.5, 0, 2, 3, 3],
+  // Hangar por dentro: carga encostada nas paredes laterais.
+  ['pilha-caixotes-hangar-parede-sul-oeste', -35.2, 25.5, Math.PI / 2, 2, 3, 1],
+  ['pilha-caixotes-hangar-parede-sul-leste', 35.2, 25.5, Math.PI / 2, 2, 3, 1],
+  ['pilha-caixotes-hangar-parede-norte-oeste', -35.2, 44.5, Math.PI / 2, 2, 3, 1],
+  ['pilha-caixotes-hangar-parede-norte-leste', 35.2, 44.5, Math.PI / 2, 2, 3, 1],
+];
+// Corredores externos do hangar (x ±36…43): as pilhas não deixam visada reta de ponta a ponta;
+// o relé faz o slalom (x ±37,85 ↔ ±41,3) e mantém o corredor no grafo sem becos.
+const CORREDORES_LATERAIS = [-1, 1].map((lado) => [
+  [37.85, 22], [37.85, 31.5], [41.3, 34], [41.3, 40], [37.85, 42.5], [37.85, 50],
+].map(([x, z]) => ({ x: x * lado, z })));
 
 function texturaProcedural(base, detalhe, tipo = 'placas') {
   const c = document.createElement('canvas'); c.width = c.height = 256;
@@ -151,7 +211,7 @@ export function preloadOperacaoFlavio() {
   draco.setDecoderPath('/vendor/draco-r160/');
   loader.setDRACOLoader(draco);
   const assets = Object.entries(PROP_FILES).map(([id, file]) => new Promise((resolve) => {
-    loader.load(assetUrl(`${PROP_ROOT}${file}`), (gltf) => { templates.set(id, gltf.scene); resolve(); }, undefined, () => resolve());
+    loader.load(assetUrl(caminhoProp(file)), (gltf) => { registrarTemplate(id, gltf.scene); resolve(); }, undefined, () => resolve());
   }));
   preloadPromise = Promise.all([preloadCharacterAssets(['senador']), ...assets]).finally(() => draco.dispose());
   return preloadPromise;
@@ -350,14 +410,6 @@ export function buildOperacaoFlavio(scene, T = {}) {
   }
   bloco('separador-seguranca-oeste', -18, 0.52, 1, 0.52, 1.04, 28, mats.marinho);
   bloco('separador-seguranca-leste', 18, 0.52, 1, 0.52, 1.04, 28, mats.marinho);
-  for (const [lado, x] of [['oeste', -23], ['leste', 23]]) {
-    bloco(`cobertura-tatica-servico-${lado}`, x, 0.725, 3, 4.8, 1.45, 1.2, mats.interno);
-    bloco(`faixa-cobertura-servico-${lado}`, x, 1.465, 3, 4.55, 0.03, 0.9, mats.amarelo, false, false);
-  }
-  for (const [lado, x, z] of [['oeste', -12, 5], ['leste', 12, 4]]) {
-    bloco(`cobertura-tatica-acesso-${lado}`, x, 0.725, z, 3.2, 1.45, 1.2, mats.metal);
-    bloco(`faixa-cobertura-acesso-${lado}`, x, 1.465, z, 2.95, 0.03, 0.9, mats.amarelo, false, false);
-  }
   for (const z of [-5, 1, 7]) for (const x of [-5.5, 5.5]) {
     cilindro('poste-fila', x, 0.55, z, 0.11, 1.1, mats.metal);
     // Cinto em dois segmentos com vão central de 1,8 m: a fila não vira trilho
@@ -391,10 +443,6 @@ export function buildOperacaoFlavio(scene, T = {}) {
   for (const x of [-24, -12, 12, 24]) faixaEntre('faixa-box-hangar', { x, z: 23 }, { x, z: 47 }, 0.18, mats.amarelo);
   faixaEntre('eixo-hangar', { x: 0, z: 21 }, { x: 0, z: 50 }, 0.24, mats.amarelo);
   for (const z of [26, 34, 42]) faixaEntre('travessa-box-hangar', { x: -24, z }, { x: 24, z }, 0.18, mats.amarelo);
-  bloco('cobertura-tatica-hangar', -3, 0.725, 37, 5, 1.45, 1.4, mats.metal);
-  bloco('faixa-cobertura-hangar', -3, 1.465, 37, 4.7, 0.03, 1.1, mats.amarelo, false, false);
-  bloco('cobertura-tatica-hangar-leste', 10, 0.725, 37, 4, 1.45, 1.4, mats.metal);
-  bloco('faixa-cobertura-hangar-leste', 10, 1.465, 37, 3.7, 0.03, 1.1, mats.amarelo, false, false);
   // No apron a proteção também é objeto real: GPU, bay de containers e trator emolduram
   // a zona de embarque e cortam as lanes leste/oeste dos spawns E sem tocar a escada.
 
@@ -563,6 +611,12 @@ export function buildOperacaoFlavio(scene, T = {}) {
   rodasCaminhao.name = 'rodas-caminhao-combustivel'; rodasCaminhao.castShadow = !lowProfile; caminhao.add(rodasCaminhao);
 
 
+  const semTransmissao = (source) => {
+    if (!lowProfile || !source.isMeshPhysicalMaterial || !(source.transmission > 0)) return source;
+    const standard = new THREE.MeshStandardMaterial();
+    standard.copy(source);
+    return standard;
+  };
   const usarProp = (id, pos, desiredSize, fallback, yaw = 0, fallbackSolid = true) => {
     const template = templates.get(id);
     // O fallback não duplica o proxy explícito; sua sombra acompanha fallbackSolid, como no GLB.
@@ -607,12 +661,6 @@ export function buildOperacaoFlavio(scene, T = {}) {
     }
     model.userData.groundClearance = placed.min.y - pos[1];
     model.userData.placedHeight = placed.max.y - placed.min.y;
-    const semTransmissao = (source) => {
-      if (!lowProfile || !source.isMeshPhysicalMaterial || !(source.transmission > 0)) return source;
-      const standard = new THREE.MeshStandardMaterial();
-      standard.copy(source);
-      return standard;
-    };
     model.traverse((o) => {
       if (!o.isMesh) return;
       o.material = Array.isArray(o.material) ? o.material.map(semTransmissao) : semTransmissao(o.material);
@@ -776,6 +824,15 @@ export function buildOperacaoFlavio(scene, T = {}) {
     real('carro_servico', -8.6, 54.5, Math.PI / 2),   // 1,5 m da ponta da asa: o anel do avião passa
     real('barreiras_aeroporto', 25.5, 55, 0),
     real('jardineira', -18, -34.8, Math.PI / 2),
+    // Laterais (playtest 08/11): ônibus de pátio e ULDs nas quinas do pátio e colados na cerca; o
+    // resto da cadeia lateral é de caixotes (PILHAS_CAIXOTES), quase sem custo de triângulos.
+    real('onibus_patio', -36.5, -35.25, Math.PI / 2),
+    real('onibus_patio', 31, 13, 0),
+    real('containers_carga', 33.5, -38, Math.PI / 2),
+    real('containers_carga', -31, -11.5, 0),
+    real('containers_carga', 31, -11.5, 0),
+    real('containers_carga', -41.65, 13, Math.PI / 2),
+    real('containers_carga', 41.65, 13, Math.PI / 2),
   ];
   // Muro New Jersey (2 × 2,24 m) com volume visível = collider; o kit GLB (cercado 5 × 4,3 m)
   // não cabe na pegada de muro e fica só como cenário além do limite norte (z ≈ 70).
@@ -805,6 +862,37 @@ export function buildOperacaoFlavio(scene, T = {}) {
     if (solid) colliderDoProp(id, x, 0, z, w, h, d, yaw);
   }
   for (const [x, yaw] of [[-30, 0.2], [30, -0.2]]) usarProp('barreiras_aeroporto', [x, 0.08, 70], 5, [5, 1.83, 4.28], yaw, false);
+  // Caixotes instanciados: uma draw call por malha do GLB para todas as pilhas. O colisor é a
+  // AABB de cada pilha e o fallback mantém a mesma grade de caixas, com ou sem GLB.
+  {
+    const [cw, ch, cd] = MEDIDA_REAL.caixote_carga, matrizes = [], m = new THREE.Matrix4();
+    for (const [nome, x, z, yaw, colunas, niveis, fileiras] of PILHAS_CAIXOTES) {
+      const w = colunas * cw, h = niveis * ch, d = fileiras * cd;
+      colliderDoProp(nome, x, 0, z, w, h, d, yaw);
+      const pilha = new THREE.Matrix4().makeRotationY(yaw).setPosition(x, 0.08, z);
+      for (let c = 0; c < colunas; c++) for (let n = 0; n < niveis; n++) for (let f = 0; f < fileiras; f++) {
+        matrizes.push(pilha.clone().multiply(m.makeTranslation((c + 0.5) * cw - w / 2, n * ch, (f + 0.5) * cd - d / 2)));
+      }
+    }
+    const grupo = new THREE.Group(); grupo.name = 'caixotes-carga'; root.add(grupo);
+    const instanciar = (geometria, mat, base) => {
+      const caixotes = new THREE.InstancedMesh(geometria, mat, matrizes.length);
+      matrizes.forEach((matriz, i) => caixotes.setMatrixAt(i, m.multiplyMatrices(matriz, base)));
+      caixotes.name = 'caixote-carga'; caixotes.castShadow = true; caixotes.receiveShadow = true;
+      caixotes.computeBoundingSphere(); grupo.add(caixotes); occluders.push(caixotes);
+    };
+    const template = templates.get('caixote_carga');
+    if (!template) instanciar(new THREE.BoxGeometry(cw, ch, cd), mats.madeira, new THREE.Matrix4().makeTranslation(0, ch / 2, 0));
+    else {
+      const modelo = template.clone(true); modelo.updateMatrixWorld(true);
+      const caixa = new THREE.Box3().setFromObject(modelo), tamanho = caixa.getSize(new THREE.Vector3()), centro = caixa.getCenter(new THREE.Vector3());
+      const normaliza = new THREE.Matrix4().makeScale(cw / tamanho.x, ch / tamanho.y, cd / tamanho.z)
+        .multiply(new THREE.Matrix4().makeTranslation(-centro.x, -caixa.min.y, -centro.z));
+      modelo.traverse((o) => {
+        if (o.isMesh) instanciar(o.geometry, Array.isArray(o.material) ? o.material.map(semTransmissao) : semTransmissao(o.material), normaliza.clone().multiply(o.matrixWorld));
+      });
+    }
+  }
 
   const sun = new THREE.DirectionalLight(0xffd2a1, 2.05);
   sun.position.set(-44, 68, -28); sun.castShadow = true; aplicaSombraSol(sun); root.add(sun);
@@ -887,7 +975,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
   // Variantes: só os checkpoints viram nó (trechos retos já são livres para o VIP); a
   // subdivisão adensava o grafo do pátio e fazia a formação da marcha central chiar.
   for (const caminho of ESCORT_PATHS.slice(1)) for (const ponto of caminho) addNode(ponto.x, ponto.z);
-  for (const route of serviceRoutes) addRoute(route);
+  for (const route of [...serviceRoutes, ...CORREDORES_LATERAIS]) addRoute(route);
 
   // Só vizinhos de células adjacentes podem estar dentro do raio; não há varredura N².
   const maxEdgeDistanceSq = step * step * 2.2;

@@ -54,8 +54,6 @@ try {
   /* gradação leve: contraste e cor um pouco acima, sem mexer na cena */
   const base = sharp(bruto).modulate({ saturation: 1.12, brightness: 1.02 }).linear(1.06, -6);
   await base.clone().resize(1920, 1080).webp({ quality: 82, effort: 6 }).toFile(join(DESTINO, 'flavio-embarque.webp'));
-  /* recorte do card: Flávio na porta, 3× o tamanho do card (64×56 px) */
-  await base.clone().extract({ left: 1610, top: 470, width: 560, height: 490 }).resize(192, 168).webp({ quality: 80, effort: 6 }).toFile(join(DESTINO, 'flavio-embarque-card.webp'));
   console.log(`GPU ${gpu} · cinemática em ${r.t.toFixed(2)} s · Flávio em ${r.ator.map((n) => n.toFixed(2)).join(', ')} · bruto ${BRUTO}`);
 } finally {
   await browser.close();

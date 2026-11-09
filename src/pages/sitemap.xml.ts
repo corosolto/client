@@ -63,7 +63,8 @@ export const STATIC: [string, string, string][] = [
      As outras telas do hub são estado do app e ficam fora (noindex). ADR 0008. */
   ...ROTAS_HUB.filter((r) => r.indexavel && (!r.dependeDoRanking || RANKING_ON)).map((r) => [r.caminho, '0.6', 'daily'] as [string, string, string]),
   ['/changelog',   '0.5', 'weekly'],
-  ...PT_EN_PAIRS.map(([, en]) => [en, '0.5', 'weekly'] as [string, string, string]),
+  /* `/en` é a home em inglês: peso de home, não de página de apoio. */
+  ...PT_EN_PAIRS.map(([pt, en]) => [en, pt === '/' ? '0.9' : '0.5', pt === '/' ? 'daily' : 'weekly'] as [string, string, string]),
 ];
 
 export const GET: APIRoute = async () => {

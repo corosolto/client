@@ -55,6 +55,10 @@ import { entradaCombatente, ALCANCE_TIRO, alturaDoOlho } from './hitboxes.js';
 import { CABECAS_HITBOX, CABECA_PADRAO } from './data/cabecas-hitbox.js';
 import { cegueiraFlash, brancoEm, retidaEm, FLASH_ERRO_MIRA } from './flashbang.js';
 import { assetUrl } from './data/asseturl.js';
+import { gradeColisores, candidatosColisao } from './collider_grid.js';
+import { usarIndiceEstatico } from './shot_surfaces.js';
+import { indexLajesRaycast } from './lajes_raycast_index.js';
+usarIndiceEstatico(indexLajesRaycast);
 export { saidaPenetracao, resolverRaio };
 // Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
 // autoritativo) e tools/eval/botdiag.mjs. Consumidor novo importa de data/weapons.js.
@@ -216,6 +220,7 @@ export function confirmGate(agora, armadoEm) {
   return 'rearma';                                           // rajada: relógio volta ao zero
 }
 const BOT_SPEED = 4.1, BOT_EYE = 1.5;   // 3.3 = 30% mais lento que o jogador: o bot nunca chegava no lugar
+const COLIDE_FOLGA = 1.0;   // _collideGrade: raio extra da consulta; empurrão acima da metade volta ao linear
 const BOT_VIEW = 45;              // alcance de aquisição de alvo (m) — ver comentário no think
 const BOT_VIEW_SNIPER = 82;       // com luneta o bot enxerga longe (o jogador de AWP era impune a 100m)
 const BOT_VIEW_ALERT = 64;        // levou/ouviu tiro: abre a visão por alguns segundos
@@ -1385,6 +1390,8 @@ export class Game {
     this._ctfZoneTex = this._makeCtfZoneTex();
     this._ctfGray = new THREE.Color(0x8a8a86);   // dessaturação da cor de time na zona (-50% sat)
     this.ray = new THREE.Raycaster();
+    // LOS dos bots roda dezenas de vezes por quadro: vetores e lista de acertos reaproveitados.
+    this._losDir = new THREE.Vector3(); this._losAb = new THREE.Vector3(); this._losTmp = new THREE.Vector3(); this._losHits = [];
 
     // ---- round state ----
     this.roundNum = 0;
@@ -6472,7 +6479,9 @@ export class Game {
      o seno/cosseno, e os senos vêm precomputados do mapa. Medido no botsim (determinístico,
      60 s × 6 mapas): ver o commit desta correção. */
   _collide(pos, r, colliders = this.world.colliders) {
-    for (const c of colliders) {
+    // Grade só filtra quem não pode encostar; empurrão que sair da folga refaz a varredura linear.
+    const grade = colliders.length > 32 && !this.__mutColideLinear ? gradeColisores(colliders) : null;
+    if (!grade || !this._collideGrade(pos, r, colliders, grade)) for (const c of colliders) {
       const nx = Math.max(c.minX, Math.min(pos.x, c.maxX));
       const nz = Math.max(c.minZ, Math.min(pos.z, c.maxZ));
       const dx = pos.x - nx, dz = pos.z - nz;
@@ -6487,6 +6496,25 @@ export class Game {
     const B = this.world.bounds;
     pos.x = Math.max(B.minX + r, Math.min(B.maxX - r, pos.x));
     pos.z = Math.max(B.minZ + r, Math.min(B.maxZ - r, pos.z));
+  }
+  _collideGrade(pos, r, colliders, grade) {
+    const x0 = pos.x, z0 = pos.z;
+    if (!Number.isFinite(x0) || !Number.isFinite(z0)) return false;
+    const n = candidatosColisao(grade, x0, z0, r + COLIDE_FOLGA), ids = grade.ids, lim2 = COLIDE_FOLGA * COLIDE_FOLGA / 4;
+    for (let k = 0; k < n; k++) {
+      const c = colliders[ids[k]];
+      const nx = Math.max(c.minX, Math.min(pos.x, c.maxX));
+      const nz = Math.max(c.minZ, Math.min(pos.z, c.maxZ));
+      const dx = pos.x - nx, dz = pos.z - nz;
+      const d2 = dx * dx + dz * dz;
+      if (d2 < r * r && pos.y + 1.5 > c.minY && pos.y + 0.3 < c.maxY) {
+        if (c.ry) this._collideRot(pos, r, c);
+        else if (d2 < 1e-8) pos.x += r;
+        else { const d = Math.sqrt(d2), push = (r - d) / d; pos.x += dx * push; pos.z += dz * push; }
+        if ((pos.x - x0) ** 2 + (pos.z - z0) ** 2 > lim2) { pos.x = x0; pos.z = z0; return false; }
+      }
+    }
+    return true;
   }
   /* Empurra `pos` para fora de um colisor GIRADO. Mesma matemática do caso AABB, só que em
      (lx, lz) — o eixo do prop. A convenção de mundo↔local é a do three (`rotation.y`):
@@ -6519,6 +6547,26 @@ export class Game {
   _mantleAlcance() {
     if (this._mAlc) return this._mAlc;
     const W = this.world, B = W.bounds, G = MANTLE_GRID;
+    const CG = MANTLE_COLLIDER_GRID;
+    const cnx = Math.max(1, Math.ceil((B.maxX - B.minX) / CG));
+    const cnz = Math.max(1, Math.ceil((B.maxZ - B.minZ) / CG));
+    const col = new Map();
+    for (const c of W.colliders) {
+      const i0 = Math.max(0, Math.floor((c.minX - 0.38 - B.minX) / CG));
+      const i1 = Math.min(cnx - 1, Math.floor((c.maxX + 0.38 - B.minX) / CG));
+      const k0 = Math.max(0, Math.floor((c.minZ - 0.38 - B.minZ) / CG));
+      const k1 = Math.min(cnz - 1, Math.floor((c.maxZ + 0.38 - B.minZ) / CG));
+      for (let i = i0; i <= i1; i++) for (let k = k0; k <= k1; k++) {
+        const key = i * cnz + k;
+        const bucket = col.get(key);
+        if (bucket) bucket.push(c); else col.set(key, [c]);
+      }
+    }
+    const perto = (x, z) => {
+      const i = Math.floor((x - B.minX) / CG), k = Math.floor((z - B.minZ) / CG);
+      if (i < 0 || i >= cnx || k < 0 || k >= cnz) return EMPTY_COLLIDERS;
+      return col.get(i * cnz + k) || EMPTY_COLLIDERS;
+    };
     const nx = Math.max(1, Math.floor((B.maxX - B.minX) / G));
     const nz = Math.max(1, Math.floor((B.maxZ - B.minZ) / G));
     const alt = new Float32Array(nx * nz).fill(NaN);
@@ -6529,7 +6577,7 @@ export class Game {
       const cx = B.minX + (i + 0.5) * G, cz = B.minZ + (k + 0.5) * G;
       for (const [ox, oz] of [[0, 0], [0.25, 0], [-0.25, 0], [0, 0.25], [0, -0.25]]) {
         const x = cx + ox, z = cz + oz, y = W.groundHeightAt(x, z, 1e3);
-        p.set(x, y, z); this._collide(p, 0.38);
+        p.set(x, y, z); this._collide(p, 0.38, perto(x, z));
         if (Math.abs(p.x - x) < 1e-3 && Math.abs(p.z - z) < 1e-3) { alt[i * nz + k] = y; break; }
       }
     }
@@ -6558,21 +6606,6 @@ export class Game {
           y = sy;
         }
         if (ok) { vis[d] = 1; fila.push(d); }
-      }
-    }
-    const CG = MANTLE_COLLIDER_GRID;
-    const cnx = Math.max(1, Math.ceil((B.maxX - B.minX) / CG));
-    const cnz = Math.max(1, Math.ceil((B.maxZ - B.minZ) / CG));
-    const col = new Map();
-    for (const c of W.colliders) {
-      const i0 = Math.max(0, Math.floor((c.minX - 0.38 - B.minX) / CG));
-      const i1 = Math.min(cnx - 1, Math.floor((c.maxX + 0.38 - B.minX) / CG));
-      const k0 = Math.max(0, Math.floor((c.minZ - 0.38 - B.minZ) / CG));
-      const k1 = Math.min(cnz - 1, Math.floor((c.maxZ + 0.38 - B.minZ) / CG));
-      for (let i = i0; i <= i1; i++) for (let k = k0; k <= k1; k++) {
-        const key = i * cnz + k;
-        const bucket = col.get(key);
-        if (bucket) bucket.push(c); else col.set(key, [c]);
       }
     }
     this._mAlc = { nx, nz, G, minX: B.minX, minZ: B.minZ, alt, vis, CG, cnx, cnz, col };
@@ -7815,8 +7848,7 @@ export class Game {
       if (this.time < pk.readyAt) continue;        // still taken
       // bot grab (andando por cima) — slot humano e corpo remoto não: o servidor decide (`pick`)
       for (const b of this.bots) {
-        // `_objectiveNpc`: bicho de horda é bot vivo do time B e varria o armário do mapa
-        if (!b.alive || b._remote || b._objectiveNpc) continue;
+        if (!this._botPegaArma(b)) continue;
         const dx = pk.x - b.pos.x, dz = pk.z - b.pos.z;
         if (dx * dx + dz * dz <= 1.7 * 1.7) { this._grabPickup(pk, b, false); break; }
       }
@@ -7829,12 +7861,15 @@ export class Game {
       if (pk.expiraEm && this.time >= pk.expiraEm) { this._sumirDrop(i); continue; }
       if (pk.rack) continue;
       for (const b of this.bots) {
-        if (!b.alive || b._remote || b._objectiveNpc) continue;
+        if (!this._botPegaArma(b)) continue;
         const dx = pk.x - b.pos.x, dz = pk.z - b.pos.z;
         if (dx * dx + dz * dz <= 1.7 * 1.7) { this._grabPickup(pk, b, false); this._sumirDrop(i); break; }
       }
     }
   }
+  // Coleta andando por cima. Horda e escolta do Flávio não: o kit é do modo, e a formação
+  // colada recolhia 80–94% dos drops em <1 s, antes do jogador chegar (operacao-flavio-pickup-check).
+  _botPegaArma(b) { return b.alive && !b._remote && !b._objectiveNpc && !this._entidadeEscolta(b); }
   /* Modo de armas EFETIVO. O caso especial `if (this._mapId === 'praca_old') return 'awp'`
      saiu junto com o mapa (pedido do dono: "vamos apagar a praça clássica"): era a única
      regra de arma amarrada a um id de mapa e o mapa não existe mais. Nenhum mapa vivo força
@@ -8090,18 +8125,29 @@ export class Game {
 
   /* ================= bots ================= */
   _losClear(from, to) {
-    const dir = to.clone().sub(from), dist = dir.length();
+    const dir = this._losDir.subVectors(to, from), dist = dir.length();
     if (dist < 0.5) return true;
     this.ray.set(from, dir.normalize()); this.ray.far = dist - 0.3;
-    if (this.world.rayOccluded ? this.world.rayOccluded(this.ray) : this.ray.intersectObjects(this.world.occluders, false).length > 0) return false;
+    if (this.world.rayOccluded ? this.world.rayOccluded(this.ray) : this._raioBloqueado(this.ray)) return false;
     // fumaça bloqueia a visão dos bots: se o segmento cruza uma nuvem opaca, sem linha de visão.
     for (const s of this._smokes) {
       if (!s._opaque) continue;
-      const ab = to.clone().sub(from);
-      const t = Math.max(0, Math.min(1, s.center.clone().sub(from).dot(ab) / (ab.lengthSq() || 1)));
-      if (from.clone().addScaledVector(ab, t).distanceToSquared(s.center) <= s.radius * s.radius) return false;
+      const ab = this._losAb.subVectors(to, from);
+      const t = Math.max(0, Math.min(1, this._losTmp.subVectors(s.center, from).dot(ab) / (ab.lengthSq() || 1)));
+      if (this._losTmp.copy(from).addScaledVector(ab, t).distanceToSquared(s.center) <= s.radius * s.radius) return false;
     }
     return true;
+  }
+  // Basta um acerto: para no primeiro occluder em vez de juntar e ordenar todos.
+  _raioBloqueado(ray) {
+    // `__mutLosTodos`: gancho da régua bots-perf (mesmo precedente do __mutBotYaw) — volta a juntar todos.
+    if (this.__mutLosTodos) return ray.intersectObjects(this.world.occluders, false).length > 0;
+    const hits = this._losHits;
+    for (const o of this.world.occluders) {
+      hits.length = 0; ray.intersectObject(o, false, hits);
+      if (hits.length) { hits.length = 0; return true; }
+    }
+    return false;
   }
   /* RÁDIO DOS BOTS: o sistema de rádio existia só pro jogador — o time era mudo, então nada
      do que os bots faziam chegava ao jogador como informação. Aqui, ao ENGATAR um alvo, o bot
@@ -8176,10 +8222,12 @@ export class Game {
     const ally = bot.team === this.player.team;
     const col = new THREE.Color(this._teamColor(bot.team));
     this._tmHaloGeo = this._tmHaloGeo || new THREE.PlaneGeometry(1, 1);
+    // forceSinglePass: plano no chão não precisa das 2 passadas de transparente dupla-face do
+    // three, que marcavam needsUpdate e recalculavam o programa 2× por halo por quadro.
     const halo = new THREE.Mesh(this._tmHaloGeo, new THREE.MeshBasicMaterial({
       map: this._teamMarkTex(ally ? 'haloAlly' : 'haloEnemy'), color: col,
       transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide,
-      polygonOffset: true, polygonOffsetFactor: -3, toneMapped: false,
+      polygonOffset: true, polygonOffsetFactor: -3, toneMapped: false, forceSinglePass: QS.get('halosingle') !== '0',
     }));
     halo.rotation.x = -Math.PI / 2; halo.scale.setScalar(1.45); halo.renderOrder = 3;
     this.scene.add(halo);
