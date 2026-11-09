@@ -60,6 +60,11 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Build Cloudflare
+        env:
+          # O fetch-viewmodels degrada para o legado quando estes segredos não existem,
+          # mas o aviso identifica exatamente a credencial necessária para o pack privado.
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          VM_BLOB_TOKEN: ${{ secrets.VM_BLOB_TOKEN }}
         run: npm run build:cf
       - name: Verifica configuração da conta
         env:

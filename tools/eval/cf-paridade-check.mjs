@@ -40,7 +40,7 @@ const COMPARADOS = ['content-security-policy', 'strict-transport-security', 'cac
 export const ROTAS = [
   { rota: '/' },
   { rota: '/en' },
-  { rota: '/api/geo-lang' },
+  { rota: '/api/geo-lang', metodo: 'GET', comparaCorpo: true },
   { rota: '/api/og/pagina.png?rota=/en&titulo=x', metodo: 'GET' },
   { rota: '/u/00000000-0000-4000-8000-00000000c0de', tolera: 'proxy social sem API_PROXY_SECRET no spike' },
   { rota: '/mapa' },
@@ -59,14 +59,18 @@ export const ROTAS = [
   { rota: '/api/profile-card/00000000-0000-4000-8000-00000000c0de.png', metodo: 'GET', tolera: 'proxy social sem API_PROXY_SECRET no spike' },
 ];
 
-async function pedir(base, { rota, metodo = 'HEAD' }) {
+async function pedir(base, regra) {
+  const { rota, metodo = 'HEAD', comparaCorpo = false } = regra;
   const inicio = performance.now();
   try {
     const r = await fetch(base + rota, { method: metodo, redirect: 'manual', headers: { 'user-agent': 'cf-paridade-check' }, signal: AbortSignal.timeout(20000) });
-    if (metodo === 'GET') await r.arrayBuffer();
+    let corpo;
+    if (metodo === 'GET') {
+      corpo = comparaCorpo ? await r.text() : await r.arrayBuffer();
+    }
     const headers = {};
     for (const h of COMPARADOS) { const v = r.headers.get(h); if (v !== null) headers[h] = v; }
-    return { status: r.status, headers, ms: Math.round(performance.now() - inicio) };
+    return { status: r.status, headers, corpo, ms: Math.round(performance.now() - inicio) };
   } catch (e) {
     return { status: 0, headers: {}, erro: e?.name || String(e), ms: Math.round(performance.now() - inicio) };
   }
@@ -91,6 +95,9 @@ for (const r of ROTAS) {
     const a = normaliza(h, prod.headers[h], PROD);
     const b = normaliza(h, alvo.headers[h], ALVO);
     if (a !== b) diferentes.push(`${h}: prod=${JSON.stringify(a ?? null)} alvo=${JSON.stringify(b ?? null)}`);
+  }
+  if (r.comparaCorpo && prod.corpo !== alvo.corpo) {
+    diferentes.push(`body: prod=${JSON.stringify(prod.corpo ?? null)} alvo=${JSON.stringify(alvo.corpo ?? null)}`);
   }
   const igual = prod.status === alvo.status && diferentes.length === 0;
   if (!igual && !r.tolera) reprova++;
