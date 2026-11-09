@@ -521,9 +521,8 @@ class Netcode {
         ent._netCrouch = !!e.crouch;
         ent.crouchF = ent._netCrouch ? 1 : 0;
         const reloadIn = e.alive ? Math.max(0, Number(e.reloadIn) || 0) : 0;
-        // O fim no relógio autoritativo distingue ciclos mesmo se os zeros da troca
-        // de arma se perderem. Um ciclo oscila até 0,1 s pela quantização v9; chegada
-        // com jitter não participa. Game.t novo reancora, sem confundir tick da Room.
+        // Fim autoritativo separa ciclos apesar de perda/jitter; tolerância v9 de 0,1 s.
+        // Game.t novo reancora sem zerar o tick da Room (docs/EMOTES-BR.md).
         const reloadEndT = snap.t + reloadIn;
         const reloadEndAntes = ent._netStateTick == null || snap.t < ent._netReloadAtT
           ? null : ent._netReloadEndT;
