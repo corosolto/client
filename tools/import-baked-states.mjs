@@ -210,6 +210,9 @@ const evidencia = `{\n  "schema": "csbrasil/baked-body-states@2",\n  "provenienc
   + `  "legenda": ${JSON.stringify(LEGENDA)},\n  "limites": ${JSON.stringify(limites)},\n  "estados": ${JSON.stringify(STATES)},\n`
   + `  "corpos": {\n${linhas.join(',\n')}\n  }\n}\n`;
 if (CHECK) {
+  // Arquivo publicado defasado ou ausente também reprova, não só a evidência.
+  const defasados = pendentes.filter(([alvo, bytes]) => !fs.existsSync(alvo) || !fs.readFileSync(alvo).equals(bytes)).map(([alvo]) => path.relative(process.cwd(), alvo));
+  if (defasados.length) { console.error(`ESTADOS-ASSADOS --check: ${defasados.length} arquivo(s) publicado(s) defasado(s): ${defasados.slice(0, 5).join(', ')}`); process.exit(1); }
   const atual = fs.existsSync(ALVO) ? fs.readFileSync(ALVO, 'utf8') : '';
   if (atual !== evidencia) { console.error(`ESTADOS-ASSADOS --check: ${ALVO} diverge da regeneração a partir do QA Studio`); process.exit(1); }
   console.log(`ESTADOS-ASSADOS --check ✓ evidência reproduzida: ${trocados}/${bodies.length * STATES.length} estados substituídos`);
