@@ -1,7 +1,4 @@
-/* Medição opcional: LIGADA por padrão (interesse legítimo, decisão do dono em 09/11/2026),
-   com recusa explícita e persistente em `cs_privacy`. Só a recusa gravada desliga; sem escolha,
-   JSON corrompido ou versão antiga valem como padrão. O identificador que viaja é o `cs_anon`
-   (UUID local, sem IP e sem e-mail); `set(false)` apaga o resto do armazenamento opcional.
+/* Medição opcional: LIGADA por padrão; recusa persistente em `cs_privacy`, identificador local `cs_anon` e limpeza opcional via `set(false)`.
    Réguas: tools/eval/privacy-choice-check.mjs e tools/eval/privacy-ops-check.mjs. */
 (function () {
   if (window.__csPrivacy) return;
