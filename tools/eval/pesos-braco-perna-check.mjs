@@ -17,7 +17,13 @@
      vértice vazado (teto padrão 0 — vale para todo personagem/skin novo e
      para os três Lula reparados);
    - um legado listado passar do teto congelado (o teto só pode baixar);
-   - o arquivo de tetos citar um id sem GLB, ou um reparado voltar à lista.
+   - o arquivo de tetos citar um id sem GLB, ou um reparado voltar à lista;
+   - um reparado (lista `reparados`) rasgar mais que a origem: rasgo = maior
+     distância (cm) entre vértices de peças diferentes coladas a ≤ 1 cm no
+     bind, por pose (5 sintéticas + 11 clipes embutidos × 8 instantes,
+     tools/personagens/pose-skin.mjs); teto `rasgoCm` = origem, por pose;
+   - um reparado passar das falhas do pose test congeladas (`falhasPose`,
+     limites do Studio: aresta 3,5×, costas 3,5×, mão 2,5×, costura 5 mm).
 
    MUTANTES (--mutante=<id>, em memória, nada é escrito em disco):
      vaza-lula     planta peso de LeftUpLeg em 5 vértices de braço do lula-mandrake
@@ -25,14 +31,17 @@
      novo-vazando  soma um "skin:personagem-novo" (cópia do lula-drip com 66
                    vértices vazados, o número do drip antes do reparo) sem teto
      teto-orfao    soma ao arquivo de tetos um id que não existe
-   --mutacoes roda os quatro e exige que cada um reprove pela razão certa.
+     cola-solta    1 vértice do lula-mandrake colado a outra peça passa a seguir só Hips
+     pose-piora    1 vértice de antebraço do lula-mandrake passa a seguir Hips
+   --mutacoes roda todos e exige que cada um reprove pela razão certa.
 
    Uso: node tools/eval/pesos-braco-perna-check.mjs [--mutante=<id> | --mutacoes]
    ============================================================================ */
 import { spawnSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { gravarInfluencia, lerGlb, medirColagem, medirVazamento, skinsDoGlb, RE_BRACO_CENSO } from '../personagens/pesos-skin.mjs';
+import { gravarInfluencia, lerGlb, medirVazamento, paresColados, skinsDoGlb, RE_BRACO_CENSO } from '../personagens/pesos-skin.mjs';
+import { medirPoses } from '../personagens/pose-skin.mjs';
 
 const RAIZ = fileURLToPath(new URL('../../', import.meta.url));
 const MUTANTES = {
@@ -40,7 +49,8 @@ const MUTANTES = {
   'legado-piora': 'skin:aljuiz-toga-mandrake: 92 vértice(s) de braço com peso de perna > teto congelado 91',
   'novo-vazando': 'skin:personagem-novo: 66 vértice(s) de braço com peso de perna',
   'teto-orfao': 'teto para skin:nao-existe sem GLB',
-  'cola-solta': 'skin:lula-mandrake: peças coladas com Σ|Δpeso|',
+  'cola-solta': 'skin:lula-mandrake: rasgo entre peças',
+  'pose-piora': 'skin:lula-mandrake: pose test com',
 };
 
 if (process.argv.includes('--mutacoes')) {
@@ -99,21 +109,29 @@ for (const id of ids) {
   if (!g.json.skins?.length) continue;
   if (mutante === 'vaza-lula' && id === 'skin:lula-mandrake') plantarVazamento(g, 5);
   if (mutante === 'cola-solta' && id === 'skin:lula-mandrake') { // 1 vértice colado a outra peça passa a seguir só Hips
-    let par = null;
-    medirColagem(g, 0.01, (s, v, u, d) => { if (!par && d < 0.01) par = [s, v]; });
+    const par = paresColados(g)[0];
     if (!par) throw new Error('MUTANTE NÃO APLICOU');
-    const [s, v] = par, hips = s.nomes.indexOf('Hips');
-    gravarInfluencia(g, s, v, 0, hips, 1);
-    for (let k = 1; k < 4; k++) gravarInfluencia(g, s, v, k, 0, 0);
+    gravarInfluencia(g, par.s, par.v, 0, par.s.nomes.indexOf('Hips'), 1);
+    for (let k = 1; k < 4; k++) gravarInfluencia(g, par.s, par.v, k, 0, 0);
+  }
+  if (mutante === 'pose-piora' && id === 'skin:lula-mandrake') { // 1 vértice de antebraço passa a seguir Hips
+    const s = skinsDoGlb(g, { geometria: false })[0], ante = s.nomes.findIndex((n) => /ForeArm$/.test(n));
+    const v = [...Array(s.W.length / 4).keys()].find((x) => s.J[x * 4] === ante && s.W[x * 4] >= 0.9);
+    if (v == null) throw new Error('MUTANTE NÃO APLICOU');
+    gravarInfluencia(g, s, v, 0, s.nomes.indexOf('Hips'), 1);
   }
   if (mutante === 'legado-piora' && id === 'skin:aljuiz-toga-mandrake') plantarVazamento(g, 1);
   const { bracos, vazados } = medirVazamento(g);
   medidas.push({ id, bracos, vazados });
-  // Rasgo entre peças: o repeso não pode colar pior do que a origem colava.
-  const colagemAntes = tetosDoc.reparados?.[id]?.colagemAntes;
-  if (colagemAntes != null) {
-    const colagem = medirColagem(g);
-    if (colagem > colagemAntes + 1e-4) falhas.push(`${id}: peças coladas com Σ|Δpeso| ${colagem} > ${colagemAntes} da origem (rasgo; use colar na receita)`);
+  // Reparado não pode rasgar mais que a origem em pose nenhuma, nem ganhar falha no pose test.
+  const reparado = tetosDoc.reparados?.[id];
+  if (reparado?.rasgoCm) {
+    const { rasgo, falhas: falhasPose } = await medirPoses(g.buf);
+    for (const [pose, tetoCm] of Object.entries(reparado.rasgoCm)) {
+      if (rasgo[pose] == null) falhas.push(`${id}: pose ${pose} do teto de rasgo não foi medida`);
+      else if (rasgo[pose] > tetoCm) falhas.push(`${id}: rasgo entre peças ${rasgo[pose]} cm em ${pose} > ${tetoCm} cm da origem (use colar na receita)`);
+    }
+    if (falhasPose > reparado.falhasPose) falhas.push(`${id}: pose test com ${falhasPose} falhas > ${reparado.falhasPose} congeladas`);
   }
   const teto = tetos[id]?.vazados ?? 0;
   if (vazados > teto) {
