@@ -41,6 +41,7 @@ const SOURCE_PATHS = {
   clans: path.join(ROOT, 'public', 'js', 'clans.js'),
   profilePop: path.join(ROOT, 'public', 'js', 'tp', 'perfil.js'),
   tretaStore: path.join(ROOT, 'public', 'js', 'treta-store.js'),
+  social: path.join(ROOT, 'public', 'js', 'tp', 'social.js'),
   sitemap: path.join(ROOT, 'src', 'pages', 'sitemap.xml.ts'),
   sitemapPage: path.join(ROOT, 'src', 'pages', 'sitemap-[page].xml.ts'),
 };
@@ -133,6 +134,9 @@ function sourceCases(s) {
       && !/new URL\(\s*['"]\/['"]\s*,\s*location\.origin\)/.test(s.tretaStore), 'indicação da loja usa a origem curta, não location.origin'],
     ['SRC11', canonicalLayout && indexCanonical, 'canonical e og:url de fonte continuam no host canônico'],
     ['SRC12', sitemapSource, 'sitemap de fonte usa SITE, nunca corosol.to'],
+    ['SRC13', /const publico\s*=\s*linkDeConvite\(conv,\s*origemCompartilhamento\(\)\)/.test(s.social)
+      && /telegram\.href\s*=\s*`https:\/\/t\.me\/share\/url\?url=\$\{encodeURIComponent\(publico\)\}/.test(s.social)
+      && /navigator\.clipboard\.writeText\(`\$\{chamada\} \$\{publico\}`\)/.test(s.social), 'sociais Treta Pop usam o convite na origem curta'],
   ];
 }
 
@@ -157,6 +161,7 @@ function buildCases(files) {
   const shareJs = jsEntries.some((text) => text.includes(SHARE));
   const inviteJs = jsEntries.some((text) => text.includes('/sala/'));
   const utmJs = jsEntries.some((text) => /utm_source/.test(text) && /utm_medium/.test(text));
+  const socialJs = Object.entries(js).find(([name]) => /(?:^|\/)tp\/social\.js$/.test(name))?.[1] || '';
   const surfaceHtml = htmlText.includes(SHARE) && /__SHARE_ORIGIN/.test(htmlText);
 
   return [
@@ -167,6 +172,9 @@ function buildCases(files) {
     ['BLD5', canonOk, `canonical buildado no host canônico (${canon.length} encontrado(s))`],
     ['BLD6', ogOk, `og:url buildado no host canônico (${og.length} encontrado(s))`],
     ['BLD7', sitemapOk, 'sitemap buildado, quando presente, não usa corosol.to'],
+    ['BLD8', /const publico\s*=\s*linkDeConvite\(conv,\s*origemCompartilhamento\(\)\)/.test(socialJs)
+      && /https:\/\/t\.me\/share\/url\?url=\$\{encodeURIComponent\(publico\)\}/.test(socialJs)
+      && /navigator\.clipboard\.writeText\(`\$\{chamada\} \$\{publico\}`\)/.test(socialJs), 'bundle social do Treta Pop compartilha o convite curto'],
   ];
 }
 

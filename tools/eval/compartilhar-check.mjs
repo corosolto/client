@@ -64,9 +64,9 @@ const item = (id, erros, msg) => { if (erros.length) falhas.push(`${id} ${msg}: 
   if (origem !== 'https://corosol.to') erros.push(`origem ${origem}: produção deve compartilhar pelo domínio curto`);
   if (C.origemCompartilhamento({ hostname: 'localhost', origin: 'http://localhost:9434' }) !== 'http://localhost:9434') erros.push('dev não caiu na origem local');
   const link = new URL(C.linkCompartilhavel('/?map=lajes', 'fim-de-partida', 'https://corosol.to'));
-  if (link.origin !== 'https://corosol.to' || link.pathname !== '/' || link.searchParams.get('map') !== 'lajes') errors.push(`link ${link.href}`);
-  if (link.searchParams.get('utm_source') !== 'compartilhar' || link.searchParams.get('utm_medium') !== 'fim-de-partida') errors.push(`utm ${link.search}`);
-  if (!/^Ganhei .*Lajes/.test(C.textoDaPartida({ venceu: true, mapa: 'Lajes' })) || !/^Perdi /.test(C.textoDaPartida({ venceu: false, mapa: 'Lajes' }))) errors.push('texto da partida');
+  if (link.origin !== 'https://corosol.to' || link.pathname !== '/' || link.searchParams.get('map') !== 'lajes') erros.push(`link ${link.href}`);
+  if (link.searchParams.get('utm_source') !== 'compartilhar' || link.searchParams.get('utm_medium') !== 'fim-de-partida') erros.push(`utm ${link.search}`);
+  if (!/^Ganhei .*Lajes/.test(C.textoDaPartida({ venceu: true, mapa: 'Lajes' })) || !/^Perdi /.test(C.textoDaPartida({ venceu: false, mapa: 'Lajes' }))) erros.push('texto da partida');
   item('CP2', erros, 'link compartilhado fora do contrato');
 }
 
@@ -80,6 +80,7 @@ const item = (id, erros, msg) => { if (erros.length) falhas.push(`${id} ${msg}: 
   const comunidade = readFileSync('public/js/community.js', 'utf8');
   const clas = readFileSync('public/js/clans.js', 'utf8');
   const pontos = [
+    ['fim de partida', hub, /<button id="btn-share-match"/, main, /ligarCompartilhar\(\$\('btn-share-match'\)[^\n]*linkCompartilhavel\(/],
     ['sala', hub, /<button id="mp-modal-compartilhar"/, main, /ligarCompartilhar\(mpEl\('mp-modal-compartilhar'\)[^\n]*linkDeConvite\(sala\.convite\)/],
     ['ranking', hub, /<button id="hub-rank-share"/, main, /ligarCompartilhar\(\$\('hub-rank-share'\)[^\n]*linkCompartilhavel\('\/comunidade\/ranking', 'ranking'\)/],
     ['skin', loja, /<button id="treta-share"/, loja, /ligarCompartilhar\(\$\('treta-share'\)[^\n]*linkCompartilhavel\('\/loja','skin'\)/],
