@@ -18,13 +18,12 @@ const EVIDENCIA = path.resolve('tools/eval');
 const STATES = ['idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'crouchwalk', 'jump', 'idle1h', 'walk1h', 'walkfire'];
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const readJSON = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
-const copy = (source, target) => {
-  const bytes = fs.readFileSync(source);
+// Nada é escrito em public/ antes de o corpo inteiro validar: um throw no meio não deixa pack parcial.
+const publish = (bytes, target) => {
   if (!fs.existsSync(target) || !fs.readFileSync(target).equals(bytes)) {
     fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.writeFileSync(target, bytes);
   }
-  return bytes;
 };
 
 function glbJSON(bytes) {
@@ -117,18 +116,16 @@ for (const entry of bodies) {
   if (RUNTIME_EXCLUSIONS[id]) regressions.push(RUNTIME_EXCLUSIONS[id]);
   if (regressions.length) { excluded.push(record); continue; }
 
-  const packedSource = path.join(NEW_ROOT, id, 'states.glb');
-  const packed = copy(packedSource, path.join(ANIMS, `${id}.glb`));
+  const packed = fs.readFileSync(path.join(NEW_ROOT, id, 'states.glb'));
   assertPacked(packed, id);
   const declared = manifest.files['states.glb'];
   if (sha(packed) !== declared.sha256 || packed.length !== declared.bytes) throw new Error(`${id}: hash/bytes divergem do manifest`);
   const fallbacks = new Map();
   for (const state of STATES) {
-    const source = path.join(NEW_ROOT, id, '_baked', `${state}.glb`);
-    assertFallback(fs.readFileSync(source), id, state, manifest);
-    fallbacks.set(state, copy(source, path.join(ANIMS, id, `${state}.glb`)));
+    const bytes = fs.readFileSync(path.join(NEW_ROOT, id, '_baked', `${state}.glb`));
+    assertFallback(bytes, id, state, manifest);
+    fallbacks.set(state, bytes);
   }
-
   const refs = {};
   for (const state of ['walk', 'run', 'crouchwalk', 'walk1h', 'walkfire']) {
     const speed = manifest.clips[state]?.speed;
@@ -151,6 +148,8 @@ for (const entry of bodies) {
       failures: r.failures,
     };
   }
+  publish(packed, path.join(ANIMS, `${id}.glb`));
+  for (const [state, bytes] of fallbacks) publish(bytes, path.join(ANIMS, id, `${state}.glb`));
   selected.push({ id, sha256: sha(packed), bytes: packed.length, gzipBytes: declared.gzipBytes, refs, states });
 }
 
