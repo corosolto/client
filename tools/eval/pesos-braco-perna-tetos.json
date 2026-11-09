@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "nota": "Tetos CONGELADOS de vértices de braço com peso de perna (conta do censo: braço = Arm|ForeArm|Hand > 0,3; vazado = UpLeg|Leg > 0,1). Medidos em 09/11/2026 sobre origin/main. Só podem BAIXAR: GLB fora desta lista tem teto 0. Ao reparar um GLB listado (tools/personagens/repesar-skin.mjs), apague a entrada.",
+  "tetos": {
+    "character:barbudo": {
+      "vazados": 33,
+      "bracos": 2138
+    },
+    "character:gotinha": {
+      "vazados": 13,
+      "bracos": 734
+    },
+    "character:ministro": {
+      "vazados": 32,
+      "bracos": 2127
+    },
+    "skin:aljuiz-toga-mandrake": {
+      "vazados": 91,
+      "bracos": 1904
+    },
+    "skin:bolsonaro-mandrake": {
+      "vazados": 17,
+      "bracos": 2628
+    },
+    "skin:lula-na-regua": {
+      "vazados": 23,
+      "bracos": 1835
+    },
+    "skin:michelle-mandrake": {
+      "vazados": 8,
+      "bracos": 2362
+    },
+    "skin:senador-drip": {
+      "vazados": 88,
+      "bracos": 2316
+    },
+    "skin:zero-um-mandrake": {
+      "vazados": 85,
+      "bracos": 2744
+    }
+  },
+  "reparados": {
+    "skin:lula-mandrake": {
+      "antes": 102
+    },
+    "skin:lula-cyborg": {
+      "antes": 80
+    },
+    "skin:lula-drip": {
+      "antes": 66
+    }
+  }
+}
