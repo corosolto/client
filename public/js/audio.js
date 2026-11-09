@@ -177,12 +177,8 @@ export class Sfx {
     this._lastVoice = performance.now();
     return true;
   }
-  /* Fala autoral do personagem. Ordem: take do evento → outro take INGAME do mesmo
-     personagem (kill/radio/round; a de seleção é longa demais) → pool da facção, e este só
-     para quem NÃO tem voz ingame própria no pack. O pool M é a soma dos bordões de todos os
-     Míticos: emprestar dele fazia o Lampião comemorar com a voz do Saci numa sala sem Saci.
-     A forma string (só a fala de seleção, formato legado) não conta como voz ingame — segue
-     no pool até o pack trazer kill/radio estruturados. */
+  /* Take do evento → outro take ingame do MESMO personagem → pool da facção só para quem não
+     tem voz ingame própria (string legada = só seleção). Pool M mistura todos os Míticos. */
   _ownIngameVoice(characterId, event) {
     const own = this.pack?.characterVoice?.[characterId];
     if (!own || typeof own !== 'object') return null;

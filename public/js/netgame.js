@@ -822,9 +822,7 @@ class Netcode {
   }
 
   // Voz de um combatente remoto (rádio ao avistar / comemoração de abate) — é o que devolve o
-  // "papo" dos personagens ao multiplayer. O nó só diz QUEM falou; a régua de quem ouve é a
-  // mesma do `_botCall` do single: até 55 m do jogador, inimigo fala menos (não entrega
-  // tudo) e a linha entra no log do rádio.
+  // "papo" dos personagens ao multiplayer. Rádio segue a régua do `_botCall` do single.
   voice(ent, kind) {
     const game = this.game, p = game.player;
     if (kind === 'radio') {
