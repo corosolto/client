@@ -53,7 +53,9 @@ if (process.argv.includes('--self-test')) {
 
 const arg = (k) => process.argv.find((x) => x.startsWith(`--${k}=`))?.split('=').slice(1).join('=') || '';
 const AMOSTRAS = 16;
-const CAPSULA_R = 0.38;   // game.js: this._collide(p.pos, 0.38) — o gate confere o literal
+// Raio lido da colisão do jogador em game.js (`this._collide(p.pos, R)`), sem cópia do literal.
+const CAPSULA_R = Number(/this\._collide\(p\.pos, ([\d.]+)\)/.exec(fs.readFileSync(path.join(root, 'public/js/game.js'), 'utf8'))?.[1]);
+if (!Number.isFinite(CAPSULA_R)) throw new Error('raio de colisão do jogador não encontrado em game.js');
 // Clipes em pé: o vértice mais baixo fica no chão. freeze apoia mão/cabeça e sobe as pernas.
 // flutua 12 cm: o dedo da referência sobe do repouso (4,3 cm) até 10 cm no uprock e na ginga,
 // e a altura de quadril escala o salto (maior medido: cuca no uprock, 9,9 cm). Pé no ar 20 cm:

@@ -300,6 +300,9 @@ for (const r of results) console.log(`${r.ok ? 'ok  ' : 'FALHA'} ${r.id}${r.erro
 console.log(`medidas ${JSON.stringify(medidas)}`);
 if (mutant) {
   assert.ok(failures.length > 0, `MUTAÇÃO PASSOU — ${mutant}`);
+  const ESPERADO = { 'emote-mocap-mudo': ['EMM3', 'EMM4', 'EMM7', 'EMM9'], 'arma-visivel-no-emote': ['EMM5'], 'emote-nao-cancela': ['EMM6'], 'id-renumerado': ['EMM0-'],
+    'quadril-fora-da-capsula': ['EMM12'], 'rotacao-local': ['EMM13'], 'lobby-sem-clipe': ['EMM11'], 'travessao-no-titulo': ['EMM0c'] };
+  for (const id of ESPERADO[mutant]) assert.ok(failures.some((x) => x.id.startsWith(id)), `${mutant} não reprovou ${id}: ${failures.map((x) => x.id).join(', ')}`);
   console.log(`MUTANTE ${mutant} REPROVADO: ${failures.map((x) => x.id).join(', ')}`);
 } else {
   assert.equal(failures.length, 0, `${failures.length} cláusulas vermelhas`);
