@@ -152,11 +152,12 @@ O alvo inicial também pode ser publicado localmente com `npx wrangler deploy
 
 ### Fase 2b: segredos e variáveis
 
-O repositório precisa de `CF_API_TOKEN` em Actions Secrets com `Workers Scripts:Edit` e da variável
-`CLOUDFLARE_ACCOUNT_ID` em Actions Variables. O token local usado no spike tem o escopo OAuth
-`workers_scripts:write`; `npx wrangler whoami` confirmou a conta `81dceb0823d6c4dd3c41ad0c51ba2143`.
-Não criar nem rotacionar token nesta fase. PRs de fork não publicam preview Cloudflare, pois não
-recebem segredos no evento `pull_request`.
+O workflow usa `CF_WORKERS_TOKEN` quando existe e cai para `CF_API_TOKEN`; o token efetivo precisa
+estar em Actions Secrets com `Workers Scripts:Edit`. A variável `CLOUDFLARE_ACCOUNT_ID` fica em
+Actions Variables. O token local usado no spike tem o escopo OAuth `workers_scripts:write`;
+`npx wrangler whoami` confirmou a conta `81dceb0823d6c4dd3c41ad0c51ba2143`. Se o token atual
+falhar no upload, registrar o erro literal no PR e criar `CF_WORKERS_TOKEN` com esse escopo.
+PRs de fork não publicam preview Cloudflare, pois não recebem segredos no evento `pull_request`.
 
 ## Segredos: destino na Cloudflare
 
