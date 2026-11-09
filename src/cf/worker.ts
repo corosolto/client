@@ -10,9 +10,21 @@ const HEADERS = vercelJson.headers.map(compilarHeader);
 // Default da Vercel em resposta SSR sem cache-control; mantido para a CDN se comportar igual.
 const CACHE_PADRAO = 'public, max-age=0, must-revalidate';
 
+// workerd entrega [vars] e secrets no binding `env` do fetch; `process.env` nasce
+// vazio (o banner do adaptador só cria o stub). Copiando aqui, todo o SSR lê
+// process.env pela envRuntime em qualquer borda. Só string: bindings de serviço
+// (ASSETS etc.) não são env.
+const ponteEnv = (env: unknown) => {
+  const proc = (globalThis.process ??= { env: {} }) as { env: Record<string, string | undefined> };
+  const alvo = proc.env ??= {};
+  for (const [chave, valor] of Object.entries(env as Record<string, unknown>))
+    if (typeof valor === 'string' && !(chave in alvo)) alvo[chave] = valor;
+};
+
 export default {
   async fetch(request: Request, env: unknown, ctx: { waitUntil(p: Promise<unknown>): void }): Promise<Response> {
     const url = new URL(request.url);
+    ponteEnv(env);
     const redirect = redirectPara(REDIRECTS, url);
     const resposta = redirect
       ? Response.redirect(new URL(redirect.destino, url).toString(), redirect.status)

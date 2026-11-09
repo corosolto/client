@@ -27,6 +27,8 @@ globalThis.__SITEMAP_ENV = {
   SUPABASE_SERVICE_ROLE_KEY: 'chave-falsa',
   RANKING_ON: 'true',
 };
+// src/lib/env-runtime.ts lê process.env em runtime; o fixture entra pelos dois caminhos.
+Object.assign(process.env, globalThis.__SITEMAP_ENV);
 let mutanteAplicou = false;
 registerHooks({
   resolve(spec, ctx, next) {

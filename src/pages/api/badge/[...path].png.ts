@@ -23,7 +23,7 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 async function avatarDataUri(url?: string | null, id?: string): Promise<string | null> {
   let buf:Buffer|null=null;
   if(id && url===`/api/social-avatar?id=${id}`){
-    const {data}=await supabaseAdmin!.storage.from('avatars').download(`${id}.png`);
+    const {data}=await supabaseAdmin()!.storage.from('avatars').download(`${id}.png`);
     if(data)buf=Buffer.from(await data.arrayBuffer());
   }else buf=await fetchAvatar(url);
   if (!buf) return null;
@@ -89,7 +89,8 @@ export const GET: APIRoute = async (ctx) => {
      60/min por IP é folgado pro uso real (a badge é embutida em README e perfil,
      um hit por visita) e corta a varredura. Mesmo helper das outras rotas. */
   const ip = ctx.request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
-  if (supabaseAdmin && !(await rateLimit(supabaseAdmin, 'badge', ip, 60, 60)))
+  const db = supabaseAdmin();
+  if (db && !(await rateLimit(db, 'badge', ip, 60, 60)))
     return new Response('rate limited', { status: 429 });
 
   try {
@@ -106,14 +107,15 @@ export const GET: APIRoute = async (ctx) => {
 };
 
 const handle: APIRoute = async ({ params, request }) => {
-  if (!supabaseAdmin)
+  const db = supabaseAdmin();
+  if (!db)
     return new Response(NOT_CONFIGURED, { status: 503, headers: { 'content-type': 'application/json' } });
   const parts = (params.path || '').split('/').filter(Boolean);
   const first = parts[0] || '';
   const key = first.replace(/\.png$/, '');
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/.test(key);
   const nick = key.slice(0, 32);
-  const query=supabaseAdmin.from('player_points').select('*');
+  const query=db.from('player_points').select('*');
   const {data:score,error}=await (isUuid?query.eq('id',key):query.eq('nick',nick)).maybeSingle();
   if(error) return new Response('unavailable',{status:503,headers:{'cache-control':'no-store'}});
   if(!score) return new Response('not found',{status:404,headers:{'cache-control':'no-store'}});

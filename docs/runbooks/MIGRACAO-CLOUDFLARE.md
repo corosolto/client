@@ -117,11 +117,19 @@ Diferenças que não são bug, mas o comparador normaliza (documentar na virada)
 - redirect estático (`/discord`, `/jogar`) sai com CSP/HSTS completos no Workers (a Vercel resolve antes das regras de header).
 
 O que as fases 2–4 têm que tratar (lista fechada, achada no spike):
-1. Segredos no build, não no runtime: `import.meta.env.API_PROXY_SECRET`, `SUPABASE_*`, `X_PIXEL_TOKEN`, `PUBLIC_API_BASE` são
-   INLINADOS pelo Astro no bundle (`segredo: ""` no chunk). Na Vercel funciona porque o build roda com as envs; no Workers
-   `wrangler secret put` não chega a esse código. Trocar essas leituras por `process.env` (populado pelo `nodejs_compat`) ou
-   `astro:env/server` (`getSecret`) antes da fase 3. `[vars]` do `wrangler.toml` entram em `process.env` NO BUILD pelo
-   adaptador (`loadWranglerEnv`) e sobrescrevem a env do shell; `.dev.vars` (gitignored) sobrepõe localmente.
+1. [RESOLVIDO no lane `feat/cf-secrets-runtime`] Segredos no build, não no runtime: toda leitura SSR de
+   `API_PROXY_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `X_PIXEL_TOKEN`, `DB_TIMEOUT_MS` e
+   `PUBLIC_API_BASE` passou por `src/lib/env-runtime.ts` (`process.env` POR REQUISIÇÃO; fallback de
+   `import.meta.env` só para `PUBLIC_*`, por nome estático). Precedência observada: (a) `[vars]` do `wrangler.toml`
+   entram no BUILD pelo `loadWranglerEnv` do adaptador E no RUNTIME pelo binding; (b) segredos de
+   `wrangler secret put` chegam SÓ no runtime, pelo binding `env` do fetch; (c) `process.env` não nasce populado no
+   bundle do Astro (o banner do adaptador cria stub vazio), por isso `src/cf/worker.ts` copia as strings do binding
+   para `process.env` em cada fetch (a "ponte", idempotente); (d) `.dev.vars` só vale com o config da raiz em
+   `wrangler dev` (com o redirect para `dist/server/wrangler.json`, precisa de `dist/server/.dev.vars`). Prova: régua
+   `eval:envruntime` (ER1 fonte + ER2 varre o build do CI com sentinelas `SENTINEL_*`; 2 mutantes; pr-fast e
+   `check:fast`), builds Vercel e Cloudflare sem sentinela inlinada, e no `csb-spike` `/api/badge` foi de 503
+   `not_configured` para 503 `unavailable` ao SETAR segredos descartáveis por `wrangler secret put` (e voltou ao
+   deletar) com o MESMO build — leitura 100% runtime.
 2. `fetch-viewmodels` com token de Blob (ou R2) no build do Workers; `strip:decalbg`, `assert:assets`, `audio:check` e
    `check:vercel` do `buildCommand` ainda não estão no `build:cf`.
 3. Cache de SSR (`/api/og`, `/mapa`, sitemap) via `caches.default` no `src/cf/worker.ts`, honrando `s-maxage`.
@@ -173,3 +181,4 @@ npm run cf:paridade -- --alvo https://<worker>.workers.dev
 | 2026-11-09 | — | runbook criado; worktrees `chore/vercel-custos-fase0`, `feat/cloudflare-spike`, `chore/eval-lixo-bloco1` abertas | L1 e L2 em paralelo |
 | 2026-11-09 | #1258 | fase 0: `vercel-ignore.sh` filtra preview por diff desde o último deploy (régua `eval:vercelignore`, 3 mutantes, no pr-fast); zips de áudio/decalques e assets do viewmodel em `node_modules/.cache/csb-packs/`; `middleware.js` e `/api/[rota]` logam uma vez por instância e causa; runbook commitado | dono mergeia; na fatura do ciclo seguinte esperar Build CPU < 60 h (preview só em PR que toca o site), Blob Data Transfer perto de zero, Observability < 1 M eventos. Se Build seguir alto, abrir os deploys de preview no painel e ler a linha `vercel-ignore:` de cada um |
 | 2026-11-09 | spike | fase 1: `csb-spike` no ar em workers.dev com 18/19 rotas idênticas à produção; adaptador por `ADAPTER`; `_headers`/`_redirects` gerados; middleware portado; OG/badge/profile-card em resvg-wasm nas duas bordas; `eval:cfparidade` e `cf-paridade-check` | dono mergeia; fase 2 começa pelo item 1 da lista (segredos em runtime) e pelo preview por PR |
+| 2026-11-09 | feat/cf-secrets-runtime | item 1 da lista resolvido: leituras SSR de segredo passam por `src/lib/env-runtime.ts` (process.env por requisição; fallback `import.meta.env` só para `PUBLIC_*`); ponte bindings→`process.env` no `src/cf/worker.ts`; `supabaseAdmin` vira leitura lazy; régua `eval:envruntime` (ER1+ER2 com sentinelas no build do CI, 2 mutantes) no pr-fast e no `check:fast`; provas nos dois adapters e no `csb-spike` (badge 503 `not_configured`→`unavailable`→`not_configured` com o mesmo build) | fase 2: preview por PR; depois itens 2+ da lista |
