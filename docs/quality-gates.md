@@ -44,8 +44,10 @@ executa `check:deploy` completo. A seleção só existe localmente: o CI nunca u
 `check:fast` e `check:deploy` expandem `tools/eval/suites.mjs` com a sequência anterior preservada.
 O `soundscape` é um job obrigatório separado no `build`, então falha externa de áudio não invalida
 um agregado inteiro. Packs de assets usam cache por tag exata e checksum quando existir; os asserts
-nominais continuam obrigatórios. O job de invariantes permanece inteiro porque compartilha o cache
-de simulações entre as verificações.
+nominais continuam obrigatórios. As invariantes são divididas por família e por mapa, sem separar
+produtor e consumidor de um `freshReport`. Sertão usa shards por IDs de check, nunca por qualidade.
+O runner grava `tools/eval/out/runner-latest.json` por execução e aceita `--jobs=2` apenas no core;
+o pre-push continua sequencial por padrão para não aumentar contenção na máquina local.
 
 Use a branch `staging` para validar combinações de PRs antes de produção.
 O workflow de staging deve apontar para `STAGING_URL`.
