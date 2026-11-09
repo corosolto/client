@@ -43,7 +43,7 @@ campanhas e funil; "olhar rápido" vai ser Umami (self-host no Workers + D1) ou 
 |---|---|---|---|
 | 0. Cortes na Vercel | preview só quando o site muda (`vercel-ignore.sh` para `VERCEL_ENV=preview`), packs em cache de build, `console.*` por requisição fora | fatura do ciclo seguinte: Build < 60 h, Observability < 1 M eventos | PR #1258 aberto (branch `chore/vercel-custos-fase0`); ver "Fase 0: o que ficou" |
 | 1. Spike | `@astrojs/cloudflare` no lugar de `@astrojs/vercel`; `wrangler.toml`; `_headers`/`_redirects` **gerados** de `vercel.json` por script (uma fonte, régua de paridade); `middleware.js` → middleware do Astro lendo `cf-connecting-ip`; `buildCommand` reproduzido no build do Workers | deploy em `*.workers.dev` com mesmos status/headers que produção em: `/`, `/en`, `/api/geo-lang`, `/api/og/pagina.png`, `/u/<perfil>`, `/mapa`, `/sala/x`, `/sitemap.xml`, `/api/health` (proxy); `check:seo`, `canonical-host-check`, `game-pages-check`, `site-smoke` rodando contra esse host | feito (PR do spike, ver seção "Fase 1: resultado do spike"); `site-smoke` fica para a fase 2 (precisa de preview por PR) |
-| 2. Preview por PR | `preview-build.yml` → `wrangler versions upload` com URL por PR; `smoke-web.yml` e o comentário do bot apontam para ela | PR qualquer gera preview e `smoke-web` passa nele | pendente |
+| 2. Preview por PR | `cf-preview.yml` filtra PRs que tocam o site, compila com `ADAPTER=cloudflare`, publica `wrangler versions upload` e atualiza o comentário sticky; `smoke-web.yml` coleta `smoke-cf` opcional | PR gera URL `*.workers.dev`, comentário é atualizado sem duplicata e o smoke registra paridade | feito (fase 2b: configurar `CF_API_TOKEN` com Workers Scripts:Edit e a variável `CLOUDFLARE_ACCOUNT_ID`) |
 | 3. Staging em paralelo | `staging.corosolto.com.br` no Workers; `prod-watch` e `smoke:prod` nos dois hosts por 1 semana; diff automático de headers/CSP/rotas | zero divergência | pendente |
 | 4. Virada | CNAME `www` → Workers (DNS já é Cloudflare; reversível em 1 min); Vercel fica 30 dias como rollback; rotacionar `API_PROXY_SECRET` e `SUPABASE_SERVICE_ROLE_KEY` na virada (site e backend no mesmo deploy) | `BASE=https://www.corosolto.com.br npm run smoke:prod` verde; MP e OAuth ok | pendente |
 | 5. Analytics | Umami (Workers + D1) ou Plausible; `@vercel/analytics` sai do `Layout.astro` | eventos no painel | pendente |
@@ -132,6 +132,32 @@ O que as fases 2–4 têm que tratar (lista fechada, achada no spike):
    na zona (pendência do dono) para a cidade chegar.
 7. `window.__CS_BUILD.sha`: `VERCEL_GIT_COMMIT_SHA` vira `GITHUB_SHA` no build.
 8. O `_headers` tem 16 blocos (teto 100) e a maior linha é a CSP (~700 chars, teto 2000): folga, mas `eval:cfparidade` vigia.
+## Fase 2: preview por PR
+
+O workflow `.github/workflows/cf-preview.yml` roda em `pull_request`, mas preserva o check visível
+mesmo quando o diff não toca o site: o job `decide` aplica o mesmo conjunto de caminhos de
+`scripts/ci/vercel-ignore.sh` e o job de publicação fica pulado. Para PRs do próprio repositório,
+ele faz `npm ci`, `npm run build:cf` e `npx wrangler versions upload --config wrangler.preview.toml
+--name csb-preview`. O Wrangler devolve uma URL de versão, por exemplo
+`https://<version>-csb-preview.<subdominio>.workers.dev`.
+
+`scripts/ci/cf_preview_comment.py` mantém um único comentário com o marcador
+`<!-- cf-preview -->`, atualizando a URL quando o PR avança. `smoke-web.yml` espera esse comentário,
+faz `curl` para provar que a URL está viva e roda o mesmo smoke web e de chat com `BASE_URL`; o job
+`smoke-cf` é `continue-on-error: true` nesta fase e não substitui o smoke da Vercel.
+
+O alvo inicial também pode ser publicado localmente com `npx wrangler deploy
+--config wrangler.preview.toml`; a configuração usa `dist/server/entry.mjs`, os assets em
+`dist/client`, `ASSETS`, `PUBLIC_API_BASE` e `RANKING_ON`, com Worker `csb-preview`.
+
+### Fase 2b: segredos e variáveis
+
+O repositório precisa de `CF_API_TOKEN` em Actions Secrets com `Workers Scripts:Edit` e da variável
+`CLOUDFLARE_ACCOUNT_ID` em Actions Variables. O token local usado no spike tem o escopo OAuth
+`workers_scripts:write`; `npx wrangler whoami` confirmou a conta `81dceb0823d6c4dd3c41ad0c51ba2143`.
+Não criar nem rotacionar token nesta fase. PRs de fork não publicam preview Cloudflare, pois não
+recebem segredos no evento `pull_request`.
+
 ## Segredos: destino na Cloudflare
 
 | Hoje (Vercel) | Depois | Como |
@@ -173,3 +199,4 @@ npm run cf:paridade -- --alvo https://<worker>.workers.dev
 | 2026-11-09 | — | runbook criado; worktrees `chore/vercel-custos-fase0`, `feat/cloudflare-spike`, `chore/eval-lixo-bloco1` abertas | L1 e L2 em paralelo |
 | 2026-11-09 | #1258 | fase 0: `vercel-ignore.sh` filtra preview por diff desde o último deploy (régua `eval:vercelignore`, 3 mutantes, no pr-fast); zips de áudio/decalques e assets do viewmodel em `node_modules/.cache/csb-packs/`; `middleware.js` e `/api/[rota]` logam uma vez por instância e causa; runbook commitado | dono mergeia; na fatura do ciclo seguinte esperar Build CPU < 60 h (preview só em PR que toca o site), Blob Data Transfer perto de zero, Observability < 1 M eventos. Se Build seguir alto, abrir os deploys de preview no painel e ler a linha `vercel-ignore:` de cada um |
 | 2026-11-09 | spike | fase 1: `csb-spike` no ar em workers.dev com 18/19 rotas idênticas à produção; adaptador por `ADAPTER`; `_headers`/`_redirects` gerados; middleware portado; OG/badge/profile-card em resvg-wasm nas duas bordas; `eval:cfparidade` e `cf-paridade-check` | dono mergeia; fase 2 começa pelo item 1 da lista (segredos em runtime) e pelo preview por PR |
+| 2026-11-09 | fase 2 | preview por PR no Workers: `cf-preview.yml`, `wrangler.preview.toml`, comentário sticky `cf-preview` e `smoke-cf` opcional; Vercel continua sendo o smoke principal | configurar `CF_API_TOKEN` com Workers Scripts:Edit e `CLOUDFLARE_ACCOUNT_ID`; depois provar URL e smoke no PR |

@@ -1,0 +1,99 @@
+name: cf-preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: cf-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  decide:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      rodar: ${{ steps.filtro.outputs.rodar }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: O PR toca o site?
+        id: filtro
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if ! git -c core.quotePath=false diff --no-renames --name-only "$BASE...$HEAD" > "$RUNNER_TEMP/arquivos.txt"; then
+            echo "rodar=true" >> "$GITHUB_OUTPUT"
+            echo "diff indisponível: preview roda"
+            exit 0
+          fi
+          if grep -Eq '^(src/|public/|vercel\.json$|package\.json$|package-lock\.json$|astro\.config\.mjs$|middleware\.js$|scripts/fetch-|scripts/copy-wasm\.mjs$|scripts/prune-dist\.mjs$|scripts/aeo\.mjs$|tools/gen-asset-rev\.mjs$|tools/viewmodels/prepare_precision_preview\.mjs$|tools/audio/|tools/strip-decal-bg\.mjs$|CHANGELOG\.md$)' "$RUNNER_TEMP/arquivos.txt"; then
+            echo "rodar=true" >> "$GITHUB_OUTPUT"
+            echo "site mudou: preview roda"
+          else
+            echo "rodar=false" >> "$GITHUB_OUTPUT"
+            echo "nenhum arquivo do site mudou: preview pula"
+          fi
+
+  preview:
+    needs: decide
+    if: needs.decide.outputs.rodar == 'true' && github.event.pull_request.draft != true && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build Cloudflare
+        run: npm run build:cf
+      - name: Verifica configuração da conta
+        env:
+          ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$ACCOUNT_ID" ]; then
+            echo "::error::Configure CLOUDFLARE_ACCOUNT_ID em Settings > Secrets and variables > Actions > Variables"
+            exit 1
+          fi
+      - name: Publica versão do Worker
+        id: upload
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [ -z "$CF_API_TOKEN" ]; then
+            echo "::error::CF_API_TOKEN ausente ou sem Workers Scripts:Edit"
+            exit 1
+          fi
+          npx wrangler versions upload \
+            --config wrangler.preview.toml \
+            --name csb-preview \
+            --message "PR #$PR_NUM" 2>&1 | tee "$RUNNER_TEMP/wrangler-upload.log"
+          URL=$(grep -Eo 'https://[^[:space:]]+\.workers\.dev' "$RUNNER_TEMP/wrangler-upload.log" | tail -n 1 | sed 's/[),.]$//')
+          if [ -z "$URL" ]; then
+            echo "::error::Wrangler não retornou a URL da versão"
+            exit 1
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "preview Cloudflare: $URL"
+      - name: Atualiza comentário sticky
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          PREVIEW_URL: ${{ steps.upload.outputs.url }}
+        run: python3 scripts/ci/cf_preview_comment.py "$PR_NUM" "$PREVIEW_URL"
