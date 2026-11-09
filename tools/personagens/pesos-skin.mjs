@@ -215,7 +215,7 @@ export const REGRAS = Object.freeze([
   'R4 destino do peso retirado: o de perna que sai do corpo vai para Hips (o pai das coxas) na fração 1 − s(a); o resto volta aos ossos que ficaram, na mesma proporção; vértice que perdeu tudo vai para a junta permitida mais próxima.',
   'R5 preenchimento harmônico: região = vértices alterados + `anel` anéis de vizinhos; o contorno fica fixo e a região é refeita pela média dos vizinhos ponderada por 1/comprimento da aresta, com R1–R4 reaplicadas a cada passada (Jacobi projetado, `preencher` passadas). Sem degrau entre vizinhos — é o que tira o "inchaço".',
   'R6 saída: no máximo 4 influências, ordem decrescente, soma 1 em float32; vértices soldados (mesma posição) recebem os mesmos pesos; vértice sem mudança mantém os bytes originais.',
-  'R7 cadeia (`mistura`): dois ossos com peso > `mistura` no mesmo vértice têm de ser do mesmo lado e estar a ≤ 2 juntas na árvore (é a conta do clip-qa do Studio que marca [rig] a partir de 0,15). Virilha nas DUAS coxas e sovaco em Spine02 junto com o braço violam; o peso do osso que viola vai para o osso do caminho entre os dois mais longe do dominante a ≤ 2 juntas, sem trocar de lado (coxa E + coxa D → Hips; LeftArm + Spine02 → Spine). Reaplicada a cada passada do R5: o degradê atravessa a cadeia (Spine02 → Spine01 → Spine → ombro → braço) em vez de saltar.',
+  'R7 cadeia (`mistura`): dois ossos com peso > `mistura` no mesmo vértice têm de ser do mesmo lado e estar a ≤ 2 juntas na árvore (é a conta do clip-qa do Studio que marca [rig] a partir de 0,15). Virilha nas DUAS coxas e sovaco em Spine02 junto com o braço violam. Âncora = o osso mais distal (o membro fica; lados opostos: o mais pesado); o peso do outro vai para o osso do caminho entre os dois a ≤ 2 juntas da âncora, sem trocar de lado (LeftArm + Spine02 → LeftArm + Spine; coxa E + coxa D → Hips). Reaplicada a cada passada do R5: o degradê atravessa a cadeia (Spine02 → Spine01 → Spine → ombro → braço) em vez de saltar.',
   'R8 costura (`virilha`/`sovaco`/`pescoco` anéis): aresta cujas pontas são dominadas por classes diferentes da zona e diferem mais que `costura` em Σ|Δpeso| é costura dura; as pontas + N anéis entram na região do R5 (degradê em vez de degrau de 1 aresta).',
   'R9 cauda (`cauda` m): vértice mais de `cauda` metros ATRÁS da junta Hips (−Z, a frente do meshy-28 é +Z) perde o peso de perna em rampa até `cauda + caudaRampa`; o peso sai para Hips (R4). Cauda/capa não segue a canela (cuca: 280 vértices até 1,3 m atrás).',
   'R10 solda: vértices na mesma célula de 1e-5 m ou em célula vizinha a ≤ 1e-5 m recebem os mesmos pesos (a costura do pose test é a da posição esfolada no bind).',
@@ -383,6 +383,12 @@ export function repesar(origem, opcoes = {}) {
       for (let i = 1; i <= Math.min(2, c.length - 2); i++) if (!ladoOsso[c[i]] || !ladoOsso[d] || ladoOsso[c[i]] === ladoOsso[d]) t = c[i];
       return t;
     }));
+    // Âncora da dupla que viola = o osso mais DISTAL (mais fundo na árvore): o membro
+    // fica e o tronco anda pela cadeia até ele (LeftArm + Spine02 → LeftArm + Spine).
+    // Ancorar no mais pesado soltava a manga dominada por Spine02 do braço
+    // (michelle-mandrake: 146 vértices de manga parados com o braço erguido).
+    // Lados opostos ou mesma profundidade: âncora = o mais pesado.
+    const profundidade = s.nomes.map((_, j) => subida(j).length);
     const cadeia = (m) => {
       if (!(o.mistura > 0)) return m;
       for (let it = 0; it < 8; it++) {
@@ -390,7 +396,10 @@ export function repesar(origem, opcoes = {}) {
         let par = null;
         for (let i = 0; i < fortes.length && !par; i++) for (let k = i + 1; k < fortes.length; k++) if (alvo[fortes[i][0]][fortes[k][0]] >= 0) { par = [fortes[i][0], fortes[k][0]]; break; }
         if (!par) break;
-        const [d, b] = par, w = m.get(b), t = alvo[d][b];
+        let [d, b] = par; // d é o mais pesado
+        const oposto = ladoOsso[d] && ladoOsso[b] && ladoOsso[d] !== ladoOsso[b];
+        if (!oposto && profundidade[b] > profundidade[d]) [d, b] = [b, d];
+        const w = m.get(b), t = alvo[d][b];
         m.delete(b); m.set(t, (m.get(t) || 0) + w);
       }
       return m;
