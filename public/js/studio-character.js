@@ -1,8 +1,9 @@
 /* Resolvedor só de navegador: pin → Blob URLs de bytes já verificados (modelo, 11 clipes,
-   clipes extras opcionais, prévias), fail-closed com StudioCharacterError.code.
+   clipes extras opcionais — inclusive packs de família com várias chaves por arquivo e um
+   states.glb compartilhado —, prévias), fail-closed com StudioCharacterError.code.
    Ordem e limites: docs/studio-character-release.md. */
 import { VERSION } from './version.js';
-import { STUDIO_CHARACTER_STATES, STUDIO_CHARACTER_SKELETON, isStudioExtraClipName } from './data/content-releases.js';
+import { STUDIO_CHARACTER_STATES, STUDIO_CHARACTER_SKELETON, STUDIO_CLIP_FAMILIES, isStudioExtraClipName, studioClipFamily } from './data/content-releases.js';
 
 export class StudioCharacterError extends Error {
   constructor(code, detail = '', options = undefined) {
@@ -92,11 +93,17 @@ function verifyManifest(manifest, pin) {
   if (!Number.isSafeInteger(budget) || budget <= 0) fail('studio_manifest_invalid', 'budgets.bytes ausente');
   if (total > Math.min(budget, MAX_PACK_BYTES)) fail('studio_budget_exceeded', `${total} bytes > ${Math.min(budget, MAX_PACK_BYTES)}`);
 
+  /* Dono por TIPO de papel (contrato v3): vários animations.<estado> podem compartilhar um
+     states.glb e vários animations.extra.<chave> podem compartilhar um pack de família; misturar
+     estado com extra (ou com qualquer outro papel) continua sendo dono duplicado. */
   const owners = new Map();
+  const tipoDe = (role) => (role.startsWith('animations.extra.') ? 'extra' : role.startsWith('animations.') ? 'estado' : role);
   const own = (role, path, ext) => {
     if (!isSafePackPath(path)) fail('studio_unsafe_path', `${role}: ${JSON.stringify(path)}`);
     if (ext && !ext.test(path)) fail('studio_manifest_invalid', `${role} com extensão inesperada: ${path}`);
-    if (owners.has(path)) fail('studio_role_duplicate', `${path} declarado por ${owners.get(path)} e ${role}`);
+    if (owners.has(path) && tipoDe(owners.get(path)) !== tipoDe(role)) {
+      fail('studio_role_duplicate', `${path} declarado por ${owners.get(path)} e ${role}`);
+    }
     if (!files.has(path)) fail('studio_role_unknown_file', `${role} aponta para ${path}, fora de files`);
     owners.set(path, role);
   };
@@ -114,11 +121,14 @@ function verifyManifest(manifest, pin) {
   /* Clipes extras (opcionais): só nomes do vocabulário são baixados, verificados e expostos.
      Chave desconhecida é ignorada — não baixa, não expõe e não derruba o pacote (o Studio
      validou o nome com um vocabulário que pode ser mais novo que este runtime); o arquivo
-     dela segue contando no inventário/orçamento, mas fica sem fetch para sempre. */
+     dela segue contando no inventário/orçamento, mas fica sem fetch para sempre.
+     Várias chaves podem compartilhar um pack de família; emote_ nunca compartilha arquivo
+     (regra do conversor, fail-closed aqui também). */
   const extraClips = [];
   const extraMap = manifest.animations.extra;
   if (extraMap !== undefined) {
     if (!isObject(extraMap)) fail('studio_manifest_invalid', 'animations.extra não é objeto');
+    const nomesPorArquivo = new Map();
     for (const [name, entry] of Object.entries(extraMap)) {
       if (!isStudioExtraClipName(name)) {
         if (isObject(entry) && isSafePackPath(entry.file) && !owners.has(entry.file)) {
@@ -127,8 +137,20 @@ function verifyManifest(manifest, pin) {
         continue;
       }
       if (!isObject(entry) || typeof entry.file !== 'string') fail('studio_manifest_invalid', `animations.extra.${name} sem file`);
+      if (entry.family !== undefined) {
+        if (!STUDIO_CLIP_FAMILIES.includes(entry.family)) fail('studio_manifest_invalid', `animations.extra.${name} com família desconhecida: ${entry.family}`);
+        if (entry.family !== studioClipFamily(name)) {
+          fail('studio_manifest_invalid', `animations.extra.${name} declara família ${entry.family}, mas o nome é ${studioClipFamily(name)}`);
+        }
+      }
       own(`animations.extra.${name}`, entry.file, /\.glb$/);
       extraClips.push([name, entry]);
+      nomesPorArquivo.set(entry.file, [...(nomesPorArquivo.get(entry.file) || []), name]);
+    }
+    for (const [arquivo, nomes] of nomesPorArquivo) {
+      if (nomes.length > 1 && nomes.some((nome) => nome.startsWith('emote_'))) {
+        fail('studio_manifest_invalid', `emote compartilha arquivo (${arquivo}: ${nomes.join(', ')}); emote tem arquivo próprio`);
+      }
     }
   }
   if (!Array.isArray(manifest.previews) || !manifest.previews.length) fail('studio_manifest_invalid', 'previews vazio');
@@ -181,14 +203,22 @@ async function resolveUncached(pin, fetchImpl, subtle) {
   catch (e) { fail('studio_manifest_invalid', 'JSON ilegível', e); }
   const plan = verifyManifest(manifest, pin);
 
-  const wanted = [
+  /* Estados podem compartilhar um states.glb, extras podem compartilhar packs de família e
+     caminhos distintos podem ter bytes idênticos: cada CONTEÚDO (SHA-256) é buscado uma vez e
+     ganha uma única Blob URL, reaproveitada por todos os papéis que apontam para ele. */
+  const wanted = [...new Set([
     plan.model,
     ...STUDIO_CHARACTER_STATES.map((s) => plan.animations[s]),
     ...plan.extraClips.map(([, entry]) => entry.file),
     ...plan.previews,
-  ];
+  ])];
+  const representantes = new Map(); // sha256 → caminho representante (o único buscado)
+  for (const path of wanted) {
+    const sha256 = plan.files.get(path).sha256;
+    if (!representantes.has(sha256)) representantes.set(sha256, path);
+  }
   const created = [];
-  const settled = await Promise.allSettled(wanted.map(async (path) => {
+  const settled = await Promise.allSettled([...representantes.values()].map(async (path) => {
     const entry = plan.files.get(path);
     const bytes = await fetchBytes(fetchImpl, new URL(path, manifestUrl).href);
     if (bytes.byteLength !== entry.bytes) fail('studio_file_length_mismatch', `${path}: ${bytes.byteLength} ≠ ${entry.bytes}`);
@@ -205,6 +235,21 @@ async function resolveUncached(pin, fetchImpl, subtle) {
     throw reason instanceof StudioCharacterError ? reason : new StudioCharacterError('studio_fetch_failed', String(reason?.message || reason), { cause: reason });
   }
   const urls = new Map(settled.map((r) => r.value));
+  const urlOf = (path) => urls.get(representantes.get(plan.files.get(path).sha256));
+
+  /* Famílias para carga preguiçosa do runtime: uma entrada por família cujas chaves vivem num
+     único CONTEÚDO compartilhado (loco|combat|ceremony no layout do conversor; caminhos
+     duplicados com o mesmo SHA contam como um só). Emotes ficam de fora (um arquivo por chave)
+     e seguem acessíveis por extraClipUrls. */
+  const families = new Map();
+  for (const family of STUDIO_CLIP_FAMILIES) {
+    if (family === 'emote') continue;
+    const chaves = plan.extraClips.map(([name]) => name).filter((name) => studioClipFamily(name) === family);
+    const conteudos = [...new Set(chaves.map((name) => plan.files.get(manifest.animations.extra[name].file).sha256))];
+    if (conteudos.length === 1) {
+      families.set(family, Object.freeze({ url: urlOf(manifest.animations.extra[chaves[0]].file), keys: Object.freeze(chaves) }));
+    }
+  }
   return Object.freeze({
     kind: pin.kind,
     id: pin.id,
@@ -212,16 +257,19 @@ async function resolveUncached(pin, fetchImpl, subtle) {
     manifest,
     manifestSha256,
     modelSha256: plan.files.get(plan.model).sha256,
-    modelUrl: urls.get(plan.model),
-    animationUrls: Object.freeze(Object.fromEntries(STUDIO_CHARACTER_STATES.map((s) => [s, urls.get(plan.animations[s])]))),
+    modelUrl: urlOf(plan.model),
+    animationUrls: Object.freeze(Object.fromEntries(STUDIO_CHARACTER_STATES.map((s) => [s, urlOf(plan.animations[s])]))),
     extraClipUrls: Object.freeze(new Map(plan.extraClips.map(([name, entry]) => [name, Object.freeze({
-      url: urls.get(entry.file),
+      url: urlOf(entry.file),
       sha256: plan.files.get(entry.file).sha256,
+      clip: name,
+      family: entry.family ?? studioClipFamily(name),
       duration: entry.duration,
       loop: entry.loop,
       rootMotion: entry.rootMotion,
     })]))),
-    previewUrls: Object.freeze(plan.previews.map((path) => urls.get(path))),
+    families: Object.freeze(families),
+    previewUrls: Object.freeze(plan.previews.map((path) => urlOf(path))),
   });
 }
 

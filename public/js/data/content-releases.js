@@ -36,6 +36,19 @@ export const isStudioExtraClipName = (name) =>
   STUDIO_EXTRA_CLIPS.includes(name)
   || STUDIO_EXTRA_CLIP_PREFIXES.some((prefixo) => name.length > prefixo.length && name.startsWith(prefixo));
 
+// Família do clipe (contrato v3): espelho de clipFamily do Studio (tools/lib/character-pack.mjs),
+// que por sua vez espelha packFamily do conversor. 'states' para os 11 estados; emote_ → 'emote'
+// (o conversor chama o pack de 'emotes'); victory|defeat|death_* → 'ceremony';
+// reload_|draw_|holster_|hit_|grenade_|knife_|shoot_ → 'combat'; o resto é 'loco'.
+export const STUDIO_CLIP_FAMILIES = Object.freeze(['loco', 'combat', 'ceremony', 'emote']);
+export const studioClipFamily = (name) => {
+  if (STUDIO_CHARACTER_STATES.includes(name)) return 'states';
+  if (name.startsWith('emote_')) return 'emote';
+  if (/^(victory|defeat|death_)/.test(name)) return 'ceremony';
+  if (/^(reload_|draw_|holster_|hit_|grenade_|knife_|shoot_)/.test(name)) return 'combat';
+  return 'loco';
+};
+
 // Único esqueleto aceito (lista autoritativa: corosolto/studio tools/lib/character-pack.mjs).
 export const STUDIO_CHARACTER_SKELETON = 'meshy-28';
 // Os 26 nomes distintos das 28 juntas (Curl_R/Curl_L repetem); o adaptador exige todos no modelo.
