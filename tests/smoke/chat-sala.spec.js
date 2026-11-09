@@ -499,7 +499,7 @@ test.describe('chat de sala', () => {
       await page.locator('#chat-entrada').fill('  oi   galera  ');
       await page.keyboard.press('Enter');
       expect(await page.evaluate(() => window.__chatNet.enviados.length), 'sem o aceite das regras nada sai pelo net').toBe(0);
-      await expect(page.locator('#chat-aviso')).toContainText(/regras/i);
+      await expect(page.locator('#chat-aviso')).toContainText(idioma === 'pt' ? /regras/i : /rules/i);
       await expect(page.locator('#chat-regras-aceite')).toBeFocused();
       expect(await chatAberto(page)).toBe(true);
       await page.locator('#chat-regras-aceite').check();
@@ -585,12 +585,12 @@ test.describe('chat de sala', () => {
       await page.locator('#chat-entrada').fill('   ');
       await page.keyboard.press('Enter');
       expect(await page.evaluate(() => window.__chatNet.enviados.length)).toBe(3);
-      await expect(page.locator('#chat-aviso')).toHaveText(/vazia/i);
+      await expect(page.locator('#chat-aviso')).toHaveText(idioma === 'pt' ? /vazia/i : /empty/i);
       await page.locator('#chat-entrada').fill('a'.repeat(161));
       await expect(page.locator('#chat-contador')).toHaveClass(/estourou/);
       await page.keyboard.press('Enter');
       expect(await page.evaluate(() => window.__chatNet.enviados.length)).toBe(3);
-      await expect(page.locator('#chat-aviso')).toHaveText(/longa/i);
+      await expect(page.locator('#chat-aviso')).toHaveText(idioma === 'pt' ? /longa/i : /long/i);
       await page.locator('#chat-entrada').fill('');
       await page.keyboard.press('Escape');
     });
@@ -638,7 +638,7 @@ test.describe('chat de sala', () => {
       await expect(page.locator('#chat-motivos textarea, #chat-motivos input[type="text"]')).toHaveCount(0);
       // o aviso de retenção (§9) aparece junto dos motivos, antes de enviar
       await expect(page.locator('#chat-motivos-aviso')).toBeVisible();
-      await expect(page.locator('#chat-motivos-aviso')).toHaveText(/90 dias/);
+      await expect(page.locator('#chat-motivos-aviso')).toHaveText(idioma === 'pt' ? /90 dias/ : /90 days/);
       await figura(page, 'denuncia-aviso');
       await page.locator('#chat-motivos input[value="spam"]').check();
       await agirEVerAviso(page, idioma === 'pt' ? /recebida/i : /received/i, () => page.locator('#chat-motivos-enviar').click());
@@ -684,7 +684,7 @@ test.describe('chat de sala', () => {
       await expect(page.locator('#chat-log')).toHaveAttribute('aria-live', 'off');
       await entregar(page, { type: 'chat', id: 60, t: 60, ch: 'sala', aud: 'todos', h: 'PQR', esp: 0, time: 'E', txt: 'escondida' });
       await expect(page.locator('#chat-nao-lidas')).toBeVisible();
-      await expect(page.locator('#chat-nao-lidas')).toHaveText('1 nova');
+      await expect(page.locator('#chat-nao-lidas')).toHaveText(idioma === 'pt' ? '1 nova' : '1 new');
       await expect(page.locator('#chat-log .chat-linha[data-id="60"]')).toBeHidden();
       await page.locator('#chat-ocultar').click();
       await expect(page.locator('#chat-nao-lidas')).toBeHidden();
@@ -701,7 +701,7 @@ test.describe('chat de sala', () => {
       // O atalho U já foi cobrado acima. A regra de espectador é verificada pelo painel
       // para evitar a virada de round entre esperar live e enviar a tecla em CI lento.
       expect(await page.evaluate(() => window.__chat.abrir('time'))).toBe(true);
-      await expect(page.locator('#chat-aviso')).toHaveText(/sala/i);
+      await expect(page.locator('#chat-aviso')).toHaveText(idioma === 'pt' ? /sala/i : /room/i);
       expect(await page.evaluate(() => window.__chat.canal())).toBe('sala');
       await expect(page.locator('#chat-canal')).toBeDisabled();
       await page.keyboard.press('Escape');
