@@ -43,6 +43,7 @@ jobs:
             echo "nenhum arquivo do site mudou: preview pula"
           fi
 
+  # A publicação é opcional para não bloquear o PR enquanto o dono ajusta o token.
   preview:
     needs: decide
     if: needs.decide.outputs.rodar == 'true' && github.event.pull_request.draft != true && github.event.pull_request.head.repo.full_name == github.repository
