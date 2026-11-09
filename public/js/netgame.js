@@ -1004,7 +1004,7 @@ class Netcode {
         const mMantle = Number.isFinite(b.mantleF) && b.mantleF > 0 && b.mantleF < 1;
         b.mesh.ctrl.setAr?.(mMantle);
         b.mesh.ctrl.setMantle?.(mMantle ? b.mantleF : null);
-        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25);
+        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25, vx * Math.cos(fwdYaw) - vz * Math.sin(fwdYaw));
       } else poseCharacter(b.mesh.parts, spd, 0, game.time);
     } else {
       b.deadT = (b.deadT || 0) + dt; b._deadShown = true;
