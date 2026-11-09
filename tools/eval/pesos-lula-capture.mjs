@@ -17,13 +17,14 @@
    (evidence/pesos-skins-20261109/), não no client.
    ============================================================================ */
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import sharp from 'sharp';
 import { chromium } from 'playwright';
 
 const arg = (n, d) => { const i = process.argv.indexOf(`--${n}`); return i > 0 ? process.argv[i + 1] : d; };
 const BASE = arg('base', 'http://127.0.0.1:9437');
-const ORIGEM = arg('origem', 'origin/main'); // commit com os GLBs antigos
+const ORIGEM = arg('origem', ''); // vazio: pai do commit que apagou o GLB antigo no HEAD
 const SAIDA = arg('saida', '/tmp/pesos-lula');
 const QUADROS = '/tmp/pesos-lula-quadros';
 mkdirSync(SAIDA, { recursive: true }); mkdirSync(QUADROS, { recursive: true });
@@ -39,11 +40,23 @@ const VISTAS = [ // tronco + braços (fatia 0,7 da altura), de frente 3/4, de la
 const TEMPO = 0.6; // s de clipe depois do aquecimento do charvideo
 
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new'] });
-const recibo = { base: BASE, origem: ORIGEM, tempo: TEMPO, skins: {} };
+/* Os nomes antigos somem da árvore com este repeso: o blob vem do pai do commit que os
+   apagou (vale na branch e depois do merge) e o hash do nome confere os bytes. */
+const glbAntigo = (antigo) => {
+  const caminho = `public/models/skins/${antigo}`;
+  const apagou = ORIGEM ? '' : execFileSync('git', ['log', '-1', '--format=%H', '--diff-filter=D', 'HEAD', '--', caminho], { encoding: 'utf8' }).trim();
+  const ref = ORIGEM || (apagou && `${apagou}^`);
+  if (!ref) throw new Error(`${antigo}: nenhum commit do HEAD apagou ${caminho}; passe --origem`);
+  const bytes = execFileSync('git', ['show', `${ref}:${caminho}`], { maxBuffer: 1 << 26 });
+  const hash = createHash('sha256').update(bytes).digest('hex').slice(0, 12);
+  if (!antigo.endsWith(`-${hash}.glb`)) throw new Error(`${antigo}: bytes de ${ref} têm hash ${hash}`);
+  return { bytes, ref };
+};
+const recibo = { base: BASE, origem: ORIGEM || 'pai do commit que apagou cada GLB antigo', tempo: TEMPO, skins: {} };
 try {
   for (const [skin, antigo] of Object.entries(ANTIGOS)) {
     const novo = manifest.skins[skin].model.split('/').pop();
-    const bytesAntigos = execFileSync('git', ['show', `${ORIGEM}:public/models/skins/${antigo}`], { maxBuffer: 1 << 26 });
+    const { bytes: bytesAntigos, ref: refAntigo } = glbAntigo(antigo);
     const tiles = { antes: [], depois: [] };
     for (const estado of ['antes', 'depois']) {
       const page = await browser.newPage({ viewport: { width: 512, height: 512 } });
@@ -95,7 +108,7 @@ try {
     const arquivo = `${SAIDA}/${skin}.jpg`;
     const info = await sharp({ create: { width: n * T, height: 3 * (T + R), channels: 4, background: '#1a222c' } })
       .composite([...resolvidas, ...rotulos]).jpeg({ quality: 82 }).toFile(arquivo);
-    recibo.skins[skin] = { antigo, novo, folha: arquivo, bytes: info.size, quadros: n * 2, diferencaMediaPorQuadro: Object.fromEntries(tiles.antes.map((t, i) => [t.rotulo, +diffs[i].toFixed(3)])) };
+    recibo.skins[skin] = { antigo, origemAntigo: refAntigo, novo, folha: arquivo, bytes: info.size, quadros: n * 2, diferencaMediaPorQuadro: Object.fromEntries(tiles.antes.map((t, i) => [t.rotulo, +diffs[i].toFixed(3)])) };
     console.log(`${skin}: ${arquivo} (${info.size} B)`);
   }
 } finally { await browser.close(); }
