@@ -74,6 +74,22 @@ if [ -f package.json ] && [ -f public/js/version.js ]; then
   [ -n "$pj" ] && [ "$pj" != "$vj" ] && falhas+=("package.json ($pj) != version.js ($vj)")
 fi
 
+# UM PRE-PUSH POR MÁQUINA. Dois ou três `check:deploy` em paralelo (worktrees diferentes,
+# sessões diferentes) levaram o load a 76 e cada um a 30+ min — nenhum terminava. O lock é
+# um diretório (mkdir é atômico no macOS, que não tem flock); o dono do lock deixa o pid, e
+# lock de processo morto é tomado. Espera no máximo 40 min; depois segue e avisa.
+trava=/tmp/csbrasil-prepush.lock
+espera=0; minha=0
+while :; do
+  if mkdir "$trava" 2>/dev/null; then minha=1; break; fi
+  dono=$(cat "$trava/pid" 2>/dev/null)
+  if [ -n "$dono" ] && ! kill -0 "$dono" 2>/dev/null; then rm -rf "$trava"; continue; fi
+  [ "$espera" -eq 0 ] && echo "pre-push: outro pre-push em andamento (pid ${dono:-?}); esperando a vez"
+  if [ "$espera" -ge 2400 ]; then echo "pre-push: 40 min de espera; seguindo sem a trava"; break; fi
+  sleep 10; espera=$((espera + 10))
+done
+if [ "$minha" = 1 ]; then echo $$ > "$trava/pid"; trap 'rm -rf "$trava"' EXIT; fi
+
 for portao in eval:mapcontrato check:prepush; do
   if ! PREPUSH_REMOTE="$remoto" PREPUSH_REFS="$entrada" npm run "$portao" --silent >/tmp/prepush-$$.log 2>&1; then
     # O motivo tem de ser a linha que REPROVOU. O padrão anterior incluía `error`

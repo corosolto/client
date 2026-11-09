@@ -70,6 +70,7 @@ const LEGACY_VOICE_ALLOWLIST = Object.freeze({
 });
 // Eventos de fala dentro da partida; `select` fica fora (frase longa da tela de seleção).
 const INGAME_VOICE_EVENTS = Object.freeze(['kill', 'radio', 'round']);
+const SFX_ONLY_VOICE_IDS = Object.freeze(['lobisomem']);
 
 export class Sfx {
   constructor() {
@@ -150,7 +151,20 @@ export class Sfx {
     const pool = this.pack?.voice?.[team];
     if (!Array.isArray(pool)) return [];
     const allowlist = LEGACY_VOICE_ALLOWLIST[team];
-    return allowlist ? pool.filter((file) => allowlist.has(file)) : pool;
+    const curado = allowlist ? pool.filter((file) => allowlist.has(file)) : pool;
+    const sfx = this._sfxOnlyFiles();
+    return sfx.size ? curado.filter((file) => !sfx.has(file)) : curado;
+  }
+  // Takes de quem NÃO fala (Lobisomem: rosnados) ficam só com o dono — nunca são bordão
+  // emprestado a outro personagem da facção pelo pool genérico.
+  _sfxOnlyFiles() {
+    const out = new Set();
+    for (const id of SFX_ONLY_VOICE_IDS) {
+      const own = this.pack?.characterVoice?.[id];
+      if (!own || typeof own !== 'object') continue;
+      for (const event of INGAME_VOICE_EVENTS) for (const file of own[event] || []) out.add(file);
+    }
+    return out;
   }
 
   // team voice line (kill celebration / random), throttled
