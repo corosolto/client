@@ -58,6 +58,11 @@ O backend só emite `hit` não fatal para vítima humana; bots remotos não rece
 Mesmo para humanos, `hit` pode ser descartado sob carga. `npm run eval:remotos3p`
 mede as entradas e seus mutantes; não substitui a inspeção visual do corpo.
 
+O arnês `charvideo.html?remote=1&wpn=ak` expõe `REMOTEVID.init`, `snapshot`, `event`,
+`step`, `view`, `state` e `grab`. `snapshot` recebe entidades e lotes de eventos;
+para morte, envie `alive: false` no mesmo snapshot do `kill`. `step` avança o relógio
+sintético. O arnês usa GLBs reais e não simula socket, HUD, áudio nem sangue.
+
 ## As duas armadilhas que a régua existe para impedir de voltar
 
 - **Undo ANTES do mixer.** O overlay usa deltas aditivos em ossos que os clipes podem ou

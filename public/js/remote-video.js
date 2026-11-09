@@ -1,16 +1,3 @@
-/* Arnês visual sem rede para o mesmo caminho de snapshots e eventos do multiplayer.
-   Em charvideo.html?remote=1, espere REMOTEVID.ready e use:
-     init({ remoteId, attackerId, remote, attacker })  // campos opcionais de entidade
-     snapshot({ tick, t, state, ents }, events = [])  // eventos drenados após entidades
-     event({ k:'hit'|'kill', a, v, d, w, h })        // despacha imediatamente
-     step(dt = 1/fps), view(degrees), grab(), state(), dispose()
-   view(90) mostra a arma de lado; state().mountAngleDeg mede a orientação do
-   suporte no mundo contra a orientação desejada em relação ao corpo.
-   init aplica o primeiro snapshot (tick 0, t 0); snapshots seguintes devem ter tick
-   distinto e tempo em segundos crescente. step avança somente o relógio sintético.
-   Para kill, envie alive:false no snapshot junto do evento (ordem real do servidor).
-   Para mudar a posição do atacante antes de um evento, aplique snapshot e avance
-   quadros até a interpolação alcançá-la. Não há socket, áudio, HUD ou efeitos de sangue. */
 import * as THREE from 'three';
 import { buildCharacterModel } from './glbchars.js';
 import { Game } from './game.js';
