@@ -20,11 +20,18 @@ const EVIDENCIA = path.resolve('tools/eval');
 const STATES = ['idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'crouchwalk', 'jump', 'idle1h', 'walk1h', 'walkfire'];
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const readJSON = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
-// Nada é escrito em public/ antes de o corpo inteiro validar: um throw no meio não deixa pack parcial.
-const publish = (bytes, target) => {
-  if (!fs.existsSync(target) || !fs.readFileSync(target).equals(bytes)) {
+/* Nada é escrito antes de TODOS os corpos validarem: os bytes ficam em `pendentes` e
+   só são promovidos no fim, com a evidência. Um throw em qualquer corpo deixa public/ e
+   tools/eval/ exatamente como estavam. */
+const pendentes = [];
+const stage = (bytes, target) => pendentes.push([target, bytes]);
+const promote = () => {
+  for (const [target, bytes] of pendentes) {
+    if (fs.existsSync(target) && fs.readFileSync(target).equals(bytes)) continue;
     fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.writeFileSync(target, bytes);
+    const tmp = `${target}.${process.pid}.tmp`;
+    fs.writeFileSync(tmp, bytes);
+    fs.renameSync(tmp, target);
   }
 };
 
@@ -160,10 +167,8 @@ for (const entry of bodies) {
       failures: r.failures,
     };
   }
-  if (!CHECK) {
-    publish(packed, path.join(ANIMS, `${id}.glb`));
-    for (const [state, bytes] of fallbacks) publish(bytes, path.join(ANIMS, id, `${state}.glb`));
-  }
+  stage(packed, path.join(ANIMS, `${id}.glb`));
+  for (const [state, bytes] of fallbacks) stage(bytes, path.join(ANIMS, id, `${state}.glb`));
   selected.push({ id, sha256: sha(packed), bytes: packed.length, gzipBytes: declared.gzipBytes, refs, states });
 }
 
@@ -189,7 +194,7 @@ if (CHECK) {
   console.log(`ESTADOS-ASSADOS --check ✓ evidência reproduzida: ${selected.length} substituídos, ${excluded.length} excluídos`);
   process.exit(0);
 }
-fs.writeFileSync(alvo, evidencia);
+stage(Buffer.from(evidencia), alvo);
 const doc = `# Estados assados por corpo\n\nGerado por \`tools/import-baked-states.mjs\` a partir dos packs meshy-28 e do QA Studio. `
   + `Os arquivos \`<id>.glb\` preservam meshopt + rotações int16; as pastas \`<id>/\` guardam o fallback por estado.\n\n`
   + `- ${selected.length} BODIES substituídos; ${excluded.length} excluídos por pelo menos uma métrica QA pior.\n`
@@ -200,6 +205,7 @@ const doc = `# Estados assados por corpo\n\nGerado por \`tools/import-baked-stat
     : `- A cuca permanece fora: o pacote final piora métricas QA apesar de melhorar piso e quadril.\n`)
   + `\nFontes Mixamo/Quaternius e licenças seguem a procedência registrada nos manifests do Studio. `
   + `O índice \`baked-states.json\` contém hashes, velocidades, números de QA e todas as exclusões.\n`;
-fs.writeFileSync(path.join(EVIDENCIA, 'baked-states.SOURCES.md'), doc);
+stage(Buffer.from(doc), path.join(EVIDENCIA, 'baked-states.SOURCES.md'));
+promote();
 console.log(`ESTADOS-ASSADOS: ${selected.length} substituídos, ${excluded.length} excluídos`);
 console.log(`excluídos: ${excluded.map((b) => b.id).join(', ')}`);
