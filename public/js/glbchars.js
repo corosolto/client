@@ -1116,6 +1116,7 @@ class CharController {
     a.timeScale = dur > 0 ? a.getClip().duration / dur : 1;
     a.enabled = true; a.fadeIn(0.08).play();
     this._upperAction = a; this._upperName = name; this._upperDur = repeat ? Infinity : (dur || a.getClip().duration); this._upperT = 0;
+    this._hitClip = name.startsWith('hit_');   // outro clipe tomou o trem superior: o flinch volta ao overlay
     return true;
   }
 
@@ -1127,13 +1128,13 @@ class CharController {
     a.reset(); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = false;
     a.timeScale = dur > 0 ? a.getClip().duration / dur : 1;
     a.enabled = true; a.fadeIn(0.08).play();
-    this._upperAction = a; this._upperName = name; this._upperDur = dur || a.getClip().duration; this._upperT = 0;
+    this._upperAction = a; this._upperName = name; this._upperDur = dur || a.getClip().duration; this._upperT = 0; this._hitClip = false;
     return true;
   }
 
   _stopUpper() {
     if (this._upperAction) this._upperAction.fadeOut(0.08);
-    this._upperAction = null; this._upperName = null; this._upperDur = 0; this._upperT = 0;
+    this._upperAction = null; this._upperName = null; this._upperDur = 0; this._upperT = 0; this._hitClip = false;
   }
 
   _tickUpper(dt) {
@@ -1342,7 +1343,7 @@ class CharController {
     this.dead = true; this.shooting = false; this._ar = false; this._mantleF = null;
     /* Overlays de vida (reload/flinch/lean/pitch) morrem junto com o corpo (dono, 31/10). Hist: docs/ANIM-3P.md. */
     this.cancelReload();
-    this._stopUpper(); this._hitClip = false; this._ceremonyPending = null; this._drawPending = false; this._drawRequested = false;
+    this._stopUpper(); this._ceremonyPending = null; this._drawPending = false; this._drawRequested = false;
     this._flinchDur = 0;
     this._leanK = 0;
     this.aimPitch = 0;

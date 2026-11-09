@@ -20,7 +20,7 @@ const MUT_JOGO = {
   'jogo-cerimonia-muda': ['    this._cerimoniaCorpos?.(winner);\n', '', 'EX10e-cerimonia'],
   'jogo-cerimonia-invertida': ['b.mesh?.ctrl?.ceremony?.(!!winner && winner === b.team)', 'b.mesh?.ctrl?.ceremony?.(!!winner && winner !== b.team)', 'EX10e-cerimonia'],
 };
-const mutants = ['strafe-mudo', 'reload-perna-congelada', 'hit-sem-direcao', 'saque-mudo', 'faca-usa-rifle', 'vitoria-muda', 'cerimonia-vira-idle', ...Object.keys(MUT_JOGO)];
+const mutants = ['strafe-mudo', 'reload-perna-congelada', 'hit-sem-direcao', 'saque-mudo', 'faca-usa-rifle', 'vitoria-muda', 'cerimonia-vira-idle', 'flinch-preso-no-hit', ...Object.keys(MUT_JOGO)];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
 if (process.argv.includes('--self-test')) {
   for (const kind of ['', ...mutants]) {
@@ -69,6 +69,7 @@ if (mutant === 'saque-mudo') once("this._playUpper(`draw_${this.oneHanded ? 'pis
 if (mutant === 'faca-usa-rifle') once("this._playUpper('knife_stab'", "this._playUpper('shoot'");
 if (mutant === 'vitoria-muda') once("this._to(nome);", "this._to('idle');");
 if (mutant === 'cerimonia-vira-idle') once("if (/^(victory|defeat)$/.test(this.curName || '')) {", 'if (false) {');
+if (mutant === 'flinch-preso-no-hit') once("    this._hitClip = name.startsWith('hit_');", '');
 source = source.replace(/from (['"])([^'"\n]+)\1/g, (all, quote, spec) => {
   const file = spec === 'three' ? path.join(root, 'public/vendor/three.module.js')
     : spec.startsWith('three/addons/') ? path.join(root, 'public/vendor/addons', spec.slice(13))
@@ -139,6 +140,30 @@ check('EX4-hit-direcao', () => {
 check('EX4b-hit-retoma-reload', () => {
   const h = body(); h.ctrl.reload(2); step(h, 6); h.ctrl.flinch({ x: 1, z: 0 }, 1); step(h, 32);
   assert.equal(h.ctrl._upperName, 'reload_rifle');
+});
+// Overlay procedural do flinch quando o clipe de hit não está tocando: medido contra um gêmeo sem tiro.
+const cabecaCm = (x, y) => { x.group.updateMatrixWorld(true); y.group.updateMatrixWorld(true);
+  return x.ctrl.headBone.getWorldPosition(new THREE.Vector3()).distanceTo(y.ctrl.headBone.getWorldPosition(new THREE.Vector3())) * 100; };
+check('EX4c-flinch-sem-clipe-depois-de-hit', () => {
+  const h = body(), g = body(); step(h, 30); step(g, 30);
+  h.ctrl.flinch({ x: 1, z: 0 }, 1); step(h, 2); step(g, 2);
+  assert.ok(/^hit_/.test(h.ctrl._upperName || ''), 'primeiro hit sem clipe');
+  assert.equal(h.ctrl.flinchK, 0, 'overlay somado ao clipe de hit');
+  step(h, 60); step(g, 60);
+  assert.equal(h.ctrl._upperName, null, 'clipe de hit não terminou');
+  h.ctrl.lod = 2; g.ctrl.lod = 2;   // LOD 2: _playUpper recusa o clipe, sobra o overlay
+  h.ctrl.flinch({ x: 1, z: 0 }, 1); step(h, 5); step(g, 5);
+  assert.equal(h.ctrl._upperName, null);
+  assert.ok(h.ctrl.flinchK > 0.5, `flinchK ${h.ctrl.flinchK} no segundo hit sem clipe`);
+  assert.ok(cabecaCm(h, g) > 3, `cabeça a ${cabecaCm(h, g).toFixed(2)} cm do gêmeo`);
+});
+check('EX4d-flinch-volta-se-clipe-interrompido', () => {
+  const h = body(), g = body(); step(h, 30); step(g, 30);
+  h.ctrl.flinch({ x: 1, z: 0 }, 1); step(h, 2); step(g, 2);
+  h.ctrl.reload(1.2); g.ctrl.reload(1.2); step(h, 3); step(g, 3);
+  assert.equal(h.ctrl._upperName, 'reload_rifle', 'recarga não tomou o trem superior');
+  assert.ok(h.ctrl.flinchK > 0.5, `flinchK ${h.ctrl.flinchK} com o hit interrompido dentro da janela de 0,18 s`);
+  assert.ok(cabecaCm(h, g) > 3, `cabeça a ${cabecaCm(h, g).toFixed(2)} cm do gêmeo`);
 });
 check('EX5-saque', () => {
   a.ctrl.draw(); assert.equal(a.ctrl._upperName, 'holster_rifle');

@@ -255,16 +255,19 @@ punho dominante com o clipe-base. Residual após a 3ª rodada: `knife_stab` aind
 no coronel (teto 2,5×), sem vantagem do retarget individual. Não foi afrouxado teto nem criado
 pack específico para esconder esse caso.
 
-A régua runtime é `npm run eval:estados3p` (EX1–EX10, 19 cláusulas), incluída no `check:fast`. Ela usa os GLBs e
+A régua runtime é `npm run eval:estados3p` (EX1–EX10, 21 cláusulas), incluída no `check:fast`. Ela usa os GLBs e
 `AnimationMixer` reais e prova: uma só requisição lazy, strafe e diagonal, pernas idênticas ao
 controle durante recarga andando, quatro direções + cabeça, holster→draw, faca, granada 1,05 s,
 vitória/derrota (e que a vitória segura 30 quadros parado, sem o idle voltar por cima) e LOD/fallback.
+EX4c/EX4d cobram o overlay procedural do flinch quando o clipe de hit não está tocando: segundo hit em
+LOD 2 depois de um hit com clipe, e hit cujo clipe é trocado pela recarga dentro da janela de 0,18 s
+(`_hitClip` passa a seguir o clipe dono do trem superior em `_playUpper`/`_stopUpper`).
 EX10a–e sobem o `Game` real (posto_treta, barbudo × capitão) com o `CharController` espionado no
 protótipo e disparam as transições: `_damage` no bot e no jogador (flinch com direção, dano/100 e
 cabeça), `_throwNade` (grenade 1,05), troca de arma do jogador e `_syncRemoteWeapon` do bot (draw no
 corpo novo) e `_endRound` (ceremony false no perdedor, true no vencedor). Mutantes: `strafe-mudo`,
 `reload-perna-congelada`, `hit-sem-direcao`, `saque-mudo`, `faca-usa-rifle`, `vitoria-muda`,
-`cerimonia-vira-idle` e sete que reescrevem `game.js` e têm de reprovar só a cláusula EX10 do call site:
+`cerimonia-vira-idle`, `flinch-preso-no-hit` e sete que reescrevem `game.js` e têm de reprovar só a cláusula EX10 do call site:
 `jogo-flinch-mudo`, `jogo-flinch-sem-cabeca`, `jogo-granada-muda`, `jogo-saque-tp-mudo`,
 `jogo-saque-bot-mudo`, `jogo-cerimonia-muda`, `jogo-cerimonia-invertida`.
 
