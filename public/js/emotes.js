@@ -4,20 +4,8 @@
 /* Vocabulário dos eixos: 'r' = direita do corpo, 'u' = cima, 'f' = frente.
    O controlador resolve esses três no mundo e converte pro quadro do pai do osso. */
 
-export const EMOTES = [
-  { id: 'passinho',    nome: 'Passinho',        origem: 'Funk carioca (RJ) — Patrimônio Imaterial do Rio, 2024', dur: 1.60, laco: true },
-  { id: 'samba',       nome: 'Samba no pé',     origem: 'Samba — a base de pés alternados do Rio',               dur: 1.40, laco: true },
-  { id: 'ginga',       nome: 'Ginga',           origem: 'Capoeira — mão à frente, perna oposta atrás',           dur: 2.00, laco: true },
-  { id: 'frevo',       nome: 'Frevo',           origem: 'Frevo (PE) — Patrimônio da Humanidade, UNESCO 2012',    dur: 1.20, laco: true },
-  { id: 'forro',       nome: 'Dois pra lá',     origem: 'Forró/xote — dois passos pra cada lado',                dur: 2.40, laco: true },
-  { id: 'quadradinho', nome: 'Quadradinho',     origem: 'Funk — o rebolado virado quadrado, em quatro tempos',   dur: 1.60, laco: true },
-  { id: 'sarrada',     nome: 'Sarrada no ar',   origem: 'Funk — impulso de quadril com as mãos à frente',        dur: 1.10, laco: false },
-  { id: 'salve',       nome: 'Salve',           origem: 'Saudação de rua — o braço que sobe no lugar do aperto de mão', dur: 1.30, laco: false },
-];
-
-export const EMOTE_IDS = EMOTES.map((e) => e.id);
-const POR_ID = new Map(EMOTES.map((e) => [e.id, e]));
-export const emoteInfo = (id) => POR_ID.get(id) || null;
+import { EMOTES, EMOTE_IDS, emoteInfo } from './data/emote-catalog.js';
+export { EMOTES, EMOTE_IDS, emoteInfo };
 
 const TAU = Math.PI * 2;
 const sin = (fase) => Math.sin(fase * TAU);
@@ -205,11 +193,11 @@ const PASSOS = {
 export function poseEmote(id, t, ossos) {
   const passo = PASSOS[id];
   if (!passo) return 0;
-  const info = POR_ID.get(id);
+  const info = emoteInfo(id);
   const dur = info ? info.dur : 1.5;
   const tempo = info && info.laco ? t % dur : Math.min(t, dur);
   return passo(tempo, dur, ossos) || 0;
 }
 
-export const emoteDuracao = (id) => (POR_ID.get(id)?.dur ?? 0);
-export const emoteLaco = (id) => !!POR_ID.get(id)?.laco;
+export const emoteDuracao = (id) => (emoteInfo(id)?.dur ?? 0);
+export const emoteLaco = (id) => !!emoteInfo(id)?.laco;
