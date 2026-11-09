@@ -365,6 +365,7 @@ test.describe('chat de sala', () => {
   test.describe('desktop: ARIA, Y/Enter/Esc, foco, IME, XSS e RTL, bloqueio, denúncia e geometria', () => {
     test.describe.configure({ mode: 'serial' });
     let page;
+    const errosDePagina = [];
     let idioma = 'pt';
     test.beforeAll(async ({ browser }, testInfo) => {
       // página própria fora do fixture: repete o cs_lang=pt do playwright.smoke.config.mjs

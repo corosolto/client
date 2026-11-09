@@ -19,14 +19,33 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.pull_requests[0].number != null
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    continue-on-error: true
     steps:
+      - name: Verifica o artefato produzido
+        id: artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          PR_NUM: ${{ github.event.workflow_run.pull_requests[0].number }}
+        run: |
+          set -euo pipefail
+          nomes=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts" --paginate --jq '.artifacts[] | select(.expired == false) | .name')
+          if grep -Fxq "cf-preview-${PR_NUM}" <<< "$nomes"; then
+            echo "modo=deploy" >> "$GITHUB_OUTPUT"
+          elif grep -Fxq "cf-preview-skip-${PR_NUM}" <<< "$nomes"; then
+            echo "modo=skip" >> "$GITHUB_OUTPUT"
+            echo "preview pulado: o build informou que não há artefato publicável"
+          else
+            echo "::error::workflow cf-preview terminou sem artefato de build nem marcador de skip"
+            exit 1
+          fi
       - name: Carrega configuração confiável
+        if: steps.artifact.outputs.modo == 'deploy'
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ github.event.workflow_run.pull_requests[0].base.sha }}
           persist-credentials: false
       - name: Baixa somente os assets compilados
+        if: steps.artifact.outputs.modo == 'deploy'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: cf-preview-${{ github.event.workflow_run.pull_requests[0].number }}
@@ -34,9 +53,11 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: steps.artifact.outputs.modo == 'deploy'
         with:
           node-version: 22
       - name: Verifica configuração da conta
+        if: steps.artifact.outputs.modo == 'deploy'
         env:
           ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
@@ -45,6 +66,7 @@ jobs:
             exit 1
           fi
       - name: Publica versão do Worker
+        if: steps.artifact.outputs.modo == 'deploy'
         id: upload
         env:
           CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN || secrets.CF_API_TOKEN }}
@@ -69,6 +91,7 @@ jobs:
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "preview Cloudflare: $URL"
       - name: Atualiza comentário sticky
+        if: steps.artifact.outputs.modo == 'deploy'
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}

@@ -70,3 +70,17 @@ jobs:
           if-no-files-found: error
           include-hidden-files: true
 
+
+  # Publica um marcador para o workflow confiável não confundir build pulado com sucesso.
+  skip:
+    needs: decide
+    if: needs.decide.outputs.rodar == 'false' || github.event.pull_request.draft == true || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cria marcador de preview pulado
+        run: |
+          printf 'preview pulado: nenhum arquivo do site mudou ou PR não publicável\n' > "$RUNNER_TEMP/preview-skip.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cf-preview-skip-${{ github.event.pull_request.number }}
+          path: ${{ runner.temp }}/preview-skip.txt
