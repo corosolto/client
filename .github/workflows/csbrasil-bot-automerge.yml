@@ -96,6 +96,6 @@ jobs:
           subprocess.run(['gh', 'pr', 'edit', pr, '--add-label', 'pronto-pra-merge'], check=True)
           if not ja:   # um comentário por PR, não um por reavaliação
               subprocess.run(['gh', 'pr', 'comment', pr, '--body',
-                              '🤖 **csbrasil-bot**: portões verdes e diff dentro do que o '
-                              '`check_automerge` aceita — marquei como `pronto-pra-merge`.'], check=True)
+                              '🤖 **csbrasil-bot**: required checks passed and the diff meets the '
+                              '`check_automerge` criteria. Marked as `pronto-pra-merge` for human review.'], check=True)
           PY

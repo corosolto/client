@@ -1,5 +1,11 @@
 {
   "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "paths": {
+      "#borda": ["./src/lib/borda/vercel.ts"],
+      "#borda-imagem": ["./src/lib/borda/vercel-imagem.ts"]
+    }
+  },
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist", "public"]
 }

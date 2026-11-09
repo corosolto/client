@@ -1,0 +1,29 @@
+# Spike da migração Vercel -> Cloudflare Workers (docs/runbooks/MIGRACAO-CLOUDFLARE.md).
+# Só é lido com `ADAPTER=cloudflare`; o build padrão continua na Vercel.
+name = "csb-spike"
+main = "src/cf/worker.ts"
+compatibility_date = "2026-11-09"
+# nodejs_compat: node:crypto/node:net das libs do proxy e `process.env` populado com [vars] e secrets.
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+# Estáticos (dist/client) servidos antes do Worker; `_headers`/`_redirects` gerados de vercel.json
+# por tools/cf/gen-headers-redirects.mjs. `/` roda no Worker primeiro por causa dos redirects
+# condicionados a querystring (`/?janela=...`), que o `_redirects` não expressa.
+# not_found_handling = "none": com "404-page" o asset layer responde 404.html sem chamar o
+# Worker, e toda rota SSR (/api/*, /u/*, /mapa) morre em 404; o 404 do Astro vem pelo adaptador.
+# drop-trailing-slash: o canonical do site é sem barra (/en, /mapas); "auto" mandaria 307 para /en/.
+[assets]
+binding = "ASSETS"
+directory = "./dist/client"
+not_found_handling = "none"
+html_handling = "drop-trailing-slash"
+run_worker_first = ["/", "/index.html"]
+
+[observability]
+enabled = true
+
+# Texto, não segredo. Segredos (API_PROXY_SECRET, SUPABASE_SERVICE_ROLE_KEY) entram por `wrangler secret put`.
+[vars]
+PUBLIC_API_BASE = "https://csbrasil-backend-hupd3weo5q-rj.a.run.app"
+RANKING_ON = "true"

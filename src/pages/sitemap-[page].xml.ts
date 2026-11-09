@@ -12,7 +12,6 @@
 // precisam morar em alguma página numerada.
 import type { APIRoute } from 'astro';
 import { SITE, RANKING_ON } from '../lib/site';
-import { supabaseAdmin } from '../lib/supabase';
 import { POR_PAGINA, offsetDaPagina, xmlUrlset, type Entrada } from '../lib/sitemap';
 import { STATIC, perfis, xmlResposta } from './sitemap.xml';
 

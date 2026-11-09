@@ -8152,10 +8152,16 @@ export class Game {
   /* RÁDIO DOS BOTS: o sistema de rádio existia só pro jogador — o time era mudo, então nada
      do que os bots faziam chegava ao jogador como informação. Aqui, ao ENGATAR um alvo, o bot
      grita o contato no mesmo log do rádio (cooldown global de 5s pra não virar tagarelice) e,
-     se for ALIADO do jogador, isso é a única pista de "tem briga ali" fora do radar. */
+     se for ALIADO do jogador, isso é a única pista de "tem briga ali" fora do radar.
+     NÓ DEDICADO: não há jogador local nem DOM; o engate vira `_voiceSnap='radio'` no snapshot
+     (room.js serializa, netcodec manda como contador v5) e cada cliente decide distância, lado
+     e voz em NetGame.voice(). Antes o canal `voice` existia no protocolo mas ninguém o
+     preenchia — o multiplayer era um time mudo. */
   _botCall(b, target) {
-    if (!this.el || !this.el.radioLog || this.state !== 'live') return;
+    if (this.state !== 'live') return;
     if (this.time < (this._radioCd || 0)) return;
+    if (this.dedicated) { this._radioCd = this.time + 5; b._voiceSnap = 'radio'; return; }
+    if (!this.el || !this.el.radioLog) return;
     if (b.pos.distanceTo(this.player.pos) > 55) return;   // longe demais: não escutaria
     this._radioCd = this.time + 5;
     const mine = b.team === this.player.team;

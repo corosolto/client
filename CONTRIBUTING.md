@@ -178,23 +178,26 @@ registro. Passo a passo em `docs/docs/construtor-de-mapas.md`. Relevo em camadas
 
 ## Antes de abrir o PR
 
-**O `git push` já roda o `check:deploy` sozinho** — é o hook `.githooks/pre-push`.
+**O `git push` já roda o `check:prepush` sozinho** — é o hook `.githooks/pre-push`.
 Ele existe porque numa única sessão de 12/08/2026 quatro pushes seguidos abriram CI
 vermelho em portão que roda em **5 segundos** na máquina: `docs:check` duas vezes,
 `arch:check` e `eval:shaderlog`. O portão existia; ninguém rodava.
 
-É o `check:deploy` e não o `check:fast` de propósito: 20 passos determinísticos, sem
-browser e sem rede, contra 35. Portão que demora vira portão que se contorna. Quando
-você precisar mesmo passar por cima, `PULAR_PORTAO=1 git push` — e o CI continua
-sendo a rede de baixo.
+O hook executa o núcleo e as suites afetadas pelo diff. Qualquer caminho desconhecido ou
+transversal (`package.json`, `game.js`, `main.js`, boot/rede, workflows) cai no `check:deploy`
+completo. A seleção é só local e o CI continua completo. Rode `npm run check:fast` ou
+`npm run check:deploy` diretamente quando quiser a suíte inteira antes do primeiro push.
+
+Em uma falha preexistente comprovada, `PREPUSH=0 git push` pula o hook — e o CI continua
+sendo a rede de baixo. Não use esse escape para uma falha do seu próprio diff.
 
 Antes de abrir o PR, o resto continua na sua mão:
 
 ```bash
-npm run check        # quality gate completo
+npm run check:deploy # quality gate completo (check:fast é a versão rápida)
 npm run arch         # se você mexeu em public/js, o ARCH.md precisa ser regerado
 npm run build        # o site tem que buildar
-npm run check:seo    # se você mexeu em src/ ou em public/llms.txt
+npm run check:seo    # se você mexeu em src/ (inclui src/pages/llms.txt.ts)
 ```
 
 `check:seo` roda `npm run build` e depois mede o **HTML publicado**, não o
@@ -231,13 +234,13 @@ E teste à mão: o jogo abre, o console fica limpo, uma partida completa roda
 - Exceção decidida pelo dono em 04/10/2026: **figura política pública** pode entrar
   como caricatura satírica, e só assim. Nome caricato, nunca o nome real. Modelo 3D
   gerado a partir de concept 2D caricato; foto real só serve de referência para o
-  concept e precisa ser conferida a olho (`docs/LICOES.md`, lição 9). O mesmo
+  concept e precisa ser conferida a olho (`docs/LICOES.md` em `../progress`, lição 9). O mesmo
   tratamento vale para todos os campos políticos. Sem gore e sem humilhação física.
   Quando um personagem desses vai ao ar é decisão do dono.
 
 ## Processo
 
-1. Feature grande? Abra uma **issue** antes (veja [`docs/IDEAS.md`](docs/IDEAS.md)).
+1. Feature grande? Abra uma **issue** antes (as ideias vivem em `docs/IDEAS.md` do repo privado `progress`).
 2. Fork, branch, PR com descrição clara e screenshots.
 
    **Nome da branch: `v2/<assunto>`** — `v2/multiplayer`, `v2/audio`, `v2/ui-hud`.

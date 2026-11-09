@@ -117,8 +117,8 @@ try {
     args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio'],
   });
   const context = await browser.newContext({ viewport: { width: 1200, height: 800 } });
-  // navegador de diagnóstico consente com a medição (privacy-runtime.js): desde a
-  // frente social o relatório de erros é opt-in e o portão mede o caminho completo
+  // navegador de diagnóstico grava a permissão explícita (privacy-runtime.js): a medição já
+  // é ligada por padrão, mas o portão fixa o estado para não depender do default do runtime
   await context.addInitScript(() => {
     // B3 asserts Portuguese copy: select the product's explicit language before boot.
     try { localStorage.setItem('cs_lang', 'pt'); } catch {}
