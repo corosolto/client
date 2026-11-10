@@ -20,15 +20,21 @@
    PF4  marcas no osso da arma: grupo skin-frame-<id> filho de Arma, símbolo e letreiro dos dois
         lados, na lateral (|x| entre 1,6 e 2,0 cm do eixo) e dentro do comprimento e da altura.
    PF5  trocar de pintura não empilha grupo de marcas da anterior.
+   PF6  todo SVG de marca (markAsset/markAssets) declara width e height no <svg>, na proporção do
+        viewBox. Sem tamanho próprio o Chrome dá ao <img> 300×150 de faz-de-conta e o WebGL recusa
+        o upload (texImage2D INVALID_VALUE): o plano existia sem oclusão e a marca não aparecia.
+        Medido 10/11: usa-bandeira-grande.svg e maga-47.svg (liberdade e MAGA no X18, idle/inspeção
+        e 3ª pessoa), acido-selo.svg e caveira-urbana.svg; com width/height os quatro sobem.
 
    REPRODUZ: node --import ./tools/eval/vm-hand-three-register.mjs tools/eval/pintura-fabrica-check.mjs [--mutante=<id>]
    MUTANTES: pintura-na-mao  -> pinta a rig inteira (mãos dentro do grupo pintado) -> PF1
-             sem-referencia  -> a fábrica volta ao caminho do socket (estado de 10/11) -> PF3, PF4, PF5 */
+             sem-referencia  -> a fábrica volta ao caminho do socket (estado de 10/11) -> PF3, PF4, PF5
+             svg-sem-tamanho -> maga-47.svg sem width/height (estado de 10/11) -> PF6 */
 import fs from 'node:fs';
 import './harness.mjs';
 const { THREE } = await import('./harness.mjs');
 
-const MUTANTES = { 'pintura-na-mao': ['PF1'], 'sem-referencia': ['PF3', 'PF4', 'PF5'] };
+const MUTANTES = { 'pintura-na-mao': ['PF1'], 'sem-referencia': ['PF3', 'PF4', 'PF5'], 'svg-sem-tamanho': ['PF6'] };
 const arg = process.argv.slice(2);
 if (arg.length > 1 || arg.some((a) => !a.startsWith('--mutante=') || !MUTANTES[a.slice(10)])) throw Error(`CLI: --mutante=${Object.keys(MUTANTES).join('|')}`);
 const MUTANTE = arg[0]?.slice(10) || '';
@@ -150,6 +156,21 @@ for (const skinId of PISTOLAS) {
     chk('PF5', grupos.length === 1 && grupos[0] === 'skin-frame-estrela-vermelha-pistola', `grupos no osso após trocar: ${grupos.join(', ') || 'nenhum'}`);
   }
 }
+
+// PF6
+const { WEAPON_SKINS } = await import('../../public/js/data/weapon-skin-definitions.js');
+const svgs = [...new Set(Object.values(WEAPON_SKINS).flatMap((d) => [d.markAsset, ...Object.values(d.markAssets || {})])
+  .filter((a) => typeof a === 'string' && a.endsWith('.svg')))].sort();
+const semTamanho = svgs.filter((asset) => {
+  let texto = fs.readFileSync(new URL(`../../public${asset}`, import.meta.url), 'utf8');
+  if (MUTANTE === 'svg-sem-tamanho' && asset.endsWith('/maga-47.svg')) texto = texto.replace(/(<svg\b[^>]*?)\s+width="[^"]*"\s+height="[^"]*"/, '$1');
+  const raiz = texto.match(/<svg\b[^>]*>/)?.[0] || '';
+  const attr = (n) => Number(raiz.match(new RegExp(`\\s${n}="([\\d.]+)"`))?.[1]);
+  const caixa = raiz.match(/\sviewBox="([^"]+)"/)?.[1].trim().split(/[\s,]+/).map(Number) || [];
+  const [w, h] = [attr('width'), attr('height')];
+  return !(w > 0 && h > 0 && caixa.length === 4 && Math.abs(w / h - caixa[2] / caixa[3]) <= 0.01 * (caixa[2] / caixa[3]));
+});
+chk('PF6', svgs.length > 0 && !semTamanho.length, `${svgs.length} SVGs de marca; sem width/height na proporção do viewBox: ${semTamanho.join(' ') || 'nenhum'}`);
 
 falhas = falhas.sort();
 if (MUTANTE) {
