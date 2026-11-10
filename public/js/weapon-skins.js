@@ -894,9 +894,8 @@ function attachOfficialMark(model, weaponId, skinId) {
   }
 }
 
-// Espaço em que a loja autora padrão e marcas: o weaponModel de 3ª pessoa (cartaz e prévia).
-// back/front/top = caixa do wrap ÷ norm (cano +Z, cima +Y); malha = Ry(-rotY)·(wrap − shiftZ·Z),
-// o inverso de CFG.rot e do recuo do grip em weapons.js; scale = norm do wrap.
+// Espaço do weaponModel 3P (cartaz/prévia da loja): caixa do wrap ÷ norm (cano +Z, cima +Y), e
+// malha = Ry(-rotY)·(wrap − shiftZ·Z), o inverso de CFG.rot e do recuo do grip (weapons.js).
 const TP_REFERENCE = Object.freeze({
   pistol: Object.freeze({ back: -0.2994, front: 0.6986, top: 0.3799, rotY: 90, shiftZ: 0.1996, scale: 0.2605 }),
 });
