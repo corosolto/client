@@ -2,6 +2,7 @@ const storeSkin = ({
   id, name, weapon, theme, color, description, price, inspiration, designOrigin = 'project-owned',
   slogan = null, markAsset = null, markSourceUrl = null, rightsStatus = 'original-safe', metalFinish = null,
   preserveBase = false, markLayout = null, sloganLayout = null, sloganAspect = null, series = null, storeEnabled = true, passe = null,
+  patternAsset = null, patternStyle = null, fpMarkLayout = null, fpSloganLayout = null, knifeMarkSize = null,
 }) => Object.freeze({
   id,
   name,
@@ -23,7 +24,13 @@ const storeSkin = ({
   ...(preserveBase ? { preserveBase: true } : {}),
   ...(markLayout ? { markLayout: Object.freeze(markLayout) } : {}),
   ...(sloganLayout ? { sloganLayout: Object.freeze(sloganLayout) } : {}),
+  // Só no corpo golden da 1ª pessoa (weapon-skins.js attachPoliticalMarkings); mesmo espaço do markLayout.
+  ...(fpMarkLayout ? { fpMarkLayout: Object.freeze(fpMarkLayout) } : {}),
+  ...(fpSloganLayout ? { fpSloganLayout: Object.freeze(fpSloganLayout) } : {}),
+  ...(knifeMarkSize ? { knifeMarkSize } : {}),
   ...(sloganAspect ? { sloganAspect } : {}),
+  ...(patternAsset ? { patternAsset } : {}),
+  ...(patternStyle ? { patternStyle: Object.freeze({ ...patternStyle, palette: patternStyle.palette ? Object.freeze([...patternStyle.palette]) : null }) } : {}),
   ...(passe ? { passe: Object.freeze(passe) } : {}),
   storeEnabled,
   storePrice: price,
@@ -76,39 +83,63 @@ const PACK_WEAPON_SKINS = Object.freeze(Object.fromEntries(PACK_WEAPON_THEMES.fl
   })
 )));
 
+// Orçamento das texturas de corpo (`patternAsset`): no máximo 6 artes distintas, lado ≤ 512 px
+// em potência de 2 e ≤ 128 KiB cada. O runtime recusa o que passar e cai no padrão procedural.
+export const PATTERN_TEXTURE_BUDGET = Object.freeze({ maxTextures: 6, maxSize: 512, maxBytes: 128 * 1024 });
+// Cada skin do passe: um padrão de TV tileável no corpo, uma marca-herói e um letreiro.
+// Paleta = [escuro, meio, claro] sobre a luminância do padrão; null mantém o RGB da arte (barras).
 const SESSAO_DA_TRETA_DESIGNS = Object.freeze([
-  ['Sintonia', 'ak', '#e4d8aa', 'Barras de teste clássicas sobre grafite.'],
-  ['Chuvisco', 'pistol', '#c7d0d2', 'Estática monocromática cortada por linhas de varredura.'],
-  ['Corte Seco', 'knife', '#f14b55', 'Faixas vermelhas e pretas de interrupção.'],
-  ['Desvio', 'm4', '#30d9d0', 'Barras ciano deslocadas como sinal fora de sincronia.'],
-  ['Fantasma', 'scar', '#c17cff', 'Ecos violetas em faixas de sinal duplicadas.'],
-  ['Retrato', 'ak', '#edcc4d', 'Quadro de calibração amarelo e carvão.'],
-  ['Canal Zero', 'pistol', '#5fe284', 'Dígitos abstratos verdes em blocos de fósforo.'],
-  ['Vértice', 'knife', '#f28b43', 'Sinal laranja em diagonais de interferência.'],
-  ['Rastreamento', 'm4', '#51a8ee', 'Azul de fita com linhas de tracking branco.'],
-  ['Vertical', 'scar', '#ec6fae', 'Colunas magenta alternadas com ruído de tela.'],
-  ['Contraste', 'ak', '#e7e4d9', 'Quadriculado de calibração preto e marfim.'],
-  ['Pulso', 'pistol', '#f2c34a', 'Ondas âmbar em tela escura.'],
-  ['Frequência', 'knife', '#50d5bd', 'Dentes de serra turquesa de sinal interrompido.'],
-  ['Quadro Partido', 'm4', '#e16a70', 'Painéis vermelhos desalinhados e ruído.'],
-  ['Encerramento', 'scar', '#e2cfe9', 'Anéis de calibração em violeta e marfim.'],
+  ['Sintonia', 'ak', '#e4d8aa', 'Barras de cor desmanchando em chuvisco e a TV de cara feia.', 'SEM SINAL', 'tv-rosto', 'barras', 2.0, null],
+  ['Chuvisco', 'pistol', '#c7d0d2', 'Chuvisco preto e branco com o fantasma saindo da tela.', 'FORA DO AR', 'fantasma-tela', 'estatica', 2.0, ['#050505', '#6d6d6d', '#f4f4f4']],
+  ['Corte Seco', 'knife', '#f14b55', 'Chuvisco vermelho e branco e a caveira de teste.', 'SEM SINAL', 'caveira-teste', 'estatica', 1.2, ['#0a0000', '#a0101a', '#ffe8e0']],
+  ['Desvio', 'm4', '#30d9d0', 'Glitch ciano fora de sincronia e a TV de cara feia.', 'CANAL 0', 'tv-rosto', 'glitch', 1.6, ['#021013', '#0b8f96', '#e8ffff']],
+  ['Fantasma', 'scar', '#c17cff', 'Chuvisco violeta com o fantasma saindo da tela.', 'FORA DO AR', 'fantasma-tela', 'estatica', 2.0, ['#08030f', '#6b2fb0', '#f3e6ff']],
+  ['Retrato', 'ak', '#edcc4d', 'Círculo de calibração amarelo e a caveira de teste.', 'SEM SINAL', 'caveira-teste', 'circulo', 3.5, ['#0d0a02', '#a07a08', '#fff2a0']],
+  ['Canal Zero', 'pistol', '#5fe284', 'Varredura de fósforo verde e a TV de cara feia.', 'CANAL 0', 'tv-rosto', 'fosforo', 1.4, ['#010a03', '#118a34', '#c8ffd2']],
+  ['Vértice', 'knife', '#f28b43', 'Glitch laranja com o fantasma saindo da tela.', 'FORA DO AR', 'fantasma-tela', 'glitch', 1.5, ['#0c0300', '#e06010', '#fff2e0']],
+  ['Rastreamento', 'm4', '#51a8ee', 'Rasgos de fita azul e a TV de cara feia.', '▶ PLAY 00:00', 'tv-rosto', 'tracking', 2.0, ['#020818', '#1c3fa8', '#f0f6ff']],
+  ['Vertical', 'scar', '#ec6fae', 'Glitch magenta e a TV de cara feia.', 'SEM SINAL', 'tv-rosto', 'glitch', 1.5, null],
+  ['Contraste', 'ak', '#e7e4d9', 'Escada de cinzas desmanchando em chuvisco e a caveira de teste.', 'FORA DO AR', 'caveira-teste', 'barras', 2.0, ['#050505', '#8a8a84', '#f6f3ea']],
+  ['Pulso', 'pistol', '#f2c34a', 'Varredura de fósforo âmbar com o fantasma saindo da tela.', 'CANAL 0', 'fantasma-tela', 'fosforo', 1.4, ['#0c0600', '#a86a08', '#ffe2a0']],
+  ['Frequência', 'knife', '#50d5bd', 'Chuvisco preto e ciano com o fantasma saindo da tela.', 'SEM SINAL', 'fantasma-tela', 'estatica', 1.2, ['#000000', '#0a4f48', '#d6fffb']],
+  ['Quadro Partido', 'm4', '#e16a70', 'Barras de cor rasgadas e a caveira de teste.', '▶ PLAY 00:00', 'caveira-teste', 'barras', 2.0, null],
+  ['Encerramento', 'scar', '#e2cfe9', 'Círculo de calibração violeta e a caveira de teste.', 'FORA DO AR', 'caveira-teste', 'circulo', 3.5, ['#0b0612', '#7c4a9c', '#f4e8fa']],
 ]);
-const SESSAO_DA_TRETA_MARCAS = Object.freeze([
-  'fora-do-ar', 'passe-lan', 'fora-do-ar', 'passe-lan', 'passe-auditorio',
-  'passe-auditorio', 'passe-lan', 'passe-coelho', 'passe-lan', 'passe-coelho',
-  'fora-do-ar', 'passe-auditorio', 'passe-coelho', 'passe-auditorio', 'fora-do-ar',
-]);
+// Marca-herói acima da escala da Emo Xadrez (0,100 longa / 0,110 pistola), dentro da silhueta
+// medida por eval:weapon-skin-body: na AK ela desce para o poço do carregador e na M4 para cima
+// do punho, onde o corpo é mais alto que a fresta do trilho. Na pistola marca e letreiro ficam
+// no ferrolho, fora da mão em 1ª pessoa.
+// fpMark/fpSlogan: mesmas coordenadas (espaço local do wrap TP), só no corpo golden da 1ª
+// pessoa — lá a mão direita, a de apoio e as emendas do receptor caem em outros lugares.
+// knifeMarkSize: teto do símbolo na lâmina (sizeFrac do perfil é 0,62).
+const SESSAO_DA_TRETA_LAYOUT = Object.freeze({
+  ak: { mark: { y: 0.084, z: 0.075, height: 0.100, lift: 0.004 }, slogan: { y: 0.085, z: 0.245, height: 0.054, lift: 0.004 },
+    fpMark: { y: 0.070, z: -0.100, height: 0.115, lift: 0.004 }, fpSlogan: { y: 0.070, z: -0.265, height: 0.050, lift: 0.004 } },
+  m4: { mark: { y: 0.058, z: -0.020, height: 0.100, lift: 0.004 }, slogan: { y: 0.085, z: 0.220, height: 0.065, lift: 0.004 },
+    fpMark: { y: 0.040, z: -0.200, height: 0.090, lift: 0.004 }, fpSlogan: { y: 0.020, z: -0.070, height: 0.035, lift: 0.004 } },
+  scar: { mark: { y: 0.090, z: -0.055, height: 0.125, lift: 0.004 }, slogan: { y: 0.085, z: 0.150, height: 0.058, lift: 0.004 },
+    fpMark: { y: 0.045, z: -0.110, height: 0.115, lift: 0.004 }, fpSlogan: { y: 0.130, z: -0.220, height: 0.040, lift: 0.004 } },
+  pistol: { mark: { y: 0.250, z: -0.150, height: 0.140 }, slogan: { y: 0.250, z: 0.380, height: 0.065 },
+    fpMark: { y: 0.245, z: -0.150, height: 0.150 }, fpSlogan: { y: 0.270, z: 0.380, height: 0.075 } },
+  knife: { knifeMarkSize: 0.9 },
+});
 const SESSAO_DA_TRETA_SKINS = Object.freeze(Object.fromEntries(SESSAO_DA_TRETA_DESIGNS.map(
-  ([name, weapon, color, description], index) => {
+  ([name, weapon, color, description, slogan, mark, pattern, scale, palette], index) => {
     const id = `arma-${String(index + 1).padStart(2, '0')}`;
-    const markLayout = weapon === 'pistol'
-      ? { y: -0.040, z: -0.015, height: 0.070 }
-      : { y: 0.085, z: -0.050, height: 0.060, lift: 0.004 };
+    const layout = SESSAO_DA_TRETA_LAYOUT[weapon];
+    const markLayout = layout?.mark || null;
+    const sloganLayout = layout?.slogan || null;
+    const fpMarkLayout = layout?.fpMark || null;
+    const fpSloganLayout = layout?.fpSlogan || null;
+    const knifeMarkSize = layout?.knifeMarkSize || null;
     return [id, storeSkin({
       id, name, weapon, color, description, theme: id, price: 0,
       inspiration: 'grafismos originais de televisão analógica fora do ar, sem marcas ou reprodução de produto',
-      markAsset: `/textures/weapon-skins/project-marks/${SESSAO_DA_TRETA_MARCAS[index]}.webp`,
-      markLayout, series: 'SESSÃO DA TRETA', storeEnabled: false,
+      markAsset: `/textures/weapon-skins/project-marks/passe-${mark}.webp`,
+      patternAsset: `/textures/weapon-skins/patterns/${pattern}.webp`,
+      patternStyle: { scale, contrast: 1.15, palette },
+      markLayout, slogan, sloganLayout, sloganAspect: 4, series: 'SESSÃO DA TRETA', storeEnabled: false,
+      fpMarkLayout, fpSloganLayout, knifeMarkSize,
       passe: { season: 'sessao-da-treta-s1', level: index + 1 },
     })];
   },

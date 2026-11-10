@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ownVmResource } from './vmownership.js';
-import { WEAPON_SKINS } from './data/weapon-skin-definitions.js';
+import { WEAPON_SKINS, PATTERN_TEXTURE_BUDGET } from './data/weapon-skin-definitions.js';
 import { footprintFullyCovered, FOOTPRINT_TOLERANCE } from './knife-mark-support.js';
 export { WEAPON_SKINS };
 const TAMO_JUNTO_FRAGMENT = Object.freeze({
@@ -147,11 +147,56 @@ const SESSAO_DA_TRETA_PATTERNS = Object.freeze([
   float scan = mix(0.54, 1.0, smoothstep(0.25 - scanAA, 0.25 + scanAA, scanWave));
   float tracking = tear * step(0.78, fract(p.y * 42.0));
   c = mix(c, vec3(0.75, 0.83, 0.79), tracking * (0.25 + noise * 0.35));
-  diffuseColor.rgb = c * scan * (0.70 + noise * 0.38) + vec3(noise * 0.035);
+  diffuseColor.rgb = c * scan * (0.24 + noise * 0.12);
 `));
 const SESSAO_DA_TRETA_FRAGMENT = Object.freeze(Object.fromEntries(
   SESSAO_DA_TRETA_PATTERNS.map((fragment, index) => [`arma-${String(index + 1).padStart(2, '0')}`, fragment]),
 ));
+// `patternAsset`: textura tileável projetada de lado no corpo, no mesmo frame local dos padrões
+// do passe. `patternStyle.scale` = repetições ao longo do comprimento da peça; `contrast` estica
+// em torno do cinza médio; `palette` (3 cores) remapeia a luminância, sem ela vale o RGB da arte.
+const PATTERN_ASSET_FRAGMENT = `
+  vec2 p = vec2(mix(vWeaponSkinLocal.x, vWeaponSkinLocal.z, weaponSkinFrame.x) - weaponSkinFrame.y,
+                vWeaponSkinLocal.y - weaponSkinFrame.z) * weaponSkinFrame.w;
+  vec3 patternTexel = texture2D(weaponSkinPattern, p * weaponSkinPatternStyle.x + vec2(0.5)).rgb;
+  vec3 c;
+  if (weaponSkinPatternStyle.z > 0.5) {
+    float l = clamp((dot(patternTexel, vec3(0.299, 0.587, 0.114)) - 0.5) * weaponSkinPatternStyle.y + 0.5, 0.0, 1.0);
+    c = l < 0.5 ? mix(weaponSkinPalette[0], weaponSkinPalette[1], l * 2.0) : mix(weaponSkinPalette[1], weaponSkinPalette[2], l * 2.0 - 1.0);
+  } else {
+    c = pow(clamp((patternTexel - 0.5) * weaponSkinPatternStyle.y + 0.5, 0.0, 1.0), vec3(2.2));
+  }
+  diffuseColor.rgb = c;
+`;
+// Fora do orçamento (PATTERN_TEXTURE_BUDGET) ou com falha de carga, a skin cai no padrão
+// procedural dela; nunca fica sem pintura.
+const patternTextures = new Map();
+const patternLoads = new Map();
+const powerOfTwo = (value) => value > 0 && (value & (value - 1)) === 0;
+function preloadPatternTexture(src) {
+  if (patternLoads.has(src)) return patternLoads.get(src);
+  if (patternLoads.size >= PATTERN_TEXTURE_BUDGET.maxTextures) {
+    console.warn(`weapon-skins: ${src} fora do orçamento de ${PATTERN_TEXTURE_BUDGET.maxTextures} texturas de corpo`);
+    return Promise.resolve(null);
+  }
+  const load = new THREE.TextureLoader().loadAsync(src).then((texture) => {
+    const { width = 0, height = 0 } = texture.image || {};
+    if (!powerOfTwo(width) || !powerOfTwo(height) || Math.max(width, height) > PATTERN_TEXTURE_BUDGET.maxSize) {
+      console.warn(`weapon-skins: ${src} ${width}x${height} fora do orçamento de textura de corpo`);
+      texture.dispose();
+      return null;
+    }
+    texture.name = `weapon_skin_pattern:${src}`;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.anisotropy = 4;
+    patternTextures.set(src, texture);
+    return texture;
+  }, () => null);
+  patternLoads.set(src, load);
+  return load;
+}
+const patternAssetTexture = (skinId) => patternTextures.get(WEAPON_SKINS[skinId]?.patternAsset) || null;
 
 const PATTERN_FRAGMENT = Object.freeze({
   'tamo-junto-ak': TAMO_JUNTO_FRAGMENT.ak,
@@ -395,6 +440,7 @@ const THEME_FRAGMENT = Object.freeze({
   `,
 });
 const patternFragment = (skinId) => SESSAO_DA_TRETA_FRAGMENT[skinId] || PATTERN_FRAGMENT[skinId] || THEME_FRAGMENT[WEAPON_SKINS[skinId]?.theme];
+const skinFragment = (skinId) => (patternAssetTexture(skinId) ? PATTERN_ASSET_FRAGMENT : patternFragment(skinId));
 const MATERIAL_PROFILE = Object.freeze({
   gold: Object.freeze({ roughness: 0.48, metalness: 0.91, envMapIntensity: 0.72 }),
   silver: Object.freeze({ roughness: 0.52, metalness: 0.93, envMapIntensity: 0.68 }),
@@ -440,18 +486,20 @@ const handMesh = (object) => {
 };
 
 export function preloadWeaponSkinCandidate(skinId) {
-  const asset = WEAPON_SKINS[skinId]?.markAsset;
-  if (!asset) return Promise.resolve(null);
+  const definition = WEAPON_SKINS[skinId];
+  const pattern = definition?.patternAsset ? preloadPatternTexture(definition.patternAsset) : null;
+  const asset = definition?.markAsset;
+  if (!asset) return pattern ? pattern.then(() => null) : Promise.resolve(null);
   if (!markLoads.has(skinId)) {
     markLoads.set(skinId, new THREE.TextureLoader().loadAsync(asset).then((texture) => {
-      texture.name = `${skinId}__${WEAPON_SKINS[skinId]?.officialMarksIncluded ? 'official_mark_permission_needed' : 'project_symbol_inlay'}`;
+      texture.name = `${skinId}__${definition.officialMarksIncluded ? 'official_mark_permission_needed' : 'project_symbol_inlay'}`;
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.anisotropy = 4;
       markTextures.set(skinId, texture);
       return texture;
     }));
   }
-  return markLoads.get(skinId);
+  return pattern ? Promise.all([markLoads.get(skinId), pattern]).then(([mark]) => mark) : markLoads.get(skinId);
 }
 
 function sloganTexture(skinId) {
@@ -465,7 +513,7 @@ function sloganTexture(skinId) {
   canvas.width = canvasWidth;
   canvas.height = 256;
   const context = canvas.getContext('2d');
-  const style = SLOGAN_STYLE[definition.theme] || SLOGAN_STYLE['trabalho-13'];
+  const style = definition.passe ? { fill: '#ffffff', stroke: '#080808' } : (SLOGAN_STYLE[definition.theme] || SLOGAN_STYLE['trabalho-13']);
   let fontSize = 148;
   const maxTextWidth = canvasWidth - 96;
   context.font = `900 ${fontSize}px "Arial Black", Arial, sans-serif`;
@@ -476,7 +524,8 @@ function sloganTexture(skinId) {
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   context.lineJoin = 'round';
-  context.lineWidth = 14;
+  // Passe: contorno escuro mais grosso — o letreiro branco some sobre estampa de alto contraste.
+  context.lineWidth = definition.passe ? 24 : 14;
   context.strokeStyle = style.stroke;
   context.fillStyle = style.fill;
   context.strokeText(definition.slogan, canvasWidth / 2, 128, maxTextWidth);
@@ -489,35 +538,41 @@ function sloganTexture(skinId) {
   return texture;
 }
 
-function fittedSideSurfaces(model, weaponId, placements) {
+// `source` (opcional): { points, scale } — vértices da arma já no espaço de `model` e a escala
+// do wrap TP equivalente. O corpo golden do 1P mede pelo frame TP do osso (goldenMarkFrame).
+function fittedSideSurfaces(model, weaponId, placements, source = null) {
   const cacheKey = `${model.uuid}:${weaponId}:${placements.map(({ y, z, width, height, lift }) => `${y},${z},${width},${height},${lift || 0}`).join('|')}`;
   if (fittedSurfaceCache.has(cacheKey)) return fittedSurfaceCache.get(cacheKey);
-  model.updateMatrixWorld(true);
-  const inverseRoot = new THREE.Matrix4().copy(model.matrixWorld).invert();
   const probes = placements.map(({ y, z, width, height, lift }) => ({
     y, z, halfW: width * 0.56, halfH: height * 0.72, lift: Math.max(0, lift || 0), min: Infinity, max: -Infinity,
   }));
   let overallMin = Infinity;
   let overallMax = -Infinity;
-  const point = new THREE.Vector3();
-  const matrix = new THREE.Matrix4();
-  model.traverse((object) => {
-    const positions = object.isMesh && !handMesh(object) && object.geometry?.attributes?.position;
-    if (!positions || object.name.startsWith('skin-') || object.name.startsWith('club-mark-')) return;
-    matrix.multiplyMatrices(inverseRoot, object.matrixWorld);
-    const step = Math.max(1, Math.ceil(positions.count / 24000));
-    for (let index = 0; index < positions.count; index += step) {
-      point.fromBufferAttribute(positions, index).applyMatrix4(matrix);
-      overallMin = Math.min(overallMin, point.x);
-      overallMax = Math.max(overallMax, point.x);
-      for (const probe of probes) {
-        if (Math.abs(point.y - probe.y) > probe.halfH || Math.abs(point.z - probe.z) > probe.halfW) continue;
-        probe.min = Math.min(probe.min, point.x);
-        probe.max = Math.max(probe.max, point.x);
-      }
+  const visit = (point) => {
+    overallMin = Math.min(overallMin, point.x);
+    overallMax = Math.max(overallMax, point.x);
+    for (const probe of probes) {
+      if (Math.abs(point.y - probe.y) > probe.halfH || Math.abs(point.z - probe.z) > probe.halfW) continue;
+      probe.min = Math.min(probe.min, point.x);
+      probe.max = Math.max(probe.max, point.x);
     }
-  });
-  const lift = 0.0015 / Math.max(0.001, model.scale.x || 1);
+  };
+  if (source) {
+    for (const point of source.points) visit(point);
+  } else {
+    model.updateMatrixWorld(true);
+    const inverseRoot = new THREE.Matrix4().copy(model.matrixWorld).invert();
+    const point = new THREE.Vector3();
+    const matrix = new THREE.Matrix4();
+    model.traverse((object) => {
+      const positions = object.isMesh && !handMesh(object) && object.geometry?.attributes?.position;
+      if (!positions || object.name.startsWith('skin-') || object.name.startsWith('club-mark-')) return;
+      matrix.multiplyMatrices(inverseRoot, object.matrixWorld);
+      const step = Math.max(1, Math.ceil(positions.count / 24000));
+      for (let index = 0; index < positions.count; index += step) visit(point.fromBufferAttribute(positions, index).applyMatrix4(matrix));
+    });
+  }
+  const lift = 0.0015 / Math.max(0.001, source?.scale || model.scale.x || 1);
   const surfaces = probes.map((probe) => Object.freeze({
     right: (Number.isFinite(probe.max) ? probe.max : overallMax) + lift + probe.lift,
     left: (Number.isFinite(probe.min) ? probe.min : overallMin) - lift - probe.lift,
@@ -588,6 +643,9 @@ function knifeGeometryFingerprint(model) {
   return h.toString(16).padStart(8, '0');
 }
 
+// `longitudinal`: a horizontal da imagem corre ao longo da lâmina e o "cima" dela fica na
+// transversal, virado ao +Y do modelo (addKnifePair). Vale para o letreiro E para o símbolo:
+// com o símbolo transversal o topo da caveira apontava para a ponta (deitado 90° no cartaz).
 const KNIFE_MARK_PROFILES = Object.freeze({
   'knife-fp': Object.freeze({
     id: 'coro-knife-fp-v2',
@@ -595,7 +653,7 @@ const KNIFE_MARK_PROFILES = Object.freeze({
     fingerprint: '2b9905bf',
     blade: Object.freeze({ fromGrip: 0.50, toTip: 0.96, minSlenderness: 2.2 }),
     roles: Object.freeze({
-      symbol: Object.freeze({ along: 0.40, sizeFrac: 0.62 }),
+      symbol: Object.freeze({ along: 0.40, sizeFrac: 0.62, longitudinal: true }),
       slogan: Object.freeze({ along: 0.76, sizeFrac: 0.62, longitudinal: true }),
     }),
     liftFrac: 0.05,
@@ -607,7 +665,7 @@ const KNIFE_MARK_PROFILES = Object.freeze({
     fingerprint: 'eede1583',
     blade: Object.freeze({ fromGrip: 0.50, toTip: 0.96, minSlenderness: 2.2 }),
     roles: Object.freeze({
-      symbol: Object.freeze({ along: 0.40, sizeFrac: 0.62 }),
+      symbol: Object.freeze({ along: 0.40, sizeFrac: 0.62, longitudinal: true }),
       slogan: Object.freeze({ along: 0.76, sizeFrac: 0.62, longitudinal: true }),
     }),
     liftFrac: 0.05,
@@ -625,6 +683,9 @@ function knifeProfileValid(profile) {
   return true;
 }
 
+// Osso único que carrega todos os vértices (faca e corpo golden das armas). getX..getW
+// desnormalizam (os GLBs golden quantizam WEIGHTS_0) e valem para atributo intercalado.
+const ATTRIBUTE_COMPONENT = Object.freeze(['getX', 'getY', 'getZ', 'getW']);
 function knifeRigidBone(meshes) {
   let bone = null;
   for (const mesh of meshes) {
@@ -633,12 +694,12 @@ function knifeRigidBone(meshes) {
     for (let i = 0; i < position.count; i++) {
       let sum = 0, dominant = -1, dominantWeight = 0;
       for (let k = 0; k < skinIndex.itemSize; k++) {
-        const weight = skinWeight.array[i * skinWeight.itemSize + k];
+        const weight = skinWeight[ATTRIBUTE_COMPONENT[k]](i);
         if (!Number.isFinite(weight) || weight < 0) return null;
         sum += weight;
         if (weight > 1e-6) {
           if (dominant >= 0) return null;
-          dominant = skinIndex.array[i * skinIndex.itemSize + k];
+          dominant = skinIndex[ATTRIBUTE_COMPONENT[k]](i);
           dominantWeight = weight;
         }
       }
@@ -804,14 +865,22 @@ function addKnifePair(model, skinId, role, texture, frame, placement, context) {
   }
   const material = paintedMaterial(texture, skinId, role);
   const longVector = frame.long.clone().multiplyScalar(frame.longSign);
+  const longitudinal = KNIFE_MARK_PROFILES[context].roles[role].longitudinal;
+  // O "cima" do texto longitudinal é o +X do plano (UV girada acima). Sem escolha, ele
+  // seguia long × normal e o lado de fora da faca 3P lia de ponta-cabeça. Cada lado gira
+  // 180° no próprio plano (nunca espelha) para o topo das letras apontar ao +Y do modelo.
+  const space = (frame.bone || model).matrixWorld.clone().invert();
+  const modelUp = new THREE.Vector3(0, 1, 0).transformDirection(model.matrixWorld).transformDirection(space);
   for (const [side, n, flip] of [['right', placement.rightN, false], ['left', placement.leftN, true]]) {
     const planeZ = flip ? frame.normal.clone().negate() : frame.normal.clone();
-    const planeX = new THREE.Vector3().crossVectors(longVector, planeZ);
+    const planeY = longVector.clone();
+    const planeX = new THREE.Vector3().crossVectors(planeY, planeZ);
+    if (longitudinal && planeX.dot(modelUp) < 0) { planeX.negate(); planeY.negate(); }
     const position = new THREE.Vector3()
       .addScaledVector(frame.long, placement.centerU)
       .addScaledVector(frame.trans, placement.centerT)
       .addScaledVector(frame.normal, n);
-    const planeFrame = new THREE.Matrix4().makeBasis(planeX, longVector, planeZ).setPosition(position);
+    const planeFrame = new THREE.Matrix4().makeBasis(planeX, planeY, planeZ).setPosition(position);
     const marking = new THREE.Mesh(geometry, material);
     marking.name = `skin-${role}-${skinId}-${side}`;
     if (frame.bone) {
@@ -862,18 +931,140 @@ function attachKnifeMarkings(model, skinId, context) {
   if (profile.representation === 'rigid-wrap' && skinned.length !== 0) return finish('representation-mismatch');
   const frame = knifeBladeFrame(model, profile);
   if (frame.error) return finish(frame.error);
-  const placements = [];
-  for (const item of items) {
-    const placement = knifePlacement(frame, profile, item.aspect, profile.roles[item.role], placements.map(({ placement: p }) => p));
-    if (!placement) return finish('footprint-unsupported');
-    placements.push({ item, placement });
+  // knifeMarkSize (opcional, por definição) é o TETO do sizeFrac do símbolo: tenta dele até o
+  // sizeFrac do perfil (passo 0,05) e fica com a primeira escala em que símbolo E letreiro cabem
+  // inteiros na lâmina. Sem override, uma tentativa só, com o perfil.
+  const profileSize = profile.roles.symbol.sizeFrac;
+  const ceiling = definition.knifeMarkSize;
+  const sizes = ceiling > profileSize && ceiling < 1
+    ? [...Array.from({ length: Math.floor((ceiling - profileSize) / 0.05) + 1 }, (_, i) => ceiling - i * 0.05), profileSize]
+    : [profileSize];
+  let placements = null;
+  let chosenSize = profileSize;
+  for (const size of sizes) {
+    const attempt = [];
+    for (const item of items) {
+      const role = item.role === 'symbol' ? { ...profile.roles.symbol, sizeFrac: size } : profile.roles[item.role];
+      const placement = knifePlacement(frame, profile, item.aspect, role, attempt.map(({ placement: p }) => p));
+      if (!placement) break;
+      attempt.push({ item, placement });
+    }
+    if (attempt.length === items.length) { placements = attempt; chosenSize = size; break; }
   }
+  if (!placements) return finish('footprint-unsupported');
   placements.forEach(({ item, placement }) => addKnifePair(model, skinId, item.role, item.texture, frame, placement, context));
   report.roles = items.map(({ role }) => role);
+  // Diagnóstico do teto knifeMarkSize: sizeFrac que coube e a altura do símbolo contra a do perfil.
+  const symbolPlaced = placements.find(({ item }) => item.role === 'symbol');
+  if (symbolPlaced && chosenSize !== profileSize) {
+    const baseline = knifePlacement(frame, profile, symbolPlaced.item.aspect, profile.roles.symbol, []);
+    report.symbolSizeFrac = chosenSize;
+    report.symbolScale = baseline ? +(symbolPlaced.placement.height / baseline.height).toFixed(2) : null;
+  }
   return finish('attached');
 }
 
-function attachPoliticalMarkings(model, weaponId, skinId) {
+/* CORPO GOLDEN DO 1P. As camadas de marca (POLITICAL_LAYOUT, markLayout/sloganLayout,
+   CLUB_MARK_LAYOUT) são autoradas no espaço LOCAL do wrap do weaponModel de 3ª pessoa
+   (grip na origem, cano em +Z, cima em +Y; as marcas são filhas do wrap escalado). O corpo
+   golden do viewmodel autorado é um SkinnedMesh preso a UM osso, em outro espaço — a AK com
+   o cano em +Y do osso, a pistola em centímetros com o cano em −Y. Montadas direto nele, as
+   marcas nasciam a 1,3–2,2 comprimentos da arma (fora do quadro) e paradas no espaço da
+   malha, sem seguir o osso. O frame abaixo leva coordenadas TP para o osso: eixos pela
+   geometria do corpo (cano = maior extensão, boca = ponta de seção mais fina; cima = segunda
+   maior, com o cano no alto), escala uniforme pelo comprimento, cano ancorado na coronha e
+   altura ancorada no topo. Referência TP = weaponModel(id).userData.metrics.box ÷
+   metrics.norm (unidades locais do wrap), medida em 10/11/2026. */
+const TP_MARK_REFERENCE = Object.freeze({
+  ak: Object.freeze({ back: -0.3793, front: 0.6188, top: 0.1514, scale: 0.8817 }),
+  m4: Object.freeze({ back: -0.3793, front: 0.6188, top: 0.1729, scale: 0.8416 }),
+  scar: Object.freeze({ back: -0.3793, front: 0.6188, top: 0.1525, scale: 0.9018 }),
+  pistol: Object.freeze({ back: -0.2994, front: 0.6986, top: 0.3799, scale: 0.2605 }),
+});
+
+function goldenMarkFrame(mesh, weaponId) {
+  const reference = TP_MARK_REFERENCE[weaponId];
+  if (!reference || !mesh?.isSkinnedMesh || handMesh(mesh)) return null;
+  const bone = knifeRigidBone([mesh]);
+  const boneIndex = bone ? mesh.skeleton.bones.indexOf(bone) : -1;
+  if (boneIndex < 0 || !mesh.skeleton.boneInverses[boneIndex]) return null;
+  // Espaço do osso independente da pose: boneInverse · bindMatrix · posição de bind.
+  const toBone = new THREE.Matrix4().multiplyMatrices(mesh.skeleton.boneInverses[boneIndex], mesh.bindMatrix);
+  const positions = mesh.geometry.attributes.position;
+  const step = Math.max(1, Math.ceil(positions.count / 24000));
+  const points = [];
+  const min = new THREE.Vector3(Infinity, Infinity, Infinity);
+  const max = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
+  for (let index = 0; index < positions.count; index += step) {
+    const point = new THREE.Vector3().fromBufferAttribute(positions, index).applyMatrix4(toBone);
+    if (!Number.isFinite(point.x) || !Number.isFinite(point.y) || !Number.isFinite(point.z)) return null;
+    points.push(point);
+    min.min(point);
+    max.max(point);
+  }
+  const extent = new THREE.Vector3().subVectors(max, min);
+  const axes = [0, 1, 2].sort((a, b) => extent.getComponent(b) - extent.getComponent(a));
+  const [barrelAxis, upAxis, sideAxis] = axes;
+  const length = extent.getComponent(barrelAxis);
+  if (!(length > 0) || !(extent.getComponent(sideAxis) > 0)) return null;
+  // Fatia de 12% em cada ponta do cano: a boca é a de menor seção (cima + lado).
+  const slice = (fromStart) => {
+    const lo = fromStart ? min.getComponent(barrelAxis) : max.getComponent(barrelAxis) - length * 0.12;
+    const hi = lo + length * 0.12;
+    const range = [Infinity, -Infinity, Infinity, -Infinity];
+    for (const p of points) {
+      const b = p.getComponent(barrelAxis);
+      if (b < lo || b > hi) continue;
+      range[0] = Math.min(range[0], p.getComponent(upAxis)); range[1] = Math.max(range[1], p.getComponent(upAxis));
+      range[2] = Math.min(range[2], p.getComponent(sideAxis)); range[3] = Math.max(range[3], p.getComponent(sideAxis));
+    }
+    return range;
+  };
+  const startSlice = slice(true);
+  const endSlice = slice(false);
+  const section = (r) => (r[1] - r[0]) + (r[3] - r[2]);
+  const muzzleAtMax = section(endSlice) <= section(startSlice);
+  const muzzleSlice = muzzleAtMax ? endSlice : startSlice;
+  const upAtMax = (muzzleSlice[0] + muzzleSlice[1]) / 2 >= (min.getComponent(upAxis) + max.getComponent(upAxis)) / 2;
+  const unit = (axis, positive) => new THREE.Vector3().setComponent(axis, positive ? 1 : -1);
+  const barrel = unit(barrelAxis, muzzleAtMax);
+  const up = unit(upAxis, upAtMax);
+  const side = new THREE.Vector3().crossVectors(up, barrel);   // imagem do +X do TP (Y × Z = X)
+  const k = length / (reference.front - reference.back);
+  const stock = muzzleAtMax ? min.getComponent(barrelAxis) : max.getComponent(barrelAxis);
+  const top = upAtMax ? max.getComponent(upAxis) : min.getComponent(upAxis);
+  const sideMid = (min.getComponent(sideAxis) + max.getComponent(sideAxis)) / 2;
+  const origin = new THREE.Vector3()
+    .setComponent(barrelAxis, stock - (muzzleAtMax ? 1 : -1) * reference.back * k)
+    .setComponent(upAxis, top - (upAtMax ? 1 : -1) * reference.top * k)
+    .setComponent(sideAxis, sideMid);
+  const matrix = new THREE.Matrix4().makeBasis(
+    side.clone().multiplyScalar(k), up.clone().multiplyScalar(k), barrel.clone().multiplyScalar(k),
+  ).setPosition(origin);
+  const inverse = matrix.clone().invert();
+  return { bone, matrix, points: points.map((p) => p.applyMatrix4(inverse)), scale: reference.scale };
+}
+
+// Grupo no osso do corpo golden com o espaço TP: as marcas seguem a animação (filhas do
+// osso, como a faca 1P) e reaproveitam o layout de 3ª pessoa sem tabela própria.
+function goldenMarkHost(mesh, weaponId, skinId) {
+  const frame = goldenMarkFrame(mesh, weaponId);
+  if (!frame) return null;
+  const host = new THREE.Group();
+  host.name = `skin-frame-${skinId}`;
+  host.matrixAutoUpdate = false;
+  host.matrix.copy(frame.matrix);
+  host.userData.weaponSkin = skinId;
+  host.userData.goldenMarkFrame = true;
+  frame.bone.add(host);
+  host.updateMatrixWorld(true);
+  return { target: host, source: { points: frame.points, scale: frame.scale } };
+}
+
+// `source` só existe no corpo golden do 1P: lá valem fpMarkLayout/fpSloganLayout (mesmo
+// espaço local do wrap TP), porque a mão e as emendas do receptor em 1ª pessoa não são as
+// do boneco de 3ª pessoa. TP e cartazes seguem com markLayout/sloganLayout.
+function attachPoliticalMarkings(model, weaponId, skinId, source = null) {
   const symbol = markTextures.get(skinId);
   const definition = WEAPON_SKINS[skinId];
   const layout = POLITICAL_LAYOUT[weaponId];
@@ -884,7 +1075,7 @@ function attachPoliticalMarkings(model, weaponId, skinId) {
     items.push({
       role: 'symbol',
       texture: symbol,
-      placement: definition.markLayout || layout.symbol,
+      placement: (source && definition.fpMarkLayout) || definition.markLayout || layout.symbol,
       aspect: (symbol.image?.width || 1) / (symbol.image?.height || 1),
     });
   }
@@ -892,7 +1083,7 @@ function attachPoliticalMarkings(model, weaponId, skinId) {
     items.push({
       role: 'slogan',
       texture: slogan,
-      placement: definition.sloganLayout || layout.slogan,
+      placement: (source && definition.fpSloganLayout) || definition.sloganLayout || layout.slogan,
       aspect: definition.sloganAspect || 8,
     });
   }
@@ -900,7 +1091,7 @@ function attachPoliticalMarkings(model, weaponId, skinId) {
   const surfaces = fittedSideSurfaces(model, weaponId, items.map(({ placement, aspect }) => ({
     ...placement,
     width: placement.height * aspect,
-  })));
+  })), source);
   items.forEach((item, index) => addFittedPair(model, skinId, item.role, item.texture, item.placement, surfaces[index], item.aspect));
 }
 
@@ -939,11 +1130,13 @@ function attachOfficialMark(model, weaponId, skinId) {
 
 function attachSkinMark(model, weaponId, skinId, knifeContext) {
   if (weaponId === 'knife') return attachKnifeMarkings(model, skinId, knifeContext);
-  if (WEAPON_SKINS[skinId]?.officialMarksIncluded) attachOfficialMark(model, weaponId, skinId);
-  else attachPoliticalMarkings(model, weaponId, skinId);
+  const golden = goldenMarkHost(model, weaponId, skinId);
+  const target = golden?.target || model;
+  if (WEAPON_SKINS[skinId]?.officialMarksIncluded) attachOfficialMark(target, weaponId, skinId);
+  else attachPoliticalMarkings(target, weaponId, skinId, golden?.source || null);
 }
 
-function cloneMaterial(material, skinId, geometry) {
+function cloneMaterial(material, skinId, geometry, unit = null) {
   const copy = ownVmResource(material.clone());
   copy.name = `${material.name || 'weapon'}__skin_${skinId}`;
   const definition = WEAPON_SKINS[skinId];
@@ -957,7 +1150,8 @@ function cloneMaterial(material, skinId, geometry) {
   copy.envMapIntensity = profile.envMapIntensity;
   copy.userData = { ...copy.userData, weaponSkin: skinId };
   let frame = null;
-  if (SESSAO_DA_TRETA_FRAGMENT[skinId]) {
+  const patternTexture = patternAssetTexture(skinId);
+  if (SESSAO_DA_TRETA_FRAGMENT[skinId] || patternTexture) {
     if (!geometry.boundingBox) geometry.computeBoundingBox();
     const { min, max } = geometry.boundingBox;
     const useZ = max.z - min.z > max.x - min.x;
@@ -966,19 +1160,30 @@ function cloneMaterial(material, skinId, geometry) {
       useZ ? 1 : 0,
       useZ ? (min.z + max.z) / 2 : (min.x + max.x) / 2,
       (min.y + max.y) / 2,
-      1 / Math.max(length, 0.0001),
+      unit || 1 / Math.max(length, 0.0001),
     );
   }
+  const style = definition?.patternStyle || {};
+  const palette = style.palette?.length === 3 ? style.palette.map((hex) => new THREE.Color(hex)) : null;
+  const patternUniforms = patternTexture ? {
+    weaponSkinPattern: { value: patternTexture },
+    weaponSkinPatternStyle: { value: new THREE.Vector3(style.scale || 1, style.contrast || 1, palette ? 1 : 0) },
+    weaponSkinPalette: { value: palette || [new THREE.Color(0), new THREE.Color(0.5, 0.5, 0.5), new THREE.Color(1, 1, 1)] },
+  } : null;
   copy.onBeforeCompile = (shader) => {
     if (frame) shader.uniforms.weaponSkinFrame = { value: frame };
+    if (patternUniforms) Object.assign(shader.uniforms, patternUniforms);
+    const declarations = `${frame ? 'uniform vec4 weaponSkinFrame;\n' : ''}${patternUniforms
+      ? 'uniform sampler2D weaponSkinPattern;\nuniform vec3 weaponSkinPatternStyle;\nuniform vec3 weaponSkinPalette[3];\n'
+      : ''}`;
     shader.vertexShader = shader.vertexShader
       .replace('void main() {', 'varying vec3 vWeaponSkinLocal;\nvoid main() {')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\n\tvWeaponSkinLocal = position;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('void main() {', `${frame ? 'uniform vec4 weaponSkinFrame;\n' : ''}varying vec3 vWeaponSkinLocal;\nvoid main() {`)
-      .replace('#include <map_fragment>', `#include <map_fragment>\n${patternFragment(skinId)}`);
+      .replace('void main() {', `${declarations}varying vec3 vWeaponSkinLocal;\nvoid main() {`)
+      .replace('#include <map_fragment>', `#include <map_fragment>\n${patternTexture ? PATTERN_ASSET_FRAGMENT : patternFragment(skinId)}`);
   };
-  copy.customProgramCacheKey = () => `weapon-skin:${skinId}:object-space-v3`;
+  copy.customProgramCacheKey = () => `weapon-skin:${skinId}:${patternTexture ? 'pattern-asset' : 'procedural'}:object-space-v3`;
   copy.needsUpdate = true;
   return copy;
 }
@@ -989,18 +1194,58 @@ export function reviewWeaponSkinId() {
   return query.get('debug') === '1' ? query.get('weaponskin') : null;
 }
 
+// Escala comum do padrão nas malhas de uma mesma arma: o pente (malha separada) recebe a arte no
+// tamanho do corpo, não esticada ao próprio comprimento. Unidade = escala efetiva da malha ÷ maior
+// comprimento efetivo em `referenceRoot` (o corpo, quando o 1P pinta peça por peça).
+// As peças golden do 1P são SkinnedMesh quantizadas (geometria normalizada em ±1): a escala real
+// está em bindMatrix · boneInverse · osso, não em matrixWorld.
+const effectiveMatrix = new THREE.Matrix4();
+function effectiveScale(object) {
+  const skinIndex = object.isSkinnedMesh && object.geometry.attributes.skinIndex;
+  const bone = skinIndex && object.skeleton?.bones[skinIndex.getX(0)];
+  const inverse = skinIndex && object.skeleton?.boneInverses[skinIndex.getX(0)];
+  if (!bone || !inverse) return object.matrixWorld.getMaxScaleOnAxis();
+  return effectiveMatrix.copy(object.matrixWorld).multiply(object.bindMatrixInverse)
+    .multiply(bone.matrixWorld).multiply(inverse).multiply(object.bindMatrix).getMaxScaleOnAxis();
+}
+function patternUnits(model, referenceRoot = model) {
+  const meshes = (root) => {
+    const list = [];
+    root.updateMatrixWorld(true);
+    root.traverse((object) => {
+      if (!object.isMesh || !object.geometry?.attributes?.position || handMesh(object)) return;
+      if (object.name.startsWith('skin-') || object.name.startsWith('club-mark-')) return;
+      if (!object.geometry.boundingBox) object.geometry.computeBoundingBox();
+      list.push(object);
+    });
+    return list;
+  };
+  let reference = 0;
+  for (const object of meshes(referenceRoot)) {
+    const { min, max } = object.geometry.boundingBox;
+    reference = Math.max(reference, Math.max(max.z - min.z, max.x - min.x) * effectiveScale(object));
+  }
+  const units = new Map();
+  if (reference > 0) for (const object of meshes(model)) units.set(object, effectiveScale(object) / reference);
+  return units;
+}
+
 // `marcas:false` pinta a peça sem repetir decalque/selo — usado nas peças IRMÃS da arma
 // (pente, ferrolho), que precisam do material da pintura mas não de um segundo adesivo.
-export function applyWeaponSkinCandidate(model, weaponId, skinId, { marcas = true, knifeContext = null } = {}) {
+// `patternReference`: corpo da arma, para a peça irmã herdar a escala do padrão dele.
+export function applyWeaponSkinCandidate(model, weaponId, skinId, { marcas = true, knifeContext = null, patternReference = null } = {}) {
   if (!skinId) return false;
   const definition = WEAPON_SKINS[skinId];
   if (!definition || !definition.targetWeapons.includes(weaponId)) return false;
-  if (!patternFragment(skinId)) return false;
+  if (!skinFragment(skinId)) return false;
+  const units = SESSAO_DA_TRETA_FRAGMENT[skinId] || patternAssetTexture(skinId)
+    ? patternUnits(model, patternReference || model)
+    : new Map();
   model.traverse((object) => {
     if (!object.isMesh || !object.material) return;
     const skinMaterial = (material) => HAND_MATERIAL.test(material?.name || '')
       ? material
-      : cloneMaterial(material, skinId, object.geometry);
+      : cloneMaterial(material, skinId, object.geometry, units.get(object) || null);
     object.material = Array.isArray(object.material)
       ? object.material.map(skinMaterial)
       : skinMaterial(object.material);

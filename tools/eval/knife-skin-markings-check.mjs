@@ -412,13 +412,15 @@ function deformedFinite(scene, animations) {
   return { knife: rawBad.knife + deformedBad.knife === 0, hands: rawBad.hand + deformedBad.hand === 0 };
 }
 
-// Contrato visual independente: texto horizontal no bitmap percorre o comprimento da lâmina.
+// Contrato visual independente: a horizontal do bitmap percorre o comprimento da lâmina, para o
+// letreiro E para o símbolo. (11/11/2026: o símbolo deixou de ser transversal — com a horizontal
+// na transversal o topo da caveira apontava para a ponta e ela aparecia deitada no cartaz, no 1P
+// e no 3P; o "cima" agora fica na transversal, virado ao +Y do modelo.)
 function aspectAndUv(marks, role, aspect) {
   const sides = marks.filter(m => m.userData.markingRole === role);
   if (sides.length !== 2) return false;
-  const longitudinal = role === 'slogan';
-  const expected = longitudinal ? 1 / aspect : aspect;
-  const coords = longitudinal ? [[0,0],[0,1],[1,0],[1,1]] : [[0,1],[1,1],[0,0],[1,0]];
+  const expected = 1 / aspect;
+  const coords = [[0,0],[0,1],[1,0],[1,1]];
   return sides.every(m => {
     const {width,height} = m.geometry.parameters, uv = m.geometry.attributes.uv;
     return Number.isFinite(width/height) && Math.abs(width/height-expected)/expected < .01
@@ -604,15 +606,18 @@ try {
     },
     'footprint-guard-off': {
       mutate: (s) => s.replace('  if (!footprintFullyCovered(centerU, centerT, halfH, halfW, overlapping, profile.coverage)) return null;\n', ''),
-      expect: ['pack-caveira-urbana-knife#fp:footprint', 'pack-maga-47-knife#tp:footprint'],
+      // Com o símbolo longitudinal a caveira do pack cabe inteira já na 1ª tentativa no 1P; a
+      // guarda segue causal no 3P do MAGA (letreiro), que sem ela sai da lâmina.
+      expect: ['pack-maga-47-knife#tp:footprint'],
     },
     'slogan-uv-off': {
       mutate: s => s.replace('if (KNIFE_MARK_PROFILES[context].roles[role].longitudinal)', 'if (false)'),
-      expect: ['pack-maga-47-knife#fp:aspect','pack-maga-47-knife#tp:aspect'],
+      // símbolo e letreiro usam a mesma UV longitudinal: os dois casos perdem o aspecto.
+      expect: ['pack-caveira-urbana-knife#fp:aspect','pack-caveira-urbana-knife#tp:aspect','pack-maga-47-knife#fp:aspect','pack-maga-47-knife#tp:aspect'],
     },
     'slogan-transversal': {
       mutate: s => s.replaceAll('longitudinal: true','longitudinal: false'),
-      expect: ['pack-maga-47-knife#fp:aspect','pack-maga-47-knife#tp:aspect'],
+      expect: ['pack-caveira-urbana-knife#fp:aspect','pack-caveira-urbana-knife#tp:aspect','pack-maga-47-knife#fp:aspect','pack-maga-47-knife#tp:aspect'],
     },
     'nan-bind': {
       mutate: (s) => s.replace(APPLY_ANCHOR, `${APPLY_ANCHOR}\n${NAN_BIND}`),

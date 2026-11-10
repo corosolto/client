@@ -522,7 +522,7 @@ export class AuthoredViewModels {
     for (let i = 0; i < pecas.length; i += 1) {
       const peca = pecas[i];
       if (peca.userData.weaponSkin === skinId) continue;
-      applyWeaponSkinCandidate(peca, weaponId, skinId, { marcas: i === 0 });
+      applyWeaponSkinCandidate(peca, weaponId, skinId, { marcas: i === 0, patternReference: pecas[0] });
     }
   }
 
