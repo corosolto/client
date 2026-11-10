@@ -133,6 +133,7 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `faca-porte-check.mjs` | Porte de LÂMINA em 3ª pessoa (ponta acima do porte de cano), lido do fonte vivo. Evidência: `asset-evidence/faca-3p-20261021/faca-3p-ab.png`. `npm run eval:faca-porte` |
 | `arma-orientacao-check.mjs` | Boca × coronha das 26 armas com o `rot` da CFG aplicado — pega arma montada de costas. `npm run eval:arma-orientacao` |
 | `skin-cobertura-check.mjs` | Pintura equipada na arma INTEIRA (corpo, pente, ferrolho, peça do `splitParts`) em 1ª pessoa, e no corpo de 3ª pessoa. `npm run eval:skin-cobertura` |
+| `pintura-fabrica-check.mjs` | PT-38 pintada na rota da fábrica (X18, skinned em vários ossos): só o grupo da arma é pintado (nunca a rig das mãos), o padrão é levado ao espaço da malha TP da loja e símbolo/letreiro nascem no osso `Arma`, na lateral. Mutantes pintura-na-mao e sem-referencia. `npm run eval:pintura-fabrica` |
 | `inspect-lado-check.mjs` | Inspeção (tecla I) vira a arma de lado em 1ª pessoa sem clipe no pack e sem sair do quadro. `npm run eval:inspect-lado` |
 | `manga-tampa-check.mjs` | Manga do pacote golden sem boca aberta (o "leque" que aparece ao girar a arma na inspeção); tampa no bind space, idempotente. `npm run eval:manga-tampa` |
 
