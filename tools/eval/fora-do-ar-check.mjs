@@ -68,12 +68,20 @@ try {
   }
   const start = main.indexOf('const routeChar =');
   const end = main.indexOf('function returnPreviewToSelection');
-  const listener = main.match(/document\.addEventListener\(PASSE_EVENTO, \(\) => \{[\s\S]*?\n\}\);/)?.[0];
-  assert(start >= 0 && end > start && listener, 'ciclo de preferência não encontrado');
+  /* Ouvinte do passe (#1294): `document.addEventListener(PASSE_EVENTO, <função>)`. A função só
+     redesenha; trocar currentChar ali apagaria a escolha antes do inventário responder. */
+  const handlerName = main.match(/document\.addEventListener\(PASSE_EVENTO,\s*([A-Za-z_$][\w$]*)\)/)?.[1];
+  const handlerAt = handlerName ? main.search(new RegExp(`function ${handlerName}\\s*\\(`)) : -1;
+  assert(start >= 0 && end > start && handlerAt >= 0, 'ciclo de preferência não encontrado');
+  let depth = 0, handlerEnd = main.indexOf('{', handlerAt);
+  for (let i = handlerEnd; i < main.length; i++) {
+    if (main[i] === '{') depth++;
+    else if (main[i] === '}' && --depth === 0) { handlerEnd = i + 1; break; }
+  }
+  const handler = main.slice(handlerAt, handlerEnd);
   const candidate = roster.find((c) => c.passe);
   if (candidate) for (const origin of ['storage', 'url']) {
     const writes = [];
-    let onPass;
     const context = vm.createContext({
       CHARACTERS: chars, HUB_ENABLED: true, URLSearchParams,
       location: { search: origin === 'url' ? `?personagem=${candidate.id}` : '' },
@@ -84,16 +92,13 @@ try {
       personagemTravado: (def) => Boolean(def?.passe),
       podeNoLado: () => true, ladosDe: () => ['E', 'B'],
       crypto: { getRandomValues: (array) => array.fill(0) },
-      PASSE_EVENTO: 'cs-passe-state', hubRosterRender: null,
-      document: { addEventListener: (_event, handler) => { onPass = handler; }, querySelectorAll: () => [] },
     });
-    vm.runInContext(`${main.slice(start, end)}\n${listener}`, context);
+    vm.runInContext(main.slice(start, end), context);
     check('FA5', vm.runInContext('currentChar', context) === candidate.id && writes.length === 0,
       `${origin}: preferência de passe foi descartada antes do inventário responder`);
-    onPass();
-    check('FA5', vm.runInContext('currentChar', context) === candidate.id,
-      `${origin}: inventário ainda pendente apagou o personagem lembrado`);
   }
+  check('FA5', !/\bcurrentChar\s*=(?!=)/.test(handler),
+    `ouvinte do passe (${handlerName}) troca currentChar: inventário pendente apagaria o personagem lembrado`);
 } catch (e) { check('FA5', false, `preferência não executável: ${e.message}`); }
 let missingApplied = false;
 for (const character of selected) {
