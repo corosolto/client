@@ -379,6 +379,7 @@ jobs:
       - name: Escadão — circulação, estrutura e casa
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
+
       - name: Escadão — compatibilidade com pacote de áudio publicado
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/escadao-audio-pack-check.mjs
@@ -966,7 +967,7 @@ jobs:
         run: npm ci
       - name: Validar fluidez, território e rede do mantle
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network --json-out=tools/eval/out/mantle.json
+        run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network eval:landing-impact --json-out=tools/eval/out/mantle.json
       - name: Tempos do mantle
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -974,6 +975,9 @@ jobs:
           name: mantle-tempos-${{ github.run_id }}
           path: tools/eval/out/mantle.json
           if-no-files-found: warn
+      - name: Penitenciária liga o look do próprio mapa (mutante corrego)
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:lookbinding
 
   build:
     needs: [reguas-e-site, mapas-e-site, invariantes-fonte, invariantes-vm, invariantes-bots, invariantes-chars-mat, invariantes-mapas, mantle, equipamento-tp-corpo, equipamento-tp-origem, contratos-visuais-personagens-camera, contratos-visuais-ferro-balcao, contratos-visuais-mapas-materiais, contratos-visuais-visual-map, contratos-visuais-campo-uv, contratos-visuais-gameplay-grafite, economia-ak-hud, soundscape, operacao-flavio-core, operacao-flavio-collider-1, operacao-flavio-collider-2, operacao-flavio-collider-3, operacao-flavio-collider-4, operacao-flavio-menu, operacao-flavio-online, operacao-flavio-integracao, operacao-flavio-comportamento, operacao-flavio-escolta]
