@@ -151,6 +151,8 @@ const GRUPOS_PI4 = [
   ['operacao-flavio-integracao', 'Operação Flávio, integração', ['eval:operacao-flavio-integracao']],
   ['operacao-flavio-comportamento', 'Operação Flávio, comportamento', ['eval:operacao-flavio-comportamento']],
   ['operacao-flavio-escolta', 'Operação Flávio, escolta', ['eval:operacao-flavio-escolta']],
+  ['equipamento-tp-corpo', 'Corpo em processos CPU reais', ['eval:tp-identity']],
+  ['equipamento-tp-origem', 'Drip, luvas e cosméticos', ['eval:tp-drip-source', 'eval:tp-glove-origin', 'eval:tp-cosmetic-source']],
   ['reguas-e-site', 'Suites preservam cobertura', ['tests/eval-suites.test.mjs']],
   ['reguas-e-site', 'Todo mapa devolve o que o game.js consome', ['eval:mapcontrato']],
   ['mapas-e-site', 'Pichação colada na parede', ['eval:pichacao-parede']],
