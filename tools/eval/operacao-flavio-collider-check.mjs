@@ -258,7 +258,9 @@ try {
   });
   for (const [name,map] of [['loaded',loaded],['fallback',fallback]]) check('plane-occludes-'+name, () => {
     map.root.updateMatrixWorld(true);
-    const context = { world: map, ray: new THREE.Raycaster(), _smokes: [] };
+    // Mesmos rascunhos que o Game cria no construtor: a LOS não aloca vetor por chamada.
+    const context = Object.assign(Object.create(Game.prototype), { world: map, ray: new THREE.Raycaster(), _smokes: [],
+      _losDir: new THREE.Vector3(), _losAb: new THREE.Vector3(), _losTmp: new THREE.Vector3(), _losHits: [] });
     const clear = Game.prototype._losClear.call(context,new THREE.Vector3(-15,1.5,56),new THREE.Vector3(15,1.5,56));
     assert.equal(clear,false,'fuselagem bloqueia LOS e raycast do jogo');
   });

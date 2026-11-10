@@ -38,11 +38,11 @@ const REPS = Number(val('repeticoes', 3));
 const TOPN = Number(val('top', 15));
 const TIMEOUT = Number(val('timeout', 180000));
 const JSON_OUT = val('json', '');
-/* CONSENTIMENTO. `land`/`perf`/`acquisition` só saem com `cs_privacy.analytics === true`
-   (privacy-runtime.js). Medir com `nao` evita que a bateria de medição injete linhas
-   falsas no funil de produção; `sim` reproduz a sessão que de fato é contada; `nenhum`
-   é o visitante NOVO, que é o estado real da maioria. O caminho do boot é o mesmo nos
-   três: o consentimento só liga/desliga POSTs que acontecem depois do portão. */
+/* MEDIÇÃO. `land`/`perf`/`acquisition` saem sempre que `cs_privacy.analytics !== false`
+   (privacy-runtime.js: ligada por padrão, recusa explícita desliga). Medir com `nao` evita que
+   a bateria de medição injete linhas falsas no funil de produção; `sim` grava a permissão
+   explícita; `nenhum` é o visitante NOVO, que hoje também é contado. O caminho do boot é o
+   mesmo nos três: a escolha só liga/desliga POSTs que acontecem depois do portão. */
 const CONSENT = val('consentimento', 'nao');
 if (!['sim', 'nao', 'nenhum'].includes(CONSENT)) { console.error('--consentimento=sim|nao|nenhum'); process.exit(2); }
 const PERFIL = flag('perfil');
@@ -305,7 +305,7 @@ async function umaRodada(cen, nome) {
       todasReqs: reqs.size,
       recursos: ate.map((r) => ({ url: r.url.replace(BASE, ''), bytes: r.bytes, type: r.type, fim: r.fim, inicio: r.inicio, pedidoPor: r.pedidoPor })).sort((a, b) => b.bytes - a.bytes),
       /* Prova de QUANDO a telemetria sai: `/api/funnel` com step=land é o que o painel
-         admin conta como "chegou". Sem consentimento ele não sai — e isso é medição,
+         admin conta como "chegou". Com a recusa gravada ele não sai — e isso é medição,
          não leitura de código. */
       apis: [...reqs.values()].filter((r) => r.url.includes('/api/')).map((r) => ({ url: r.url.replace(BASE, ''), inicio: r.inicio, fim: r.fim })),
       perf, perfil, perfilFn,
