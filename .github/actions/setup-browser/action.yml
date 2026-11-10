@@ -1,0 +1,32 @@
+name: Setup Playwright Chromium
+description: Installs the repository Playwright version and exports a validated CHROME_BIN.
+runs:
+  using: composite
+  steps:
+    - name: Configure Playwright browser path
+      shell: bash
+      run: echo 'PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers' >> "$GITHUB_ENV"
+
+    - name: Playwright global (mesma versão do devDependency)
+      shell: bash
+      run: |
+        set -euo pipefail
+        VERSION="$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
+        if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+          echo "::error::devDependencies.playwright não resolveu para uma versão exata: [$VERSION]"
+          exit 1
+        fi
+        npm install --global "playwright@$VERSION"
+
+    - name: Instala Chromium + libs do sistema
+      shell: bash
+      run: npx --no-install playwright install --with-deps chromium
+
+    - name: Resolve CHROME_BIN (Chromium do Playwright)
+      shell: bash
+      run: |
+        set -euo pipefail
+        BIN="$(node -e "console.log(require('playwright').chromium.executablePath())")"
+        test -x "$BIN" || { echo "::error::CHROME_BIN não resolveu para um executável: [$BIN]"; exit 1; }
+        echo "CHROME_BIN=$BIN" >> "$GITHUB_ENV"
+        printf 'CHROME_BIN=%s\n' "$BIN"

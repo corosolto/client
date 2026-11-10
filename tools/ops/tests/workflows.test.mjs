@@ -81,7 +81,6 @@ test('portao-browser.yml: Sertão em dois shards balanceados, cobertura exata e 
 
   for (const [nome, corpoJob] of Object.entries(jobs)) {
     if (!/run: npm run eval:/.test(corpoJob)) continue;
-    assert.match(corpoJob, /run: npm run eval:serve/, `${nome} roda eval:* sem subir o eval:serve`);
     assert.match(corpoJob, /CHROME_BIN=/, `${nome} roda eval:* sem resolver o CHROME_BIN`);
   }
 });

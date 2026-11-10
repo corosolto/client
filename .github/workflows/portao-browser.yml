@@ -108,24 +108,18 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Playwright global (mesma versão do devDependency)
-        run: npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
-
-      - name: Instala Chromium + libs do sistema
-        run: npx playwright install --with-deps chromium
-
-      - name: Resolve CHROME_BIN (Chromium do Playwright)
-        run: |
-          BIN="$(node -e "console.log(require('playwright').chromium.executablePath())")"
-          test -x "$BIN" || { echo "CHROME_BIN não resolveu para um executável: [$BIN]"; exit 1; }
-          echo "CHROME_BIN=$BIN" >> "$GITHUB_ENV"
+      - name: Setup Playwright Chromium
+        uses: ./.github/actions/setup-browser
 
       - name: Sobe o eval:serve em background
-        run: npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+        run: |
+          test -n "${CHROME_BIN:-}" || { echo '::error::CHROME_BIN ausente depois do setup-browser'; exit 1; }
+          printf 'CHROME_BIN=%s\n' "$CHROME_BIN"
+          npm run eval:serve >/tmp/eval-serve.log 2>&1 &
 
       - name: Espera o servidor responder
         run: |
-          for i in $(seq 1 60); do
+          for _ in $(seq 1 60); do
             if curl -fsS http://localhost:8123/ >/dev/null; then
               exit 0
             fi
@@ -163,24 +157,18 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Playwright global (mesma versão do devDependency)
-        run: npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
-
-      - name: Instala Chromium + libs do sistema
-        run: npx playwright install --with-deps chromium
-
-      - name: Resolve CHROME_BIN (Chromium do Playwright)
-        run: |
-          BIN="$(node -e "console.log(require('playwright').chromium.executablePath())")"
-          test -x "$BIN" || { echo "CHROME_BIN não resolveu para um executável: [$BIN]"; exit 1; }
-          echo "CHROME_BIN=$BIN" >> "$GITHUB_ENV"
+      - name: Setup Playwright Chromium
+        uses: ./.github/actions/setup-browser
 
       - name: Sobe o eval:serve em background
-        run: npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+        run: |
+          test -n "${CHROME_BIN:-}" || { echo '::error::CHROME_BIN ausente depois do setup-browser'; exit 1; }
+          printf 'CHROME_BIN=%s\n' "$CHROME_BIN"
+          npm run eval:serve >/tmp/eval-serve.log 2>&1 &
 
       - name: Espera o servidor responder
         run: |
-          for i in $(seq 1 60); do
+          for _ in $(seq 1 60); do
             if curl -fsS http://localhost:8123/ >/dev/null; then
               exit 0
             fi
@@ -234,24 +222,18 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Playwright global (mesma versão do devDependency)
-        run: npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
-
-      - name: Instala Chromium + libs do sistema
-        run: npx playwright install --with-deps chromium
-
-      - name: Resolve CHROME_BIN (Chromium do Playwright)
-        run: |
-          BIN="$(node -e "console.log(require('playwright').chromium.executablePath())")"
-          test -x "$BIN" || { echo "CHROME_BIN não resolveu para um executável: [$BIN]"; exit 1; }
-          echo "CHROME_BIN=$BIN" >> "$GITHUB_ENV"
+      - name: Setup Playwright Chromium
+        uses: ./.github/actions/setup-browser
 
       - name: Sobe o eval:serve em background
-        run: npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+        run: |
+          test -n "${CHROME_BIN:-}" || { echo '::error::CHROME_BIN ausente depois do setup-browser'; exit 1; }
+          printf 'CHROME_BIN=%s\n' "$CHROME_BIN"
+          npm run eval:serve >/tmp/eval-serve.log 2>&1 &
 
       - name: Espera o servidor responder
         run: |
-          for i in $(seq 1 60); do
+          for _ in $(seq 1 60); do
             if curl -fsS http://localhost:8123/ >/dev/null; then
               exit 0
             fi
@@ -319,24 +301,18 @@ jobs:
           bash scripts/fetch-decals.sh
           node tools/eval/assets-check.mjs --so=decals
 
-      - name: Playwright global (mesma versão do devDependency)
-        run: npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
-
-      - name: Instala Chromium + libs do sistema
-        run: npx playwright install --with-deps chromium
-
-      - name: Resolve CHROME_BIN (Chromium do Playwright)
-        run: |
-          BIN="$(node -e "console.log(require('playwright').chromium.executablePath())")"
-          test -x "$BIN" || { echo "CHROME_BIN não resolveu para um executável: [$BIN]"; exit 1; }
-          echo "CHROME_BIN=$BIN" >> "$GITHUB_ENV"
+      - name: Setup Playwright Chromium
+        uses: ./.github/actions/setup-browser
 
       - name: Sobe o eval:serve em background
-        run: npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+        run: |
+          test -n "${CHROME_BIN:-}" || { echo '::error::CHROME_BIN ausente depois do setup-browser'; exit 1; }
+          printf 'CHROME_BIN=%s\n' "$CHROME_BIN"
+          npm run eval:serve >/tmp/eval-serve.log 2>&1 &
 
       - name: Espera o servidor responder
         run: |
-          for i in $(seq 1 60); do
+          for _ in $(seq 1 60); do
             if curl -fsS http://localhost:8123/ >/dev/null; then
               exit 0
             fi
@@ -436,17 +412,14 @@ jobs:
           cache: npm
       - run: npm ci
 
-      - name: Instala Chromium + libs do sistema
-        run: npx playwright install --with-deps chromium
-
-      - name: Resolve CHROME_BIN (Chromium do Playwright)
-        run: |
-          BIN="$(node -e "console.log(require('playwright').chromium.executablePath())")"
-          test -x "$BIN" || { echo "CHROME_BIN não resolveu para um executável: [$BIN]"; exit 1; }
-          echo "CHROME_BIN=$BIN" >> "$GITHUB_ENV"
+      - name: Setup Playwright Chromium
+        uses: ./.github/actions/setup-browser
 
       - name: Sobe o eval:serve em background
-        run: npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+        run: |
+          test -n "${CHROME_BIN:-}" || { echo '::error::CHROME_BIN ausente depois do setup-browser'; exit 1; }
+          printf 'CHROME_BIN=%s\n' "$CHROME_BIN"
+          npm run eval:serve >/tmp/eval-serve.log 2>&1 &
 
       - name: Espera o servidor responder
         run: |
