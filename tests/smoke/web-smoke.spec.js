@@ -92,7 +92,7 @@ test('menu, ranking, map, teams, character and initial hud boot', async ({ page 
   await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
   await page.keyboard.press('Enter');
   await expect(page.locator('#boot-splash')).toHaveCount(0);
-  const idioma = await page.evaluate(async () => (await (await fetch('/api/geo-lang')).json()).lang);
+  let idioma;
 
   await expect(page.locator('#main-menu')).toBeVisible();
   await page.locator('.cs-item[data-act="ranking"]').click();
@@ -111,6 +111,7 @@ test('menu, ranking, map, teams, character and initial hud boot', async ({ page 
 
   await page.locator('#btn-team-e').click();
   await expect(page.locator('#char-select')).toBeVisible();
+  idioma = (await page.locator('#char-faction-tag').innerText()).includes('TIME') ? 'pt' : 'en';
   const characters = page.locator('#char-list .char-row');
   await expect(characters.first()).toBeVisible();
   marcar('char-select');
