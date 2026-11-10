@@ -42,7 +42,7 @@ const REGRAS = [
   ['ui', /^(?:src\/(?:components|pages|layouts|styles)\/|public\/(?:css\/|[^/]+\.(?:css|html)$)|tests\/(?:ui|menu|boot)|tools\/eval\/(?:ui-|screen-query|ranking|convida|placar|community|login|roster|chat|lobby)|public\/js\/(?:ui-|splash|screenquery|chat|login|profile|ranking|convida|placar|community|clans|account|treta-|mode-announcements|brasoes|compartilhar|rotas|nick))/],
   ['audio', /(?:^|\/)(?:audio[^/]*|soundscape[^/]*|menu-music[^/]*|.*ambience[^/]*)(?:\/|\.|$)/],
   ['browser', /(?:browser|playwright|portao-browser)/],
-  ['network', /^(?:tools\/eval\/(?:net|transport|online|apis|geo-proxy|edge-cache|telemetry|telemetria|mp-|server-traffic)|tests\/net|src\/lib\/server-traffic\.mjs$|public\/js\/(?:apibase|transporte|nos|contagem|player-unique|privacy|client-id|economia-partida|compra-partida))/],
+  ['network', /^(?:tools\/eval\/(?:net|transport|online|apis|geo-proxy|edge-cache|telemetry|telemetria|mp-|server-traffic)|tests\/net|src\/lib\/server-traffic\.mjs$|src\/middleware\.ts$|^middleware\.js$|public\/js\/(?:apibase|transporte|nos|contagem|player-unique|privacy|client-id|economia-partida|compra-partida))/],
   ['vm', /^(?:tools\/viewmodels\/|tools\/eval\/(?:vm|tp-|authored|weapon|recoil|ballistics|firing|character|meshopt|glb-peso|normal-only|skin-profile|death-camera|ads1p|posto|preview-grip|knife-skin)|public\/js\/(?:vm|authoredvm|fparms|fpsrig|meleevm|recoil|weapons|weapon|glove|handik|look))/],
 ];
 
