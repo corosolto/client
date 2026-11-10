@@ -14,6 +14,8 @@ const flag = (name) => argv.includes(`--${name}`);
 const die = (message) => { console.error(`ERRO: ${message}`); process.exit(1); };
 
 /* IDs vêm dos registros reais; não há lista paralela neste gerador. */
+/* characters.js importa 'three': a ponte do vendor (eval/three-node.mjs) resolve no Node sem pacote. */
+await import('./eval/three-node.mjs');
 globalThis.location ||= { search: '' };
 globalThis.localStorage ||= { getItem: () => null };
 const { CHARACTERS, charWeapon } = await import('../public/js/characters.js');

@@ -9,6 +9,8 @@
     "eval:fora-do-ar": "node tools/eval/fora-do-ar-check.mjs && node tools/eval/fora-do-ar-check.mjs --mutante=remove-faccao && node tools/eval/fora-do-ar-check.mjs --mutante=lista-fixa && node tools/eval/fora-do-ar-check.mjs --mutante=sem-avatar && node tools/eval/fora-do-ar-check.mjs --mutante=perde-selecao && npm run eval:passe-debug && npm run eval:site-catalog && npm run eval:charvideoframe",
     "eval:passe-debug": "node tools/eval/passe-debug-check.mjs && node tools/eval/passe-debug-check.mjs --mutante=sem-debug",
     "gen:site-catalog": "node scripts/site-catalog.mjs",
+    "//gen:pack-media": "Avatar, hero, recorte e vídeo de seleção dos personagens de pack Studio, renderizados no charvideo.html (BASE com /packs/ servido). Resultado: tools/eval/char-result-stills.mjs.",
+    "gen:pack-media": "sh tools/eval/with-browser-lock.sh node tools/gen-pack-media.mjs",
     "eval:site-catalog": "node scripts/site-catalog.mjs --check && node tools/eval/site-catalog-check.mjs && node tools/eval/site-catalog-check.mjs --mutante=lista-fixa && node tools/eval/site-catalog-check.mjs --mutante=sem-registro",
     "eval:charvideoframe": "node tools/eval/charvideo-frame-check.mjs && node tools/eval/charvideo-frame-check.mjs --mutate",
     "// ranking": "Relato de Ruben: fotos, perfis e times no placar; renderers reais e mutantes.",
