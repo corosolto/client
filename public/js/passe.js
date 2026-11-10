@@ -114,20 +114,21 @@ export function trocarContaPasse() {
   return carregarPasse();
 }
 
-let resgatando = null;
+let resgatando = null, resgatandoChave = '';
 /* Resgate de UM nível. Sem conta não sai pedido: quem chama leva o jogador para o login. */
 export async function resgatarNivel(level) {
   if (!estado?.authenticated) throw new Error('account_required');
   if (!inteiro(level, 1) || level > PASSE_NIVEIS) throw new Error('level_locked');
-  if (resgatando) return resgatando;
-  const minha = epoca;
-  resgatando = (async () => {
+  const minha = epoca, chave = `${minha}:${level}`;   // clique duplo vira um pedido; outra conta, nunca
+  if (resgatando && resgatandoChave === chave) return resgatando;
+  const pedido = (async () => {
     const out = await pedir({ action: 'claim', level });
     const novo = normalizarStatus(out?.status);
     if (novo && minha === epoca) { estado = novo; avisar(); }
     return out;
-  })().finally(() => { resgatando = null; });
-  return resgatando;
+  })().finally(() => { if (resgatando === pedido) resgatando = null; });
+  resgatando = pedido; resgatandoChave = chave;
+  return pedido;
 }
 
 /* Personagem do passe (`passe:{season, level}` em characters.js) só joga quando o inventário do
