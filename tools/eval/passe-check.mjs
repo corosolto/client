@@ -1,0 +1,231 @@
+#!/usr/bin/env node
+/* ============================================================================
+   passe-check.mjs — O PASSE "SESSÃO DA TRETA" OBEDECE AO SERVIDOR
+   ----------------------------------------------------------------------------
+   Roda os módulos REAIS (public/js/passe.js e public/js/passe-anuncio.js) no Node,
+   com fetch ligado ao mock do contrato (tools/eval/passe-mock.mjs) e um DOM mínimo.
+
+   PS1 xp-do-cliente     · o client nunca manda XP: GET sem corpo; o único POST é
+                           {action:'claim', level} (inteiro). Nenhum outro arquivo de
+                           public/js chama /api/passe.
+   PS2 claim-sem-conta   · visitante não manda resgate (zero POST) e recebe
+                           account_required para o fluxo de login.
+   PS3 personagem-travado-selecionavel · personagem com `passe` fica travado até o
+                           status do servidor listar em unlocked.characters; nada no
+                           localStorage destrava; logout trava de novo. main.js passa
+                           pela trava no seletor, no M, no início da partida e no MP.
+   PS4 passe-modal-repete · o anúncio aparece uma vez por versão, só com a temporada
+                           no ar, sem empilhar <dialog> e fora do ?embed=1.
+   PS5 claim-duplo       · dois cliques no mesmo resgate saem como UM pedido.
+
+   Uso: node tools/eval/passe-check.mjs [--mutante=<id> [--espera-reprovar]]
+     --espera-reprovar  sai 0 só se o mutante derrubar a cláusula que ele mira
+   ============================================================================ */
+import assert from 'node:assert/strict';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { criarPasseMock } from './passe-mock.mjs';
+
+const ARGS = process.argv.slice(2);
+const MUT = (ARGS.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+const ESPERA = ARGS.includes('--espera-reprovar');
+const MUTANTES = {
+  'xp-do-cliente': ['PS1', 'public/js/passe.js', "pedir({ action: 'claim', level })", "pedir({ action: 'claim', level, xp: estado.xp })"],
+  'claim-sem-conta': ['PS2', 'public/js/passe.js', "if (!estado?.authenticated) throw new Error('account_required');", ''],
+  'personagem-travado-selecionavel': ['PS3', 'public/js/passe.js', 'return !estado?.authenticated || !estado.unlocked.characters.includes(def.id);', 'return false;'],
+  'trava-local': ['PS3', 'public/js/passe.js', 'if (!def?.passe) return false;',
+    "if (!def?.passe) return false;\n  try { if (JSON.parse(localStorage.getItem('cs-passe-destravados') || '[]').includes(def.id)) return false; } catch {}"],
+  'partida-sem-trava': ['PS3', 'public/js/main.js', 'if (!online && escolhidoDef && personagemTravado(escolhidoDef)) charId', 'if (false && escolhidoDef) charId'],
+  'roster-sem-trava': ['PS3', 'public/js/main.js', "if (personagemTravado(def)) { $('hub-roster-selected')", "if (false) { $('hub-roster-selected')"],
+  'passe-modal-repete': ['PS4', 'public/js/passe-anuncio.js', '  marcarAnuncio();\n', '\n'],
+  'anuncio-fora-da-temporada': ['PS4', 'public/js/passe.js', 'return agora >= Date.parse(status.starts_at) && agora < Date.parse(status.ends_at);', 'return true;'],
+  'claim-duplo': ['PS5', 'public/js/passe.js', 'if (resgatando) return resgatando;', ''],
+};
+if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
+
+const ler = (p) => {
+  let t = readFileSync(p, 'utf8');
+  if (MUT && MUTANTES[MUT][1] === p) {
+    const [, , de, para] = MUTANTES[MUT];
+    if (!t.includes(de)) { console.error(`mutante ${MUT} não aplicou em ${p}`); process.exit(2); }
+    t = t.replace(de, para);
+  }
+  return t;
+};
+const dataUrl = (fonte) => `data:text/javascript;base64,${Buffer.from(fonte).toString('base64')}`;
+
+/* ---------- DOM mínimo: o que passe.js e passe-anuncio.js tocam ---------- */
+const storage = new Map();
+let busca = '';
+class No {
+  constructor(tag) { this.tagName = tag.toUpperCase(); this.children = []; this.attrs = {}; this.dataset = {}; this.ouvintes = {}; this.textContent = ''; this.open = false; this.parent = null; this.style = { setProperty() {} }; }
+  setAttribute(k, v) { this.attrs[k] = String(v); }
+  getAttribute(k) { return this.attrs[k] ?? null; }
+  append(...xs) { for (const x of xs) { if (typeof x === 'string') this.textContent += x; else { x.parent = this; this.children.push(x); } } }
+  appendChild(x) { this.append(x); return x; }
+  remove() { if (this.parent) this.parent.children = this.parent.children.filter((c) => c !== this); this.parent = null; }
+  addEventListener(t, f) { (this.ouvintes[t] ||= []).push(f); }
+  dispara(t) { for (const f of this.ouvintes[t] || []) f({ preventDefault() {} }); }
+  showModal() { this.open = true; }
+  close() { this.open = false; }
+  focus() { document.activeElement = this; }
+  get isConnected() { let n = this; while (n.parent) n = n.parent; return n === document.body; }
+  todos() { return this.children.flatMap((c) => [c, ...c.todos()]); }
+  texto() { return [this.textContent, ...this.children.map((c) => c.texto())].join(' '); }
+}
+const document = {
+  body: new No('body'), documentElement: { dataset: {} }, activeElement: null,
+  createElement: (t) => new No(t),
+  querySelector(sel) {
+    if (sel === 'dialog[open]') return [this.body, ...this.body.todos()].find((n) => n.tagName === 'DIALOG' && n.open) || null;
+    throw new Error(`seletor não suportado no DOM mínimo: ${sel}`);
+  },
+  dispatchEvent() { return true; },
+};
+globalThis.document = document;
+globalThis.CustomEvent = class { constructor(t, o) { this.type = t; this.detail = o?.detail; } };
+globalThis.localStorage = { getItem: (k) => (storage.has(k) ? storage.get(k) : null), setItem: (k, v) => storage.set(k, String(v)), removeItem: (k) => storage.delete(k) };
+Object.defineProperty(globalThis, 'location', { configurable: true, get: () => ({ search: busca, hostname: 'localhost' }) });
+
+/* ---------- fetch ligado ao mock do contrato ---------- */
+let mock = criarPasseMock();
+const pedidos = [];
+globalThis.fetch = async (url, init = {}) => {
+  const u = new URL(url, 'http://localhost');
+  pedidos.push({ path: u.pathname, search: u.search, method: init.method || 'GET', body: init.body ?? null });
+  if (u.pathname !== '/api/passe') return new Response('{"error":"not_found"}', { status: 404 });
+  const { status, body } = mock.handle(init.method || 'GET', init.body || '');
+  return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+};
+
+storage.set('cs_lang', 'pt');   // i18n.js lê o idioma no import: os textos medidos são os PT
+const passeFonte = ler('public/js/passe.js');
+const passeUrl = dataUrl(passeFonte);
+const P = await import(passeUrl);
+const anuncioFonte = ler('public/js/passe-anuncio.js')
+  .replace("from './i18n.js'", `from '${pathToFileURL('public/js/i18n.js').href}'`)
+  .replace("from './passe.js'", `from '${passeUrl}'`);
+const A = await import(dataUrl(anuncioFonte));
+const mainJs = ler('public/js/main.js');
+
+const falhas = [];
+const clausula = async (id, nome, fn) => {
+  try { await fn(); console.log(`  ✓ ${id} ${nome}`); }
+  catch (e) { falhas.push(id); console.log(`  ✗ ${id} REPROVOU: ${e.message.split('\n')[0]}`); }
+};
+const novaConta = async (opcoes) => { mock = criarPasseMock(opcoes); pedidos.length = 0; await P.trocarContaPasse(); };
+
+await clausula('PS1', 'xp-do-cliente: só {action:"claim", level} sai do client', async () => {
+  await novaConta({ autenticado: true, xp: 9000, claimed: [] });
+  const s = P.passeEstado();
+  assert.ok(s?.authenticated && s.claimable.length >= 3, 'status do mock não chegou');
+  for (const n of [...s.claimable, s.level + 1]) await P.resgatarNivel(n).catch(() => {});
+  const gets = pedidos.filter((p) => p.method === 'GET'), posts = pedidos.filter((p) => p.method === 'POST');
+  assert.ok(gets.length >= 1 && gets.every((p) => p.body === null && p.search === ''), 'GET /api/passe com corpo ou query');
+  assert.ok(posts.length >= 4, `só ${posts.length} resgate(s) medido(s)`);
+  for (const p of posts) {
+    const corpo = JSON.parse(p.body);
+    assert.deepEqual(Object.keys(corpo).sort(), ['action', 'level'], `POST com campo extra: ${p.body}`);
+    assert.ok(corpo.action === 'claim' && Number.isSafeInteger(corpo.level), `POST fora do contrato: ${p.body}`);
+  }
+  assert.equal(mock.chamadas.filter((c) => c.method === 'POST' && c.corpo && Object.keys(c.corpo).some((k) => /xp|progress|reward/i.test(k))).length, 0, 'servidor recebeu XP do client');
+  /* só passe.js conversa com /api/passe */
+  const arquivos = (d) => readdirSync(d).flatMap((f) => { const p = join(d, f); return statSync(p).isDirectory() ? arquivos(p) : p.endsWith('.js') ? [p] : []; });
+  const outros = arquivos('public/js').filter((f) => f !== join('public/js', 'passe.js') && /['"`]\/api\/passe/.test(readFileSync(f, 'utf8')));
+  assert.deepEqual(outros, [], `outros módulos chamam /api/passe: ${outros.join(', ')}`);
+});
+
+await clausula('PS2', 'claim-sem-conta: visitante não manda resgate', async () => {
+  await novaConta({ autenticado: false, claimed: [] });
+  assert.equal(P.passeEstado()?.authenticated, false, 'status de visitante não chegou');
+  pedidos.length = 0;
+  await assert.rejects(P.resgatarNivel(1), /account_required/);
+  assert.equal(pedidos.filter((p) => p.method === 'POST').length, 0, 'visitante mandou POST de resgate');
+  assert.deepEqual(mock.creditos.length, 0, 'mock creditou recompensa para visitante');
+  /* a tela leva para o login em vez de tentar */
+  const tela = readFileSync('public/js/tp/passe.js', 'utf8');
+  assert.match(tela, /if \(!s\?\.authenticated\) \{ entrar\(\); return; \}/, 'tela tenta resgatar sem conta');
+  assert.match(tela, /e\.message === 'account_required'\) \{[^}]*entrar\(\)/, 'account_required do servidor não leva ao login');
+});
+
+await clausula('PS3', 'personagem-travado-selecionavel: só o servidor destrava', async () => {
+  const caveira = { id: 'capitao-caveira', name: 'Capitão Caveira', passe: { season: 'sessao-da-treta-s1', level: 1 } };
+  const vlad = { id: 'vlad', name: 'Vlad', passe: { season: 'sessao-da-treta-s1', level: 15 } };
+  const livre = { id: 'esquerdomacho', name: 'Esquerdomacho' };
+  storage.set('cs-passe-destravados', JSON.stringify(['capitao-caveira', 'vlad']));
+  storage.set('csbr-home-character', 'vlad');
+  await novaConta({ autenticado: false, claimed: [] });
+  assert.equal(P.personagemTravado(caveira), true, 'visitante joga com personagem do passe');
+  assert.equal(P.personagemTravado(livre), false, 'personagem fora do passe travou');
+  await novaConta({ autenticado: true, xp: 1200, claimed: [] });
+  assert.equal(P.personagemTravado(caveira), true, 'nível alcançado sem resgate já destrava (ou o localStorage destravou)');
+  await P.resgatarNivel(1);
+  assert.equal(P.personagemTravado(caveira), false, 'resgate confirmado pelo servidor não destravou');
+  assert.equal(P.personagemTravado(vlad), true, 'personagem de nível não resgatado destravou');
+  mock.definir({ autenticado: false });
+  await P.trocarContaPasse();
+  assert.equal(P.personagemTravado(caveira), true, 'logout manteve o personagem destravado');
+  assert.equal(P.nivelDoPersonagem(vlad), 15, 'nível do cadeado errado');
+  storage.delete('cs-passe-destravados'); storage.delete('csbr-home-character');
+  /* main.js: toda escolha passa pela trava */
+  const exige = [
+    [/if \(!online && escolhidoDef && personagemTravado\(escolhidoDef\)\) charId = personagemLivre\(/, 'início de partida offline'],
+    [/if \(personagemTravado\(def\)\) \{ \$\('hub-roster-selected'\)/, 'clique no seletor do lobby'],
+    [/if \(!selChar \|\| personagemTravado\(selChar\)\) return;/, 'confirmação do seletor (M e menu antigo)'],
+    [/return def && !personagemTravado\(def\) \? def : null;/, 'pedido de personagem no multiplayer'],
+    [/podeNoLado\(character, rememberedSide\) && !personagemTravado\(character\)/, 'sorteio do personagem inicial'],
+    [/personagemLivre\(CHARACTERS\.find\(\(c\) => c\.id === currentChar\)/, 'personagem do lobby'],
+  ];
+  const faltam = exige.filter(([re]) => !re.test(mainJs)).map(([, nome]) => nome);
+  assert.deepEqual(faltam, [], `main.js escolhe sem a trava em: ${faltam.join(', ')}`);
+});
+
+await clausula('PS4', 'passe-modal-repete: anúncio uma vez por versão', async () => {
+  storage.clear();
+  await novaConta({ autenticado: false, claimed: [] });
+  const abertos = () => document.body.children.filter((n) => n.tagName === 'DIALOG');
+  const primeiro = A.anunciarPasse({});
+  assert.ok(primeiro?.open, 'temporada no ar e o anúncio não abriu');
+  assert.match(primeiro.texto(), /ENTRAR E JOGAR O PASSE/, 'visitante sem CTA de login');
+  assert.equal(storage.get(P.PASSE_ANUNCIO_CHAVE), P.PASSE_ANUNCIO_VERSAO, 'versão vista não ficou guardada');
+  assert.equal(A.anunciarPasse({}), null, 'anúncio empilhou sobre o próprio <dialog>');
+  primeiro.dispara('cancel');
+  assert.equal(abertos().length, 0, 'ESC não fechou o anúncio');
+  assert.equal(A.anunciarPasse({}), null, 'anúncio repetiu na mesma versão');
+  storage.set(P.PASSE_ANUNCIO_CHAVE, 'sessao-da-treta-s1/0');
+  const nova = A.anunciarPasse({});
+  assert.ok(nova?.open, 'versão nova do passe não anunciou');
+  nova.dispara('cancel');
+  storage.clear();
+  busca = '?embed=1';
+  assert.equal(A.anunciarPasse({}), null, 'anúncio abriu no ?embed=1');
+  busca = '';
+  const outro = document.createElement('dialog'); outro.open = true; document.body.append(outro);
+  assert.equal(A.anunciarPasse({}), null, 'anúncio empilhou sobre outro <dialog>');
+  outro.remove();
+  assert.equal(P.passeAnuncioDevido({ status: P.passeEstado(), agora: Date.parse('2027-01-11T00:00:00Z'), visto: null }), false, 'anuncia temporada encerrada');
+  assert.equal(P.passeAnuncioDevido({ status: P.passeEstado(), agora: Date.parse('2026-11-01T00:00:00Z'), visto: null }), false, 'anuncia antes do início');
+  assert.equal(P.passeAnuncioDevido({ status: null, visto: null }), false, 'anuncia sem resposta do servidor');
+  storage.clear();
+});
+
+await clausula('PS5', 'claim-duplo: dois cliques, um pedido', async () => {
+  await novaConta({ autenticado: true, xp: 1500, claimed: [] });
+  pedidos.length = 0;
+  const [a, b] = await Promise.all([P.resgatarNivel(1), P.resgatarNivel(1)]);
+  assert.equal(pedidos.filter((p) => p.method === 'POST').length, 1, 'clique duplo virou dois pedidos');
+  assert.equal(a.level, 1); assert.equal(b.level, 1);
+  const repetido = await P.resgatarNivel(1);
+  assert.equal(repetido.already_claimed, true, 'repetição não veio idempotente do servidor');
+  assert.equal(mock.creditos.filter((c) => c.event_key.endsWith(':1')).length, 5, 'recompensas do nível 1 duplicaram');
+});
+
+const alvo = MUT ? MUTANTES[MUT][0] : '';
+if (ESPERA) {
+  const mordeu = falhas.includes(alvo);
+  console.log(`${mordeu ? 'MORDE' : 'CEGO '} ${alvo} (${MUT})`);
+  process.exit(mordeu ? 0 : 1);
+}
+console.log(JSON.stringify({ mutante: MUT || null, falhas }));
+process.exit(falhas.length ? 1 : 0);
