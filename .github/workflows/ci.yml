@@ -163,6 +163,9 @@ jobs:
       - name: Suites preservam cobertura e seleção do pre-push
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node --test tests/eval-suites.test.mjs
+      - name: Duration-based sharding preserves full coverage
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node --test tests/eval-duration-shards.test.mjs
 
   contratos-visuais-personagens-camera:
     runs-on: ubuntu-latest
