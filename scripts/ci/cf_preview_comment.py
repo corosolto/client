@@ -78,6 +78,11 @@ def atualizar(repo: str, pr: str, url: str, head_sha: str) -> None:
         )
 
 
+def resolver_head_sha(argv: list[str], ambiente: dict[str, str]) -> str:
+    """O workflow passa o SHA no terceiro argumento; a forma antiga usa o ambiente."""
+    return argv[3] if len(argv) == 4 else ambiente.get("HEAD_SHA", "")
+
+
 def selftest() -> int:
     """Cobre corpo, duplicatas oficiais e forjados sem rede."""
     texto = corpo("https://abc-csb-preview.rubenmarcus-dev.workers.dev", "deadbee")
@@ -92,6 +97,8 @@ def selftest() -> int:
     assert url_preview([oficial, forjado], "abc123") == "https://oficial.workers.dev"
     assert url_preview([forjado], "abc123") is None
     assert url_preview([antigo, oficial], "abc123") == "https://oficial.workers.dev"
+    assert resolver_head_sha(["script", "1307", "https://x.workers.dev", "abc123"], {}) == "abc123"
+    assert resolver_head_sha(["script", "1307", "https://x.workers.dev"], {"HEAD_SHA": "def456"}) == "def456"
     print("CF-COMMENT PASS: duplicatas oficiais e forjados ignorados")
     return 0
 
@@ -99,14 +106,14 @@ def selftest() -> int:
 def main() -> int:
     if "--selftest" in sys.argv:
         return selftest()
-    if len(sys.argv) != 3:
-        print(f"uso: {sys.argv[0]} PR URL", file=sys.stderr)
+    if len(sys.argv) not in (3, 4):
+        print(f"uso: {sys.argv[0]} PR URL [HEAD_SHA]", file=sys.stderr)
         return 2
     repo = os.environ.get("GITHUB_REPOSITORY")
     if not repo:
         print("GITHUB_REPOSITORY ausente", file=sys.stderr)
         return 2
-    atualizar(repo, sys.argv[1], sys.argv[2], os.environ.get("HEAD_SHA", ""))
+    atualizar(repo, sys.argv[1], sys.argv[2], resolver_head_sha(sys.argv, os.environ))
     return 0
 
 
