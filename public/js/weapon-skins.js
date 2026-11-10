@@ -462,6 +462,13 @@ const POLITICAL_LAYOUT = Object.freeze({
   pistol: Object.freeze({
     symbol: Object.freeze({ y: -0.020, z: -0.015, height: 0.082 }),
     slogan: Object.freeze({ y: 0.240, z: 0.035, height: 0.030 }),
+    // 1P no X18 da fábrica: a mão cobre a lateral de trás; só a frente do ferrolho fica livre no
+    // idle e na inspeção (busca de layout, docs/viewmodels/pistola-pintada-fabrica.md).
+    fp: Object.freeze({
+      gap: 0.01,
+      symbol: Object.freeze({ y: 0.300, front: 0.690, height: 0.100, maxWidth: 0.160, fitWidth: 0.100 }),
+      slogan: Object.freeze({ y: 0.290, height: 0.050, maxWidth: 0.400, fitWidth: 0.600 }),
+    }),
   }),
 });
 const SLOGAN_STYLE = Object.freeze({
@@ -537,8 +544,8 @@ function sloganTexture(skinId) {
   return texture;
 }
 
-// `source` (opcional): { points, scale } — vértices da arma já no espaço de `model` e a escala
-// do wrap TP equivalente. O corpo golden do 1P mede pelo frame TP do osso (goldenMarkFrame).
+// `source` (opcional): { points, scale } — vértices já no espaço de `model` e escala do wrap TP;
+// no 1P vêm do frame TP do osso (goldenMarkFrame no corpo golden, referenceFrame no X18).
 function fittedSideSurfaces(model, weaponId, placements, source = null) {
   const cacheKey = `${model.uuid}:${weaponId}:${placements.map(({ y, z, width, height, lift }) => `${y},${z},${width},${height},${lift || 0}`).join('|')}`;
   if (fittedSurfaceCache.has(cacheKey)) return fittedSurfaceCache.get(cacheKey);
@@ -991,13 +998,19 @@ function attachKnifeMarkings(model, skinId, context) {
   return finish('attached');
 }
 
+// Espaço do weaponModel 3P (cartaz/prévia da loja): caixa do wrap ÷ norm (cano +Z, cima +Y), e
+// malha = Ry(-rotY)·(wrap − shiftZ·Z), o inverso de CFG.rot e do recuo do grip (weapons.js).
+const TP_REFERENCE = Object.freeze({
+  pistol: Object.freeze({ back: -0.2994, front: 0.6986, top: 0.3799, rotY: 90, shiftZ: 0.1996, scale: 0.2605 }),
+});
+
 // Corpo golden do 1P: SkinnedMesh num osso, em outro espaço que o wrap TP onde os layouts são
 // autorados. Referência = weaponModel(id).userData.metrics.box ÷ metrics.norm (10/11/2026).
 const TP_MARK_REFERENCE = Object.freeze({
   ak: Object.freeze({ back: -0.3793, front: 0.6188, top: 0.1514, scale: 0.8817 }),
   m4: Object.freeze({ back: -0.3793, front: 0.6188, top: 0.1729, scale: 0.8416 }),
   scar: Object.freeze({ back: -0.3793, front: 0.6188, top: 0.1525, scale: 0.9018 }),
-  pistol: Object.freeze({ back: -0.2994, front: 0.6986, top: 0.3799, scale: 0.2605 }),
+  pistol: TP_REFERENCE.pistol,
 });
 
 function goldenMarkFrame(mesh, weaponId) {
@@ -1079,35 +1092,46 @@ function goldenMarkHost(mesh, weaponId, skinId) {
   return { target: host, source: { points: frame.points, scale: frame.scale } };
 }
 
-// `source` só existe no corpo golden do 1P: lá valem fpMarkLayout/fpSloganLayout, porque mão e
-// emendas do receptor em 1ª pessoa não são as do boneco de 3ª pessoa.
+// Layout 1P (`layout.fp`): a marca termina em `front` (cano +Z) e cabe em `maxWidth`; a lateral é
+// medida numa janela de pelo menos `fitWidth`: a face do ferrolho só tem vértice nas pontas.
+function fpPlacement(spec, aspect, front) {
+  const height = Math.min(spec.height, spec.maxWidth / aspect);
+  const width = height * aspect;
+  const fitWidth = Math.max(width, spec.fitWidth);
+  return { y: spec.y, z: front - width / 2, height, fit: { z: front - fitWidth / 2, width: fitWidth } };
+}
+
+// `source` (1P): fpMarkLayout/fpSloganLayout da skin ganham do `layout.fp` e do layout de 3ª
+// pessoa, porque mão e emendas do receptor em 1ª pessoa não são as do boneco de 3ª pessoa.
 function attachPoliticalMarkings(model, weaponId, skinId, source = null) {
   const symbol = markTextures.get(skinId);
   const definition = WEAPON_SKINS[skinId];
   const layout = POLITICAL_LAYOUT[weaponId];
   if (!definition || !layout) return;
   const slogan = sloganTexture(skinId);
+  const fp = source ? layout.fp : null;
   const items = [];
+  let front = fp?.symbol.front;
   if (symbol) {
-    items.push({
-      role: 'symbol',
-      texture: symbol,
-      placement: (source && definition.fpMarkLayout) || definition.markLayout || layout.symbol,
-      aspect: (symbol.image?.width || 1) / (symbol.image?.height || 1),
-    });
+    const aspect = (symbol.image?.width || 1) / (symbol.image?.height || 1);
+    const placement = (source && definition.fpMarkLayout) || (fp ? fpPlacement(fp.symbol, aspect, front) : definition.markLayout || layout.symbol);
+    if (fp) front = placement.z - placement.height * aspect / 2 - fp.gap;
+    items.push({ role: 'symbol', texture: symbol, placement, aspect });
   }
   if (slogan) {
+    const aspect = definition.sloganAspect || 8;
     items.push({
       role: 'slogan',
       texture: slogan,
-      placement: (source && definition.fpSloganLayout) || definition.sloganLayout || layout.slogan,
-      aspect: definition.sloganAspect || 8,
+      placement: (source && definition.fpSloganLayout) || (fp ? fpPlacement(fp.slogan, aspect, front) : definition.sloganLayout || layout.slogan),
+      aspect,
     });
   }
   if (!items.length) return;
   const surfaces = fittedSideSurfaces(model, weaponId, items.map(({ placement, aspect }) => ({
     ...placement,
     width: placement.height * aspect,
+    ...placement.fit,
   })), source);
   items.forEach((item, index) => addFittedPair(model, skinId, item.role, item.texture, item.placement, surfaces[index], item.aspect));
 }
@@ -1145,17 +1169,96 @@ function attachOfficialMark(model, weaponId, skinId) {
   }
 }
 
-function attachSkinMark(model, weaponId, skinId, knifeContext) {
+// Corpo skinned em vários ossos (X18 da fábrica). `referencia` = { bone, barrel, up } no espaço
+// do osso; o corpo é ajustado à caixa TP pela coronha, pelo topo e pelo meio lateral.
+function referenceFrame(model, weaponId, { bone, barrel, up } = {}) {
+  const reference = TP_REFERENCE[weaponId];
+  if (!reference || !bone?.isObject3D || !(barrel?.lengthSq() > 0) || !(up?.lengthSq() > 0)) return null;
+  const z = barrel.clone().normalize();
+  const y = up.clone().addScaledVector(z, -up.dot(z));
+  if (!(y.lengthSq() > 0)) return null;
+  y.normalize();
+  const x = new THREE.Vector3().crossVectors(y, z);   // Y × Z = X, como no wrap TP: sem espelho
+  model.updateMatrixWorld(true);
+  bone.updateWorldMatrix(true, false);
+  const boneInverseWorld = bone.matrixWorld.clone().invert();
+  const meshes = [];
+  model.traverse((object) => {
+    if (!object.isMesh || !object.geometry?.attributes?.position || handMesh(object)) return;
+    if (object.name.startsWith('skin-') || object.name.startsWith('club-mark-')) return;
+    const index = object.isSkinnedMesh ? object.skeleton.bones.indexOf(bone) : -1;
+    // Skinned: boneInverse · bindMatrix leva a pose de bind ao osso, independente da animação.
+    const toBone = index >= 0
+      ? new THREE.Matrix4().multiplyMatrices(object.skeleton.boneInverses[index], object.bindMatrix)
+      : new THREE.Matrix4().multiplyMatrices(boneInverseWorld, object.matrixWorld);
+    meshes.push({ object, toBone });
+  });
+  if (!meshes.length) return null;
+  const points = [];
+  const lo = new THREE.Vector3(Infinity, Infinity, Infinity);
+  const hi = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
+  const axes = new THREE.Vector3();
+  for (const { object, toBone } of meshes) {
+    const positions = object.geometry.attributes.position;
+    const step = Math.max(1, Math.ceil(positions.count / 24000));
+    for (let index = 0; index < positions.count; index += step) {
+      const point = new THREE.Vector3().fromBufferAttribute(positions, index).applyMatrix4(toBone);
+      axes.set(point.dot(x), point.dot(y), point.dot(z));
+      if (!Number.isFinite(axes.x + axes.y + axes.z)) return null;
+      points.push(point);
+      lo.min(axes);
+      hi.max(axes);
+    }
+  }
+  const k = (hi.z - lo.z) / (reference.front - reference.back);
+  if (!(k > 0)) return null;
+  const origin = new THREE.Vector3()
+    .addScaledVector(x, (lo.x + hi.x) / 2)
+    .addScaledVector(y, hi.y - reference.top * k)
+    .addScaledVector(z, lo.z - reference.back * k);
+  const matrix = new THREE.Matrix4().makeBasis(
+    x.clone().multiplyScalar(k), y.clone().multiplyScalar(k), z.clone().multiplyScalar(k),
+  ).setPosition(origin);
+  const inverse = matrix.clone().invert();
+  const meshFromWrap = new THREE.Matrix4().makeRotationY(-reference.rotY * Math.PI / 180)
+    .multiply(new THREE.Matrix4().makeTranslation(0, 0, -reference.shiftZ));
+  const spaces = new Map(meshes.map(({ object, toBone }) => [object, meshFromWrap.clone().multiply(inverse).multiply(toBone)]));
+  const wrapPoints = points.map((point) => point.applyMatrix4(inverse));
+  // Caixa da arma inteira no espaço da malha TP: o padrão de textura (patternAsset) a usa como a 3P.
+  const box = new THREE.Box3();
+  for (const point of wrapPoints) box.expandByPoint(point.clone().applyMatrix4(meshFromWrap));
+  return { bone, matrix, points: wrapPoints, scale: reference.scale, spaces, box };
+}
+
+// Grupo filho do osso com o espaço do wrap TP: as marcas seguem a animação e usam POLITICAL_LAYOUT /
+// CLUB_MARK_LAYOUT sem tabela própria. Troca de pintura tira o grupo da anterior.
+function referenceMarkHost(frame, skinId) {
+  for (const old of frame.bone.children.filter((child) => child.userData.referenceMarkFrame)) frame.bone.remove(old);
+  const host = new THREE.Group();
+  host.name = `skin-frame-${skinId}`;
+  host.matrixAutoUpdate = false;
+  host.matrix.copy(frame.matrix);
+  host.userData.weaponSkin = skinId;
+  host.userData.referenceMarkFrame = true;
+  frame.bone.add(host);
+  host.updateMatrixWorld(true);
+  return host;
+}
+
+// `frame` (X18 da fábrica, referenceFrame) ou corpo golden (goldenMarkFrame): marcas no osso.
+function attachSkinMark(model, weaponId, skinId, knifeContext, frame = null) {
   if (weaponId === 'knife') return attachKnifeMarkings(model, skinId, knifeContext);
-  const golden = goldenMarkHost(model, weaponId, skinId);
-  const target = golden?.target || model;
+  const golden = frame ? null : goldenMarkHost(model, weaponId, skinId);
+  const target = frame ? referenceMarkHost(frame, skinId) : golden?.target || model;
+  const source = frame ? { points: frame.points, scale: frame.scale } : golden?.source || null;
   if (WEAPON_SKINS[skinId]?.officialMarksIncluded) attachOfficialMark(target, weaponId, skinId);
-  else attachPoliticalMarkings(target, weaponId, skinId, golden?.source || null);
+  else attachPoliticalMarkings(target, weaponId, skinId, source);
 }
 
 // `knifeMask` (faca steelBlade): mapa, aço e acabamento originais ficam; a pintura e o perfil de
 // material valem só onde dot(posição, xyz) + w ≤ 0 — o cabo/guarda de knifeHandleMask.
-function cloneMaterial(material, skinId, geometry, unit = null, knifeMask = null) {
+// `reference` (X18): { space: geometria → malha TP, box: caixa da arma nesse espaço }.
+function cloneMaterial(material, skinId, geometry, unit = null, knifeMask = null, reference = null) {
   const copy = ownVmResource(material.clone());
   copy.name = `${material.name || 'weapon'}__skin_${skinId}`;
   const definition = WEAPON_SKINS[skinId];
@@ -1169,12 +1272,18 @@ function cloneMaterial(material, skinId, geometry, unit = null, knifeMask = null
     copy.metalness = profile.metalness;
     copy.envMapIntensity = profile.envMapIntensity;
   }
-  copy.userData = { ...copy.userData, weaponSkin: skinId, ...(knifeMask ? { steelBladeMask: knifeMask.toArray() } : {}) };
+  const space = reference?.space || null;
+  copy.userData = {
+    ...copy.userData,
+    weaponSkin: skinId,
+    ...(knifeMask ? { steelBladeMask: knifeMask.toArray() } : {}),
+    ...(space ? { weaponSkinSpace: space.toArray() } : {}),
+  };
   let frame = null;
   const patternTexture = patternAssetTexture(skinId);
   if (SESSAO_DA_TRETA_FRAGMENT[skinId] || patternTexture) {
-    if (!geometry.boundingBox) geometry.computeBoundingBox();
-    const { min, max } = geometry.boundingBox;
+    if (!reference?.box && !geometry.boundingBox) geometry.computeBoundingBox();
+    const { min, max } = reference?.box || geometry.boundingBox;
     const useZ = max.z - min.z > max.x - min.x;
     const length = useZ ? max.z - min.z : max.x - min.x;
     frame = new THREE.Vector4(
@@ -1193,6 +1302,7 @@ function cloneMaterial(material, skinId, geometry, unit = null, knifeMask = null
   } : null;
   const fragment = patternTexture ? PATTERN_ASSET_FRAGMENT : patternFragment(skinId);
   copy.onBeforeCompile = (shader) => {
+    if (space) shader.uniforms.weaponSkinSpace = { value: space };
     if (frame) shader.uniforms.weaponSkinFrame = { value: frame };
     if (patternUniforms) Object.assign(shader.uniforms, patternUniforms);
     if (knifeMask) {
@@ -1203,8 +1313,8 @@ function cloneMaterial(material, skinId, geometry, unit = null, knifeMask = null
       ? 'uniform sampler2D weaponSkinPattern;\nuniform vec3 weaponSkinPatternStyle;\nuniform vec3 weaponSkinPalette[3];\n'
       : ''}${knifeMask ? 'uniform vec4 weaponSkinKnife;\nuniform vec2 weaponSkinHandleFinish;\n' : ''}`;
     shader.vertexShader = shader.vertexShader
-      .replace('void main() {', 'varying vec3 vWeaponSkinLocal;\nvoid main() {')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\n\tvWeaponSkinLocal = position;');
+      .replace('void main() {', `${space ? 'uniform mat4 weaponSkinSpace;\n' : ''}varying vec3 vWeaponSkinLocal;\nvoid main() {`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\n\tvWeaponSkinLocal = ${space ? '(weaponSkinSpace * vec4(position, 1.0)).xyz' : 'position'};`);
     shader.fragmentShader = shader.fragmentShader
       .replace('void main() {', `${declarations}varying vec3 vWeaponSkinLocal;\nvoid main() {`);
     shader.fragmentShader = knifeMask
@@ -1218,7 +1328,7 @@ function cloneMaterial(material, skinId, geometry, unit = null, knifeMask = null
         .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\n  metalnessFactor = mix(metalnessFactor, weaponSkinHandleFinish.y, weaponSkinHandle);')
       : shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>\n${fragment}`);
   };
-  copy.customProgramCacheKey = () => `weapon-skin:${skinId}:${patternTexture ? 'pattern-asset' : 'procedural'}:${knifeMask ? 'aco' : 'corpo'}:object-space-v3`;
+  copy.customProgramCacheKey = () => `weapon-skin:${skinId}:${patternTexture ? 'pattern-asset' : 'procedural'}:${knifeMask ? 'aco' : 'corpo'}:object-space-v3${space ? ':referencia' : ''}`;
   copy.needsUpdate = true;
   return copy;
 }
@@ -1265,25 +1375,30 @@ function patternUnits(model, referenceRoot = model) {
 // `marcas:false` pinta a peça sem repetir decalque/selo — usado nas peças IRMÃS da arma
 // (pente, ferrolho), que precisam do material da pintura mas não de um segundo adesivo.
 // `patternReference`: corpo da arma, para a peça irmã herdar a escala do padrão dele.
-export function applyWeaponSkinCandidate(model, weaponId, skinId, { marcas = true, knifeContext = null, patternReference = null } = {}) {
+// `referencia` (corpo da fábrica): ver referenceFrame; inválida = não pinta, nunca cor chapada.
+export function applyWeaponSkinCandidate(model, weaponId, skinId, { marcas = true, knifeContext = null, patternReference = null, referencia = null } = {}) {
   if (!skinId) return false;
   const definition = WEAPON_SKINS[skinId];
   if (!definition || !definition.targetWeapons.includes(weaponId)) return false;
   if (!skinFragment(skinId)) return false;
-  const units = SESSAO_DA_TRETA_FRAGMENT[skinId] || patternAssetTexture(skinId)
+  const frame = referencia ? referenceFrame(model, weaponId, referencia) : null;
+  if (referencia && !frame) return false;
+  const units = !frame && (SESSAO_DA_TRETA_FRAGMENT[skinId] || patternAssetTexture(skinId))
     ? patternUnits(model, patternReference || model)
     : new Map();
   const steelBlade = weaponId === 'knife' && definition.steelBlade === true;
   model.traverse((object) => {
     if (!object.isMesh || !object.material) return;
+    const space = frame?.spaces.get(object) || null;
     const skinMaterial = (material) => HAND_MATERIAL.test(material?.name || '')
       ? material
-      : cloneMaterial(material, skinId, object.geometry, units.get(object) || null, steelBlade ? knifeHandleMask(object.geometry) : null);
+      : cloneMaterial(material, skinId, object.geometry, units.get(object) || null, steelBlade ? knifeHandleMask(object.geometry) : null,
+        space ? { space, box: frame.box } : null);
     object.material = Array.isArray(object.material)
       ? object.material.map(skinMaterial)
       : skinMaterial(object.material);
   });
-  if (marcas) attachSkinMark(model, weaponId, skinId, knifeContext);
+  if (marcas) attachSkinMark(model, weaponId, skinId, knifeContext, frame);
   model.userData.weaponSkin = skinId;
   return true;
 }
