@@ -75,6 +75,7 @@ const request=(url,body)=>new Request('http://localhost:4323'+url,{method:body?'
 class Element {
   constructor(tag){this.tagName=tag.toUpperCase();this.children=[];this.dataset={};this.attrs={};this.textContent='';this.checked=false;this.required=false;this.hidden=false;this.open=false;this.value='';}
   append(...nodes){this.children.push(...nodes);}
+  appendChild(node){this.children.push(node);return node;}
   replaceChildren(...nodes){this.children=nodes;this.textContent='';}
   setAttribute(k,v){this.attrs[k]=String(v);}
   getAttribute(k){return this.attrs[k] ?? null;}
@@ -108,7 +109,7 @@ async function ui(authenticated=false,{nick='Guest',bootSplash=false,runCommunit
     return new Response(JSON.stringify(out),{status:200});
   };
   const observers=[];
-  const context=vm.createContext({document:{body:new Element('body'),getElementById:id=>ids[id] || null,createElement:tag=>new Element(tag),createTextNode:text=>text,querySelectorAll:()=>[],addEventListener:()=>{},dispatchEvent:()=>{},hidden:false,activeElement:null},CustomEvent:class {constructor(type,{detail}){this.type=type;this.detail=detail}},MutationObserver:class {constructor(fn){observers.push(fn)}observe(){}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,String(v)),removeItem:k=>storage.delete(k)},location:{origin:'http://localhost:4323',search:'',assign:p=>navigation.push(p)},navigator:{clipboard:{writeText:async text=>copied.push(text)}},URL,URLSearchParams,fetch,AbortSignal,setInterval:()=>1,setTimeout,clearTimeout,console});
+  const context=vm.createContext({document:{head:new Element('head'),body:new Element('body'),getElementById:id=>ids[id] || null,createElement:tag=>new Element(tag),createTextNode:text=>text,querySelectorAll:()=>[],addEventListener:()=>{},dispatchEvent:()=>{},hidden:false,activeElement:null},CustomEvent:class {constructor(type,{detail}){this.type=type;this.detail=detail}},MutationObserver:class {constructor(fn){observers.push(fn)}observe(){}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,String(v)),removeItem:k=>storage.delete(k)},location:{origin:'http://localhost:4323',search:'',assign:p=>navigation.push(p)},navigator:{clipboard:{writeText:async text=>copied.push(text)}},URL,URLSearchParams,fetch,AbortSignal,setInterval:()=>1,setTimeout,clearTimeout,console});
   let entry=null;
   context.window=context;context.dispatchEvent=()=>{};context.addEventListener=()=>{};context.sessionStorage={removeItem:()=>{}};
   vm.runInContext(read(path.join(root,'public/js/profile-character-catalog.js')).replace(/export\s+/g,''),context,{timeout:vmTimeout});
@@ -161,7 +162,10 @@ await check('E05','stale guest proof automatically retries once without it and p
   const nodes=()=>all(u.ids['account-entry-body']);
   const google=nodes().find(n=>n.tagName==='BUTTON' && n.dataset.provider==='google');assert(google);
   const twitter=nodes().find(n=>n.tagName==='BUTTON' && n.dataset.provider==='twitter');assert(twitter);
-  await Promise.all([google.onclick(),twitter.onclick()]);
+  let deadlock;
+  const tentativas = Promise.all([google.onclick(),twitter.onclick()]);
+  await Promise.race([tentativas,new Promise((_,reject)=>{deadlock=setTimeout(()=>reject(new Error('guest_invalid aguardou a própria promise')),250);})]);
+  clearTimeout(deadlock);
   await google.onclick();
   const starts=u.calls.filter(c=>c.action==='start');
   assert.equal(starts.length,5,'each provider needs initial plus retry, plus the later Google attempt');

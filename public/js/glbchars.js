@@ -24,8 +24,9 @@ import { weaponModel, preloadWeapons, ONE_HANDED, gripPoints } from './weapons.j
 import { mountEyewear } from './eyewear.js';
 import { gloveSkinStyle } from './data/glove-skin-definitions.js';
 import { solveCCDIK } from './handik.js';
-import { CHARACTER_RELEASES, STUDIO_CHARACTER_STATES, STUDIO_SKELETON_JOINTS, characterRelease } from './data/content-releases.js';
+import { CHARACTER_RELEASES, STUDIO_CHARACTER_STATES, characterRelease } from './data/content-releases.js';
 import { resolveStudioCharacter, StudioCharacterError } from './studio-character.js';
+import { studioSkeletonMismatch } from './studio-skeleton.js';
 
 // Character ids that have a real model under public/models/characters/<id>.glb.
 export const GLB_CHARS = new Set([
@@ -608,10 +609,12 @@ function preloadStudioCharacter(id, release) {
       loadGLB(pack.modelUrl),
       ...STUDIO_CHARACTER_STATES.map((s) => loadGLB(pack.animationUrls[s])),
     ]).catch((e) => { throw new StudioCharacterError('studio_glb_invalid', `${id}: ${e?.message || e}`, { cause: e }); });
-    const joints = new Set();
-    model.scene.traverse((o) => { if (o.isSkinnedMesh && o.skeleton) for (const b of o.skeleton.bones) joints.add(b.name); });
-    const missing = STUDIO_SKELETON_JOINTS.filter((name) => !joints.has(name));
-    if (missing.length) throw new StudioCharacterError('studio_skeleton_mismatch', `${id}: sem ${missing.join(',')}`);
+    const bones = new Set();
+    model.scene.traverse((o) => {
+      if (o.isSkinnedMesh && o.skeleton) for (const bone of o.skeleton.bones) bones.add(bone);
+    });
+    const detalhe = studioSkeletonMismatch([...bones]);
+    if (detalhe) throw new StudioCharacterError('studio_skeleton_mismatch', `${id}: ${detalhe}`);
     const set = {};
     STUDIO_CHARACTER_STATES.forEach((s, i) => {
       const clip = clipGlbs[i].animations.find((c) => c.name === s);
@@ -1097,6 +1100,7 @@ class CharController {
     this.cur = null; this.dead = false; this.shooting = false; this.crouch = false; this.jumping = false;
     this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0; this._porte1hK = 0;
     this._flinchT = 0; this._flinchDur = 0; this._flinchDir = null; this._fireT = 0; this._fireDur = 0;
+    this._drawT = 0; this._drawBone = null; this._drawBase = new THREE.Quaternion();
     this._emoteId = null; this._emoteT = 0; this._emoteK = 0; this._emoteDip = 0;
     this.emotando = false; this._emoteOssos = [];
     this._ar = false; this._mantleF = null; this._landT = 0; this._yawAtraso = null; this._deathTilt = 0; this.lod = 0;
@@ -1148,6 +1152,8 @@ class CharController {
   // Recarga INTERROMPIDA (granada na mão, morte): o overlay cai no mesmo quadro — senão o
   // corpo 3P segue mergulhando atrás de um pente que ninguém está trocando.
   cancelReload() { this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; }
+
+  draw() { if (!this.dead) this._drawT = 0.32; }
 
   /* Levar tiro move o corpo: sem isso quem atira de longe não sabe se acertou.
      `dir` é a direção do disparo em mundo; `forca` 0..1 (dano/100). */
@@ -1206,7 +1212,13 @@ class CharController {
 
   die(dir = null) {
     this._emoteId = null;
-    if (this.dead) return;
+    if (this.dead) {
+      if (dir && !this._deathDir) {
+        this._deathTilt = Math.atan2(dir.x, dir.z);
+        this._deathDir = { x: dir.x, z: dir.z };
+      }
+      return;
+    }
     // Viés de tombo pela direção do disparo: o mesmo clipe deixa de cair sempre igual.
     this._deathTilt = dir ? Math.atan2(dir.x, dir.z) : 0;
     this._deathDir = dir ? { x: dir.x, z: dir.z } : null;
@@ -1214,6 +1226,7 @@ class CharController {
     this.dead = true; this.shooting = false; this._ar = false; this._mantleF = null;
     /* Overlays de vida (reload/flinch/lean/pitch) morrem junto com o corpo (dono, 31/10). Hist: docs/ANIM-3P.md. */
     this.cancelReload();
+    this._drawT = 0;
     this._flinchDur = 0;
     this._leanK = 0;
     this.aimPitch = 0;
@@ -1247,6 +1260,8 @@ class CharController {
   // stride, so we drive the cycle rate from how fast the body is really moving).
   update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
     this._restaurarPoseMorte();
+    if (this._drawBone) { this._drawBone.quaternion.copy(this._drawBase); this._drawBone = null; }
+    this._drawT = Math.max(0, this._drawT - dt);
     const freeHand = this._previewFreeHand;
     // Restaura antes do mixer: uma pose idêntica pode não reescrever a propriedade em dt=0.
     if (freeHand?.applied) { freeHand.bone.quaternion.copy(freeHand.before); freeHand.applied = false; }
@@ -1388,6 +1403,16 @@ class CharController {
           orientTpMount(t);   // reorienta o cano pós-IK
         }
       }
+    }
+    const drawArm = this._drawT > 0 && !this.dead && this.lod < 1 && !this.emotando && this.corpo?.get('RightArm');
+    if (drawArm?.parent) {
+      this._drawBone = drawArm;
+      this._drawBase.copy(drawArm.quaternion);
+      this.group.updateMatrixWorld(true);
+      drawArm.parent.getWorldQuaternion(_pq).invert();
+      _axisF.set(Math.cos(this.group.rotation.y), 0, -Math.sin(this.group.rotation.y)).applyQuaternion(_pq).normalize();
+      drawArm.quaternion.premultiply(_qLean.setFromAxisAngle(_axisF, Math.sin(Math.PI * this._drawT / 0.32) * 0.3));
+      if (this.tpMount) orientTpMount(this.tpMount);
     }
     // IK da mão de apoio (FASE 2): palma L no guarda-mão da arma montada (só 2 mãos).
     // Roda depois do mixer/pose — corrige o contato por arma sem tocar na orientação.

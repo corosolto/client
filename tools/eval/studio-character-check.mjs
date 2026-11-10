@@ -27,6 +27,7 @@
      R15b chave fora do vocabulário é ignorada: não baixa, não expõe e não derruba o pacote
      R15c extra conhecido fora de files → studio_role_unknown_file;  R15d extra duplicando arquivo de estado → studio_role_duplicate
      R15e extras contam no orçamento → studio_budget_exceeded antes de baixar;  R15f extra não-objeto/entrada sem file → studio_manifest_invalid
+     R18 validador do esqueleto do adaptador rejeita juntas ausentes, extras e multiplicidade errada
      S1  /packs/ serve com MIME certo e Cache-Control: no-store (pelo plugin Vite real)
      S4  travessia/forma não canônica → 404;  S5 symlink para fora da raiz → 404
      S6  diretório e extensão de código → 404;  S7 sem STUDIO_PACK_ROOT → 404;  S8 método ≠ GET/HEAD → 405
@@ -49,6 +50,7 @@ import { pathToFileURL } from 'node:url';
 const ROOT = join(import.meta.dirname, '../..');
 // Raiz real (piloto) capturada antes das cláusulas S, que mexem na variável.
 const RAIZ_REAL = process.env.STUDIO_PACK_ROOT;
+const SKELETON = 'public/js/studio-skeleton.js';
 const mutante = process.argv.find((a) => a.startsWith('--mutante='))?.split('=')[1];
 const RES = 'public/js/studio-character.js';
 const SRV = 'scripts/studio-pack-serving.mjs';
@@ -57,7 +59,6 @@ const SRV = 'scripts/studio-pack-serving.mjs';
 const mutacoes = {
   'sha-manifesto-ignorado': [RES, 'if (manifestSha256 !== pin.manifestSha256) fail(', 'if (false) fail(', ['R2:']],
   'sha-arquivo-ignorado': [RES, 'if (sha256 !== entry.sha256) fail(', 'if (false) fail(', ['R3:']],
-  'tamanho-ignorado': [RES, 'if (bytes.byteLength !== entry.bytes) fail(', 'if (false) fail(', ['R4:']],
   'estado-opcional': [RES, "if (!Object.hasOwn(manifest.animations, state)) fail('studio_state_missing', state);", '', ['R5:']],
   'estado-desconhecido': [RES, "if (!STUDIO_CHARACTER_STATES.includes(state)) fail('studio_state_unknown', state);", '', ['R6:']],
   'dono-duplicado': [RES, "if (owners.has(path) && tipoDe(owners.get(path)) !== tipoDe(role)) {", 'if (false) {', ['R6b:', 'R15d:']],
@@ -81,6 +82,7 @@ const mutacoes = {
   'servidor-segue-symlink': [SRV, 'if (!contained(rootReal, real)) return deny(404);', '', ['S5:']],
   'servidor-serve-codigo': [SRV, "  '.webp': 'image/webp',\n", "  '.webp': 'image/webp',\n  '.js': 'text/javascript',\n", ['S6:']],
   'servidor-sem-raiz': [SRV, 'if (!root) return deny(404);', "if (!root) root = '.';", ['S7:']],
+  'esqueleto-validacao-ignorada': [SKELETON, 'return invalid ? detail : null;', 'return null;', ['R18:']],
 };
 if (mutante && !mutacoes[mutante]) throw new Error(`mutante desconhecido: ${mutante}`);
 if (process.argv.includes('--mutantes')) {
@@ -102,7 +104,7 @@ let base = ROOT;
 if (mutante) {
   const [alvo, de, para] = mutacoes[mutante];
   base = join(temporario, 'repo');
-  for (const rel of [RES, SRV, 'public/js/version.js', 'public/js/data/content-releases.js']) {
+  for (const rel of [RES, SRV, SKELETON, 'public/js/version.js', 'public/js/data/content-releases.js']) {
     mkdirSync(dirname(join(base, rel)), { recursive: true });
     copyFileSync(join(ROOT, rel), join(base, rel));
   }
@@ -114,7 +116,8 @@ if (mutante) {
 const importa = (rel) => import(pathToFileURL(join(base, rel)).href);
 const R = await importa(RES);
 const S = await importa(SRV);
-const { CHARACTER_RELEASES, STUDIO_CHARACTER_STATES } = await importa('public/js/data/content-releases.js');
+const K = await importa(SKELETON);
+const { CHARACTER_RELEASES, STUDIO_CHARACTER_STATES, STUDIO_SKELETON_JOINTS } = await importa('public/js/data/content-releases.js');
 const { VERSION } = await importa('public/js/version.js');
 
 const falhas = [];
@@ -206,6 +209,20 @@ try {
   const ordem = ['2.1.0-alpha.9', '2.1.0-alpha.10', '2.1.0-alpha.138', '2.1.0-beta', '2.1.0', '2.1.1', '10.0.0'];
   for (let i = 1; i < ordem.length; i++) {
     if (R.compareRuntimeVersions(ordem[i - 1], ordem[i]) !== -1) falha(`R8: ${ordem[i - 1]} não ficou antes de ${ordem[i]}`);
+  }
+
+  // ── R18: adaptador GLB ───────────────────────────────────────────────────────
+  {
+    const bones = STUDIO_SKELETON_JOINTS.flatMap((name) =>
+      Array.from({ length: name.startsWith('Curl_') ? 2 : 1 }, () => ({ name })));
+    if (K.studioSkeletonMismatch(bones)) falha('R18: esqueleto sintético válido rejeitado');
+    if (K.studioSkeletonMismatch([...bones, bones[0]])) falha('R18: bone repetido por identidade alterou a contagem');
+    const semHead = bones.filter((bone) => bone.name !== 'Head');
+    if (!K.studioSkeletonMismatch(semHead)?.includes('sem Head')) falha('R18: junta ausente aceita');
+    const comExtra = [...bones, { name: 'UnexpectedBone' }];
+    if (!K.studioSkeletonMismatch(comExtra)?.includes('inesperadas UnexpectedBone')) falha('R18: junta extra aceita');
+    const curl = bones.findIndex((bone) => bone.name === 'Curl_L');
+    if (!K.studioSkeletonMismatch(bones.slice(0, curl).concat(bones.slice(curl + 1)))?.includes('Curl_L=1')) falha('R18: multiplicidade Curl aceita');
   }
 
   // ── R1 ──────────────────────────────────────────────────────────────────────

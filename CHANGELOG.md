@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.139`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.141`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -39,7 +39,6 @@
 - Attacker respawns are forward/base-only: never behind the convoy, never inside the boarding lounge (south terminal pocket, `x∈(-29,29) z∈(-57,-44)` mirrored in map evals and docs), always ≥7 m from the VIP and route-reachable from the next checkpoint; defenders keep the rear wave.
 - Attackers actively contest the escort, while VIP always carries armor, a helmet and a working PT-38.
 - Escort recovery includes physical path replanning, stable formation slots and online-authoritative respawn waves.
-- Studio character releases (R2 plan, phase 4/5, PR 1): the client can load a CHARACTER from an immutable, verified Studio pack pinned by manifest SHA-256 (`public/js/data/content-releases.js`; first pin `capitao-caveira@0.1.1`, rebuilt from the joint-fitted rig of #1253 after 0.1.0 rendered both hands as stretched shards). `public/js/studio-character.js` hashes the exact manifest bytes before parsing, validates identity, `minRuntime` vs `VERSION`, `meshy-28`, safe paths, unique inventory and role ownership, then checks every file's length and SHA-256 with WebCrypto before handing out Blob URLs; it fails closed with typed `studio_*` errors and revokes every URL of a failed attempt. `glbchars.js` loads the model and all 11 clips only from those URLs (no index/merged/shared fallback), all-or-nothing, with a `{kind:'studio'}` body origin that never matches public gloves; failures reject `preloadCharacterAssets()` and log `[studio]`. `/packs/` is served from `STUDIO_PACK_ROOT` (no copy into `public/`) by one handler mounted in the Astro dev server and `tools/eval/serve.mjs`; without the variable it 404s. Not in the roster yet (no portraits/backend/MP). Guarded by `eval:studiochar` (synthetic pack, 17 code mutants; CI and `check:fast`) and `eval:studiochar:browser` (real pilot in Chrome via `charvideo.html?id=capitao-caveira`, UNRUN without `STUDIO_PACK_ROOT`). Docs: `docs/studio-character-release.md`.
 
 ### Changed
 - Bloqueios do release #1251: respostas do smoke passam a ser classificadas pelo hostname antes da lista de terceiros, impedindo que `/img/facebook-*` ou `?origem=twitter.com` esconda 404/500 do próprio host; `eval:cfparidade` só aceita mutante com exit 1; `eval:bots-perf` entra em `operacao-flavio-comportamento` e a prova browser fica no Chrome com GPU real, pois o runner `portao-controles` usa SwiftShader (`degraded=true`, 3,5 s/quadro), sem novos jobs nem falsa cobertura de GPU. `cf-preview.yml` compila o PR via `pull_request` sem segredos e entrega somente o artefato; `cf-preview-deploy.yml` reage ao `workflow_run`, carrega a configuração do branch base e publica com Wrangler pinado, sem executar código do PR com tokens Cloudflare/GitHub. Sticky e smoke exigem `github-actions[bot]` e SHA+URL no mesmo comentário; `tools/cf/` passa a disparar preview e o job `skip` declara `runs-on: ubuntu-latest` para o workflow voltar a iniciar.
@@ -59,6 +58,8 @@
 - Edge traffic count (`src/lib/server-traffic.mjs`) now names in-app browsers: TikTok (`musical_ly`/`BytedanceWebview`/`TikTok`), Instagram, Facebook (`FBAN`/`FBAV`/`FB_IAB`), LinkedIn (`LinkedInApp`) and X (`TwitterAndroid`/`Twitter for iPhone`) stay `kind: browser` (they are people) with `agent: app/<name>`; open browsers keep the empty agent. Reason: the 08/11 TikTok paid campaign sent 517 visits in one hour, 72% loaded the game and 85% left in under a minute without entering, and the admin had no way to tell them from Chrome. `server-traffic-check.mjs` gains the five UA cases plus the open-Chrome and `facebookexternalhit` counter-cases, and is finally wired as `eval:servertraffic` inside `check:fast` (it had no script since #988).
 
 ### Fixed
+- Revisão atual do release #1251: o artefato do PR é extraído em `dist`, isolado do checkout confiável usado por Wrangler e pelo comentário sticky; o smoke Cloudflare por `workflow_dispatch` não consulta mais sticky de PR e falha imediatamente se `BASE_URL` estiver vazio. WFS cobre os três caminhos com mutantes; E05 ganhou DOM completo e timeout, confirmando que o retry de `guest_invalid` termina sem alterar o login.
+- Pre-push no longer falls back to the full `check:deploy` when a change touches the two edge entry points: `middleware.js` (Vercel proxy root) and `src/middleware.ts` (Workers) now select `core + network` in `selecao-pre-push.mjs` (the landing PR #1291 burned a full local run because of this). Covered by a new case in `eval-suites.test.mjs`.
 - Revisão do release #1251: `origemCompartilhamento` só usa `corosol.to` no apex ou em subdomínios com fronteira (`*.corosolto.com.br`), sem desviar hosts como `evilcorosolto.com.br`; o middleware Astro devolve `next()` na Vercel, cujo proxy já conta a requisição, e só agenda `/api/server-traffic` no Workers. Regressões comportamentais cobrem apex/subdomínio/host estranho e os dois adaptadores; `eval:shareorigin` ganha o mutante sem fronteira e os builds Vercel/Cloudflare passam. UIR20 deixa de prender a forma `new Set` de `geo.ts` e chama `langFromCountry` para verificar `US/GB → en` e `PT/BR/ausente → pt`.
 - Social login no longer gets stuck on `guest_invalid` when the browser holds a stale guest proof. Google, other OAuth providers and email now retry automatically without the invalid proof, preserving local history and never accepting it as valid; subsequent clicks do not resend it, and each provider gets one retry and navigation. Covered by LP15/E05 and both recovery mutants.
 - Multiplayer character voices belong to the character again (owner, 09/11: Saci and other absent characters shouting in a Lampião room). `Sfx.characterVoice` now resolves take of the event → another in-game take of the SAME character (kill/radio/round) → faction pool only for characters without structured in-game voice; the legacy string form (select-only) keeps the pool. The live pack stored every Mítico as that string with all 56 kill takes mixed in `voice.M`, so any Mítico kill picked any Mítico: `tools/audio/miticos-character-voice-apply.mjs` + `miticos-voice-map.json` (pool M identified offline by transcription + voice pitch band) restructure the 9 Míticos as `{select, kill}` with captions, zero new bytes, pool untouched — the owner applies it to the private manifest. Pinned by `eval:mp-voz-personagem` (VOZ1–6, mutant `pool-da-faccao`).
@@ -242,6 +243,208 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.141] — 2026-11-10
+
+### Mudado
+- fix(ci): protege preview Cloudflare e smoke manual (#1300)
+- test(ci): limita regras CF ao passo exato
+- test(ci): prende guarda do smoke ao dispatch
+- fix(ci): isola artefato e corrige smoke manual
+
+## [2.1.0-alpha.140] — 2026-11-10
+
+### Mudado
+- Jogo para de travar com muitos bots (#1245)
+- Emit google-site-verification meta on the home head (#1254)
+- Add itch.io embed wrapper and allow itch.zone ancestor (#1252)
+- ci: harden post-deploy smoke classification (#1255)
+- Remove 157 eval scripts with no caller anywhere in the repo (#1256)
+- ci(browser): validar agregado do portão em staging (#1246)
+- ci: acelerar pre-push e isolar gates pesados (#1257)
+- fix(ui): manter ação privada visível no boot v3 (#1250)
+- Use English bot updates and retire obsolete review requirements (#1262)
+- feat(cf): spike do site no Cloudflare Workers (fase 1 da migração) (#1261)
+- fix(audio): voz é do personagem e rádio dos bots chega ao multiplayer (#1263)
+- ci: shard heavy simulations and publish timings (#1267)
+- Medição ligada por padrão: recusa explícita desliga (#1264)
+- Cortar build de preview, cache de packs e log por requisição na Vercel (fase 0) (#1258)
+- chore: régua eval:lixo (LX1-LX5) + bloco 1 da limpeza (#1259)
+- chore: limpeza de órfãos lote 2 (#1272)
+- feat: preview Cloudflare por PR (#1271)
+- Segredos de SSR em runtime no Workers: env-runtime + ponte de bindings (achado 1 do spike CF) (#1276)
+- ci: paraleliza contratos visuais e Flávio (#1275)
+- Contagem de borda nomeia navegador interno de app (#1278)
+- Pre-push e CI param de queimar uma hora por push (#1281)
+- ci: rebalanceia equipamento TP sem novos jobs (#1282)
+- feat: usar corosol.to nos links compartilháveis (#1285)
+- feat(cf): publica Worker de staging em paralelo (#1283)
+- fix(cf): restaurar geo e assets de áudio no Workers (#1284)
+- docs(skills): personagem 3P pelo processo padrão do Studio (#1269)
+- [REA] Adicionar impacto de pouso por superfície e vínculo de look (#1289)
+- fix(login): continua OAuth quando a prova do convidado expira (#1296)
+- feat: automate daily releases and build repair (#1290)
+- fix(login): continua OAuth quando a prova do convidado expira (#1297)
+- ci(preview): builda mudanças do adaptador (#1299)
+- /app: landing leve para quem abre o jogo dentro de app (#1291)
+- fix(ci): desbloqueia a promoção staging (#1286)
+- lote release 08/11: jogo sem travar com muitos bots (#1245) (#1251)
+- fix(ci): declara runner do preview pulado
+- ci(preview): builda mudanças do adaptador
+- style(ci): compacta comentario de geo da borda
+- fix(login): separa recuperação por provider
+- fix(login): continua OAuth quando a prova do convidado expira
+- fix(login): separa recuperação por provider
+- fix(bot): classify batches from verified complete diffs
+- fix(bot): verify complete release diff before merging
+- fix(bot): preserve feature routing and require positive English detection
+- fix(release): resolve hostname e trafego duplicado
+- test(game): usar ID canônico do córrego
+- docs(game): atualizar âncoras da matriz
+- chore(ci): remover diário do diff da PR
+- fix(bot): require main ancestry and lockfile-free Node setup
+- test(smoke): detect locale from rendered faction label
+- fix(bot): secure dependency reinstall and batch review resolution
+- Constrain preview build timeout
+- Satisfy Cloudflare workflow gate requirements
+- fix(login): continua OAuth quando a prova do convidado expira
+- fix(bot): refresh release ancestry refs explicitly
+- fix(bot): require approval and clear human blocks for batches
+- fix(landing): alvo do iOS com uma autoridade https e fiação testável
+- fix(bot): bind automerge to evaluated head
+- fix(bot): block merges while review is pending
+- Detect chat smoke locale from rendered UI
+- fix(ci): permite config do Worker staging
+- fix(bot): protect quality gates from build repair
+- test(ci): enforce automerge decision ordering
+- fix(bot): reject missing hotfix ancestry evidence
+- fix(ci): nao mede GPU real em SwiftShader
+- test(game): ampliar timeout da régua de pouso
+- Fix preview artifact gating and chat smoke collector
+- fix(ci): align bot merge policy guards
+- test(smoke): cover remaining chat locale labels
+- fix(cf): respeita teto de timeout do deploy
+- docs(game): regenerar matriz de armas
+- fix(cf): preserva contrato do gate smoke
+- fix(ci): executa preview CF do branch base
+- fix(ci): split Cloudflare preview deploy
+- fix(ci): isolate Cloudflare preview secrets
+- test(smoke): localize chat assertions
+- test(bot): retire CI fixture debt
+- docs(bot): document release and PR language policies
+- feat(bot): require English PR titles and descriptions
+- feat(bot): repair failed builds with isolated Codex jobs
+- test(bot): add build repair trust guards
+- feat(bot): merge safe PRs into daily release batches
+- feat(bot): classify releases and assign bugfixes
+- test: register share origin in fast suite
+- test(smoke): accept edge locale labels
+- docs: comentários da landing e do privacy-runtime no teto de 2 linhas
+- test: harden share link gates
+- fix(ci): resolve bloqueios da promocao staging
+- feat: use corosol.to for shared links
+- fix(cf): restore geo and audio assets on Workers
+- docs(cf): registra prova do staging
+- fix(cf): torna issue de paridade shell seguro
+- feat(cf): publica Worker de staging em paralelo
+- ci: rebalanceia contratos de equipamento TP
+- fix(game): respeitar altura da água no pouso
+- feat(borda): landing /app para quem abre o jogo dentro de app
+- ci(pre-push): scripts/ci/*.py são core (eval:fixture cobra o selftest)
+- docs: changelog dos portões de CI
+- ci(smoke): smoke-cf e FX2 saem do vermelho crônico do staging
+- ci(pre-push): o teste das suítes é transversal como o seletor
+- ci(pre-push): base mais próxima entre main e staging; skills e markdown são core
+- test(suites): eval:servertraffic entra no baseline da suíte fast
+- ci: separa visual-map de materiais
+- ci: isola contrato ferro-balcao
+- ER1 pega leitura de env por alias e destructuring (review do estraga-codigo)
+- ci: separa integracao comportamento e escolta Flavio
+- CI: passo --varre precisa das sentinelas no próprio env
+- chore: disparar validacao do smoke por SHA
+- Segredos de SSR saem do build e viram leitura de runtime (achado 1 do spike CF)
+- fix(ci): prepara three no shard de grafite
+- fix: vincular smoke ao preview do commit
+- fix(borda): comentário da classe de app dentro do teto
+- docs: registrar preview Cloudflare validado
+- fix: considerar config do Worker no filtro
+- fix: restaurar executor do preview Cloudflare
+- chore: disparar preview após token dedicado
+- chore: reexecutar preview Cloudflare
+- fix: tornar preview opcional e registrar asset ausente
+- chore: permitir config de preview na raiz
+- docs: registrar permissão ausente no preview
+- docs: detalha shards e selecao do pre-push
+- feat(pre-push): seleciona scripts e workflows alterados
+- ci: divide contratos visuais e Flavio em shards
+- fix: permitir token dedicado no preview Cloudflare
+- feat: publicar preview Cloudflare por PR
+- chore: arquiva históricos e pastas privadas
+- chore: remove geradores raiz órfãos
+- chore: remove órfãos eval da lote 2
+- chore(docs): regenera bloco de scripts com eval:servertraffic
+- feat(borda): nomear navegador interno de app na contagem de tráfego
+- docs(skills): personagem 3P passa pelo processo padrão do Studio
+- fix(eval): lixo conta rename como adição (--no-renames) e prova com mutante
+- Chave do cache de packs vira sha256 da URL inteira
+- test(eval): eval:lixo é passo novo da suite fast, fora do baseline congelado
+- ci(eval): add runner timings and optional core parallelism
+- ci(browser): split livestock checks by id
+- ci(invariants): shard simulations by family and map
+- test(audio): VOZ8 executa o produtor real do room.js; mutantes exigem saída 1
+- chore(audio): encurta comentários novos (régua comentario)
+- fix(audio): voz é do personagem e rádio dos bots chega ao multiplayer
+- docs(review): retire obsolete reviewer requirements in historical records
+- chore(review): remove retired provider references from CI fixtures
+- feat(privacidade): medição ligada por padrão, recusa explícita desliga
+- fix(cf): middleware lê API_PROXY_SECRET e PUBLIC_API_BASE em runtime; adaptador.mjs no gatilho
+- test(cf): _headers/_redirects gerados de vercel.json, réguas de paridade e runbook da fase 1
+- feat(cf): adaptador por ADAPTER, Worker csb-spike e imagens em resvg-wasm nas duas bordas
+- build(deps): @astrojs/cloudflare 14.3.4 e wrangler 4.158 para o spike do Workers
+- chore(limpeza): bloco 1, só o que tem zero chamador
+- feat(eval): régua eval:lixo, PR não nasce com lixo (LX1-LX5)
+- Registrar o PR #1258 no status do runbook
+- Cortar build de preview, cache de packs e log por requisição na Vercel
+- fix(bots): write public PR updates in English
+- test(ui): require visible private-room options
+- test(vm): drop inconclusive local-weapon mutant
+- test(vm): include initial weapon in MP boot budget
+- Remove 157 eval scripts with no caller anywhere in the repo
+- ci(workflow): isolate heavy and external checks
+- ci(eval): select lightweight pre-push suites
+- fix: exclude /api/* proxy failures from site smoke
+- Regenerate docs blocks for check:fast with eval:portalembed
+- fix: keep backend smoke noise out of site gate
+- Emit google-site-verification meta on the home head
+- ci: harden post-deploy smoke classification
+- test(game): proteger vínculo visual e régua de look
+- feat(game): adicionar impacto de pouso por superfície
+- Add itch.io embed wrapper and allow itch.zone ancestor
+- chore(docs): regenera bloco derivado (autofix)
+- fix(ui): preserve private-room actions during v3 boot
+- ci(browser): replace aggregate heredoc with python -c
+- test(vm): drop inconclusive local-weapon mutant
+- Regenerate the weapon matrix line anchors
+- Give the plane LOS clause the Game scratch vectors
+- Inject the static raycast index so shot_surfaces stays three-free
+- test(vm): include initial weapon in MP boot budget
+- ci(browser): indent aggregate heredoc
+- chore(docs): regenera bloco derivado (autofix)
+- Regenerate the weapon matrix line anchors
+- Trim the light-layers comment to the two-line limit
+- Log the bot-count stutter fix in the changelog
+- Add bots-perf rulers for bot-count stutter
+- Add a mutation hook that restores the old all-hits LOS path
+- Regenerate ARCH.md for the new game.js methods
+- Key the VIP line-of-sight memo on the LOS function too
+- Keep lights visible to every post pass layer
+- Render character contact shadows in a single pass
+- Reuse noise buffers for synthesized gunshots and steps
+- Stop per-frame shader key churn from bot shadows and team halos
+- Index static occluder meshes for every map
+- Memoize the VIP line of sight within a Flávio sim step
+- Stop bot line-of-sight checks at the first occluder hit
+- Index colliders in an XZ grid for _collide
 
 ## [2.1.0-alpha.139] — 2026-11-08
 

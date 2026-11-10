@@ -45,6 +45,24 @@ suavizado a 8/s, proporcional a `lateral/4,5`. Medido: 3,5 m/s lateral desloca a
 ~5 cm no eixo da direita; sem lateral volta a <0,5 cm; corpo morto não inclina.
 Jogador 3P e bots clássicos alimentam; caminho NN segue sem (flag de laboratório).
 
+### Dados já disponíveis para remotos
+
+O segmento interpolado fornece velocidade lateral no referencial do corpo. Eventos `hit`
+e `kill` usam a diferença entre posições de vítima e autor; sem autor, a morte preserva
+o fallback sem direção. Se o evento chegar depois do snapshot de morte, acrescenta a
+direção sem reiniciar o clipe; um `kill` atrasado não anima corpo já vivo após respawn.
+Trocas de arma entre snapshots disparam saque procedural breve,
+sem tocar no protocolo; o overlay é omitido no LOD distante e cancelado na morte.
+O suporte da arma é reorientado após o saque, antes do IK da mão de apoio.
+O backend só emite `hit` não fatal para vítima humana; bots remotos não recebem flinch.
+Mesmo para humanos, `hit` pode ser descartado sob carga. `npm run eval:remotos3p`
+mede as entradas e seus mutantes; não substitui a inspeção visual do corpo.
+
+O arnês `charvideo.html?remote=1&wpn=ak` expõe `REMOTEVID.init`, `snapshot`, `event`,
+`step`, `view`, `state` e `grab`. `snapshot` recebe entidades e lotes de eventos;
+para morte, envie `alive: false` no mesmo snapshot do `kill`. `step` avança o relógio
+sintético. O arnês usa GLBs reais e não simula socket, HUD, áudio nem sangue.
+
 ## As duas armadilhas que a régua existe para impedir de voltar
 
 - **Undo ANTES do mixer.** O overlay usa deltas aditivos em ossos que os clipes podem ou

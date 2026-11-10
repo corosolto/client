@@ -197,6 +197,12 @@ test('contagem de borda é network, não fallback', () => {
   assert.deepEqual(r.suites, ['core', 'network']);
 });
 
+test('as duas bordas de contagem (middleware da Vercel e do Workers) são network, não fallback', () => {
+  const r = selecionarPorArquivos(['middleware.js', 'src/middleware.ts']);
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core', 'network']);
+});
+
 const CASOS = [
   ['public/js/map_campo.js', 'maps', 'eval:mapcontrato'],
   ['src/components/Lobby.astro', 'ui', 'eval:ui-v3'],
