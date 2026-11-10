@@ -143,7 +143,7 @@ await caso('LP8', 'telemetria só com consentimento de analytics', () => {
   }
   for (const nome of ['login_prompt_shown', 'login_prompt_dismissed', 'login_prompt_provider_click']) assert(fontePrompt.includes(`'${nome}'`), nome);
 });
-await caso('LP15', 'prova antiga do convidado oferece uma recuperação e mantém o progresso local', async () => {
+await caso('LP15', 'prova antiga do convidado cai automaticamente para login sem vínculo e preserva o progresso local', async () => {
   class El {
     constructor(){this.children=[];this.dataset={};this.open=false;this.textContent='';}
     append(...children){this.children.push(...children);}
@@ -155,7 +155,7 @@ await caso('LP15', 'prova antiga do convidado oferece uma recuperação e manté
   ids['main-menu'].classList={contains:()=>false};
   const calls=[],navigations=[],listeners={},observers=[],proof={uid:'fixture-guest',token:'fixture-proof'},storage=new Map([['awpbr_stats','{"kills":3}']]);
   const ctx={analyticsAllowed:()=>false,privacyChoice:()=>null,PROVIDER_ICONS:{},guestProof:()=>proof,accountError:e=>e.message,
-    socialApi:async(_path,body)=>{calls.push(body);if(body.guest)throw new Error('guest_invalid');return {url:'https://provider.example/authorize'};},
+    socialApi:async(_path,body)=>{calls.push(body);await new Promise(resolve=>setTimeout(resolve,0));if(body.guest)throw new Error('guest_invalid');return {url:'https://provider.example/authorize'};},
     leaveTo:url=>navigations.push(url),localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
     sessionStorage:{getItem:()=>null,setItem:()=>{}},location:{search:''},URLSearchParams,Date,Number,JSON,
     MutationObserver:class{constructor(fn){observers.push(fn)}observe(){}},document:{body:new El(),activeElement:null,documentElement:{dataset:{}},createElement:()=>new El(),createTextNode:text=>text,getElementById:id=>ids[id]||null,querySelector:()=>null,addEventListener:(name,fn)=>{listeners[name]=fn}}};
@@ -165,14 +165,17 @@ await caso('LP15', 'prova antiga do convidado oferece uma recuperação e manté
   listeners['cs-match-end']({detail:{mode:'singleplayer'}});
   for(const observer of observers)observer();
   const google=ids['login-prompt-providers'].children.find(b=>b.dataset.provider==='google');assert(google);
-  await google.onclick();await google.onclick();
-  const recover=ids['login-prompt-providers'].children.filter(b=>b.textContent==='Entrar sem vincular o convidado');
-  assert.equal(recover.length,1,'403 repetido duplicou a recuperação');
-  await recover[0].onclick();
+  const discord=ids['login-prompt-providers'].children.find(b=>b.dataset.provider==='discord');assert(discord);
+  await Promise.all([google.onclick(),discord.onclick()]);
+  await google.onclick();
   const starts=calls.filter(body=>body?.action==='start');
-  assert.equal(starts.length,3);assert(starts[0].guest && starts[1].guest);
-  assert.equal(starts[2].guest,undefined,'a recuperação ainda envia a prova antiga');
-  assert.equal(navigations.length,1,'a escolha explícita não prosseguiu ao provedor');
+  assert.equal(starts.length,3,'o primeiro 403 deve gerar uma única retentativa sem prova');
+  assert(starts[0].guest,'a primeira tentativa deve conservar a prova para vínculo válido');
+  assert.equal(starts[1].guest,undefined,'a retentativa automática ainda envia a prova antiga');
+  assert.equal(starts[2].guest,undefined,'um clique seguinte reenviou a prova inválida');
+  assert.equal(navigations.length,2,'os dois logins não continuaram ao provedor');
+  assert(!ids['login-prompt-providers'].children.some(b=>/Entrar sem vincular/.test(b.textContent)),'o fallback continua exigindo uma segunda escolha');
+  assert.match(ids['login-prompt-status'].textContent,/sem vincular/i);
   assert.equal(storage.get('awpbr_stats'),'{"kills":3}');
 });
 await caso('LP10', 'perfil compartilhado (/u/<perfil>, que é o hub, e o link antigo ?perfil=) pula o convite', () => {
