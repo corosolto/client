@@ -106,7 +106,8 @@ summary:hover .cl-perma,summary:focus-within .cl-perma,.cl-perma:focus-visible{o
     a.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      var url = location.origin + location.pathname + '#' + d.id;
+      var shareOrigin = location.hostname.toLowerCase().endsWith('corosolto.com.br') ? (window.__SHARE_ORIGIN || location.origin) : location.origin;
+      var url = shareOrigin + location.pathname + '#' + d.id;
       history.replaceState(null, '', '#' + d.id);
       d.open = true;
       var antes = a.textContent;
