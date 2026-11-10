@@ -1257,7 +1257,6 @@ function attachSkinMark(model, weaponId, skinId, knifeContext, frame = null) {
 
 // `knifeMask` (faca steelBlade): mapa, aço e acabamento originais ficam; a pintura e o perfil de
 // material valem só onde dot(posição, xyz) + w ≤ 0 — o cabo/guarda de knifeHandleMask.
-// `reference` (X18): { space: geometria → malha TP, box: caixa da arma nesse espaço }.
 function cloneMaterial(material, skinId, geometry, unit = null, knifeMask = null, reference = null) {
   const copy = ownVmResource(material.clone());
   copy.name = `${material.name || 'weapon'}__skin_${skinId}`;
@@ -1272,6 +1271,7 @@ function cloneMaterial(material, skinId, geometry, unit = null, knifeMask = null
     copy.metalness = profile.metalness;
     copy.envMapIntensity = profile.envMapIntensity;
   }
+  // `reference` (X18): space = geometria → malha TP; box = caixa da arma nesse espaço.
   const space = reference?.space || null;
   copy.userData = {
     ...copy.userData,
