@@ -35,6 +35,19 @@ do cartaz e da prévia da loja, pela coronha, pelo topo e pelo meio lateral:
 Sem referência válida (socket ausente ou malha de mão dentro do grupo), a arma fica sem pintura,
 nunca em cor chapada.
 
+## Marcas no 1P
+
+No layout de 3ª pessoa a mão do X18 cobre a lateral de trás: símbolo 100% e letreiro 61–80%
+tapados no idle e na inspeção. `POLITICAL_LAYOUT.pistol.fp` (só no corpo com referência) põe o
+símbolo terminando na frente do ferrolho (z 0,69, y 0,30, altura 0,10 até 0,16 de largura) e o
+letreiro logo atrás dele (y 0,29, altura 0,05). É o lugar livre que a busca de layout achou no
+idle e na inspeção girada. A lateral do ferrolho só tem vértice nas pontas, então o letreiro mede
+a superfície numa janela de 0,6; com janela estreita ele afundava no ferrolho.
+
+Medido em 8 pinturas da loja: nenhuma marca tapada por mão ou peça. Pendente: os símbolos de
+`usa-bandeira-grande.svg` e `maga-47.svg` têm o plano no lugar e sem oclusão, mas não aparecem na
+imagem; a causa (textura SVG) não foi investigada nesta rota.
+
 ## Mãos
 
 A luva xadrez com `pack-emo-xadrez` é a `gloveSkin` do próprio pack (`pack-emo-gloves`), não
