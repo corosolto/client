@@ -34,10 +34,12 @@
    (`0xff5555`) chama `num()`.
    ═══════════════════════════════════════════════════════════════════════════════════ */
 
+import { FACTIONS } from './factions.js';
+
 /* As facções que têm cor própria, na ordem em que o elenco as declara.
    Facção fora desta lista cai no NEUTRO, nunca em `undefined` — foi o `undefined` que
    apagou a bandeira em 07/08. */
-export const FACCOES = ['E', 'B', 'U', 'C', 'F', 'M'];
+export const FACCOES = FACTIONS.map((f) => f.id);
 
 /* Três tons por facção, e cada um existe por um motivo medido:
 
@@ -50,14 +52,9 @@ export const FACCOES = ['E', 'B', 'U', 'C', 'F', 'M'];
                A versão pálida passa a 5,9-9,1:1 e mantém a leitura "vermelho = time-e".
 
    Os valores são exatamente os que já estavam espalhados: nenhum pixel muda ao unificar. */
-export const PALETA = {
-  E: { base: '#ff5555', escura: '#e03232', palida: '#ff9a9a' },   // Esquerda vermelho
-  B: { base: '#3355ff', escura: '#1f3fc8', palida: '#a8b8ff' },   // Direita azul
-  U: { base: '#4aa3ff', escura: '#2f7fe0', palida: '#a8cdff' },   // Tribos azul
-  C: { base: '#ff6ec7', escura: '#c23a86', palida: '#ffb3e0' },   // Palhaços rosa-circo
-  F: { base: '#ffc233', escura: '#c79a12', palida: '#ffd98a' },   // Funkeiros ouro
-  M: { base: '#9d4edd', escura: '#5e35b1', palida: '#d0a3f0' },   // Mítico roxo
-};
+export const PALETA = Object.fromEntries(FACTIONS.map((f) => [
+  f.id, { base: f.color, escura: f.dark, palida: f.ink },
+]));
 
 /* ESPELHO — inimigo da MESMA facção do jogador. Não é cor de facção: é o roxo que existe
    para os dois lados não ficarem da mesma cor quando a partida é facção contra ela mesma.

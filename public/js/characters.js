@@ -613,6 +613,10 @@ export const CHARACTERS = [
   { id: 'marina-silva', team: 'P', lados: ['E'], name: 'Dona Floresta',
     blurb: 'Óculos vinho, coque grisalho e vestido verde-petróleo. A conversa é calma; a mira, firme.',
     pal: { skin: 0x9a684f, shirt: 0x243654, pants: 0x22242b, hair: 0x292522, boots: 0x222222 } },
+  { id: 'capitao-caveira', team: 'fora-do-ar', tribe: 'fora-do-ar', name: 'Capitão Caveira',
+    passe: { season: 'sessao-da-treta-s1', level: 1 },
+    blurb: 'Boina, uniforme preto e um sinal que não aceita rendição. A ronda da madrugada chegou.',
+    pal: { skin: 0xc98d5e, shirt: 0x171d23, pants: 0x171d23, hair: 0x363a3c, boots: 0x111111 } },
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
 
