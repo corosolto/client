@@ -7,6 +7,10 @@ import { montarPlacar } from './ranking.js';
 import { wallpaperJavaporcos } from '../javaporcos_apresentacao.js';
 import { anunciarJavaporcos } from '../javaporcos_novidade.js';
 import { montarPainelFlavio } from './flavio.js';
+import { abrirPasse } from './passe.js';
+import { passeEstado, passeFalhou, carregarPasse, PASSE_EVENTO } from '../passe.js';
+import { anunciarPasse } from '../passe-anuncio.js';
+import { abrirLoginPrompt } from '../login-prompt.js';
 
 const $ = (id) => document.getElementById(id);
 function no(tag, cls = '', texto = '') {
@@ -26,11 +30,13 @@ const filtroLoja = () => (document.querySelector('[data-treta-filter="owned"]')?
 /* mesmo sinal de sessão do resto do tp/: o hub escreve 'account' no login quando há perfil */
 const ehGuest = () => ($('hub-account-login')?.dataset.state || 'guest') === 'guest';
 
-/* PASSE fica fora: não há backend de passe (decisão registrada na entrega da frente). */
+/* PASSE só aparece com o servidor do passe respondendo (GET /api/passe, passe.js): sem backend,
+   nenhuma aba de sistema que não existe (régua LB8). A tela é tp/passe.js. */
 /* RANKING em 2º (dono, 22/10): é a tela de retorno diário, e atrás de CARREIRA sempre
    esteve o placar — o rótulo antigo prometia uma tela de patente que não existe. */
 const ABAS = [
   { id: 'jogar', rotulo: 'JOGAR', ir: () => abaDoHub('jogar') },
+  { id: 'passe', rotulo: 'PASSE', ir: () => abrirPasse(), soComServidor: true },
   { id: 'ranking', rotulo: 'RANKING', ir: () => abaDoHub('ranking') },
   { id: 'loja', rotulo: 'LOJA', ir: () => { abaDoHub('loja'); if (filtroLoja() === 'owned') document.querySelector('[data-treta-filter="all"]')?.click(); } },
   { id: 'armario', rotulo: 'ARMÁRIO', ir: () => {
@@ -58,6 +64,7 @@ function montarAbas(header) {
     const b = no(a.href ? 'a' : 'button', 'tp-lobby-aba', tr(a.rotulo));
     b.dataset.tpAba = a.id;
     if (a.href) b.href = a.href; else { b.type = 'button'; b.addEventListener('click', a.ir); }
+    if (a.soComServidor) b.hidden = !passeEstado();
     nav.appendChild(b);
   }
   nav.appendChild(risco);
@@ -76,6 +83,11 @@ function montarAbas(header) {
   if (filtros) new MutationObserver(marcar).observe(filtros, { attributes: true, subtree: true, attributeFilter: ['aria-pressed'] });
   addEventListener('resize', marcar);
   document.fonts?.ready.then(marcar);
+  document.addEventListener(PASSE_EVENTO, () => {
+    const passe = nav.querySelector('[data-tp-aba="passe"]');
+    if (passe) passe.hidden = !passeEstado();
+    marcar();
+  });
   marcar();
 }
 
@@ -638,14 +650,49 @@ function montar() {
 /* O que a conta tem equipado aparece NO PERSONAGEM (main.js/armaDoPreview): o painel de
    cards "EQUIPADO" que morava aqui foi recusado pelo dono em 20/10. */
 
+/* O lobby monta por trás do splash: anúncio só depois que ele sai (o Enter do splash não pode
+   acionar o botão do anúncio), como o convite de login (login-prompt.js). */
+function semSplash() {
+  const fora = () => { const s = $('boot-splash'); return !s || s.classList.contains('gone'); };
+  if (fora()) return Promise.resolve();
+  return new Promise((resolve) => {
+    const obs = new MutationObserver(() => { if (fora()) { obs.disconnect(); resolve(); } });
+    obs.observe(document.body, { childList: true });
+    obs.observe($('boot-splash'), { attributes: true, attributeFilter: ['class'] });
+  });
+}
+
+/* Status do passe da conta ATUAL: o login no boot troca a conta e descarta o status anterior. */
+function esperarPasse(ms) {
+  if (passeEstado() || passeFalhou()) return Promise.resolve();
+  return new Promise((resolve) => {
+    const fim = () => { clearTimeout(prazo); document.removeEventListener(PASSE_EVENTO, ouvir); resolve(); };
+    const ouvir = () => { if (passeEstado() || passeFalhou()) fim(); };
+    const prazo = setTimeout(fim, ms);
+    document.addEventListener(PASSE_EVENTO, ouvir);
+    void carregarPasse();
+  });
+}
+
+/* Novidades ao entrar no lobby, uma por vez: o passe (temporada no ar segundo o servidor) vem antes da
+   caça ao Javaporco. O status do passe já foi pedido no boot (main.js); espera no máximo 4 s por ele. */
+async function anunciarNovidades() {
+  if (new URLSearchParams(location.search).has('auto')) return;
+  await semSplash();
+  await esperarPasse(4000);
+  if (menu()?.classList.contains('hidden')) return;   // a partida começou enquanto o servidor respondia
+  if (anunciarPasse({ abrirPasse, entrar: () => abrirLoginPrompt('passe') })) return;
+  anunciarJavaporcos({
+    jogar: () => $('tp-lobby-invasao')?.click(), multiplayer: () => $('hub-mp')?.click(),
+  });
+}
+
 export function ligar() {
   const raiz = document.documentElement;
   const pronto = () => raiz.dataset.homeUi === 'hub' && $('hub-ui') && !$('hub-ui').hidden;
   const abrir = () => {
     montar();
-    if (!new URLSearchParams(location.search).has('auto')) anunciarJavaporcos({
-      jogar: () => $('tp-lobby-invasao')?.click(), multiplayer: () => $('hub-mp')?.click(),
-    });
+    void anunciarNovidades();
   };
   if (pronto()) { abrir(); return; }
   const espera = new MutationObserver(() => { if (pronto()) { espera.disconnect(); abrir(); } });
