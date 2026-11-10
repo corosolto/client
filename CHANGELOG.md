@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.142`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.143`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -241,6 +241,17 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.143] — 2026-11-10
+
+### Mudado
+- Merge main-only CI hotfix. Owner explicitly authorized CI correction and release. All checks are green. (#1314)
+- chore(bots): standardize csbrasil-bot public output in English (#1311)
+- Merge account modal polish 2.1.0-alpha.142. Owner explicitly authorized CI correction and release. All checks, including smoke-cf, are green; all review threads are resolved with evidence. (#1307)
+- test: cover invalid CF comment arity
+- fix: accept positional SHA in CF preview comment
+- chore(bots): standardize csbrasil-bot public output in English
+- test: reject transient stale guest error
 
 ## [2.1.0-alpha.142] — 2026-11-10
 
