@@ -51,10 +51,10 @@ aprovação humana definida nos quality gates antes de entrar em `staging`.
 - `claim` valida SHA atual e consome no máximo uma tentativa, marcada por `build-fix-attempted`;
   runs obsoletos não consomem tentativa;
 - `propose` não recebe token de push: instala o Codex antes do checkout da PR, em `/tmp`, com
-  configs npm vazias e registry oficial, verifica o hash do binário e executa o agente. A
-  instalação anterior de dependências usa `npm ci --ignore-scripts`. Depois roda
-  `npm run check:fast` e publica somente um patch binário com metadados e SHA-256; logs são
-  dados não confiáveis, nunca instruções;
+  configs npm vazias e registry oficial, verifica o hash do binário e executa o agente. Antes de
+  reinstalar dependências, rejeita qualquer edição nos gates; as instalações usam
+  `npm ci --ignore-scripts`. Depois roda `npm run check:fast` e publica somente um patch binário
+  com metadados e SHA-256; logs são dados não confiáveis, nunca instruções;
 - comandos iniciados pelo Codex não herdam `OPENAI_API_KEY`, `GH_TOKEN` nem `CSBRASIL_BOT_TOKEN`;
 - `publish` parte de um checkout fresco, valida repositório, PR, branch, SHA, tree, digest, paths e
   aplicação exata do patch com um guard novo da branch padrão;
@@ -71,9 +71,10 @@ aprovação humana definida nos quality gates antes de entrar em `staging`.
   mergeável e nenhuma pendência do estraga-codigo. Gameplay, backend e workflows não entram nesse caminho.
 - Todo merge usa `--match-head-commit` com o SHA avaliado; push entre decisão e merge aborta em
   vez de publicar código não verificado.
-- A PR oficial `staging → main` usa o caminho `release-batch`: pode conter superfícies já
-  integradas, mas continua bloqueada por checks vermelhos, conflito, draft, revisão pendente e
-  pelas labels `needs-human-gameplay`, `needs-human-backend` e `needs-hotfix-review`.
+- A PR oficial `staging → main` usa o caminho `release-batch`: exige `estragacodigo-resolved`
+  sem `CHANGES_REQUESTED`, não exige `reviewDecision=APPROVED`, e continua bloqueada por checks
+  vermelhos, conflito, draft e pelas labels `needs-human-gameplay`, `needs-human-backend` e
+  `needs-hotfix-review`.
 - Rollup vazio ou desconhecido não conta como verde.
 - Crash automático gera sugestão de duplicata; fechamento continua humano.
 

@@ -62,7 +62,6 @@ def decide(pr: dict) -> dict:
     common = (
         not pr.get("isDraft", False)
         and not estragacodigo_blocked
-        and pr.get("reviewDecision") == "APPROVED"
         and pr.get("mergeStateStatus") in {"CLEAN", "HAS_HOOKS"}
         and checks_green
     )
@@ -81,8 +80,13 @@ def decide(pr: dict) -> dict:
         and not human_blocked
         and (not hotfix_main or ("release" in labels and hotfix_verified))
     )
+    batch_review_ok = "estragacodigo-resolved" in labels and pr.get("reviewDecision") != "CHANGES_REQUESTED"
+    eligible = common and (
+        (release_batch and batch_review_ok)
+        or (eligible_safe and pr.get("reviewDecision") == "APPROVED")
+    )
     return {
-        "eligible": common and (release_batch or eligible_safe),
+        "eligible": eligible,
         "merge_kind": "release-batch" if release_batch else "safe",
         "estragacodigo_blocked": estragacodigo_blocked,
         "touches_workflows": touches_workflows,
@@ -146,9 +150,20 @@ def selftest() -> int:
         ("rollup nulo não mescla", com(statusCheckRollup=None), False),
         ("rollup vazio não prova build verde", com(statusCheckRollup=[]), False),
         ("lote oficial verde mescla mesmo com superfícies sensíveis já integradas",
-         com(labels=[{"name": "release"}], files=[{"path": ".github/workflows/ci.yml"}],
+         com(labels=[{"name": "release"}, {"name": "estragacodigo-resolved"}], files=[{"path": ".github/workflows/ci.yml"}],
              baseRefName="main", headRefName="staging",
              headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), True),
+        ("lote oficial sem resolução de revisão não mescla nem com aprovação",
+         com(labels=[{"name": "release"}], baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), False),
+        ("lote resolvido mescla sem reviewDecision formal",
+         com(labels=[{"name": "release"}, {"name": "estragacodigo-resolved"}],
+             reviewDecision=None, baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), True),
+        ("lote com mudanças pedidas não mescla nem com label de resolução",
+         com(labels=[{"name": "release"}, {"name": "estragacodigo-resolved"}],
+             reviewDecision="CHANGES_REQUESTED", baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), False),
         ("lote de fork não mescla",
          com(labels=[{"name": "release"}], baseRefName="main", headRefName="staging",
              headRepository={"nameWithOwner": "fork/client"}, expected_repository="corosolto/client"), False),

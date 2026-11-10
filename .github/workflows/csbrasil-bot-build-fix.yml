@@ -229,8 +229,13 @@ jobs:
       - name: Reject unexpected proposal commits
         run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
 
-      - name: Reinstall repaired dependencies
-        run: npm ci
+      - name: Reject protected edits before dependency installation
+        run: |
+          test -z "$(/usr/bin/git status --porcelain=v1 -- package.json package-lock.json)"
+          test -z "$(/usr/bin/git status --porcelain=v1 -- .github/workflows .github/actions .githooks scripts/ci tools/eval)"
+
+      - name: Reinstall repaired dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
 
       - name: Independently run fast checks
         run: npm run check:fast
