@@ -116,8 +116,8 @@ function sourceCases(s) {
     ['SRC1', /^export\s+const\s+SHARE_ORIGIN\s*=\s*['"]https:\/\/corosol\.to['"]\s*;?/m.test(s.site), 'SHARE_ORIGIN declara corosol.to'],
     ['SRC2', /window\.__SHARE_ORIGIN\s*=\s*SHARE_ORIGIN/.test(s.index), 'SHARE_ORIGIN é injetada no HTML antes dos módulos'],
     ['SRC3', /origemCompartilhamento/.test(s.share)
-      && /host\.endsWith\(['"]corosolto\.com\.br['"]\)/.test(s.share)
-      && /return\s+origem\s*\|\|/.test(s.share), 'helper preserva same-origin em dev e usa a origem curta em produção'],
+      && /host\s*===\s*['"]corosolto\.com\.br['"]\s*\|\|\s*host\.endsWith\(['"]\.corosolto\.com\.br['"]\)/.test(s.share)
+      && /return\s+origem\s*\|\|/.test(s.share), 'helper preserva same-origin em dev e limita produção por fronteira de hostname'],
     ['SRC4', /linkCompartilhavel/.test(s.share)
       && /utm_source/.test(s.share) && /utm_medium/.test(s.share), 'helper compartilhável acrescenta UTM source/medium'],
     ['SRC5', /origemCompartilhamento\(\)/.test(s.invite)
@@ -204,6 +204,15 @@ if (MUTATE) {
         ...base,
         sources: { ...base.sources, site: base.sources.site.replace(
           /export\s+const\s+SHARE_ORIGIN\s*=\s*['"]https:\/\/corosol\.to['"]/, `export const SHARE_ORIGIN = '${SITE}'`,
+        ) },
+      }),
+    },
+    {
+      nome: 'hostname de produção perde a fronteira de subdomínio',
+      aplica: (base) => ({
+        ...base,
+        sources: { ...base.sources, share: base.sources.share.replace(
+          "host === 'corosolto.com.br' || host.endsWith('.corosolto.com.br')", "host.endsWith('corosolto.com.br')",
         ) },
       }),
     },

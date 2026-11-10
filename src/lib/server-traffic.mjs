@@ -7,7 +7,7 @@ const PAGES = new Set([
   '/', '/sobre', '/about', '/como-jogar', '/how-to-play', '/mapas', '/maps',
   '/personagens', '/characters', '/armas', '/weapons', '/mapa', '/clans',
   '/apoie', '/termos', '/privacidade', '/regras-de-uso', '/excluir-dados',
-  '/whats-new', '/changelog',
+  '/whats-new', '/changelog', '/app',
 ]);
 
 function landing(pathname) {
@@ -88,6 +88,19 @@ export function trafficEntry(request) {
     utmSource: classification.kind === 'browser' && /^[a-z0-9_.-]{1,60}$/.test(utm) ? utm : null,
     ...classification,
   };
+}
+
+/* WebView de app abrindo a home vai para /app (landing leve) com a query intacta; `?jogo=1`
+   é a escolha já feita lá e não volta. Só a home: perfil, sala e docs seguem onde apontam. */
+export function desvioParaApp(request) {
+  if (request.method !== 'GET') return null;
+  const url = new URL(request.url);
+  if (url.hostname !== SITE_HOST || !request.headers.get('accept')?.includes('text/html')) return null;
+  const path = url.pathname.replace(/\/+$/, '') || '/';
+  if (path !== '/' || url.searchParams.get('jogo') === '1' || url.searchParams.has('sala')) return null;
+  if (!classify(request.headers.get('user-agent')).agent.startsWith('app/')) return null;
+  url.pathname = '/app';
+  return url.toString();
 }
 export function uniqueRegister(ip, agent, secret, day) {
   if (!ip || !agent || !secret || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;

@@ -7,7 +7,7 @@ export function origemCompartilhamento(loc = globalThis.location) {
   const host = typeof loc?.hostname === 'string' ? loc.hostname.toLowerCase() : (() => {
     try { return new URL(origem).hostname.toLowerCase(); } catch { return ''; }
   })();
-  if (host.endsWith('corosolto.com.br')) return globalThis.window?.__SHARE_ORIGIN || 'https://corosol.to';
+  if (host === 'corosolto.com.br' || host.endsWith('.corosolto.com.br')) return globalThis.window?.__SHARE_ORIGIN || 'https://corosol.to';
   return origem || 'https://www.corosolto.com.br';
 }
 

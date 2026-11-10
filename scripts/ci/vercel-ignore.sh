@@ -51,7 +51,7 @@ if [ "${VERCEL_ENV:-}" != "production" ]; then
   fi
   # Tudo que o buildCommand/`npm run build` lê e que muda o que o site serve.
   TOCA_SITE="$(printf '%s\n' "$MUDOU" | grep -E \
-    '^(src/|public/|vercel\.json$|package\.json$|package-lock\.json$|astro\.config\.mjs$|middleware\.js$|scripts/fetch-|scripts/copy-wasm\.mjs$|scripts/prune-dist\.mjs$|scripts/aeo\.mjs$|tools/gen-asset-rev\.mjs$|tools/viewmodels/prepare_precision_preview\.mjs$|tools/audio/|tools/strip-decal-bg\.mjs$|CHANGELOG\.md$)' \
+    '^(src/|public/|vercel\.json$|package\.json$|package-lock\.json$|astro\.config\.mjs$|middleware\.js$|scripts/fetch-|scripts/adaptador\.mjs$|scripts/copy-wasm\.mjs$|scripts/prune-dist\.mjs$|scripts/aeo\.mjs$|tools/gen-asset-rev\.mjs$|tools/cf/|tools/viewmodels/prepare_precision_preview\.mjs$|tools/audio/|tools/strip-decal-bg\.mjs$|CHANGELOG\.md$)' \
     || true)"
   PRIMEIROS="$(printf '%s\n' "$MUDOU" | grep -v '^$' | head -n 5 | tr '\n' ' ')"
   if [ -n "$TOCA_SITE" ]; then

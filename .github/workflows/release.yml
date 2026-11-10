@@ -32,8 +32,9 @@
 # RELEASE EM LOTE (14/10/2026, decisão do dono): horário fixo travava o desenvolvimento —
 # o trabalho esperava a janela das 11:41/19:41 em vez de sair quando o lote fechava. Agora
 # os PRs se empilham num PR de LOTE e o trem sai quando ESSE PR entra na main: label
-# `release`, ou branch de origem `lote-*`, `claude/lote-*` ou `*/lote-*`. Merge de PR
-# comum não dispara nada. Hotfix continua sendo `gh workflow run release.yml`.
+# `release`, ou branch de origem `lote-*`, `claude/lote-*` ou `*/lote-*`. O classificador
+# adiciona `release` a hotfix que mira `main`, portanto hotfix seguro usa o mesmo trem logo
+# após o merge. `gh workflow run release.yml` continua como fallback manual.
 #
 # POR QUE `push` + API e não `pull_request: [closed]`: no `pull_request` o YAML e o
 # checkout vêm do ref refs/pull/N/merge (não da main), PR de fork chega sem os secrets

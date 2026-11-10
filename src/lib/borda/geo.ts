@@ -1,5 +1,5 @@
-// Geo confiável da borda; o adaptador escolhe Vercel ou Cloudflare por `#borda`,
-// evitando misturar o PoP com o visitante quando há cabeçalhos das duas plataformas.
+// Geo confiável da borda: `#borda` escolhe Vercel ou Cloudflare sem misturar
+// o PoP ao visitante quando há cabeçalhos das duas plataformas.
 export interface GeoDaBorda {
   country: string | null;
   city: string | null;

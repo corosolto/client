@@ -18,10 +18,12 @@
      VI7  preview em staging/main/lote-*         -> 1 (STAGING_URL e o trem dependem delas)
      VI8  produção: `chore(release):` -> 1; merge comum -> 0 (inalterado)
      VI9  o log diz a decisão e os primeiros caminhos mudados
+     VI10 preview, commit exclusivo em tools/cf -> 1 (headers do Worker mudam)
 
-   MUTANTES (`--mutate` roda os três; cada um tem que reprovar):
+   MUTANTES (`--mutate` roda os quatro; cada um tem que reprovar):
      preview-sempre-builda   o ramo de preview volta a `exit 1` cego   -> VI1/VI3
      src-pulado              `src/` sai da lista do que entra no site  -> VI2/VI4
+     cf-pulado               `tools/cf/` sai da lista                  -> VI10
      release-pulado          produção ignora o commit de release       -> VI8
 
    Uso: node tools/eval/vercel-ignore-check.mjs [--mutate | --mutante=<nome>]
@@ -34,7 +36,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SCRIPT = join(ROOT, 'scripts', 'ci', 'vercel-ignore.sh');
-const MUTANTES = ['preview-sempre-builda', 'src-pulado', 'release-pulado'];
+const MUTANTES = ['preview-sempre-builda', 'src-pulado', 'cf-pulado', 'release-pulado'];
 const arg = (nome) => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=')[1] || '';
 const mutante = arg('mutante');
 if (mutante && !MUTANTES.includes(mutante)) { console.error(`mutante desconhecido: ${mutante}`); process.exit(2); }
@@ -58,6 +60,7 @@ const muta = (de, para) => {
 };
 if (mutante === 'preview-sempre-builda') muta('  REF="${VERCEL_GIT_COMMIT_REF:-}"\n', '  exit 1\n  REF="${VERCEL_GIT_COMMIT_REF:-}"\n');
 if (mutante === 'src-pulado') muta("'^(src/|public/", "'^(public/");
+if (mutante === 'cf-pulado') muta('|tools/cf/|', '|');
 if (mutante === 'release-pulado') muta('"chore(release):"*) echo "vercel-ignore: commit de release — builda produção"; exit 1 ;;', '"chore(release):"*) exit 0 ;;');
 
 /* Repositório temporário: base + três commits (só tools, src, só docs). */
@@ -85,6 +88,8 @@ try {
   const comSrc = commit('feat: muda o site');
   escreve('docs/nota.md', '# só docs\n');
   const soDocs = commit('docs: nota');
+  escreve('scripts/adaptador.mjs', 'export const v = 1;\n');
+  const comAdaptador = commit('feat: muda o adaptador');
 
   const preview = (prev, extra = {}) => roda({ VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'feat/qualquer', VERCEL_GIT_COMMIT_MESSAGE: 'feat: push', VERCEL_GIT_PREVIOUS_SHA: prev, ...extra });
 
@@ -103,6 +108,14 @@ try {
   cobra('VI3', r3.status === 0, `commit só em docs/ deveria pular (exit ${r3.status}): ${r3.stdout}`);
   const r4 = preview(base);
   cobra('VI4', r4.status === 1, `intervalo base..docs inclui src/ e deveria buildar (exit ${r4.status}): ${r4.stdout}`);
+  escreve('tools/cf/gen-headers-redirects.mjs', '# gera CSP nova\n');
+  const comCf = commit('feat: muda headers do Worker');
+  git('checkout', '-q', comCf);
+  const rCf = preview(soDocs);
+  cobra('VI11', rCf.status === 1, `commit exclusivo em tools/cf/ deveria buildar (exit ${rCf.status}): ${rCf.stdout}`);
+  git('checkout', '-q', comAdaptador);
+  const rAdaptador = preview(soDocs);
+  cobra('VI10', rAdaptador.status === 1, `commit só em scripts/adaptador.mjs deveria buildar (exit ${rAdaptador.status}): ${rAdaptador.stdout}`);
   const r5 = preview('');
   cobra('VI5', r5.status === 1, `sem VERCEL_GIT_PREVIOUS_SHA deveria buildar (exit ${r5.status}): ${r5.stdout}`);
   const r6 = preview('0123456789abcdef0123456789abcdef01234567');

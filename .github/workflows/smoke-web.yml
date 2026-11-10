@@ -180,8 +180,8 @@ jobs:
           set -euo pipefail
           for i in $(seq 1 90); do
             BODY="$(gh api "repos/$REPO/issues/$PR_NUM/comments" --paginate \
-              --jq '.[] | select(.body | contains("<!-- cf-preview -->")) | .body' 2>/dev/null || true)"
-            if ! printf '%s\n' "$BODY" | grep -Fq "<!-- sha: $HEAD_SHA -->"; then
+              --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("<!-- cf-preview -->")) and (.body | contains("<!-- sha: " + env.HEAD_SHA + " -->"))) | .body' 2>/dev/null || true)"
+            if [ -z "$BODY" ]; then
               sleep 10
               continue
             fi
