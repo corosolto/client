@@ -702,7 +702,7 @@ jobs:
         run: npm ci
       - name: Operação Flávio, comportamento e simulação
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:operacao-flavio-comportamento --json-out=tools/eval/out/operacao-flavio-comportamento.json
+        run: node tools/eval/runner.mjs eval:operacao-flavio-comportamento eval:bots-perf --json-out=tools/eval/out/operacao-flavio-comportamento.json
       - name: Tempos de comportamento da Operação Flávio
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

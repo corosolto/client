@@ -4,6 +4,21 @@ import { describe, it } from 'node:test';
 import * as landing from '../../public/js/landing-app.js';
 import { desvioParaApp, trafficEntry, uniqueRegister } from '../../src/lib/server-traffic.mjs';
 
+async function carregaMiddlewareAstro(adaptador) {
+  let fonte = readFileSync(new URL('../../src/middleware.ts', import.meta.url), 'utf8');
+  fonte = fonte.replace(/^import[^\n]*\n/gm, '');
+  fonte = fonte.replace('declare const __ADAPTADOR__: string;', `const __ADAPTADOR__ = ${JSON.stringify(adaptador)};`);
+  fonte = fonte.replace('export const onRequest =', 'const onRequest =');
+  const lib = JSON.stringify(new URL('../../src/lib/server-traffic.mjs', import.meta.url).href);
+  const prefixo = `import { desvioParaApp, trafficEntry, uniqueRegister } from ${lib};
+const defineMiddleware = (fn) => fn;
+const borda = globalThis.__serverTrafficBorda;
+const backendUrl = () => 'https://backend.invalid';
+`;
+  const modulo = `${prefixo}${fonte}\nexport { onRequest };`;
+  return import(`data:text/javascript;base64,${Buffer.from(modulo).toString('base64')}`);
+}
+
 describe('entradas HTML contadas no servidor', () => {
   it('guarda só host de origem e UTM curta, sem URL sensível nem identidade', () => {
     const request = new Request('https://www.corosolto.com.br/?utm_source=X&utm_campaign=segredo', {
@@ -90,6 +105,44 @@ describe('entradas HTML contadas no servidor', () => {
 });
 
 describe('middleware de contagem', () => {
+  it('não duplica a contagem na Vercel e mantém o ingest no Workers', async () => {
+    const originalFetch = globalThis.fetch;
+    const originalSecret = process.env.API_PROXY_SECRET;
+    process.env.API_PROXY_SECRET = 'test-only-secret-for-server-traffic-000000';
+    try {
+      for (const adaptador of ['vercel', 'cloudflare']) {
+        let chamadas = 0;
+        let proximo = 0;
+        const pendencias = [];
+        globalThis.__serverTrafficBorda = {
+          ipDoCliente: () => '198.51.100.10',
+          agendar: (_locals, promise) => pendencias.push(promise),
+        };
+        globalThis.fetch = async () => {
+          chamadas++;
+          return new Response(null, { status: 204 });
+        };
+        const { onRequest } = await carregaMiddlewareAstro(adaptador);
+        const request = new Request('https://www.corosolto.com.br/?utm_source=x', {
+          headers: { accept: 'text/html', 'user-agent': 'Mozilla/5.0' },
+        });
+        const response = await onRequest({ request, locals: {} }, () => {
+          proximo++;
+          return new Response(null, { status: 200 });
+        });
+        await Promise.all(pendencias);
+        assert.equal(response.status, 200);
+        assert.equal(proximo, 1);
+        assert.equal(chamadas, adaptador === 'cloudflare' ? 1 : 0, `${adaptador} deve ter exatamente um dono da contagem`);
+      }
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete globalThis.__serverTrafficBorda;
+      if (originalSecret === undefined) delete process.env.API_PROXY_SECRET;
+      else process.env.API_PROXY_SECRET = originalSecret;
+    }
+  });
+
   it('registra o proxy no build da Vercel', () => {
     const config = JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'));
     assert.equal(config.proxy?.entrypoint, 'middleware.js');

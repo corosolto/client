@@ -8,7 +8,10 @@ import { desvioParaApp, trafficEntry, uniqueRegister } from './lib/server-traffi
 // Env lida POR REQUISIÇÃO: no Workers a ponte do src/cf/worker.ts copia [vars] e
 // secrets do binding para process.env; segredo nunca inlinado pelo import.meta.env.
 
+declare const __ADAPTADOR__: string;
+
 export const onRequest = defineMiddleware((context, next) => {
+  if (__ADAPTADOR__ !== 'cloudflare') return next();
   const { request } = context;
   const desvio = desvioParaApp(request);
   if (desvio) return context.redirect(desvio, 302);
