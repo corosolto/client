@@ -2943,7 +2943,8 @@ if (HUB_ENABLED) {
   const factionGrid = $('hub-factions');
   // Grupos saem do elenco jogável: grupo novo em characters.js aparece aqui sem lista à mão.
   // Políticos não têm brasão próprio e jogam pelos dois lados, então mostram os dois.
-  const groupOrder = ['E', 'B', 'P', 'U', 'C', 'F', 'M'];
+  const groupOrder = FACTIONS.map((fac) => fac.id);
+  groupOrder.splice(2, 0, 'P');
   const groups = [...new Set(CHARACTERS.map((c) => c.team))]
     .sort((a, b) => (groupOrder.indexOf(a) + 1 || 99) - (groupOrder.indexOf(b) + 1 || 99));
   for (const fac of groups) {

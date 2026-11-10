@@ -207,6 +207,11 @@ export const MAPAS: Mapa[] = [
   },
 ];
 
+import { faction } from '../../public/js/factions.js';
+export const TIMES = (['E', 'B'] as const).map((id) => ({
+  id, nome: `Time ${id}`, cor: faction(id).color,
+}));
+
 /** Catálogo editorial gerado de `public/js/characters.js`; nunca leia o filesystem no SSR. */
 export { GRUPOS, PERSONAGENS, capaDoGrupo } from './catalog.generated';
 export type { Grupo, Personagem } from './catalog.generated';
