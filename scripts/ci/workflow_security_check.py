@@ -190,6 +190,27 @@ def read_workflows(root: Path = Path('.github/workflows')) -> dict[Path, str]:
 
 BUILD = Path('.github/workflows/preview-build.yml')
 DEPLOY = Path('.github/workflows/preview-deploy.yml')
+CF_BUILD = Path('.github/workflows/cf-preview.yml')
+CF_DEPLOY = Path('.github/workflows/cf-preview-deploy.yml')
+SMOKE_WEB = Path('.github/workflows/smoke-web.yml')
+
+
+def cloudflare_failures(build: str, deploy: str, smoke: str) -> list[str]:
+    errors = []
+    if 'pull_request:' not in build or 'pull_request_target' in build or 'secrets.' in build:
+        errors.append('CF1 build Cloudflare precisa usar pull_request sem segredos')
+    if 'workflow_run:' not in deploy:
+        errors.append('CF2 deploy Cloudflare precisa usar workflow_run')
+    download = re.search(r'name: Baixa somente os assets compilados[\s\S]*?path:\s*([^\s]+)', deploy)
+    if not download or download.group(1) != 'dist':
+        errors.append('CF3 artefato do PR precisa ficar isolado em dist, fora do checkout confiável')
+    if 'python3 scripts/ci/cf_preview_comment.py' not in deploy:
+        errors.append('CF4 comentário precisa executar o script do checkout confiável')
+    if not re.search(r'- name: Aguarda URL sticky do Cloudflare\n\s+if: github\.event_name == \'pull_request\'', smoke):
+        errors.append('CF5 dispatch manual não pode esperar sticky de PR')
+    if '${BASE_URL:-}' not in smoke:
+        errors.append('CF6 dispatch manual precisa falhar imediatamente se BASE_URL estiver vazio')
+    return errors
 
 
 def _ler(p: Path) -> str:
@@ -251,6 +272,13 @@ def selftest(source: str) -> list[str]:
         mutant.write_text('steps:\\n  - uses: actions/checkout@v4\\n', encoding='utf-8')
         if not supply_failures(read_workflows(Path(tmp))):
             missed.append('extensao-yaml')
+    cf_build, cf_deploy, smoke = _ler(CF_BUILD), _ler(CF_DEPLOY), _ler(SMOKE_WEB)
+    cf_mutants = {
+        'cf-artefato-na-raiz': (cf_build, cf_deploy.replace('path: dist', 'path: .', 1), smoke),
+        'cf-dispatch-espera-sticky': (cf_build, cf_deploy, smoke.replace("- name: Aguarda URL sticky do Cloudflare\n        if: github.event_name == 'pull_request'", '- name: Aguarda URL sticky do Cloudflare')),
+        'cf-dispatch-sem-host': (cf_build, cf_deploy, smoke.replace('${BASE_URL:-}', '${BASE_URL}')),
+    }
+    missed += [name for name, (b, d, s) in cf_mutants.items() if not cloudflare_failures(b, d, s)]
     return missed
 
 
@@ -262,6 +290,7 @@ def main() -> int:
     workflows = read_workflows()
     errors = (preview_failures(source)
               + separacao_failures(_ler(BUILD), _ler(DEPLOY))
+              + cloudflare_failures(_ler(CF_BUILD), _ler(CF_DEPLOY), _ler(SMOKE_WEB))
               + supply_failures(workflows)
               + merge_group_failures(workflows))
     if errors:
