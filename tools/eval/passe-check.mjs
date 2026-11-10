@@ -61,6 +61,11 @@ const ler = (p) => {
 };
 const dataUrl = (fonte) => `data:text/javascript;base64,${Buffer.from(fonte).toString('base64')}`;
 
+/* Relógio fixo no meio da temporada (05/11/2026 a 10/01/2027): a régua mede comportamento, não a
+   data em que roda. Vale para os módulos do client e para o mock, que leem Date.now(). */
+const AGORA = Date.parse('2026-11-20T15:00:00Z');
+Date.now = () => AGORA;
+
 /* ---------- DOM mínimo: o que passe.js e passe-anuncio.js tocam ---------- */
 const storage = new Map();
 let busca = '';

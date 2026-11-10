@@ -5,6 +5,8 @@
          {action:'claim', level:1}, o nível vira RESGATADO e o bônus de XP aparece.
      PB3 visitante no celular deitado (844×390): CTA do anúncio abre o convite de login (login-prompt.js);
          a tela do passe cabe sem rolar na horizontal e não tem botão de resgate.
+     PB5 funil do painel: com medição permitida sai modal_view e open, uma vez cada; com a recusa
+         gravada em cs_privacy não sai nenhum evento.
      PB4 seletor: personagem do passe aparece com cadeado e "Nível N" e não é escolhido; o mesmo id salvo
          no localStorage não entra no lobby; depois do resgate (inventário do servidor) é escolhido.
    Uso (servidor próprio; um navegador por vez):
@@ -19,6 +21,13 @@ import { criarPasseMock } from './passe-mock.mjs';
 const BASE = process.env.BASE;
 if (!BASE) { console.error('passe BASE=http://127.0.0.1:<porta> explícito'); process.exit(2); }
 const OUT = process.env.OUT || 'tools/eval/out/passe';
+/* Janela da temporada relativa a hoje: o navegador usa o relógio real, e a régua mede o
+   comportamento, não a data em que roda (fora de 05/11 a 10/01 a janela anda junto). */
+const DIA = 86400000;
+const mockNoAr = (opcoes) => criarPasseMock({
+  inicio: Math.min(Date.parse('2026-11-05T03:00:00Z'), Date.now() - 5 * DIA),
+  fim: Math.max(Date.parse('2027-01-10T03:00:00Z'), Date.now() + 60 * DIA), ...opcoes,
+});
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
@@ -31,6 +40,7 @@ const browser = await chromium.launch({
 const MUTANTES = {
   'passe-modal-repete': ['PB1', /\/js\/passe-anuncio\.js/, (t) => t.replace('  marcarAnuncio();\n', '\n')],
   'personagem-travado-selecionavel': ['PB4', /\/js\/main\.js/, (t) => t.replace("if (personagemTravado(def)) { $('hub-roster-selected')", "if (false) { $('hub-roster-selected')")],
+  'analytics-sem-consentimento': ['PB5', /\/js\/passe\.js/, (t) => t.replace(' || !globalThis.__csPrivacy?.allowed()) return;', ') return;')],
   'claim-sem-conta': ['PB3', /\/js\/tp\/passe\.js/, (t) => t.replace('if (!s?.authenticated) { entrar(); return; }', '')
     .replace("const primeiro = s.claimable[0];", 'const primeiro = s.claimable[0] || (!s.authenticated && 1);')],
 };
@@ -40,24 +50,26 @@ const MUTANTES = {
 const INJETA_PERSONAGEM = (t) => t.replace('export const CHARACTERS = [',
   "export const CHARACTERS = [\n  { id: 'capitao-caveira', team: 'E', name: 'Capitão Caveira', passe: { season: 'sessao-da-treta-s1', level: 1 },\n    blurb: 'Personagem do passe (régua).', pal: { skin: 0xe8b98a, shirt: 0x222222, pants: 0x222222, hair: 0x111111, boots: 0x111111 } },");
 
-async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mutante = '', personagem = null, anuncioVisto = false }) {
+async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mutante = '', personagem = null, anuncioVisto = false, recusaMedicao = false }) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: toque, isMobile: toque, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   page.setDefaultTimeout(15000);
   const erros = [];
   page.on('pageerror', (e) => { if (!/\/\.astro\//.test(e.stack || '')) erros.push(e.message.slice(0, 160)); });
-  await page.addInitScript(({ personagem, anuncioVisto }) => {
+  await page.addInitScript(({ personagem, anuncioVisto, recusaMedicao }) => {
     localStorage.setItem('awpbr_settings', JSON.stringify({ menuMusic: false, vol: 0, speech: false }));
     localStorage.setItem('cs_lang', 'pt'); localStorage.setItem('awpbr_nick', 'Regua'); localStorage.setItem('cs_treta_intro', 'v1');
     localStorage.setItem('csbr-mode-ann-seen', JSON.stringify(['operacao_flavio']));
     localStorage.setItem('cs-javaporcos-cidade-anuncio-v1', '1');
     if (personagem) { localStorage.setItem('csbr-home-character', personagem); localStorage.setItem('csbr-home-side', 'E'); }
     if (anuncioVisto) localStorage.setItem('cs-passe-anuncio', 'sessao-da-treta-s1/1');
-  }, { personagem, anuncioVisto });
-  const posts = [];
+    /* recusa gravada no formato do privacy-runtime.js: o funil do passe não pode sair */
+    if (recusaMedicao) localStorage.setItem('cs_privacy', JSON.stringify({ version: 'corosolto-analytics-v1', analytics: false }));
+  }, { personagem, anuncioVisto, recusaMedicao });
+  const posts = [], eventos = [];   // resgates e funil do painel, separados
   await page.route('**/api/passe', async (r) => {
     const req = r.request();
-    if (req.method() === 'POST') posts.push(req.postData());
+    if (req.method() === 'POST') { const corpo = req.postData() || ''; if (/"action":"analytics"/.test(corpo)) eventos.push(JSON.parse(corpo).event); else posts.push(corpo); }
     const { status, body } = mock.handle(req.method(), req.postData() || '');
     await r.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
   });
@@ -85,7 +97,7 @@ async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mu
   await page.waitForFunction(() => !document.getElementById('splash-enter')?.classList.contains('hidden'), null, { timeout: 90000 }).catch(() => {});
   await page.waitForTimeout(1200);
   await entrarNoLobby(page, !anuncioVisto);
-  return { page, ctx, posts, erros };
+  return { page, ctx, posts, eventos, erros };
 }
 
 /* Sai do splash e espera o status do passe (aba PASSE visível). O anúncio sai depois que o lobby
@@ -110,8 +122,8 @@ async function medir(mutante = '') {
 
   /* Sessão A: desktop, conta com 2.350 XP e nada resgatado. */
   {
-    const mock = criarPasseMock({ autenticado: true, xp: 2350, claimed: [] });
-    const { page, ctx, posts, erros } = await abrir({ mock, mutante });
+    const mock = mockNoAr({ autenticado: true, xp: 2350, claimed: [] });
+    const { page, ctx, posts, eventos, erros } = await abrir({ mock, mutante });
     const anuncio = await page.evaluate(() => {
       const d = document.getElementById('passe-anuncio');
       const arte = d?.querySelector('.tp-passe-anuncio__arte');
@@ -140,7 +152,9 @@ async function medir(mutante = '') {
       proximo: document.querySelector('.tp-passe__resgatar')?.textContent || '',
     }));
     add('PB2@resgate', depois.n1 === 'resgatado' && /\+10% XP/.test(depois.boost) && posts.length === 1 && posts[0] === '{"action":"claim","level":1}' && /NÍVEL 2/.test(depois.proximo),
-      `"${tela.resgatar}" -> nível 1 ${depois.n1}; bônus "${depois.boost}"; POSTs ${JSON.stringify(posts)}; próximo "${depois.proximo}"; aviso "${depois.aviso}"`);
+      `"${tela.resgatar}" -> nível 1 ${depois.n1}; bônus "${depois.boost}"; resgates ${JSON.stringify(posts)}; próximo "${depois.proximo}"; aviso "${depois.aviso}"`);
+    add('PB5', JSON.stringify(eventos) === '["modal_view","open"]' && JSON.stringify(mock.eventos) === '["modal_view","open"]',
+      `funil com medição permitida: ${JSON.stringify(eventos)} (quer modal_view e open, uma vez cada)`);
     await page.evaluate(() => { document.querySelector('.tp-passe__niveis').scrollLeft = 0; });
     await foto(page, 'passe-desktop', mutante);
     /* PB4: depois do resgate o servidor lista o personagem: o seletor escolhe */
@@ -171,8 +185,8 @@ async function medir(mutante = '') {
 
   /* Sessão B: celular deitado, visitante. */
   {
-    const mock = criarPasseMock({ autenticado: false, claimed: [] });
-    const { page, ctx, posts, erros } = await abrir({ w: 844, h: 390, toque: true, conta: false, mock, mutante });
+    const mock = mockNoAr({ autenticado: false, claimed: [] });
+    const { page, ctx, posts, eventos, erros } = await abrir({ w: 844, h: 390, toque: true, conta: false, mock, mutante, recusaMedicao: true });
     const anuncio = await page.evaluate(() => ({ aberto: !!document.getElementById('passe-anuncio')?.open, cta: document.querySelector('#passe-anuncio [data-passe-cta]')?.textContent || '' }));
     await foto(page, 'anuncio-celular-visitante', mutante);
     if (anuncio.aberto) await page.click('#passe-anuncio [data-passe-cta]');
@@ -191,14 +205,15 @@ async function medir(mutante = '') {
     await page.click('[data-resgatar]', { timeout: 1500 }).catch(() => {});
     await page.waitForTimeout(500);
     add('PB3', anuncio.aberto && anuncio.cta === 'ENTRAR E JOGAR O PASSE' && login.aberto && /passe/.test(login.titulo) && tela.aberta && tela.larguraOk && tela.niveis === 15 && tela.resgates === 0 && tela.entrar && posts.length === 0,
-      `anúncio ${anuncio.aberto ? `"${anuncio.cta}"` : 'NÃO ABRIU'}; login ${login.aberto ? `"${login.titulo}"` : 'NÃO ABRIU'}; tela ${tela.aberta ? 'aberta' : 'FECHADA'}, ${tela.niveis} níveis, ${tela.larguraOk ? 'sem rolagem lateral' : 'ROLA NA HORIZONTAL'}, ${tela.resgates} botão(ões) de resgate, ENTRAR ${tela.entrar ? 'presente' : 'ausente'}; POSTs ${posts.length}`);
+      `anúncio ${anuncio.aberto ? `"${anuncio.cta}"` : 'NÃO ABRIU'}; login ${login.aberto ? `"${login.titulo}"` : 'NÃO ABRIU'}; tela ${tela.aberta ? 'aberta' : 'FECHADA'}, ${tela.niveis} níveis, ${tela.larguraOk ? 'sem rolagem lateral' : 'ROLA NA HORIZONTAL'}, ${tela.resgates} botão(ões) de resgate, ENTRAR ${tela.entrar ? 'presente' : 'ausente'}; resgates ${posts.length}`);
+    add('PB5@recusa', eventos.length === 0, `funil com recusa gravada: ${eventos.length ? `SAIU ${JSON.stringify(eventos)}` : 'nenhum evento'}`);
     add('PB0@celular', !erros.length, erros.length ? `erros de página: ${erros.join(' | ')}` : 'sem erro de página');
     await ctx.close();
   }
 
   /* Sessão C: celular deitado, conta; Sessão D: seletor com o personagem travado e o id salvo no navegador. */
   {
-    const mock = criarPasseMock({ autenticado: true, xp: 6400, claimed: [1, 2] });
+    const mock = mockNoAr({ autenticado: true, xp: 6400, claimed: [1, 2] });
     const { page, ctx } = await abrir({ w: 844, h: 390, toque: true, mock, mutante, anuncioVisto: true });
     await page.click('[data-tp-aba="passe"]').catch(() => {});
     await page.waitForSelector('#tp-passe[open] .tp-passe-nivel', { timeout: 10000 }).catch(() => {});
@@ -207,7 +222,7 @@ async function medir(mutante = '') {
     await ctx.close();
   }
   {
-    const mock = criarPasseMock({ autenticado: true, xp: 400, claimed: [] });
+    const mock = mockNoAr({ autenticado: true, xp: 400, claimed: [] });
     const { page, ctx } = await abrir({ mock, mutante, personagem: 'capitao-caveira', anuncioVisto: true });
     const lobby = await page.evaluate(() => document.getElementById('hub-character-name')?.textContent || '');
     await page.click('#hub-change-character').catch(() => {});
