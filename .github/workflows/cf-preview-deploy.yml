@@ -98,4 +98,4 @@ jobs:
           PR_NUM: ${{ github.event.workflow_run.pull_requests[0].number }}
           PREVIEW_URL: ${{ steps.upload.outputs.url }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-        run: python3 scripts/ci/cf_preview_comment.py "$PR_NUM" "$PREVIEW_URL" "$HEAD_SHA"
+        run: python3 scripts/ci/cf_preview_comment.py "$PR_NUM" "$PREVIEW_URL"
