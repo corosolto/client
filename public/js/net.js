@@ -268,8 +268,12 @@ export class NetClient {
           const rtt = performance.now() - m.t;
           if (Number.isFinite(rtt) && rtt >= 0 && rtt <= 60000) {
             this.stats.ping = rtt;
-            this._rttSamples.push(+rtt.toFixed(1));
-            if (this._rttSamples.length > 32) this._rttSamples.shift();
+            // Mesma regra do gap: aba oculta = ping inflado pelo throttle do navegador,
+            // não pela rede. stats.ping atualiza (informativo), a AMOSTRA não entra.
+            if (!(typeof document !== 'undefined' && document.hidden)) {
+              this._rttSamples.push(+rtt.toFixed(1));
+              if (this._rttSamples.length > 32) this._rttSamples.shift();
+            }
           }
         } else if (m.type === 'partida') {
           if (m.protocolVersion !== 8) { falha(new Error('protocolo_incompativel')); return; }
@@ -313,8 +317,12 @@ export class NetClient {
           if (this._lastSnapT) {
             const gap = now - this._lastSnapT;
             this.stats.gapMax = Math.max(gap, this.stats.gapMax * 0.92);
-            this._gapSamples.push(+gap.toFixed(1));
-            if (this._gapSamples.length > 512) this._gapSamples.shift();
+            // Aba oculta não é experiência de jogo: o navegador suspende o event loop e
+            // os gaps viram segundos (falso "atenção" mobile que polui o p95). Congela.
+            if (!(typeof document !== 'undefined' && document.hidden)) {
+              this._gapSamples.push(+gap.toFixed(1));
+              if (this._gapSamples.length > 512) this._gapSamples.shift();
+            }
           }
           this._lastSnapT = now;
           // `m.t` é o relógio DO SERVIDOR (netcodec, f64 s): `now` é quando o render
