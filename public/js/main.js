@@ -1415,7 +1415,7 @@ const rememberedChar = routeCharacterId || storedCharacterId;
 const rememberedSide = localStorage.getItem('csbr-home-side') === 'B' ? 'B' : 'E';
 const randomInitialCharacter = () => {
   const eligible = CHARACTERS.filter((character) => podeNoLado(character, rememberedSide) && !personagemTravado(character));
-  if (!eligible.length) return CHARACTERS[0];
+  if (!eligible.length) return CHARACTERS.find((character) => !personagemTravado(character)) || CHARACTERS[0];
   const seed = new Uint32Array(1);
   crypto.getRandomValues(seed);
   return eligible[seed[0] % eligible.length];

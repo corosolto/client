@@ -53,6 +53,7 @@ const MUTANTES = {
   'confirma-sem-trava': ['PS7', 'public/js/main.js', 'if (!selChar || personagemTravado(selChar)) return;', 'if (!selChar || (personagemTravado(selChar) && !selChar.passe)) return;'],
   'mp-pede-travado': ['PS7', 'public/js/main.js', 'return def ? personagemLivre(def, escolhaSpAntesDoMp?.team || currentTeam) : null;',
     'return def ? (personagemTravado(def) ? def : personagemLivre(def, escolhaSpAntesDoMp?.team || currentTeam)) : null;'],
+  'sorteio-reserva-travado': ['PS7', 'public/js/main.js', 'return CHARACTERS.find((character) => !personagemTravado(character)) || CHARACTERS[0];', 'return CHARACTERS[0];'],
   'lobby-sem-trava': ['PS7', 'public/js/main.js', 'const def = personagemLivre(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);',
     'const def = (personagemTravado(CHARACTERS[0]), CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0]);'],
   'passe-modal-repete': ['PS4', 'public/js/passe-anuncio.js', '  marcarAnuncio();\n', '\n'],
@@ -241,9 +242,10 @@ function caminhosDoMain() {
   };
   const medir = () => {
     const sorteados = new Set(Array.from({ length: 40 }, () => api.randomInitialCharacter().id));
+    ctx.rememberedSide = 'P'; const reserva = api.randomInitialCharacter().id; ctx.rememberedSide = 'E';   // lado sem ninguém livre
     Object.assign(ctx, { HUB_ENABLED: true, currentChar: 'capitao-caveira', mostrado: null }); api.syncHomeCharacter();
     return {
-      sorteio: sorteados.has('capitao-caveira'), livre: api.personagemLivre(caveira, 'E').id, lobby: ctx.mostrado?.id,
+      sorteio: sorteados.has('capitao-caveira'), reserva, livre: api.personagemLivre(caveira, 'E').id, lobby: ctx.mostrado?.id,
       mp: api.personagemEscolhido()?.id || null, partida: api.guardaPartida('capitao-caveira', 'E', false),
       online: api.guardaPartida('capitao-caveira', 'E', true), hub: confirmar(caveira, 'esquerdomacho'), antigo: confirmar(caveira, 'esquerdomacho', false),
     };
@@ -256,6 +258,7 @@ await clausula('PS7', 'main.js executado: nenhum caminho entrega o personagem tr
   await novaConta({ autenticado: false, claimed: [] });
   const t = main.medir();
   assert.equal(t.sorteio, false, 'sorteio do personagem inicial entregou o travado');
+  assert.equal(t.reserva, 'esquerdomacho', `sorteio sem ninguém livre no lado entregou ${t.reserva}`);
   assert.equal(t.livre, 'esquerdomacho', `personagemLivre devolveu ${t.livre}`);
   assert.equal(t.lobby, 'esquerdomacho', `lobby mostrou ${t.lobby} com o id travado salvo`);
   assert.equal(t.mp, 'esquerdomacho', `multiplayer pediu ${t.mp} (quer o mesmo livre do lobby)`);
