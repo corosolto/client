@@ -6,6 +6,7 @@ import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Script as VMScript, createContext } from 'node:vm';
 import sharp from 'sharp';
+import { langFromCountry } from '../../src/lib/geo.ts';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const cli = process.argv.slice(2);
@@ -162,8 +163,6 @@ let staticAudit = existsSync(join(ROOT, 'tools/eval/redesign-static-audit.json')
   ? readFileSync(join(ROOT, 'tools/eval/redesign-static-audit.json'), 'utf8') : '';
 let loading3d = existsSync(join(ROOT, 'public/js/loading3d.js'))
   ? readFileSync(join(ROOT, 'public/js/loading3d.js'), 'utf8') : '';
-const geoLib = existsSync(join(ROOT, 'src/lib/geo.ts'))
-  ? readFileSync(join(ROOT, 'src/lib/geo.ts'), 'utf8') : '';
 const apiGeoLang = existsSync(join(ROOT, 'src/pages/api/geo-lang.ts'))
   ? readFileSync(join(ROOT, 'src/pages/api/geo-lang.ts'), 'utf8') : '';
 let mutacaoAplicou = !MUTANTE;
@@ -1181,9 +1180,11 @@ const versaoMenuNoCanto = /<\/div>\s*<span class="menu-version" id="mf-ver"><\/s
    ANTES do boot (translateDom) e cai no navegador quando a API não existe. */
 const idiomaGeo = !/export const prerender = false/.test(astro)
   && /window\.__GEO_LANG__/.test(astro)
-  && /const EN_GEO_COUNTRIES = new Set\(\[[\s\S]*?'US'[\s\S]*?'GB'/.test(geoLib)
-  && !/EN_GEO_COUNTRIES[\s\S]{0,400}'PT'|'ES'/.test(geoLib)
-  && /export function langFromCountry/.test(geoLib)
+  && langFromCountry('US') === 'en'
+  && langFromCountry('GB') === 'en'
+  && langFromCountry('PT') === 'pt'
+  && langFromCountry('BR') === 'pt'
+  && langFromCountry(null) === 'pt'
   && /export const prerender = false/.test(apiGeoLang)
   && /langFromCountry/.test(apiGeoLang)
   && /export async function resolveGeoLang/.test(i18n)
