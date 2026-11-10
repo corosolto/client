@@ -76,9 +76,9 @@ export function mountAccountEntry(container,{auth=null,config={providers:[]},ret
       mountAccountIntegrations(container,auth,config,say);void mountProfilePreferences(container,{auth,message:say,fold:true});container.append(status);return;
     }
     dialogHead(container,'A PORTA DA RESENHA','CHEGA JUNTO.');
-    const form=node('form'),label=node('label','Como a turma vai te chamar?','social-field'),nick=node('input');nick.required=true;nick.maxLength=32;nick.pattern='[A-Za-z0-9_.\\-]{2,32}';nick.autocomplete='nickname';label.append(nick);
+    const form=node('form'),label=node('label','Como a turma vai te chamar?','social-field'),nick=node('input');nick.required=true;nick.maxLength=32;nick.pattern='[A-Za-z0-9_.\\-一-鿿]{2,32}';nick.autocomplete='nickname';label.append(nick);
     const submit=button('VESTIR A CAMISA ▸',async()=>{if(!form.reportValidity())return;const out=await socialApi('/api/social-auth',{action:'onboard',nick:nick.value,...(guestProof()?{guest:guestProof()}:{})});auth.profile=out.profile;auth.account_verified=out.account_verified===true;acceptAccount(auth);await onAuthenticated(auth);});
-    form.append(label,node('p','2 a 32 letras, números, ponto, hífen ou _.','social-muted'),submit);form.onsubmit=e=>{e.preventDefault();submit.click();};container.append(form);void mountProfilePreferences(container,{auth,message:say});container.append(status);return;
+    form.append(label,node('p','2 a 32 letras, números, ideogramas chineses, ponto, hífen ou _.','social-muted'),submit);form.onsubmit=e=>{e.preventDefault();submit.click();};container.append(form);void mountProfilePreferences(container,{auth,message:say});container.append(status);return;
   }
   dialogHead(container,'A PORTA DA RESENHA','CHEGA JUNTO.');
   container.append(node('p','Guarde suas conquistas, encontre a turma e volte pra próxima treta. Partidas completas e verificadas que forem elegíveis nesta campanha têm os T$ resgatados uma única vez ao vincular o convidado.','social-muted'));
