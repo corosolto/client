@@ -16,7 +16,7 @@
      BASE=http://127.0.0.1:9431 tools/eval/with-browser-lock.sh node tools/eval/passe-browser.mjs [--mutantes]
    Capturas em OUT (padrão tools/eval/out/passe). */
 import { execSync } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { criarPasseMock } from './passe-mock.mjs';
 
@@ -33,8 +33,11 @@ const mockNoAr = (opcoes) => criarPasseMock({
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
+const CHROME_MAC = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const chromeBin = process.env.CHROME_BIN || (existsSync(CHROME_MAC) ? CHROME_MAC : '');
 const browser = await chromium.launch({
-  executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  /* CHROME_BIN vence; sem ele, o Chrome do macOS se existir, senão o Chromium do próprio Playwright (Linux/CI) */
+  ...(chromeBin ? { executablePath: chromeBin } : {}),
   args: ['--headless=new', '--mute-audio', '--autoplay-policy=no-user-gesture-required'],
 });
 
