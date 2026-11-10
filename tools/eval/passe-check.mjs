@@ -17,8 +17,8 @@
                            de claim_until (as outras cláusulas confiam nele).
    PS7 main.js executado · os trechos REAIS de main.js rodam num vm com um personagem
                            travado: sorteio inicial, personagem do lobby, confirmação do
-                           seletor (M e menu antigo), pedido no MP e início de partida
-                           offline nunca entregam o travado; destravado pelo servidor,
+                           seletor (M e menu antigo), pedido no MP (o mesmo livre do lobby) e
+                           início de partida offline nunca entregam o travado; destravado pelo servidor,
                            todos entregam (controle positivo). O clique do seletor do lobby
                            é medido no navegador (passe-browser.mjs, PB4).
    PS4 passe-modal-repete · o anúncio aparece uma vez por versão, só com a temporada
@@ -51,7 +51,8 @@ const MUTANTES = {
   'livre-ignora-trava': ['PS7', 'public/js/main.js', '(def && !personagemTravado(def) ? def', '(def && (!personagemTravado(def) || def.passe) ? def'],
   'sorteio-com-travado': ['PS7', 'public/js/main.js', '&& !personagemTravado(character));', '&& (!personagemTravado(character) || !!character.passe));'],
   'confirma-sem-trava': ['PS7', 'public/js/main.js', 'if (!selChar || personagemTravado(selChar)) return;', 'if (!selChar || (personagemTravado(selChar) && !selChar.passe)) return;'],
-  'mp-pede-travado': ['PS7', 'public/js/main.js', 'return def && !personagemTravado(def) ? def : null;', 'return def && (!personagemTravado(def) || def.passe) ? def : null;'],
+  'mp-pede-travado': ['PS7', 'public/js/main.js', 'return def ? personagemLivre(def, escolhaSpAntesDoMp?.team || currentTeam) : null;',
+    'return def ? (personagemTravado(def) ? def : personagemLivre(def, escolhaSpAntesDoMp?.team || currentTeam)) : null;'],
   'lobby-sem-trava': ['PS7', 'public/js/main.js', 'const def = personagemLivre(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);',
     'const def = (personagemTravado(CHARACTERS[0]), CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0]);'],
   'passe-modal-repete': ['PS4', 'public/js/passe-anuncio.js', '  marcarAnuncio();\n', '\n'],
@@ -257,7 +258,7 @@ await clausula('PS7', 'main.js executado: nenhum caminho entrega o personagem tr
   assert.equal(t.sorteio, false, 'sorteio do personagem inicial entregou o travado');
   assert.equal(t.livre, 'esquerdomacho', `personagemLivre devolveu ${t.livre}`);
   assert.equal(t.lobby, 'esquerdomacho', `lobby mostrou ${t.lobby} com o id travado salvo`);
-  assert.equal(t.mp, null, `multiplayer pediu ${t.mp}`);
+  assert.equal(t.mp, 'esquerdomacho', `multiplayer pediu ${t.mp} (quer o mesmo livre do lobby)`);
   assert.equal(t.partida, 'esquerdomacho', `partida offline começou com ${t.partida}`);
   assert.equal(t.online, 'capitao-caveira', 'online trocou o corpo que o servidor da sala deu');
   for (const [nome, r] of [['hub', t.hub], ['menu antigo', t.antigo]]) {

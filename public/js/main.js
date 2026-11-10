@@ -4757,11 +4757,11 @@ function mpDevolverEscolhaSp() {
   syncHomeCharacter();
 }
 // O personagem do jogador: dentro do MP é o guardado na entrada (a sala só empresta o corpo).
-// Personagem do passe ainda travado não é pedido à sala (passe.js).
+// Passe travado: pede o mesmo livre que o lobby mostra (personagemLivre), sem apagar a escolha salva.
 function personagemEscolhido() {
   const id = escolhaSpAntesDoMp ? escolhaSpAntesDoMp.char : currentChar;
   const def = CHARACTERS.find((c) => c.id === id);
-  return def && !personagemTravado(def) ? def : null;
+  return def ? personagemLivre(def, escolhaSpAntesDoMp?.team || currentTeam) : null;
 }
 let mpNoAtual = null;
 let mpConectando = false;   // trava de reentrada do mpEntrar (BUG-88)
