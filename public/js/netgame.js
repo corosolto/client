@@ -82,7 +82,9 @@ class Netcode {
     this._onPageHide = () => this._flushStatsParcial();
     this._onVisChange = () => { if (typeof document !== 'undefined' && document.hidden) this._flushStatsParcial(); };
     globalThis.addEventListener?.('pagehide', this._onPageHide);
-    document.addEventListener?.('visibilitychange', this._onVisChange);
+    // harness sem DOM: `document` pode nem existir como global — o encadeamento
+    // opcional não protege global indefinido, só propriedade. O guard é o typeof.
+    if (typeof document !== 'undefined') document.addEventListener?.('visibilitychange', this._onVisChange);
     this._prevOnClose = net.onClose;
     this._onCloseNetGame = (motivo) => { this._flushStatsParcial(); this._prevOnClose?.(motivo); };
     net.onClose = this._onCloseNetGame;
@@ -124,7 +126,7 @@ class Netcode {
   dispose() {
     if (this._nsTimer) { clearInterval(this._nsTimer); this._nsTimer = null; }
     globalThis.removeEventListener?.('pagehide', this._onPageHide);
-    document.removeEventListener?.('visibilitychange', this._onVisChange);
+    if (typeof document !== 'undefined') document.removeEventListener?.('visibilitychange', this._onVisChange);
     if (this.net?.onClose === this._onCloseNetGame) this.net.onClose = this._prevOnClose;
     try { this.net.stopPing(); } catch { /* já fechada */ }
     if (this.net.onSlot === this._onSlot) this.net.onSlot = this._prevOnSlot;
