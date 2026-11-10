@@ -187,7 +187,11 @@ export function classificar(novos, { mencoes, assets }) {
       const rel = p.slice('public/'.length);
       const stem = base.replace(/\.[^.]+$/, '');
       const c = assets();
-      const pedido = c.includes(rel) || c.includes(base) || (stem.length >= 4 && c.includes(stem));
+      /* Arte de resultado: game.js/main.js montam `/img/resultado/${id}-${pose}.webp`; pedida
+         quando o id do personagem está no corpus e o molde da URL também. */
+      const resultado = /^img\/resultado\/(.{4,})-(?:vitoria|derrota)\.webp$/.exec(rel);
+      const pedido = c.includes(rel) || c.includes(base) || (stem.length >= 4 && c.includes(stem))
+        || Boolean(resultado && c.includes(`'${resultado[1]}'`) && c.includes('/img/resultado/${'));
       if (!pedido) falhas.LX5.push(p);
     }
   }

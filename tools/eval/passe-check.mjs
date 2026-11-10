@@ -220,6 +220,8 @@ function caminhosDoMain() {
     CHARACTERS: [caveira, livreE, livreB], podeNoLado: (d, l) => d?.team === l, ladosDe: (d) => [d?.team || 'E'],
     personagemTravado: P.personagemTravado, rememberedSide: 'E', crypto: { getRandomValues: (a) => { a[0] = semente++; return a; } },
     HUB_ENABLED: true, $: el, document: { querySelector: () => null }, tr: (x) => x, FACTION_NAME: { E: 'TIME E', B: 'TIME B' }, PALETA: {},
+    // Brasão por slug do registro de facções (main.js usa urlDoBrasao(factionDefinition(lado).crest)).
+    urlDoBrasao: (crest) => `img/brasoes/${crest}.png`, factionDefinition: (id) => ({ crest: String(id).toLowerCase() }),
     pvSetChar: (d) => { ctx.mostrado = d; }, sfx: { uiClick() {} }, show: () => {}, startGame: (t, c) => { ctx.iniciou = c; },
     localStorage: { setItem: (k, v) => { ctx.gravado[k] = v; } }, gravado: {},
     currentChar: 'capitao-caveira', currentTeam: 'E', currentFaction: 'E', currentEnemyFaction: null,
