@@ -62,7 +62,7 @@ export function criarPasseMock({
   const status = () => {
     const level = autenticado ? nivelAtual() : 0;
     const agoraMs = agora();
-    const aberto = agoraMs < fimResgate;
+    const aberto = agoraMs >= inicio && agoraMs < fimResgate;
     const feitos = [...resgates.keys()].sort((a, b) => a - b);
     const boosts = [...resgates.entries()].map(([n, r]) => ({ pct: BOOSTS[n - 1], until: r.em + 86400000 })).filter((b) => b.until > agoraMs);
     const melhor = boosts.sort((a, b) => b.pct - a.pct || b.until - a.until)[0];
@@ -99,7 +99,7 @@ export function criarPasseMock({
     const n = corpo.level;
     if (!Number.isSafeInteger(n) || n < 1 || n > NIVEIS.length) return erro(400, 'level_invalid');
     if (resgates.has(n)) return { status: 200, body: { ok: true, already_claimed: true, season: TEMPORADA, level: n, rewards: resgates.get(n).rewards, status: status() } };
-    if (agora() >= fimResgate) return erro(409, 'season_closed');
+    if (agora() < inicio || agora() >= fimResgate) return erro(409, 'season_closed');
     if (n > nivelAtual()) return erro(409, 'level_locked');
     entregar(n, agora());
     return { status: 200, body: { ok: true, season: TEMPORADA, level: n, rewards: resgates.get(n).rewards, status: status() } };

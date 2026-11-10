@@ -13,6 +13,8 @@
    PS3 personagem-travado-selecionavel · personagem com `passe` fica travado até o
                            status do servidor listar em unlocked.characters; nada no
                            localStorage destrava; logout trava de novo.
+   PS8 mock na janela   · o mock do contrato não abre resgate antes de starts_at nem depois
+                           de claim_until (as outras cláusulas confiam nele).
    PS7 main.js executado · os trechos REAIS de main.js rodam num vm com um personagem
                            travado: sorteio inicial, personagem do lobby, confirmação do
                            seletor (M e menu antigo), pedido no MP e início de partida
@@ -34,7 +36,6 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import vm from 'node:vm';
-import { criarPasseMock } from './passe-mock.mjs';
 
 const ARGS = process.argv.slice(2);
 const MUT = (ARGS.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
@@ -57,6 +58,8 @@ const MUTANTES = {
   'anuncio-fora-da-temporada': ['PS4', 'public/js/passe.js', 'return agora >= Date.parse(status.starts_at) && agora < Date.parse(status.ends_at);', 'return true;'],
   'claim-duplo': ['PS5', 'public/js/passe.js', 'if (resgatando && resgatandoChave === chave) return resgatando;', ''],
   'claim-de-outra-conta': ['PS5', 'public/js/passe.js', 'chave = `${minha}:${level}`;', 'chave = `${level}`;'],
+  'mock-pre-temporada': ['PS8', 'tools/eval/passe-mock.mjs', 'const aberto = agoraMs >= inicio && agoraMs < fimResgate;', 'const aberto = agoraMs < fimResgate;'],
+  'mock-resgate-pre-temporada': ['PS8', 'tools/eval/passe-mock.mjs', 'if (agora() < inicio || agora() >= fimResgate)', 'if (agora() >= fimResgate)'],
   'analytics-sem-consentimento': ['PS6', 'public/js/passe.js', " || !globalThis.__csPrivacy?.allowed()) return;", ') return;'],
   'modal-sem-evento': ['PS6', 'public/js/passe-anuncio.js', "  registrarEventoPasse('modal_view');\n", '\n'],
   'tela-sem-evento': ['PS6', 'public/js/tp/passe.js', "  registrarEventoPasse('open');\n", '\n'],
@@ -73,6 +76,8 @@ const ler = (p) => {
   return t;
 };
 const dataUrl = (fonte) => `data:text/javascript;base64,${Buffer.from(fonte).toString('base64')}`;
+/* o mock entra pelo mesmo caminho dos módulos do client: mutável pela própria régua (PS8) */
+const { criarPasseMock } = await import(dataUrl(ler('tools/eval/passe-mock.mjs')));
 
 /* Relógio fixo no meio da temporada (05/11/2026 a 10/01/2027): a régua mede comportamento, não a
    data em que roda. Vale para os módulos do client e para o mock, que leem Date.now(). */
@@ -343,6 +348,18 @@ await clausula('PS6', 'analytics: modal_view e open só com consentimento', asyn
   /* a tela do passe (DOM do lobby, fora do Node) manda open ao abrir */
   const tela = ler('public/js/tp/passe.js');
   assert.match(tela.slice(tela.indexOf('export function abrirPasse')), /dialog\.showModal\(\);[\s\S]*registrarEventoPasse\('open'\);/, 'abrir a tela do passe não manda open');
+});
+
+await clausula('PS8', 'mock na janela: nada de resgate fora da temporada', async () => {
+  const antes = criarPasseMock({ autenticado: true, xp: 9000, claimed: [], inicio: AGORA + 86400000, fim: AGORA + 60 * 86400000 });
+  assert.deepEqual(antes.status().claimable, [], `pré-temporada com níveis resgatáveis: ${antes.status().claimable}`);
+  const r = antes.handle('POST', JSON.stringify({ action: 'claim', level: 1 }));
+  assert.ok(r.status === 409 && r.body.error === 'season_closed', `resgate na pré-temporada: ${r.status} ${JSON.stringify(r.body)}`);
+  const depois = criarPasseMock({ autenticado: true, xp: 9000, claimed: [], inicio: AGORA - 90 * 86400000, fim: AGORA - 8 * 86400000 });
+  assert.deepEqual(depois.status().claimable, [], 'resgate aberto depois de claim_until');
+  assert.equal(depois.handle('POST', JSON.stringify({ action: 'claim', level: 1 })).status, 409, 'resgate aceito depois de claim_until');
+  const noAr = criarPasseMock({ autenticado: true, xp: 9000, claimed: [] });
+  assert.ok(noAr.status().claimable.length > 0 && noAr.handle('POST', JSON.stringify({ action: 'claim', level: 1 })).status === 200, 'controle: temporada no ar sem resgate');
 });
 
 const alvo = MUT ? MUTANTES[MUT][0] : '';
