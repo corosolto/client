@@ -106,18 +106,21 @@ const CONTRATO = [
   { rota: '/sitemap.xml', esperado: '200 + XML válido (urlset ou índice)',
     checa: ({ status, corpo }) => {
       if (status !== 200) return `status ${status}`;
-      if (!/^\s*<\?xml/.test(corpo)) return 'não começa com declaração XML';
-      const ehIndice = /<sitemapindex(?:\s|>)/.test(corpo);
-      const ehUrlset = /<urlset(?:\s|>)/.test(corpo);
-      if (!ehIndice && !ehUrlset) return 'raiz XML não é <urlset> nem <sitemapindex>';
+      if (!/^\s*<\?xml[^>]*>\s*<(sitemapindex|urlset)\b[^>]*>/i.test(corpo))
+        return 'raiz XML não é <urlset> nem <sitemapindex>';
+      const raiz = /^\s*<\?xml[^>]*>\s*<(sitemapindex|urlset)\b/i.exec(corpo)[1].toLowerCase();
+      if (!new RegExp(`</${raiz}>\\s*$`, 'i').test(corpo))
+        return `<${raiz}> sem fechamento`;
       const locs = corpo.match(/<loc>/g) || [];
-      if (ehIndice) {
-        if (!locs.length) return 'índice sem nenhum <loc> de sitemap';
+      if (raiz === 'sitemapindex') {
         const abertas = (corpo.match(/<sitemap>/g) || []).length;
         const fechadas = (corpo.match(/<\/sitemap>/g) || []).length;
+        if (!abertas) return 'índice sem nenhum <sitemap>';
         if (abertas !== fechadas) return `<sitemap> desbalanceado: ${abertas} abre, ${fechadas} fecha`;
+        if (locs.length !== abertas) return `${locs.length} <loc> para ${abertas} <sitemap>`;
       } else {
-        if (locs.length < 8) return `${locs.length} <loc>, mínimo 8 no urlset`;
+        const minimo = EXTERNO ? 8 : (RANKING_ON ? 9 : 8);
+        if (locs.length < minimo) return `${locs.length} <loc>, mínimo ${minimo} no urlset`;
         const abertas = (corpo.match(/<url>/g) || []).length;
         const fechadas = (corpo.match(/<\/url>/g) || []).length;
         if (abertas !== fechadas) return `<url> desbalanceado: ${abertas} abre, ${fechadas} fecha`;
