@@ -36,9 +36,10 @@ import { PISTOLS } from '../../../public/js/weapons.js';
 
 // Placar assado (navegador, local) que o CI confere sem navegador: eval:vm-enquadramento-placar.
 export const PLACAR_ARQ = 'tools/eval/vm-enquadramento-idle.json';
-// Tudo que decide o quadro parado: composição/FOV por arma e rota, revisões dos GLBs e a régua.
+// Tudo que decide o quadro parado: composição/FOV por arma e rota, a escolha da rota e o goldFrame
+// (authoredvm.js), revisões dos GLBs e a régua.
 export const ENTRADAS = Object.freeze(['public/js/data/vmconfig.js', 'public/js/data/vmframe.js', 'public/js/data/vmfabrica.js',
-  'public/js/data/vmbytes.js', 'public/js/data/goldenver.js', 'tools/eval/lib/vm-enquadramento.mjs']);
+  'public/js/data/vmbytes.js', 'public/js/data/goldenver.js', 'public/js/authoredvm.js', 'tools/eval/lib/vm-enquadramento.mjs']);
 // Armas com rota de pintura (main.js: playerWeaponSkins; authoredvm.js: gold#<arma>).
 export const PINTADAS = Object.freeze(['pistol', 'ak', 'm4', 'scar']);
 // `sobrepor` troca o texto de um arquivo antes do hash (mutante do CI sem tocar o disco).
