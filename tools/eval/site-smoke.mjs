@@ -59,9 +59,10 @@ const BASE = EXTERNO || `http://127.0.0.1:${PORTA}`;
 // ---------------------------------------------------------------------------
 // O CONTRATO. Uma linha por rota. `checa` recebe { status, corpo, headers }.
 // ---------------------------------------------------------------------------
-// 8 páginas indexáveis hoje; /ranking entra na conta só com o ranking ligado —
-// desligado a cópia do hub em /ranking é noindex, e noindex no sitemap é contradição.
-const XML_LOC_MIN = RANKING_ON ? 9 : 8;
+// O smoke local lê o modo do código; um alvo externo pode ter configuração de
+// ambiente diferente (por exemplo, produção com ranking ligado). O sitemap
+// também pode ser um urlset ou um índice de shards; cada forma tem contrato
+// próprio e não deve ser confundida por uma contagem fixa de <loc>.
 
 const CONTRATO = [
   { rota: '/', esperado: '200 + <title> com "CORO SOLTO"',
@@ -102,18 +103,27 @@ const CONTRATO = [
       return null;
     },
   })),
-
-  { rota: '/sitemap.xml', esperado: `200 + XML válido + >= ${XML_LOC_MIN} <loc>`,
+  { rota: '/sitemap.xml', esperado: '200 + XML válido (urlset ou índice)',
     checa: ({ status, corpo }) => {
       if (status !== 200) return `status ${status}`;
       if (!/^\s*<\?xml/.test(corpo)) return 'não começa com declaração XML';
+      const ehIndice = /<sitemapindex(?:\s|>)/.test(corpo);
+      const ehUrlset = /<urlset(?:\s|>)/.test(corpo);
+      if (!ehIndice && !ehUrlset) return 'raiz XML não é <urlset> nem <sitemapindex>';
       const locs = corpo.match(/<loc>/g) || [];
-      if (locs.length < XML_LOC_MIN) return `${locs.length} <loc>, mínimo ${XML_LOC_MIN}`;
+      if (ehIndice) {
+        if (!locs.length) return 'índice sem nenhum <loc> de sitemap';
+        const abertas = (corpo.match(/<sitemap>/g) || []).length;
+        const fechadas = (corpo.match(/<\/sitemap>/g) || []).length;
+        if (abertas !== fechadas) return `<sitemap> desbalanceado: ${abertas} abre, ${fechadas} fecha`;
+      } else {
+        if (locs.length < 8) return `${locs.length} <loc>, mínimo 8 no urlset`;
+        const abertas = (corpo.match(/<url>/g) || []).length;
+        const fechadas = (corpo.match(/<\/url>/g) || []).length;
+        if (abertas !== fechadas) return `<url> desbalanceado: ${abertas} abre, ${fechadas} fecha`;
+      }
       // XML mal formado é o modo de falha silenciosa aqui: um & solto derruba o
       // parse de quem consome e o status continua 200.
-      const abertas = (corpo.match(/<url>/g) || []).length;
-      const fechadas = (corpo.match(/<\/url>/g) || []).length;
-      if (abertas !== fechadas) return `<url> desbalanceado: ${abertas} abre, ${fechadas} fecha`;
       const amp = corpo.match(/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-f]+;)/i);
       if (amp) return `& não escapado perto de ${JSON.stringify(corpo.slice(Math.max(0, amp.index - 30), amp.index + 30))}`;
       return null;
@@ -127,13 +137,16 @@ const CONTRATO = [
   /* A rota migrada passa pelo proxy same-origin para previews dinâmicos não dependerem de
      CORS. No CI, o upstream é o stub local abaixo; nunca a rede ou o backend publicado. */
   { rota: '/api/leaderboard',
-    esperado: '200 + JSON do backend via proxy same-origin',
+    esperado: EXTERNO
+      ? '200 + JSON em um dos modos publicados'
+      : '200 + JSON do backend via proxy same-origin',
     checa: ({ status, corpo, headers }) => {
       if (status !== 200) return `status ${status}`;
       if (!/application\/json/i.test(headers.get('content-type') || '')) return 'content-type não é JSON';
       let payload;
       try { payload = JSON.parse(corpo); } catch { return 'corpo não é JSON válido'; }
-      if (RANKING_ON ? !Array.isArray(payload.players) : payload.disabled !== true)
+      const modoValido = payload.disabled === true || Array.isArray(payload.players);
+      if (EXTERNO ? !modoValido : (RANKING_ON ? !Array.isArray(payload.players) : payload.disabled !== true))
         return `contrato inesperado: ${JSON.stringify(payload).slice(0, 120)}`;
       return null;
     } },
