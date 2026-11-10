@@ -1,6 +1,6 @@
 {
-  "mediaSha256": "cddcef88b10dbe80acf90d03dcf77e85e117cdc178e68591d9ede3f42c3b146a",
-  "weaponMapSha256": "e650f1e2eca7141476d2feed64b8a11a38ac76753b3aab49cd824b8fca9573af",
-  "review": "Recibo de geração dos 63 vídeos e mapa CHAR_WEAPON correspondente. A revisão em pranchas de asset-evidence/bug59/ cobre o lote anterior. Os quadros novos de Julia Zanatta e Marina Silva foram inspecionados; a pose de seleção da Julia ainda precisa de revisão visual humana antes da aprovação do elenco.",
-  "regenerate": "BASE=http://127.0.0.1:8142 node tools/eval/char-native-vids.mjs"
+  "mediaSha256": "2fb4ca4582702879f409632b8c48f72d58013b1c5914313e424b6a5a95f3a986",
+  "weaponMapSha256": "de9f2404af71a6fa64b8bc212c6d1b41c17d43e596341332ffc16b1947b543fb",
+  "review": "Recibo de geração dos 63 vídeos e mapa CHAR_WEAPON correspondente. A revisão em pranchas de asset-evidence/bug59/ cobre o lote anterior. Os quadros novos de Julia Zanatta e Marina Silva foram inspecionados; a pose de seleção da Julia ainda precisa de revisão visual humana antes da aprovação do elenco. Em 10/11/2026 entraram os 30 vídeos de seleção da facção Fora do Ar (640×854 VP9, idle em loop) gerados por tools/gen-pack-media.mjs no charvideo.html a partir dos packs Studio 0.2.0, e as 30 armas no CHAR_WEAPON; aprovados por crítico independente sobre prancha de contato.",
+  "regenerate": "BASE=http://127.0.0.1:8142 node tools/eval/char-native-vids.mjs · packs Studio: BASE=… npm run gen:pack-media"
 }

@@ -554,8 +554,10 @@ if (MUTANTE === 'asset-ausente' && avatares.length) { avatares = avatares.slice(
 const selecao = nomes('public/video/chars', (f) => f.endsWith('.webm'));
 const resultadoImg = nomes('public/img/resultado', (f) => /-(?:derrota|vitoria)\.webp$/.test(f));
 const resultadoVideo = nomes('public/video/resultado', (f) => /-(?:derrota|vitoria)\.webm$/.test(f));
-const esperadoAvatar = ids.map((id) => `${id}.webp`);
-const esperadoSelecao = ids.map((id) => `${id}.webm`);
+/* Ordena depois do sufixo, como `nomes()`: 'capitao-caveira.webp' vem antes de 'capitao.webp'
+   ('-' < '.'), embora 'capitao' venha antes de 'capitao-caveira' como id. */
+const esperadoAvatar = ids.map((id) => `${id}.webp`).sort();
+const esperadoSelecao = ids.map((id) => `${id}.webm`).sort();
 const hashResultado = createHash('sha256');
 for (const arquivo of resultadoImg) {
   const rel = `public/img/resultado/${arquivo}`;
