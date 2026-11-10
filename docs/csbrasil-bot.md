@@ -75,8 +75,8 @@ aprovação humana definida nos quality gates antes de entrar em `staging`.
 - A PR oficial `staging → main` usa o caminho `release-batch`: exige `estragacodigo-resolved`
   sem `CHANGES_REQUESTED`, não exige `reviewDecision=APPROVED`, e continua bloqueada por checks
   vermelhos, conflito, draft e pelas labels `needs-human-gameplay`, `needs-human-backend` e
-  `needs-hotfix-review`. Se a API truncar a lista de arquivos, o automerge calcula
-  `origin/main...origin/staging` via Git e exige que `origin/staging` seja o `headRefOid`
+  `needs-hotfix-review`. Se a API truncar a lista de arquivos, classificação e automerge calculam
+  `origin/main...origin/staging` via Git e exigem que `origin/staging` seja o `headRefOid`
   avaliado; sem diff completo verificado, não há merge.
 - Rollup vazio ou desconhecido não conta como verde.
 - Crash automático gera sugestão de duplicata; fechamento continua humano.

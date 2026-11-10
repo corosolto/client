@@ -139,6 +139,27 @@ jobs:
           path = '/tmp/pr.json'
           pr = json.load(open(path))
           pr['expected_repository'] = os.environ['GITHUB_REPOSITORY']
+          official_batch = (
+              pr.get('baseRefName') == 'main'
+              and pr.get('headRefName') == 'staging'
+              and (pr.get('headRepository') or {}).get('nameWithOwner') == pr['expected_repository']
+          )
+          if official_batch:
+              subprocess.run([
+                  'git', 'fetch', 'origin', 'main:refs/remotes/origin/main',
+                  'staging:refs/remotes/origin/staging',
+              ], check=True)
+              remote_head = subprocess.check_output(['git', 'rev-parse', 'origin/staging'], text=True).strip()
+              if remote_head != pr.get('headRefOid'):
+                  raise RuntimeError('release batch head moved before classification')
+              files = subprocess.check_output([
+                  'git', 'diff', '--name-only', 'origin/main...origin/staging',
+              ], text=True).splitlines()
+              if not files:
+                  raise RuntimeError('release batch diff is empty')
+              pr['files'] = [{'path': path} for path in files]
+              pr['changedFiles'] = len(files)
+              pr['full_diff_verified'] = True
           channel = json.loads(subprocess.check_output([
               'python3', 'scripts/ci/release_policy.py',
           ], input=json.dumps(pr), text=True))
