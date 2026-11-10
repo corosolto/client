@@ -1,6 +1,6 @@
 {
   "name": "coro-solto",
-  "version": "2.1.0-alpha.140",
+  "version": "2.1.0-alpha.141",
   "license": "AGPL-3.0-only",
   "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS satírico de navegador com 63 personagens em dois times (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
@@ -778,8 +778,6 @@
     "eval:bot-crouch-geometry": "node tools/eval/bot-crouch-geometry-mutations.mjs",
     "eval:tphandownership": "node tools/eval/tp-hand-ownership-check.mjs",
     "eval:characterkit": "node --test tools/character-kit/*.test.mjs",
-    "eval:studiochar": "node tools/eval/studio-character-check.mjs && node tools/eval/studio-character-check.mjs --mutantes",
-    "eval:studiochar:browser": "sh tools/eval/with-browser-lock.sh node tools/eval/studio-character-browser.mjs",
     "eval:tpjumpownership": "node tools/eval/tp-jump-ownership-check.mjs",
     "//eval:tpjumpownership": "Ownership de salto interrompido e retorno com guards reais; CPU sem aprovação de pose, física ou Gamewire.",
     "//eval:shot-final-pose": "Emissão FP após pose/câmera finais com SkinnedMesh; cobre fila DOM/rede, pooling, destino balístico e mutações causais. Não certifica arte. Serviço visual: docs/visual-consistency/SHOT-FINAL-POSE.md.",
