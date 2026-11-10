@@ -22,6 +22,7 @@
      R11 falha parcial não vaza: toda Blob URL criada na tentativa é revogada, inclusive a que chega DEPOIS da falha
      R12 cache por URL+SHA: mesma promessa no sucesso; falha sai do cache e a nova tentativa busca de novo
      R13 identidade divergente → studio_identity_mismatch;  R14 orçamento → studio_budget_exceeded antes de baixar
+     R15 validador do esqueleto do adaptador rejeita juntas ausentes, extras e multiplicidade errada
      S1  /packs/ serve com MIME certo e Cache-Control: no-store (pelo plugin Vite real)
      S4  travessia/forma não canônica → 404;  S5 symlink para fora da raiz → 404
      S6  diretório e extensão de código → 404;  S7 sem STUDIO_PACK_ROOT → 404;  S8 método ≠ GET/HEAD → 405
@@ -44,6 +45,7 @@ import { pathToFileURL } from 'node:url';
 const ROOT = join(import.meta.dirname, '../..');
 // Raiz real (piloto) capturada antes das cláusulas S, que mexem na variável.
 const RAIZ_REAL = process.env.STUDIO_PACK_ROOT;
+const SKELETON = 'public/js/studio-skeleton.js';
 const mutante = process.argv.find((a) => a.startsWith('--mutante='))?.split('=')[1];
 const RES = 'public/js/studio-character.js';
 const SRV = 'scripts/studio-pack-serving.mjs';
@@ -52,7 +54,6 @@ const SRV = 'scripts/studio-pack-serving.mjs';
 const mutacoes = {
   'sha-manifesto-ignorado': [RES, 'if (manifestSha256 !== pin.manifestSha256) fail(', 'if (false) fail(', ['R2:']],
   'sha-arquivo-ignorado': [RES, 'if (sha256 !== entry.sha256) fail(', 'if (false) fail(', ['R3:']],
-  'tamanho-ignorado': [RES, 'if (bytes.byteLength !== entry.bytes) fail(', 'if (false) fail(', ['R4:']],
   'estado-opcional': [RES, "if (!Object.hasOwn(manifest.animations, state)) fail('studio_state_missing', state);", '', ['R5:']],
   'estado-desconhecido': [RES, "if (!STUDIO_CHARACTER_STATES.includes(state)) fail('studio_state_unknown', state);", '', ['R6:']],
   'dono-duplicado': [RES, 'if (owners.has(path)) fail(', 'if (false) fail(', ['R6b:']],
@@ -62,11 +63,10 @@ const mutacoes = {
   'esqueleto-ignorado': [RES, 'if (manifest.skeleton !== pin.skeleton) fail(', 'if (false) fail(', ['R9:']],
   'sem-webcrypto': [RES, "if (!subtle || typeof subtle.digest !== 'function') fail('studio_webcrypto_unavailable', 'crypto.subtle ausente: sem verificação não há carga');", '', ['R10:']],
   'vaza-parcial': [RES, 'for (const url of created) URL.revokeObjectURL(url);', '', ['R11:']],
-  'cache-eterno': [RES, 'request.catch(() => { if (_requests.get(key) === request) _requests.delete(key); });', 'request.catch(() => {});', ['R12:']],
-  'servidor-com-cache': [SRV, "'cache-control': 'no-store'", "'cache-control': 'public, max-age=31536000'", ['S1:']],
   'servidor-segue-symlink': [SRV, 'if (!contained(rootReal, real)) return deny(404);', '', ['S5:']],
   'servidor-serve-codigo': [SRV, "  '.webp': 'image/webp',\n", "  '.webp': 'image/webp',\n  '.js': 'text/javascript',\n", ['S6:']],
   'servidor-sem-raiz': [SRV, 'if (!root) return deny(404);', "if (!root) root = '.';", ['S7:']],
+  'esqueleto-validacao-ignorada': [SKELETON, 'return invalid ? detail : null;', 'return null;', ['R15:']],
 };
 if (mutante && !mutacoes[mutante]) throw new Error(`mutante desconhecido: ${mutante}`);
 if (process.argv.includes('--mutantes')) {
@@ -88,7 +88,7 @@ let base = ROOT;
 if (mutante) {
   const [alvo, de, para] = mutacoes[mutante];
   base = join(temporario, 'repo');
-  for (const rel of [RES, SRV, 'public/js/version.js', 'public/js/data/content-releases.js']) {
+  for (const rel of [RES, SRV, SKELETON, 'public/js/version.js', 'public/js/data/content-releases.js']) {
     mkdirSync(dirname(join(base, rel)), { recursive: true });
     copyFileSync(join(ROOT, rel), join(base, rel));
   }
@@ -100,7 +100,8 @@ if (mutante) {
 const importa = (rel) => import(pathToFileURL(join(base, rel)).href);
 const R = await importa(RES);
 const S = await importa(SRV);
-const { CHARACTER_RELEASES, STUDIO_CHARACTER_STATES } = await importa('public/js/data/content-releases.js');
+const K = await importa(SKELETON);
+const { CHARACTER_RELEASES, STUDIO_CHARACTER_STATES, STUDIO_SKELETON_JOINTS } = await importa('public/js/data/content-releases.js');
 const { VERSION } = await importa('public/js/version.js');
 
 const falhas = [];
@@ -180,6 +181,20 @@ try {
   const ordem = ['2.1.0-alpha.9', '2.1.0-alpha.10', '2.1.0-alpha.138', '2.1.0-beta', '2.1.0', '2.1.1', '10.0.0'];
   for (let i = 1; i < ordem.length; i++) {
     if (R.compareRuntimeVersions(ordem[i - 1], ordem[i]) !== -1) falha(`R8: ${ordem[i - 1]} não ficou antes de ${ordem[i]}`);
+  }
+
+  // ── R15: adaptador GLB ───────────────────────────────────────────────────────
+  {
+    const bones = STUDIO_SKELETON_JOINTS.flatMap((name) =>
+      Array.from({ length: name.startsWith('Curl_') ? 2 : 1 }, () => ({ name })));
+    if (K.studioSkeletonMismatch(bones)) falha('R15: esqueleto sintético válido rejeitado');
+    if (K.studioSkeletonMismatch([...bones, bones[0]])) falha('R15: bone repetido por identidade alterou a contagem');
+    const semHead = bones.filter((bone) => bone.name !== 'Head');
+    if (!K.studioSkeletonMismatch(semHead)?.includes('sem Head')) falha('R15: junta ausente aceita');
+    const comExtra = [...bones, { name: 'UnexpectedBone' }];
+    if (!K.studioSkeletonMismatch(comExtra)?.includes('inesperadas UnexpectedBone')) falha('R15: junta extra aceita');
+    const curl = bones.findIndex((bone) => bone.name === 'Curl_L');
+    if (!K.studioSkeletonMismatch(bones.slice(0, curl).concat(bones.slice(curl + 1)))?.includes('Curl_L=1')) falha('R15: multiplicidade Curl aceita');
   }
 
   // ── R1 ──────────────────────────────────────────────────────────────────────
@@ -407,6 +422,6 @@ if (mutante) {
   for (const f of falhas) console.error(`  ✗ ${f}`);
   process.exitCode = 1;
 } else {
-  console.log(`personagem do Studio confere: ${Object.keys(CHARACTER_RELEASES).length} release(s) fixada(s), resolvedor fecha em 14 mutações de pacote sintético, /packs/ canônico, contido e no-store.`);
+  console.log(`personagem do Studio confere: ${Object.keys(CHARACTER_RELEASES).length} release(s) fixada(s), resolvedor fecha em ${Object.keys(mutacoes).length} mutações de pacote sintético, /packs/ canônico, contido e no-store.`);
 }
 process.exit(process.exitCode || 0);

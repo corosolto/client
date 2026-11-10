@@ -24,13 +24,9 @@ import { weaponModel, preloadWeapons, ONE_HANDED, gripPoints } from './weapons.j
 import { mountEyewear } from './eyewear.js';
 import { gloveSkinStyle } from './data/glove-skin-definitions.js';
 import { solveCCDIK } from './handik.js';
-import { CHARACTER_RELEASES, STUDIO_CHARACTER_STATES, STUDIO_SKELETON_JOINTS, characterRelease } from './data/content-releases.js';
+import { CHARACTER_RELEASES, STUDIO_CHARACTER_STATES, characterRelease } from './data/content-releases.js';
 import { resolveStudioCharacter, StudioCharacterError } from './studio-character.js';
-const STUDIO_SKELETON_COUNTS = new Map(
-  STUDIO_SKELETON_JOINTS.map((name) => [name, name.startsWith('Curl_') ? 2 : 1]),
-);
-const STUDIO_SKELETON_TOTAL = [...STUDIO_SKELETON_COUNTS.values()].reduce((sum, count) => sum + count, 0);
-
+import { studioSkeletonMismatch } from './studio-skeleton.js';
 
 // Character ids that have a real model under public/models/characters/<id>.glb.
 export const GLB_CHARS = new Set([
@@ -607,20 +603,8 @@ function preloadStudioCharacter(id, release) {
     model.scene.traverse((o) => {
       if (o.isSkinnedMesh && o.skeleton) for (const bone of o.skeleton.bones) bones.add(bone);
     });
-    const joints = new Map();
-    for (const bone of bones) joints.set(bone.name, (joints.get(bone.name) || 0) + 1);
-    const missing = [...STUDIO_SKELETON_COUNTS.keys()].filter((name) => !joints.has(name));
-    const unexpected = [...joints.keys()].filter((name) => !STUDIO_SKELETON_COUNTS.has(name));
-    const wrongCount = [...joints].filter(([name, count]) => STUDIO_SKELETON_COUNTS.get(name) !== count);
-    if (missing.length || unexpected.length || wrongCount.length || bones.size !== STUDIO_SKELETON_TOTAL) {
-      const detalhe = [
-        missing.length ? `sem ${missing.join(',')}` : '',
-        unexpected.length ? `inesperadas ${unexpected.join(',')}` : '',
-        wrongCount.length ? `multiplicidade inválida ${wrongCount.map(([name, count]) => `${name}=${count}`).join(',')}` : '',
-        bones.size !== STUDIO_SKELETON_TOTAL ? `total ${bones.size} (esperado ${STUDIO_SKELETON_TOTAL})` : '',
-      ].filter(Boolean).join('; ');
-      throw new StudioCharacterError('studio_skeleton_mismatch', `${id}: ${detalhe}`);
-    }
+    const detalhe = studioSkeletonMismatch([...bones]);
+    if (detalhe) throw new StudioCharacterError('studio_skeleton_mismatch', `${id}: ${detalhe}`);
     const set = {};
     STUDIO_CHARACTER_STATES.forEach((s, i) => {
       const clip = clipGlbs[i].animations.find((c) => c.name === s);
