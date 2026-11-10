@@ -790,6 +790,7 @@
     "eval:characterkit": "node --test tools/character-kit/*.test.mjs",
     "eval:studiochar": "node tools/eval/studio-character-check.mjs && node tools/eval/studio-character-check.mjs --mutantes",
     "eval:studiochar:browser": "sh tools/eval/with-browser-lock.sh node tools/eval/studio-character-browser.mjs",
+    "eval:porte-braco:browser": "sh tools/eval/with-browser-lock.sh node tools/eval/porte-braco-browser.mjs && sh tools/eval/with-browser-lock.sh node tools/eval/porte-braco-browser.mjs --mutante=bracoombro && sh tools/eval/with-browser-lock.sh node tools/eval/porte-braco-browser.mjs --mutante=torsocabeca",
     "eval:tpjumpownership": "node tools/eval/tp-jump-ownership-check.mjs",
     "//eval:tpjumpownership": "Ownership de salto interrompido e retorno com guards reais; CPU sem aprovação de pose, física ou Gamewire.",
     "//eval:shot-final-pose": "Emissão FP após pose/câmera finais com SkinnedMesh; cobre fila DOM/rede, pooling, destino balístico e mutações causais. Não certifica arte. Serviço visual: docs/visual-consistency/SHOT-FINAL-POSE.md.",
