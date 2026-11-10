@@ -486,6 +486,36 @@ console.log('\n· remotos interpolam com BUFFER (~120 ms): pacote atrasado não 
   g2.dispose();
 }
 
+/* META DO DONO — "sem amostra não existe": a janela parcial de quem OCULTOU a aba
+ * (mobile trocando de app) ou FECHOU a página no meio era descartada em silêncio.
+ * Agora pagehide/visibilitychange→hidden e o close do WS fazem o flush do que
+ * acumulou, e voltar a ficar visível antecipa a próxima janela (2 s, não 10). */
+console.log('\n· janela PARCIAL de client_stats sai ao ocultar/sair (sem amostra não existe)');
+{
+  const net = fakeNet(1);
+  const g = montaJogo(net);
+  const enviadas = [];
+  net.sendClientStats = (p) => enviadas.push(p);
+  net.drainRttSamples = () => [31, 33];
+  net.drainGapSamples = () => [30, 34];
+  g._mp._nsFps = 60;                       // jogou visível e renderizou nesta janela
+  g._mp._reconcileWindow.push(0.02, 0.03);
+  g._mp._flushStatsParcial();
+  cobra(enviadas.length === 1 && enviadas[0].fps === 60 && enviadas[0].rttSamples.length === 2 && enviadas[0].reconcileCount === 2,
+    'ocultar/sair manda a janela PARCIAL (fps, pongs e correções acumulados), não descarta');
+  cobra(g._mp._reconcileWindow.length === 0, 'e a janela recomeça limpa: amostra drenada não se repete');
+  // MUTANTE: sem o flush (comportamento antigo), o close do WS não leva nada
+  enviadas.length = 0;
+  const flush0 = g._mp._flushStatsParcial;
+  g._mp._flushStatsParcial = () => {};
+  net.onClose?.('quit');
+  cobra(enviadas.length === 0, 'MUTANTE sem flush perde a janela do close (a cláusula acima morde)');
+  g._mp._flushStatsParcial = flush0;
+  net.onClose?.('quit');
+  cobra(enviadas.length === 1, 'o hook de close do WS também leva a última janela');
+  g.dispose();
+}
+
 console.log('\n· cadência de 30 Hz reduz a latência visual sem perder o buffer');
 {
   const net = fakeNet(1, 5, false, 30);

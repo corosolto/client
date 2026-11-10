@@ -68,6 +68,24 @@ class Netcode {
     // economia de partida (docs/ECONOMIA-PARTIDA.md): resposta do nó vai para o menu de compra
     net.onCompra = (m) => { try { this.game._compra?.respostaRemota(m); } catch { /* HUD */ } };
     net.startPing();
+    /* CAPTURA TOTAL (meta do dono: "sem amostra não existe"): a janela parcial que
+     estava sendo acumulada era DESCARTADA ao ocultar a aba (mobile troca de app) e ao
+     sair da página — o jogador que jogou 8 s visível não deixava amostra nenhuma.
+     Agora ocultar/sair/fechar o WS faz o flush do que acumulou; e voltar à aba
+     antecipa a próxima janela (2 s) em vez de empurrar 10 s. */
+    this._flushStatsParcial = () => {
+      const game = this.game;
+      if (game._disposed || !game.online || !this.net) return;
+      if (!(this._nsFps > 0)) return;                 // nunca renderizou visível: sem janela útil
+      try { this.enviarJanelaStats(); } catch { /* flush nunca derruba o jogo */ }
+    };
+    this._onPageHide = () => this._flushStatsParcial();
+    this._onVisChange = () => { if (typeof document !== 'undefined' && document.hidden) this._flushStatsParcial(); };
+    globalThis.addEventListener?.('pagehide', this._onPageHide);
+    document.addEventListener?.('visibilitychange', this._onVisChange);
+    this._prevOnClose = net.onClose;
+    this._onCloseNetGame = (motivo) => { this._flushStatsParcial(); this._prevOnClose?.(motivo); };
+    net.onClose = this._onCloseNetGame;
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
     this._nsTimer = setInterval(() => { this.updateStats(); this._pulsoDePausa(); }, 250);
     this._statsInactive = false;
@@ -105,6 +123,9 @@ class Netcode {
 
   dispose() {
     if (this._nsTimer) { clearInterval(this._nsTimer); this._nsTimer = null; }
+    globalThis.removeEventListener?.('pagehide', this._onPageHide);
+    document.removeEventListener?.('visibilitychange', this._onVisChange);
+    if (this.net?.onClose === this._onCloseNetGame) this.net.onClose = this._prevOnClose;
     try { this.net.stopPing(); } catch { /* já fechada */ }
     if (this.net.onSlot === this._onSlot) this.net.onSlot = this._prevOnSlot;
     if (this.net.onPersonagem === this._onPersonagem) this.net.onPersonagem = this._prevOnPersonagem;
@@ -1056,7 +1077,9 @@ class Netcode {
       this._reconcileWindow.length = 0;
       this.net.drainRttSamples?.();
       this.net.drainGapSamples?.();
-      this._nextClientStats = now + 10000;
+      // Voltou a ficar VISÍVEL: a próxima janela sai em 2 s (não 10) — quem abre e
+      // fecha a aba rápido (mobile) ainda produz amostra na sessão.
+      this._nextClientStats = now + (inactive ? 10000 : 2000);
     }
     if (this._nsT0 == null) { this._nsT0 = now; this._nsF0 = game._rafFrames || 0; }
     const dframes = (game._rafFrames || 0) - this._nsF0, dtime = now - this._nsT0;
@@ -1064,28 +1087,35 @@ class Netcode {
       if (dframes > 0) this._nsFps = Math.round((dframes * 1000) / dtime);   // pausado (0 frames) mantém o último fps de jogo
       this._nsT0 = now; this._nsF0 = game._rafFrames || 0;
     }
+    if (!inactive && now >= this._nextClientStats && this._nsFps > 0) this.enviarJanelaStats();
+  }
+
+  /* Uma janela de client_stats saindo — tanto a fechada de 10 s quanto o FLUSH PARCIAL
+   * de quem ocultou a aba/saiu da página no meio (meta: jogador que jogou pouco visível
+   * ainda deixa amostra). Amostras drenadas não se repetem; a janela nova recomeça. */
+  enviarJanelaStats() {
+    const game = this.game;
+    if (game._disposed || !game.online || !this.net) return;
     const s = this.net.computeStats();
-    if (!inactive && now >= this._nextClientStats && this._nsFps > 0) {
-      this._nextClientStats = now + 10000;
-      const correcoes = this._reconcileWindow;
-      // O HUD conserva o pior gap recente; a telemetria usa p95 dos intervalos
-      // desta janela para que um pico isolado não defina a qualidade inteira.
-      const gaps = this.net.drainGapSamples?.();
-      this.net.sendClientStats?.({
-        fps: this._nsFps, rtt: s.ping, rttSamples: this.net.drainRttSamples?.(), snap: s.hz, gap: this._percentil(gaps, 0.95),
-        reconcileP95: this._percentil(correcoes, 0.95),
-        // O p95 da sessão precisa dos eventos, não do p95 de cada janela. Em uma
-        // janela anormalmente cheia, distribuir as 512 amostras por toda ela.
-        reconcileSamples: correcoes.length <= 512 ? correcoes.slice() : Array.from({ length: 512 }, (_, i) =>
-          correcoes[Math.floor((i + 0.5) * correcoes.length / 512)]),
-        reconcileMax: correcoes.length ? +Math.max(...correcoes).toFixed(3) : null,
-        reconcileCount: correcoes.length,
-        quality: game.settings?.quality || null,
-      });
-      // A próxima janela não repete os mesmos eventos. Os totais acima continuam vivos
-      // para o registro da sessão; o servidor soma somente os eventos novos de cada 10 s.
-      correcoes.length = 0;
-    }
+    this._nextClientStats = this._now() + 10000;
+    const correcoes = this._reconcileWindow;
+    // O HUD conserva o pior gap recente; a telemetria usa p95 dos intervalos
+    // desta janela para que um pico isolado não defina a qualidade inteira.
+    const gaps = this.net.drainGapSamples?.();
+    this.net.sendClientStats?.({
+      fps: this._nsFps, rtt: s.ping, rttSamples: this.net.drainRttSamples?.(), snap: s.hz, gap: this._percentil(gaps, 0.95),
+      reconcileP95: this._percentil(correcoes, 0.95),
+      // O p95 da sessão precisa dos eventos, não do p95 de cada janela. Em uma
+      // janela anormalmente cheia, distribuir as 512 amostras por toda ela.
+      reconcileSamples: correcoes.length <= 512 ? correcoes.slice() : Array.from({ length: 512 }, (_, i) =>
+        correcoes[Math.floor((i + 0.5) * correcoes.length / 512)]),
+      reconcileMax: correcoes.length ? +Math.max(...correcoes).toFixed(3) : null,
+      reconcileCount: correcoes.length,
+      quality: game.settings?.quality || null,
+    });
+    // A próxima janela não repete os mesmos eventos. Os totais acima continuam vivos
+    // para o registro da sessão; o servidor soma somente os eventos novos de cada 10 s.
+    correcoes.length = 0;
   }
 
   _percentil(values, q) {
