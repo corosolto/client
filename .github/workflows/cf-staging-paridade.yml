@@ -1,0 +1,99 @@
+name: cf-staging-paridade
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      host:
+        description: 'Host workers.dev do staging (vazio usa csb-staging.<sub>.workers.dev)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: cf-staging-paridade
+  cancel-in-progress: true
+
+env:
+  SUBDOMAIN: ${{ vars.CF_WORKERS_SUBDOMAIN }}
+  HOST_INPUT: ${{ inputs.host }}
+
+jobs:
+  paridade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Compara staging com produção
+        id: compara
+        run: |
+          set +e
+          TARGET="${HOST_INPUT:-https://csb-staging.${SUBDOMAIN:-rubenmarcus-dev}.workers.dev}"
+          echo "TARGET=$TARGET" >> "$GITHUB_ENV"
+          node tools/eval/cf-paridade-check.mjs --alvo "$TARGET" --json > parity.json
+          STATUS=$?
+          echo "paridade_exit=$STATUS" >> "$GITHUB_OUTPUT"
+          echo "cf-paridade saiu $STATUS para $TARGET"
+          exit 0
+      - name: Publica JSON da paridade
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cf-staging-paridade-${{ github.run_id }}
+          path: parity.json
+          if-no-files-found: error
+      - name: Aplica allowlist e prepara veredito
+        id: allowlist
+        run: |
+          set +e
+          node tools/eval/cf-paridade-allowlist-check.mjs --resultado=parity.json 2>&1 | tee allowlist.log
+          STATUS=${PIPESTATUS[0]}
+          echo "allowlist_exit=$STATUS" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Abre ou atualiza issue de divergência
+        if: steps.allowlist.outputs.allowlist_exit != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh label create cloudflare --repo "$GITHUB_REPOSITORY" --color 'f6821f' --description 'Cloudflare Workers' 2>/dev/null || true
+          NUMBER=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search '[cf-staging] paridade in:title' --json number,title --jq '.[] | select(.title == "[cf-staging] paridade") | .number' | head -n 1)
+          BODY=$(cat <<EOF
+          ## Paridade Cloudflare staging
+
+          O comparador encontrou divergência(s) fora da allowlist em $TARGET contra https://www.corosolto.com.br.
+
+          Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          Artifact: cf-staging-paridade-${GITHUB_RUN_ID}
+
+          allowlist_exit=${{ steps.allowlist.outputs.allowlist_exit }}
+
+          <details><summary>Veredito</summary>
+
+          $(cat allowlist.log)
+          </details>
+          EOF
+          )
+          if [ -n "$NUMBER" ]; then
+            gh issue comment "$NUMBER" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title '[cf-staging] paridade' --label cloudflare --body "$BODY"
+          fi
+      - name: Falha fora da allowlist
+        if: steps.allowlist.outputs.allowlist_exit != '0'
+        run: exit 1
+      - name: Registra paridade verde
+        if: steps.allowlist.outputs.allowlist_exit == '0'
+        run: |
+          echo "Paridade aprovada: divergências conhecidas estão na allowlist." >> "$GITHUB_STEP_SUMMARY"
