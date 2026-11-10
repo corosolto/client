@@ -236,12 +236,21 @@ const MUTANTES = {
 };
 
 /* RM4 — ELENCO REAL: todo GLB de public/models/characters medido com o pack compartilhado.
-   Exceções legadas (medidas em 08/11, nenhuma com o defeito do piloto: desalinho 7-16 cm
-   contra 23 cm) entram com TETO = valor medido; piorar reprova, entrar personagem novo acima
-   de 2,5× reprova. Os GLB do lote30 não estão neste repo (studio-assets, LFS privado). */
+   Os sete casos acima de 2,5× são dívida legada declarada: cada exceção tem advisory
+   estável, motivo, teto observado e expiração. Exceção nova ou vencida reprova; o teto
+   nunca pode subir silenciosamente. Os GLB do lote30 não estão neste repo (studio-assets,
+   LFS privado). */
 const ELENCO_EXCECOES = {
-  barbudo: 3.27, canarinho: 2.64, cuca: 3.49, dama: 2.55, deputado: 5.13, 'profeta-calcada': 5.15, 'programador-virado': 3.04,
+  barbudo: { teto: 3.27, advisory: 'RIG-RM4-LEGACY-20261108', expira: '2026-12-10', motivo: 'rig legado do elenco' },
+  canarinho: { teto: 2.64, advisory: 'RIG-RM4-LEGACY-20261108', expira: '2026-12-10', motivo: 'rig legado do elenco' },
+  cuca: { teto: 3.49, advisory: 'RIG-RM4-LEGACY-20261108', expira: '2026-12-10', motivo: 'rig legado do elenco' },
+  dama: { teto: 2.55, advisory: 'RIG-RM4-LEGACY-20261108', expira: '2026-12-10', motivo: 'rig legado do elenco' },
+  deputado: { teto: 5.13, advisory: 'RIG-RM4-LEGACY-20261108', expira: '2026-12-10', motivo: 'rig legado do elenco' },
+  'profeta-calcada': { teto: 5.15, advisory: 'RIG-RM4-LEGACY-20261108', expira: '2026-12-10', motivo: 'rig legado do elenco' },
+  'programador-virado': { teto: 3.04, advisory: 'RIG-RM4-LEGACY-20261108', expira: '2026-12-10', motivo: 'rig legado do elenco' },
 };
+const ELENCO_IDS = Object.freeze(['barbudo', 'canarinho', 'cuca', 'dama', 'deputado', 'profeta-calcada', 'programador-virado']);
+
 
 /* Mutante mao-deslocada: o mst real com a junta LeftHand 10 cm acima e 20 cm à frente da
    carne, IBM recalculada (rig coerente, junta fora da mão) — o defeito do piloto num GLB real. */
@@ -271,16 +280,27 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const ids = readdirSync(dir).filter((f) => f.endsWith('.glb')).map((f) => f.replace(/\.glb$/, '')).sort();
     const caminhos = Object.fromEntries(ids.map((id) => [id, join(dir, `${id}.glb`)]));
     const tmp = mutante ? mkdtempSync(join(tmpdir(), 'rig-maos-elenco-')) : null;
-    const falhas = [];
+    const falhas = [], hoje = new Date().toISOString().slice(0, 10);
+    const idsExcecoes = Object.keys(ELENCO_EXCECOES).sort();
+    if (JSON.stringify(idsExcecoes) !== JSON.stringify([...ELENCO_IDS].sort())) {
+      throw new Error(`RM4: exceção nova ou removida sem atualizar o advisory — ${idsExcecoes.join(', ')}`);
+    }
+    for (const [id, excecao] of Object.entries(ELENCO_EXCECOES)) {
+      if (!excecao.advisory || !excecao.motivo || !/^\d{4}-\d{2}-\d{2}$/.test(excecao.expira)
+        || !Number.isFinite(excecao.teto) || excecao.teto <= LIMITE) {
+        throw new Error(`RM4: exceção ${id} sem advisory, motivo, expiração ou teto acima do limite`);
+      }
+    }
     try {
       if (mutante) caminhos.mst = await maoDeslocada(caminhos.mst, join(tmp, 'mst.glb'));
       for (const id of ids) {
         const r = await medirMaos(caminhos[id], { clipes });
-        const pior = Math.max(...r.map((l) => l.pior)), teto = ELENCO_EXCECOES[id];
-        if (r.some((l) => !l.arestas)) falhas.push(`RM4: ${id} sem aresta pesada na mão — não medido`);
-        else if (teto === undefined && pior > LIMITE) falhas.push(`RM4: ${id} estica a mão ${pior.toFixed(2)}× > ${LIMITE}×`);
-        else if (teto !== undefined && pior > teto) falhas.push(`RM4: ${id} piorou: ${pior.toFixed(2)}× > teto registrado ${teto}×`);
-        else if (teto !== undefined && pior <= LIMITE) console.log(`  nota: ${id} agora mede ${pior.toFixed(2)}× ≤ ${LIMITE}× — pode sair de ELENCO_EXCECOES`);
+        const pior = Math.max(...r.map((l) => l.pior)), excecao = ELENCO_EXCECOES[id];
+        if (excecao && hoje > excecao.expira) falhas.push(`RM4: ${id} advisory ${excecao.advisory} expirada em ${excecao.expira}`);
+        else if (r.some((l) => !l.arestas)) falhas.push(`RM4: ${id} sem aresta pesada na mão — não medido`);
+        else if (!excecao && pior > LIMITE) falhas.push(`RM4: ${id} estica a mão ${pior.toFixed(2)}× > ${LIMITE}×`);
+        else if (excecao && pior > excecao.teto) falhas.push(`RM4: ${id} piorou: ${pior.toFixed(2)}× > teto ${excecao.teto}× do advisory ${excecao.advisory}`);
+        else if (excecao && pior <= LIMITE) console.log(`  nota: ${id} agora mede ${pior.toFixed(2)}× ≤ ${LIMITE}× — pode sair do advisory ${excecao.advisory}`);
       }
     } finally { if (tmp) rmSync(tmp, { recursive: true, force: true }); }
     if (mutante) {
