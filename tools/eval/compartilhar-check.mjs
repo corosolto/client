@@ -19,7 +19,7 @@ const mutar = (texto, de, para) => {
 };
 let fonte = readFileSync('public/js/compartilhar.js', 'utf8');
 if (MUT === 'cancelar') fonte = mutar(fonte, "if (erro?.name === 'AbortError') return 'cancelado';", '');
-if (MUT === 'origem') fonte = mutar(fonte, "if (host.endsWith('corosolto.com.br')) return globalThis.window?.__SHARE_ORIGIN || 'https://corosol.to';", "if (host.endsWith('nunca-corosolto.com.br')) return globalThis.window?.__SHARE_ORIGIN || 'https://corosol.to';");
+if (MUT === 'origem') fonte = mutar(fonte, "if (host === 'corosolto.com.br' || host.endsWith('.corosolto.com.br')) return globalThis.window?.__SHARE_ORIGIN || 'https://corosol.to';", "if (host.endsWith('nunca-corosolto.com.br')) return globalThis.window?.__SHARE_ORIGIN || 'https://corosol.to';");
 if (MUT === 'ponto') fonte = mutar(fonte, "url.searchParams.set('utm_medium', ponto);", "url.searchParams.set('utm_medium', 'mutante');");
 const C = await import(`data:text/javascript;base64,${Buffer.from(fonte).toString('base64')}`);
 
@@ -62,6 +62,10 @@ const item = (id, erros, msg) => { if (erros.length) falhas.push(`${id} ${msg}: 
   const prod = { hostname: 'www.corosolto.com.br', origin: 'https://www.corosolto.com.br' };
   const origem = C.origemCompartilhamento(prod);
   if (origem !== 'https://corosol.to') erros.push(`origem ${origem}: produção deve compartilhar pelo domínio curto`);
+  if (C.origemCompartilhamento({ hostname: 'corosolto.com.br', origin: 'https://corosolto.com.br' }) !== 'https://corosol.to') erros.push('apex de produção não usa o domínio curto');
+  if (C.origemCompartilhamento({ hostname: 'eu.corosolto.com.br', origin: 'https://eu.corosolto.com.br' }) !== 'https://corosol.to') erros.push('subdomínio de produção não usa o domínio curto');
+  const hostFalso = 'https://evilcorosolto.com.br';
+  if (C.origemCompartilhamento({ hostname: 'evilcorosolto.com.br', origin: hostFalso }) !== hostFalso) erros.push('sufixo sem fronteira de hostname desvia o compartilhamento para produção');
   if (C.origemCompartilhamento({ hostname: 'localhost', origin: 'http://localhost:9434' }) !== 'http://localhost:9434') erros.push('dev não caiu na origem local');
   const link = new URL(C.linkCompartilhavel('/?map=lajes', 'fim-de-partida', 'https://corosol.to'));
   if (link.origin !== 'https://corosol.to' || link.pathname !== '/' || link.searchParams.get('map') !== 'lajes') erros.push(`link ${link.href}`);
