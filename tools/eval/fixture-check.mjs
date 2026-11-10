@@ -22,7 +22,9 @@
         [--mutante=lista-cresce|selftest-quebrado]
    ============================================================================ */
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { relatarBaseAusente, resolverBase } from './base-ref.mjs';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
@@ -57,6 +59,23 @@ if (mutante === 'sem-fixture') {
   tocados = ['scripts/ci/pr_route.py'];
 }
 
+function rodaSelftest(arquivo) {
+  if (arquivo !== 'scripts/ci/pr_language.py') {
+    execFileSync('python3', [arquivo, '--selftest'], { stdio: 'ignore' });
+    return;
+  }
+  const dir = mkdtempSync(join(tmpdir(), 'pr-language-fixture-'));
+  try {
+    const venv = join(dir, 'venv');
+    const python = join(venv, 'bin', 'python');
+    execFileSync('python3', ['-m', 'venv', venv], { stdio: 'ignore' });
+    execFileSync(python, ['-m', 'pip', 'install', '--disable-pip-version-check', 'langdetect==1.0.9'], { stdio: 'ignore' });
+    execFileSync(python, [arquivo, '--selftest'], { stdio: 'ignore' });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 const falhas = [];
 for (const arquivo of tocados) {
   if (SEM_FIXTURE.has(arquivo)) {
@@ -65,7 +84,7 @@ for (const arquivo of tocados) {
   }
   let ok = false;
   try {
-    execFileSync('python3', [arquivo, '--selftest'], { stdio: 'ignore' });
+    rodaSelftest(arquivo);
     ok = true;
   } catch { ok = false; }
   if (mutante === 'selftest-quebrado') ok = false;

@@ -25,34 +25,17 @@ STRONG_PORTUGUESE = {
     "feito", "agora", "ainda", "usuario", "usuário", "jogador", "jogo", "mapa",
     "personagem", "producao", "produção",
 }
-ENGLISH_MARKERS = {
-    "the", "this", "that", "these", "those", "is", "are", "was", "were", "be", "been",
-    "and", "or", "with", "without", "from", "into", "when", "after", "before", "for",
-    "fix", "fixed", "fixes", "add", "adds", "added", "update", "updated", "repair", "change",
-    "improve", "remove", "restore", "merge", "correct", "spelling", "typo", "handle", "handling",
-    "daily", "release", "batch", "build", "check", "checks", "test", "tests", "passed",
-    "player", "players", "guard", "fallback", "summary", "validation", "description", "title", "english",
-    "lobby", "reconnect", "profile", "code", "docs", "documentation", "feature", "bug", "error",
-    "issue", "pull", "request", "workflow", "server", "client", "user", "users", "game", "games",
-    "map", "maps", "character", "characters", "audio", "runtime", "production", "hotfix", "safe",
-    "automatic", "bot", "branch", "commit", "review", "policy", "source", "data", "file", "files",
-    "new", "old", "current", "initial", "final", "open", "close", "closes", "resolve", "resolves",
-    "read", "write", "preserve", "require", "required", "green", "failed", "failure", "success",
-}
 
 
 def detect_language_error(combined: str) -> str | None:
-    if detect is not None:
-        try:
-            detected = detect(combined)
-        except LangDetectException:
-            return "title and description language could not be determined; write them in English"
-        if detected != "en":
-            return f"title and description must be English (detected language: {detected})"
-        return None
-    words = set(re.findall(r"[a-zà-ÿ]+", combined))
-    if not words & ENGLISH_MARKERS:
-        return "title and description must contain recognizable English prose"
+    if detect is None:
+        return "langdetect is required for positive English detection; install langdetect==1.0.9"
+    try:
+        detected = detect(combined)
+    except LangDetectException:
+        return "title and description language could not be determined; write them in English"
+    if detected != "en":
+        return f"title and description must be English (detected language: {detected})"
     return None
 
 
@@ -120,6 +103,16 @@ def selftest() -> int:
         ok = (len(errors) > 0) == (expected_failures > 0)
         failures += 0 if ok else 1
         print(f"  {'ok  ' if ok else 'FALHOU'} {name}: {errors}")
+    global detect
+    installed = detect
+    try:
+        detect = None
+        missing_error = detect_language_error("fix: repair the player reconnect")
+        ok = missing_error is not None and "langdetect is required" in missing_error
+        failures += 0 if ok else 1
+        print(f"  {'ok  ' if ok else 'FALHOU'} missing detector fails closed: {missing_error}")
+    finally:
+        detect = installed
     return 0 if not failures else 1
 
 

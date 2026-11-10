@@ -22,9 +22,12 @@ def is_hotfix(item: dict) -> bool:
 
 def is_bugfix(item: dict) -> bool:
     labels = label_names(item)
-    return is_hotfix(item) or bool(labels.intersection({"bug", "bugfix", "crash-auto"})) or bool(
-        BUGFIX_TITLE.search(item.get("title") or "")
-    )
+    if is_hotfix(item) or labels.intersection({"bug", "bugfix", "crash-auto"}):
+        return True
+    title = item.get("title") or ""
+    if re.match(r"^\s*(?:feat|feature|docs|chore|refactor|perf|style|build|ci|test)(?:\([^)]*\))?\s*:", title, re.IGNORECASE):
+        return False
+    return bool(BUGFIX_TITLE.search(title))
 
 
 def release_channel(item: dict) -> str:
@@ -60,6 +63,8 @@ def selftest() -> int:
         ({"title": "Add telemetry", "labels": [{"name": "bug"}]}, True, False, "batch"),
         ({"title": "Jogo trava no lobby"}, True, False, "batch"),
         ({"title": "feat: add error telemetry", "body": "fix: not the title"}, False, False, "batch"),
+        ({"title": "feat: add crash telemetry"}, False, False, "batch"),
+        ({"title": "feat: add crash telemetry", "labels": [{"name": "bug"}]}, True, False, "batch"),
         ({"title": "Add prefix fixer"}, False, False, "batch"),
     ]
     ancestry_cases = [

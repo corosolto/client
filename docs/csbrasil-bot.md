@@ -95,8 +95,9 @@ aprovação humana definida nos quality gates antes de entrar em `staging`.
 ## Idioma dos PRs
 
 Título e descrição de toda PR, humana ou bot, devem estar em inglês. `pr-language.yml`
-executa `scripts/ci/pr_language.py` em abertura, edição e push, com `langdetect==1.0.9` para
-exigir detecção positiva de inglês e reprovar idioma desconhecido. Marcadores de português dão
-o diagnóstico; artigos ambíguos não reprovam sozinhos. Comentários públicos do bot também usam
-inglês. O texto original de uma issue permanece verbatim na issue; a PR bootstrap aponta para
-ela em vez de copiar o relato. Labels e marcadores técnicos continuam estáveis.
+executa `scripts/ci/pr_language.py` em abertura, edição e push, com `langdetect==1.0.9` obrigatório
+para exigir detecção positiva de inglês e reprovar idioma desconhecido. Não há fallback lexical:
+sem o pacote, o check falha fechado; a fixture cria uma venv temporária com a mesma versão.
+Marcadores de português dão o diagnóstico e artigos ambíguos não reprovam sozinhos. Comentários
+públicos do bot também usam inglês. O texto original de uma issue permanece verbatim na issue;
+a PR bootstrap aponta para ela em vez de copiar o relato. Labels e marcadores técnicos continuam estáveis.
