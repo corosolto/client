@@ -47,7 +47,8 @@ try {
   const declaration = main.match(/const FACTION_NAME = [\s\S]*?;\n/)?.[0];
   assert(declaration, 'mapa de nomes não encontrado');
   const names = vm.runInNewContext(`${declaration}\nFACTION_NAME`, { FACTIONS: [...original, probe], Object });
-  check('FA2', names[probe.id] === probe.name, 'seletor mantém nomes hardcoded fora do registro');
+  // O rótulo de grupo no jogo é o nome do registro em caixa alta (mesma tipografia dos outros grupos).
+  check('FA2', names[probe.id] === probe.name.toLocaleUpperCase('pt-BR'), 'seletor mantém nomes hardcoded fora do registro');
 } catch (e) { check('FA2', false, `nomes do seletor não executáveis: ${e.message}`); }
 const charsSource = read('public/js/characters.js');
 const block = charsSource.match(/export const CHARACTERS = (\[[\s\S]*?\n\]);/)?.[1];

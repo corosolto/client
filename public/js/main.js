@@ -48,7 +48,8 @@ import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
 /* E/B são os dois times de gameplay; as demais chaves são grupos do elenco. */
-const FACTION_NAME = { ...Object.fromEntries(FACTIONS.map((f) => [f.id, f.name])), P: 'POLÍTICOS' };
+/* Rótulo de grupo no jogo é caixa alta, como os outros; o registro guarda o nome editorial ("Fora do Ar"). */
+const FACTION_NAME = { ...Object.fromEntries(FACTIONS.map((f) => [f.id, f.name.toLocaleUpperCase('pt-BR')])), P: 'POLÍTICOS' };
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';

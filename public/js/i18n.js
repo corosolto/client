@@ -37,6 +37,7 @@ export async function resolveGeoLang() {
 const DICT = {
   'T$ · ERRO': 'T$ · ERROR',
   'Fora do Ar': 'Off the Air',
+  'FORA DO AR': 'OFF THE AIR',
   'A treta continua depois do sinal!': 'The fight continues after the signal!',
   'Boina, uniforme preto e um sinal que não aceita rendição. A ronda da madrugada chegou.': 'Beret, black uniform and a signal that refuses to surrender. The midnight patrol is here.',
   'Antena de papel-alumínio e chiado na orelha. Só pega sinal quando a treta começa.': 'A foil antenna and static in its ears. The signal only comes through when the fight begins.',
