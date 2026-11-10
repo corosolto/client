@@ -163,6 +163,9 @@ jobs:
       - name: Suites preservam cobertura e seleção do pre-push
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node --test tests/eval-suites.test.mjs
+      - name: Asset manifests and orphan ratchets stay exact
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:assetinventory
 
   contratos-visuais-personagens-camera:
     runs-on: ubuntu-latest
@@ -487,7 +490,7 @@ jobs:
           node tools/eval/cla-ssr-check.mjs
           node tools/eval/cla-ssr-check.mjs --mutate
           node tools/eval/rotas-check.mjs --dist
-          ! node tools/eval/rotas-check.mjs --dist --mutante=robots
+          if node tools/eval/rotas-check.mjs --dist --mutante=robots; then exit 1; fi
           node tools/eval/perfil-abas-check.mjs
           node tools/eval/perfil-abas-check.mjs --mutate
           node tools/eval/profile-character-empty-check.mjs
