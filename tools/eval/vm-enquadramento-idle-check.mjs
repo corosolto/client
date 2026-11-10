@@ -112,16 +112,17 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         await page.waitForFunction(() => window.__game?.state === 'live' && window.__game.player?.alive, null, { timeout: 240000 });
         for (const c of doGrupo) {
           const pintada = rota === 'pintura';
-          const pronto = ({ w, p }) => {
+          const pronto = ({ w, skinId }) => {
             const g = window.__game;
             if (g.player.weapon !== w) return false;
             if (w === 'knife') return Boolean(g.vm.melee?.active && g.vm.melee.scene);
             const e = g.vm.authored?.entry?.(w);
-            // Pintada = alguma peça da arma carrega a pintura (a rota pode ser gold# ou fab#).
+            // Pintada = alguma peça da arma carrega ESTA pintura (a rota pode ser gold# ou fab#).
             let pintada = false;
-            e?.mount?.traverse((o) => { if (o.userData?.weaponSkin) pintada = true; });
-            return Boolean(e && g.vm.authored.active(w) && e.mount?.visible && (!p || pintada || e.key.startsWith('gold#')));
+            e?.mount?.traverse((o) => { if (o.userData?.weaponSkin === skinId) pintada = true; });
+            return Boolean(e && g.vm.authored.active(w) && e.mount?.visible && (!skinId || pintada));
           };
+          const skinId = pintada ? c.pintura?.skin || c.pintura?.id || null : null;
           let ok = false;
           for (let k = 0; k < 6 && !ok; k++) {
             await page.evaluate((w) => {
@@ -131,12 +132,12 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
               if (g.player.weapon !== w) g._switchWeapon(w);
               g.player.drawUntil = 0;
             }, c.arma);
-            await page.waitForFunction(pronto, { w: c.arma, p: pintada }, { timeout: 30000 }).catch(() => {});
+            await page.waitForFunction(pronto, { w: c.arma, skinId }, { timeout: 30000 }).catch(() => {});
             await page.waitForTimeout(1200);
             // Saque terminado e máquina autorada em idle (arco de draw fora do quadro medido).
             await page.waitForFunction((w) => { const g = window.__game; const a = g.vm.authored; return g.time > g.player.drawUntil + 0.6 && (w === 'knife' || !a?.active?.(w) || a.state(w) === 'idle'); }, c.arma, { timeout: 20000 }).catch(() => {});
             await page.waitForTimeout(500);
-            ok = await page.evaluate(pronto, { w: c.arma, p: pintada });
+            ok = await page.evaluate(pronto, { w: c.arma, skinId });
           }
           const linha = { aspecto, rota, arma: c.arma, pintura: c.pintura?.id || null };
           if (!ok) {

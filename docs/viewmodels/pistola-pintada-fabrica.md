@@ -69,9 +69,11 @@ O corte no canto de baixo à direita é o mesmo da AK aprovada.
 
 ## Réguas
 
-- `npm run eval:vm-enquadramento-idle` (local): a pistola pintada contra a sem pintura em centro,
-  área (±20%) e eixo do cano (≤15°), em 16:9 e 3:2. O placar `tools/eval/vm-enquadramento-idle.json`
-  é conferido no CI por `eval:vm-enquadramento-placar`.
+- `npm run eval:vm-enquadramento-idle` (local, fora do `check:vm`: Playwright global, Chrome e
+  catálogo pago em `/private-assets`): a pistola pintada contra a sem pintura em centro, área
+  (±20%) e eixo do cano (≤15°), em 16:9 e 3:2. A célula pintada só conta com a peça carregando a
+  pintura pedida. O placar `tools/eval/vm-enquadramento-idle.json` é conferido no CI por
+  `eval:vm-enquadramento-placar`.
 - `npm run eval:pintura-fabrica` (CI): grupo pintado sem mão, padrão no espaço TP, marcas no osso
   `Arma`, troca de pintura sem marcas empilhadas e SVG de marca com `width`/`height`. Mutantes
   `pintura-na-mao`, `sem-referencia` e `svg-sem-tamanho`.
