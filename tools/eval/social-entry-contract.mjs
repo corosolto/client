@@ -26,7 +26,7 @@ const only=process.argv.find(s=>s.startsWith('--only='))?.split('=')[1];
 if(mutant) {
   assert(['advertise-disabled','stale-auth-dialog','quit-social-resume','portrait-no-guard','portrait-broad-guard','handle-action','share-opt-in','copy-origin','guest-recovery'].includes(mutant),'unknown mutation');
   if(['handle-action','share-opt-in','copy-origin'].includes(mutant)){const pairs={'handle-action':["action('handle',null","action('settings',null"],'share-opt-in':['share.checked=p.settings.share_character===true','share.checked=true'],'copy-origin':['${root.dataset.site}${p.url}','${location.origin}${p.url}']};const [before,after]=pairs[mutant];const changed=community.replace(before,after);assert.notEqual(changed,community,'mutation did not apply');community=changed;}else if(mutant==='guest-recovery'){
-    const changed=entrySource.replace("if(e.message==='guest_invalid'){","if(false){");assert.notEqual(changed,entrySource,'mutation did not apply');entrySource=changed;
+    const changed=entrySource.replace("if(e.message!=='guest_invalid')throw e;","if(true)throw e;");assert.notEqual(changed,entrySource,'mutation did not apply');entrySource=changed;
   }else if(mutant==='stale-auth-dialog') {
     const changed=entrySource.replace('loading=false;if(dialog.open)draw();maybePrompt();','loading=false;maybePrompt();');
     assert.notEqual(changed,entrySource,'mutation did not apply');entrySource=changed;
@@ -100,7 +100,7 @@ async function ui(authenticated=false,{nick='Guest',bootSplash=false,runCommunit
   let loggedIn=authenticated;
   const profile={id:'fixture-account',nick:'Fixture',avatar_url:null,bio:'',level:1,next_level_points:10,kills:0,deaths:0,matches:0,points:0,wins:0,losses:0,kd:0,play_seconds:0,socials:[],history:[],favorites:[],achievements:[],settings:{profile:'public',presence:'friends',activity:'friends'}};
   Object.assign(profile,profileValues);const fetch=async(p,opts={})=> {
-    const body=opts.body?JSON.parse(opts.body):null;calls.push({path:p,action:body?.action,body});if(body?.action==='handle'){profile.handle=body.handle;profile.url='/u/'+body.handle;}
+    const body=opts.body?JSON.parse(opts.body):null;calls.push({path:p,action:body?.action,body});await new Promise(resolve=>setTimeout(resolve,0));if(body?.action==='handle'){profile.handle=body.handle;profile.url='/u/'+body.handle;}
     if(authGate && p.startsWith('/api/social-auth'))await authGate;
     if(guestInvalid && body?.guest && ['start','email'].includes(body.action))return new Response(JSON.stringify({error:'guest_invalid'}),{status:403});
     if(body?.action==='logout')loggedIn=false;
@@ -156,19 +156,20 @@ await check('E04','early account opening hydrates available Auth methods',async(
   for(const provider of ['google','twitter','facebook','linkedin_oidc'])assert(all(u.ids['account-entry-body']).some(n=>n.tagName==='BUTTON' && n.dataset.provider===provider),`${provider} never hydrates`);
   for(const key of ['cs_anon','awpbr_token','awpbr_stats'])assert.equal(u.storage.get(key),u.before[key],'loading race destroys guest');
 });
-await check('E05','stale guest proof offers one explicit recovery and retries the chosen provider',async()=> {
+await check('E05','stale guest proof automatically retries once without it and preserves local history',async()=> {
   const u=await ui(false,{runCommunity:false,guestInvalid:true});await u.entry.initAccountEntry();u.ids['hub-account-login'].onclick();
   const nodes=()=>all(u.ids['account-entry-body']);
   const google=nodes().find(n=>n.tagName==='BUTTON' && n.dataset.provider==='google');assert(google);
-  await google.onclick();await google.onclick();
-  const recover=nodes().filter(n=>n.tagName==='BUTTON' && /ENTRAR SEM VINCULAR/.test(n.textContent));
-  assert.equal(recover.length,1,'each 403 adds another recovery button');
-  await recover[0].onclick();
+  const discord=nodes().find(n=>n.tagName==='BUTTON' && n.dataset.provider==='discord');assert(discord);
+  await Promise.all([google.onclick(),discord.onclick()]);
+  await google.onclick();
   const starts=u.calls.filter(c=>c.action==='start');
-  assert.equal(starts.length,3);
-  assert(starts[0].body.guest && starts[1].body.guest,'initial attempts must retain guest proof');
-  assert.equal(starts[2].body.guest,undefined,'explicit recovery still sends invalid guest proof');
-  assert.equal(u.navigation.length,1,'recovery does not continue the selected login');
+  assert.equal(starts.length,3,'the first 403 must cause one automatic retry without guest proof');
+  assert(starts[0].body.guest,'initial attempt must retain guest proof for valid linking');
+  assert.equal(starts[1].body.guest,undefined,'automatic retry still sends invalid guest proof');
+  assert.equal(starts[2].body.guest,undefined,'a later click resends invalid guest proof');
+  assert.equal(u.navigation.length,2,'both login attempts did not continue to the provider');
+  assert(!nodes().some(n=>n.tagName==='BUTTON' && /ENTRAR SEM VINCULAR/.test(n.textContent)),'fallback still requires a second choice');
   for(const key of ['cs_anon','awpbr_token','awpbr_stats'])assert.equal(u.storage.get(key),u.before[key],`recovery discarded ${key}`);
 });
 await check('P01','pause community and resume preserve the same game',()=> {
