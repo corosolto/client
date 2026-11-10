@@ -176,6 +176,10 @@ const TP_CLEAR = parseFloat(qp.get('tpclear')) || 0.06;   // folga mínima entre
 // propósito: arma longe da mão é mão solta (C7), que é pior que um encosto na roupa.
 const TP_BURIED_TOL = 0.10;
 const TP_CLEAR_MAX = 0.20;
+/* Corpos cuja cabeça é mais larga que o tronco logo abaixo e cuja palma nasce na altura do
+   pescoço: o raio do tronco é medido sem pescoço/cabeça (torsoProfile). Saci mudaria também
+   (empurrão 0,094 -> 0 com mp5), mas legado fica como está. ?torsocabeca=1 desliga (mutante). */
+const TORSO_SEM_CABECA = new Set(qp.get('torsocabeca') === '1' ? [] : ['bebe-reborn']);
 /* CLAMP DE FRENTE (04-05/08, BUG do dono: "arma por trás do corpo" — jozo, trapfunk,
    coach). O clipe assentado da seleção deixa a mão direita de alguns rigs ATRÁS do plano
    do corpo (select-mount.mjs: coach frenteZ -0,052 m, esbirro -0,065) e a arma, que é
@@ -201,6 +205,20 @@ const P1H_MAO_L = [-0.19, -0.06, 0.02];
 const P1H_SKIP = new Set(['canarinho', 'bonzo']);
 /* Esquerdomacho alternava entre clipe 1H e overlay. Usa locomotiva base + um único overlay. */
 const P1H_BASE_CLIP = new Set(['esquerdomacho']);
+/* BRAÇO NO OMBRO (Fora do Ar, 10/11). Nos rigs v4 do Studio de clovis, bebezão, coronel (lado R)
+   e boneca-da-cristaleira o joint *Arm nasceu quase no punho: clavícula 0,28–0,45 m contra
+   braço de 0,06–0,09 m, medidos no bind. A malha do braço pesa no *Shoulder, então o clipe gira
+   um toco de 6 cm e o braço visível fica em T; o overlay de 1 mão gira esse braço-T em torno do
+   próprio eixo e não muda nada. Critério medido no rig: clavícula/braço > 3. Os legados medem no
+   máximo 0,87 e os outros Studio no máximo 2,16. Nesses lados, durante o porte de 1 mão, a
+   clavícula mira a direção abaixo (espaço do modelo: +Z frente, lado com sinal) e o *Arm
+   desfaz o giro em mundo, então a mão mantém a orientação de arma. ?bracoombro=0 desliga;
+   ?bracoombro=x,y,z troca o alvo do lado da arma para A/B. */
+const _bo = (qp.get('bracoombro') || '').split(',').map(Number);
+const BRACO_OMBRO = qp.get('bracoombro') !== '0';
+const BRACO_OMBRO_RAZAO = 3;
+const BRACO_OMBRO_ALVO_R = _bo.length === 3 && _bo.every((n) => !isNaN(n)) ? _bo : [0.35, -0.6, 0.7];
+const BRACO_OMBRO_ALVO_L = [0.35, -0.9, 0.15];
 const loader = new GLTFLoader();
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 /* Tint 3P por personagem (31/10, capa do Juiz); crivo na contact sheet. Hist: docs/ANIM-3P.md. */
@@ -472,7 +490,11 @@ function torsoProfile(id, model) {
   if (sk) {
     const bones = sk.skeleton.bones;
     const arm = new Set();
-    bones.forEach((b, i) => { if (/arm|hand|shoulder|clavicle|curl/i.test(b.name)) arm.add(i); });
+    /* Pescoço/cabeça fora do perfil só em TORSO_SEM_CABECA: no Bebê Reborn a palma do idle1h
+       nasce na altura do pescoço, a faixa vizinha pegava a cabeça de boneca (raio 0,37 m contra
+       tronco de 0,09–0,13) e o empurrão tirava a pistola 15 cm da palma. */
+    const fora = TORSO_SEM_CABECA.has(id) ? /arm|hand|shoulder|clavicle|curl|^neck$|^head$/i : /arm|hand|shoulder|clavicle|curl/i;
+    bones.forEach((b, i) => { if (fora.test(b.name)) arm.add(i); });
     const excluded = withBoneDescendants(bones, arm);
     const pos = sk.geometry.attributes.position, si = sk.geometry.attributes.skinIndex, sw = sk.geometry.attributes.skinWeight;
     const at = (a, i, k) => (k === 0 ? a.getX(i) : k === 1 ? a.getY(i) : k === 2 ? a.getZ(i) : a.getW(i));
@@ -630,6 +652,7 @@ const _gq = new THREE.Quaternion(), _wq = new THREE.Quaternion(), _pq = new THRE
 const _qLean = new THREE.Quaternion(), _axisF = new THREE.Vector3();
 const _right = new THREE.Vector3();
 const _ikTgt = new THREE.Vector3(), _ancoraPalma = new THREE.Vector3();
+const _ombroDe = new THREE.Vector3(), _ombroPara = new THREE.Vector3();
 function orientTpMount(t) {
   t.handBone.updateWorldMatrix(true, false);
   t.model.getWorldQuaternion(_gq);
@@ -917,7 +940,10 @@ export function buildCharacterModel(def, opts = {}) {
       mount.position.copy(handBone.worldToLocal(model.localToWorld(palmM)));
       // A âncora da palma em espaço do OSSO: é o que o clamp de frente por-quadro
       // (CharController.update) reprojeta no espaço do modelo a cada frame.
-      if (ctrl.tpMount) ctrl.tpMount.palmLocal = mount.position.clone();
+      if (ctrl.tpMount) {
+        ctrl.tpMount.palmLocal = mount.position.clone();
+        ctrl.tpMount.empurrao = need > 0.005 ? need : 0;   // régua porte-braco-browser (PB2)
+      }
       if(ctrl.tpMount){
         const carryPalm=mount.position.clone();
         handBone.localToWorld(carryPalm);model.worldToLocal(carryPalm);
@@ -1034,6 +1060,21 @@ export function buildCharacterModel(def, opts = {}) {
     'LeftUpLeg', 'RightUpLeg', 'LeftLeg', 'RightLeg', 'LeftFoot', 'RightFoot']);
   model.traverse(o => { if (o.isBone && QUERO.has(o.name) && !corpo.has(o.name)) corpo.set(o.name, o); });
   ctrl.corpo = corpo;
+  /* BRAÇO NO OMBRO: razão medida no corpo montado (distâncias de mundo não dependem da pose). */
+  ctrl.bracoOmbro = null;
+  if (BRACO_OMBRO) {
+    model.updateMatrixWorld(true);
+    for (const lado of ['Right', 'Left']) {
+      const sh = corpo.get(`${lado}Shoulder`), arm = corpo.get(`${lado}Arm`), fore = corpo.get(`${lado}ForeArm`);
+      const hand = fore?.children.find((o) => o.isBone && o.name === `${lado}Hand`);
+      if (!sh || !arm || !fore || !hand) continue;
+      const pSh = sh.getWorldPosition(new THREE.Vector3()), pArm = arm.getWorldPosition(new THREE.Vector3());
+      const braco = pArm.distanceTo(fore.getWorldPosition(new THREE.Vector3()));
+      if (!(braco > 0) || pSh.distanceTo(pArm) / braco <= BRACO_OMBRO_RAZAO) continue;
+      const a = lado === 'Right' ? BRACO_OMBRO_ALVO_R : BRACO_OMBRO_ALVO_L;
+      (ctrl.bracoOmbro ||= []).push({ sh, arm, hand, alvo: new THREE.Vector3(lado === 'Right' ? -a[0] : a[0], a[1], a[2]).normalize() });
+    }
+  }
   /* PV_PULSO: guarda a pegada de JOGO e gira o pulso — mas só DEPOIS de torso/corpo
      (o overlay 1H precisa deles) e da pose funcional assentada (#1179, crítico 31/10). */
   if (PV_PULSO && opts.preview && withWeapon && ctrl.tpMount && !BLADES.has(opts.weaponId)) {
@@ -1478,6 +1519,22 @@ class CharController {
       this._porte1hK += ((quer1h ? 1 : 0) - this._porte1hK) * Math.min(1, dt * 10);
       if (this._porte1hK > 0.004 && this.reloadK <= 0.05 && this.corpo?.size) {
         const k1 = this._porte1hK;
+        /* BRAÇO NO OMBRO: a clavícula leva o braço visível do clipe até o alvo; o *Arm devolve
+           o mesmo giro em mundo, então a mão sai do T sem mudar a orientação da arma. */
+        if (this.bracoOmbro && this.model) {
+          this.model.getWorldQuaternion(_wq);
+          for (const b of this.bracoOmbro) {
+            this.group.updateMatrixWorld(true);
+            b.hand.getWorldPosition(_ombroDe).sub(b.sh.getWorldPosition(_v)).normalize();
+            _ombroPara.copy(b.alvo).applyQuaternion(_wq);
+            const ang = Math.acos(Math.max(-1, Math.min(1, _ombroDe.dot(_ombroPara)))) * k1;
+            _ombroDe.cross(_ombroPara);
+            if (ang < 1e-4 || _ombroDe.lengthSq() < 1e-10) continue;
+            _ombroDe.normalize();
+            _deltaMundo(b.sh, _ombroDe.x, _ombroDe.y, _ombroDe.z, ang);
+            _deltaMundo(b.arm, _ombroDe.x, _ombroDe.y, _ombroDe.z, -ang);
+          }
+        }
         const rArm = this.corpo.get('RightArm'), rFore = this.corpo.get('RightForeArm');
         if (rArm) _deltaMundo(rArm, cosY, 0, -sinY, (canarinho1h ? CANARINHO_P1H_ARM : P1H_ARM) * k1);
         if (rFore) _deltaMundo(rFore, cosY, 0, -sinY, (canarinho1h ? CANARINHO_P1H_FORE : P1H_FORE) * k1);
