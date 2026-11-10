@@ -84,27 +84,27 @@ const PACK_WEAPON_SKINS = Object.freeze(Object.fromEntries(PACK_WEAPON_THEMES.fl
   })
 )));
 
-// Orçamento das texturas de corpo (`patternAsset`): no máximo 6 artes distintas, lado ≤ 512 px
+// Orçamento das texturas de corpo (`patternAsset`): uma arte por skin do passe (15), lado ≤ 512 px
 // em potência de 2 e ≤ 128 KiB cada. O runtime recusa o que passar e cai no padrão procedural.
-export const PATTERN_TEXTURE_BUDGET = Object.freeze({ maxTextures: 6, maxSize: 512, maxBytes: 128 * 1024 });
-// Cada skin do passe: um padrão de TV tileável no corpo, uma marca-herói e um letreiro.
+export const PATTERN_TEXTURE_BUDGET = Object.freeze({ maxTextures: 15, maxSize: 512, maxBytes: 128 * 1024 });
+// Cada skin do passe: um padrão de terror tileável no corpo, uma marca-herói e um letreiro.
 // Paleta = [escuro, meio, claro] sobre a luminância do padrão; null mantém o RGB da arte (barras).
 const SESSAO_DA_TRETA_DESIGNS = Object.freeze([
   ['arma-01', 'Sintonia', 'ak', '#e4d8aa', 'Barras de cor desmanchando em chuvisco e a TV de cara feia.', 'SEM SINAL', 'tv-rosto', 'barras', 2.0, null],
   ['arma-02', 'Chuvisco', 'pistol', '#c7d0d2', 'Chuvisco preto e branco com o fantasma saindo da tela.', 'FORA DO AR', 'fantasma-tela', 'estatica', 2.0, ['#050505', '#6d6d6d', '#f4f4f4']],
-  ['arma-03', 'Corte Seco', 'knife', '#f14b55', 'Chuvisco vermelho e branco e a caveira de teste.', 'SEM SINAL', 'caveira-teste', 'estatica', 1.2, ['#0a0000', '#a0101a', '#ffe8e0']],
-  ['arma-04', 'Desvio', 'm4', '#30d9d0', 'Glitch ciano fora de sincronia e a TV de cara feia.', 'CANAL 0', 'tv-rosto', 'glitch', 1.6, ['#021013', '#0b8f96', '#e8ffff']],
+  ['arma-03', 'Ursinho', 'knife', '#b98a5e', 'Pelúcia remendada com pontos grossos e botões, e o Ursinho gravado no aço.', 'ME ABRAÇA', 'ursinho', 'pelucia', 2.4, ['#0e0805', '#5a3a22', '#c9a67e']],
+  ['arma-04', 'Chupa-Cabra', 'm4', '#7fbf5a', 'Couro de escamas riscado de garra e o Chupa-Cabra de presas à mostra.', 'COM FOME', 'chupa-cabra', 'escamas', 1.4, ['#030403', '#2b3326', '#9fae8c']],
   ['arma-05', 'Fantasma', 'scar', '#c17cff', 'Chuvisco violeta com o fantasma saindo da tela.', 'FORA DO AR', 'fantasma-tela', 'estatica', 2.0, ['#08030f', '#6b2fb0', '#f3e6ff']],
-  ['arma-06', 'Retrato', 'ak', '#edcc4d', 'Círculo de calibração amarelo e a caveira de teste.', 'SEM SINAL', 'caveira-teste', 'circulo', 3.5, ['#0d0a02', '#a07a08', '#fff2a0']],
-  ['arma-07', 'Canal Zero', 'pistol', '#5fe284', 'Varredura de fósforo verde e a TV de cara feia.', 'CANAL 0', 'tv-rosto', 'fosforo', 1.4, ['#010a03', '#118a34', '#c8ffd2']],
-  ['arma-08', 'Vértice', 'knife', '#f28b43', 'Glitch laranja com o fantasma saindo da tela.', 'FORA DO AR', 'fantasma-tela', 'glitch', 1.5, ['#0c0300', '#e06010', '#fff2e0']],
-  ['arma-09', 'Rastreamento', 'm4', '#51a8ee', 'Rasgos de fita azul e a TV de cara feia.', '▶ PLAY 00:00', 'tv-rosto', 'tracking', 2.0, ['#020818', '#1c3fa8', '#f0f6ff']],
-  ['arma-10', 'Vertical', 'scar', '#ec6fae', 'Glitch magenta e a TV de cara feia.', 'SEM SINAL', 'tv-rosto', 'glitch', 1.5, null],
-  ['arma-11', 'Contraste', 'ak', '#e7e4d9', 'Escada de cinzas desmanchando em chuvisco e a caveira de teste.', 'FORA DO AR', 'caveira-teste', 'barras', 2.0, ['#050505', '#8a8a84', '#f6f3ea']],
-  ['arma-12', 'Pulso', 'pistol', '#f2c34a', 'Varredura de fósforo âmbar com o fantasma saindo da tela.', 'CANAL 0', 'fantasma-tela', 'fosforo', 1.4, ['#0c0600', '#a86a08', '#ffe2a0']],
-  ['arma-13', 'Frequência', 'knife', '#50d5bd', 'Chuvisco preto e ciano com o fantasma saindo da tela.', 'SEM SINAL', 'fantasma-tela', 'estatica', 1.2, ['#000000', '#0a4f48', '#d6fffb']],
-  ['arma-14', 'Quadro Partido', 'm4', '#e16a70', 'Barras de cor rasgadas e a caveira de teste.', '▶ PLAY 00:00', 'caveira-teste', 'barras', 2.0, null],
-  ['arma-15', 'Encerramento', 'scar', '#e2cfe9', 'Círculo de calibração violeta e a caveira de teste.', 'FORA DO AR', 'caveira-teste', 'circulo', 3.5, ['#0b0612', '#7c4a9c', '#f4e8fa']],
+  ['arma-06', 'Capitão Caveira', 'ak', '#e9dfc4', 'Costelas e vértebras em raio X e o Capitão Caveira de quepe torto.', 'OSSO DURO', 'capitao-caveira', 'costelas', 1.2, ['#050403', '#2a251d', '#8f8775']],
+  ['arma-07', 'Dona Aranha', 'pistol', '#9b86c9', 'Teia grossa cheia de aranhas e a Dona Aranha descendo pelo fio.', 'PEGUEI', 'aranha', 'teia', 1.4, ['#020203', '#1a1426', '#6e6590']],
+  ['arma-08', 'Assombração', 'knife', '#c9a676', 'Foto velha mofada com rostos gritando e a Assombração gravada no aço.', 'QUEM TÁ AÍ?', 'assombracao', 'sepia', 2.8, ['#0d0804', '#5a4128', '#e8d2a8']],
+  ['arma-09', 'Sorridente', 'm4', '#f0d77a', 'Sorrisos de dente quadrado colados uns nos outros e o Sorridente do Ônibus.', 'SORRIA', 'sorridente', 'dentes', 1.4, ['#060403', '#33270f', '#9a8e66']],
+  ['arma-10', 'Drácula', 'scar', '#b0213f', 'Veludo gótico com morcegos no damasco e o Drácula de asas abertas.', 'SÓ À NOITE', 'dracula', 'veludo', 1.4, ['#050104', '#3a0718', '#b0607a']],
+  ['arma-11', 'Bebê Reborn', 'ak', '#f2d9d0', 'Porcelana rachada em craquelê e o Bebê Reborn de olho de vidro.', 'NANA NENÊ', 'bebe-reborn', 'porcelana', 1.4, ['#0e0a0a', '#6f6260', '#e8dfda']],
+  ['arma-12', 'Bicho do Bueiro', 'pistol', '#9cc43a', 'Cano de esgoto enferrujado escorrendo gosma e o Bicho do Bueiro espiando da tampa.', 'DESCE AQUI', 'bicho-bueiro', 'ferrugem', 1.4, ['#060402', '#4a2a10', '#a8d040']],
+  ['arma-13', 'Muro de Caco', 'knife', '#5fc28e', 'Chapisco escuro cravado de caco de vidro e o Muro de Caco gravado no aço.', 'NÃO PULA', 'muro-caco', 'chapisco', 2.4, ['#0a0b0a', '#2f342f', '#f2fbff']],
+  ['arma-14', 'Coelho da Páscoa', 'm4', '#e98ab4', 'Um campo de olhos arregalados e o Coelho da Páscoa que não pisca.', 'TÔ TE VENDO', 'coelho-pascoa', 'olhos', 1.2, ['#080206', '#3a1228', '#a88a9a']],
+  ['arma-15', 'Cristaleira', 'scar', '#c8d2b0', 'Renda de vó comida pelo mofo e a Boneca da Cristaleira de olho vazio.', 'NÃO MEXE', 'boneca-cristaleira', 'renda', 1.4, ['#040503', '#1e2419', '#6f7862']],
 ]);
 // Marca ≥ Emo Xadrez (0,100), dentro da silhueta de eval:weapon-skin-body; fpMark/fpSlogan valem
 // só no corpo golden do 1P (mão e emendas mudam). Faca não tem layout: lâmina de aço (steelBlade).
@@ -128,7 +128,7 @@ const SESSAO_DA_TRETA_SKINS = Object.freeze(Object.fromEntries(SESSAO_DA_TRETA_D
     const steelBlade = weapon === 'knife';
     return [id, storeSkin({
       id, name, weapon, color, description, theme: id, price: 0,
-      inspiration: 'grafismos originais de televisão analógica fora do ar, sem marcas ou reprodução de produto',
+      inspiration: 'arte original de terror (TV fora do ar e personagens da Sessão da Treta), sem marcas, símbolos religiosos ou reprodução de produto',
       markAsset: `/textures/weapon-skins/project-marks/passe-${mark}.webp`,
       patternAsset: `/textures/weapon-skins/patterns/${pattern}.webp`,
       patternStyle: { scale, contrast: 1.15, palette },
