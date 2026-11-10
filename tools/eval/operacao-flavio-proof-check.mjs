@@ -118,6 +118,28 @@ const familias = {
   }],
 };
 
+export const COLLIDER_SHARDS = Object.freeze([0, 1, 2, 3]);
+
+export function selecionarProvas(nomes) {
+  if (!nomes.length) throw new Error('famílias conhecidas obrigatórias');
+  return nomes.map((nome) => {
+    const shard = /^collider:(.*)$/.exec(nome);
+    if (shard) {
+      if (!/^[0-3]$/.test(shard[1])) throw new Error(`shard collider inválido: ${nome}; esperado collider:0..collider:3`);
+      const indice = Number(shard[1]);
+      const [script, mutations, marker] = familias.collider;
+      return {
+        nome, script, marker,
+        mutantes: Object.entries(mutations).filter((_, posicao) => posicao % COLLIDER_SHARDS.length === indice),
+      };
+    }
+    const familia = familias[nome];
+    if (!familia) throw new Error(`família desconhecida: ${nome}`);
+    const [script, mutations, marker] = familia;
+    return { nome, script, marker, mutantes: Object.entries(mutations) };
+  });
+}
+
 export function provaValida(result, marcador, clausula) {
   const stdout = result.stdout || '';
   const stderr = result.stderr || '';
@@ -137,18 +159,30 @@ if (process.argv.includes('--autoteste')) {
   ]) assert.equal(provaValida(invalid, marker, clause), false);
   console.log('✓ prova exige status1, aplicação e cláusula; setup, timeout e crash são rejeitados');
 } else if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const names = process.argv.slice(2);
-  assert.ok(names.length && names.every(n => familias[n]), 'famílias conhecidas obrigatórias');
-  for (const name of names) {
-    const [script, mutations, marker] = familias[name];
-    for (const [mutant, clause] of Object.entries(mutations)) {
+  const args = process.argv.slice(2);
+  const listar = args[0] === '--list-json';
+  let selecionadas;
+  try {
+    selecionadas = selecionarProvas(listar ? args.slice(1) : args);
+  } catch (erro) {
+    console.error(erro.message);
+    process.exit(2);
+  }
+  if (listar) {
+    console.log(JSON.stringify(selecionadas.map(({ nome, script, mutantes }) => ({
+      familia: nome, script, mutantes: mutantes.map(([mutante]) => mutante),
+    }))));
+    process.exit(0);
+  }
+  for (const { nome, script, mutantes, marker } of selecionadas) {
+    for (const [mutant, clause] of mutantes) {
       const result = spawnSync(process.execPath, [fileURLToPath(new URL(script, import.meta.url)), '--mutante='+mutant],
         { encoding: 'utf8', timeout: 90000, maxBuffer: 8 * 1024 * 1024 });
       if (!provaValida(result, marker || 'Mutação aplicada: '+mutant, clause)) {
-        console.error(`${name}/${mutant}: prova ausente; status=${result.status}; sinal=${result.signal}`);
+        console.error(`${nome}/${mutant}: prova ausente; status=${result.status}; sinal=${result.signal}`);
         console.error((result.stdout || '').slice(-1800), (result.stderr || '').slice(-2500));
         process.exitCode = 1;
-      } else console.log(`✓ ${name}/${mutant}: mutação aplicada e falha esperada`);
+      } else console.log(`✓ ${nome}/${mutant}: mutação aplicada e falha esperada`);
     }
   }
 }

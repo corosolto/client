@@ -16,7 +16,7 @@ const BASE = process.env.BASE;
 if (!BASE) { console.error('BASE obrigatório (ex.: BASE=http://localhost:4321)'); process.exit(1); }
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 if (!['', 'sem-fixa'].includes(MUTANTE)) { console.error(`mutante desconhecido: ${MUTANTE}`); process.exit(1); }
-const ALVO = "_loadWallFixa = (mapName && MAPS[currentMap]?.loadingWall) || '';";
+const ALVO = "_loadWallFixa = (mapName && MAPS[currentMap]?.loadingWall) || loadingWallDoPersonagem(currentChar) || '';";
 
 const b = await chromium.launch({ args: ['--use-angle=metal', '--headless=new', '--mute-audio'] });
 async function paredeDaEspera(mapa) {

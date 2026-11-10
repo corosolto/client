@@ -9,6 +9,8 @@
      VM_REQUIRED=1      qualquer asset faltando ou divergente reprova o build (produção)
      VM_SOURCE_DIR      copia de uma árvore local em vez do Blob (build local do dono)
      VM_DEST            destino alternativo (réguas)
+   Cache de build: cada asset fica em node_modules/.cache/csb-packs/viewmodels/<sha256>
+   (a Vercel guarda a pasta entre builds); sem a pasta (local) baixa do Blob como antes.
    Sem credencial e sem VM_REQUIRED: avisa e sai 0 — o jogo cai no viewmodel legado. */
 import { createHash, randomBytes } from 'node:crypto';
 import { copyFileSync, existsSync, lstatSync, mkdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -17,14 +19,18 @@ import path from 'node:path';
 import { DEST_DIR, ROOT, blobPathOf, readManifest, sha256File } from './vm-assets.mjs';
 import { VM_LAUNCH } from '../public/js/data/vmconfig.js';
 
-// Lançamento sem GLB não pode publicar um build "verde" que mostra só armas sem mãos.
-const REQUIRED = VM_LAUNCH === true || process.env.VM_REQUIRED === '1';
+// `VM_REQUIRED=0` é usado pelo preview Cloudflare sem a credencial privada: a
+// ausência é registrada, mas não impede o build público que usa o legado.
+const REQUIRED = process.env.VM_REQUIRED === '1' || (VM_LAUNCH === true && process.env.VM_REQUIRED !== '0');
 const DEST = path.resolve(process.env.VM_DEST || DEST_DIR);
 const SOURCE_DIR = process.env.VM_SOURCE_DIR ? path.resolve(process.env.VM_SOURCE_DIR) : '';
 const TOKEN = process.env.VM_BLOB_TOKEN || process.env.BLOB_READ_WRITE_TOKEN || '';
 const CONCURRENCY = 6;
 const rel = (p) => (p.startsWith(`${ROOT}${path.sep}`) ? path.relative(ROOT, p) : p);
 const mb = (n) => `${(n / 1048576).toFixed(1)} MB`;
+const CACHE = path.join(ROOT, 'node_modules', '.cache', 'csb-packs', 'viewmodels');
+if (process.env.VERCEL === '1') mkdirSync(CACHE, { recursive: true });
+const CACHE_ON = existsSync(CACHE);
 
 let manifest;
 try { manifest = readManifest(); } catch (error) {
@@ -88,6 +94,14 @@ async function download(entry, tmp) {
   return last;
 }
 
+async function doCache(entry, tmp) {
+  const cached = path.join(CACHE, entry.sha256);
+  if (!CACHE_ON || !existsSync(cached)) return false;
+  if ((await sha256File(cached)) === entry.sha256) { copyFileSync(cached, tmp); return true; }
+  rmSync(cached, { force: true });
+  return false;
+}
+
 async function install(entry) {
   const target = path.join(DEST, entry.path);
   mkdirSync(path.dirname(target), { recursive: true });
@@ -96,9 +110,10 @@ async function install(entry) {
     if (SOURCE_DIR) {
       copyFileSync(path.join(SOURCE_DIR, entry.path), tmp);
       if ((await sha256File(tmp)) !== entry.sha256) return 'cópia local diverge do manifesto';
-    } else {
+    } else if (!(await doCache(entry, tmp))) {
       const err = await download(entry, tmp);
       if (err) return err;
+      if (CACHE_ON) copyFileSync(tmp, path.join(CACHE, entry.sha256));
     }
     renameSync(tmp, target);
     return '';

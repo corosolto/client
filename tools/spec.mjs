@@ -13,23 +13,23 @@
    Brasil?), fica com a skill `asset-review`.
 
    ── O CONTRATO ──────────────────────────────────────────────────────────────
-   Ficha é um MD em plans/ com `<!-- spec:time -->` ou `<!-- spec:mapa -->` na
-   primeira linha. O marcador é o que separa ficha de plano comum: o check varre
-   plans/ e só valida quem se declara spec.
+   Ficha é um MD com `<!-- spec:time -->` ou `<!-- spec:mapa -->` na primeira
+   linha. O marcador é o que separa ficha de plano comum; o check valida apenas
+   os caminhos pedidos.
 
    time: cada seção `## N. Nome — papel` exige Visual, Papel, Arma e Mecânica.
    mapa: exige as seções Local real, Layout, Cobertura, Linhas de visão,
          Referências e Régua de aceite.
 
    Uso:
-     node tools/spec.mjs new time <slug>     → cria plans/NN-<SLUG>.md
+     node tools/spec.mjs new time <slug>     → cria artifacts/specs/NN-<SLUG>.md
      node tools/spec.mjs new mapa <slug>     → idem, schema de mapa
      node tools/spec.mjs check <arq|dir>…    → valida; sai 1 se algo falta
      node tools/spec.mjs check --mutante=sem-mecanica
        → prova que a régua morde: valida uma ficha PROPOSITALMENTE quebrada e
          exige que ela seja reprovada. Régua que aprova o mutante está cega.
    ============================================================================ */
-import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 const MARCADOR = /<!--\s*spec:(time|mapa)\s*-->/;
@@ -101,11 +101,15 @@ function validaArquivo(arq, exigeMarcador = false) {
 
 /* ── scaffold ─────────────────────────────────────────────────────────────── */
 
+const SPEC_DIR = 'artifacts/specs';
+
 function proximoNumero() {
-  const ns = readdirSync('plans')
-    .map((f) => parseInt(f.match(/^(\d+)-/)?.[1] ?? '', 10))
-    .filter((n) => Number.isFinite(n));
-  return String(Math.max(...ns) + 1).padStart(2, '0');
+  const ns = existsSync(SPEC_DIR)
+    ? readdirSync(SPEC_DIR)
+      .map((f) => parseInt(f.match(/^(\d+)-/)?.[1] ?? '', 10))
+      .filter((n) => Number.isFinite(n))
+    : [];
+  return String(Math.max(0, ...ns) + 1).padStart(2, '0');
 }
 
 const MOLDE_TIME = (slug) => `<!-- spec:time -->
@@ -150,7 +154,8 @@ function scaffold(tipo, slug) {
     console.error(`tipo desconhecido: "${tipo}" (use time|mapa)`);
     process.exit(2);
   }
-  const nome = `plans/${proximoNumero()}-${slug.toUpperCase().replace(/\s+/g, '-')}.md`;
+  mkdirSync(SPEC_DIR, { recursive: true });
+  const nome = join(SPEC_DIR, `${proximoNumero()}-${slug.toUpperCase().replace(/\s+/g, '-')}.md`);
   if (existsSync(nome)) {
     console.error(`já existe: ${nome}`);
     process.exit(2);
@@ -190,9 +195,12 @@ if (cmd === 'new') {
   scaffold(args[0], args[1] ?? 'sem-nome');
 } else if (cmd === 'check') {
   if (args[0] === '--mutante') { mutante(); process.exit(0); }
-  const alvos = args.flatMap((a) =>
-    a.endsWith('.md') ? [{ arq: a, exigeMarcador: true }]
-      : readdirSync(a).filter((f) => f.endsWith('.md')).map((f) => ({ arq: join(a, f), exigeMarcador: false })));
+  const alvos = args.flatMap((a) => {
+    if (a.endsWith('.md')) return [{ arq: a, exigeMarcador: true }];
+    if (!existsSync(a)) return [];
+    return readdirSync(a).filter((f) => f.endsWith('.md'))
+      .map((f) => ({ arq: join(a, f), exigeMarcador: false }));
+  });
   const erros = alvos.flatMap(({ arq, exigeMarcador }) => validaArquivo(arq, exigeMarcador));
   if (erros.length) {
     console.error(erros.map((e) => `  ✗ ${e}`).join('\n'));

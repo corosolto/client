@@ -21,7 +21,7 @@ const troca = (texto, velho, novo) => {
   if (!texto || n === texto) { console.error(`MUTANTE ${mut} NAO APLICOU`); process.exit(2); }
   return n;
 };
-if (mut === 'link-sem-origem') nos = troca(nos, '/sala/${convite}?${ORIGEM_CONVITE}`', '/sala/${convite}`');
+if (mut === 'link-sem-origem') nos = troca(nos, 'url.search = ORIGEM_CONVITE;', "url.search = '';");
 if (mut === 'cta-sem-origem') pagina = troca(pagina, 'href={hrefEntrarNaSala(convite, Astro.url.searchParams)}', 'href={`/?sala=${encodeURIComponent(convite)}`}');
 if (mut === 'repassa-tudo') lib = troca(lib, 'for (const chave of CHAVES_ORIGEM) {', 'for (const chave of new Set(origem.keys())) {');
 if (mut === 'sem-teto') lib = troca(lib, 'valor && valor.length <= 60', 'valor');
@@ -32,6 +32,7 @@ const cobra = (ok, msg) => { if (!ok) falhas.push(msg); };
 const dir = mkdtempSync(join(tmpdir(), 'convite-origem-'));
 const importa = async (nome, fonte) => { const f = join(dir, nome); writeFileSync(f, fonte); return import(pathToFileURL(f).href); };
 
+writeFileSync(join(dir, 'compartilhar.js'), ler('public/js/compartilhar.js'));
 const { linkDeConvite, parseConvite } = await importa('nos.mjs', nos);
 const link = new URL(linkDeConvite('BR-7K3M', 'https://www.corosolto.com.br'));
 const codigo = decodeURIComponent(link.pathname.split('/').pop());

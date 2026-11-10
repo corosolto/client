@@ -3,9 +3,14 @@ name: smoke-web
 on:
   pull_request:
   workflow_dispatch:
-
+    inputs:
+      host:
+        description: 'Host Cloudflare para smoke-cf (ex.: https://csb-staging.<sub>.workers.dev)'
+        required: false
+        type: string
 permissions:
   contents: read
+  pull-requests: read
 
 # Push novo no MESMO PR cancela o smoke velho: ele testaria um commit que já não é
 # a cabeça do PR e prende runner do plano Free (teto de 20 jobs) por até 40 min.
@@ -143,3 +148,75 @@ jobs:
             /tmp/csbrasil-dev.log
             test-results
           if-no-files-found: ignore
+
+  # O preview é opcional enquanto a migração roda em paralelo com a Vercel.
+  smoke-cf:
+    needs: decide
+    if: (github.event_name == 'pull_request' && needs.decide.outputs.rodar == 'true') || (github.event_name == 'workflow_dispatch' && inputs.host != '' && needs.decide.outputs.rodar == 'true')
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Define host Cloudflare por dispatch
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          HOST: ${{ inputs.host }}
+        run: |
+          set -euo pipefail
+          case "$HOST" in
+            https://*.workers.dev|https://*.workers.dev/*) ;;
+            *) echo "::error::host deve ser uma URL https://*.workers.dev"; exit 1 ;;
+          esac
+          echo "BASE_URL=${HOST%/}" >> "$GITHUB_ENV"
+          echo "Host Cloudflare informado: ${HOST%/}"
+      - name: Aguarda URL sticky do Cloudflare
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 90); do
+            BODY="$(gh api "repos/$REPO/issues/$PR_NUM/comments" --paginate \
+              --jq '.[] | select(.body | contains("<!-- cf-preview -->")) | .body' 2>/dev/null || true)"
+            if ! printf '%s\n' "$BODY" | grep -Fq "<!-- sha: $HEAD_SHA -->"; then
+              sleep 10
+              continue
+            fi
+            URL="$(printf '%s\n' "$BODY" | grep -Eo 'https://[^[:space:]]+\.workers\.dev' | tail -n 1 || true)"
+            if [ -n "$URL" ] && curl --fail --silent --show-error --location --max-time 20 "$URL/" >/dev/null; then
+              echo "BASE_URL=$URL" >> "$GITHUB_ENV"
+              echo "Preview Cloudflare disponível: $URL"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::preview Cloudflare não apareceu no comentário sticky"
+          exit 1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run smoke web no Cloudflare
+        run: npx playwright test --config=playwright.smoke.config.mjs tests/smoke/web-smoke.spec.js tests/smoke/web-assets.spec.js tests/smoke/chat-sala.spec.js --reporter=list --trace=on --output=test-results
+      - name: Upload smoke Cloudflare
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: smoke-cf-artifacts
+          path: test-results
+          if-no-files-found: ignore
+      - name: Registra resultado do smoke Cloudflare
+        if: always()
+        run: |
+          {
+            echo "## Smoke Cloudflare"
+            echo
+            echo "URL: \`$BASE_URL\`"
+            echo "O resultado deste job é opcional nesta fase e aparece no check \`smoke-cf\`."
+          } >> "$GITHUB_STEP_SUMMARY"
