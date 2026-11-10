@@ -107,16 +107,17 @@ export function initLoginPrompt({auth=null,config=null,accountBusy=()=>false,ski
     if(reason){writeRecord({dismissedAt:Date.now(),matches:0});emit(track,'login_prompt_dismissed',{reason});}
     dialog.close();previousFocus?.focus?.();
   };
-  let loginAttempt=null;
+  const loginAttempts=new Map();
   const attempt=fn=>{
-    if(loginAttempt)return loginAttempt;
-    loginAttempt=(async()=>{try{await fn(guestLink);}catch(e){
+    if(loginAttempts.has(fn))return loginAttempts.get(fn);
+    const pending=(async()=>{try{await fn(guestLink);}catch(e){
       if(e.message==='guest_invalid'){
         guestLink=false;status.textContent='Convidado antigo não encontrado. Entrando sem vincular o histórico local…';
         try{await fn(false);}catch(error){status.textContent=accountError(error);}
       }else status.textContent=accountError(e);
     }})();
-    return loginAttempt.finally(()=>{loginAttempt=null;});
+    loginAttempts.set(fn,pending);
+    return pending.finally(()=>{loginAttempts.delete(fn);});
   };
   const button=(cls,label,provider,fn)=>{
     const b=document.createElement('button');b.type='button';b.className=cls;b.dataset.provider=provider;
