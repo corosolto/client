@@ -613,7 +613,7 @@ export const CHARACTERS = [
   { id: 'marina-silva', team: 'P', lados: ['E'], name: 'Dona Floresta',
     blurb: 'Óculos vinho, coque grisalho e vestido verde-petróleo. A conversa é calma; a mira, firme.',
     pal: { skin: 0x9a684f, shirt: 0x243654, pants: 0x22242b, hair: 0x292522, boots: 0x222222 } },
-  /* Fora do Ar (passe Sessão da Treta, spec §2): packs Studio 0.2.0 fixados em data/content-releases.js.
+  /* Fora do Ar (passe Sessão da Treta, spec §2): packs Studio 0.2.0/0.2.1 fixados em data/content-releases.js.
      Nomes das fichas do studio-assets; travados até o servidor dizer que o nível foi resgatado. */
   { id: 'capitao-caveira', team: 'fora-do-ar', tribe: 'fora-do-ar', name: 'Capitão Caveira',
     passe: { season: 'sessao-da-treta-s1', level: 1 },
@@ -757,7 +757,7 @@ export const CHAR_WEAPON = {
   mariabonita: 'awp', lampiao: 'm4', saci: 'mp5', caipora: 'scar', bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', curupira: 'mp5',
   barbudo: 'ak', capitao: 'md97', dama: 'm4', professor: 'mp5', senador: 'famas',
   ministro: 'shotgun', deputado: 'uzi', juiz: 'scar', 'julia-zanatta': 'ak', 'marina-silva': 'm4',
-  // Fora do Ar (passe Sessão da Treta): arma de cada personagem do pack Studio 0.2.0.
+  // Fora do Ar (passe Sessão da Treta): arma de cada personagem do pack Studio fixado.
   'capitao-caveira': 'ak', 'teletreco-sinal-fraco': 'uzi', 'bebe-reborn': 'pistol', 'chupa-cabra': 'shotgun',
   'teletreco-antenao': 'mp5', 'assombracao-lanhouse': 'p90', 'dracula': 'deagle',
   'boneca-da-cristaleira': 'pistol', 'satanista-talkshow': 'scar', 'clovis-fora-do-ar': 'revolver38',
