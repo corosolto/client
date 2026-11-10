@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.139`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.140`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -244,6 +244,45 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.140] — 2026-11-10
+
+### Mudado
+- Studio character release pins a verified pack, enforces the complete `meshy-28` skeleton in the runtime adapter and bounds response reads before retaining oversized data.
+- Jogo para de travar com muitos bots (#1245)
+- Emit google-site-verification meta on the home head (#1254)
+- Add itch.io embed wrapper and allow itch.zone ancestor (#1252)
+- ci: harden post-deploy smoke classification (#1255)
+- Remove 157 eval scripts with no caller anywhere in the repo (#1256)
+- ci(browser): validar agregado do portão em staging (#1246)
+- ci: acelerar pre-push e isolar gates pesados (#1257)
+- fix(ui): manter ação privada visível no boot v3 (#1250)
+- Use English bot updates and retire obsolete review requirements (#1262)
+- feat(cf): spike do site no Cloudflare Workers (fase 1 da migração) (#1261)
+- fix(audio): voz é do personagem e rádio dos bots chega ao multiplayer (#1263)
+- ci: shard heavy simulations and publish timings (#1267)
+- Medição ligada por padrão: recusa explícita desliga (#1264)
+- Cortar build de preview, cache de packs e log por requisição na Vercel (fase 0) (#1258)
+- chore: régua eval:lixo (LX1-LX5) + bloco 1 da limpeza (#1259)
+- chore: limpeza de órfãos lote 2 (#1272)
+- feat: preview Cloudflare por PR (#1271)
+- Segredos de SSR em runtime no Workers: env-runtime + ponte de bindings (achado 1 do spike CF) (#1276)
+- ci: paraleliza contratos visuais e Flávio (#1275)
+- Contagem de borda nomeia navegador interno de app (#1278)
+- Pre-push e CI param de queimar uma hora por push (#1281)
+- ci: rebalanceia equipamento TP sem novos jobs (#1282)
+- feat: usar corosol.to nos links compartilháveis (#1285)
+- feat(cf): publica Worker de staging em paralelo (#1283)
+- fix(cf): restaurar geo e assets de áudio no Workers (#1284)
+- docs(skills): personagem 3P pelo processo padrão do Studio (#1269)
+- [REA] Adicionar impacto de pouso por superfície e vínculo de look (#1289)
+- fix(login): continua OAuth quando a prova do convidado expira (#1296)
+- feat: automate daily releases and build repair (#1290)
+- fix(login): continua OAuth quando a prova do convidado expira (#1297)
+- ci(preview): builda mudanças do adaptador (#1299)
+- /app: landing leve para quem abre o jogo dentro de app (#1291)
+- fix(ci): desbloqueia a promoção staging (#1286)
+- lote release 08/11: jogo sem travar com muitos bots (#1251)
 
 ## [2.1.0-alpha.139] — 2026-11-08
 
