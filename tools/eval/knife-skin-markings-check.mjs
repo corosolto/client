@@ -579,7 +579,7 @@ try {
   // Mutantes: conjunto EXATO de cláusulas RED (sem sobra, sem falta); exceção = infra 3.
   const CASE_CLAUSE_IDS = (tag) => ['attached', 'roles-exact', 'count', 'aspect', 'parent', 'footprint'].map((c) => `${tag}:${c}`);
   const FULL = CASES.flatMap((c) => [...CASE_CLAUSE_IDS(`${c.id}#fp`), ...CASE_CLAUSE_IDS(`${c.id}#tp`)]);
-  const APPLY_ANCHOR = '  placements.forEach(({ item, placement }) => addKnifePair(model, skinId, item.role, item.texture, frame, placement, context));';
+  const APPLY_ANCHOR = '  placements.forEach(({ item, spec, frame, placement }) => addKnifePair(model, skinId, item.role, item.texture, frame, placement, context, spec));';
   const NAN_HAND = '  model.traverse((o) => { if (o.isMesh && /Glove|Hand|Sleeve|Cloth/i.test(((Array.isArray(o.material) ? o.material[0] : o.material) || {}).name || \'\')) o.geometry.attributes.position.setX(0, NaN); });';
   const NAN_BIND = '  model.traverse((o) => { if (o.isSkinnedMesh && !/Glove|Hand|Sleeve|Cloth/i.test(((Array.isArray(o.material) ? o.material[0] : o.material) || {}).name || \'\')) o.bindMatrix.elements[12] = NaN; });';
   const MUTANTS = {
@@ -611,7 +611,7 @@ try {
       expect: ['pack-maga-47-knife#tp:footprint'],
     },
     'slogan-uv-off': {
-      mutate: s => s.replace('if (KNIFE_MARK_PROFILES[context].roles[role].longitudinal)', 'if (false)'),
+      mutate: s => s.replace('  if (spec.longitudinal) {\n    const uv = geometry.attributes.uv;', '  if (false) {\n    const uv = geometry.attributes.uv;'),
       // símbolo e letreiro usam a mesma UV longitudinal: os dois casos perdem o aspecto.
       expect: ['pack-caveira-urbana-knife#fp:aspect','pack-caveira-urbana-knife#tp:aspect','pack-maga-47-knife#fp:aspect','pack-maga-47-knife#tp:aspect'],
     },

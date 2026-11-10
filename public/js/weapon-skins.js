@@ -579,21 +579,24 @@ function fittedSideSurfaces(model, weaponId, placements, source = null) {
   fittedSurfaceCache.set(cacheKey, surfaces);
   return surfaces;
 }
-function paintedMaterial(texture, skinId, role) {
+// `etched`: gravação ácida no aço — figura em cinza-escuro fosco, nunca placa branca na lâmina.
+function paintedMaterial(texture, skinId, role, etched = false) {
   const material = new THREE.MeshStandardMaterial({
     map: texture,
+    color: etched ? 0x3a3a3a : 0xffffff,
     transparent: true,
+    opacity: etched ? 0.9 : 1,
     alphaTest: 0.12,
     depthWrite: false,
     polygonOffset: true,
     polygonOffsetFactor: -1,
-    roughness: role === 'symbol' ? 0.70 : 0.76,
-    metalness: role === 'symbol' ? 0.12 : 0.08,
+    roughness: etched ? 0.86 : role === 'symbol' ? 0.70 : 0.76,
+    metalness: etched ? 0.35 : role === 'symbol' ? 0.12 : 0.08,
     envMapIntensity: 0.74,
     side: THREE.FrontSide,
   });
   ownVmResource(material);
-  material.name = `${skinId}__${role}_paint`;
+  material.name = `${skinId}__${etched ? 'etched' : role}_paint`;
   return material;
 }
 
@@ -642,6 +645,11 @@ function knifeGeometryFingerprint(model) {
   return h.toString(16).padStart(8, '0');
 }
 
+// `steelRoles` (skin steelBlade): símbolo vira gravação escura pequena na lâmina, letreiro no cabo.
+const KNIFE_STEEL_ROLES = Object.freeze({
+  symbol: Object.freeze({ along: 0.30, sizeFrac: 0.70, longitudinal: true, region: 'blade', etched: true }),
+  slogan: Object.freeze({ along: 0.62, sizeFrac: 0.40, longitudinal: true, region: 'handle' }),
+});
 // `longitudinal`: a horizontal da imagem corre ao longo da lâmina e o topo vai ao dorso (+Y do
 // modelo). Vale para letreiro e símbolo; o símbolo transversal deitava a caveira para a ponta.
 const KNIFE_MARK_PROFILES = Object.freeze({
@@ -650,10 +658,12 @@ const KNIFE_MARK_PROFILES = Object.freeze({
     representation: 'skinned-bone',
     fingerprint: '2b9905bf',
     blade: Object.freeze({ fromGrip: 0.50, toTip: 0.96, minSlenderness: 2.2 }),
+    handle: Object.freeze({ fromGrip: 0.05, toTip: 0.42 }),
     roles: Object.freeze({
       symbol: Object.freeze({ along: 0.40, sizeFrac: 0.62, longitudinal: true }),
       slogan: Object.freeze({ along: 0.76, sizeFrac: 0.62, longitudinal: true }),
     }),
+    steelRoles: KNIFE_STEEL_ROLES,
     liftFrac: 0.05,
     coverage: FOOTPRINT_TOLERANCE,
   }),
@@ -662,10 +672,12 @@ const KNIFE_MARK_PROFILES = Object.freeze({
     representation: 'rigid-wrap',
     fingerprint: 'eede1583',
     blade: Object.freeze({ fromGrip: 0.50, toTip: 0.96, minSlenderness: 2.2 }),
+    handle: Object.freeze({ fromGrip: 0.05, toTip: 0.42 }),
     roles: Object.freeze({
       symbol: Object.freeze({ along: 0.40, sizeFrac: 0.62, longitudinal: true }),
       slogan: Object.freeze({ along: 0.76, sizeFrac: 0.62, longitudinal: true }),
     }),
+    steelRoles: KNIFE_STEEL_ROLES,
     liftFrac: 0.05,
     coverage: FOOTPRINT_TOLERANCE,
   }),
@@ -673,9 +685,10 @@ const KNIFE_MARK_PROFILES = Object.freeze({
 const KNIFE_CONTEXTS = Object.freeze(Object.keys(KNIFE_MARK_PROFILES));
 
 function knifeProfileValid(profile) {
-  const { blade, roles } = profile;
+  const { blade, handle, roles, steelRoles } = profile;
   if (!(blade.fromGrip > 0 && blade.toTip > blade.fromGrip && blade.toTip <= 1 && blade.minSlenderness > 0)) return false;
-  for (const role of Object.values(roles)) {
+  if (!(handle.fromGrip >= 0 && handle.toTip > handle.fromGrip && handle.toTip <= blade.fromGrip)) return false;
+  for (const role of [...Object.values(roles), ...Object.values(steelRoles)]) {
     if (!(role.along >= 0 && role.along <= 1 && role.sizeFrac > 0 && role.sizeFrac < 1)) return false;
   }
   return true;
@@ -734,7 +747,38 @@ function principalAxis(centered, exclude = []) {
   return axis.normalize();
 }
 
-function knifeBladeFrame(model, profile) {
+// Faca steelBlade: cabo/guarda = parte grossa da malha. Fronteira = vértice grosso mais perto da
+// ponta no eixo longo (PCA) da geometria crua; vale no 1P skinned e no 3P. Sem lâmina fina: null.
+const knifeMaskCache = new WeakMap();
+function knifeHandleMask(geometry) {
+  if (knifeMaskCache.has(geometry)) return knifeMaskCache.get(geometry);
+  const positions = geometry.attributes.position;
+  const points = [];
+  for (let i = 0; i < positions.count; i++) points.push(new THREE.Vector3().fromBufferAttribute(positions, i));
+  let mask = null;
+  if (points.length) {
+    const centroid = points.reduce((acc, p) => acc.add(p), new THREE.Vector3()).divideScalar(points.length);
+    const centered = points.map((p) => p.sub(centroid));
+    const long = principalAxis(centered);
+    const normal = new THREE.Vector3().crossVectors(long, principalAxis(centered, [long])).normalize();
+    const along = centered.map((p) => p.dot(long));
+    const across = centered.map((p) => p.dot(normal));
+    const [nMin, nMax] = across.reduce(([lo, hi], n) => [Math.min(lo, n), Math.max(hi, n)], [Infinity, -Infinity]);
+    const [uMin, uMax] = along.reduce(([lo, hi], u) => [Math.min(lo, u), Math.max(hi, u)], [Infinity, -Infinity]);
+    const thick = along.filter((_, i) => Math.abs(across[i] - (nMin + nMax) / 2) > (nMax - nMin) * 0.35);
+    const sign = thick.reduce((sum, u) => sum + u, 0) <= 0 ? 1 : -1;
+    const boundary = Math.max(...thick.map((u) => sign * u)) + (uMax - uMin) * 0.01;
+    const blade = along.filter((u) => sign * u > boundary).length;
+    if (thick.length && blade >= points.length * 0.01) {
+      const axis = long.clone().multiplyScalar(sign);
+      mask = new THREE.Vector4(axis.x, axis.y, axis.z, -(axis.dot(centroid) + boundary));
+    }
+  }
+  knifeMaskCache.set(geometry, mask);
+  return mask;
+}
+
+function knifeBladeFrame(model, profile, region = profile.blade) {
   model.updateMatrixWorld(true);
   const meshes = [];
   model.traverse((object) => {
@@ -792,7 +836,7 @@ function knifeBladeFrame(model, profile) {
   const tipAtMax = (head[1] - head[0]) + (head[3] - head[2]) <= (tail[1] - tail[0]) + (tail[3] - tail[2]);
   const longSign = tipAtMax ? 1 : -1;
   const gripEnd = tipAtMax ? longRange[0] : longRange[1];
-  const { fromGrip, toTip } = profile.blade;
+  const { fromGrip, toTip } = region;
   const regionUMin = Math.min(gripEnd + longSign * fromGrip * len, gripEnd + longSign * toTip * len);
   const regionUMax = Math.max(gripEnd + longSign * fromGrip * len, gripEnd + longSign * toTip * len);
   const regionTriangles = triangles
@@ -855,15 +899,15 @@ function knifePlacement(frame, profile, aspect, role, priors) {
   return null;
 }
 
-function addKnifePair(model, skinId, role, texture, frame, placement, context) {
+function addKnifePair(model, skinId, role, texture, frame, placement, context, spec) {
   const geometry = ownVmResource(new THREE.PlaneGeometry(placement.width, placement.height));
-  if (KNIFE_MARK_PROFILES[context].roles[role].longitudinal) {
+  if (spec.longitudinal) {
     const uv = geometry.attributes.uv;
     for (let i = 0; i < uv.count; i++) { const u = uv.getX(i); uv.setXY(i, 1 - uv.getY(i), u); }
   }
-  const material = paintedMaterial(texture, skinId, role);
+  const material = paintedMaterial(texture, skinId, role, spec.etched === true);
   const longVector = frame.long.clone().multiplyScalar(frame.longSign);
-  const longitudinal = KNIFE_MARK_PROFILES[context].roles[role].longitudinal;
+  const longitudinal = spec.longitudinal;
   // Cada lado gira 180° no próprio plano (nunca espelha) para o topo das letras apontar ao +Y
   // do modelo; sem isso o lado de fora da faca 3P lia de ponta-cabeça.
   const space = (frame.bone || model).matrixWorld.clone().invert();
@@ -926,37 +970,24 @@ function attachKnifeMarkings(model, skinId, context) {
   });
   if (profile.representation === 'skinned-bone' && skinned.length !== 1) return finish('representation-mismatch');
   if (profile.representation === 'rigid-wrap' && skinned.length !== 0) return finish('representation-mismatch');
-  const frame = knifeBladeFrame(model, profile);
-  if (frame.error) return finish(frame.error);
-  // knifeMarkSize é o teto do símbolo: desce até o sizeFrac do perfil (passo 0,05) e fica com a
-  // primeira escala em que símbolo e letreiro cabem inteiros na lâmina.
-  const profileSize = profile.roles.symbol.sizeFrac;
-  const ceiling = definition.knifeMarkSize;
-  const sizes = ceiling > profileSize && ceiling < 1
-    ? [...Array.from({ length: Math.floor((ceiling - profileSize) / 0.05) + 1 }, (_, i) => ceiling - i * 0.05), profileSize]
-    : [profileSize];
-  let placements = null;
-  let chosenSize = profileSize;
-  for (const size of sizes) {
-    const attempt = [];
-    for (const item of items) {
-      const role = item.role === 'symbol' ? { ...profile.roles.symbol, sizeFrac: size } : profile.roles[item.role];
-      const placement = knifePlacement(frame, profile, item.aspect, role, attempt.map(({ placement: p }) => p));
-      if (!placement) break;
-      attempt.push({ item, placement });
-    }
-    if (attempt.length === items.length) { placements = attempt; chosenSize = size; break; }
+  // steelBlade: cada papel mede a própria região (gravação na lâmina, letreiro no cabo).
+  const roles = definition.steelBlade ? profile.steelRoles : profile.roles;
+  const frames = new Map();
+  const placements = [];
+  for (const item of items) {
+    const spec = roles[item.role];
+    const region = spec.region || 'blade';
+    if (!frames.has(region)) frames.set(region, knifeBladeFrame(model, profile, profile[region]));
+    const frame = frames.get(region);
+    if (frame.error) return finish(frame.error);
+    const priors = placements.filter((entry) => entry.frame === frame).map((entry) => entry.placement);
+    const placement = knifePlacement(frame, profile, item.aspect, spec, priors);
+    if (!placement) return finish('footprint-unsupported');
+    placements.push({ item, spec, frame, placement });
   }
-  if (!placements) return finish('footprint-unsupported');
-  placements.forEach(({ item, placement }) => addKnifePair(model, skinId, item.role, item.texture, frame, placement, context));
+  placements.forEach(({ item, spec, frame, placement }) => addKnifePair(model, skinId, item.role, item.texture, frame, placement, context, spec));
   report.roles = items.map(({ role }) => role);
-  // Diagnóstico do teto knifeMarkSize: sizeFrac que coube e a altura do símbolo contra a do perfil.
-  const symbolPlaced = placements.find(({ item }) => item.role === 'symbol');
-  if (symbolPlaced && chosenSize !== profileSize) {
-    const baseline = knifePlacement(frame, profile, symbolPlaced.item.aspect, profile.roles.symbol, []);
-    report.symbolSizeFrac = chosenSize;
-    report.symbolScale = baseline ? +(symbolPlaced.placement.height / baseline.height).toFixed(2) : null;
-  }
+  report.regions = placements.map(({ item, spec }) => `${item.role}:${spec.region || 'blade'}${spec.etched ? ':etched' : ''}`);
   return finish('attached');
 }
 
@@ -1122,19 +1153,23 @@ function attachSkinMark(model, weaponId, skinId, knifeContext) {
   else attachPoliticalMarkings(target, weaponId, skinId, golden?.source || null);
 }
 
-function cloneMaterial(material, skinId, geometry, unit = null) {
+// `knifeMask` (faca steelBlade): mapa, aço e acabamento originais ficam; a pintura e o perfil de
+// material valem só onde dot(posição, xyz) + w ≤ 0 — o cabo/guarda de knifeHandleMask.
+function cloneMaterial(material, skinId, geometry, unit = null, knifeMask = null) {
   const copy = ownVmResource(material.clone());
   copy.name = `${material.name || 'weapon'}__skin_${skinId}`;
   const definition = WEAPON_SKINS[skinId];
   const profile = MATERIAL_PROFILE[definition?.metalFinish] || MATERIAL_PROFILE.default;
-  if (!definition?.preserveBase) {
+  if (!definition?.preserveBase && !knifeMask) {
     copy.map = null;
     copy.color.set(0xffffff);
   }
-  copy.roughness = profile.roughness;
-  copy.metalness = profile.metalness;
-  copy.envMapIntensity = profile.envMapIntensity;
-  copy.userData = { ...copy.userData, weaponSkin: skinId };
+  if (!knifeMask) {
+    copy.roughness = profile.roughness;
+    copy.metalness = profile.metalness;
+    copy.envMapIntensity = profile.envMapIntensity;
+  }
+  copy.userData = { ...copy.userData, weaponSkin: skinId, ...(knifeMask ? { steelBladeMask: knifeMask.toArray() } : {}) };
   let frame = null;
   const patternTexture = patternAssetTexture(skinId);
   if (SESSAO_DA_TRETA_FRAGMENT[skinId] || patternTexture) {
@@ -1156,20 +1191,34 @@ function cloneMaterial(material, skinId, geometry, unit = null) {
     weaponSkinPatternStyle: { value: new THREE.Vector3(style.scale || 1, style.contrast || 1, palette ? 1 : 0) },
     weaponSkinPalette: { value: palette || [new THREE.Color(0), new THREE.Color(0.5, 0.5, 0.5), new THREE.Color(1, 1, 1)] },
   } : null;
+  const fragment = patternTexture ? PATTERN_ASSET_FRAGMENT : patternFragment(skinId);
   copy.onBeforeCompile = (shader) => {
     if (frame) shader.uniforms.weaponSkinFrame = { value: frame };
     if (patternUniforms) Object.assign(shader.uniforms, patternUniforms);
+    if (knifeMask) {
+      shader.uniforms.weaponSkinKnife = { value: knifeMask };
+      shader.uniforms.weaponSkinHandleFinish = { value: new THREE.Vector2(profile.roughness, profile.metalness) };
+    }
     const declarations = `${frame ? 'uniform vec4 weaponSkinFrame;\n' : ''}${patternUniforms
       ? 'uniform sampler2D weaponSkinPattern;\nuniform vec3 weaponSkinPatternStyle;\nuniform vec3 weaponSkinPalette[3];\n'
-      : ''}`;
+      : ''}${knifeMask ? 'uniform vec4 weaponSkinKnife;\nuniform vec2 weaponSkinHandleFinish;\n' : ''}`;
     shader.vertexShader = shader.vertexShader
       .replace('void main() {', 'varying vec3 vWeaponSkinLocal;\nvoid main() {')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\n\tvWeaponSkinLocal = position;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('void main() {', `${declarations}varying vec3 vWeaponSkinLocal;\nvoid main() {`)
-      .replace('#include <map_fragment>', `#include <map_fragment>\n${patternTexture ? PATTERN_ASSET_FRAGMENT : patternFragment(skinId)}`);
+      .replace('void main() {', `${declarations}varying vec3 vWeaponSkinLocal;\nvoid main() {`);
+    shader.fragmentShader = knifeMask
+      ? shader.fragmentShader
+        .replace('#include <map_fragment>', `#include <map_fragment>
+  vec3 weaponSkinSteel = diffuseColor.rgb;
+  ${fragment}
+  float weaponSkinHandle = step(dot(vWeaponSkinLocal, weaponSkinKnife.xyz) + weaponSkinKnife.w, 0.0);
+  diffuseColor.rgb = mix(weaponSkinSteel, diffuseColor.rgb, weaponSkinHandle);`)
+        .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, weaponSkinHandleFinish.x, weaponSkinHandle);')
+        .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\n  metalnessFactor = mix(metalnessFactor, weaponSkinHandleFinish.y, weaponSkinHandle);')
+      : shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>\n${fragment}`);
   };
-  copy.customProgramCacheKey = () => `weapon-skin:${skinId}:${patternTexture ? 'pattern-asset' : 'procedural'}:object-space-v3`;
+  copy.customProgramCacheKey = () => `weapon-skin:${skinId}:${patternTexture ? 'pattern-asset' : 'procedural'}:${knifeMask ? 'aco' : 'corpo'}:object-space-v3`;
   copy.needsUpdate = true;
   return copy;
 }
@@ -1224,11 +1273,12 @@ export function applyWeaponSkinCandidate(model, weaponId, skinId, { marcas = tru
   const units = SESSAO_DA_TRETA_FRAGMENT[skinId] || patternAssetTexture(skinId)
     ? patternUnits(model, patternReference || model)
     : new Map();
+  const steelBlade = weaponId === 'knife' && definition.steelBlade === true;
   model.traverse((object) => {
     if (!object.isMesh || !object.material) return;
     const skinMaterial = (material) => HAND_MATERIAL.test(material?.name || '')
       ? material
-      : cloneMaterial(material, skinId, object.geometry, units.get(object) || null);
+      : cloneMaterial(material, skinId, object.geometry, units.get(object) || null, steelBlade ? knifeHandleMask(object.geometry) : null);
     object.material = Array.isArray(object.material)
       ? object.material.map(skinMaterial)
       : skinMaterial(object.material);

@@ -2,7 +2,7 @@ const storeSkin = ({
   id, name, weapon, theme, color, description, price, inspiration, designOrigin = 'project-owned',
   slogan = null, markAsset = null, markSourceUrl = null, rightsStatus = 'original-safe', metalFinish = null,
   preserveBase = false, markLayout = null, sloganLayout = null, sloganAspect = null, series = null, storeEnabled = true, passe = null,
-  patternAsset = null, patternStyle = null, fpMarkLayout = null, fpSloganLayout = null, knifeMarkSize = null,
+  patternAsset = null, patternStyle = null, fpMarkLayout = null, fpSloganLayout = null, steelBlade = false,
 }) => Object.freeze({
   id,
   name,
@@ -27,7 +27,8 @@ const storeSkin = ({
   // Só no corpo golden da 1ª pessoa (weapon-skins.js attachPoliticalMarkings); mesmo espaço do markLayout.
   ...(fpMarkLayout ? { fpMarkLayout: Object.freeze(fpMarkLayout) } : {}),
   ...(fpSloganLayout ? { fpSloganLayout: Object.freeze(fpSloganLayout) } : {}),
-  ...(knifeMarkSize ? { knifeMarkSize } : {}),
+  // Faca: lâmina fica no aço original; pintura e letreiro só no cabo/guarda (weapon-skins.js).
+  ...(steelBlade ? { steelBlade: true } : {}),
   ...(sloganAspect ? { sloganAspect } : {}),
   ...(patternAsset ? { patternAsset } : {}),
   ...(patternStyle ? { patternStyle: Object.freeze({ ...patternStyle, palette: patternStyle.palette ? Object.freeze([...patternStyle.palette]) : null }) } : {}),
@@ -106,7 +107,7 @@ const SESSAO_DA_TRETA_DESIGNS = Object.freeze([
   ['arma-15', 'Encerramento', 'scar', '#e2cfe9', 'Círculo de calibração violeta e a caveira de teste.', 'FORA DO AR', 'caveira-teste', 'circulo', 3.5, ['#0b0612', '#7c4a9c', '#f4e8fa']],
 ]);
 // Marca ≥ Emo Xadrez (0,100), dentro da silhueta de eval:weapon-skin-body; fpMark/fpSlogan valem
-// só no corpo golden do 1P (mão e emendas mudam); knifeMarkSize é o teto do símbolo na lâmina.
+// só no corpo golden do 1P (mão e emendas mudam). Faca não tem layout: lâmina de aço (steelBlade).
 const SESSAO_DA_TRETA_LAYOUT = Object.freeze({
   ak: { mark: { y: 0.084, z: 0.075, height: 0.100, lift: 0.004 }, slogan: { y: 0.085, z: 0.245, height: 0.054, lift: 0.004 },
     fpMark: { y: 0.070, z: -0.100, height: 0.115, lift: 0.004 }, fpSlogan: { y: 0.070, z: -0.265, height: 0.050, lift: 0.004 } },
@@ -116,7 +117,6 @@ const SESSAO_DA_TRETA_LAYOUT = Object.freeze({
     fpMark: { y: 0.045, z: -0.110, height: 0.115, lift: 0.004 }, fpSlogan: { y: 0.130, z: -0.220, height: 0.040, lift: 0.004 } },
   pistol: { mark: { y: 0.250, z: -0.150, height: 0.140 }, slogan: { y: 0.250, z: 0.380, height: 0.065 },
     fpMark: { y: 0.245, z: -0.150, height: 0.150 }, fpSlogan: { y: 0.270, z: 0.380, height: 0.075 } },
-  knife: { knifeMarkSize: 0.9 },
 });
 const SESSAO_DA_TRETA_SKINS = Object.freeze(Object.fromEntries(SESSAO_DA_TRETA_DESIGNS.map(
   ([id, name, weapon, color, description, slogan, mark, pattern, scale, palette], index) => {
@@ -125,7 +125,7 @@ const SESSAO_DA_TRETA_SKINS = Object.freeze(Object.fromEntries(SESSAO_DA_TRETA_D
     const sloganLayout = layout?.slogan || null;
     const fpMarkLayout = layout?.fpMark || null;
     const fpSloganLayout = layout?.fpSlogan || null;
-    const knifeMarkSize = layout?.knifeMarkSize || null;
+    const steelBlade = weapon === 'knife';
     return [id, storeSkin({
       id, name, weapon, color, description, theme: id, price: 0,
       inspiration: 'grafismos originais de televisão analógica fora do ar, sem marcas ou reprodução de produto',
@@ -133,7 +133,7 @@ const SESSAO_DA_TRETA_SKINS = Object.freeze(Object.fromEntries(SESSAO_DA_TRETA_D
       patternAsset: `/textures/weapon-skins/patterns/${pattern}.webp`,
       patternStyle: { scale, contrast: 1.15, palette },
       markLayout, slogan, sloganLayout, sloganAspect: 4, series: 'SESSÃO DA TRETA', storeEnabled: false,
-      fpMarkLayout, fpSloganLayout, knifeMarkSize,
+      fpMarkLayout, fpSloganLayout, steelBlade,
       passe: { season: 'sessao-da-treta-s1', level: index + 1 },
     })];
   },
