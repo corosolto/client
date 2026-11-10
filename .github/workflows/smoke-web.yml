@@ -3,7 +3,11 @@ name: smoke-web
 on:
   pull_request:
   workflow_dispatch:
-
+    inputs:
+      host:
+        description: 'Host Cloudflare para smoke-cf (ex.: https://csb-staging.<sub>.workers.dev)'
+        required: false
+        type: string
 permissions:
   contents: read
   pull-requests: read
@@ -148,12 +152,24 @@ jobs:
   # O preview é opcional enquanto a migração roda em paralelo com a Vercel.
   smoke-cf:
     needs: decide
-    if: github.event_name == 'pull_request' && needs.decide.outputs.rodar == 'true'
+    if: (github.event_name == 'pull_request' && needs.decide.outputs.rodar == 'true') || (github.event_name == 'workflow_dispatch' && inputs.host != '' && needs.decide.outputs.rodar == 'true')
     continue-on-error: true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Define host Cloudflare por dispatch
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          HOST: ${{ inputs.host }}
+        run: |
+          set -euo pipefail
+          case "$HOST" in
+            https://*.workers.dev|https://*.workers.dev/*) ;;
+            *) echo "::error::host deve ser uma URL https://*.workers.dev"; exit 1 ;;
+          esac
+          echo "BASE_URL=${HOST%/}" >> "$GITHUB_ENV"
+          echo "Host Cloudflare informado: ${HOST%/}"
       - name: Aguarda URL sticky do Cloudflare
         env:
           GH_TOKEN: ${{ github.token }}

@@ -1,7 +1,8 @@
 name: cf-preview
 
 on:
-  pull_request_target:
+  # O build roda sem segredos; o deploy confiável é disparado em outro workflow.
+  pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
@@ -43,14 +44,10 @@ jobs:
             echo "nenhum arquivo do site mudou: preview pula"
           fi
 
-  # O build executa código do PR em um runner descartável, sem credenciais de
-  # publicação ou escrita no PR. Somente os bytes de dist atravessam esta fronteira.
-  compile:
+  # O build recebe código do PR sem segredos. O deploy fica em cf-preview-deploy.yml.
+  preview:
     needs: decide
     if: needs.decide.outputs.rodar == 'true' && github.event.pull_request.draft != true && github.event.pull_request.head.repo.full_name == github.repository
-    continue-on-error: true
-    permissions:
-      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -64,82 +61,27 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Build Cloudflare
+      - name: Build Cloudflare sem segredos
         run: npm run build:cf
-      - name: Entrega somente os artefatos compilados
+      - name: Guarda apenas os assets compilados
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: cf-preview-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          name: cf-preview-${{ github.event.pull_request.number }}
           path: dist
-          retention-days: 1
           if-no-files-found: error
           include-hidden-files: true
 
-  # A publicação é opcional para não bloquear o PR enquanto o dono ajusta o token.
-  # Este job nunca faz checkout do head: config, script de comentário e Wrangler
-  # vêm de fontes confiáveis, e o artefato do PR é tratado apenas como dados.
-  preview:
-    needs: [decide, compile]
-    if: always() && needs.decide.outputs.rodar == 'true' && needs.compile.result == 'success' && github.event.pull_request.draft != true && github.event.pull_request.head.repo.full_name == github.repository
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+
+  # Publica um marcador para o workflow confiável não confundir build pulado com sucesso.
+  skip:
+    needs: decide
+    if: needs.decide.outputs.rodar == 'false' || github.event.pull_request.draft == true || github.event.pull_request.head.repo.full_name != github.repository
+    timeout-minutes: 10
     steps:
-      - name: Checkout da configuração confiável do branch base
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          persist-credentials: false
-          sparse-checkout: |
-            wrangler.preview.toml
-            scripts/ci/cf_preview_comment.py
-          sparse-checkout-cone-mode: false
-      - name: Baixa somente os artefatos compilados do PR
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: cf-preview-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
-          path: dist
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 22
-      - name: Instala Wrangler oficial pinado
-        run: npm install --prefix "$RUNNER_TEMP/cf-preview-wrangler" --no-save --no-package-lock --ignore-scripts --no-audit --no-fund wrangler@4.158.0
-      - name: Verifica configuração da conta
-        env:
-          ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Cria marcador de preview pulado
         run: |
-          if [ -z "$ACCOUNT_ID" ]; then
-            echo "::error::Configure CLOUDFLARE_ACCOUNT_ID em Settings > Secrets and variables > Actions > Variables"
-            exit 1
-          fi
-      - name: Publica versão do Worker
-        id: upload
-        env:
-          CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN || secrets.CF_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          PR_NUM: ${{ github.event.pull_request.number }}
-        run: |
-          set -euo pipefail
-          if [ -z "$CF_API_TOKEN" ]; then
-            echo "::error::CF_WORKERS_TOKEN/CF_API_TOKEN ausente ou sem Workers Scripts:Edit"
-            exit 1
-          fi
-          "$RUNNER_TEMP/cf-preview-wrangler/node_modules/.bin/wrangler" versions upload \
-            --config "$GITHUB_WORKSPACE/wrangler.preview.toml" \
-            --name csb-preview \
-            --message "PR #$PR_NUM" 2>&1 | tee "$RUNNER_TEMP/wrangler-upload.log"
-          URL=$(grep -Eo 'https://[^[:space:]]+\.workers\.dev' "$RUNNER_TEMP/wrangler-upload.log" | tail -n 1 | sed 's/[),.]$//')
-          if [ -z "$URL" ]; then
-            echo "::error::Wrangler não retornou a URL da versão"
-            exit 1
-          fi
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-          echo "preview Cloudflare: $URL"
-      - name: Atualiza comentário sticky
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          PR_NUM: ${{ github.event.pull_request.number }}
-          PREVIEW_URL: ${{ steps.upload.outputs.url }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: python3 "$GITHUB_WORKSPACE/scripts/ci/cf_preview_comment.py" "$PR_NUM" "$PREVIEW_URL"
+          printf 'preview pulado: nenhum arquivo do site mudou ou PR não publicável\n' > "$RUNNER_TEMP/preview-skip.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cf-preview-skip-${{ github.event.pull_request.number }}
+          path: ${{ runner.temp }}/preview-skip.txt
