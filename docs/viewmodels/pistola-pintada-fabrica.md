@@ -44,9 +44,11 @@ letreiro logo atrás dele (y 0,29, altura 0,05). É o lugar livre que a busca de
 idle e na inspeção girada. A lateral do ferrolho só tem vértice nas pontas, então o letreiro mede
 a superfície numa janela de 0,6; com janela estreita ele afundava no ferrolho.
 
-Medido em 8 pinturas da loja: nenhuma marca tapada por mão ou peça. Pendente: os símbolos de
-`usa-bandeira-grande.svg` e `maga-47.svg` têm o plano no lugar e sem oclusão, mas não aparecem na
-imagem; a causa (textura SVG) não foi investigada nesta rota.
+Medido em 8 pinturas da loja: nenhuma marca tapada por mão ou peça. Os símbolos de
+`usa-bandeira-grande.svg` e `maga-47.svg` tinham o plano no lugar e sem oclusão, mas sumiam: o
+SVG não declarava `width`/`height`, o Chrome dava ao `<img>` 300×150 de faz-de-conta e o WebGL
+recusava o upload (`texImage2D` INVALID_VALUE). Com tamanho no `<svg>` (também `acido-selo.svg` e
+`caveira-urbana.svg`) a bandeira e o 47 aparecem na frente do ferrolho; o PF6 cobra isso.
 
 ## Mãos
 
@@ -71,4 +73,5 @@ O corte no canto de baixo à direita é o mesmo da AK aprovada.
   área (±20%) e eixo do cano (≤15°), em 16:9 e 3:2. O placar `tools/eval/vm-enquadramento-idle.json`
   é conferido no CI por `eval:vm-enquadramento-placar`.
 - `npm run eval:pintura-fabrica` (CI): grupo pintado sem mão, padrão no espaço TP, marcas no osso
-  `Arma` e troca de pintura sem marcas empilhadas. Mutantes `pintura-na-mao` e `sem-referencia`.
+  `Arma`, troca de pintura sem marcas empilhadas e SVG de marca com `width`/`height`. Mutantes
+  `pintura-na-mao`, `sem-referencia` e `svg-sem-tamanho`.
