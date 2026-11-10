@@ -368,6 +368,13 @@ const POLITICAL_LAYOUT = Object.freeze({
   pistol: Object.freeze({
     symbol: Object.freeze({ y: -0.020, z: -0.015, height: 0.082 }),
     slogan: Object.freeze({ y: 0.240, z: 0.035, height: 0.030 }),
+    // 1P no X18 da fábrica: a mão cobre a lateral de trás; só a frente do ferrolho fica livre no
+    // idle e na inspeção (busca de layout, docs/viewmodels/pistola-pintada-fabrica.md).
+    fp: Object.freeze({
+      gap: 0.01,
+      symbol: Object.freeze({ y: 0.300, front: 0.690, height: 0.100, maxWidth: 0.160, fitWidth: 0.100 }),
+      slogan: Object.freeze({ y: 0.290, height: 0.050, maxWidth: 0.400, fitWidth: 0.600 }),
+    }),
   }),
 });
 const SLOGAN_STYLE = Object.freeze({
@@ -830,33 +837,44 @@ function attachKnifeMarkings(model, skinId, context) {
   return finish('attached');
 }
 
+// Layout 1P (`layout.fp`): a marca termina em `front` (cano +Z) e cabe em `maxWidth`; a lateral é
+// medida numa janela de pelo menos `fitWidth`: a face do ferrolho só tem vértice nas pontas.
+function fpPlacement(spec, aspect, front) {
+  const height = Math.min(spec.height, spec.maxWidth / aspect);
+  const width = height * aspect;
+  const fitWidth = Math.max(width, spec.fitWidth);
+  return { y: spec.y, z: front - width / 2, height, fit: { z: front - fitWidth / 2, width: fitWidth } };
+}
+
 function attachPoliticalMarkings(model, weaponId, skinId, source = null) {
   const symbol = markTextures.get(skinId);
   const definition = WEAPON_SKINS[skinId];
   const layout = POLITICAL_LAYOUT[weaponId];
   if (!definition || !layout) return;
   const slogan = sloganTexture(skinId);
+  const fp = source ? layout.fp : null;
   const items = [];
+  let front = fp?.symbol.front;
   if (symbol) {
-    items.push({
-      role: 'symbol',
-      texture: symbol,
-      placement: definition.markLayout || layout.symbol,
-      aspect: (symbol.image?.width || 1) / (symbol.image?.height || 1),
-    });
+    const aspect = (symbol.image?.width || 1) / (symbol.image?.height || 1);
+    const placement = fp ? fpPlacement(fp.symbol, aspect, front) : definition.markLayout || layout.symbol;
+    if (fp) front = placement.z - placement.height * aspect / 2 - fp.gap;
+    items.push({ role: 'symbol', texture: symbol, placement, aspect });
   }
   if (slogan) {
+    const aspect = definition.sloganAspect || 8;
     items.push({
       role: 'slogan',
       texture: slogan,
-      placement: definition.sloganLayout || layout.slogan,
-      aspect: definition.sloganAspect || 8,
+      placement: fp ? fpPlacement(fp.slogan, aspect, front) : definition.sloganLayout || layout.slogan,
+      aspect,
     });
   }
   if (!items.length) return;
   const surfaces = fittedSideSurfaces(model, weaponId, items.map(({ placement, aspect }) => ({
     ...placement,
     width: placement.height * aspect,
+    ...placement.fit,
   })), source);
   items.forEach((item, index) => addFittedPair(model, skinId, item.role, item.texture, item.placement, surfaces[index], item.aspect));
 }
