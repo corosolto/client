@@ -120,8 +120,9 @@ globalThis.fetch = async (url, init = {}) => {
   const u = new URL(url, 'http://localhost');
   pedidos.push({ path: u.pathname, search: u.search, method: init.method || 'GET', body: init.body ?? null });
   if (u.pathname !== '/api/passe') return new Response('{"error":"not_found"}', { status: 404 });
+  const conta = mock;   // o pedido pertence à conta que estava ativa quando saiu
   if (init.method === 'POST' && atrasoPost) await new Promise((r) => setTimeout(r, atrasoPost));
-  const { status, body } = mock.handle(init.method || 'GET', init.body || '');
+  const { status, body } = conta.handle(init.method || 'GET', init.body || '');
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 };
 
@@ -305,14 +306,17 @@ await clausula('PS5', 'claim-duplo: dois cliques, um pedido', async () => {
   assert.equal(mock.creditos.filter((c) => c.event_key.endsWith(':1')).length, 5, 'recompensas do nível 1 duplicaram');
   /* troca de conta com o resgate em voo: a conta nova manda o PRÓPRIO pedido */
   await novaConta({ autenticado: true, xp: 1500, claimed: [] });
+  const contaAntiga = mock;
   pedidos.length = 0; atrasoPost = 30;
   const antiga = P.resgatarNivel(1);
-  mock = criarPasseMock({ autenticado: true, xp: 1500, claimed: [] });
+  const contaNova = mock = criarPasseMock({ autenticado: true, xp: 1500, claimed: [] });
   await P.trocarContaPasse();
   const nova = P.resgatarNivel(1);
   await Promise.allSettled([antiga, nova]); atrasoPost = 0;
   assert.equal(pedidos.filter((p) => p.method === 'POST').length, 2, 'conta nova reaproveitou o resgate em voo da conta anterior');
-  assert.equal(mock.creditos.filter((c) => c.event_key.endsWith(':1')).length, 5, 'conta nova não recebeu o próprio resgate');
+  const doNivel1 = (conta) => conta.creditos.filter((c) => c.event_key.endsWith(':1')).length;
+  assert.equal(doNivel1(contaAntiga), 5, 'conta anterior perdeu o próprio resgate');
+  assert.equal(doNivel1(contaNova), 5, 'conta nova não recebeu o próprio resgate');
 });
 
 await clausula('PS6', 'analytics: modal_view e open só com consentimento', async () => {
