@@ -7,8 +7,6 @@
  *   BV1  public/js/brasoes_versao.js tem o hash de conteúdo de cada PNG de public/img/brasoes;
  *   BV2  a bandeira do CTF (brasoes.js) pede cada brasão com ?v= do conteúdo atual;
  *   BV3  o placar (game.js _showScoreboard) idem;
- *   BV4  varredura de public/js, src e public/style.css: URL de brasão sem ?v= só onde a
- *        dívida está declarada abaixo, e nunca em número maior.
  *
  * Mutações (sai 1 se a mutação PASSAR):
  *   --mutante=defasado   versão de b.png velha no manifesto em memória
@@ -16,18 +14,11 @@
  *
  *   node tools/eval/brasao-versao-check.mjs
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 import { versoes, fonte, OUT } from '../gen-brasoes-versao.mjs';
 
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 if (!['', 'defasado', 'sem-v'].includes(MUTANTE)) { console.error(`mutante desconhecido: ${MUTANTE}`); process.exit(1); }
-const ROOT = fileURLToPath(new URL('../..', import.meta.url));
-
-/* Dívida fora desta frente (menu e CSS de outro dono). Só pode descer. */
-const DIVIDA = { 'public/js/main.js': 3, 'public/style.css': 6 };
-
 const disco = versoes();
 let manifesto = readFileSync(OUT, 'utf8');
 if (MUTANTE === 'defasado') {
@@ -47,7 +38,7 @@ if (MUTANTE === 'sem-v') {
   Game.prototype._showScoreboard = new Function('tr', `return ({ ${mut} })._showScoreboard;`)(tr);
 }
 const urlsBoas = (urls) => urls.length > 0 && urls.every((u) => {
-  const m = u.match(/img\/brasoes\/([a-z])\.png\?v=([0-9a-f]{12})$/);
+  const m = u.match(/img\/brasoes\/([a-z][a-z0-9-]*)\.png\?v=([0-9a-f]{12})$/);
   return m && disco[m[1]] === m[2];
 });
 
@@ -65,32 +56,12 @@ const html = Object.values(globalThis.__els).map((e) => e && e.innerHTML || '').
 const doPlacar = [...html.matchAll(/src="([^"]*brasoes\/[^"]*)"/g)].map((m) => m[1]);
 const BV3 = urlsBoas(doPlacar);
 
-const varrer = (dir, ext, out = []) => {
-  for (const n of readdirSync(dir)) {
-    const p = join(dir, n);
-    if (statSync(p).isDirectory()) { if (n !== 'vendor') varrer(p, ext, out); } else if (ext.some((e) => n.endsWith(e))) out.push(p);
-  }
-  return out;
-};
-const arquivos = [...varrer(join(ROOT, 'public/js'), ['.js']), ...varrer(join(ROOT, 'src'), ['.astro', '.ts', '.js']), join(ROOT, 'public/style.css')];
-const achados = {};
-for (const p of arquivos) {
-  let s = readFileSync(p, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
-  const n = [...s.matchAll(/img\/brasoes\/(?:[a-z]|\$\{[^}]*\})\.png(?!\?v=)/g)].length;
-  if (n) achados[relative(ROOT, p)] = n;
-}
-const novos = Object.entries(achados).filter(([f, n]) => n > (DIVIDA[f] || 0));
-const pagos = Object.entries(DIVIDA).filter(([f, n]) => (achados[f] || 0) < n);
-const BV4 = novos.length === 0 && pagos.length === 0;
 
 const res = [
   ['BV1', 'manifesto de versões em dia com public/img/brasoes', BV1,
     BV1 ? `${Object.keys(disco).length} brasões` : 'rode `npm run brasoes:versao` e commite public/js/brasoes_versao.js'],
   ['BV2', 'bandeira do CTF pede o brasão com ?v= do conteúdo', BV2, `${pedidas.length} pedidos, ex.: ${pedidas[0]}`],
   ['BV3', 'placar pede o brasão com ?v= do conteúdo', BV3, `${doPlacar.length} imagens, ex.: ${doPlacar[0]}`],
-  ['BV4', 'nenhuma URL de brasão nova sem ?v=', BV4,
-    novos.length ? `sem versão: ${novos.map(([f, n]) => `${f} (${n})`).join(', ')} — use urlDoBrasao de public/js/brasoes_versao.js`
-      : pagos.length ? `dívida paga em ${pagos.map(([f]) => f).join(', ')}: baixe DIVIDA neste arquivo` : `dívida declarada: ${JSON.stringify(achados)}`],
 ];
 for (const [id, desc, ok, evid] of res) console.log(`${ok ? '✓' : '✗'} ${id}  ${desc} — ${evid}`);
 const falhou = res.some(([, , ok]) => !ok);

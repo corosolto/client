@@ -31,7 +31,8 @@ import { preloadMapAmbientLife } from './ambientlife.js';   // fauna do mapa (MA
 import { apiUrl, fetchComRetry, versaoComOrigem } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
 import { MAPS, DEFAULT_MAP, ehMapaJavaporcos, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS, comMapaCarregado, defineSeedHavan } from './maps.js';
 import { PALETA } from './paleta.js';
-import { FACTIONS } from './factions.js';
+import { FACTIONS, faction as factionDefinition } from './factions.js';
+import { urlDoBrasao } from './brasoes_versao.js';
 import { preloadWeapons, WEAPON_IDS } from './weapons.js';
 import {preloadWeaponSkinCandidate} from './weapon-skins.js';
 import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
@@ -1452,7 +1453,7 @@ function syncHomeCharacter() {
   const def = personagemLivre(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);
   const lado = ladoValido(def, currentTeam);
   $('hub-character-name').textContent = `${tr(FACTION_NAME[lado])} · ${def.name}`;
-  $('hub-character-crest').src = `/img/brasoes/${lado.toLowerCase()}.png`;
+  $('hub-character-crest').src = '/' + urlDoBrasao(factionDefinition(lado).crest);
   $('hub-change-character').style.setProperty('--hub-faction', PALETA[lado]?.base || '#b4d92e');
   pvSetChar(def);
 }
@@ -1516,7 +1517,7 @@ function openHubRoster(updateRoute = true) {
     lados.replaceChildren(); filters.replaceChildren(); grid.replaceChildren();
     for (const lado of ['E', 'B']) {
       const button = document.createElement('button'); button.type = 'button'; button.setAttribute('role', 'tab');
-      const crest = document.createElement('img'); crest.src = `/img/brasoes/${lado.toLowerCase()}.png`; crest.alt = '';
+      const crest = document.createElement('img'); crest.src = '/' + urlDoBrasao(factionDefinition(lado).crest); crest.alt = '';
       button.append(crest, tr(FACTION_NAME[lado]));
       button.style.setProperty('--lado', PALETA[lado].base);
       button.setAttribute('aria-selected', String(lado === hubRosterLado));
@@ -2950,8 +2951,8 @@ if (HUB_ENABLED) {
     item.dataset.faction = fac;
     item.style.setProperty('--hub-faction', PALETA[fac]?.base || (fac === 'P' ? '#d6b55a' : '#b4d92e'));
     const crests = document.createElement('span'); crests.className = 'hub-faction-crests';
-    for (const letter of fac === 'P' ? ['e', 'b'] : [fac.toLowerCase()]) {
-      const crest = document.createElement('img'); crest.src = `/img/brasoes/${letter}.png`; crest.alt = ''; crests.appendChild(crest);
+    for (const crestId of fac === 'P' ? ['e', 'b'] : [factionDefinition(fac).crest]) {
+      const crest = document.createElement('img'); crest.src = '/' + urlDoBrasao(crestId); crest.alt = ''; crests.appendChild(crest);
     }
     const name = document.createElement('span'); name.textContent = tr(FACTION_NAME[fac] || fac);
     item.append(crests, name); factionGrid.appendChild(item);

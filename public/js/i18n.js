@@ -36,6 +36,9 @@ export async function resolveGeoLang() {
 /* PT -> EN. Ordena por tela pra manutenção; a chave é o texto EXATO (trim) do DOM. */
 const DICT = {
   'T$ · ERRO': 'T$ · ERROR',
+  'Fora do Ar': 'Off the Air',
+  'A treta continua depois do sinal!': 'The fight continues after the signal!',
+  'Boina, uniforme preto e um sinal que não aceita rendição. A ronda da madrugada chegou.': 'Beret, black uniform and a signal that refuses to surrender. The midnight patrol is here.',
   // splash / boot
   'CLIQUE OU PRESSIONE QUALQUER TECLA': 'CLICK OR PRESS ANY KEY',
   'CARREGANDO ARENA…': 'LOADING ARENA…',

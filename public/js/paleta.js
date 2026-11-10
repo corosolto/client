@@ -27,11 +27,8 @@
    no `Game`. A cor DE uma facção não depende de partida nenhuma, e é só isso que mora
    aqui.
 
-   ── POR QUE ESTE ARQUIVO NÃO IMPORTA NADA ───────────────────────────────────────
-   De propósito. Ele é importado por `game.js`, `brasoes.js` e `characters.js`; qualquer
-   import aqui vira aresta a mais no grafo de módulos e abre risco de ciclo justo no
-   caminho de boot. Cores são strings — `three` não é necessário. Quem quer número
-   (`0xff5555`) chama `num()`.
+   O registro não importa o engine: paletas, nomes e brasões podem derivar dele
+   sem introduzir ciclo no boot. Quem precisa do hexadecimal numérico chama `num()`.
    ═══════════════════════════════════════════════════════════════════════════════════ */
 
 import { FACTIONS } from './factions.js';
