@@ -3,13 +3,15 @@
 import { defineMiddleware } from 'astro:middleware';
 import { borda } from '#borda';
 import { backendUrl } from './lib/env-runtime';
-import { trafficEntry, uniqueRegister } from './lib/server-traffic.mjs';
+import { desvioParaApp, trafficEntry, uniqueRegister } from './lib/server-traffic.mjs';
 
 // Env lida POR REQUISIÇÃO: no Workers a ponte do src/cf/worker.ts copia [vars] e
 // secrets do binding para process.env; segredo nunca inlinado pelo import.meta.env.
 
 export const onRequest = defineMiddleware((context, next) => {
   const { request } = context;
+  const desvio = desvioParaApp(request);
+  if (desvio) return context.redirect(desvio, 302);
   const entry = trafficEntry(request);
   const secret = process.env.API_PROXY_SECRET;
   if (entry && secret && secret.length >= 32) {
