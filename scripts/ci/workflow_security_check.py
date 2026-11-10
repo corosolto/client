@@ -190,6 +190,46 @@ def read_workflows(root: Path = Path('.github/workflows')) -> dict[Path, str]:
 
 BUILD = Path('.github/workflows/preview-build.yml')
 DEPLOY = Path('.github/workflows/preview-deploy.yml')
+CF_BUILD = Path('.github/workflows/cf-preview.yml')
+CF_DEPLOY = Path('.github/workflows/cf-preview-deploy.yml')
+SMOKE_WEB = Path('.github/workflows/smoke-web.yml')
+
+
+def passo(source: str, nome: str) -> str:
+    linhas = source.splitlines()
+    for i, linha in enumerate(linhas):
+        if linha.strip() != f'- name: {nome}':
+            continue
+        indentacao = len(linha) - len(linha.lstrip())
+        bloco = []
+        for seguinte in linhas[i + 1:]:
+            atual = len(seguinte) - len(seguinte.lstrip())
+            if seguinte.strip() and atual <= indentacao and seguinte.lstrip().startswith('- '):
+                break
+            bloco.append(seguinte)
+        return '\n'.join(bloco)
+    return ''
+
+
+def cloudflare_failures(build: str, deploy: str, smoke: str) -> list[str]:
+    errors = []
+    if 'pull_request:' not in build or 'pull_request_target' in build or 'secrets.' in build:
+        errors.append('CF1 build Cloudflare precisa usar pull_request sem segredos')
+    if 'workflow_run:' not in deploy:
+        errors.append('CF2 deploy Cloudflare precisa usar workflow_run')
+    download = passo(deploy, 'Baixa somente os assets compilados')
+    destino = re.search(r'(?m)^\s*path:\s*(\S+)\s*$', download)
+    if not destino or destino.group(1) != 'dist':
+        errors.append('CF3 artefato do PR precisa ficar isolado em dist, fora do checkout confiável')
+    if 'python3 scripts/ci/cf_preview_comment.py' not in deploy:
+        errors.append('CF4 comentário precisa executar o script do checkout confiável')
+    sticky = passo(smoke, 'Aguarda URL sticky do Cloudflare')
+    if "if: github.event_name == 'pull_request'" not in sticky:
+        errors.append('CF5 dispatch manual não pode esperar sticky de PR')
+    guarda = passo(smoke, 'Confirma host do smoke manual')
+    if '${BASE_URL:-}' not in guarda or "if: github.event_name == 'workflow_dispatch'" not in guarda:
+        errors.append('CF6 dispatch manual precisa falhar imediatamente se BASE_URL estiver vazio')
+    return errors
 
 
 def _ler(p: Path) -> str:
@@ -251,6 +291,15 @@ def selftest(source: str) -> list[str]:
         mutant.write_text('steps:\\n  - uses: actions/checkout@v4\\n', encoding='utf-8')
         if not supply_failures(read_workflows(Path(tmp))):
             missed.append('extensao-yaml')
+    cf_build, cf_deploy, smoke = _ler(CF_BUILD), _ler(CF_DEPLOY), _ler(SMOKE_WEB)
+    cf_mutants = {
+        'cf-artefato-na-raiz': (cf_build, cf_deploy.replace('path: dist', 'path: .', 1), smoke),
+        'cf-path-dist-em-outro-passo': (cf_build, cf_deploy.replace('          path: dist\n', '', 1) + '\n      - name: Upload posterior\n        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02\n        with:\n          path: dist\n', smoke),
+        'cf-dispatch-espera-sticky': (cf_build, cf_deploy, smoke.replace("- name: Aguarda URL sticky do Cloudflare\n        if: github.event_name == 'pull_request'", '- name: Aguarda URL sticky do Cloudflare')),
+        'cf-dispatch-sem-host': (cf_build, cf_deploy, smoke.replace('${BASE_URL:-}', '${BASE_URL}')),
+        'cf-guarda-no-evento-errado': (cf_build, cf_deploy, smoke.replace("- name: Confirma host do smoke manual\n        if: github.event_name == 'workflow_dispatch'", "- name: Confirma host do smoke manual\n        if: github.event_name == 'pull_request'")),
+    }
+    missed += [name for name, (b, d, s) in cf_mutants.items() if not cloudflare_failures(b, d, s)]
     return missed
 
 
@@ -262,6 +311,7 @@ def main() -> int:
     workflows = read_workflows()
     errors = (preview_failures(source)
               + separacao_failures(_ler(BUILD), _ler(DEPLOY))
+              + cloudflare_failures(_ler(CF_BUILD), _ler(CF_DEPLOY), _ler(SMOKE_WEB))
               + supply_failures(workflows)
               + merge_group_failures(workflows))
     if errors:
