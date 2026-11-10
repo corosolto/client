@@ -89,21 +89,21 @@ export const PATTERN_TEXTURE_BUDGET = Object.freeze({ maxTextures: 6, maxSize: 5
 // Cada skin do passe: um padrão de TV tileável no corpo, uma marca-herói e um letreiro.
 // Paleta = [escuro, meio, claro] sobre a luminância do padrão; null mantém o RGB da arte (barras).
 const SESSAO_DA_TRETA_DESIGNS = Object.freeze([
-  ['Sintonia', 'ak', '#e4d8aa', 'Barras de cor desmanchando em chuvisco e a TV de cara feia.', 'SEM SINAL', 'tv-rosto', 'barras', 2.0, null],
-  ['Chuvisco', 'pistol', '#c7d0d2', 'Chuvisco preto e branco com o fantasma saindo da tela.', 'FORA DO AR', 'fantasma-tela', 'estatica', 2.0, ['#050505', '#6d6d6d', '#f4f4f4']],
-  ['Corte Seco', 'knife', '#f14b55', 'Chuvisco vermelho e branco e a caveira de teste.', 'SEM SINAL', 'caveira-teste', 'estatica', 1.2, ['#0a0000', '#a0101a', '#ffe8e0']],
-  ['Desvio', 'm4', '#30d9d0', 'Glitch ciano fora de sincronia e a TV de cara feia.', 'CANAL 0', 'tv-rosto', 'glitch', 1.6, ['#021013', '#0b8f96', '#e8ffff']],
-  ['Fantasma', 'scar', '#c17cff', 'Chuvisco violeta com o fantasma saindo da tela.', 'FORA DO AR', 'fantasma-tela', 'estatica', 2.0, ['#08030f', '#6b2fb0', '#f3e6ff']],
-  ['Retrato', 'ak', '#edcc4d', 'Círculo de calibração amarelo e a caveira de teste.', 'SEM SINAL', 'caveira-teste', 'circulo', 3.5, ['#0d0a02', '#a07a08', '#fff2a0']],
-  ['Canal Zero', 'pistol', '#5fe284', 'Varredura de fósforo verde e a TV de cara feia.', 'CANAL 0', 'tv-rosto', 'fosforo', 1.4, ['#010a03', '#118a34', '#c8ffd2']],
-  ['Vértice', 'knife', '#f28b43', 'Glitch laranja com o fantasma saindo da tela.', 'FORA DO AR', 'fantasma-tela', 'glitch', 1.5, ['#0c0300', '#e06010', '#fff2e0']],
-  ['Rastreamento', 'm4', '#51a8ee', 'Rasgos de fita azul e a TV de cara feia.', '▶ PLAY 00:00', 'tv-rosto', 'tracking', 2.0, ['#020818', '#1c3fa8', '#f0f6ff']],
-  ['Vertical', 'scar', '#ec6fae', 'Glitch magenta e a TV de cara feia.', 'SEM SINAL', 'tv-rosto', 'glitch', 1.5, null],
-  ['Contraste', 'ak', '#e7e4d9', 'Escada de cinzas desmanchando em chuvisco e a caveira de teste.', 'FORA DO AR', 'caveira-teste', 'barras', 2.0, ['#050505', '#8a8a84', '#f6f3ea']],
-  ['Pulso', 'pistol', '#f2c34a', 'Varredura de fósforo âmbar com o fantasma saindo da tela.', 'CANAL 0', 'fantasma-tela', 'fosforo', 1.4, ['#0c0600', '#a86a08', '#ffe2a0']],
-  ['Frequência', 'knife', '#50d5bd', 'Chuvisco preto e ciano com o fantasma saindo da tela.', 'SEM SINAL', 'fantasma-tela', 'estatica', 1.2, ['#000000', '#0a4f48', '#d6fffb']],
-  ['Quadro Partido', 'm4', '#e16a70', 'Barras de cor rasgadas e a caveira de teste.', '▶ PLAY 00:00', 'caveira-teste', 'barras', 2.0, null],
-  ['Encerramento', 'scar', '#e2cfe9', 'Círculo de calibração violeta e a caveira de teste.', 'FORA DO AR', 'caveira-teste', 'circulo', 3.5, ['#0b0612', '#7c4a9c', '#f4e8fa']],
+  ['arma-01', 'Sintonia', 'ak', '#e4d8aa', 'Barras de cor desmanchando em chuvisco e a TV de cara feia.', 'SEM SINAL', 'tv-rosto', 'barras', 2.0, null],
+  ['arma-02', 'Chuvisco', 'pistol', '#c7d0d2', 'Chuvisco preto e branco com o fantasma saindo da tela.', 'FORA DO AR', 'fantasma-tela', 'estatica', 2.0, ['#050505', '#6d6d6d', '#f4f4f4']],
+  ['arma-03', 'Corte Seco', 'knife', '#f14b55', 'Chuvisco vermelho e branco e a caveira de teste.', 'SEM SINAL', 'caveira-teste', 'estatica', 1.2, ['#0a0000', '#a0101a', '#ffe8e0']],
+  ['arma-04', 'Desvio', 'm4', '#30d9d0', 'Glitch ciano fora de sincronia e a TV de cara feia.', 'CANAL 0', 'tv-rosto', 'glitch', 1.6, ['#021013', '#0b8f96', '#e8ffff']],
+  ['arma-05', 'Fantasma', 'scar', '#c17cff', 'Chuvisco violeta com o fantasma saindo da tela.', 'FORA DO AR', 'fantasma-tela', 'estatica', 2.0, ['#08030f', '#6b2fb0', '#f3e6ff']],
+  ['arma-06', 'Retrato', 'ak', '#edcc4d', 'Círculo de calibração amarelo e a caveira de teste.', 'SEM SINAL', 'caveira-teste', 'circulo', 3.5, ['#0d0a02', '#a07a08', '#fff2a0']],
+  ['arma-07', 'Canal Zero', 'pistol', '#5fe284', 'Varredura de fósforo verde e a TV de cara feia.', 'CANAL 0', 'tv-rosto', 'fosforo', 1.4, ['#010a03', '#118a34', '#c8ffd2']],
+  ['arma-08', 'Vértice', 'knife', '#f28b43', 'Glitch laranja com o fantasma saindo da tela.', 'FORA DO AR', 'fantasma-tela', 'glitch', 1.5, ['#0c0300', '#e06010', '#fff2e0']],
+  ['arma-09', 'Rastreamento', 'm4', '#51a8ee', 'Rasgos de fita azul e a TV de cara feia.', '▶ PLAY 00:00', 'tv-rosto', 'tracking', 2.0, ['#020818', '#1c3fa8', '#f0f6ff']],
+  ['arma-10', 'Vertical', 'scar', '#ec6fae', 'Glitch magenta e a TV de cara feia.', 'SEM SINAL', 'tv-rosto', 'glitch', 1.5, null],
+  ['arma-11', 'Contraste', 'ak', '#e7e4d9', 'Escada de cinzas desmanchando em chuvisco e a caveira de teste.', 'FORA DO AR', 'caveira-teste', 'barras', 2.0, ['#050505', '#8a8a84', '#f6f3ea']],
+  ['arma-12', 'Pulso', 'pistol', '#f2c34a', 'Varredura de fósforo âmbar com o fantasma saindo da tela.', 'CANAL 0', 'fantasma-tela', 'fosforo', 1.4, ['#0c0600', '#a86a08', '#ffe2a0']],
+  ['arma-13', 'Frequência', 'knife', '#50d5bd', 'Chuvisco preto e ciano com o fantasma saindo da tela.', 'SEM SINAL', 'fantasma-tela', 'estatica', 1.2, ['#000000', '#0a4f48', '#d6fffb']],
+  ['arma-14', 'Quadro Partido', 'm4', '#e16a70', 'Barras de cor rasgadas e a caveira de teste.', '▶ PLAY 00:00', 'caveira-teste', 'barras', 2.0, null],
+  ['arma-15', 'Encerramento', 'scar', '#e2cfe9', 'Círculo de calibração violeta e a caveira de teste.', 'FORA DO AR', 'caveira-teste', 'circulo', 3.5, ['#0b0612', '#7c4a9c', '#f4e8fa']],
 ]);
 // Marca-herói acima da escala da Emo Xadrez (0,100 longa / 0,110 pistola), dentro da silhueta
 // medida por eval:weapon-skin-body: na AK ela desce para o poço do carregador e na M4 para cima
@@ -124,8 +124,7 @@ const SESSAO_DA_TRETA_LAYOUT = Object.freeze({
   knife: { knifeMarkSize: 0.9 },
 });
 const SESSAO_DA_TRETA_SKINS = Object.freeze(Object.fromEntries(SESSAO_DA_TRETA_DESIGNS.map(
-  ([name, weapon, color, description, slogan, mark, pattern, scale, palette], index) => {
-    const id = `arma-${String(index + 1).padStart(2, '0')}`;
+  ([id, name, weapon, color, description, slogan, mark, pattern, scale, palette], index) => {
     const layout = SESSAO_DA_TRETA_LAYOUT[weapon];
     const markLayout = layout?.mark || null;
     const sloganLayout = layout?.slogan || null;
