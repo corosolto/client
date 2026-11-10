@@ -94,7 +94,7 @@ export function initLoginPrompt({auth=null,config=null,accountBusy=()=>false,ski
   const list=document.getElementById('login-prompt-providers'),status=document.getElementById('login-prompt-status');
   const title=document.getElementById('login-prompt-title'),kicker=dialog.querySelector('header small'),treta=document.getElementById('login-prompt-treta');
   const plain={title:title?.textContent,kicker:kicker?.textContent};
-  let previousFocus=null,recovery=null,ended=false,owed=false,mode='singleplayer',campaign=null,pitched=false,pedido=null;
+  let previousFocus=null,guestLink=true,ended=false,owed=false,mode='singleplayer',campaign=null,pitched=false,pedido=null;
   // Fim da decisão pós-partida (mostrou e fechou, ou não era a vez): a apresentação da loja vem depois.
   const settle=()=>{if(!owed)return;owed=false;document.dispatchEvent(new CustomEvent('cs-pos-partida',{detail:{treta:pitched}}));pitched=false;};
   const drawTreta=()=>{
@@ -116,21 +116,27 @@ export function initLoginPrompt({auth=null,config=null,accountBusy=()=>false,ski
     if(reason && !pedido){writeRecord({dismissedAt:Date.now(),matches:0});emit(track,'login_prompt_dismissed',{reason});}
     dialog.close();previousFocus?.focus?.();
   };
+  const loginAttempts=new Map();
+  const attempt=fn=>{
+    if(loginAttempts.has(fn))return loginAttempts.get(fn);
+    const pending=(async()=>{try{await fn(guestLink);}catch(e){
+      if(e.message==='guest_invalid'){
+        guestLink=false;status.textContent='Convidado antigo não encontrado. Entrando sem vincular o histórico local…';
+        try{await fn(false);}catch(error){status.textContent=accountError(error);}
+      }else status.textContent=accountError(e);
+    }})();
+    loginAttempts.set(fn,pending);
+    return pending.finally(()=>{loginAttempts.delete(fn);});
+  };
   const button=(cls,label,provider,fn)=>{
     const b=document.createElement('button');b.type='button';b.className=cls;b.dataset.provider=provider;
     if(PROVIDER_ICONS[provider]){const i=document.createElement('span');i.className='account-provider-icon';i.innerHTML=PROVIDER_ICONS[provider];b.append(i);}
     b.append(document.createTextNode(label));
-    b.onclick=async()=>{b.disabled=true;emit(track,'login_prompt_provider_click',{provider});try{await fn(true);}catch(e){
-      status.textContent=accountError(e);b.disabled=false;
-      if(e.message==='guest_invalid'){
-        if(!recovery){recovery=document.createElement('button');recovery.type='button';recovery.className='account-button';recovery.textContent='Entrar sem vincular o convidado';list.append(recovery);}
-        recovery.onclick=async()=>{recovery.disabled=true;try{await fn(false);}catch(error){status.textContent=accountError(error);recovery.disabled=false;}};
-      }
-    }};
+    b.onclick=async()=>{b.disabled=true;emit(track,'login_prompt_provider_click',{provider});try{await attempt(fn);}finally{b.disabled=false;}};
     return b;
   };
   const draw=()=>{
-    list.replaceChildren();recovery=null;status.textContent='';
+    list.replaceChildren();status.textContent='';
     for(const [id,name] of PROVIDERS) {
       const provider=providerId(id,config);
       if(!config.providers?.includes(provider))continue;

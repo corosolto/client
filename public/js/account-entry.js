@@ -94,15 +94,17 @@ export function mountAccountEntry(container,{auth=null,config={providers:[]},ret
   choiceColumn.append(privacy,document.createTextNode(' · '),terms);
   let linkGuest=true;
   const payload=()=>{setPrivacyChoice(analytics.checked);newsletterDraft=consent.checked;return {returnTo,newsletter:consent.checked,analytics:analytics.checked,...(linkGuest && guestProof()?{guest:guestProof()}:{})};};
-  let recovery=null,retry=null;
-  const perform=async fn=>{try{await fn();}catch(e){if(e.message==='guest_invalid'){
-    retry=fn;
-    if(!recovery){recovery=button('ENTRAR SEM VINCULAR O CONVIDADO',async()=>{
-      linkGuest=false;recovery.hidden=true;
-      say('Seu histórico local continua neste navegador. Entrando sem vincular o convidado…');
-      await retry();
-    });entryColumn.append(recovery);}
-  }throw e;}};
+  const entryAttempts=new Map();
+  const perform=fn=>{
+    if(entryAttempts.has(fn))return entryAttempts.get(fn);
+    const pending=(async()=>{try{await fn();}catch(e){if(e.message!=='guest_invalid')throw e;
+      linkGuest=false;
+      say('Convidado antigo não encontrado. Entrando sem vincular o histórico local…');
+      await fn();
+    }})();
+    entryAttempts.set(fn,pending);
+    return pending.finally(()=>{entryAttempts.delete(fn);});
+  };
   const providers=node('div','','account-providers');
   for(const provider of providerChoices(config))if(PROVIDER_NAMES[provider]) {
     const enabled=(config.providers || []).includes(provider);

@@ -4,6 +4,7 @@ import sys
 
 from crash_dedupe import find_duplicate
 from issue_review import review_issue
+from issue_triage import triage
 
 
 def sweep(payload: dict) -> dict:
@@ -18,14 +19,16 @@ def sweep(payload: dict) -> dict:
 
     for issue in issues:
         review = review_issue({"issue": issue, "prs": prs})
+        issue_triage = triage(issue, payload.get("bugfix_assignee", "nunreasonable"))
         labels_existing = {label["name"] for label in issue.get("labels", [])}
-        labels_add = sorted(set(review.get("labels_add", [])) - labels_existing)
+        labels_add = sorted((set(review.get("labels_add", [])) | set(issue_triage["labels_add"])) - labels_existing)
+        add_assignee = issue_triage.get("add_assignee")
         covered = review.get("covered_pr")
         duplicate = None
         if "crash-auto" in labels_existing:
             duplicate = find_duplicate(issue, issues)
 
-        if labels_add or covered or duplicate:
+        if labels_add or add_assignee or covered or duplicate:
             comment = review["comment"]
             if duplicate:
                 comment = "\n".join(
@@ -44,6 +47,7 @@ def sweep(payload: dict) -> dict:
                 {
                     "issue_number": issue["number"],
                     "labels_add": labels_add,
+                    "add_assignee": add_assignee,
                     "comment": comment,
                     "should_comment": bool(covered or duplicate),
                 }
@@ -65,13 +69,20 @@ def selftest() -> int:
     muda = {"number": 4, "title": "issue calada", "url": "u4",
             "author": {"login": "ze"}, "labels": [{"name": "graficos"}],
             "body": "d" * 60, "state": "open"}
+    bug_antigo = {"number": 5, "title": "Fix reconnect no lobby", "url": "u5",
+                  "author": {"login": "ze"}, "labels": [], "assignees": [],
+                  "body": "e" * 60, "state": "open"}
     prs = [{"number": 9, "title": "fix ferro velho", "url": "u9", "body": "fixes #3"}]
-    out = sweep({"prs": prs, "issues": [crash_a, crash_b, coberta, muda]})
+    out = sweep({"prs": prs, "issues": [crash_a, crash_b, coberta, muda, bug_antigo]})
     por_issue = {a["issue_number"]: a for a in out["actions"]}
     casos = [
         ("issue coberta gera ação", 3 in por_issue),
         ("issue coberta comenta (PR existe)", por_issue.get(3, {}).get("should_comment") is True),
         ("issue sensível sem PR não gera ação", 4 not in por_issue),
+        ("bug antigo recebe label e responsável sem comentário",
+         por_issue.get(5, {}).get("add_assignee") == "nunreasonable"
+         and "bugfix" in por_issue.get(5, {}).get("labels_add", [])
+         and por_issue.get(5, {}).get("should_comment") is False),
         ("crash com gêmeo detecta duplicata", "> [!TIP]" in por_issue.get(1, {}).get("comment", "") or "> [!TIP]" in por_issue.get(2, {}).get("comment", "")),
         ("comentário reusa o formato da review", "csbrasil-bot issue review" in por_issue.get(3, {}).get("comment", "")),
     ]
