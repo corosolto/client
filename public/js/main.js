@@ -1555,9 +1555,12 @@ function openHubRoster(updateRoute = true) {
       /* Célula = card (escolhe SEU personagem, como sempre) + chip ＋ (trava quem entra).
          Papel do escalado: pode no seu lado = aliado, senão inimigo; montagem re-filtra. */
       const travado = personagemTravado(def), nivel = nivelDoPersonagem(def);
-      const cell = document.createElement('div'); cell.className = travado ? 'hub-roster-cell hub-roster-cell--travado' : 'hub-roster-cell';
+      /* escolhido de fato: com a escolha salva ainda travada pelo passe, é o livre que o lobby mostra */
+      const efetivo = personagemLivre(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam)?.id;
+      const cell = document.createElement('div'); cell.className = 'hub-roster-cell';
+      if (travado) cell.classList.add('hub-roster-cell--travado');
       const button = document.createElement('button'); button.type = 'button';
-      button.setAttribute('aria-pressed', String(!travado && def.id === currentChar && !equipada));
+      button.setAttribute('aria-pressed', String(!travado && def.id === efetivo && !equipada));
       const avatar = document.createElement('img'); avatar.src = `/img/chars/avatars/${def.id}.webp`;
       avatar.alt = ''; avatar.loading = 'lazy';
       const name = document.createElement('span'); name.textContent = def.name;
@@ -1583,7 +1586,7 @@ function openHubRoster(updateRoute = true) {
         escolher(def.id);
       };
       cell.appendChild(button);
-      if (def.id !== currentChar) {
+      if (def.id !== efetivo) {
         const pin = document.createElement('button'); pin.type = 'button';
         const ehPin = settings.pinnedChars.includes(def.id);
         const papel = podeNoLado(def, currentTeam) ? tr('ALIADO') : tr('INIMIGO');

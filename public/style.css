@@ -334,10 +334,10 @@ html[data-home-ui="hub"] #main-menu[data-hub-mp-tab="private"] .mp-corpo>.mp-cri
 .hub-roster-cell--skin img{object-position:50% 14%;object-view-box:inset(0 22% 70% 22%)}
 .hub-roster-cell--skin>button::after{content:'SKIN';position:absolute;left:0;top:0;padding:2px 5px;font:700 9px/1 var(--mono);letter-spacing:.5px;color:#131313;background:#b4d92e}
 /* Personagem do passe Sessão da Treta ainda travado (main.js): retrato apagado, cadeado e o nível. */
-.hub-roster-cell--travado>button,.char-row--travado{position:relative;cursor:not-allowed}
+.hub-roster-cell--travado>button:not(.hub-roster-pin),.char-row--travado{position:relative;cursor:not-allowed}
 .hub-roster-cell--travado img,.char-row--travado img{filter:grayscale(1) brightness(.45)}
-.hub-roster-trava{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:center;gap:4px;padding:4px;
-  background:rgba(9,7,4,.82);color:#f3b958;font:800 11px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;pointer-events:none}
+.hub-roster-trava{position:absolute;left:0;right:0;top:0;aspect-ratio:1;display:flex;align-items:flex-end;justify-content:center;gap:4px;padding:0 4px 6px;box-sizing:border-box;
+  background:linear-gradient(180deg,transparent 55%,rgba(9,7,4,.92));color:#f3b958;font:800 11px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;pointer-events:none}
 .hub-roster-trava svg{flex:none;width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.4}
 .hub-roster-escalacao-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .hub-roster-escalacao-row p{margin:8px 0 0;color:#a5a5a3;font:600 13px/1.4 var(--font);flex:1;min-width:0}
