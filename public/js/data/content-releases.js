@@ -69,7 +69,8 @@ export const CHARACTER_RELEASES = Object.freeze({
     minRuntime: '2.1.0-alpha.138',
     skeleton: STUDIO_CHARACTER_SKELETON,
   }),
-  /* Elenco Fora do Ar (passe Sessão da Treta): todos em 0.2.0, SHA do manifest.json instalado. */
+  /* Elenco Fora do Ar (passe Sessão da Treta): 19 em 0.2.1 (estados corrigidos; coelho com rig novo)
+     e 11 em 0.2.0, SHA do manifest.json instalado. */
   'teletreco-sinal-fraco': Object.freeze({
     kind: 'character',
     id: 'teletreco-sinal-fraco',
