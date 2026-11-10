@@ -1,9 +1,5 @@
-/* Passe "Sessão da Treta" (operations/passe-sessao-da-treta-spec.md §5 e §6).
-   O SERVIDOR decide tudo: XP, nível, missões, resgate e o que está destravado. Este módulo só
-   lê o status (GET /api/passe), pede o resgate de UM nível (POST {action:'claim', level}) e
-   responde se um personagem do passe está travado. O client nunca manda XP, progresso nem
-   recompensa, e nada salvo no navegador destrava personagem.
-   Sem DOM e sem import: a régua (tools/eval/passe-check.mjs) carrega este arquivo no Node. */
+/* Passe Sessão da Treta (spec §5/§6): o servidor decide XP, resgate e destravado; o client só lê,
+   pede claim de um nível e nunca manda XP. Sem DOM nem import: passe-check.mjs carrega no Node. */
 
 export const PASSE_TEMPORADA = 'sessao-da-treta-s1';
 export const PASSE_NIVEIS = 15;

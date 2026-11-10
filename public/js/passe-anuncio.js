@@ -1,9 +1,5 @@
-/* Anúncio do passe "Sessão da Treta": uma vez por versão (PASSE_ANUNCIO_VERSAO), só com a
-   temporada no ar segundo o servidor e sem empilhar em outro <dialog>. Mesmo molde do
-   javaporcos_novidade.js: <dialog> nativo, foco devolvido ao fechar, ESC fecha.
-   Guarda só a versão vista (armazenamento necessário de preferência). O evento modal_view do funil
-   só sai com consentimento de medição (registrarEventoPasse, passe.js).
-   Régua: tools/eval/passe-check.mjs (mutantes passe-modal-repete e modal-sem-evento). */
+/* Anúncio do passe: uma vez por versão, com a temporada no ar, sem empilhar <dialog> (molde do
+   javaporcos_novidade.js); modal_view só com consentimento. Régua: tools/eval/passe-check.mjs. */
 import { tr } from './i18n.js';
 import { passeEstado, passeAnuncioDevido, marcarAnuncio, registrarEventoPasse } from './passe.js';
 
