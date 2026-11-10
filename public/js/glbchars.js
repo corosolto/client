@@ -57,7 +57,10 @@ for (const id of Object.keys(CHARACTER_RELEASES)) GLB_CHARS.add(id);
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando
 // (caso do Dollynho na tela de seleção). Neles, a mão L segue a pose do clipe.
 // Exportado para a select-mount.mjs: nesses, MÃO-L não se aplica (é decisão, não defeito).
-export const IK_L_SKIP = new Set(['dollynho', 'gotinha', 'et', 'canarinho']);
+// Fora do Ar (auditoria de 10/11, palma L→guarda-mão em idle/shoot): clovis 65 cm, bebezão 34,
+// coronel 26 e coelho 14 — o IK não alcança (fantasia/barriga) e a mão vira toco esticado.
+export const IK_L_SKIP = new Set(['dollynho', 'gotinha', 'et', 'canarinho',
+  'clovis-fora-do-ar', 'bebezao-de-feira', 'coronel-arrego', 'coelho-pascoa-shopping']);
 
 const STATES = ['idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'crouchwalk', 'jump'];
 // Clipes OPCIONAIS: 1 mão (pistolas) + andando atirando. Se o arquivo não existir,

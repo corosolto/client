@@ -760,11 +760,11 @@ export const CHAR_WEAPON = {
   // Fora do Ar (passe Sessão da Treta): arma de cada personagem do pack Studio 0.2.0.
   'capitao-caveira': 'ak', 'teletreco-sinal-fraco': 'uzi', 'bebe-reborn': 'pistol', 'chupa-cabra': 'shotgun',
   'teletreco-antenao': 'mp5', 'assombracao-lanhouse': 'p90', 'dracula': 'deagle',
-  'boneca-da-cristaleira': 'pistol', 'satanista-talkshow': 'scar', 'clovis-fora-do-ar': 'shotgun',
-  'teletreco-chiadinho': 'uzi', 'bicho-do-bueiro': 'shotgun', 'coronel-arrego': 'md97',
-  'sorridente-onibus': 'mp5', 'bebezao-de-feira': 'lmg', 'boneco-falante-87': 'pistol',
+  'boneca-da-cristaleira': 'pistol', 'satanista-talkshow': 'scar', 'clovis-fora-do-ar': 'revolver38',
+  'teletreco-chiadinho': 'uzi', 'bicho-do-bueiro': 'shotgun', 'coronel-arrego': 'pistol',
+  'sorridente-onibus': 'mp5', 'bebezao-de-feira': 'deagle', 'boneco-falante-87': 'pistol',
   'padre-parapsicologo': 'revolver38', 'muro-de-caco': 'g3', 'teletreco-fora-do-ar': 'famas',
-  'coelho-pascoa-shopping': 'shotgun', 'pm-arrego': 'md97', 'nanica': 'mp5', 'roqueiro-mistico-70': 'akm',
+  'coelho-pascoa-shopping': 'revolver38', 'pm-arrego': 'md97', 'nanica': 'mp5', 'roqueiro-mistico-70': 'akm',
   'profeta-auditorio': 'scar', 'bicheiro-barracao': 'revolver38', 'prata': 'deagle', 'dom-pedro-i': 'mosin',
   'tiradentes': 'carbine', 'corisco': 'm4', 'vlad': 'g3sg1',
 };
