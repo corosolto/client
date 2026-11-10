@@ -652,10 +652,11 @@ function knifeGeometryFingerprint(model) {
   return h.toString(16).padStart(8, '0');
 }
 
-// `steelRoles` (skin steelBlade): símbolo vira gravação escura pequena na lâmina, letreiro no cabo.
+// `steelRoles` (skin steelBlade): símbolo e letreiro gravados escuros e pequenos na lâmina; o
+// cabo fica só com o padrão (letreiro no cabo ficava 20-27% sob o polegar do 1P, 10/11/2026).
 const KNIFE_STEEL_ROLES = Object.freeze({
-  symbol: Object.freeze({ along: 0.30, sizeFrac: 0.70, longitudinal: true, region: 'blade', etched: true }),
-  slogan: Object.freeze({ along: 0.62, sizeFrac: 0.40, longitudinal: true, region: 'handle' }),
+  symbol: Object.freeze({ along: 0.30, sizeFrac: 0.70, longitudinal: true, etched: true }),
+  slogan: Object.freeze({ along: 0.70, sizeFrac: 0.25, longitudinal: true, etched: true }),
 });
 // `longitudinal`: a horizontal da imagem corre ao longo da lâmina e o topo vai ao dorso (+Y do
 // modelo). Vale para letreiro e símbolo; o símbolo transversal deitava a caveira para a ponta.
@@ -665,7 +666,6 @@ const KNIFE_MARK_PROFILES = Object.freeze({
     representation: 'skinned-bone',
     fingerprint: '2b9905bf',
     blade: Object.freeze({ fromGrip: 0.50, toTip: 0.96, minSlenderness: 2.2 }),
-    handle: Object.freeze({ fromGrip: 0.05, toTip: 0.42 }),
     roles: Object.freeze({
       symbol: Object.freeze({ along: 0.40, sizeFrac: 0.62, longitudinal: true }),
       slogan: Object.freeze({ along: 0.76, sizeFrac: 0.62, longitudinal: true }),
@@ -679,7 +679,6 @@ const KNIFE_MARK_PROFILES = Object.freeze({
     representation: 'rigid-wrap',
     fingerprint: 'eede1583',
     blade: Object.freeze({ fromGrip: 0.50, toTip: 0.96, minSlenderness: 2.2 }),
-    handle: Object.freeze({ fromGrip: 0.05, toTip: 0.42 }),
     roles: Object.freeze({
       symbol: Object.freeze({ along: 0.40, sizeFrac: 0.62, longitudinal: true }),
       slogan: Object.freeze({ along: 0.76, sizeFrac: 0.62, longitudinal: true }),
@@ -692,9 +691,8 @@ const KNIFE_MARK_PROFILES = Object.freeze({
 const KNIFE_CONTEXTS = Object.freeze(Object.keys(KNIFE_MARK_PROFILES));
 
 function knifeProfileValid(profile) {
-  const { blade, handle, roles, steelRoles } = profile;
+  const { blade, roles, steelRoles } = profile;
   if (!(blade.fromGrip > 0 && blade.toTip > blade.fromGrip && blade.toTip <= 1 && blade.minSlenderness > 0)) return false;
-  if (!(handle.fromGrip >= 0 && handle.toTip > handle.fromGrip && handle.toTip <= blade.fromGrip)) return false;
   for (const role of [...Object.values(roles), ...Object.values(steelRoles)]) {
     if (!(role.along >= 0 && role.along <= 1 && role.sizeFrac > 0 && role.sizeFrac < 1)) return false;
   }
@@ -785,7 +783,7 @@ function knifeHandleMask(geometry) {
   return mask;
 }
 
-function knifeBladeFrame(model, profile, region = profile.blade) {
+function knifeBladeFrame(model, profile) {
   model.updateMatrixWorld(true);
   const meshes = [];
   model.traverse((object) => {
@@ -843,7 +841,7 @@ function knifeBladeFrame(model, profile, region = profile.blade) {
   const tipAtMax = (head[1] - head[0]) + (head[3] - head[2]) <= (tail[1] - tail[0]) + (tail[3] - tail[2]);
   const longSign = tipAtMax ? 1 : -1;
   const gripEnd = tipAtMax ? longRange[0] : longRange[1];
-  const { fromGrip, toTip } = region;
+  const { fromGrip, toTip } = profile.blade;
   const regionUMin = Math.min(gripEnd + longSign * fromGrip * len, gripEnd + longSign * toTip * len);
   const regionUMax = Math.max(gripEnd + longSign * fromGrip * len, gripEnd + longSign * toTip * len);
   const regionTriangles = triangles
@@ -977,24 +975,19 @@ function attachKnifeMarkings(model, skinId, context) {
   });
   if (profile.representation === 'skinned-bone' && skinned.length !== 1) return finish('representation-mismatch');
   if (profile.representation === 'rigid-wrap' && skinned.length !== 0) return finish('representation-mismatch');
-  // steelBlade: cada papel mede a própria região (gravação na lâmina, letreiro no cabo).
   const roles = definition.steelBlade ? profile.steelRoles : profile.roles;
-  const frames = new Map();
+  const frame = knifeBladeFrame(model, profile);
+  if (frame.error) return finish(frame.error);
   const placements = [];
   for (const item of items) {
     const spec = roles[item.role];
-    const region = spec.region || 'blade';
-    if (!frames.has(region)) frames.set(region, knifeBladeFrame(model, profile, profile[region]));
-    const frame = frames.get(region);
-    if (frame.error) return finish(frame.error);
-    const priors = placements.filter((entry) => entry.frame === frame).map((entry) => entry.placement);
-    const placement = knifePlacement(frame, profile, item.aspect, spec, priors);
+    const placement = knifePlacement(frame, profile, item.aspect, spec, placements.map((entry) => entry.placement));
     if (!placement) return finish('footprint-unsupported');
-    placements.push({ item, spec, frame, placement });
+    placements.push({ item, spec, placement });
   }
-  placements.forEach(({ item, spec, frame, placement }) => addKnifePair(model, skinId, item.role, item.texture, frame, placement, context, spec));
+  placements.forEach(({ item, spec, placement }) => addKnifePair(model, skinId, item.role, item.texture, frame, placement, context, spec));
   report.roles = items.map(({ role }) => role);
-  report.regions = placements.map(({ item, spec }) => `${item.role}:${spec.region || 'blade'}${spec.etched ? ':etched' : ''}`);
+  report.regions = placements.map(({ item, spec }) => `${item.role}:blade${spec.etched ? ':etched' : ''}`);
   return finish('attached');
 }
 

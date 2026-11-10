@@ -1,22 +1,32 @@
 #!/usr/bin/env node
-// LAM0-LAM4: faca do passe (steelBlade) com lâmina de aço original — pintura, acabamento e letreiro
-// só no cabo/guarda; na lâmina no máximo a gravação escura. 1P via _accept real (knife-fp), 3P via
-// weaponModel real (knife-tp). Verdade independente: a cor do atlas original no UV de cada vértice.
-// Mutante `lamina-envelopada`: a máscara some e a skin embrulha a lâmina — precisa reprovar.
+// LAM0-LAM4: faca do passe (steelBlade) com lâmina de aço original — pintura e acabamento só no
+// cabo/guarda; símbolo e letreiro gravados escuros na lâmina, cabo sem marca (polegar do 1P).
+// 1P via _accept real (knife-fp), 3P via weaponModel real (knife-tp). Verdade independente: a cor
+// do atlas original no UV de cada vértice. Mutantes (precisam reprovar): `lamina-envelopada` (a
+// máscara some e a skin embrulha a lâmina), `marcas-no-cabo` (marcas medidas no cabo, onde o
+// polegar tapava 20-27% do letreiro em 10/11/2026), `letreiro-branco` (letreiro sem gravação).
 // Exit: 0 GREEN · 1 RED · 2 USO incorreto · 3 infra/import.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const trocaUma = (source, antes, depois) => {
+  if (source.split(antes).length !== 2) throw Error(`INFRA: trecho do mutante não é único: ${antes}`);
+  return source.replace(antes, depois);
+};
 const MUTANTS = Object.freeze({
-  'lamina-envelopada': (s) => s.replace('steelBlade ? knifeHandleMask(object.geometry) : null', 'null'),
+  'lamina-envelopada': (s) => trocaUma(s, 'steelBlade ? knifeHandleMask(object.geometry) : null', 'null'),
+  'marcas-no-cabo': (s) => trocaUma(s, 'const frame = knifeBladeFrame(model, profile);',
+    'const frame = knifeBladeFrame(model, { ...profile, blade: { ...profile.blade, fromGrip: 0.05, toTip: 0.42 } });'),
+  'letreiro-branco': (s) => trocaUma(s, 'slogan: Object.freeze({ along: 0.70, sizeFrac: 0.25, longitudinal: true, etched: true })',
+    'slogan: Object.freeze({ along: 0.70, sizeFrac: 0.25, longitudinal: true })'),
 });
 const args = process.argv.slice(2);
 const mutantArg = args.find((arg) => arg.startsWith('--mutante='));
 const mutant = mutantArg?.slice('--mutante='.length) || null;
 const prove = args.includes('--provar-mutante');
 if (args.some((arg) => arg !== mutantArg && arg !== '--provar-mutante') || (mutant && !MUTANTS[mutant]) || (prove && !mutant)) {
-  console.error('USO knife-steel-blade: [--mutante=lamina-envelopada --provar-mutante]');
+  console.error(`USO knife-steel-blade: [--mutante=${Object.keys(MUTANTS).join('|')} --provar-mutante]`);
   process.exit(2);
 }
 
@@ -188,9 +198,9 @@ function evaluateKnife(root, skinId, context, atlas) {
     return handleSide(best) ? 'cabo' : 'lamina';
   };
   const placed = marks.map((mark) => ({ role: mark.userData.markingRole, side: side(mark), luma: mark.material.color.r * 0.299 + mark.material.color.g * 0.587 + mark.material.color.b * 0.114 }));
-  checks.LAM4 = placed.length === 4
-    && placed.every((m) => m.side === 'cabo' || (m.role === 'symbol' && m.luma <= MAX_ETCH_LUMA))
-    && placed.filter((m) => m.side === 'lamina').length <= 2;
+  // LAM4: par de símbolo e par de letreiro, todos gravados (escuros) na lâmina; nenhum no cabo.
+  checks.LAM4 = placed.filter((m) => m.role === 'symbol').length === 2 && placed.filter((m) => m.role === 'slogan').length === 2
+    && placed.every((m) => m.side === 'lamina' && m.luma <= MAX_ETCH_LUMA);
   const detail = { steelRatio: +steelRatio.toFixed(3), handleRatio: +handleRatio.toFixed(3), bright, dark, marks: placed.map((m) => `${m.role}:${m.side}:${m.luma.toFixed(2)}`) };
   return { checks: Object.fromEntries(Object.entries(checks).map(([id, ok]) => [`${skinId}#${context}:${id}`, ok])), detail };
 }
@@ -235,4 +245,4 @@ if (prove) {
   process.exit(0);
 }
 if (failed.length) { console.error(`RED knife-steel-blade: ${failed.join(', ')}`); process.exit(1); }
-console.log(`GREEN knife-steel-blade: ${knives.length} facas × 1P/3P com lâmina de aço e pintura só no cabo`);
+console.log(`GREEN knife-steel-blade: ${knives.length} facas × 1P/3P com lâmina de aço, pintura só no cabo e marcas gravadas na lâmina`);

@@ -27,7 +27,7 @@ const storeSkin = ({
   // Só no corpo da 1ª pessoa (golden; pistola: X18 da fábrica), no mesmo espaço do markLayout.
   ...(fpMarkLayout ? { fpMarkLayout: Object.freeze(fpMarkLayout) } : {}),
   ...(fpSloganLayout ? { fpSloganLayout: Object.freeze(fpSloganLayout) } : {}),
-  // Faca: lâmina fica no aço original; pintura e letreiro só no cabo/guarda (weapon-skins.js).
+  // Faca: lâmina no aço original com símbolo e letreiro gravados; pintura só no cabo/guarda.
   ...(steelBlade ? { steelBlade: true } : {}),
   ...(sloganAspect ? { sloganAspect } : {}),
   ...(patternAsset ? { patternAsset } : {}),
