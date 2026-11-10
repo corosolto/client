@@ -57,6 +57,7 @@
 - Edge traffic count (`src/lib/server-traffic.mjs`) now names in-app browsers: TikTok (`musical_ly`/`BytedanceWebview`/`TikTok`), Instagram, Facebook (`FBAN`/`FBAV`/`FB_IAB`), LinkedIn (`LinkedInApp`) and X (`TwitterAndroid`/`Twitter for iPhone`) stay `kind: browser` (they are people) with `agent: app/<name>`; open browsers keep the empty agent. Reason: the 08/11 TikTok paid campaign sent 517 visits in one hour, 72% loaded the game and 85% left in under a minute without entering, and the admin had no way to tell them from Chrome. `server-traffic-check.mjs` gains the five UA cases plus the open-Chrome and `facebookexternalhit` counter-cases, and is finally wired as `eval:servertraffic` inside `check:fast` (it had no script since #988).
 
 ### Fixed
+- Revisão atual do release #1251: o artefato do PR é extraído em `dist`, isolado do checkout confiável usado por Wrangler e pelo comentário sticky; o smoke Cloudflare por `workflow_dispatch` não consulta mais sticky de PR e falha imediatamente se `BASE_URL` estiver vazio. WFS cobre os três caminhos com mutantes; E05 ganhou DOM completo e timeout, confirmando que o retry de `guest_invalid` termina sem alterar o login.
 - Revisão do release #1251: `origemCompartilhamento` só usa `corosol.to` no apex ou em subdomínios com fronteira (`*.corosolto.com.br`), sem desviar hosts como `evilcorosolto.com.br`; o middleware Astro devolve `next()` na Vercel, cujo proxy já conta a requisição, e só agenda `/api/server-traffic` no Workers. Regressões comportamentais cobrem apex/subdomínio/host estranho e os dois adaptadores; `eval:shareorigin` ganha o mutante sem fronteira e os builds Vercel/Cloudflare passam. UIR20 deixa de prender a forma `new Set` de `geo.ts` e chama `langFromCountry` para verificar `US/GB → en` e `PT/BR/ausente → pt`.
 - Social login no longer gets stuck on `guest_invalid` when the browser holds a stale guest proof. Google, other OAuth providers and email now retry automatically without the invalid proof, preserving local history and never accepting it as valid; subsequent clicks do not resend it, and each provider gets one retry and navigation. Covered by LP15/E05 and both recovery mutants.
 - Multiplayer character voices belong to the character again (owner, 09/11: Saci and other absent characters shouting in a Lampião room). `Sfx.characterVoice` now resolves take of the event → another in-game take of the SAME character (kill/radio/round) → faction pool only for characters without structured in-game voice; the legacy string form (select-only) keeps the pool. The live pack stored every Mítico as that string with all 56 kill takes mixed in `voice.M`, so any Mítico kill picked any Mítico: `tools/audio/miticos-character-voice-apply.mjs` + `miticos-voice-map.json` (pool M identified offline by transcription + voice pitch band) restructure the 9 Míticos as `{select, kill}` with captions, zero new bytes, pool untouched — the owner applies it to the private manifest. Pinned by `eval:mp-voz-personagem` (VOZ1–6, mutant `pool-da-faccao`).
@@ -244,7 +245,10 @@
 ## [2.1.0-alpha.141] — 2026-11-10
 
 ### Mudado
-- fix: suaviza entrada do modal de conta
+- fix(ci): protege preview Cloudflare e smoke manual (#1300)
+- test(ci): limita regras CF ao passo exato
+- test(ci): prende guarda do smoke ao dispatch
+- fix(ci): isola artefato e corrige smoke manual
 
 ## [2.1.0-alpha.140] — 2026-11-10
 

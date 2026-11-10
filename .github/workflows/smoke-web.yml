@@ -171,6 +171,7 @@ jobs:
           echo "BASE_URL=${HOST%/}" >> "$GITHUB_ENV"
           echo "Host Cloudflare informado: ${HOST%/}"
       - name: Aguarda URL sticky do Cloudflare
+        if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -195,6 +196,14 @@ jobs:
           done
           echo "::error::preview Cloudflare não apareceu no comentário sticky"
           exit 1
+      - name: Confirma host do smoke manual
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          if [ -z "${BASE_URL:-}" ]; then
+            echo "::error::BASE_URL ausente no dispatch; informe inputs.host"
+            exit 1
+          fi
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
