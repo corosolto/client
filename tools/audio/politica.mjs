@@ -133,3 +133,25 @@ export function motivoDeRecusa(rel, bytes, pol, contexto = 'pack') {
   }
   return null;
 }
+
+/* Caminhos são relativos a public/audio. O arquivo versionado é o ratchet:
+   órfãos antigos ficam explícitos; qualquer órfão novo precisa de revisão humana. */
+export function carregarAllowlistOrfaos(caminho) {
+  if (!existsSync(caminho)) return { erro: `allowlist de órfãos ausente: ${caminho}` };
+  try {
+    const data = JSON.parse(readFileSync(caminho, 'utf8'));
+    if (data.schema !== 1 || !Array.isArray(data.allow)) throw new Error('schema 1 e allow[] são obrigatórios');
+    const allow = new Set();
+    for (const rel of data.allow) {
+      if (typeof rel !== 'string' || !rel || rel.includes('\\') || rel.startsWith('/') || rel.startsWith('audio/')
+        || rel.split('/').some((part) => !part || part === '.' || part === '..')) {
+        throw new Error(`caminho inválido: ${JSON.stringify(rel)}`);
+      }
+      if (allow.has(rel)) throw new Error(`caminho duplicado: ${rel}`);
+      allow.add(rel);
+    }
+    return { allow, erro: null };
+  } catch (error) {
+    return { erro: `allowlist de órfãos inválida (${error.message})` };
+  }
+}
