@@ -112,7 +112,7 @@ export function initLoginPrompt({auth=null,config=null,accountBusy=()=>false,ski
     if(loginAttempts.has(fn))return loginAttempts.get(fn);
     const pending=(async()=>{try{await fn(guestLink);}catch(e){
       if(e.message==='guest_invalid'){
-        guestLink=false;status.textContent='Convidado antigo não encontrado. Entrando sem vincular o histórico local…';
+        guestLink=false;status.textContent='Preparando sua entrada…';
         try{await fn(false);}catch(error){status.textContent=accountError(error);}
       }else status.textContent=accountError(e);
     }})();

@@ -178,7 +178,7 @@ await caso('LP15', 'prova antiga do convidado cai automaticamente para login sem
   assert.equal(starts.at(-1).guest,undefined,'um clique seguinte reenviou a prova inválida');
   assert.equal(navigations.length,3,'cada provider escolhido deve navegar uma vez');
   assert(!ids['login-prompt-providers'].children.some(b=>/Entrar sem vincular/.test(b.textContent)),'o fallback continua exigindo uma segunda escolha');
-  assert.match(ids['login-prompt-status'].textContent,/sem vincular/i);
+  assert.match(ids['login-prompt-status'].textContent,/preparando sua entrada/i);
   assert.equal(storage.get('awpbr_stats'),'{"kills":3}');
 });
 await caso('LP10', 'perfil compartilhado (/u/<perfil>, que é o hub, e o link antigo ?perfil=) pula o convite', () => {
