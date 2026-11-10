@@ -69,6 +69,7 @@ def decide(pr: dict) -> dict:
         "release" in labels
         and not labels.intersection({"needs-human-gameplay", "needs-human-backend", "needs-hotfix-review"})
         and pr.get("baseRefName") == "main"
+        and (not lista_incompleta or pr.get("full_diff_verified") is True)
         and pr.get("headRefName") == "staging"
         and (pr.get("headRepository") or {}).get("nameWithOwner") == pr.get("expected_repository")
         and bool(pr.get("expected_repository"))
@@ -155,6 +156,16 @@ def selftest() -> int:
              headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), True),
         ("lote oficial sem resolução de revisão não mescla nem com aprovação",
          com(labels=[{"name": "release"}], baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), False),
+        ("lote com lista incompleta e diff Git verificado mescla",
+         com(labels=[{"name": "release"}, {"name": "estragacodigo-resolved"}],
+             files=None, changedFiles=1720, full_diff_verified=True,
+             baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), True),
+        ("lote com lista incompleta e sem prova de diff não mescla",
+         com(labels=[{"name": "release"}, {"name": "estragacodigo-resolved"}],
+             files=None, changedFiles=1720,
+             baseRefName="main", headRefName="staging",
              headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), False),
         ("lote resolvido mescla sem reviewDecision formal",
          com(labels=[{"name": "release"}, {"name": "estragacodigo-resolved"}],

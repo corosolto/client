@@ -59,6 +59,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         if: env.pular != '1'
         with:
+          fetch-depth: 0
           filter: blob:none
           sparse-checkout: scripts/ci
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -71,6 +72,39 @@ jobs:
       - name: Fetch PR status
         if: env.pular != '1'
         run: gh pr view "$PR_NUMBER" --json isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,files,changedFiles,baseRefName,headRefName,headRefOid,headRepository > /tmp/automerge.json
+      - name: Verify complete release batch diff
+        if: env.pular != '1'
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          path = '/tmp/automerge.json'
+          pr = json.load(open(path))
+          labels = {label.get('name') for label in pr.get('labels') or []}
+          candidate = (
+              'release' in labels
+              and pr.get('baseRefName') == 'main'
+              and pr.get('headRefName') == 'staging'
+              and (pr.get('headRepository') or {}).get('nameWithOwner') == os.environ['GITHUB_REPOSITORY']
+          )
+          if not candidate:
+              raise SystemExit(0)
+          subprocess.run([
+              'git', 'fetch', 'origin', 'main:refs/remotes/origin/main',
+              'staging:refs/remotes/origin/staging',
+          ], check=True)
+          remote_head = subprocess.check_output(['git', 'rev-parse', 'origin/staging'], text=True).strip()
+          if remote_head != pr.get('headRefOid'):
+              raise RuntimeError('release batch head moved before full-diff verification')
+          files = subprocess.check_output([
+              'git', 'diff', '--name-only', 'origin/main...origin/staging',
+          ], text=True).splitlines()
+          if not files:
+              raise RuntimeError('release batch diff is empty')
+          pr['files'] = [{'path': path} for path in files]
+          pr['changedFiles'] = len(files)
+          pr['full_diff_verified'] = True
+          open(path, 'w').write(json.dumps(pr))
+          PY
       - name: Check eligibility
         if: env.pular != '1'
         # O autoteste roda ANTES da decisão: este script mescla sem humano no
