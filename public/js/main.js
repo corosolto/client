@@ -4276,7 +4276,7 @@ function pickTeam(faction) {
     hideLoading();
     const list = $('char-list');
     list.innerHTML = '';
-    let firstRow = null;
+    let firstRow = null, firstChar = null;
     chars.forEach((c) => {
       const row = document.createElement('button');
       row.className = 'char-row';
@@ -4308,11 +4308,11 @@ function pickTeam(faction) {
         selectCharacterFromAvatar(c, row, chars);
       };
       list.appendChild(row);
-      if (!firstRow && !personagemTravado(c)) firstRow = row;
+      if (!firstRow && !personagemTravado(c)) { firstRow = row; firstChar = c; }
     });
     // seleciona DEPOIS de gerar todos os thumbs — senão o preview fica com o último
     show('char-select');
-    if (firstRow) selectChar(chars[[...list.children].indexOf(firstRow)], firstRow);
+    if (firstRow) selectChar(firstChar, firstRow);
   };
   if (navOnly || previewUsesStills()) { mountCharList(); return; }
   // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
