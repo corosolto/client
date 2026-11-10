@@ -12,8 +12,13 @@
                            account_required para o fluxo de login.
    PS3 personagem-travado-selecionavel · personagem com `passe` fica travado até o
                            status do servidor listar em unlocked.characters; nada no
-                           localStorage destrava; logout trava de novo. main.js passa
-                           pela trava no seletor, no M, no início da partida e no MP.
+                           localStorage destrava; logout trava de novo.
+   PS7 main.js executado · os trechos REAIS de main.js rodam num vm com um personagem
+                           travado: sorteio inicial, personagem do lobby, confirmação do
+                           seletor (M e menu antigo), pedido no MP e início de partida
+                           offline nunca entregam o travado; destravado pelo servidor,
+                           todos entregam (controle positivo). O clique do seletor do lobby
+                           é medido no navegador (passe-browser.mjs, PB4).
    PS4 passe-modal-repete · o anúncio aparece uma vez por versão, só com a temporada
                            no ar, sem empilhar <dialog> e fora do ?embed=1.
    PS5 claim-duplo       · dois cliques no mesmo resgate saem como UM pedido.
@@ -28,6 +33,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import vm from 'node:vm';
 import { criarPasseMock } from './passe-mock.mjs';
 
 const ARGS = process.argv.slice(2);
@@ -39,8 +45,14 @@ const MUTANTES = {
   'personagem-travado-selecionavel': ['PS3', 'public/js/passe.js', 'return !estado?.authenticated || !estado.unlocked.characters.includes(def.id);', 'return false;'],
   'trava-local': ['PS3', 'public/js/passe.js', 'if (!def?.passe) return false;',
     "if (!def?.passe) return false;\n  try { if (JSON.parse(localStorage.getItem('cs-passe-destravados') || '[]').includes(def.id)) return false; } catch {}"],
-  'partida-sem-trava': ['PS3', 'public/js/main.js', 'if (!online && escolhidoDef && personagemTravado(escolhidoDef)) charId', 'if (false && escolhidoDef) charId'],
-  'roster-sem-trava': ['PS3', 'public/js/main.js', "if (personagemTravado(def)) { $('hub-roster-selected')", "if (false) { $('hub-roster-selected')"],
+  /* PS7: mantêm o texto `personagemTravado` em main.js e mudam só o comportamento */
+  'partida-sem-trava': ['PS7', 'public/js/main.js', 'if (!online && escolhidoDef && personagemTravado(escolhidoDef)) charId', 'if (online && escolhidoDef && personagemTravado(escolhidoDef)) charId'],
+  'livre-ignora-trava': ['PS7', 'public/js/main.js', '(def && !personagemTravado(def) ? def', '(def && (!personagemTravado(def) || def.passe) ? def'],
+  'sorteio-com-travado': ['PS7', 'public/js/main.js', '&& !personagemTravado(character));', '&& (!personagemTravado(character) || !!character.passe));'],
+  'confirma-sem-trava': ['PS7', 'public/js/main.js', 'if (!selChar || personagemTravado(selChar)) return;', 'if (!selChar || (personagemTravado(selChar) && !selChar.passe)) return;'],
+  'mp-pede-travado': ['PS7', 'public/js/main.js', 'return def && !personagemTravado(def) ? def : null;', 'return def && (!personagemTravado(def) || def.passe) ? def : null;'],
+  'lobby-sem-trava': ['PS7', 'public/js/main.js', 'const def = personagemLivre(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);',
+    'const def = (personagemTravado(CHARACTERS[0]), CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0]);'],
   'passe-modal-repete': ['PS4', 'public/js/passe-anuncio.js', '  marcarAnuncio();\n', '\n'],
   'anuncio-fora-da-temporada': ['PS4', 'public/js/passe.js', 'return agora >= Date.parse(status.starts_at) && agora < Date.parse(status.ends_at);', 'return true;'],
   'claim-duplo': ['PS5', 'public/js/passe.js', 'if (resgatando) return resgatando;', ''],
@@ -180,17 +192,74 @@ await clausula('PS3', 'personagem-travado-selecionavel: só o servidor destrava'
   assert.equal(P.personagemTravado(caveira), true, 'logout manteve o personagem destravado');
   assert.equal(P.nivelDoPersonagem(vlad), 15, 'nível do cadeado errado');
   storage.delete('cs-passe-destravados'); storage.delete('csbr-home-character');
-  /* main.js: toda escolha passa pela trava */
-  const exige = [
-    [/if \(!online && escolhidoDef && personagemTravado\(escolhidoDef\)\) charId = personagemLivre\(/, 'início de partida offline'],
-    [/if \(personagemTravado\(def\)\) \{ \$\('hub-roster-selected'\)/, 'clique no seletor do lobby'],
-    [/if \(!selChar \|\| personagemTravado\(selChar\)\) return;/, 'confirmação do seletor (M e menu antigo)'],
-    [/return def && !personagemTravado\(def\) \? def : null;/, 'pedido de personagem no multiplayer'],
-    [/podeNoLado\(character, rememberedSide\) && !personagemTravado\(character\)/, 'sorteio do personagem inicial'],
-    [/personagemLivre\(CHARACTERS\.find\(\(c\) => c\.id === currentChar\)/, 'personagem do lobby'],
-  ];
-  const faltam = exige.filter(([re]) => !re.test(mainJs)).map(([, nome]) => nome);
-  assert.deepEqual(faltam, [], `main.js escolhe sem a trava em: ${faltam.join(', ')}`);
+});
+
+/* Trechos reais de main.js, recortados por âncora e executados com o passe.js deste processo. */
+const corta = (fonte, de, ate) => {
+  const i = fonte.indexOf(de), j = fonte.indexOf(ate, i + de.length);
+  if (i < 0 || j < 0) throw new Error(`âncora ausente em main.js: ${de.slice(0, 50)}`);
+  return fonte.slice(i, j);
+};
+function caminhosDoMain() {
+  const caveira = { id: 'capitao-caveira', team: 'E', name: 'Capitão Caveira', passe: { season: 'sessao-da-treta-s1', level: 1 } };
+  const livreE = { id: 'esquerdomacho', team: 'E', name: 'Esquerdomacho' }, livreB = { id: 'caminhoneiro', team: 'B', name: 'Caminhoneiro' };
+  const dom = new Map();
+  const el = (id) => { if (!dom.has(id)) dom.set(id, { id, textContent: '', src: '', dataset: { hubTab: 'jogar', hubNet: 'sp' }, classList: { contains: () => false }, style: { setProperty() {} } }); return dom.get(id); };
+  let semente = 0;
+  const ctx = vm.createContext({
+    CHARACTERS: [caveira, livreE, livreB], podeNoLado: (d, l) => d?.team === l, ladosDe: (d) => [d?.team || 'E'],
+    personagemTravado: P.personagemTravado, rememberedSide: 'E', crypto: { getRandomValues: (a) => { a[0] = semente++; return a; } },
+    HUB_ENABLED: true, $: el, document: { querySelector: () => null }, tr: (x) => x, FACTION_NAME: { E: 'TIME E', B: 'TIME B' }, PALETA: {},
+    pvSetChar: (d) => { ctx.mostrado = d; }, sfx: { uiClick() {} }, show: () => {}, startGame: (t, c) => { ctx.iniciou = c; },
+    localStorage: { setItem: (k, v) => { ctx.gravado[k] = v; } }, gravado: {},
+    currentChar: 'capitao-caveira', currentTeam: 'E', currentFaction: 'E', currentEnemyFaction: null,
+    escolhaSpAntesDoMp: null, selChar: caveira, switchMode: false, game: null, mpSessao: null,
+  });
+  const fonte = [
+    corta(mainJs, 'const randomInitialCharacter = () => {', 'const rememberedDef ='),
+    corta(mainJs, 'const ladoValido = ', 'const initialSide ='),
+    corta(mainJs, 'function syncHomeCharacter() {', 'function refreshMenuEquipment() {'),
+    corta(mainJs, 'function personagemEscolhido() {', 'let mpNoAtual'),
+    `${corta(mainJs, "$('char-confirm').onclick = () => {", '\n};\n')}\n};`,
+    `function guardaPartida(charId, team, online) {\n${corta(mainJs, '  const escolhidoDef = CHARACTERS.find(c => c.id === charId);', '  const charDef = ')}  return charId;\n}`,
+  ].join('\n');
+  const api = vm.runInContext(`${fonte}\n({ randomInitialCharacter, personagemLivre, syncHomeCharacter, personagemEscolhido, guardaPartida })`, ctx);
+  const confirmar = (sel, atual, hub = true) => {
+    Object.assign(ctx, { selChar: sel, currentChar: atual, HUB_ENABLED: hub, gravado: {}, iniciou: null });
+    el('char-confirm').onclick();
+    return { atual: ctx.currentChar, gravou: Object.keys(ctx.gravado).length, iniciou: ctx.iniciou };
+  };
+  const medir = () => {
+    const sorteados = new Set(Array.from({ length: 40 }, () => api.randomInitialCharacter().id));
+    Object.assign(ctx, { HUB_ENABLED: true, currentChar: 'capitao-caveira', mostrado: null }); api.syncHomeCharacter();
+    return {
+      sorteio: sorteados.has('capitao-caveira'), livre: api.personagemLivre(caveira, 'E').id, lobby: ctx.mostrado?.id,
+      mp: api.personagemEscolhido()?.id || null, partida: api.guardaPartida('capitao-caveira', 'E', false),
+      online: api.guardaPartida('capitao-caveira', 'E', true), hub: confirmar(caveira, 'esquerdomacho'), antigo: confirmar(caveira, 'esquerdomacho', false),
+    };
+  };
+  return { medir };
+}
+
+await clausula('PS7', 'main.js executado: nenhum caminho entrega o personagem travado', async () => {
+  const main = caminhosDoMain();
+  await novaConta({ autenticado: false, claimed: [] });
+  const t = main.medir();
+  assert.equal(t.sorteio, false, 'sorteio do personagem inicial entregou o travado');
+  assert.equal(t.livre, 'esquerdomacho', `personagemLivre devolveu ${t.livre}`);
+  assert.equal(t.lobby, 'esquerdomacho', `lobby mostrou ${t.lobby} com o id travado salvo`);
+  assert.equal(t.mp, null, `multiplayer pediu ${t.mp}`);
+  assert.equal(t.partida, 'esquerdomacho', `partida offline começou com ${t.partida}`);
+  assert.equal(t.online, 'capitao-caveira', 'online trocou o corpo que o servidor da sala deu');
+  for (const [nome, r] of [['hub', t.hub], ['menu antigo', t.antigo]]) {
+    assert.ok(r.atual === 'esquerdomacho' && !r.gravou && !r.iniciou, `confirmação (${nome}) escolheu o travado: ${JSON.stringify(r)}`);
+  }
+  /* controle positivo: com o servidor destravando, os mesmos caminhos entregam o personagem */
+  await novaConta({ autenticado: true, xp: 1200, claimed: [] });
+  await P.resgatarNivel(1);
+  const d = main.medir();
+  assert.ok(d.livre === 'capitao-caveira' && d.lobby === 'capitao-caveira' && d.mp === 'capitao-caveira' && d.partida === 'capitao-caveira'
+    && d.hub.atual === 'capitao-caveira' && d.antigo.iniciou === 'capitao-caveira', `destravado pelo servidor e ainda bloqueado: ${JSON.stringify(d)}`);
 });
 
 await clausula('PS4', 'passe-modal-repete: anúncio uma vez por versão', async () => {
