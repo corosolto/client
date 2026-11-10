@@ -26,7 +26,7 @@
           rig aprovado da linha, congelado por hash em REFERENCIA: gold# = rig A da AK
           aprovada (gold#ak), fab# = rig K (fab#m4; o K de tools/viewmodels/lib/hand-rigs.mjs),
           faca = rig L. Medido hoje: sem pintura a AK mostra A, a faca L e as outras 24 K;
-          com pintura 13 armas vão de K para A e a pistola de K para L (NOTA na saída).
+          com pintura 13 armas vão de K para A; a pistola pintada fica no X18 (NOTA na saída).
           A/K/L são linhas aprovadas; o que a régua cobra é a arma ficar no rig da linha.
    A cor que chega à TELA por arma × time fica com vm-maos-time.mjs (navegador, local);
    esta roda em node puro, no CI, e mede o que o pixel não vê: a assinatura do rig.
@@ -43,14 +43,12 @@
    listadas; `--exigir-catalogo` transforma ausência em reprovação (uso local).
    Bytes diferentes do `?v=` reprovam sempre: medir outro arquivo é não medir.
 
-   Mutantes: luva-por-arma, pbr-por-arma, troca-rig, luva-crua, divida-paga
+   Mutantes: luva-por-arma, pbr-por-arma, troca-rig, luva-crua
      luva-por-arma  a faca sintética perde a identidade do time (Parte 1)
      pbr-por-arma   o donor tardio troca o acabamento da pistola sintética (Parte 1)
      troca-rig      a arma de --arma= (padrão m4) recebe a malha de mão de outro rig,
                     com o material de nome certo: o defeito da pistola (RIG)
      luva-crua      a arma de --arma= (padrão m4) sai sem identidade de time (MÃO1)
-     divida-paga    a pistola golden recebe o braço da AK: a dívida quitada e ainda
-                    declarada tem de reprovar
    Uso: node --import ./tools/eval/vm-hand-three-register.mjs tools/eval/vm-hand-continuity-check.mjs
         [--mutante=…] [--arma=m4] [--exigir-catalogo] [--json]
    ============================================================================ */
@@ -260,7 +258,7 @@ async function doadorPara(signatureAlvo) {
   }
   return doadores.find((d) => assinaturaTexto(assinatura(d.meshes)) !== signatureAlvo);
 }
-function plantaRig(scene, doador, { renomeia = true } = {}) {
+function plantaRig(scene, doador) {
   const alvo = handMeshesOf(scene);
   const nomes = alvo.flatMap((m) => materialsOf(m).map((x) => x.name).filter((n) => HAND.test(n)));
   const papel = (n) => (/Glove/i.test(n) ? 'glove' : /Cloth|Sleeves/i.test(n) ? 'cloth' : 'skin');
@@ -272,7 +270,7 @@ function plantaRig(scene, doador, { renomeia = true } = {}) {
   for (const o of sobra) o.removeFromParent();
   for (const mesh of handMeshesOf(braco)) {
     mesh.material = Array.isArray(mesh.material) ? mesh.material.map((m) => m.clone()) : mesh.material.clone();
-    if (renomeia) for (const m of materialsOf(mesh)) m.name = nomes.find((n) => papel(n) === papel(m.name)) || nomes[0] || m.name;
+    for (const m of materialsOf(mesh)) m.name = nomes.find((n) => papel(n) === papel(m.name)) || nomes[0] || m.name;
   }
   braco.name = `mutante_troca_rig_${path.basename(doador.f, '.glb')}`;
   scene.add(braco);
@@ -299,12 +297,6 @@ for (const r of rotas) {
     const doador = await doadorPara(assinaturaTexto(assinatura(handMeshesOf(gltf.scene))));
     plantaRig(gltf.scene, doador);
     linha.mutante = `malha de mão de ${doador.f}`;
-    mutacoes += 1; appliedRoutes.add(`${r.weapon}@${r.rota}`);
-  }
-  if (mutante === 'divida-paga' && r.key === 'gold#pistol') {
-    // O conserto de arte simulado: a pistola golden recebe o braço da AK como ele é.
-    await doadorPara('');
-    plantaRig(gltf.scene, doadores.find((d) => d.f.endsWith('/ak-hires.glb')), { renomeia: false });
     mutacoes += 1; appliedRoutes.add(`${r.weapon}@${r.rota}`);
   }
   /* Sobe o pacote como o runtime sobe: clone do parse, cameraSpacePackage, bind das
@@ -395,7 +387,7 @@ for (const chave of Object.keys(DIVIDA)) {
 const naoMedidas = linhas.filter((l) => l.estado === 'NAO_MEDIDA');
 const ok = !vermelhos.length && !quitados.length;
 /* Aplicação ausente ou survivor não recebe crédito do controlador. */
-const naoAplicado = ['troca-rig', 'luva-crua', 'divida-paga'].includes(mutante) && !mutacoes;
+const naoAplicado = ['troca-rig', 'luva-crua'].includes(mutante) && !mutacoes;
 
 if (JSON_OUT) {
   const status = linhas.some(l => l.estado === 'ERRO') ? 'INFRA' : naoAplicado ? 'NOT_APPLIED' : ok ? 'GREEN' : 'RED';

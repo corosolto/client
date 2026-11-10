@@ -231,7 +231,8 @@ export function preloadAuthoredFamilies(keys = []) {
 
 // Chaves que o boot deve esperar: as READY do loadout (arma assada tem chave
 // própria — família#arma) + granada, se aberta.
-const skinnedEntryKey = (weapon, weaponSkins) => weaponSkins?.[weapon] && GOLDEN_VER[weapon] ? `gold#${weapon}` : entryKeyFor(weapon);
+// `pinturaNaFabrica` (vmconfig): a pintura fica na rota sem pintura e só troca o material.
+const skinnedEntryKey = (weapon, weaponSkins) => weaponSkins?.[weapon] && GOLDEN_VER[weapon] && !VM_WEAPON[weapon]?.pinturaNaFabrica ? `gold#${weapon}` : entryKeyFor(weapon);
 export function authoredBootFamilies(weaponIds = [], weaponSkins = null) {
   const keys = new Set(weaponIds.map((id) => skinnedEntryKey(id, weaponSkins)).filter(Boolean));
   if (!AUTHORED_KILLED && familyReady('grenade')) keys.add('grenade');
@@ -482,6 +483,22 @@ export function pecasDaPintura(entry) {
   return [corpo, ...new Set(fora)];
 }
 
+/* Fábrica (X18): só o grupo da arma é pintado, nunca a rig das mãos. Boca/alça/cima da ficha
+   (filhos do osso da arma) orientam padrão e marcas no espaço da arma 3P (referenceFrame). */
+export function pinturaDaFabrica(entry) {
+  const meshes = entry?.weaponMeshes || [];
+  const corpo = meshes[0]?.parent;
+  const { muzzle, sight, up } = entry?.sockets || {};
+  const bone = sight?.parent;
+  if (!corpo || meshes.some((mesh) => mesh.parent !== corpo) || !bone || muzzle?.parent !== bone || up?.parent !== bone) return null;
+  let comMao = false;
+  corpo.traverse((object) => { if ((entry.handMeshes || []).includes(object)) comMao = true; });
+  if (comMao) return null;
+  return { corpo, referencia: {
+    bone, barrel: muzzle.position.clone().sub(sight.position), up: up.position.clone().sub(sight.position),
+  } };
+}
+
 export class AuthoredViewModels {
   constructor(parent, onReady = null, profile = {}) {
     this.parent = parent;
@@ -516,6 +533,12 @@ export class AuthoredViewModels {
   _applyWeaponSkin(entry, weaponId) {
     const skinId = this.profile.weaponSkins?.[weaponId];
     if (!skinId) return;
+    if (entry.mint?.fabrica) {
+      const fabrica = pinturaDaFabrica(entry);
+      if (!fabrica) console.warn(`[viewmodel] ${entry.key}: pintura ${skinId} sem referência da ficha; arma sem pintura`);
+      else if (fabrica.corpo.userData.weaponSkin !== skinId) applyWeaponSkinCandidate(fabrica.corpo, weaponId, skinId, { referencia: fabrica.referencia });
+      return;
+    }
     const pecas = pecasDaPintura(entry);
     for (let i = 0; i < pecas.length; i += 1) {
       const peca = pecas[i];

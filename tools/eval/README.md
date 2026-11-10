@@ -16,6 +16,7 @@ com código 1 em falha crítica.
 
 | Arquivo | O que mede | Artefato |
 |---|---|---|
+| `vm-enquadramento-placar-check.mjs` | FP parado (idle) cabe no quadro: placar assado por `vm-enquadramento-idle-check.mjs` (jogo real no navegador, máscara com sobrevarredura ×3, 26 armas sem pintura + pistol/ak/m4/scar pintadas, 16:9 e 3:2) medido sobre o vmconfig/GLBs atuais e re-julgado VERDE: arma dentro com margem (longas saem só por baixo/direita), tamanho são, braço ≤ 5× a pistola e pistola ancorada embaixo. Re-assar: `npm run eval:vm-enquadramento-idle -- --assar` (local, catálogo pago). Mutantes goldframe-antigo, sem-pistola-pintada, pistola-longe. | `npm run eval:vm-enquadramento-placar` |
 | `construtor-input-check.mjs` | Entradas de grade não esgotam memória nem travam a CLI; o handler real do editor preserva objetos ao editar campos. | `npm run eval:construtor-input` (incluído em `eval:mapjson`) |
 | `ballistics-falloff-check.mjs` | Extremos e interpolação da queda de dano; mede jogador e ambas as IAs, com mutações da curva e da distância. | `npm run eval:ballistics-falloff` |
 | `firing-cadence-check.mjs` | Cadência pelo _updatePlayer real; calendário, cooldown, teto por passo, entrada e interrupções, com mutantes. | `npm run eval:firing-cadence` |
@@ -132,6 +133,7 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `faca-porte-check.mjs` | Porte de LÂMINA em 3ª pessoa (ponta acima do porte de cano), lido do fonte vivo. Evidência: `asset-evidence/faca-3p-20261021/faca-3p-ab.png`. `npm run eval:faca-porte` |
 | `arma-orientacao-check.mjs` | Boca × coronha das 26 armas com o `rot` da CFG aplicado — pega arma montada de costas. `npm run eval:arma-orientacao` |
 | `skin-cobertura-check.mjs` | Pintura equipada na arma INTEIRA (corpo, pente, ferrolho, peça do `splitParts`) em 1ª pessoa, e no corpo de 3ª pessoa. `npm run eval:skin-cobertura` |
+| `pintura-fabrica-check.mjs` | PT-38 pintada na rota da fábrica (X18, skinned em vários ossos): só o grupo da arma é pintado (nunca a rig das mãos), o padrão é levado ao espaço da malha TP da loja e símbolo/letreiro nascem no osso `Arma`, na lateral; todo SVG de marca declara `width`/`height` (sem isso o WebGL recusa o upload). Mutantes pintura-na-mao, sem-referencia e svg-sem-tamanho. `npm run eval:pintura-fabrica` |
 | `inspect-lado-check.mjs` | Inspeção (tecla I) vira a arma de lado em 1ª pessoa sem clipe no pack e sem sair do quadro. `npm run eval:inspect-lado` |
 | `manga-tampa-check.mjs` | Manga do pacote golden sem boca aberta (o "leque" que aparece ao girar a arma na inspeção); tampa no bind space, idempotente. `npm run eval:manga-tampa` |
 
