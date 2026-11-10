@@ -6,22 +6,25 @@
    e do catálogo pago; o CI não tem. Aqui, em milissegundos, sobre o placar assado
    (tools/eval/vm-enquadramento-idle.json):
      Q1 o placar foi medido sobre as entradas atuais (hash de vmconfig, vmframe,
-        vmfabrica, vmbytes, goldenver e da própria régua) — mexeu no goldFrame,
-        no frame de uma arma ou num GLB sem re-medir = vermelho;
+        vmfabrica, vmbytes, goldenver, authoredvm e da própria régua, mais PISTOLS,
+        CFG.len e a pintura de cada célula) — mexeu no goldFrame, no frame de uma
+        arma, num GLB, no tamanho do molde ou na pintura medida sem re-medir = vermelho;
      Q2 cobertura: 16:9 e 3:2 × (26 armas sem pintura + pistol/ak/m4/scar pintadas);
      Q3 toda célula, RE-JULGADA com a régua atual, é VERDE (não confia no estado gravado).
-   Mutantes (todos reprovam): --mutante=goldframe-antigo (devolve o goldFrame de
-   06/11 em memória: Q1), --mutante=sem-pistola-pintada (tira a célula: Q2),
+   Mutantes (todos reprovam): --mutante=goldframe-antigo (goldFrame da PT-38 com o
+   fov de outra calibragem, em memória: Q1), --mutante=len-do-molde (CFG.len da AK +10%: Q1),
+   --mutante=outra-pintura (outra pistola pintada na célula: Q1),
+   --mutante=sem-pistola-pintada (tira a célula: Q2),
    --mutante=pistola-longe (grava na célula a medida do quadro do dono: Q3).
    Conserto quando Q1 reprova: `npm run eval:vm-enquadramento-idle -- --assar` (local).
    ============================================================================ */
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { ASPECTOS, PINTADAS, PLACAR_ARQ, REFERENCIA_DA_PINTURA, comparar, hashDasEntradas, julgar } from './lib/vm-enquadramento.mjs';
+import { ASPECTOS, PINTADAS, PLACAR_ARQ, REFERENCIA_DA_PINTURA, comparar, derivadas, hashDasEntradas, julgar } from './lib/vm-enquadramento.mjs';
 const ROOT = process.cwd();
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').slice('--mutante='.length);
-const MUTANTES = ['goldframe-antigo', 'sem-pistola-pintada', 'pistola-longe'];
+const MUTANTES = ['goldframe-antigo', 'len-do-molde', 'outra-pintura', 'sem-pistola-pintada', 'pistola-longe'];
 if (MUT && !MUTANTES.includes(MUT)) { console.error(`mutante desconhecido: ${MUT} (há: ${MUTANTES.join(', ')})`); process.exit(2); }
 const { WEAPON_IDS } = await import(pathToFileURL(path.join(ROOT, 'public/js/weapons.js')).href);
 
@@ -30,9 +33,19 @@ let sobrepor = {};
 if (MUT === 'goldframe-antigo') {
   const arq = 'public/js/data/vmconfig.js';
   const txt = fs.readFileSync(path.join(ROOT, arq), 'utf8');
-  const velho = txt.replace(/goldFrame: \{[^}]*\}/, 'goldFrame: { x: -7.5, y: -5.5, z: 0, fov: 60 }');
-  if (velho === txt) throw new Error('mutante não aplicou: goldFrame da PT-38 sumiu de vmconfig.js');
+  // O goldFrame atual já é o de 06/11: o mutante troca o fov (60 → 75) para o texto mudar.
+  const velho = txt.replace(/goldFrame: \{([^}]*)fov: 60 \}/, 'goldFrame: {$1fov: 75 }');
+  if (velho === txt) throw new Error('mutante não aplicou: goldFrame da PT-38 com fov 60 sumiu de vmconfig.js');
   sobrepor = { [arq]: velho };
+}
+const valores = derivadas();
+if (MUT === 'len-do-molde') {
+  if (!(valores.len.ak > 0)) throw new Error('mutante não aplicou: CFG.len da AK ausente');
+  valores.len.ak *= 1.1;
+}
+if (MUT === 'outra-pintura') {
+  if (!valores.pinturas.pistol) throw new Error('mutante não aplicou: célula pintada da pistola sem pintura');
+  valores.pinturas.pistol = `${valores.pinturas.pistol}-outra`;
 }
 if (MUT === 'sem-pistola-pintada') placar.celulas = placar.celulas.filter((c) => !(c.rota === 'pintura' && c.arma === 'pistol'));
 if (MUT === 'pistola-longe') {
@@ -43,7 +56,7 @@ if (MUT === 'pistola-longe') {
 }
 
 const falhas = [];
-const hash = hashDasEntradas(ROOT, sobrepor);
+const hash = hashDasEntradas(ROOT, sobrepor, valores);
 if (placar.hash !== hash) falhas.push(`Q1 placar medido sobre outras entradas (${placar.hash} ≠ ${hash}): rode \`npm run eval:vm-enquadramento-idle -- --assar\``);
 const esperadas = [];
 for (const aspecto of Object.keys(ASPECTOS)) {

@@ -32,7 +32,8 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { PISTOLS } from '../../../public/js/weapons.js';
+import { PISTOLS, WEAPON_IDS, weaponCFG } from '../../../public/js/weapons.js';
+import { TRETA_PACKS, TRETA_WEAPON_SKINS } from '../../../public/js/treta-catalog.js';
 
 // Placar assado (navegador, local) que o CI confere sem navegador: eval:vm-enquadramento-placar.
 export const PLACAR_ARQ = 'tools/eval/vm-enquadramento-idle.json';
@@ -42,10 +43,25 @@ export const ENTRADAS = Object.freeze(['public/js/data/vmconfig.js', 'public/js/
   'public/js/data/vmbytes.js', 'public/js/data/goldenver.js', 'public/js/authoredvm.js', 'tools/eval/lib/vm-enquadramento.mjs']);
 // Armas com rota de pintura (main.js: playerWeaponSkins; authoredvm.js: gold#<arma>).
 export const PINTADAS = Object.freeze(['pistol', 'ak', 'm4', 'scar']);
-// `sobrepor` troca o texto de um arquivo antes do hash (mutante do CI sem tocar o disco).
-export function hashDasEntradas(raiz = process.cwd(), sobrepor = {}) {
+// Pintura da loja que a célula `pintura` equipa: a 1ª skin avulsa da arma, senão a do pack.
+export function pinturaDe(arma) {
+  const p = TRETA_WEAPON_SKINS.find((s) => s.weapon === arma);
+  if (p) return { ...p, slot: 'weapon' };
+  const pack = TRETA_PACKS.find((k) => k.weaponSkins?.[arma]);
+  return pack ? { id: pack.id, name: pack.name, slot: 'pack', weapon: null, price: pack.price, skin: pack.weaponSkins[arma] } : null;
+}
+// O que decide o quadro fora de ENTRADAS sem ler weapons.js e o catálogo inteiros: classe curta
+// (PISTOLS), CFG.len (reescala do molde em cameraSpacePackage) e a pintura de cada célula.
+export const derivadas = () => ({
+  pistolas: [...PISTOLS].sort(),
+  len: Object.fromEntries(WEAPON_IDS.map((id) => [id, weaponCFG(id).len ?? null])),
+  pinturas: Object.fromEntries(PINTADAS.map((arma) => [arma, pinturaDe(arma)?.skin || pinturaDe(arma)?.id || null])),
+});
+// `sobrepor` troca o texto de um arquivo e `valores` as derivadas antes do hash (mutantes do CI).
+export function hashDasEntradas(raiz = process.cwd(), sobrepor = {}, valores = derivadas()) {
   const h = crypto.createHash('sha256');
   for (const f of ENTRADAS) { h.update(f); h.update(sobrepor[f] ?? fs.readFileSync(path.join(raiz, f))); }
+  h.update(JSON.stringify(valores));
   return h.digest('hex').slice(0, 16);
 }
 export const ASPECTOS = Object.freeze({ '16x9': [1920, 1080], '3x2': [1500, 1000] });

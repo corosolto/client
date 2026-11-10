@@ -28,13 +28,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execSync, spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { ASPECTOS, ENTRADAS, LIMIARES, MASCARA_SOBRE, PINTADAS, PLACAR_ARQ, REDUCAO, REFERENCIA_DA_PINTURA, SOBRE, comparar, hashDasEntradas, julgar, medir } from './lib/vm-enquadramento.mjs';
+import { ASPECTOS, ENTRADAS, LIMIARES, MASCARA_SOBRE, PINTADAS, PLACAR_ARQ, REDUCAO, REFERENCIA_DA_PINTURA, SOBRE, comparar, hashDasEntradas, julgar, medir, pinturaDe } from './lib/vm-enquadramento.mjs';
 
 const ROOT = process.cwd();
 const arg = (n, d = '') => { const h = process.argv.find((a) => a.startsWith(`--${n}=`)); return h ? h.slice(n.length + 3) : d; };
 const flag = (n) => process.argv.includes(`--${n}`);
 const { WEAPON_IDS } = await import(pathToFileURL(path.join(ROOT, 'public/js/weapons.js')).href);
-const { TRETA_WEAPON_SKINS = [], TRETA_PACKS = [] } = await import(pathToFileURL(path.join(ROOT, 'public/js/treta-catalog.js')).href);
 
 const MUTANTES = {   // aplicados só na célula alvo (arma + rota); a referência é medida intacta
   'pistola-longe': { arma: 'pistol', rota: 'pintura', aplicar: (e) => { e.cameraFov *= 1.6; } },
@@ -53,12 +52,6 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   // O mutante mede também a referência sem pintura (a comparação P1–P3 precisa dela).
   const rotas = MUT ? ['padrao', 'pintura'] : arg('rotas', 'padrao,pintura').split(',');
   const filtro = MUT ? [MUT.arma, REFERENCIA_DA_PINTURA[MUT.arma]] : (arg('armas') ? arg('armas').split(',') : null);
-  const pinturaDe = (arma) => {
-    const p = TRETA_WEAPON_SKINS.find((s) => s.weapon === arma);
-    if (p) return { ...p, slot: 'weapon' };
-    const pack = TRETA_PACKS.find((k) => k.weaponSkins?.[arma]);
-    return pack ? { id: pack.id, name: pack.name, slot: 'pack', weapon: null, price: pack.price, skin: pack.weaponSkins[arma] } : null;
-  };
   const celulas = [];
   for (const rota of rotas) {
     const armas = (rota === 'pintura' ? PINTADAS : WEAPON_IDS).filter((a) => !filtro || filtro.includes(a));
