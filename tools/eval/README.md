@@ -16,6 +16,7 @@ com código 1 em falha crítica.
 
 | Arquivo | O que mede | Artefato |
 |---|---|---|
+| `vm-enquadramento-placar-check.mjs` | FP parado (idle) cabe no quadro: placar assado por `vm-enquadramento-idle-check.mjs` (jogo real no navegador, máscara com sobrevarredura ×3, 26 armas sem pintura + pistol/ak/m4/scar pintadas, 16:9 e 3:2) medido sobre o vmconfig/GLBs atuais e re-julgado VERDE: arma dentro com margem (longas saem só por baixo/direita), tamanho são, braço ≤ 5× a pistola e pistola ancorada embaixo. Re-assar: `npm run eval:vm-enquadramento-idle -- --assar` (local, catálogo pago). Mutantes goldframe-antigo, sem-pistola-pintada, pistola-longe. | `npm run eval:vm-enquadramento-placar` |
 | `construtor-input-check.mjs` | Entradas de grade não esgotam memória nem travam a CLI; o handler real do editor preserva objetos ao editar campos. | `npm run eval:construtor-input` (incluído em `eval:mapjson`) |
 | `ballistics-falloff-check.mjs` | Extremos e interpolação da queda de dano; mede jogador e ambas as IAs, com mutações da curva e da distância. | `npm run eval:ballistics-falloff` |
 | `firing-cadence-check.mjs` | Cadência pelo _updatePlayer real; calendário, cooldown, teto por passo, entrada e interrupções, com mutantes. | `npm run eval:firing-cadence` |
