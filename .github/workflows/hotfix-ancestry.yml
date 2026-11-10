@@ -66,11 +66,18 @@ jobs:
           staging = subprocess.check_output([
               'git', 'rev-list', 'origin/main..origin/staging',
           ], text=True).splitlines()
+          main_is_ancestor = subprocess.run([
+              'git', 'merge-base', '--is-ancestor', 'origin/main', head_ref,
+          ], check=False).returncode == 0
           result = json.loads(subprocess.check_output([
               'python3', 'scripts/ci/release_policy.py', '--ancestry',
-          ], input=json.dumps({'head_commits': head, 'staging_commits': staging}), text=True))
+          ], input=json.dumps({
+              'head_commits': head,
+              'staging_commits': staging,
+              'main_is_ancestor': main_is_ancestor,
+          }), text=True))
           if not result['hotfix_main_only']:
-              print('::error::Hotfix contains commits from staging. Rebase only the urgent fix onto main.')
+              print('::error::Hotfix must contain the current main as ancestor and no unpublished staging commits. Rebase only the urgent fix onto main.')
               sys.exit(1)
           print('Hotfix ancestry is main-only.')
           PY

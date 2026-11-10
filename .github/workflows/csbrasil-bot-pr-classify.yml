@@ -155,9 +155,16 @@ jobs:
               staging = subprocess.check_output([
                   'git', 'rev-list', 'origin/main..origin/staging',
               ], text=True).splitlines()
+              main_is_ancestor = subprocess.run([
+                  'git', 'merge-base', '--is-ancestor', 'origin/main', head_ref,
+              ], check=False).returncode == 0
               result = json.loads(subprocess.check_output([
                   'python3', 'scripts/ci/release_policy.py', '--ancestry',
-              ], input=json.dumps({'head_commits': head, 'staging_commits': staging}), text=True))
+              ], input=json.dumps({
+                  'head_commits': head,
+                  'staging_commits': staging,
+                  'main_is_ancestor': main_is_ancestor,
+              }), text=True))
               pr.update(result)
           open(path, 'w').write(json.dumps(pr))
           PY

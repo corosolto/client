@@ -20,10 +20,11 @@ integração e organização de releases.
 - Bugfix comum recebe `release-batch` e segue para `staging`.
 - Título começando com `hotfix:` ou `[hotfix]`, ou label `hotfix`, identifica hotfix.
 - Hotfix deve nascer de `main` e mirar `main`. O bot não o desvia para `staging` e adiciona
-  `release` somente quando a base é `main` e os commits exclusivos da head não intersectam os
-  commits ainda não publicados de `staging`. Caso contrário aplica `needs-hotfix-review`,
-  remove `safe-automerge` e bloqueia o merge. Uma branch baseada em `staging` não é promovida
-  automaticamente porque isso poderia publicar commits não relacionados.
+  `release` somente quando a base é `main`, `origin/main` é ancestor da head atual e os commits
+  exclusivos da head não intersectam os commits ainda não publicados de `staging`. Commits novos
+  do hotfix não precisam (nem podem) já estar em `main`. Caso contrário aplica
+  `needs-hotfix-review`, remove `safe-automerge` e bloqueia o merge. Uma branch baseada em
+  `staging` não é promovida automaticamente porque isso poderia publicar commits não relacionados.
 - `release.yml` publica após o merge verde de uma PR com `release`. O dispatch manual continua
   disponível como fallback. Além das labels, o automerge exige o check `hotfix-ancestry` verde
   na head atual; fetch falho ou check ausente/vermelho impede o merge mesmo com labels antigas.

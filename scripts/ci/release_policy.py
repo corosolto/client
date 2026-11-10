@@ -31,8 +31,10 @@ def release_channel(item: dict) -> str:
     return "hotfix" if is_hotfix(item) else "batch"
 
 
-def hotfix_has_only_main_ancestors(head_commits: list[str], staging_commits: list[str]) -> bool:
-    return bool(head_commits) and set(head_commits).isdisjoint(staging_commits)
+def hotfix_has_only_main_ancestors(
+    head_commits: list[str], staging_commits: list[str], main_is_ancestor: bool = False
+) -> bool:
+    return bool(head_commits) and main_is_ancestor and set(head_commits).isdisjoint(staging_commits)
 
 
 def ancestry_result(payload: dict) -> dict:
@@ -41,9 +43,11 @@ def ancestry_result(payload: dict) -> dict:
             raise ValueError(f"{field} must be an explicit commit list")
         if any(not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}", sha) for sha in payload[field]):
             raise ValueError(f"{field} contains an invalid commit SHA")
+    if not isinstance(payload.get("main_is_ancestor"), bool):
+        raise ValueError("main_is_ancestor must be an explicit boolean")
     return {
         "hotfix_main_only": hotfix_has_only_main_ancestors(
-            payload["head_commits"], payload["staging_commits"]
+            payload["head_commits"], payload["staging_commits"], payload["main_is_ancestor"]
         )
     }
 
@@ -59,10 +63,11 @@ def selftest() -> int:
         ({"title": "Add prefix fixer"}, False, False, "batch"),
     ]
     ancestry_cases = [
-        (["hotfix-1"], ["staging-1"], True),
-        (["hotfix-1", "staging-1"], ["staging-1", "staging-2"], False),
-        ([], ["staging-1"], False),
-        (["hotfix-1"], [], True),
+        (["hotfix-1"], ["staging-1"], True, True),
+        (["hotfix-1", "staging-1"], ["staging-1", "staging-2"], True, False),
+        (["hotfix-1"], ["staging-1"], False, False),
+        ([], ["staging-1"], True, False),
+        (["hotfix-1"], [], True, True),
     ]
     failures = 0
     for item, bugfix, hotfix, channel in cases:
@@ -71,19 +76,24 @@ def selftest() -> int:
         ok = actual == expected
         failures += 0 if ok else 1
         print(f"  {'ok  ' if ok else 'FALHOU'} {item['title']}: {actual}")
-    for head, staging, expected in ancestry_cases:
-        actual = hotfix_has_only_main_ancestors(head, staging)
+    for head, staging, main_is_ancestor, expected in ancestry_cases:
+        actual = hotfix_has_only_main_ancestors(head, staging, main_is_ancestor)
         ok = actual == expected
         failures += 0 if ok else 1
-        print(f"  {'ok  ' if ok else 'FALHOU'} ancestry head={head} staging={staging}: {actual}")
+        print(f"  {'ok  ' if ok else 'FALHOU'} ancestry head={head} staging={staging} main={main_is_ancestor}: {actual}")
     valid_head = "a" * 40
     valid_staging = "b" * 40
-    if ancestry_result({"head_commits": [valid_head], "staging_commits": [valid_staging]})["hotfix_main_only"]:
+    if ancestry_result({"head_commits": [valid_head], "staging_commits": [valid_staging], "main_is_ancestor": True})["hotfix_main_only"]:
         print("  ok   ancestry explícita sem interseção")
     else:
         failures += 1
         print("  FALHOU ancestry explícita sem interseção")
-    if ancestry_result({"head_commits": [], "staging_commits": []})["hotfix_main_only"]:
+    if ancestry_result({"head_commits": [valid_head], "staging_commits": [], "main_is_ancestor": False})["hotfix_main_only"]:
+        failures += 1
+        print("  FALHOU branch sem main como ancestor foi aceita")
+    else:
+        print("  ok   branch sem main como ancestor é rejeitada")
+    if ancestry_result({"head_commits": [], "staging_commits": [], "main_is_ancestor": True})["hotfix_main_only"]:
         failures += 1
         print("  FALHOU ancestry vazia não pode provar main-only")
     else:
@@ -92,7 +102,8 @@ def selftest() -> int:
         {"staging_commits": []},
         {"head_commits": [valid_head]},
         {"head_commits": "not-a-list", "staging_commits": []},
-        {"head_commits": ["not-a-sha"], "staging_commits": []},
+        {"head_commits": ["not-a-sha"], "staging_commits": [], "main_is_ancestor": True},
+        {"head_commits": [valid_head], "staging_commits": [], "main_is_ancestor": "yes"},
     ):
         try:
             ancestry_result(invalid)
