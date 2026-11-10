@@ -84,7 +84,7 @@ for (let i = 0; i < 240 && !pronto; i++) {
 if (!pronto) throw new Error(`servidor não respondeu em ${BASE}`);
 
 const browser = await chromium.launch({
-  executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  ...(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : {}),   // padrão: Chromium do Playwright
   args: ['--headless=new', '--mute-audio', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
 });
 const page = await browser.newPage({ viewport: { width: 64, height: 64 } });

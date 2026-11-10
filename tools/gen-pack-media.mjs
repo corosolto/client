@@ -47,7 +47,7 @@ const FUNDO_CORPO = { r: 0, g: 0, b: 0 };        // mesmo preto dos vídeos/reco
 const LUZ = { map: process.env.MAPA || 'parque_treta', exp: process.env.EXPOSICAO || '2.0', fatia: process.env.FATIA || '1.04' };
 
 const browser = await chromium.launch({
-  executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  ...(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : {}),   // padrão: Chromium do Playwright
   args: ['--headless=new', '--mute-audio'],
 });
 const page = await browser.newPage();
