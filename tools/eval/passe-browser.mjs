@@ -7,6 +7,7 @@
          a tela do passe cabe sem rolar na horizontal e não tem botão de resgate.
      PB5 funil do painel: com medição permitida sai modal_view e open, uma vez cada; com a recusa
          gravada em cs_privacy não sai nenhum evento.
+     PB6 resposta lenta: /api/passe respondendo em 7 s (depois de qualquer prazo curto) ainda abre o anúncio.
      PB4 seletor: personagem do passe aparece com cadeado e "Nível N" e não é escolhido; o mesmo id salvo
          no localStorage não entra no lobby; depois do resgate (inventário do servidor) é escolhido.
    Uso (servidor próprio; um navegador por vez):
@@ -41,6 +42,7 @@ const MUTANTES = {
   'passe-modal-repete': ['PB1', /\/js\/passe-anuncio\.js/, (t) => t.replace('  marcarAnuncio();\n', '\n')],
   'personagem-travado-selecionavel': ['PB4', /\/js\/main\.js/, (t) => t.replace("if (personagemTravado(def)) { $('hub-roster-selected')", "if (false) { $('hub-roster-selected')")],
   'analytics-sem-consentimento': ['PB5', /\/js\/passe\.js/, (t) => t.replace(' || !globalThis.__csPrivacy?.allowed()) return;', ') return;')],
+  'anuncio-com-prazo': ['PB6', /\/js\/tp\/lobby\.js/, (t) => t.replace('  await esperarPasse();', '  await Promise.race([esperarPasse(), new Promise((r) => setTimeout(r, 4000))]);')],
   'claim-sem-conta': ['PB3', /\/js\/tp\/passe\.js/, (t) => t.replace('if (!s?.authenticated) { entrar(); return; }', '')
     .replace("const primeiro = s.claimable[0];", 'const primeiro = s.claimable[0] || (!s.authenticated && 1);')],
 };
@@ -50,7 +52,7 @@ const MUTANTES = {
 const INJETA_PERSONAGEM = (t) => t.replace('export const CHARACTERS = [',
   "export const CHARACTERS = [\n  { id: 'capitao-caveira', team: 'E', name: 'Capitão Caveira', passe: { season: 'sessao-da-treta-s1', level: 1 },\n    blurb: 'Personagem do passe (régua).', pal: { skin: 0xe8b98a, shirt: 0x222222, pants: 0x222222, hair: 0x111111, boots: 0x111111 } },");
 
-async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mutante = '', personagem = null, anuncioVisto = false, recusaMedicao = false }) {
+async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mutante = '', personagem = null, anuncioVisto = false, recusaMedicao = false, atrasoMs = 0 }) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: toque, isMobile: toque, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   page.setDefaultTimeout(15000);
@@ -70,6 +72,7 @@ async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mu
   await page.route('**/api/passe', async (r) => {
     const req = r.request();
     if (req.method() === 'POST') { const corpo = req.postData() || ''; if (/"action":"analytics"/.test(corpo)) eventos.push(JSON.parse(corpo).event); else posts.push(corpo); }
+    if (atrasoMs && req.method() === 'GET') await new Promise((ok) => setTimeout(ok, atrasoMs));
     const { status, body } = mock.handle(req.method(), req.postData() || '');
     await r.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
   });
@@ -240,6 +243,14 @@ async function medir(mutante = '') {
     const depois = await page.evaluate(() => ({ aviso: document.getElementById('hub-roster-selected')?.textContent || '', aberto: !document.getElementById('hub-roster-modal')?.hidden, nome: document.getElementById('hub-character-name')?.textContent || '' }));
     add('PB4', cel.existe && cel.travado && /Nível 1/.test(cel.rotulo) && !/Caveira/.test(lobby) && depois.aberto && /destrava no nível 1/.test(depois.aviso) && !/Caveira/.test(depois.nome),
       `id salvo no navegador -> lobby com "${lobby}"; célula ${cel.existe ? (cel.travado ? `travada "${cel.rotulo}"` : 'LIVRE') : 'ausente'}; clique: "${depois.aviso}", lobby "${depois.nome}"`);
+    await ctx.close();
+  }
+  /* Sessão E: servidor lento, o anúncio espera a resposta em vez de desistir. */
+  {
+    const mock = mockNoAr({ autenticado: true, xp: 2350, claimed: [] });
+    const { page, ctx } = await abrir({ mock, mutante, atrasoMs: 7000 });
+    const aberto = await page.evaluate(() => !!document.getElementById('passe-anuncio')?.open);
+    add('PB6', aberto, `/api/passe em 7 s: anúncio ${aberto ? 'abriu' : 'NÃO ABRIU (desistiu antes da resposta)'}`);
     await ctx.close();
   }
   return r;

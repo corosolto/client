@@ -662,24 +662,23 @@ function semSplash() {
   });
 }
 
-/* Status do passe da conta ATUAL: o login no boot troca a conta e descarta o status anterior. */
-function esperarPasse(ms) {
+/* Status do passe da conta ATUAL: espera a resposta (o pedido tem prazo de 12 s em passe.js) ou a falha;
+   o login no boot troca a conta e descarta o status anterior, então vale o evento, não a promessa. */
+function esperarPasse() {
   if (passeEstado() || passeFalhou()) return Promise.resolve();
   return new Promise((resolve) => {
-    const fim = () => { clearTimeout(prazo); document.removeEventListener(PASSE_EVENTO, ouvir); resolve(); };
-    const ouvir = () => { if (passeEstado() || passeFalhou()) fim(); };
-    const prazo = setTimeout(fim, ms);
+    const ouvir = () => { if (passeEstado() || passeFalhou()) { document.removeEventListener(PASSE_EVENTO, ouvir); resolve(); } };
     document.addEventListener(PASSE_EVENTO, ouvir);
     void carregarPasse();
   });
 }
 
 /* Novidades ao entrar no lobby, uma por vez: o passe (temporada no ar segundo o servidor) vem antes da
-   caça ao Javaporco. O status do passe já foi pedido no boot (main.js); espera no máximo 4 s por ele. */
+   caça ao Javaporco, que espera a resposta do passe para não abrir na frente dele. */
 async function anunciarNovidades() {
   if (new URLSearchParams(location.search).has('auto')) return;
   await semSplash();
-  await esperarPasse(4000);
+  await esperarPasse();
   if (menu()?.classList.contains('hidden')) return;   // a partida começou enquanto o servidor respondia
   if (anunciarPasse({ abrirPasse, entrar: () => abrirLoginPrompt('passe') })) return;
   anunciarJavaporcos({
