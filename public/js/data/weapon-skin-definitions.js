@@ -24,7 +24,7 @@ const storeSkin = ({
   ...(preserveBase ? { preserveBase: true } : {}),
   ...(markLayout ? { markLayout: Object.freeze(markLayout) } : {}),
   ...(sloganLayout ? { sloganLayout: Object.freeze(sloganLayout) } : {}),
-  // Só no corpo golden da 1ª pessoa (weapon-skins.js attachPoliticalMarkings); mesmo espaço do markLayout.
+  // Só no corpo da 1ª pessoa (golden; pistola: X18 da fábrica), no mesmo espaço do markLayout.
   ...(fpMarkLayout ? { fpMarkLayout: Object.freeze(fpMarkLayout) } : {}),
   ...(fpSloganLayout ? { fpSloganLayout: Object.freeze(fpSloganLayout) } : {}),
   // Faca: lâmina fica no aço original; pintura e letreiro só no cabo/guarda (weapon-skins.js).
@@ -106,8 +106,8 @@ const SESSAO_DA_TRETA_DESIGNS = Object.freeze([
   ['arma-14', 'Coelho da Páscoa', 'm4', '#e98ab4', 'Um campo de olhos arregalados e o Coelho da Páscoa que não pisca.', 'TÔ TE VENDO', 'coelho-pascoa', 'olhos', 1.2, ['#080206', '#3a1228', '#a88a9a']],
   ['arma-15', 'Cristaleira', 'scar', '#c8d2b0', 'Renda de vó comida pelo mofo e a Boneca da Cristaleira de olho vazio.', 'NÃO MEXE', 'boneca-cristaleira', 'renda', 1.4, ['#040503', '#1e2419', '#6f7862']],
 ]);
-// Marca ≥ Emo Xadrez (0,100), dentro da silhueta de eval:weapon-skin-body; fpMark/fpSlogan valem
-// só no corpo golden do 1P (mão e emendas mudam). Faca não tem layout: lâmina de aço (steelBlade).
+// Marca ≥ Emo Xadrez (0,100), dentro da silhueta de eval:weapon-skin-body; fpMark/fpSlogan valem só
+// no 1P (pistola: X18, frente do ferrolho fora da mão). Faca: lâmina de aço (steelBlade), sem layout.
 const SESSAO_DA_TRETA_LAYOUT = Object.freeze({
   ak: { mark: { y: 0.084, z: 0.075, height: 0.100, lift: 0.004 }, slogan: { y: 0.085, z: 0.245, height: 0.054, lift: 0.004 },
     fpMark: { y: 0.070, z: -0.100, height: 0.115, lift: 0.004 }, fpSlogan: { y: 0.070, z: -0.265, height: 0.050, lift: 0.004 } },
@@ -115,8 +115,10 @@ const SESSAO_DA_TRETA_LAYOUT = Object.freeze({
     fpMark: { y: 0.040, z: -0.200, height: 0.090, lift: 0.004 }, fpSlogan: { y: 0.020, z: -0.070, height: 0.035, lift: 0.004 } },
   scar: { mark: { y: 0.090, z: -0.055, height: 0.125, lift: 0.004 }, slogan: { y: 0.085, z: 0.150, height: 0.058, lift: 0.004 },
     fpMark: { y: 0.045, z: -0.110, height: 0.115, lift: 0.004 }, fpSlogan: { y: 0.130, z: -0.220, height: 0.040, lift: 0.004 } },
+  // Pistola 1P: a lateral do ferrolho do X18 só tem vértice nas pontas; `fit` mede a superfície ali.
   pistol: { mark: { y: 0.250, z: -0.150, height: 0.140 }, slogan: { y: 0.250, z: 0.380, height: 0.065 },
-    fpMark: { y: 0.245, z: -0.150, height: 0.150 }, fpSlogan: { y: 0.270, z: 0.380, height: 0.075 } },
+    fpMark: { y: 0.300, z: 0.620, height: 0.100, fit: { z: 0.640, width: 0.100 } },
+    fpSlogan: { y: 0.300, z: 0.410, height: 0.060, fit: { z: 0.410, width: 0.600 } } },
 });
 const SESSAO_DA_TRETA_SKINS = Object.freeze(Object.fromEntries(SESSAO_DA_TRETA_DESIGNS.map(
   ([id, name, weapon, color, description, slogan, mark, pattern, scale, palette], index) => {
