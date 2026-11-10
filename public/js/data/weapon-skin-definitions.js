@@ -105,13 +105,8 @@ const SESSAO_DA_TRETA_DESIGNS = Object.freeze([
   ['arma-14', 'Quadro Partido', 'm4', '#e16a70', 'Barras de cor rasgadas e a caveira de teste.', '▶ PLAY 00:00', 'caveira-teste', 'barras', 2.0, null],
   ['arma-15', 'Encerramento', 'scar', '#e2cfe9', 'Círculo de calibração violeta e a caveira de teste.', 'FORA DO AR', 'caveira-teste', 'circulo', 3.5, ['#0b0612', '#7c4a9c', '#f4e8fa']],
 ]);
-// Marca-herói acima da escala da Emo Xadrez (0,100 longa / 0,110 pistola), dentro da silhueta
-// medida por eval:weapon-skin-body: na AK ela desce para o poço do carregador e na M4 para cima
-// do punho, onde o corpo é mais alto que a fresta do trilho. Na pistola marca e letreiro ficam
-// no ferrolho, fora da mão em 1ª pessoa.
-// fpMark/fpSlogan: mesmas coordenadas (espaço local do wrap TP), só no corpo golden da 1ª
-// pessoa — lá a mão direita, a de apoio e as emendas do receptor caem em outros lugares.
-// knifeMarkSize: teto do símbolo na lâmina (sizeFrac do perfil é 0,62).
+// Marca ≥ Emo Xadrez (0,100), dentro da silhueta de eval:weapon-skin-body; fpMark/fpSlogan valem
+// só no corpo golden do 1P (mão e emendas mudam); knifeMarkSize é o teto do símbolo na lâmina.
 const SESSAO_DA_TRETA_LAYOUT = Object.freeze({
   ak: { mark: { y: 0.084, z: 0.075, height: 0.100, lift: 0.004 }, slogan: { y: 0.085, z: 0.245, height: 0.054, lift: 0.004 },
     fpMark: { y: 0.070, z: -0.100, height: 0.115, lift: 0.004 }, fpSlogan: { y: 0.070, z: -0.265, height: 0.050, lift: 0.004 } },

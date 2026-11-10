@@ -152,9 +152,8 @@ const SESSAO_DA_TRETA_PATTERNS = Object.freeze([
 const SESSAO_DA_TRETA_FRAGMENT = Object.freeze(Object.fromEntries(
   SESSAO_DA_TRETA_PATTERNS.map((fragment, index) => [`arma-${String(index + 1).padStart(2, '0')}`, fragment]),
 ));
-// `patternAsset`: textura tileável projetada de lado no corpo, no mesmo frame local dos padrões
-// do passe. `patternStyle.scale` = repetições ao longo do comprimento da peça; `contrast` estica
-// em torno do cinza médio; `palette` (3 cores) remapeia a luminância, sem ela vale o RGB da arte.
+// `patternAsset`: textura tileável de lado no corpo; `patternStyle` = repetições no comprimento,
+// contraste em torno do cinza e paleta de 3 cores sobre a luminância (sem paleta vale o RGB).
 const PATTERN_ASSET_FRAGMENT = `
   vec2 p = vec2(mix(vWeaponSkinLocal.x, vWeaponSkinLocal.z, weaponSkinFrame.x) - weaponSkinFrame.y,
                 vWeaponSkinLocal.y - weaponSkinFrame.z) * weaponSkinFrame.w;
@@ -643,9 +642,8 @@ function knifeGeometryFingerprint(model) {
   return h.toString(16).padStart(8, '0');
 }
 
-// `longitudinal`: a horizontal da imagem corre ao longo da lâmina e o "cima" dela fica na
-// transversal, virado ao +Y do modelo (addKnifePair). Vale para o letreiro E para o símbolo:
-// com o símbolo transversal o topo da caveira apontava para a ponta (deitado 90° no cartaz).
+// `longitudinal`: a horizontal da imagem corre ao longo da lâmina e o topo vai ao dorso (+Y do
+// modelo). Vale para letreiro e símbolo; o símbolo transversal deitava a caveira para a ponta.
 const KNIFE_MARK_PROFILES = Object.freeze({
   'knife-fp': Object.freeze({
     id: 'coro-knife-fp-v2',
@@ -866,9 +864,8 @@ function addKnifePair(model, skinId, role, texture, frame, placement, context) {
   const material = paintedMaterial(texture, skinId, role);
   const longVector = frame.long.clone().multiplyScalar(frame.longSign);
   const longitudinal = KNIFE_MARK_PROFILES[context].roles[role].longitudinal;
-  // O "cima" do texto longitudinal é o +X do plano (UV girada acima). Sem escolha, ele
-  // seguia long × normal e o lado de fora da faca 3P lia de ponta-cabeça. Cada lado gira
-  // 180° no próprio plano (nunca espelha) para o topo das letras apontar ao +Y do modelo.
+  // Cada lado gira 180° no próprio plano (nunca espelha) para o topo das letras apontar ao +Y
+  // do modelo; sem isso o lado de fora da faca 3P lia de ponta-cabeça.
   const space = (frame.bone || model).matrixWorld.clone().invert();
   const modelUp = new THREE.Vector3(0, 1, 0).transformDirection(model.matrixWorld).transformDirection(space);
   for (const [side, n, flip] of [['right', placement.rightN, false], ['left', placement.leftN, true]]) {
@@ -931,9 +928,8 @@ function attachKnifeMarkings(model, skinId, context) {
   if (profile.representation === 'rigid-wrap' && skinned.length !== 0) return finish('representation-mismatch');
   const frame = knifeBladeFrame(model, profile);
   if (frame.error) return finish(frame.error);
-  // knifeMarkSize (opcional, por definição) é o TETO do sizeFrac do símbolo: tenta dele até o
-  // sizeFrac do perfil (passo 0,05) e fica com a primeira escala em que símbolo E letreiro cabem
-  // inteiros na lâmina. Sem override, uma tentativa só, com o perfil.
+  // knifeMarkSize é o teto do símbolo: desce até o sizeFrac do perfil (passo 0,05) e fica com a
+  // primeira escala em que símbolo e letreiro cabem inteiros na lâmina.
   const profileSize = profile.roles.symbol.sizeFrac;
   const ceiling = definition.knifeMarkSize;
   const sizes = ceiling > profileSize && ceiling < 1
@@ -964,17 +960,8 @@ function attachKnifeMarkings(model, skinId, context) {
   return finish('attached');
 }
 
-/* CORPO GOLDEN DO 1P. As camadas de marca (POLITICAL_LAYOUT, markLayout/sloganLayout,
-   CLUB_MARK_LAYOUT) são autoradas no espaço LOCAL do wrap do weaponModel de 3ª pessoa
-   (grip na origem, cano em +Z, cima em +Y; as marcas são filhas do wrap escalado). O corpo
-   golden do viewmodel autorado é um SkinnedMesh preso a UM osso, em outro espaço — a AK com
-   o cano em +Y do osso, a pistola em centímetros com o cano em −Y. Montadas direto nele, as
-   marcas nasciam a 1,3–2,2 comprimentos da arma (fora do quadro) e paradas no espaço da
-   malha, sem seguir o osso. O frame abaixo leva coordenadas TP para o osso: eixos pela
-   geometria do corpo (cano = maior extensão, boca = ponta de seção mais fina; cima = segunda
-   maior, com o cano no alto), escala uniforme pelo comprimento, cano ancorado na coronha e
-   altura ancorada no topo. Referência TP = weaponModel(id).userData.metrics.box ÷
-   metrics.norm (unidades locais do wrap), medida em 10/11/2026. */
+// Corpo golden do 1P: SkinnedMesh num osso, em outro espaço que o wrap TP onde os layouts são
+// autorados. Referência = weaponModel(id).userData.metrics.box ÷ metrics.norm (10/11/2026).
 const TP_MARK_REFERENCE = Object.freeze({
   ak: Object.freeze({ back: -0.3793, front: 0.6188, top: 0.1514, scale: 0.8817 }),
   m4: Object.freeze({ back: -0.3793, front: 0.6188, top: 0.1729, scale: 0.8416 }),
@@ -1061,9 +1048,8 @@ function goldenMarkHost(mesh, weaponId, skinId) {
   return { target: host, source: { points: frame.points, scale: frame.scale } };
 }
 
-// `source` só existe no corpo golden do 1P: lá valem fpMarkLayout/fpSloganLayout (mesmo
-// espaço local do wrap TP), porque a mão e as emendas do receptor em 1ª pessoa não são as
-// do boneco de 3ª pessoa. TP e cartazes seguem com markLayout/sloganLayout.
+// `source` só existe no corpo golden do 1P: lá valem fpMarkLayout/fpSloganLayout, porque mão e
+// emendas do receptor em 1ª pessoa não são as do boneco de 3ª pessoa.
 function attachPoliticalMarkings(model, weaponId, skinId, source = null) {
   const symbol = markTextures.get(skinId);
   const definition = WEAPON_SKINS[skinId];
@@ -1194,11 +1180,8 @@ export function reviewWeaponSkinId() {
   return query.get('debug') === '1' ? query.get('weaponskin') : null;
 }
 
-// Escala comum do padrão nas malhas de uma mesma arma: o pente (malha separada) recebe a arte no
-// tamanho do corpo, não esticada ao próprio comprimento. Unidade = escala efetiva da malha ÷ maior
-// comprimento efetivo em `referenceRoot` (o corpo, quando o 1P pinta peça por peça).
-// As peças golden do 1P são SkinnedMesh quantizadas (geometria normalizada em ±1): a escala real
-// está em bindMatrix · boneInverse · osso, não em matrixWorld.
+// Escala comum do padrão entre as malhas da arma: o pente herda a do corpo (`referenceRoot`).
+// Peça golden do 1P é skinned quantizada: a escala real está em bindMatrix · boneInverse · osso.
 const effectiveMatrix = new THREE.Matrix4();
 function effectiveScale(object) {
   const skinIndex = object.isSkinnedMesh && object.geometry.attributes.skinIndex;
