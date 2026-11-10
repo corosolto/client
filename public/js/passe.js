@@ -103,6 +103,14 @@ export function carregarPasse() {
   return pedido;
 }
 
+/* Funil do painel (spec §6): dois eventos anônimos, agregados por dia no servidor. Mesma régua da
+   loja Treta: sem consentimento de medição (window.__csPrivacy) não sai nada. */
+const EVENTOS = new Set(['modal_view', 'open']);
+export function registrarEventoPasse(event) {
+  if (!EVENTOS.has(event) || !globalThis.__csPrivacy?.allowed()) return;
+  void pedir({ action: 'analytics', event }).catch(() => {});
+}
+
 /* Conta trocou (login, logout): esquece o status da conta anterior antes de perguntar de novo. */
 export function trocarContaPasse() {
   epoca++; carregando = null; estado = null; falhou = false;

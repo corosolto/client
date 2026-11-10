@@ -5,7 +5,7 @@ import { tr, frase, LANG } from '../i18n.js';
 import { CHARACTERS } from '../characters.js';
 import { TRETA_COIN_ART } from '../treta-catalog.js';
 import { abrirLoginPrompt } from '../login-prompt.js';
-import { passeEstado, passeFalhou, carregarPasse, resgatarNivel, progressoNivel, PASSE_EVENTO } from '../passe.js';
+import { passeEstado, passeFalhou, carregarPasse, resgatarNivel, progressoNivel, registrarEventoPasse, PASSE_EVENTO } from '../passe.js';
 
 const $ = (id) => document.getElementById(id);
 function no(tag, cls = '', texto = '') {
@@ -265,6 +265,7 @@ export function abrirPasse() {
   desenhar();
   dialog.showModal();
   dialog.querySelector('.tp-passe__fechar').focus();
+  registrarEventoPasse('open');
   void carregarPasse();
   return dialog;
 }

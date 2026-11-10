@@ -17,6 +17,9 @@
    PS4 passe-modal-repete · o anúncio aparece uma vez por versão, só com a temporada
                            no ar, sem empilhar <dialog> e fora do ?embed=1.
    PS5 claim-duplo       · dois cliques no mesmo resgate saem como UM pedido.
+   PS6 analytics         · funil do painel: modal_view quando o anúncio abre e open quando a
+                           tela abre, só {action:'analytics', event}, e NADA sem consentimento
+                           de medição (window.__csPrivacy), como a loja Treta.
 
    Uso: node tools/eval/passe-check.mjs [--mutante=<id> [--espera-reprovar]]
      --espera-reprovar  sai 0 só se o mutante derrubar a cláusula que ele mira
@@ -41,6 +44,9 @@ const MUTANTES = {
   'passe-modal-repete': ['PS4', 'public/js/passe-anuncio.js', '  marcarAnuncio();\n', '\n'],
   'anuncio-fora-da-temporada': ['PS4', 'public/js/passe.js', 'return agora >= Date.parse(status.starts_at) && agora < Date.parse(status.ends_at);', 'return true;'],
   'claim-duplo': ['PS5', 'public/js/passe.js', 'if (resgatando) return resgatando;', ''],
+  'analytics-sem-consentimento': ['PS6', 'public/js/passe.js', " || !globalThis.__csPrivacy?.allowed()) return;", ') return;'],
+  'modal-sem-evento': ['PS6', 'public/js/passe-anuncio.js', "  registrarEventoPasse('modal_view');\n", '\n'],
+  'tela-sem-evento': ['PS6', 'public/js/tp/passe.js', "  registrarEventoPasse('open');\n", '\n'],
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -126,8 +132,9 @@ await clausula('PS1', 'xp-do-cliente: só {action:"claim", level} sai do client'
   assert.ok(posts.length >= 4, `só ${posts.length} resgate(s) medido(s)`);
   for (const p of posts) {
     const corpo = JSON.parse(p.body);
-    assert.deepEqual(Object.keys(corpo).sort(), ['action', 'level'], `POST com campo extra: ${p.body}`);
-    assert.ok(corpo.action === 'claim' && Number.isSafeInteger(corpo.level), `POST fora do contrato: ${p.body}`);
+    const chaves = Object.keys(corpo).sort().join(',');
+    assert.ok((chaves === 'action,level' && corpo.action === 'claim' && Number.isSafeInteger(corpo.level))
+      || (chaves === 'action,event' && corpo.action === 'analytics' && ['modal_view', 'open'].includes(corpo.event)), `POST fora do contrato: ${p.body}`);
   }
   assert.equal(mock.chamadas.filter((c) => c.method === 'POST' && c.corpo && Object.keys(c.corpo).some((k) => /xp|progress|reward/i.test(k))).length, 0, 'servidor recebeu XP do client');
   /* só passe.js conversa com /api/passe */
@@ -219,6 +226,32 @@ await clausula('PS5', 'claim-duplo: dois cliques, um pedido', async () => {
   const repetido = await P.resgatarNivel(1);
   assert.equal(repetido.already_claimed, true, 'repetição não veio idempotente do servidor');
   assert.equal(mock.creditos.filter((c) => c.event_key.endsWith(':1')).length, 5, 'recompensas do nível 1 duplicaram');
+});
+
+await clausula('PS6', 'analytics: modal_view e open só com consentimento', async () => {
+  storage.clear(); storage.set('cs_lang', 'pt');
+  await novaConta({ autenticado: false, claimed: [] });
+  const eventos = () => pedidos.filter((p) => p.method === 'POST' && JSON.parse(p.body).action === 'analytics').map((p) => JSON.parse(p.body));
+  const anunciar = () => { const d = A.anunciarPasse({}); d?.dispara('cancel'); storage.delete(P.PASSE_ANUNCIO_CHAVE); return d; };
+  for (const [nome, privacidade] of [['sem __csPrivacy', undefined], ['recusa gravada', { allowed: () => false }]]) {
+    globalThis.__csPrivacy = privacidade;
+    pedidos.length = 0;
+    assert.ok(anunciar(), 'anúncio não abriu para medir');
+    P.registrarEventoPasse('open');
+    await new Promise((r) => setTimeout(r, 0));
+    assert.deepEqual(eventos(), [], `evento saiu ${nome}`);
+  }
+  globalThis.__csPrivacy = { allowed: () => true };
+  pedidos.length = 0;
+  anunciar();
+  P.registrarEventoPasse('xp');
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(eventos(), [{ action: 'analytics', event: 'modal_view' }], `anúncio com consentimento mandou ${JSON.stringify(eventos())}`);
+  assert.deepEqual(mock.eventos, ['modal_view'], 'servidor não recebeu modal_view');
+  delete globalThis.__csPrivacy;
+  /* a tela do passe (DOM do lobby, fora do Node) manda open ao abrir */
+  const tela = ler('public/js/tp/passe.js');
+  assert.match(tela.slice(tela.indexOf('export function abrirPasse')), /dialog\.showModal\(\);[\s\S]*registrarEventoPasse\('open'\);/, 'abrir a tela do passe não manda open');
 });
 
 const alvo = MUT ? MUTANTES[MUT][0] : '';

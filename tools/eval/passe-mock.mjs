@@ -50,6 +50,7 @@ export function criarPasseMock({
   const resgates = new Map();   // nível -> {em, rewards}; a chave season:level do servidor
   const creditos = [];          // ledger falso: uma linha por recompensa entregue, com o event_key do resgate
   const chamadas = [];
+  const eventos = [];           // funil do painel recebido (modal_view, open)
   const entregar = (n, em) => {
     const nivel = NIVEIS[n - 1];
     resgates.set(n, { em, rewards: nivel.rewards });
@@ -83,6 +84,14 @@ export function criarPasseMock({
   const erro = (status, error) => ({ status, body: { error } });
   function claim(corpo) {
     if (!corpo || typeof corpo !== 'object' || Array.isArray(corpo)) return erro(400, 'bad_json');
+    /* funil do painel: {action:'analytics', event}, anônimo, sem nada além disso */
+    if (corpo.action === 'analytics') {
+      const sobra = Object.keys(corpo).filter((k) => k !== 'action' && k !== 'event');
+      if (sobra.length) return erro(400, `campo_recusado:${sobra.join(',')}`);
+      if (!['modal_view', 'open'].includes(corpo.event)) return erro(400, 'event_invalid');
+      eventos.push(corpo.event);
+      return { status: 200, body: { ok: true, stored: true } };
+    }
     const extras = Object.keys(corpo).filter((k) => k !== 'action' && k !== 'level');
     if (extras.length) return erro(400, `campo_recusado:${extras.join(',')}`);
     if (corpo.action !== 'claim') return erro(400, 'action_invalid');
@@ -105,7 +114,7 @@ export function criarPasseMock({
     return erro(405, 'method_not_allowed');
   }
   return {
-    status, claim, handle, chamadas, creditos,
+    status, claim, handle, chamadas, creditos, eventos,
     definir(campos) { if ('autenticado' in campos) autenticado = campos.autenticado; if ('xp' in campos) xp = campos.xp; },
   };
 }
