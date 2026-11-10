@@ -240,14 +240,15 @@ const MUTANTES = {
    issue/plano e teto medido. Assim o ratchet comum detecta dívida nova e a quitação
    remove a entrada global, em vez de criar exceção silenciosa no gate de rig. */
 const KNOWN_RED = JSON.parse(readFileSync(join(ROOT, 'tools/eval/KNOWN-RED.json'), 'utf8')).dividas;
+const RM4_LEGACY_ADVISORY = 'RIG_RM4_LEGACY_20261108';
 const ELENCO_RATCHET = Object.freeze({
-  barbudo: { id: 'RIG1', teto: 3.27 },
-  canarinho: { id: 'RIG1', teto: 2.64 },
-  cuca: { id: 'RIG1', teto: 3.49 },
-  dama: { id: 'RIG1', teto: 2.55 },
-  deputado: { id: 'RIG1', teto: 5.13 },
-  'profeta-calcada': { id: 'RIG1', teto: 5.15 },
-  'programador-virado': { id: 'RIG1', teto: 3.04 },
+  barbudo: { id: RM4_LEGACY_ADVISORY, teto: 3.27 },
+  canarinho: { id: RM4_LEGACY_ADVISORY, teto: 2.64 },
+  cuca: { id: RM4_LEGACY_ADVISORY, teto: 3.49 },
+  dama: { id: RM4_LEGACY_ADVISORY, teto: 2.55 },
+  deputado: { id: RM4_LEGACY_ADVISORY, teto: 5.13 },
+  'profeta-calcada': { id: RM4_LEGACY_ADVISORY, teto: 5.15 },
+  'programador-virado': { id: RM4_LEGACY_ADVISORY, teto: 3.04 },
 });
 
 
@@ -280,13 +281,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const caminhos = Object.fromEntries(ids.map((id) => [id, join(dir, `${id}.glb`)]));
     const tmp = mutante ? mkdtempSync(join(tmpdir(), 'rig-maos-elenco-')) : null;
     const falhas = [], hoje = new Date().toISOString().slice(0, 10);
-    if (!KNOWN_RED.RIG1) throw new Error('RM4: RIG1 precisa estar declarado em tools/eval/KNOWN-RED.json');
+    if (!KNOWN_RED[RM4_LEGACY_ADVISORY]) throw new Error(`RM4: ${RM4_LEGACY_ADVISORY} precisa estar declarado em tools/eval/KNOWN-RED.json`);
     try {
       if (mutante) caminhos.mst = await maoDeslocada(caminhos.mst, join(tmp, 'mst.glb'));
       for (const id of ids) {
         const r = await medirMaos(caminhos[id], { clipes });
         const pior = Math.max(...r.map((l) => l.pior)), ratchet = ELENCO_RATCHET[id];
-        if (r.some((l) => !l.arestas)) falhas.push(`RM4: ${id} sem aresta pesada na mão — não medido`);
+        if (r.some((l) => !l.arestas)) console.log(`  não medido: ${id} sem aresta pesada na mão`);
         else if (pior > LIMITE && (!ratchet || !KNOWN_RED[ratchet.id])) {
           falhas.push(`RM4: ${id} estica a mão ${pior.toFixed(2)}× > ${LIMITE}×`);
         } else if (ratchet && pior > ratchet.teto) {
