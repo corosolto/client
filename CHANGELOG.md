@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.139`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.141`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -244,6 +244,208 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.141] — 2026-11-10
+
+### Mudado
+- fix(ci): protege preview Cloudflare e smoke manual (#1300)
+- test(ci): limita regras CF ao passo exato
+- test(ci): prende guarda do smoke ao dispatch
+- fix(ci): isola artefato e corrige smoke manual
+
+## [2.1.0-alpha.140] — 2026-11-10
+
+### Mudado
+- Jogo para de travar com muitos bots (#1245)
+- Emit google-site-verification meta on the home head (#1254)
+- Add itch.io embed wrapper and allow itch.zone ancestor (#1252)
+- ci: harden post-deploy smoke classification (#1255)
+- Remove 157 eval scripts with no caller anywhere in the repo (#1256)
+- ci(browser): validar agregado do portão em staging (#1246)
+- ci: acelerar pre-push e isolar gates pesados (#1257)
+- fix(ui): manter ação privada visível no boot v3 (#1250)
+- Use English bot updates and retire obsolete review requirements (#1262)
+- feat(cf): spike do site no Cloudflare Workers (fase 1 da migração) (#1261)
+- fix(audio): voz é do personagem e rádio dos bots chega ao multiplayer (#1263)
+- ci: shard heavy simulations and publish timings (#1267)
+- Medição ligada por padrão: recusa explícita desliga (#1264)
+- Cortar build de preview, cache de packs e log por requisição na Vercel (fase 0) (#1258)
+- chore: régua eval:lixo (LX1-LX5) + bloco 1 da limpeza (#1259)
+- chore: limpeza de órfãos lote 2 (#1272)
+- feat: preview Cloudflare por PR (#1271)
+- Segredos de SSR em runtime no Workers: env-runtime + ponte de bindings (achado 1 do spike CF) (#1276)
+- ci: paraleliza contratos visuais e Flávio (#1275)
+- Contagem de borda nomeia navegador interno de app (#1278)
+- Pre-push e CI param de queimar uma hora por push (#1281)
+- ci: rebalanceia equipamento TP sem novos jobs (#1282)
+- feat: usar corosol.to nos links compartilháveis (#1285)
+- feat(cf): publica Worker de staging em paralelo (#1283)
+- fix(cf): restaurar geo e assets de áudio no Workers (#1284)
+- docs(skills): personagem 3P pelo processo padrão do Studio (#1269)
+- [REA] Adicionar impacto de pouso por superfície e vínculo de look (#1289)
+- fix(login): continua OAuth quando a prova do convidado expira (#1296)
+- feat: automate daily releases and build repair (#1290)
+- fix(login): continua OAuth quando a prova do convidado expira (#1297)
+- ci(preview): builda mudanças do adaptador (#1299)
+- /app: landing leve para quem abre o jogo dentro de app (#1291)
+- fix(ci): desbloqueia a promoção staging (#1286)
+- lote release 08/11: jogo sem travar com muitos bots (#1245) (#1251)
+- fix(ci): declara runner do preview pulado
+- ci(preview): builda mudanças do adaptador
+- style(ci): compacta comentario de geo da borda
+- fix(login): separa recuperação por provider
+- fix(login): continua OAuth quando a prova do convidado expira
+- fix(login): separa recuperação por provider
+- fix(bot): classify batches from verified complete diffs
+- fix(bot): verify complete release diff before merging
+- fix(bot): preserve feature routing and require positive English detection
+- fix(release): resolve hostname e trafego duplicado
+- test(game): usar ID canônico do córrego
+- docs(game): atualizar âncoras da matriz
+- chore(ci): remover diário do diff da PR
+- fix(bot): require main ancestry and lockfile-free Node setup
+- test(smoke): detect locale from rendered faction label
+- fix(bot): secure dependency reinstall and batch review resolution
+- Constrain preview build timeout
+- Satisfy Cloudflare workflow gate requirements
+- fix(login): continua OAuth quando a prova do convidado expira
+- fix(bot): refresh release ancestry refs explicitly
+- fix(bot): require approval and clear human blocks for batches
+- fix(landing): alvo do iOS com uma autoridade https e fiação testável
+- fix(bot): bind automerge to evaluated head
+- fix(bot): block merges while review is pending
+- Detect chat smoke locale from rendered UI
+- fix(ci): permite config do Worker staging
+- fix(bot): protect quality gates from build repair
+- test(ci): enforce automerge decision ordering
+- fix(bot): reject missing hotfix ancestry evidence
+- fix(ci): nao mede GPU real em SwiftShader
+- test(game): ampliar timeout da régua de pouso
+- Fix preview artifact gating and chat smoke collector
+- fix(ci): align bot merge policy guards
+- test(smoke): cover remaining chat locale labels
+- fix(cf): respeita teto de timeout do deploy
+- docs(game): regenerar matriz de armas
+- fix(cf): preserva contrato do gate smoke
+- fix(ci): executa preview CF do branch base
+- fix(ci): split Cloudflare preview deploy
+- fix(ci): isolate Cloudflare preview secrets
+- test(smoke): localize chat assertions
+- test(bot): retire CI fixture debt
+- docs(bot): document release and PR language policies
+- feat(bot): require English PR titles and descriptions
+- feat(bot): repair failed builds with isolated Codex jobs
+- test(bot): add build repair trust guards
+- feat(bot): merge safe PRs into daily release batches
+- feat(bot): classify releases and assign bugfixes
+- test: register share origin in fast suite
+- test(smoke): accept edge locale labels
+- docs: comentários da landing e do privacy-runtime no teto de 2 linhas
+- test: harden share link gates
+- fix(ci): resolve bloqueios da promocao staging
+- feat: use corosol.to for shared links
+- fix(cf): restore geo and audio assets on Workers
+- docs(cf): registra prova do staging
+- fix(cf): torna issue de paridade shell seguro
+- feat(cf): publica Worker de staging em paralelo
+- ci: rebalanceia contratos de equipamento TP
+- fix(game): respeitar altura da água no pouso
+- feat(borda): landing /app para quem abre o jogo dentro de app
+- ci(pre-push): scripts/ci/*.py são core (eval:fixture cobra o selftest)
+- docs: changelog dos portões de CI
+- ci(smoke): smoke-cf e FX2 saem do vermelho crônico do staging
+- ci(pre-push): o teste das suítes é transversal como o seletor
+- ci(pre-push): base mais próxima entre main e staging; skills e markdown são core
+- test(suites): eval:servertraffic entra no baseline da suíte fast
+- ci: separa visual-map de materiais
+- ci: isola contrato ferro-balcao
+- ER1 pega leitura de env por alias e destructuring (review do estraga-codigo)
+- ci: separa integracao comportamento e escolta Flavio
+- CI: passo --varre precisa das sentinelas no próprio env
+- chore: disparar validacao do smoke por SHA
+- Segredos de SSR saem do build e viram leitura de runtime (achado 1 do spike CF)
+- fix(ci): prepara three no shard de grafite
+- fix: vincular smoke ao preview do commit
+- fix(borda): comentário da classe de app dentro do teto
+- docs: registrar preview Cloudflare validado
+- fix: considerar config do Worker no filtro
+- fix: restaurar executor do preview Cloudflare
+- chore: disparar preview após token dedicado
+- chore: reexecutar preview Cloudflare
+- fix: tornar preview opcional e registrar asset ausente
+- chore: permitir config de preview na raiz
+- docs: registrar permissão ausente no preview
+- docs: detalha shards e selecao do pre-push
+- feat(pre-push): seleciona scripts e workflows alterados
+- ci: divide contratos visuais e Flavio em shards
+- fix: permitir token dedicado no preview Cloudflare
+- feat: publicar preview Cloudflare por PR
+- chore: arquiva históricos e pastas privadas
+- chore: remove geradores raiz órfãos
+- chore: remove órfãos eval da lote 2
+- chore(docs): regenera bloco de scripts com eval:servertraffic
+- feat(borda): nomear navegador interno de app na contagem de tráfego
+- docs(skills): personagem 3P passa pelo processo padrão do Studio
+- fix(eval): lixo conta rename como adição (--no-renames) e prova com mutante
+- Chave do cache de packs vira sha256 da URL inteira
+- test(eval): eval:lixo é passo novo da suite fast, fora do baseline congelado
+- ci(eval): add runner timings and optional core parallelism
+- ci(browser): split livestock checks by id
+- ci(invariants): shard simulations by family and map
+- test(audio): VOZ8 executa o produtor real do room.js; mutantes exigem saída 1
+- chore(audio): encurta comentários novos (régua comentario)
+- fix(audio): voz é do personagem e rádio dos bots chega ao multiplayer
+- docs(review): retire obsolete reviewer requirements in historical records
+- chore(review): remove retired provider references from CI fixtures
+- feat(privacidade): medição ligada por padrão, recusa explícita desliga
+- fix(cf): middleware lê API_PROXY_SECRET e PUBLIC_API_BASE em runtime; adaptador.mjs no gatilho
+- test(cf): _headers/_redirects gerados de vercel.json, réguas de paridade e runbook da fase 1
+- feat(cf): adaptador por ADAPTER, Worker csb-spike e imagens em resvg-wasm nas duas bordas
+- build(deps): @astrojs/cloudflare 14.3.4 e wrangler 4.158 para o spike do Workers
+- chore(limpeza): bloco 1, só o que tem zero chamador
+- feat(eval): régua eval:lixo, PR não nasce com lixo (LX1-LX5)
+- Registrar o PR #1258 no status do runbook
+- Cortar build de preview, cache de packs e log por requisição na Vercel
+- fix(bots): write public PR updates in English
+- test(ui): require visible private-room options
+- test(vm): drop inconclusive local-weapon mutant
+- test(vm): include initial weapon in MP boot budget
+- Remove 157 eval scripts with no caller anywhere in the repo
+- ci(workflow): isolate heavy and external checks
+- ci(eval): select lightweight pre-push suites
+- fix: exclude /api/* proxy failures from site smoke
+- Regenerate docs blocks for check:fast with eval:portalembed
+- fix: keep backend smoke noise out of site gate
+- Emit google-site-verification meta on the home head
+- ci: harden post-deploy smoke classification
+- test(game): proteger vínculo visual e régua de look
+- feat(game): adicionar impacto de pouso por superfície
+- Add itch.io embed wrapper and allow itch.zone ancestor
+- chore(docs): regenera bloco derivado (autofix)
+- fix(ui): preserve private-room actions during v3 boot
+- ci(browser): replace aggregate heredoc with python -c
+- test(vm): drop inconclusive local-weapon mutant
+- Regenerate the weapon matrix line anchors
+- Give the plane LOS clause the Game scratch vectors
+- Inject the static raycast index so shot_surfaces stays three-free
+- test(vm): include initial weapon in MP boot budget
+- ci(browser): indent aggregate heredoc
+- chore(docs): regenera bloco derivado (autofix)
+- Regenerate the weapon matrix line anchors
+- Trim the light-layers comment to the two-line limit
+- Log the bot-count stutter fix in the changelog
+- Add bots-perf rulers for bot-count stutter
+- Add a mutation hook that restores the old all-hits LOS path
+- Regenerate ARCH.md for the new game.js methods
+- Key the VIP line-of-sight memo on the LOS function too
+- Keep lights visible to every post pass layer
+- Render character contact shadows in a single pass
+- Reuse noise buffers for synthesized gunshots and steps
+- Stop per-frame shader key churn from bot shadows and team halos
+- Index static occluder meshes for every map
+- Memoize the VIP line of sight within a Flávio sim step
+- Stop bot line-of-sight checks at the first occluder hit
+- Index colliders in an XZ grid for _collide
 
 ## [2.1.0-alpha.139] — 2026-11-08
 
