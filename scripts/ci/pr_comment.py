@@ -19,6 +19,12 @@ LABEL_REASONS = {
     "safe-automerge": "small and reversible, outside sensitive areas: eligible under the safe-merge policy",
     "needs-estragacodigo-resolution": "has an unresolved estraga-codigo finding: requires `estragacodigo-resolved` before merging",
     "crash-auto": "created from an automated production crash report",
+    "bugfix": "bug fix assigned to the configured bugfix owner",
+    "hotfix": "urgent production fix; keep it based on and targeting `main`",
+    "release": "merging into `main` triggers the release train",
+    "release-batch": "joins the next daily `staging` to `main` release batch",
+    "release-hotfix": "hotfix channel; releases immediately only after a green merge into `main`",
+    "needs-hotfix-review": "contains staging commits or lacks main-only ancestry proof: automatic merge and release are blocked",
 }
 
 AREA_RULES = [

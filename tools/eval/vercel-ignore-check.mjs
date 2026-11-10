@@ -88,6 +88,8 @@ try {
   const comSrc = commit('feat: muda o site');
   escreve('docs/nota.md', '# só docs\n');
   const soDocs = commit('docs: nota');
+  escreve('scripts/adaptador.mjs', 'export const v = 1;\n');
+  const comAdaptador = commit('feat: muda o adaptador');
 
   const preview = (prev, extra = {}) => roda({ VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'feat/qualquer', VERCEL_GIT_COMMIT_MESSAGE: 'feat: push', VERCEL_GIT_PREVIOUS_SHA: prev, ...extra });
 
@@ -110,7 +112,10 @@ try {
   const comCf = commit('feat: muda headers do Worker');
   git('checkout', '-q', comCf);
   const rCf = preview(soDocs);
-  cobra('VI10', rCf.status === 1, `commit exclusivo em tools/cf/ deveria buildar (exit ${rCf.status}): ${rCf.stdout}`);
+  cobra('VI11', rCf.status === 1, `commit exclusivo em tools/cf/ deveria buildar (exit ${rCf.status}): ${rCf.stdout}`);
+  git('checkout', '-q', comAdaptador);
+  const rAdaptador = preview(soDocs);
+  cobra('VI10', rAdaptador.status === 1, `commit só em scripts/adaptador.mjs deveria buildar (exit ${rAdaptador.status}): ${rAdaptador.stdout}`);
   const r5 = preview('');
   cobra('VI5', r5.status === 1, `sem VERCEL_GIT_PREVIOUS_SHA deveria buildar (exit ${r5.status}): ${r5.stdout}`);
   const r6 = preview('0123456789abcdef0123456789abcdef01234567');

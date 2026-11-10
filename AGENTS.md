@@ -115,6 +115,10 @@ onde registrar, em que ordem rodar o quality gate, e como reportar o que **não*
 Ela vale para agente e para gente. Como a `gauntlet-fps`, ela nasceu aqui e vive em
 `.claude/skills/` porque `.agents/skills/` é gitignored (skill de terceiro, fixada por hash).
 
+**PR title and description MUST be written in English.** A regra vale para humanos e bots;
+o workflow `pr-language.yml` executa `scripts/ci/pr_language.py` em abertura, edição e push.
+Detalhes do processo e o template ficam em [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 **Todo commit leva o trailer `Agent:`** (ex.: `Agent: Kimi Code`; humano leva
 `Agent: humano`) — é o que sustenta o "cada commit diz qual" do README. Você não
 digita: o `.githooks/prepare-commit-msg` preenche pela assinatura do ambiente, e
