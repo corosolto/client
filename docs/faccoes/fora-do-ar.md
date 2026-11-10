@@ -9,7 +9,7 @@ Identidade: TV analógica brasileira, assombração de bairro e lendas de madrug
 
 - **Visual:** boina escura, uniforme tático preto, joelheiras, botas e emblema de caveira original. Corpo e animações do pack Studio fixado em `public/js/data/content-releases.js`; não há modelo procedural substituto.
 - **Papel:** combatente de fuzil, jogável nos dois lados da partida sem virar um terceiro time de gameplay.
-- **Arma:** AK do acervo existente, selecionada pela mesma função `charWeapon` usada na apresentação e no nascimento em partida.
+- **Arma:** AK do acervo existente no preview, selecionada por `charWeapon`. A partida preserva o equipamento inicial e a economia já existentes.
 - **Mecânica:** rajada controlada e recarga do fuzil já implementado; a liberação é o resgate verificado pelo servidor, não XP/localStorage informado pelo navegador. Sem bônus de dano, tamanho de hitbox ou mobilidade por ser personagem de passe.
 - **Procedência:** Studio Assets, `creepypasta-season-20261108/characters/capitao-caveira/PROVENANCE.md` e `ficha.json`. Rosto e uniforme originais; sem farda/insígnia real, sem personagem de filme/TV, sem gore ou sangue.
 
