@@ -81,7 +81,7 @@ async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mu
     return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(sessao) });
   });
   await page.route('**/js/characters.js*', async (r) => {
-    const res = await r.fetch();
+    const res = await r.fetch().catch(() => r.fetch());   // o servidor de eval às vezes derruba a conexão sob carga
     await r.fulfill({ response: res, body: INJETA_PERSONAGEM(await res.text()) });
   });
   if (mutante) {
