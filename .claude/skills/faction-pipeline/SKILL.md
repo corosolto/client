@@ -16,6 +16,12 @@ lote so comeca depois que uma fatia vertical prova o pipeline inteiro no jogo re
 3. Antes de tocar `game.js`, leia `tools/eval/ARCH.md` e respeite a tabela de conflito.
 4. Para esta frente, a fonte dos nomes, rosters e falas e
    `../progress` → `archive/specs/0002-novas-faccoes/spec.md`. Nao copie essas listas para esta skill.
+5. Personagem 3P de elenco nasce pelo processo padrao do Studio (`corosolto/studio` →
+   `docs/character-pipeline.md`): Mint final sem rig → rig Blender meshy-28 com pose
+   gate → clipes convertidos com QA → pack `kind: character` verificado/instalado pelo
+   client (`scripts/studio-pack.mjs`, `docs/studio-character-release.md`). Nenhum GLB
+   novo de personagem em `public/` do client, nenhum rig de proximidade ou auto-rig do
+   Mint, nenhum clipe sem QA; entrar no elenco e virar release pin e PR proprio.
 
 ## Fluxo
 
@@ -39,7 +45,9 @@ lote so comeca depois que uma fatia vertical prova o pipeline inteiro no jogo re
 
 Antes do lote, conclua um personagem representativo com:
 
-- modelo Mint PBR, UV, normais, rig, clips e encaixe de arma;
+- modelo Mint PBR, UV e normais; rig meshy-28, clips e pack `kind: character` pelo
+  processo padrao do Studio (`corosolto/studio` → `docs/character-pipeline.md`);
+  encaixe de arma no runtime;
 - hitbox competitivo independente de cabelo, barriga, mochila, antena ou cauda;
 - thumbnail e tres vistas do modelo;
 - video de selecao, poster estatico e fala de selecao;
@@ -81,7 +89,8 @@ Se qualquer item falhar, corrija o pipeline. Nao multiplique o defeito pelo rost
 ## Definicao de Pronto
 
 - Registro, UI propria/adversaria, espelho, brasao, bandeira e paletas cobrem a faccao.
-- Todos os personagens tem GLB valido, rig, arma, thumbnail, poster e fallback seguro.
+- Todos os personagens tem pack `kind: character` valido do Studio (rig meshy-28,
+  clips com QA), arma, thumbnail, poster e fallback seguro; nenhum GLB novo em `public/`.
 - Video e voz sao estaticos, reproduziveis por manifest e nao expõem segredo no cliente.
 - Teclado, mouse e proporcao 1536x1024 foram exercitados no jogo real.
 - Gates novos mordem as mutacoes; checks relevantes passam.
