@@ -99,6 +99,8 @@ def selftest() -> int:
     assert url_preview([antigo, oficial], "abc123") == "https://oficial.workers.dev"
     assert resolver_head_sha(["script", "1307", "https://x.workers.dev", "abc123"], {}) == "abc123"
     assert resolver_head_sha(["script", "1307", "https://x.workers.dev"], {"HEAD_SHA": "def456"}) == "def456"
+    invalido = subprocess.run([sys.executable, sys.argv[0], "1307", "https://x.workers.dev", "abc123", "extra"], capture_output=True, text=True)
+    assert invalido.returncode == 2 and "PR URL [HEAD_SHA]" in invalido.stderr, invalido
     print("CF-COMMENT PASS: duplicatas oficiais e forjados ignorados")
     return 0
 
