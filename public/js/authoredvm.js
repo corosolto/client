@@ -467,6 +467,8 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
 const GOLDEN_PAINT_BODY = Object.freeze({
   'gold#pistol': 'coro_solto_project_pistol',
   'gold#ak': 'coro_solto_project_ak_body',
+  'gold#m4': 'coro_solto_project_ak_body',
+  'gold#scar': 'coro_solto_project_ak_body',
 });
 
 /* Pintura usa body golden explícito sem criar wrap de montagem Mint; peças irmãs
@@ -543,7 +545,7 @@ export class AuthoredViewModels {
     for (let i = 0; i < pecas.length; i += 1) {
       const peca = pecas[i];
       if (peca.userData.weaponSkin === skinId) continue;
-      applyWeaponSkinCandidate(peca, weaponId, skinId, { marcas: i === 0 });
+      applyWeaponSkinCandidate(peca, weaponId, skinId, { marcas: i === 0, patternReference: pecas[0] });
     }
   }
 

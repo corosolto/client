@@ -32,7 +32,7 @@ function fixture({ inventory = equipped, accountReady = Promise.resolve(), readI
     CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options?.detail; } },
     AbortSignal: timeoutAPI ? { timeout: ms => { const controller = new AbortController(); controllers.push(controller); deadlines.push(ms); return controller.signal; } } : {},
     TRETA_ITEMS_ENABLED: false, VERSION: 'fixture', TRETA_SKINS: [{ id: 'lula-cyborg', name: 'Barbudo Cyborg', slot: 'character', character: 'barbudo' }],
-    TRETA_WEAPON_SKINS: weaponSkins, TRETA_GLOVES: [], TRETA_PACKS: [{ id: 'pack-fixture', name: 'Pack Fixture', slot: 'pack', model: '/packs/pack-fixture', ready: true, weaponSkins: { ak: 'pack-fixture-ak' } }], TRETA_COINS: [], TRETA_EYEWEAR: [],
+    TRETA_WEAPON_SKINS: weaponSkins, TRETA_PASSE_WEAPON_SKINS: [], TRETA_GLOVES: [], TRETA_PACKS: [{ id: 'pack-fixture', name: 'Pack Fixture', slot: 'pack', model: '/packs/pack-fixture', ready: true, weaponSkins: { ak: 'pack-fixture-ak' } }], TRETA_COINS: [], TRETA_EYEWEAR: [],
     TRETA_DEFAULT_REWARDS: {}, TRETA_COIN_ART: { poster: '/fixture.webp' },
     initTretaRewards: noop, updateTretaRewards: noop, ligarCompartilhar: noop,
     estadoDaUrl: () => null, loadAccount: async () => ({ authenticated: true }),
