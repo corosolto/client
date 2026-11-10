@@ -2244,7 +2244,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     .map((d) => (typeof d === 'string' ? d : d.id))
     .filter((id, i, a) => GLB_CHARS.has(id) && a.indexOf(id) === i);
   // Fallback sem roster GLB: só o acervo legado. Release do Studio só carrega quando está
-  // na partida (fora do elenco hoje); pedir /packs/ aqui seria 404 garantido em produção.
+  // na partida; aqui baixaria do R2 todos os pacotes fixados sem ninguém usá-los.
   const _charsToLoad = _rosterGlb.length ? _rosterGlb : [...GLB_CHARS].filter((id) => !characterRelease(id));
   /* Armas da partida sorteadas aqui pelo mesmo motivo do roster: as 26 custavam 164 MB de VRAM
      e 7,5 MB de download numa partida que usa ~9. O resto chega em ocioso. Régua: ARM1. */
