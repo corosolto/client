@@ -92,7 +92,7 @@ export const VM_WEAPON = {
       hammer: { mesh: 'GEO-deagle-hammer', bone: 'Hammer' },
     } }),
   // PT-38 sem pintura = X18 da fábrica (dono, 06/11: a golden pública via a traseira); pintura
-  // também (pinturaNaFabrica, 10/11): docs/viewmodels/pistola-pintada-enquadramento-20261110.md.
+  // também (pinturaNaFabrica, 10/11): docs/viewmodels/pistola-pintada-fabrica.md.
   pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay', pinturaNaFabrica: true,
     // A câmera do piloto (fov 34°) dava 1,99× a PT-38 aprovada (playtest 06/11). Unidades do
     // piloto (~97 un/m); medido em vm-reguas pistola-ref: 1,05×, desvio 1 px.
