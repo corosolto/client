@@ -8,6 +8,7 @@
      PB5 funil do painel: com medição permitida sai modal_view e open, uma vez cada; com a recusa
          gravada em cs_privacy não sai nenhum evento.
      PB6 resposta lenta: /api/passe respondendo em 7 s (depois de qualquer prazo curto) ainda abre o anúncio.
+     PB7 grade do seletor (UIR44 no navegador): card ocupa a célula, chip ＋ no canto de cima e livre do cadeado.
      PB4 seletor: personagem do passe aparece com cadeado e "Nível N" e não é escolhido; o mesmo id salvo
          no localStorage não entra no lobby; depois do resgate (inventário do servidor) é escolhido.
    Uso (servidor próprio; um navegador por vez):
@@ -43,6 +44,9 @@ const MUTANTES = {
   'personagem-travado-selecionavel': ['PB4', /\/js\/main\.js/, (t) => t.replace("if (personagemTravado(def)) { $('hub-roster-selected')", "if (false) { $('hub-roster-selected')")],
   'analytics-sem-consentimento': ['PB5', /\/js\/passe\.js/, (t) => t.replace(' || !globalThis.__csPrivacy?.allowed()) return;', ') return;')],
   'anuncio-com-prazo': ['PB6', /\/js\/tp\/lobby\.js/, (t) => t.replace('  await esperarPasse();', '  await Promise.race([esperarPasse(), new Promise((r) => setTimeout(r, 4000))]);')],
+  'pin-some-no-travado': ['PB7', /\/js\/main\.js/, (t) => t.replace('      if (def.id !== efetivo) {', '      if (def.id !== currentChar) {')],
+  'cadeado-sob-o-chip': ['PB7', /\/style\.css/, (t) => t.replace('align-items:flex-end;justify-content:center;gap:4px;padding:0 4px 6px;', 'align-items:flex-start;justify-content:flex-end;gap:4px;padding:8px 6px 0;')],
+  'pin-fora-da-celula': ['PB7', /\/style\.css/, (t) => t.replace('.hub-roster-cell--travado>button:not(.hub-roster-pin),', '.hub-roster-cell--travado>button,')],
   'claim-sem-conta': ['PB3', /\/js\/tp\/passe\.js/, (t) => t.replace('if (!s?.authenticated) { entrar(); return; }', '')
     .replace("const primeiro = s.claimable[0];", 'const primeiro = s.claimable[0] || (!s.authenticated && 1);')],
 };
@@ -236,6 +240,22 @@ async function medir(mutante = '') {
       const c = [...document.querySelectorAll('.hub-roster-cell')].find((x) => /Capitão Caveira/.test(x.textContent));
       return { existe: !!c, travado: !!c?.classList.contains('hub-roster-cell--travado'), rotulo: c?.querySelector('.hub-roster-trava')?.textContent || '' };
     });
+    /* UIR44 no navegador: o card ocupa a célula inteira e o chip ＋ fica dentro dela, sem o cadeado por cima */
+    const geo = await page.evaluate(() => {
+      const r = (e) => e?.getBoundingClientRect();
+      const dentro = (a, b) => a && b && a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1;
+      const cruza = (a, b) => a && b && a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+      return [...document.querySelectorAll('#hub-roster-grid .hub-roster-cell')].filter((c) => c.checkVisibility?.()).slice(0, 12).map((c) => {
+        const cel = r(c), card = r(c.querySelector(':scope>button:not(.hub-roster-pin)')), pin = r(c.querySelector('.hub-roster-pin')), travaEl = c.querySelector('.hub-roster-trava');
+        const trava = travaEl ? (() => { const g = document.createRange(); g.selectNodeContents(travaEl); return g.getBoundingClientRect(); })() : null;
+        return { nome: c.textContent.trim().slice(0, 18), travado: c.classList.contains('hub-roster-cell--travado'), larguraIgual: !!card && Math.abs(card.width - cel.width) <= 1,
+          temPin: !!pin, pinDentro: !pin || dentro(pin, cel), pinNoTopo: !pin || pin.top < cel.top + cel.height / 3, pinLivre: !pin || !cruza(pin, trava) };
+      });
+    });
+    const ruins = geo.filter((g) => !g.larguraIgual || !g.pinDentro || !g.pinNoTopo || !g.pinLivre);
+    const travadoComPin = geo.find((g) => g.travado)?.temPin;
+    add('PB7', geo.length >= 8 && !ruins.length && travadoComPin,
+      `${geo.length} células: ${ruins.length ? `fora do lugar ${JSON.stringify(ruins.slice(0, 3))}` : 'card ocupa a célula e o ＋ fica no canto de cima'}; travado ${travadoComPin ? 'com' : 'SEM'} chip ＋`);
     await page.evaluate(() => document.querySelector('.hub-roster-cell--travado')?.scrollIntoView({ block: 'center' }));
     await foto(page, 'seletor-travado-desktop', mutante);
     await page.evaluate(() => [...document.querySelectorAll('.hub-roster-cell button')].find((b) => /Capitão Caveira/.test(b.textContent))?.click());
