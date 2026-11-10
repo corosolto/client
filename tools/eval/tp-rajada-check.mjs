@@ -83,6 +83,35 @@ function mede(m) {
   _b.copy(c.ikL.fore); c.ikL.gun.localToWorld(_b);
   return { peso, mao: _a.distanceTo(_b) * 100, clip: Object.keys(c.actions).find((k) => c.actions[k] === c.cur) };
 }
+{
+  const tardio = monta(), fallback = monta();
+  for (const m of [tardio, fallback]) {
+    m.ctrl.die();
+    for (let i = 0; i < 6; i++) m.ctrl.update(DT, 0, false);
+  }
+  const tempo = tardio.ctrl.mixer.time;
+  tardio.ctrl.die({ x: 1, z: 0 });
+  if (tardio.ctrl.mixer.time !== tempo) throw new Error('kill atrasado reiniciou o clipe');
+  for (const m of [tardio, fallback]) {
+    m.ctrl.update(DT, 0, false);
+    m.group.updateMatrixWorld(true);
+  }
+  const a = tardio.ctrl.torso.spines[0].getWorldQuaternion(new THREE.Quaternion());
+  const b = fallback.ctrl.torso.spines[0].getWorldQuaternion(new THREE.Quaternion());
+  if (a.angleTo(b) < 0.001) throw new Error('kill atrasado não direcionou a queda em curso');
+}
+{
+  const m = monta(), c = m.ctrl;
+  c.draw();
+  for (let i = 0; i < 8; i++) c.update(DT, 0, false);
+  m.group.updateMatrixWorld(true);
+  const mount = c.tpMount;
+  const orientacao = mount.mount.getWorldQuaternion(new THREE.Quaternion());
+  const esperada = mount.model.getWorldQuaternion(new THREE.Quaternion()).multiply(mount.carry);
+  if (orientacao.angleTo(esperada) > 0.001 || mede(m).mao > MAO_MAX_CM) {
+    throw new Error('saque desalinha a arma ou solta a mão de apoio');
+  }
+}
 
 function sp(m, { segundos, tiroACada = 0, tiros = Infinity, vf = 0, morre = false }) {
   const out = [];
@@ -102,7 +131,7 @@ function sp(m, { segundos, tiroACada = 0, tiros = Infinity, vf = 0, morre = fals
 function mp(m, { segundos, tiroACada }) {
   let clock = 100000;
   const net = { meta: { snapshotHz: 20 }, startPing() {}, stopPing() {}, onSlot: null, onPersonagem: null };
-  const nc = makeNetcode({}, net);
+  const nc = makeNetcode({ camera: { position: new THREE.Vector3() } }, net);
   clearInterval(nc._nsTimer);
   nc._now = () => clock;
   const ent = { def, team: 'E', mesh: m, weapon: ARMA, pos: new THREE.Vector3(), yaw: 0, alive: true, _remote: 7, _netBot: true,
