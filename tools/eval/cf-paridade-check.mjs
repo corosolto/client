@@ -36,18 +36,26 @@ if (!ALVO) { console.error('uso: --alvo https://<worker>.workers.dev'); process.
 const COMPARADOS = ['content-security-policy', 'strict-transport-security', 'cache-control', 'x-content-type-options',
   'referrer-policy', 'permissions-policy', 'content-type', 'location', 'x-robots-tag'];
 
-import { ROTAS } from './cf-paridade-routes.mjs';
+import { ROTAS as ROTAS_ORIGINAIS } from './cf-paridade-routes.mjs';
+
+/* A API de idioma precisa comparar o JSON, além do status e headers. */
+export const ROTAS = ROTAS_ORIGINAIS.map((regra) => regra.rota === '/api/geo-lang'
+  ? { ...regra, metodo: 'GET', comparaCorpo: true }
+  : regra);
 
 /* Divergências conhecidas são avaliadas por tools/eval/cf-paridade-allowlist-check.mjs.
    Esta régua continua estrita: o workflow captura o JSON mesmo quando ela sai 1. */
-async function pedir(base, { rota, metodo = 'HEAD' }) {
+async function pedir(base, { rota, metodo = 'HEAD', comparaCorpo = false }) {
   const inicio = performance.now();
   try {
     const r = await fetch(base + rota, { method: metodo, redirect: 'manual', headers: { 'user-agent': 'cf-paridade-check' }, signal: AbortSignal.timeout(20000) });
-    if (metodo === 'GET') await r.arrayBuffer();
+    let corpo;
+    if (metodo === 'GET') {
+      corpo = comparaCorpo ? await r.text() : await r.arrayBuffer();
+    }
     const headers = {};
     for (const h of COMPARADOS) { const v = r.headers.get(h); if (v !== null) headers[h] = v; }
-    return { status: r.status, headers, ms: Math.round(performance.now() - inicio) };
+    return { status: r.status, headers, corpo, ms: Math.round(performance.now() - inicio) };
   } catch (e) {
     return { status: 0, headers: {}, erro: e?.name || String(e), ms: Math.round(performance.now() - inicio) };
   }
@@ -72,6 +80,9 @@ for (const r of ROTAS) {
     const a = normaliza(h, prod.headers[h], PROD);
     const b = normaliza(h, alvo.headers[h], ALVO);
     if (a !== b) diferentes.push(`${h}: prod=${JSON.stringify(a ?? null)} alvo=${JSON.stringify(b ?? null)}`);
+  }
+  if (r.comparaCorpo && prod.corpo !== alvo.corpo) {
+    diferentes.push(`body: prod=${JSON.stringify(prod.corpo ?? null)} alvo=${JSON.stringify(alvo.corpo ?? null)}`);
   }
   const igual = prod.status === alvo.status && diferentes.length === 0;
   if (!igual) reprova++;
