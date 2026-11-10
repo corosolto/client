@@ -26,7 +26,7 @@ try {
     g.player.primary = 'm4'; g.player.secondary = 'deagle';
     g._switchWeapon('m4');
   });
-  await page.waitForFunction(() => window.__game._vmVisibility?.authored === true, null, { timeout: 120000 });
+  if (!MUTANTE) await page.waitForFunction(() => window.__game._vmVisibility?.authored === true, null, { timeout: 120000 });
   await page.waitForFunction((mut) => mut || Boolean(window.__game.vm.authored.entry('deagle')), MUTANTE, { timeout: 120000 });
   await page.waitForTimeout(MUTANTE ? 3000 : 300);
   // O estado no instante da troca decide o próximo render: sem pacote montado, o legado
