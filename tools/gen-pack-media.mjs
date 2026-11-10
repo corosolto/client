@@ -31,6 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
 const { CHARACTERS, charWeapon } = await import('../public/js/characters.js');
 const { CHARACTER_RELEASES } = await import('../public/js/data/content-releases.js');
+const { ONE_HANDED } = await import('../public/js/weapons.js');
 const pedidos = process.argv.slice(2);
 const ids = pedidos.length ? pedidos : Object.keys(CHARACTER_RELEASES);
 const fora = ids.filter((id) => !CHARACTER_RELEASES[id] || !CHARACTERS.some((c) => c.id === id));
@@ -68,28 +69,45 @@ async function abrir(id, { w, h, shot, yaw }) {
 }
 const quadro = async () => png(await page.evaluate(() => { CHARVID.reset(); return CHARVID.grab(); }));
 /* Quadro de corpo inteiro (enquadrado pelo envelope deformado) + posição na tela do osso Head
-   do próprio rig. O shot=busto do charvideo mira 84% da altura e corta a cara de quem tem
-   cabeça grande ou antena (mascotes de 1,3 m); aqui o busto sai do esqueleto, não da altura. */
+   do próprio rig e da caixa da arma montada. O shot=busto do charvideo mira 84% da altura e
+   corta a cara de quem tem cabeça grande ou antena (mascotes de 1,3 m); aqui o busto sai do
+   esqueleto, não da altura. */
 async function quadroComCabeca(w, h) {
-  const r = await page.evaluate(() => {
+  const r = await page.evaluate(async () => {
+    const THREE = await import('three');
     CHARVID.reset();
     const head = CHARVID.ctrl.headBone, g = CHARVID.ctrl.group;
     const v = head.position.clone(); head.getWorldPosition(v);
-    return { url: CHARVID.grab(), head: v.toArray(), base: g.position.toArray(), framing: CHARVID.framing };
+    const arma = CHARVID.ctrl.tpMount?.mount;
+    let cantos = null;
+    if (arma?.visible && arma.children.length) {
+      const bb = new THREE.Box3().setFromObject(arma);
+      cantos = [];
+      for (const x of [bb.min.x, bb.max.x]) for (const y of [bb.min.y, bb.max.y]) for (const z of [bb.min.z, bb.max.z]) cantos.push([x, y, z]);
+    }
+    return { url: CHARVID.grab(), head: v.toArray(), cantos, base: g.position.toArray(), framing: CHARVID.framing };
   });
   const tanY = Math.tan((34 / 2) * Math.PI / 180), tanX = tanY * (w / h);   // FOV do shot=corpo
   const cam = [r.base[0], r.framing.targetY, r.base[2] - r.framing.distance];
-  const dz = r.head[2] - cam[2];
   /* Câmera em -Z olhando +Z: o +X do mundo vai para a esquerda da tela. */
-  const sx = (0.5 - (r.head[0] - cam[0]) / (dz * tanX) / 2) * w;
-  const sy = (0.5 - (r.head[1] - cam[1]) / (dz * tanY) / 2) * h;
-  return { buf: png(r.url), cabeca: { x: sx, y: sy } };
+  const tela = (p) => {
+    const dz = p[2] - cam[2];
+    return { x: (0.5 - (p[0] - cam[0]) / (dz * tanX) / 2) * w, y: (0.5 - (p[1] - cam[1]) / (dz * tanY) / 2) * h };
+  };
+  const arma = r.cantos && r.cantos.map(tela).reduce((c, p) => ({
+    x0: Math.min(c.x0, p.x), x1: Math.max(c.x1, p.x), y0: Math.min(c.y0, p.y), y1: Math.max(c.y1, p.y),
+  }), { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity });
+  return { buf: png(r.url), cabeca: tela(r.head), arma };
 }
 const sobre = (buf, fundo) => sharp(buf).flatten({ background: fundo });
 
 /* Quadrado do busto: topo no alpha mais alto da coluna da cabeça, lado = 2,6× a distância
-   topo→osso da cabeça (cabeça + ombros), limitado a 30–62% da figura; centrado no osso. */
-async function busto(buf, cabeca) {
+   topo→osso da cabeça (cabeça + ombros), limitado a 30–62% da figura; centrado no osso.
+   Com `arma` (só o hero de arma de uma mão): se a caixa da arma não cabe inteira no quadrado,
+   ele cresce para baixo e para o lado até caber, com o topo fixo e no máximo 75% da figura.
+   Clóvis e Coronel (10/11): com o braço fora do T a pistola desce ao quadril e saía do busto.
+   Arma longa continua cortada como sempre (o cano passa do quadro em 16 dos 30). */
+async function busto(buf, cabeca, arma = null) {
   const { data, info } = await sharp(buf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const W = info.width, H = info.height, a = (x, y) => data[(y * W + x) * 4 + 3] > 8;
   let top = -1, bottom = -1;
@@ -98,8 +116,15 @@ async function busto(buf, cabeca) {
   if (top < 0) throw new Error('quadro sem personagem');
   if (!(cabeca.y > top && cabeca.y < bottom)) throw new Error(`osso da cabeça fora da figura (${cabeca.y} ∉ ${top}..${bottom})`);
   const figura = bottom - top + 1;
-  const lado = Math.round(Math.min(figura * 0.62, Math.max(figura * 0.30, (cabeca.y - top) * 2.6)));
-  const left = Math.round(cabeca.x - lado / 2), y = top - Math.round(lado * 0.05);
+  let lado = Math.round(Math.min(figura * 0.62, Math.max(figura * 0.30, (cabeca.y - top) * 2.6)));
+  let left = Math.round(cabeca.x - lado / 2);
+  const y = top - Math.round(lado * 0.05);
+  if (arma) {
+    const m = lado * 0.04;
+    const x0 = Math.min(left, arma.x0 - m), x1 = Math.max(left + lado, arma.x1 + m), y1 = Math.max(y + lado, arma.y1 + m);
+    const novo = Math.round(Math.max(x1 - x0, y1 - y));
+    if (novo > lado && novo <= figura * 0.75) { lado = novo; left = Math.round((x0 + x1 - lado) / 2); }
+  }
   const pad = { top: Math.max(0, -y), left: Math.max(0, -left), right: Math.max(0, left + lado - W), bottom: Math.max(0, y + lado - H) };
   const base = await sharp(buf).extend({ ...pad, background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
   return sharp(base).extract({ left: left + pad.left, top: y + pad.top, width: lado, height: lado }).png().toBuffer();
@@ -108,9 +133,10 @@ async function busto(buf, cabeca) {
 const recibos = {};
 for (const id of ids) {
   const pose = await abrir(id, { w: 1024, h: 1536, shot: 'corpo', yaw: -15 });
-  const { buf: inteiro, cabeca } = await quadroComCabeca(1024, 1536);
+  const { buf: inteiro, cabeca, arma } = await quadroComCabeca(1024, 1536);
+  const heroi = await busto(inteiro, cabeca, ONE_HANDED.has(charWeapon(id)) ? arma : null);
+  await sobre(heroi, FUNDO_RETRATO).resize(512, 512, { kernel: 'lanczos3' }).webp({ quality: 88 }).toFile(join(ROOT, `public/img/chars-hero/${id}.webp`));
   const rosto = await busto(inteiro, cabeca);
-  await sobre(rosto, FUNDO_RETRATO).resize(512, 512, { kernel: 'lanczos3' }).webp({ quality: 88 }).toFile(join(ROOT, `public/img/chars-hero/${id}.webp`));
   await sobre(rosto, FUNDO_RETRATO).resize(256, 256, { kernel: 'lanczos3' }).webp({ quality: 88 }).toFile(join(ROOT, `public/img/chars/avatars/${id}.webp`));
 
   await abrir(id, { w: 720, h: 926, shot: 'corpo', yaw: -20 });
