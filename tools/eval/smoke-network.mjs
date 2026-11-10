@@ -13,8 +13,12 @@ export function eventoTexto(evento) {
 export function nosso(evento, { host, ensaioLocal = false, respostasOk = new Set() }) {
   const texto = eventoTexto(evento);
   const contexto = `${texto} ${evento.url || ''}`;
+  if (evento.kind === 'response') {
+    let proprio = false;
+    try { proprio = new URL(evento.url).host === host; } catch { /* resposta sem URL válida não é do host */ }
+    return proprio && !/\/api\//.test(evento.url || '');
+  }
   if (TERCEIROS.test(contexto)) return false;
-  if (evento.kind === 'response') return contexto.includes(host) && !/\/api\//.test(evento.url || '');
   if (evento.kind === 'requestfailed' && evento.error === 'net::ERR_ABORTED'
       && (respostasOk.has(evento.request) || respostasOk.has(evento.url))) return false;
   if (ensaioLocal && RUIDO_LOCAL.test(contexto)) return false;

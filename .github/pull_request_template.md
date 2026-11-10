@@ -1,3 +1,5 @@
+<!-- The PR title and all sections below MUST be written in English. The pr-language check enforces this repository rule. -->
+
 ## Summary
 
 -

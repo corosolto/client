@@ -114,6 +114,8 @@ jobs:
         run: npm run eval:treta-coins
       - name: Skin equipada aguarda manifesto e conta vigente no boot
         run: npm run eval:treta-manifest-ready
+      - name: Passe Sessão da Treta obedece ao servidor (sem XP do client, com mutantes)
+        run: npm run eval:passe
       - name: Preview mobile preserva skin e propriedade da mídia
         run: npm run eval:character-preview-media
       - name: Retrato hero só para personagem com arquivo (#1231, com mutantes)
@@ -140,6 +142,8 @@ jobs:
         run: npm run eval:vercelignore
       - name: Segredo de SSR é lido em runtime, não inlinado no build (com mutantes)
         run: npm run eval:envruntime
+      - name: Allowlist de divergências conhecidas do staging Cloudflare
+        run: npm run eval:cfallowlist
       - name: Wrapper de portal embeda o site (frame-ancestors, UTM, pointer-lock)
         run: npm run eval:portalembed
       # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
@@ -379,6 +383,7 @@ jobs:
       - name: Escadão — circulação, estrutura e casa
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
+
       - name: Escadão — compatibilidade com pacote de áudio publicado
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/escadao-audio-pack-check.mjs
@@ -701,7 +706,7 @@ jobs:
         run: npm ci
       - name: Operação Flávio, comportamento e simulação
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:operacao-flavio-comportamento --json-out=tools/eval/out/operacao-flavio-comportamento.json
+        run: node tools/eval/runner.mjs eval:operacao-flavio-comportamento eval:bots-perf --json-out=tools/eval/out/operacao-flavio-comportamento.json
       - name: Tempos de comportamento da Operação Flávio
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -743,9 +748,11 @@ jobs:
           node-version: 22
           cache: npm
       - name: Dependências (npm ci)
+        id: deps
         run: npm ci
-      - name: Corpo e cosméticos em processos CPU reais
-        run: node tools/eval/runner.mjs eval:tp-identity eval:tp-cosmetic-source --json-out=tools/eval/out/equipamento-corpo.json
+      - name: Corpo em processos CPU reais
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:tp-identity --json-out=tools/eval/out/equipamento-corpo.json
       - name: Tempos do equipamento corpo
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -764,9 +771,11 @@ jobs:
           node-version: 22
           cache: npm
       - name: Dependências (npm ci)
+        id: deps
         run: npm ci
-      - name: Drip e luvas em processos CPU reais
-        run: node tools/eval/runner.mjs eval:tp-drip-source eval:tp-glove-origin --json-out=tools/eval/out/equipamento-origem.json
+      - name: Drip, luvas e cosméticos em processos CPU reais
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:tp-drip-source eval:tp-glove-origin eval:tp-cosmetic-source --json-out=tools/eval/out/equipamento-origem.json
       - name: Tempos do equipamento origem
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -962,7 +971,7 @@ jobs:
         run: npm ci
       - name: Validar fluidez, território e rede do mantle
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network --json-out=tools/eval/out/mantle.json
+        run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network eval:landing-impact --json-out=tools/eval/out/mantle.json
       - name: Tempos do mantle
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -970,6 +979,9 @@ jobs:
           name: mantle-tempos-${{ github.run_id }}
           path: tools/eval/out/mantle.json
           if-no-files-found: warn
+      - name: Penitenciária liga o look do próprio mapa (mutante corrego)
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:lookbinding
 
   build:
     needs: [reguas-e-site, mapas-e-site, invariantes-fonte, invariantes-vm, invariantes-bots, invariantes-chars-mat, invariantes-mapas, mantle, equipamento-tp-corpo, equipamento-tp-origem, contratos-visuais-personagens-camera, contratos-visuais-ferro-balcao, contratos-visuais-mapas-materiais, contratos-visuais-visual-map, contratos-visuais-campo-uv, contratos-visuais-gameplay-grafite, economia-ak-hud, soundscape, operacao-flavio-core, operacao-flavio-collider-1, operacao-flavio-collider-2, operacao-flavio-collider-3, operacao-flavio-collider-4, operacao-flavio-menu, operacao-flavio-online, operacao-flavio-integracao, operacao-flavio-comportamento, operacao-flavio-escolta]

@@ -18,7 +18,13 @@ LABELS = {
     "stale-backlog": ("c2e0c6", "Issue antiga ou desalinhada com o checkout atual; precisa revalidação"),
     "needs-repro": ("f9d0c4", "Issue precisa passos de reprodução mais concretos"),
     "preview-autorizado": ("0e8a16", "Mantenedor revisou o SHA atual e liberou preview do fork na Vercel"),
-    "pronto-pra-merge": ("0e8a16", "Portões verdes e diff dentro do aceito: falta só o merge, que é humano"),
+    "pronto-pra-merge": ("0e8a16", "Required checks passed and the diff is eligible for automatic merge"),
+    "bugfix": ("d93f0b", "Bug fix routed to the configured bugfix assignee"),
+    "hotfix": ("b60205", "Urgent production fix; targets main for an immediate release"),
+    "release": ("5319e7", "Merging this PR into main triggers the release train"),
+    "release-batch": ("0e8a16", "Change waits for the next staging-to-main release batch"),
+    "release-hotfix": ("b60205", "Hotfix channel; immediate release only when targeting main"),
+    "needs-hotfix-review": ("b60205", "Hotfix branch contains staging commits or unverified ancestry; maintainer review required"),
 }
 
 
@@ -49,6 +55,9 @@ def selftest() -> int:
          ["needs-estragacodigo-resolution"], ["needs-estragacodigo-resolution"]),
         ("resolução do estragacodigo está registrada",
          ["estragacodigo-resolved"], ["estragacodigo-resolved"]),
+        ("canais de release estão registrados",
+         ["bugfix", "hotfix", "release", "release-batch", "release-hotfix", "needs-hotfix-review"],
+         ["bugfix", "hotfix", "release", "release-batch", "release-hotfix", "needs-hotfix-review"]),
     ]
     erros = 0
     for nome, pedido, esperado in casos:

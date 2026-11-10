@@ -3,7 +3,11 @@ name: smoke-web
 on:
   pull_request:
   workflow_dispatch:
-
+    inputs:
+      host:
+        description: 'Host Cloudflare para smoke-cf (ex.: https://csb-staging.<sub>.workers.dev)'
+        required: false
+        type: string
 permissions:
   contents: read
   pull-requests: read
@@ -148,12 +152,24 @@ jobs:
   # O preview é opcional enquanto a migração roda em paralelo com a Vercel.
   smoke-cf:
     needs: decide
-    if: github.event_name == 'pull_request' && needs.decide.outputs.rodar == 'true'
+    if: (github.event_name == 'pull_request' && needs.decide.outputs.rodar == 'true') || (github.event_name == 'workflow_dispatch' && inputs.host != '' && needs.decide.outputs.rodar == 'true')
     continue-on-error: true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Define host Cloudflare por dispatch
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          HOST: ${{ inputs.host }}
+        run: |
+          set -euo pipefail
+          case "$HOST" in
+            https://*.workers.dev|https://*.workers.dev/*) ;;
+            *) echo "::error::host deve ser uma URL https://*.workers.dev"; exit 1 ;;
+          esac
+          echo "BASE_URL=${HOST%/}" >> "$GITHUB_ENV"
+          echo "Host Cloudflare informado: ${HOST%/}"
       - name: Aguarda URL sticky do Cloudflare
         env:
           GH_TOKEN: ${{ github.token }}
@@ -164,8 +180,8 @@ jobs:
           set -euo pipefail
           for i in $(seq 1 90); do
             BODY="$(gh api "repos/$REPO/issues/$PR_NUM/comments" --paginate \
-              --jq '.[] | select(.body | contains("<!-- cf-preview -->")) | .body' 2>/dev/null || true)"
-            if ! printf '%s\n' "$BODY" | grep -Fq "<!-- sha: $HEAD_SHA -->"; then
+              --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("<!-- cf-preview -->")) and (.body | contains("<!-- sha: " + env.HEAD_SHA + " -->"))) | .body' 2>/dev/null || true)"
+            if [ -z "$BODY" ]; then
               sleep 10
               continue
             fi

@@ -13,10 +13,10 @@
          bot que edita o workflow que o governa amplia a própria permissão.
    AF3 · o bot não mergeia. Deixar o PR pronto e fechá-lo são coisas diferentes, e
          a segunda é humana (decisão do dono, 21/08).
-   AF4 · e isso vale para o repositório INTEIRO, não só para o autofix: nenhum
-         workflow pode chamar `gh pr merge`. O `csbrasil-bot-automerge` chamava, e
-         era a única coisa que um bot daqui fazia sozinho — justamente a que não
-         devia. Ele agora aplica `pronto-pra-merge` e o botão continua humano.
+   AF4 · merge automático só existe no job `automerge`, depois de
+         `check_automerge.py` no MESMO job, por merge commit, `--match-head-commit` e sem apagar `staging` (decisão do dono,
+         09/11/2026, substituindo a espera humana de 21/08). Qualquer outro workflow,
+         squash ou chamada fora da guarda continua proibido.
    AF7 · todo commit que o bot faz - `git commit` E `git merge`, inclusive a chamada
          GUARDADA (`… || git commit`) - carrega os trailers que o CI cobra de gente:
          `Agent:` (agente_check) e `Signed-off-by:` (dco_check). Sem `-m`, o `git merge`
@@ -58,6 +58,8 @@ const MUTANTES = {
   'lista-abre-workflow': 'AF2',
   'autofix-mergeia': 'AF3',
   'automerge-volta': 'AF4',
+  'automerge-fora-ordem': 'AF4',
+  'automerge-cheque-outro-job': 'AF4',
   'resolve-conflito-de-codigo': 'AF5',
   'sem-varredura-pos-release': 'AF6',
   'commit-sem-trailer': 'AF7',
@@ -259,21 +261,38 @@ if (MUT === 'push-sem-trava') wf = wf.replace("(steps.trava.outputs.commitar == 
   }
 }
 
-/* ---- AF4: e nenhum outro workflow mergeia tampouco ---- */
+/* ---- AF4: merge só no automerge, depois da guarda e por merge commit ---- */
 for (const nome of WORKFLOWS) {
   let texto = ler(`.github/workflows/${nome}`);
   if (MUT === 'automerge-volta' && nome === 'csbrasil-bot-automerge.yml') {
     texto += "\n          subprocess.run(['gh', 'pr', 'merge', pr, '--squash', '--auto'])\n";
   }
-  /* Só a CHAMADA conta: o comentário que explica por que ela saiu tem de poder citá-la. */
+  const decisao = 'python3 scripts/ci/check_automerge.py < /tmp/automerge.json > /tmp/automerge-result.json';
+  if (MUT === 'automerge-fora-ordem' && nome === 'csbrasil-bot-automerge.yml') {
+    texto = texto.replace(decisao, '').replace('subprocess.run(command, check=True)', `subprocess.run(command, check=True)\n          ${decisao}`);
+  }
+  if (MUT === 'automerge-cheque-outro-job' && nome === 'csbrasil-bot-automerge.yml') {
+    texto = texto.replace(decisao, '');
+    texto += `\n  unrelated:\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - run: ${decisao}\n`;
+  }
+  /* Só a CHAMADA conta: o comentário que explica a política pode citá-la. */
   const linhas = texto.split('\n').filter((l) => !/^\s*#/.test(l));
-  if (linhas.some((l) => /gh['"]?,\s*['"]pr['"],\s*['"]merge['"]|gh pr merge/.test(l))) {
-    falhas.push(`AF4 ${nome} mergeia PR sozinho — deixar pronto e fechar são coisas diferentes`);
+  const chamadas = linhas.filter((l) => /gh['"]?,\s*['"]pr['"],\s*['"]merge['"]|gh pr merge/.test(l));
+  if (!chamadas.length) continue;
+  const automerge = texto.match(/^  automerge:\n([\s\S]*?)(?=^  [\w-]+:\n|\Z)/m)?.[1] || '';
+  const posDecisao = automerge.indexOf(decisao);
+  const mergesNoJob = [...automerge.matchAll(/\['gh', 'pr', 'merge', pr, '--merge', '--match-head-commit', head_oid\]/g)].map((m) => m.index);
+  const guardado = nome === 'csbrasil-bot-automerge.yml'
+    && posDecisao >= 0
+    && mergesNoJob.length === chamadas.length
+    && mergesNoJob.every((pos) => pos > posDecisao);
+  if (!guardado) {
+    falhas.push(`AF4 ${nome} tem merge fora do job automerge, antes de check_automerge.py ou sem merge commit`);
   }
 }
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
-if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m AF autofix escreve só o que a trava libera, a lista não cobre código e o bot não mergeia');
+if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m AF escrita limitada e merge somente no automerge guardado');
 if (MUT && !falhas.length) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);
   falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso (MC1)
