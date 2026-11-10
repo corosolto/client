@@ -177,14 +177,36 @@ async function sha256Hex(subtle, bytes) {
   return hex;
 }
 
-async function fetchBytes(fetchImpl, url) {
+async function fetchBytes(fetchImpl, url, maxBytes) {
   let res;
   try { res = await fetchImpl(url, { credentials: 'same-origin' }); }
   catch (e) { fail('studio_fetch_failed', url, e); }
   if (!res || !res.ok) fail('studio_fetch_failed', `${url} HTTP ${res?.status ?? '?'}`);
   /* Sem atalho por Content-Length: com Content-Encoding ele mede o corpo comprimido.
-     Quem decide é o tamanho dos bytes decodificados, conferido pelo chamador. */
-  return new Uint8Array(await res.arrayBuffer());
+     O limite é aplicado enquanto o corpo decodificado chega, antes de reter bytes além do contrato. */
+  const reader = res.body?.getReader?.();
+  if (!reader) fail('studio_fetch_failed', `${url}: body reader indisponível`);
+  const chunks = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        fail(maxBytes === MAX_PACK_BYTES ? 'studio_budget_exceeded' : 'studio_file_length_mismatch', `${url}: > ${maxBytes} bytes`);
+      }
+      chunks.push(value);
+    }
+  } catch (e) {
+    if (e instanceof StudioCharacterError) throw e;
+    fail('studio_fetch_failed', url, e);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  return bytes;
 }
 
 const baseHref = () => globalThis.location?.href || 'http://localhost/';
@@ -195,7 +217,7 @@ async function resolveUncached(pin, fetchImpl, subtle) {
   if (typeof fetchImpl !== 'function') fail('studio_fetch_failed', 'fetch indisponível');
 
   const manifestUrl = new URL(pin.manifestUrl, baseHref());
-  const manifestBytes = await fetchBytes(fetchImpl, manifestUrl.href);
+  const manifestBytes = await fetchBytes(fetchImpl, manifestUrl.href, MAX_PACK_BYTES);
   const manifestSha256 = await sha256Hex(subtle, manifestBytes);
   if (manifestSha256 !== pin.manifestSha256) fail('studio_manifest_sha_mismatch', `${manifestSha256} ≠ ${pin.manifestSha256}`);
   let manifest;
@@ -220,7 +242,7 @@ async function resolveUncached(pin, fetchImpl, subtle) {
   const created = [];
   const settled = await Promise.allSettled([...representantes.values()].map(async (path) => {
     const entry = plan.files.get(path);
-    const bytes = await fetchBytes(fetchImpl, new URL(path, manifestUrl).href);
+    const bytes = await fetchBytes(fetchImpl, new URL(path, manifestUrl).href, entry.bytes);
     if (bytes.byteLength !== entry.bytes) fail('studio_file_length_mismatch', `${path}: ${bytes.byteLength} ≠ ${entry.bytes}`);
     const sha256 = await sha256Hex(subtle, bytes);
     if (sha256 !== entry.sha256) fail('studio_file_sha_mismatch', `${path}: ${sha256} ≠ ${entry.sha256}`);
@@ -272,6 +294,7 @@ async function resolveUncached(pin, fetchImpl, subtle) {
     previewUrls: Object.freeze(plan.previews.map((path) => urlOf(path))),
   });
 }
+
 
 /* Cache de promessa por URL + SHA do manifesto (e identidade do pin). Sucesso fica
    para a vida da página; falha sai do cache para a próxima chamada tentar de novo. */

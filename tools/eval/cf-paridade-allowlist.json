@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "rotas": [
+        "/",
+        "/en",
+        "/api/geo-lang",
+        "/api/og/pagina.png?rota=/en&titulo=x",
+        "/u/00000000-0000-4000-8000-00000000c0de",
+        "/mapa",
+        "/sala/ABC",
+        "/sitemap.xml",
+        "/api/health",
+        "/discord",
+        "/jogar",
+        "/?janela=configuracoes",
+        "/?secao=comunidade&social=feed",
+        "/docs/en/status",
+        "/audio/manifest.json",
+        "/img/reticle.png",
+        "/models/nao-existe.glb",
+        "/api/badge/00000000-0000-4000-8000-00000000c0de.png",
+        "/api/profile-card/00000000-0000-4000-8000-00000000c0de.png"
+      ],
+      "header": "content-security-policy",
+      "contains": ".itch.zone",
+      "reason": "CSP do staging aceita .itch.zone até a política da produção acompanhar a migração."
+    },
+    {
+      "rota": "/api/badge/00000000-0000-4000-8000-00000000c0de.png",
+      "kind": "route",
+      "reason": "Sem credenciais Supabase, /api/badge degrada para a resposta not_configured esperada."
+    },
+    {
+      "rota": "/u/00000000-0000-4000-8000-00000000c0de",
+      "kind": "route",
+      "reason": "Perfil social degrada sem API_PROXY_SECRET configurado no Worker."
+    },
+    {
+      "rota": "/api/health",
+      "kind": "route",
+      "reason": "Proxy de health degrada sem API_PROXY_SECRET configurado no Worker."
+    },
+    {
+      "rota": "/api/profile-card/00000000-0000-4000-8000-00000000c0de.png",
+      "kind": "route",
+      "reason": "Card social degrada sem API_PROXY_SECRET configurado no Worker."
+    }
+  ]
+}

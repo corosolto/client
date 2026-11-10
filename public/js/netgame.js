@@ -479,10 +479,12 @@ class Netcode {
       }
       if (ent !== game.player) ent._netBot = !!e.bot;   // IA: frente +Z (yaw); humano: convenção da câmera (yaw+π) — BUG-117
       if (ent !== game.player && e.weapon) {
+        const trocouArma = !primeiroSnap && wasAlive && e.alive && ent.weapon && ent.weapon !== e.weapon;
         // O id lógico sozinho não troca a arma que foi montada dentro do GLB do personagem.
         // O helper remonta a 3ª pessoa quando pickup/respawn muda a arma autoritativa.
         if (ent.weapon !== e.weapon || ent._meshWeapon !== e.weapon) game._syncRemoteWeapon?.(ent, e.weapon);
         else ent.weapon = e.weapon;
+        if (trocouArma) ent.mesh?.ctrl?.draw?.();
       }
       if (ent === game.player) {
         this._meuNomeServidor = e.name || this._meuNomeServidor;   // o servidor trunca o apelido; é este nome que vem em `killedBy`
@@ -599,6 +601,12 @@ class Netcode {
     const d = Math.max(0, Math.min(999, e.d | 0)), h = e.h === 1 || e.h === true, w = String(e.w || '').slice(0, 8);
     const dist = (a) => (a && a.pos && p && p.pos) ? Math.hypot(a.pos.x - p.pos.x, a.pos.z - p.pos.z) : 0;
     if (e.k === 'hit') {
+      if (vId !== meu) {
+        if (att?.pos && vic?.pos && vic !== p && vic.alive) {
+          vic.mesh?.ctrl?.flinch?.({ x: vic.pos.x - att.pos.x, z: vic.pos.z - att.pos.z }, d / 100);
+        }
+        return;
+      }
       if (!att || this.espectador || vId !== meu) return;
       try { game._dmgArc(att, p, d); } catch { /* HUD */ }
       game._noteHit(att, w, d, h, dist(att));
@@ -607,7 +615,10 @@ class Netcode {
       try { game._feed(att, vic, w, h); } catch { /* HUD */ }
       if (att === p && game._compra) game._compra.ganhoAbate(w, vic.team === p.team);   // +TRETA$ do nó
       if (vic === p) { if (att && !this.espectador) game._noteHit(att, w, d, h, dist(att)); }
-      else this.morteRemota(vic, att, h);
+      else {
+        if (!vic.alive && att?.pos && vic.pos) vic.mesh?.ctrl?.die?.({ x: vic.pos.x - att.pos.x, z: vic.pos.z - att.pos.z });
+        this.morteRemota(vic, att, h);
+      }
     } else if (e.k === 'tiro') {
       this.tiroDeRede(att, e);
     } else if (e.k === 'drop') {
@@ -1018,6 +1029,8 @@ class Netcode {
       const fwdYaw = segYaw == null ? corpoYaw : (b._netBot === false ? segYaw + Math.PI : segYaw);
       const fwd = vx * Math.sin(fwdYaw) + vz * Math.cos(fwdYaw);
       if (b.mesh.isGLB) {
+        const distCam = Math.hypot(b.pos.x - game.camera.position.x, b.pos.z - game.camera.position.z);
+        b.mesh.ctrl.lod = distCam > 45 ? 2 : (distCam > 25 ? 1 : 0);
         // update(dt, moving, hasTarget, speed, back): a velocidade REAL vai no 4º argumento —
         // com speed=0 o clipe rodava a 0,45× e o boneco deslizava (BUG-113).
         b.mesh.ctrl.aimPitch = Math.max(-0.6, Math.min(0.6, b._netPitch || 0));
@@ -1025,7 +1038,7 @@ class Netcode {
         const mMantle = Number.isFinite(b.mantleF) && b.mantleF > 0 && b.mantleF < 1;
         b.mesh.ctrl.setAr?.(mMantle);
         b.mesh.ctrl.setMantle?.(mMantle ? b.mantleF : null);
-        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25);
+        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25, vx * Math.cos(fwdYaw) - vz * Math.sin(fwdYaw));
       } else poseCharacter(b.mesh.parts, spd, 0, game.time);
     } else {
       b.deadT = (b.deadT || 0) + dt; b._deadShown = true;

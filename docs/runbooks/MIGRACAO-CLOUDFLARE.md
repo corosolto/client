@@ -54,7 +54,7 @@ campanhas e funil; "olhar rápido" vai ser Umami (self-host no Workers + D1) ou 
 - `scripts/ci/vercel-ignore.sh`, ramo preview: builda só se `git diff --name-only $VERCEL_GIT_PREVIOUS_SHA..HEAD`
   toca `src/`, `public/`, `vercel.json`, `package*.json`, `astro.config.mjs`, `middleware.js`, `scripts/fetch-*`,
   `scripts/copy-wasm.mjs`, `scripts/prune-dist.mjs`, `scripts/aeo.mjs`, `tools/gen-asset-rev.mjs`,
-  `tools/viewmodels/prepare_precision_preview.mjs`, `tools/audio/`, `tools/strip-decal-bg.mjs` ou `CHANGELOG.md`.
+  `tools/cf/`, `tools/viewmodels/prepare_precision_preview.mjs`, `tools/audio/`, `tools/strip-decal-bg.mjs` ou `CHANGELOG.md`.
   `staging`, `main` e `lote-*` buildam sempre. Sem `VERCEL_GIT_PREVIOUS_SHA` (primeiro push da branch) ou com o
   SHA fora do clone raso da Vercel (`--depth=10`): builda. O script só sai 0 ou 1; qualquer outro código a Vercel
   trata como deploy falho. Produção não mudou (só `chore(release):`). O preview de PR que o bot comenta vem do
@@ -137,11 +137,14 @@ O que as fases 2–4 têm que tratar (lista fechada, achada no spike):
 
 ## Fase 2: preview por PR
 
-O workflow `.github/workflows/cf-preview.yml` roda em `pull_request`, mas preserva o check visível
-mesmo quando o diff não toca o site: o job `decide` aplica o mesmo conjunto de caminhos de
+O workflow `.github/workflows/cf-preview.yml` roda em `pull_request_target`, portanto a definição usada é sempre a do branch base, não a do PR. O job `decide` aplica o mesmo conjunto de caminhos de
 `scripts/ci/vercel-ignore.sh` e o job de publicação fica pulado. Para PRs do próprio repositório,
-ele faz `npm ci`, `npm run build:cf` e `npx wrangler versions upload --config wrangler.preview.toml
---name csb-preview`. O Wrangler devolve uma URL de versão, por exemplo
+o job `compile` faz `npm ci` e `npm run build:cf` num runner descartável sem segredos e exporta só
+`dist`. O job `preview` não faz checkout do head: baixa `dist` como dados, instala Wrangler 4.158.0
+sem credenciais fora do workspace e publica pelo binário absoluto. `wrangler.preview.toml` e
+`scripts/ci/cf_preview_comment.py` vêm de um checkout sparse do `base.sha`; o token Cloudflare fica
+restrito ao upload e o token de escrita no PR ao comentário. Assim, executáveis, configuração e
+scripts controlados pelo PR nunca entram no job tokenizado. O comentário e o smoke aceitam a URL somente de `github-actions[bot]`, com SHA e URL no mesmo corpo, ignorando marcadores forjados; `tools/cf/` entra no gatilho. O Wrangler devolve uma URL de versão, por exemplo
 `https://<version>-csb-preview.<subdominio>.workers.dev`.
 
 `scripts/ci/cf_preview_comment.py` mantém um único comentário com o marcador
@@ -212,3 +215,4 @@ npm run cf:paridade -- --alvo https://<worker>.workers.dev
 | 2026-11-09 | spike | fase 1: `csb-spike` no ar em workers.dev com 18/19 rotas idênticas à produção; adaptador por `ADAPTER`; `_headers`/`_redirects` gerados; middleware portado; OG/badge/profile-card em resvg-wasm nas duas bordas; `eval:cfparidade` e `cf-paridade-check` | dono mergeia; fase 2 começa pelo item 1 da lista (segredos em runtime) e pelo preview por PR |
 | 2026-11-09 | fase 2 | feito: preview por PR no Workers via `cf-preview.yml`, `wrangler.preview.toml`, comentário sticky `cf-preview` e `smoke-cf` opcional; Vercel continua sendo o smoke principal; run 42606435715 publicou a versão e retornou `HTTP 200` | fase 2b: `CF_WORKERS_TOKEN` dedicado configurado; seguir com smoke/paridade e merge |
 | 2026-11-09 | limpeza-lote2 | lote 2 removeu 9 `tools/eval` órfãos e 59 geradores raiz sem chamadores; arquivou históricos e pastas privadas fora do repo; ajustou os consumidores de `plans/` e `references/` | L2 aguarda PR e merge; arquivos `tools/blender/**` e `tools/fabrica/**` seguem intactos por decisão do dono |
+| 2026-11-09 | — | links compartilháveis do jogo e do site passam a usar `https://corosol.to`; canonical, `og:url`, hreflang, sitemap e JSON-LD permanecem em `www`; régua `eval:shareorigin` com mutantes entra na suite fast | abrir PR para `staging`, acompanhar pr-fast e confirmar a prova de convite no navegador |

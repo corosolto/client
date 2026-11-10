@@ -5,7 +5,7 @@ import { nomeTimeJavaporcos, wallpaperJavaporcos } from './javaporcos_apresentac
 // Boot, menus, settings, logo, main loop.
 import * as THREE from 'three';
 import { estadoDaUrl, urlDoEstado, CHAVES_DE_TELA } from './rotas.js';
-import { ligarCompartilhar, linkCompartilhavel, textoDaPartida, origemPublica } from './compartilhar.js';
+import { ligarCompartilhar, linkCompartilhavel, textoDaPartida } from './compartilhar.js';
 import {initAccountEntry,mountProfilePreferences} from './account-entry.js';
 import {initLoginPrompt,noteLoginPromptMatch} from './login-prompt.js';
 import {analyticsAllowed} from './privacy-preferences.js';
@@ -5106,7 +5106,7 @@ function mpModalSalaCriada(sala, senha = '') {
   };
   /* WhatsApp: `wa.me/?text=` abre o app no celular e o WhatsApp Web no computador, com a
      mensagem pronta e o link dentro — sem pedir número, a pessoa escolhe o grupo lá. */
-  ligarCompartilhar(mpEl('mp-modal-compartilhar'), () => ({ titulo: 'Sala no CORO SOLTO', texto: `Entra na minha sala ${sala.convite} no CORO SOLTO.`, url: linkDeConvite(sala.convite, origemPublica()) }));
+  ligarCompartilhar(mpEl('mp-modal-compartilhar'), () => ({ titulo: 'Sala no CORO SOLTO', texto: `Entra na minha sala ${sala.convite} no CORO SOLTO.`, url: linkDeConvite(sala.convite) }));
   const zap = mpEl('mp-modal-zap');
   if (zap) {
     zap.href = `https://wa.me/?text=${encodeURIComponent(frase('conviteZap', linkDeConvite(sala.convite)))}`;

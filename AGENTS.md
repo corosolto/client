@@ -41,9 +41,9 @@ algo está errado e o quality gate está verde, o defeito é do quality gate.
 
 | Zona | O que é | Tamanho medido | Regra |
 |---|---|---|---|
-| `public/` | o **jogo** | 204 arquivos `.js`, 81.802 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
-| `src/` | o **site** | 29 páginas `.astro`, 5 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
-| `tools/` | o **arnês** | 1169 scripts em `tools/eval/`, 127 em `tools/` | node puro: sobe o jogo real sem browser |
+| `public/` | o **jogo** | 206 arquivos `.js`, 82.126 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
+| `src/` | o **site** | 30 páginas `.astro`, 5 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
+| `tools/` | o **arnês** | 1026 scripts em `tools/eval/`, 91 em `tools/` | node puro: sobe o jogo real sem browser |
 
 **Não existe `public/index.html`.** O HTML do jogo é `src/pages/index.astro`, servido na rota `/`. Servir `public/` estaticamente entrega os arnêses visuais, **não o jogo** — é a pegadinha que custa a primeira hora de todo mundo.
 
@@ -115,6 +115,10 @@ onde registrar, em que ordem rodar o quality gate, e como reportar o que **não*
 Ela vale para agente e para gente. Como a `gauntlet-fps`, ela nasceu aqui e vive em
 `.claude/skills/` porque `.agents/skills/` é gitignored (skill de terceiro, fixada por hash).
 
+**PR title and description MUST be written in English.** A regra vale para humanos e bots;
+o workflow `pr-language.yml` executa `scripts/ci/pr_language.py` em abertura, edição e push.
+Detalhes do processo e o template ficam em [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 **Todo commit leva o trailer `Agent:`** (ex.: `Agent: Kimi Code`; humano leva
 `Agent: humano`) — é o que sustenta o "cada commit diz qual" do README. Você não
 digita: o `.githooks/prepare-commit-msg` preenche pela assinatura do ambiente, e
@@ -162,7 +166,7 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 npm run check:fast   # node tools/eval/runner.mjs --suite=fast
 ```
 
-`package.json` tem **777 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
+`package.json` tem **804 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 

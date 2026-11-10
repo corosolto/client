@@ -268,8 +268,8 @@ async function fluxo(mutante, cap) {
   const m = await page.evaluate(async (lima) => {
     const card = document.querySelector('#mp-modal .mp-modal-card');
     const { linkDeConvite } = await import('/js/nos.js');
-    const { origemPublica } = await import('/js/compartilhar.js');
-    const local = linkDeConvite('BR-7K3M'), publico = linkDeConvite('BR-7K3M', origemPublica());
+    const { origemCompartilhamento } = await import('/js/compartilhar.js');
+    const local = linkDeConvite('BR-7K3M'), publico = linkDeConvite('BR-7K3M', origemCompartilhamento());
     const limas = [...card.querySelectorAll('*')].filter((e) => e.checkVisibility() && getComputedStyle(e).backgroundColor === lima).map((e) => e.id || e.className);
     let qr = '';
     const svg = card.querySelector('.tp-convidar__qr svg');

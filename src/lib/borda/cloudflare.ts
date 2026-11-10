@@ -2,12 +2,16 @@
 // `waitUntil` vive em `locals.cfContext` (@astrojs/cloudflare 14; `locals.runtime` saiu no Astro 6).
 import { isIP } from 'node:net';
 import type { Borda } from './contrato';
+import { geoDaBorda } from './geo';
 
 export const borda = {
   nome: 'cloudflare',
   ipDoCliente(request) {
     const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '';
     return isIP(ip) ? ip : null;
+  },
+  geoDoCliente(request) {
+    return geoDaBorda(request, 'cloudflare');
   },
   agendar(locals, promessa) {
     const ctx = 'cfContext' in locals ? locals.cfContext : null;
