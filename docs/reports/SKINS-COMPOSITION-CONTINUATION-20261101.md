@@ -1,3 +1,5 @@
+> Registro histórico. As pendências do revisor legado abaixo não são exigências atuais; siga [o ciclo vigente de revisão](../../.claude/skills/estragacodigo-loop/SKILL.md).
+
 # Composição de skins sobre QA: continuação
 
 ## Objetivo e limites
@@ -11,7 +13,7 @@ Definição de pronto desta lane: candidato local recuperável com os dois ances
 - QA observado clean em `d20f53c1f637fa92cf6c05913876c31d5d733952`; novo nome de WT/branch verificado ausente antes da criação.
 - #1190 original `44084cf796b45f46d6d3dc9bf2267e638994ff82`, delta de cinco caminhos desde `4cf8dd99d813fe7caa323b5e9567df3c86957f1a`. Metadata remota desta rodada: base staging `618fc78b3c8a25bfff1526d8de130957ebbb6f86`, CONFLICTING/DIRTY.
 - #1191 original `1da0bc3f54f4a1d2f230028ff4bd54b6633a8e28`, base exata #1190, MERGEABLE/UNSTABLE, CHANGES_REQUESTED na leitura remota.
-- Auditoria integral de origem: aggregate `audits/2026-10-31-visual-consistency/REUSE-SKINS-PRS-R58.md`, JSON, evidence e patches. Protocolo `operations/corosolto-hq-20261026/ledger/REVIEW-PROTOCOL-20261031.md`: CodeRabbit OFF, GLM/OMP e crítico independente; Estraga permanece obrigatório.
+- Auditoria integral de origem: aggregate `audits/2026-10-31-visual-consistency/REUSE-SKINS-PRS-R58.md`, JSON, evidence e patches. Protocolo `operations/corosolto-hq-20261026/ledger/REVIEW-PROTOCOL-20261031.md`: revisor legado OFF, GLM/OMP e crítico independente; Estraga permanece obrigatório.
 
 ## Marco validado: #1190
 

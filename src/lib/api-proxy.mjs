@@ -1,7 +1,7 @@
 import { BlockList, isIP } from 'node:net';
 
-/* Salto da Cloudflare (faixas de cloudflare.com/ips): x-vercel-ip-* descreve o PoP e valem os
-   cf-*. Fora dessas faixas os cf-* são forjáveis e vale a geo da Vercel. */
+/* Salto da Cloudflare (faixas de cloudflare.com/ips) ou `request.cf`: x-vercel-ip-* descreve o
+   PoP e vale a geo da Vercel. Fora desses sinais os cf-* são forjáveis. */
 const CLOUDFLARE_V4 = [
   '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22', '141.101.64.0/18',
   '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20', '197.234.240.0/22', '198.41.128.0/17',
@@ -36,14 +36,16 @@ const cidadeCodificada = (bruto) => {
    cidade ausente. Sem o Managed Transform de localização, a Cloudflare manda só o país. */
 export function origemDoJogador(request, clientAddress) {
   const h = request.headers;
-  if (saltoDaCloudflare(clientAddress)) {
+  // O adaptador Cloudflare expõe `request.cf`; no Vercel a decisão continua
+  // baseada no salto verificado, preservando a barreira contra cf-* forjado.
+  if (request.cf || saltoDaCloudflare(clientAddress)) {
     const real = h.get('cf-connecting-ip') || '';
     const geo = {};
     for (const nome of GEO_CLOUDFLARE) {
       const valor = h.get(nome);
       if (valor) geo[nome] = nome === 'cf-ipcity' ? cidadeCodificada(valor) : valor;
     }
-    return { ip: isIP(real) ? real : clientAddress, geo, borda: 'cloudflare' };
+    return { ip: isIP(real) ? real : clientAddress || '', geo, borda: 'cloudflare' };
   }
   const geo = {};
   for (const nome of GEO_VERCEL) {

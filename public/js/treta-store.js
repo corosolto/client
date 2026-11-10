@@ -5,7 +5,7 @@ import {TRETA_ACCESSORY_PROPOSALS} from './treta-proposals.js';
 import {loadAccount,socialApi} from './account-entry.js';
 import {byId} from './characters.js';
 import {estadoDaUrl,urlDoEstado,ABAS_LOJA} from './rotas.js';
-import {ligarCompartilhar,linkCompartilhavel} from './compartilhar.js';
+import {ligarCompartilhar,linkCompartilhavel,origemCompartilhamento} from './compartilhar.js';
 import {eyewearFitCount,eyewearProfile,loadEyewearFitData} from './eyewear.js';
 import {VERSION} from './version.js';
 import { tr, frase } from './i18n.js';
@@ -510,7 +510,7 @@ export function initTretaStore({skipPrompt=false,onEquipped=()=>{}}={}) {
   $('treta-invite').onclick=async()=>{
     void inviteEvent('cta');
     if(!state?.wallet){login();return;}
-    const url=new URL('/',location.origin);url.searchParams.set('treta',state.wallet.referral_code);
+    const url=new URL('/',origemCompartilhamento());url.searchParams.set('treta',state.wallet.referral_code);
     try{
       await navigator.clipboard.writeText(url.href);
       void inviteEvent('copied');

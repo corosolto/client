@@ -1,0 +1,86 @@
+name: cf-preview
+
+on:
+  # O build roda sem segredos; o deploy confiável é disparado em outro workflow.
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: cf-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  decide:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      rodar: ${{ steps.filtro.outputs.rodar }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: O PR toca o site?
+        id: filtro
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if ! git -c core.quotePath=false diff --no-renames --name-only "$BASE...$HEAD" > "$RUNNER_TEMP/arquivos.txt"; then
+            echo "rodar=true" >> "$GITHUB_OUTPUT"
+            echo "diff indisponível: preview roda"
+            exit 0
+          fi
+          if grep -Eq '^(src/|public/|vercel\.json$|wrangler\.preview\.toml$|package\.json$|package-lock\.json$|astro\.config\.mjs$|middleware\.js$|scripts/fetch-|scripts/copy-wasm\.mjs$|scripts/prune-dist\.mjs$|scripts/aeo\.mjs$|tools/gen-asset-rev\.mjs$|tools/viewmodels/prepare_precision_preview\.mjs$|tools/audio/|tools/strip-decal-bg\.mjs$|CHANGELOG\.md$)' "$RUNNER_TEMP/arquivos.txt"; then
+            echo "rodar=true" >> "$GITHUB_OUTPUT"
+            echo "site mudou: preview roda"
+          else
+            echo "rodar=false" >> "$GITHUB_OUTPUT"
+            echo "nenhum arquivo do site mudou: preview pula"
+          fi
+
+  # O build recebe código do PR sem segredos. O deploy fica em cf-preview-deploy.yml.
+  preview:
+    needs: decide
+    if: needs.decide.outputs.rodar == 'true' && github.event.pull_request.draft != true && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build Cloudflare sem segredos
+        run: npm run build:cf
+      - name: Guarda apenas os assets compilados
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cf-preview-${{ github.event.pull_request.number }}
+          path: dist
+          if-no-files-found: error
+          include-hidden-files: true
+
+
+  # Publica um marcador para o workflow confiável não confundir build pulado com sucesso.
+  skip:
+    needs: decide
+    if: needs.decide.outputs.rodar == 'false' || github.event.pull_request.draft == true || github.event.pull_request.head.repo.full_name != github.repository
+    timeout-minutes: 10
+    steps:
+      - name: Cria marcador de preview pulado
+        run: |
+          printf 'preview pulado: nenhum arquivo do site mudou ou PR não publicável\n' > "$RUNNER_TEMP/preview-skip.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cf-preview-skip-${{ github.event.pull_request.number }}
+          path: ${{ runner.temp }}/preview-skip.txt

@@ -42,8 +42,8 @@ let proxy = readFileSync('src/lib/api-proxy.mjs', 'utf8');
 let rota = readFileSync('src/pages/api/[rota].ts', 'utf8');
 let main = readFileSync('public/js/main.js', 'utf8');
 if (mut === 'geo-direto') jogo = muta(jogo, "if (VIA_SITE.has(nome) && !forcado) return caminho;", '');
-if (mut === 'pop-como-cidade') proxy = muta(proxy, 'if (saltoDaCloudflare(clientAddress)) {', 'if (false) {');
-if (mut === 'cf-forjado') proxy = muta(proxy, 'if (saltoDaCloudflare(clientAddress)) {', "if (request.headers.has('cf-connecting-ip')) {");
+if (mut === 'pop-como-cidade') proxy = muta(proxy, 'if (request.cf || saltoDaCloudflare(clientAddress)) {', 'if (false) {');
+if (mut === 'cf-forjado') proxy = muta(proxy, 'if (request.cf || saltoDaCloudflare(clientAddress)) {', "if (request.headers.has('cf-connecting-ip')) {");
 if (mut === 'sem-prazo') proxy = muta(proxy, '    signal: AbortSignal.timeout(TEMPO_MAXIMO_MS),\n', '');
 if (mut === 'sem-segredo') rota = muta(rota, '{ segredo: SEGREDO }', '{}');
 if (mut === 'rota-fora-do-proxy') rota = muta(rota, "'submit-match', ", '');
@@ -122,8 +122,8 @@ const CF = { 'cf-connecting-ip': '201.17.0.9', 'cf-ipcountry': 'BR', 'cf-ipcity'
   cobra(!sem.has('x-csb-proxy-auth'), 'GP6 x-csb-proxy-auth do NAVEGADOR atravessou o proxy');
 }
 cobra(sinal instanceof AbortSignal, 'GP8 fetch do proxy sem prazo — Cloud Run pendurado segura cada chamada de telemetria até o teto da função da Vercel');
-cobra(/const SEGREDO = import\.meta\.env\.API_PROXY_SECRET \|\| '';/.test(rota) && /\{ segredo: SEGREDO(?:, session: [^}]+)? \}/.test(rota),
-  'GP6 [rota].ts não repassa API_PROXY_SECRET ao proxy');
+cobra(/from '\.\.\/\.\.\/lib\/env-runtime'/.test(rota) && /\{ segredo: envRuntime\('API_PROXY_SECRET'\) \|\| ''/.test(rota),
+  'GP6 [rota].ts não repassa API_PROXY_SECRET (leitura de runtime via envRuntime) ao proxy');
 
 cobra(/void fetch\(apiUrl\(path\), \{/.test(main) && /fetch\(apiUrl\('\/api\/presence'\)/.test(main)
   && /const r = await fetch\(apiUrl\(path\), body/.test(main),

@@ -39,7 +39,6 @@ let brasilia = readFileSync('public/js/map_brasilia.js', 'utf8');
 let indexPage = readFileSync('src/pages/index.astro', 'utf8');
 let layoutPage = readFileSync('src/layouts/Layout.astro', 'utf8');
 const astroConfig = readFileSync('astro.config.mjs', 'utf8');
-const pruneDist = readFileSync('scripts/prune-dist.mjs', 'utf8');
 const loader = readFileSync('public/vendor/addons/loaders/GLTFLoader.js', 'utf8');
 const urna = parseGlb('public/models/props/urna.glb');
 
@@ -347,11 +346,6 @@ const buildCacheContract = /const MANIFESTO_JS = moduleCacheManifest\(\)/.test(a
 const evalCacheProbe = sonda(['tools/eval/social-serve-check.mjs', ...(mutant === 'cache-serve-constante' ? ['--mutante=cache-gele'] : [])], { maxBuffer: 32768 });
 const evalCacheContract = evalCacheProbe.status === 0;
 if (!evalCacheContract && evalCacheProbe.mediu) console.error((evalCacheProbe.stderr || 'cache HTTP não medido').slice(-1500));
-const prunedJsPrefixes = [...new Set([...pruneDist.matchAll(
-  /['"](?:dist\/client|\.vercel\/output\/static)\/js\/([^'"]+)['"]/g,
-)].map((match) => `${match[1].replace(/\/$/, '')}/`))];
-const publishedModulesOnly = prunedJsPrefixes.length > 0
-  && cachedModules.every((module) => !prunedJsPrefixes.some((prefix) => module.startsWith(prefix)));
 const filesOnDisk = [];
 const visitDirectory = (directory = '') => {
   for (const entry of readdirSync(posix.join('public/js', directory), { withFileTypes: true })) {
@@ -361,9 +355,9 @@ const visitDirectory = (directory = '') => {
   }
 };
 visitDirectory();
-const expectedPublishedModules = filesOnDisk
-  .filter((module) => !prunedJsPrefixes.some((prefix) => module.startsWith(prefix)))
-  .sort();
+/* prune-dist não poda mais nenhum js/ (js/editor saiu em 11/2026): o publicado é
+   exatamente o que está em public/js, e módulo a mais no manifesto reprova aqui. */
+const expectedPublishedModules = filesOnDisk.sort();
 const publishedGraphComplete = cachedModules.length === expectedPublishedModules.length
   && expectedPublishedModules.every((module, index) => cachedModules[index] === module);
 /* Contrato estático é medido neste processo e vale sozinho: probe HTTP morto
@@ -372,7 +366,6 @@ const staticCacheContract = buildCacheContract
   && injectedCacheContract(indexPage)
   && (!/\/js\/|__MANIFESTO_JS__/.test(layoutPage) || injectedCacheContract(layoutPage))
   && [...reachableModules].every((module) => cachedModules.includes(module))
-  && publishedModulesOnly
   && publishedGraphComplete
   && cacheMutationApplied
   && contentRevisionChanged;

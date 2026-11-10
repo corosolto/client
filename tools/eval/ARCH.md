@@ -105,7 +105,7 @@ Cobertura: **4148 de 10091 linhas (41%)** do `game.js` têm dono declarado. O re
 | 403 | `PUNCH_ZOOM` | 3 |
 | 406 | `BOCA_CORPO` | 3 |
 | 409 | `bocaLocalDaArma` | 22 |
-| 431 | `TRACER_STYLE` | 6 |
+| 432 | `LANDING_FX_STYLE` | 12 |
 | 441 | `ADS_RAMPA_S` | 3 |
 | 445 | `aberturaCone` | 16 |
 | 461 | `anguloDeDisparo` | 4 |
@@ -295,6 +295,7 @@ Cobertura: **4148 de 10091 linhas (41%)** do `game.js` têm dono declarado. O re
 | 4969 | `_killfeedWeaponIcon()` | 10 |
 | 4979 | `_wpnIcon()` | 64 |
 | 5043 | `_tracer()` | 30 |
+| 5081 | `_landingFx()` | 27 |
 | 5073 | `_puff()` | 39 |
 | 5112 | `_holeDecalMat()` | 8 |
 | 5120 | `_flash()` | 66 |
@@ -358,6 +359,7 @@ Cobertura: **4148 de 10091 linhas (41%)** do `game.js` têm dono declarado. O re
 | 6392 | `_hideCtfHud()` | 6 |
 | 6398 | `_updateCtfHud()` | 76 |
 | 6474 | `_collide()` | 23 |
+| 6500 | `_collideGrade()` | 25 |
 | 6497 | `_collideRot()` | 22 |
 | 6519 | `_mantleAlcance()` | 67 |
 | 6586 | `_mantleColliders()` | 10 |
@@ -402,6 +404,7 @@ Cobertura: **4148 de 10091 linhas (41%)** do `game.js` têm dono declarado. O re
 | 8026 | `_pickSpawn()` | 25 |
 | 8051 | `_respawnPlayer()` | 48 |
 | 8099 | `_losClear()` | 18 |
+| 8132 | `_raioBloqueado()` | 14 |
 | 8117 | `_botCall()` | 41 |
 | 8158 | `_teamMarkTex()` | 23 |
 | 8181 | `_makeTeamMark()` | 18 |

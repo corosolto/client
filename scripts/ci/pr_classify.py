@@ -2,6 +2,8 @@
 import json
 import sys
 
+from release_policy import is_bugfix, is_hotfix, label_names
+
 SENSITIVE_GAMEPLAY = (
     "public/js/game.js",
     "public/js/characters.js",
@@ -88,12 +90,45 @@ def classifica(payload: dict) -> dict:
     elif changed_files > 0:
         labels_remove.append("safe-automerge")
 
+    hotfix = is_hotfix(payload)
+    bugfix = is_bugfix(payload)
+    official_batch = (
+        base_branch == "main"
+        and payload.get("headRefName") == "staging"
+        and bool(payload.get("expected_repository"))
+        and (payload.get("headRepository") or {}).get("nameWithOwner") == payload.get("expected_repository")
+    )
+    explicit_release = base_branch == "main" and not hotfix and "release" in label_names(payload)
+    if official_batch or explicit_release:
+        labels_add.append("release")
+        labels_remove.extend(["release-batch", "release-hotfix", "hotfix", "bugfix", "safe-automerge", "needs-hotfix-review"])
+    elif hotfix:
+        labels_remove.append("release-batch")
+        labels_add.extend(["bugfix", "hotfix", "release-hotfix"])
+        if base_branch == "main" and payload.get("hotfix_main_only") is True:
+            labels_add.append("release")
+            labels_remove.append("needs-hotfix-review")
+        else:
+            labels_remove.append("release")
+            if base_branch == "main":
+                labels_add.append("needs-hotfix-review")
+                labels_remove.append("safe-automerge")
+            else:
+                labels_remove.append("needs-hotfix-review")
+    else:
+        labels_remove.extend(["release", "release-hotfix", "hotfix", "needs-hotfix-review"])
+        labels_add.append("release-batch")
+        if bugfix:
+            labels_add.append("bugfix")
+        else:
+            labels_remove.append("bugfix")
+
     branch_target = target_label(base_branch)
     labels_add.append(branch_target)
     labels_remove.extend({"target:main", "target:staging", "target:release"} - {branch_target})
 
     return {
-        "labels_add": sorted(set(labels_add)),
+        "labels_add": sorted(set(labels_add) - set(labels_remove)),
         "labels_remove": sorted(set(labels_remove)),
     }
 
@@ -113,6 +148,47 @@ def selftest() -> int:
         ("gameplay continua pedindo humano",
          {"files": [{"path": "public/js/game.js"}], "changedFiles": 1, "baseRefName": "main"},
          {"tem": ["needs-human-gameplay"], "nao_tem": ["safe-automerge"]}),
+        ("bugfix comum entra no lote e recebe responsável",
+         {"title": "fix: repair lobby reconnect", "files": [{"path": "docs/a.md"}],
+          "changedFiles": 1, "baseRefName": "staging"},
+         {"tem": ["bugfix", "release-batch"], "nao_tem": ["release", "release-hotfix"]}),
+        ("hotfix na main recebe via imediata de release",
+         {"title": "hotfix: restore production loader", "files": [{"path": "docs/a.md"}],
+          "changedFiles": 1, "baseRefName": "main", "hotfix_main_only": True},
+         {"tem": ["bugfix", "hotfix", "release", "release-hotfix"], "nao_tem": ["release-batch"]}),
+        ("hotfix já classificado mantém todas as labels",
+         {"title": "hotfix: restore production loader", "files": [{"path": "docs/a.md"}],
+          "labels": [{"name": "hotfix"}, {"name": "release"}],
+          "changedFiles": 1, "baseRefName": "main", "hotfix_main_only": True},
+         {"tem": ["bugfix", "hotfix", "release", "release-hotfix"], "nao_tem": ["release-batch"]}),
+        ("hotfix na staging não dispara release por engano",
+         {"title": "hotfix: restore production loader", "files": [{"path": "docs/a.md"}],
+          "changedFiles": 1, "baseRefName": "staging"},
+         {"tem": ["bugfix", "hotfix", "release-hotfix"], "nao_tem": ["release", "release-batch"]}),
+        ("hotfix com commit da staging na ancestry bloqueia merge imediato",
+         {"title": "hotfix: restore production loader", "files": [{"path": "docs/a.md"}],
+          "changedFiles": 1, "baseRefName": "main", "hotfix_main_only": False},
+         {"tem": ["bugfix", "hotfix", "release-hotfix", "needs-hotfix-review"],
+          "nao_tem": ["release", "safe-automerge", "release-batch"]}),
+        ("feature não vira bugfix por mencionar erro no corpo",
+         {"title": "feat: add error telemetry", "body": "This fixes a bug eventually",
+          "files": [{"path": "docs/a.md"}], "changedFiles": 1, "baseRefName": "staging"},
+         {"tem": ["release-batch"], "nao_tem": ["bugfix", "hotfix", "release"]}),
+        ("PR oficial staging para main preserva o gatilho de release",
+         {"title": "release: daily batch 2026-11-09", "files": [{"path": "docs/a.md"}],
+          "changedFiles": 1, "baseRefName": "main", "headRefName": "staging",
+          "headRepository": {"nameWithOwner": "corosolto/client"}, "expected_repository": "corosolto/client"},
+         {"tem": ["release"], "nao_tem": ["release-batch", "release-hotfix", "hotfix", "safe-automerge"]}),
+        ("staging de outro repo do mesmo dono não vira lote oficial",
+         {"title": "release: daily batch 2026-11-09", "files": [{"path": "docs/a.md"}],
+          "changedFiles": 1, "baseRefName": "main", "headRefName": "staging",
+          "headRepository": {"nameWithOwner": "corosolto/other"}, "expected_repository": "corosolto/client"},
+         {"tem": ["release-batch"], "nao_tem": ["release"]}),
+        ("label release manual na main não é apagada",
+         {"title": "release: integrate approved changes", "labels": [{"name": "release"}],
+          "files": [{"path": "docs/a.md"}], "changedFiles": 1,
+          "baseRefName": "main", "headRefName": "lote-approved"},
+         {"tem": ["release"], "nao_tem": ["release-batch", "safe-automerge"]}),
     ]
     erros = 0
     for nome, payload, esperado in casos:
