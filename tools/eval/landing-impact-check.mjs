@@ -20,7 +20,7 @@ for (const ev of ['uncaughtException', 'unhandledRejection']) {
   });
 }
 
-const game = bootGame('fy_corrego', {
+const game = bootGame('corrego', {
   textures: initTextures(), ctf: true, seed: 12345, settings: { quality: 'high' },
 });
 const p = game.player;
@@ -106,7 +106,7 @@ const findWetOnWater = (g, wet) => {
 for (const [mapId, wet] of [
   ['piscina_treta', (w, x, z) => w.slowAt?.(x, z)],
   ['amazonia', (w, x, z) => w.footstepSurfaceAt?.(x, z) === 'water'],
-  ['fy_corrego', (w, x, z) => w.slowAt?.(x, z)],
+  ['corrego', (w, x, z) => w.slowAt?.(x, z)],
 ]) {
   const g = bootGame(mapId, { textures: initTextures(), seed: 12345 });
   const w = g.world;
@@ -121,32 +121,32 @@ for (const [mapId, wet] of [
 /* CÓRREGO explícito: (0,35) está na lâmina real; fora do canal (BBox.max.x + 0.2) a API
    deve ser null. O slowAt é MAIS LARGO que a malha — isso não amplia a API. */
 {
-  const g = bootGame('fy_corrego', { textures: initTextures(), seed: 12345 });
+  const g = bootGame('corrego', { textures: initTextures(), seed: 12345 });
   const mesh = g.scene.userData.waters?.[0]?.mesh;
-  assert(mesh, 'fy_corrego não registrou malha de água em scene.userData.waters');
+  assert(mesh, 'corrego não registrou malha de água em scene.userData.waters');
   mesh.updateMatrixWorld(true);
   const raycaster = new THREE.Raycaster();
   raycaster.set(new THREE.Vector3(0, 60, 35), new THREE.Vector3(0, -1, 0));
   const hit = raycaster.intersectObject(mesh, false)[0];
-  assert(hit, 'fy_corrego: (0, 35) não tem interseção vertical com a malha de água real');
+  assert(hit, 'corrego: (0, 35) não tem interseção vertical com a malha de água real');
   const api = g.world.waterSurfaceAt(0, 35);
   assert(Number.isFinite(api) && Math.abs(api - hit.point.y) <= 1e-6,
-    `fy_corrego divergiu da malha real de água em (0, 35): API ${api} vs malha ${hit.point.y}`);
+    `corrego divergiu da malha real de água: API ${api} vs malha ${hit.point.y}`);
   const centroY = g.world.waterSurfaceAt(0, 0);
-  assert(Number.isFinite(centroY), 'fy_corrego: (0, 0) não publica a altura da lâmina central');
+  assert(Number.isFinite(centroY), 'corrego: (0, 0) não publica a altura da lâmina central');
   assert.equal(g._footstepSurface(new THREE.Vector3(0, centroY, 0)), 'water',
-    'fy_corrego: pouso no centro da lâmina caiu no fallback de terra');
+    'corrego: pouso no centro da lâmina caiu no fallback de terra');
   assert.equal(g._footstepSurface(new THREE.Vector3(0, 0.4, 0)), 'dirt',
-    'fy_corrego: ponte central foi classificada como água');
+    'corrego: ponte central foi classificada como água');
   const bbox = new THREE.Box3().setFromObject(mesh);
   const fora = g.world.waterSurfaceAt(bbox.max.x + 0.2, 35);
-  assert(fora == null, `fy_corrego publicou água fora do canal em x=${bbox.max.x + 0.2}`);
+  assert(fora == null, `corrego publicou água fora do canal em x=${bbox.max.x + 0.2}`);
 }
 
 /* CLEANUP REAL do 139: Game novo, SEM _tintFx fake — material e CanvasTexture de verdade,
    contados por addEventListener('dispose'). O puff é compartilhado e não pode cair. */
 {
-  const life = bootGame('fy_corrego', { textures: initTextures(), seed: 12345, settings: { quality: 'high' } });
+  const life = bootGame('corrego', { textures: initTextures(), seed: 12345, settings: { quality: 'high' } });
   const spawn = (surface) => {
     life._footstepSurface = () => surface;
     return life._landingFx(new THREE.Vector3(0, -1.6, 35), 0.8);
