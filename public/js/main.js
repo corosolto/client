@@ -2204,7 +2204,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const playerWeaponSkins = Object.fromEntries(['ak','pistol','m4','scar']
     .map((weaponId)=>[weaponId,playerPack?.weaponSkins[weaponId] || equippedTretaWeaponSkin(weaponId)])
     .filter(([,skinId])=>skinId));
-  const playerKnifeSkinId = playerPack?.knifeSkin || null;
+  const playerKnifeSkinId = playerPack?.knifeSkin || equippedTretaWeaponSkin('knife') || null;
   const matchEyewear = [playerEyewearId,...matchRoster.allyDefs.map(d=>d.eyewearId),...matchRoster.enemyDefs.map(d=>d.eyewearId)];
   const matchSkins = [playerSkinId, ...matchRoster.allyDefs.map(d=>d.skinId), ...matchRoster.enemyDefs.map(d=>d.skinId)];
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]

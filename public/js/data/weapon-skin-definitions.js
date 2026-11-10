@@ -1,7 +1,7 @@
 const storeSkin = ({
   id, name, weapon, theme, color, description, price, inspiration, designOrigin = 'project-owned',
   slogan = null, markAsset = null, markSourceUrl = null, rightsStatus = 'original-safe', metalFinish = null,
-  preserveBase = false, markLayout = null, sloganLayout = null, sloganAspect = null, series = null, storeEnabled = true,
+  preserveBase = false, markLayout = null, sloganLayout = null, sloganAspect = null, series = null, storeEnabled = true, passe = null,
 }) => Object.freeze({
   id,
   name,
@@ -24,6 +24,7 @@ const storeSkin = ({
   ...(markLayout ? { markLayout: Object.freeze(markLayout) } : {}),
   ...(sloganLayout ? { sloganLayout: Object.freeze(sloganLayout) } : {}),
   ...(sloganAspect ? { sloganAspect } : {}),
+  ...(passe ? { passe: Object.freeze(passe) } : {}),
   storeEnabled,
   storePrice: price,
   storeSlot: 'weapon',
@@ -75,9 +76,48 @@ const PACK_WEAPON_SKINS = Object.freeze(Object.fromEntries(PACK_WEAPON_THEMES.fl
   })
 )));
 
+const SESSAO_DA_TRETA_DESIGNS = Object.freeze([
+  ['Sintonia', 'ak', '#e4d8aa', 'Barras de teste clássicas sobre grafite.'],
+  ['Chuvisco', 'pistol', '#c7d0d2', 'Estática monocromática cortada por linhas de varredura.'],
+  ['Corte Seco', 'knife', '#f14b55', 'Faixas vermelhas e pretas de interrupção.'],
+  ['Desvio', 'm4', '#30d9d0', 'Barras ciano deslocadas como sinal fora de sincronia.'],
+  ['Fantasma', 'scar', '#c17cff', 'Ecos violetas em faixas de sinal duplicadas.'],
+  ['Retrato', 'ak', '#edcc4d', 'Quadro de calibração amarelo e carvão.'],
+  ['Canal Zero', 'pistol', '#5fe284', 'Dígitos abstratos verdes em blocos de fósforo.'],
+  ['Vértice', 'knife', '#f28b43', 'Sinal laranja em diagonais de interferência.'],
+  ['Rastreamento', 'm4', '#51a8ee', 'Azul de fita com linhas de tracking branco.'],
+  ['Vertical', 'scar', '#ec6fae', 'Colunas magenta alternadas com ruído de tela.'],
+  ['Contraste', 'ak', '#e7e4d9', 'Quadriculado de calibração preto e marfim.'],
+  ['Pulso', 'pistol', '#f2c34a', 'Ondas âmbar em tela escura.'],
+  ['Frequência', 'knife', '#50d5bd', 'Dentes de serra turquesa de sinal interrompido.'],
+  ['Quadro Partido', 'm4', '#e16a70', 'Painéis vermelhos desalinhados e ruído.'],
+  ['Encerramento', 'scar', '#e2cfe9', 'Anéis de calibração em violeta e marfim.'],
+]);
+const SESSAO_DA_TRETA_MARCAS = Object.freeze([
+  'fora-do-ar', 'passe-lan', 'fora-do-ar', 'passe-lan', 'passe-auditorio',
+  'passe-auditorio', 'passe-lan', 'passe-coelho', 'passe-lan', 'passe-coelho',
+  'fora-do-ar', 'passe-auditorio', 'passe-coelho', 'passe-auditorio', 'fora-do-ar',
+]);
+const SESSAO_DA_TRETA_SKINS = Object.freeze(Object.fromEntries(SESSAO_DA_TRETA_DESIGNS.map(
+  ([name, weapon, color, description], index) => {
+    const id = `arma-${String(index + 1).padStart(2, '0')}`;
+    const markLayout = weapon === 'pistol'
+      ? { y: -0.040, z: -0.015, height: 0.070 }
+      : { y: 0.085, z: -0.050, height: 0.060, lift: 0.004 };
+    return [id, storeSkin({
+      id, name, weapon, color, description, theme: id, price: 0,
+      inspiration: 'grafismos originais de televisão analógica fora do ar, sem marcas ou reprodução de produto',
+      markAsset: `/textures/weapon-skins/project-marks/${SESSAO_DA_TRETA_MARCAS[index]}.webp`,
+      markLayout, series: 'SESSÃO DA TRETA', storeEnabled: false,
+      passe: { season: 'sessao-da-treta-s1', level: index + 1 },
+    })];
+  },
+)));
+
 
 export const WEAPON_SKINS = Object.freeze({
   ...PACK_WEAPON_SKINS,
+  ...SESSAO_DA_TRETA_SKINS,
   'ondas-cariocas': Object.freeze({
     id: 'ondas-cariocas',
     name: 'M4 Ondas Cariocas',

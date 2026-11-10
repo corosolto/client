@@ -106,6 +106,53 @@ const EMO_XADREZ_FRAGMENT = Object.freeze({
     diffuseColor.rgb = emoPistolColor;
   `,
 });
+// Cada expressão desenha um padrão de transmissão distinto em coordenadas locais.
+const SESSAO_DA_TRETA_PATTERNS = Object.freeze([
+  `vec3 c = mod(floor((p.x + 1.0) * 10.0), 6.0) < 1.0 ? vec3(0.92, 0.85, 0.65) : (mod(floor((p.x + 1.0) * 10.0), 6.0) < 3.0 ? vec3(0.08, 0.65, 0.68) : vec3(0.70, 0.10, 0.20));`,
+  `vec3 c = mix(vec3(0.05), vec3(0.76, 0.81, 0.82), noise * (0.65 + 0.35 * step(0.5, fract(p.y * 95.0))));`,
+  `float dropout = step(0.78, fract(p.y * 17.0 + noise * 0.12));
+   vec3 c = mix(vec3(0.025, 0.008, 0.012), vec3(0.68, 0.025, 0.045), 0.25 + noise * 0.48);
+   c = mix(c, vec3(0.92, 0.43, 0.38), dropout * 0.75);`,
+  `vec3 c = mix(vec3(0.02, 0.11, 0.15), vec3(0.04, 0.82, 0.78), step(0.42, fract(p.x * 9.0 + floor(p.y * 20.0) * 0.23)));`,
+  `vec3 c = mix(vec3(0.06, 0.025, 0.10), vec3(0.68, 0.32, 0.86), max(step(0.84, fract(p.x * 9.0)), step(0.84, fract(p.x * 9.0 + 0.23))));`,
+  `vec3 c = mix(vec3(0.04), vec3(0.92, 0.75, 0.16), max(step(0.86, fract(p.x * 8.0)), step(0.86, fract(p.y * 8.0))));`,
+  `vec3 c = mix(vec3(0.015, 0.08, 0.035), vec3(0.15, 0.82, 0.32), step(0.5, mod(floor(p.x * 18.0) + floor(p.y * 13.0) * 3.0, 5.0)));`,
+  `vec2 q = (p - vec2(-0.08, 0.01)) * vec2(1.0, 2.4);
+   float rings = step(0.78, fract(length(q) * 13.0));
+   float ghost = step(0.88, fract(length(q - vec2(0.025, 0.0)) * 13.0));
+   vec3 c = mix(vec3(0.055, 0.025, 0.008), vec3(0.88, 0.38, 0.07), rings * 0.8 + ghost * 0.2);`,
+  `vec3 c = mix(vec3(0.025, 0.12, 0.42), vec3(0.80, 0.91, 0.94), step(0.91, fract(p.y * 35.0 + noise * 0.15)));`,
+  `vec3 c = mix(vec3(0.08, 0.015, 0.06), vec3(0.82, 0.16, 0.51), step(0.5, fract(p.x * 14.0)) * (0.75 + noise * 0.25));`,
+  `float grid = max(step(0.94, fract(p.x * 5.0)), step(0.92, fract(p.y * 8.0)));
+   float cross = max(1.0 - smoothstep(0.003, 0.009, abs(p.x)), 1.0 - smoothstep(0.003, 0.009, abs(p.y)));
+   vec3 c = mix(vec3(0.10), vec3(0.76), max(grid * 0.55, cross));`,
+  `vec3 c = mix(vec3(0.10, 0.055, 0.01), vec3(0.95, 0.66, 0.10), smoothstep(0.70, 0.82, sin(p.y * 45.0 + sin(p.x * 12.0))));`,
+  `float wave = 1.0 - smoothstep(0.004, 0.012, abs(p.y - 0.035 * sin(p.x * 30.0)));
+   float echo = 1.0 - smoothstep(0.003, 0.009, abs(p.y + 0.034 - 0.035 * sin(p.x * 30.0 + 0.7)));
+   vec3 c = mix(vec3(0.012, 0.07, 0.075), vec3(0.20, 0.88, 0.78), max(wave, echo * 0.55));`,
+  `vec3 c = mix(vec3(0.16, 0.025, 0.035), vec3(0.82, 0.25, 0.29), step(0.5, fract(p.x * 5.0 + floor(p.y * 10.0) * 0.35)) * (0.8 + noise * 0.2));`,
+  `vec3 c = mix(vec3(0.13, 0.06, 0.19), vec3(0.87, 0.77, 0.90), step(0.5, fract(length(p * vec2(1.0, 1.6)) * 12.0)));`,
+].map((design) => `
+  vec2 p = vec2(mix(vWeaponSkinLocal.x, vWeaponSkinLocal.z, weaponSkinFrame.x) - weaponSkinFrame.y,
+                vWeaponSkinLocal.y - weaponSkinFrame.z) * weaponSkinFrame.w;
+  // Deslocamento horizontal irregular por linha: tracking de fita, não camuflagem.
+  float row = floor(p.y * 42.0);
+  float rowNoise = fract(sin(row * 91.73) * 43758.5453);
+  float tear = step(0.78, rowNoise);
+  p.x += tear * (rowNoise - 0.78) * 0.19;
+  float noise = fract(sin(dot(floor(p * vec2(190.0, 150.0)), vec2(12.9898, 78.233))) * 43758.5453);
+  ${design}
+  float scanWave = fract(p.y * 85.0);
+  float scanAA = min(fwidth(scanWave), 0.25);
+  float scan = mix(0.54, 1.0, smoothstep(0.25 - scanAA, 0.25 + scanAA, scanWave));
+  float tracking = tear * step(0.78, fract(p.y * 42.0));
+  c = mix(c, vec3(0.75, 0.83, 0.79), tracking * (0.25 + noise * 0.35));
+  diffuseColor.rgb = c * scan * (0.70 + noise * 0.38) + vec3(noise * 0.035);
+`));
+const SESSAO_DA_TRETA_FRAGMENT = Object.freeze(Object.fromEntries(
+  SESSAO_DA_TRETA_PATTERNS.map((fragment, index) => [`arma-${String(index + 1).padStart(2, '0')}`, fragment]),
+));
+
 const PATTERN_FRAGMENT = Object.freeze({
   'tamo-junto-ak': TAMO_JUNTO_FRAGMENT.ak,
   'tamo-junto-pistola': TAMO_JUNTO_FRAGMENT.pistol,
@@ -347,7 +394,7 @@ const THEME_FRAGMENT = Object.freeze({
     diffuseColor.rgb = vec3(0.48, 0.54, 0.58) * prataBrush;
   `,
 });
-const patternFragment = (skinId) => PATTERN_FRAGMENT[skinId] || THEME_FRAGMENT[WEAPON_SKINS[skinId]?.theme];
+const patternFragment = (skinId) => SESSAO_DA_TRETA_FRAGMENT[skinId] || PATTERN_FRAGMENT[skinId] || THEME_FRAGMENT[WEAPON_SKINS[skinId]?.theme];
 const MATERIAL_PROFILE = Object.freeze({
   gold: Object.freeze({ roughness: 0.48, metalness: 0.91, envMapIntensity: 0.72 }),
   silver: Object.freeze({ roughness: 0.52, metalness: 0.93, envMapIntensity: 0.68 }),
@@ -365,6 +412,8 @@ const POLITICAL_LAYOUT = Object.freeze({
     symbol: Object.freeze({ y: 0.047, z: -0.075, height: 0.085 }),
     slogan: Object.freeze({ y: 0.120, z: 0.170, height: 0.035 }),
   }),
+  m4: Object.freeze({ symbol: Object.freeze({ y: 0.085, z: -0.050, height: 0.060, lift: 0.004 }) }),
+  scar: Object.freeze({ symbol: Object.freeze({ y: 0.085, z: -0.050, height: 0.060, lift: 0.004 }) }),
   pistol: Object.freeze({
     symbol: Object.freeze({ y: -0.020, z: -0.015, height: 0.082 }),
     slogan: Object.freeze({ y: 0.240, z: 0.035, height: 0.030 }),
@@ -894,7 +943,7 @@ function attachSkinMark(model, weaponId, skinId, knifeContext) {
   else attachPoliticalMarkings(model, weaponId, skinId);
 }
 
-function cloneMaterial(material, skinId) {
+function cloneMaterial(material, skinId, geometry) {
   const copy = ownVmResource(material.clone());
   copy.name = `${material.name || 'weapon'}__skin_${skinId}`;
   const definition = WEAPON_SKINS[skinId];
@@ -907,12 +956,26 @@ function cloneMaterial(material, skinId) {
   copy.metalness = profile.metalness;
   copy.envMapIntensity = profile.envMapIntensity;
   copy.userData = { ...copy.userData, weaponSkin: skinId };
+  let frame = null;
+  if (SESSAO_DA_TRETA_FRAGMENT[skinId]) {
+    if (!geometry.boundingBox) geometry.computeBoundingBox();
+    const { min, max } = geometry.boundingBox;
+    const useZ = max.z - min.z > max.x - min.x;
+    const length = useZ ? max.z - min.z : max.x - min.x;
+    frame = new THREE.Vector4(
+      useZ ? 1 : 0,
+      useZ ? (min.z + max.z) / 2 : (min.x + max.x) / 2,
+      (min.y + max.y) / 2,
+      1 / Math.max(length, 0.0001),
+    );
+  }
   copy.onBeforeCompile = (shader) => {
+    if (frame) shader.uniforms.weaponSkinFrame = { value: frame };
     shader.vertexShader = shader.vertexShader
       .replace('void main() {', 'varying vec3 vWeaponSkinLocal;\nvoid main() {')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\n\tvWeaponSkinLocal = position;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('void main() {', 'varying vec3 vWeaponSkinLocal;\nvoid main() {')
+      .replace('void main() {', `${frame ? 'uniform vec4 weaponSkinFrame;\n' : ''}varying vec3 vWeaponSkinLocal;\nvoid main() {`)
       .replace('#include <map_fragment>', `#include <map_fragment>\n${patternFragment(skinId)}`);
   };
   copy.customProgramCacheKey = () => `weapon-skin:${skinId}:object-space-v3`;
@@ -933,11 +996,11 @@ export function applyWeaponSkinCandidate(model, weaponId, skinId, { marcas = tru
   const definition = WEAPON_SKINS[skinId];
   if (!definition || !definition.targetWeapons.includes(weaponId)) return false;
   if (!patternFragment(skinId)) return false;
-  const skinMaterial = (material) => HAND_MATERIAL.test(material?.name || '')
-    ? material
-    : cloneMaterial(material, skinId);
   model.traverse((object) => {
     if (!object.isMesh || !object.material) return;
+    const skinMaterial = (material) => HAND_MATERIAL.test(material?.name || '')
+      ? material
+      : cloneMaterial(material, skinId, object.geometry);
     object.material = Array.isArray(object.material)
       ? object.material.map(skinMaterial)
       : skinMaterial(object.material);

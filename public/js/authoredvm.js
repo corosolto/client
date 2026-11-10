@@ -466,6 +466,8 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
 const GOLDEN_PAINT_BODY = Object.freeze({
   'gold#pistol': 'coro_solto_project_pistol',
   'gold#ak': 'coro_solto_project_ak_body',
+  'gold#m4': 'coro_solto_project_ak_body',
+  'gold#scar': 'coro_solto_project_ak_body',
 });
 
 /* Pintura usa body golden explícito sem criar wrap de montagem Mint; peças irmãs
