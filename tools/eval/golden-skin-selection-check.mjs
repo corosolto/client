@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const args = process.argv.slice(2);
-const MUTANTS = ['body-noop', 'mag-unpainted', 'hand-painted', 'ak-base-changed', 'first-mesh', 'golden-no-lancamento', 'sem-alca-golden'];
+const MUTANTS = ['body-noop', 'mag-unpainted', 'hand-painted', 'ak-base-changed', 'first-mesh', 'golden-no-lancamento', 'sem-alca-golden', 'pintura-golden'];
 if (args.length > 1 || args.some(a => !MUTANTS.includes(a.replace(/^--mutante=/, '')) || !a.startsWith('--mutante='))) throw Error('CLI inválida: --mutante=' + MUTANTS.join('|'));
 const mutant = args[0]?.slice('--mutante='.length) || '';
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
@@ -34,6 +34,12 @@ function replaceOnce(before, after) {
   source = source.replace(before, after);
 }
 replaceOnce('    if (NODE_RUNTIME || AUTHORED_KILLED) return null;', '    if (AUTHORED_KILLED) return null;');
+// 10/11: a PT-38 pintada do jogo vai pela fábrica (pinturaNaFabrica, catálogo pago, fora do Node). A rota real
+// é cobrada em pistol-paint-factory-route; o resto do gate segue cobrindo a pintura golden.
+const { VM_WEAPON } = await import('../../public/js/data/vmconfig.js');
+if (mutant === 'pintura-golden') VM_WEAPON.pistol.pinturaNaFabrica = false;   // a pintura volta para a gold#pistol longe
+const rotaPintadaReal = [...originalRuntime.authoredBootFamilies(['pistol'], { pistol: 'ouro-pistola' })];
+VM_WEAPON.pistol.pinturaNaFabrica = false;
 if (mutant === 'body-noop') replaceOnce('if (!corpo && entry?.golden && GOLDEN_PAINT_BODY[entry.key]) {', 'if (false) {');
 if (mutant === 'first-mesh') replaceOnce('const bodies = (entry.weaponMeshes || []).filter(mesh => mesh?.name === GOLDEN_PAINT_BODY[entry.key]);', 'const bodies = (entry.weaponMeshes || []).slice(0, 1);');
 if (mutant === 'mag-unpainted') replaceOnce('const irmas = [...(entry.weaponMeshes || []), ...(corpo.userData?.mintParts || [])];', 'const irmas = [...(entry.weaponMeshes || []), ...(corpo.userData?.mintParts || [])].filter(p => !/magazine|charging_handle/.test(p.name));');
@@ -151,6 +157,7 @@ plain.vm._keyFor = (id) => runtime.AuthoredViewModels.prototype._keyFor.call(pla
 const bareKey = plain.vm._keyFor('pistol');
 const realRoute = originalRuntime.vmFonteDe('pistol').chave;
 check('pistol-factory-launch', bareKey === 'fab#pistol' && realRoute === 'fab#pistol', { bareKey, realRoute });
+check('pistol-paint-factory-route', rotaPintadaReal.includes('fab#pistol') && !rotaPintadaReal.includes('gold#pistol'), rotaPintadaReal);
 {
   const goldPistol = entries.pistol;
   painted.g._switchWeapon('pistol');
@@ -181,7 +188,7 @@ GLTFLoader.prototype.loadAsync = originalLoadAsync;
 for (const k of Object.keys(originalConsole)) console[k] = originalConsole[k];
 if (events.some(e => e.level === 'warn' || e.level === 'error')) throw Error('INFRA: ' + JSON.stringify(events.filter(e => e.level === 'warn' || e.level === 'error')));
 const failed = checks.filter(c => !c.ok).map(c => c.id).sort();
-const expected = { 'body-noop': ['pistol-body', 'pistol-siblings', 'pistol-body-first', 'ak-body', 'ak-siblings', 'ak-body-first', 'named-body-order'], 'mag-unpainted': ['pistol-siblings', 'ak-siblings'], 'hand-painted': ['hands-excluded', 'mint-factory-preserved'], 'ak-base-changed': ['ak-unpainted'], 'first-mesh': ['named-body-order', 'duplicate-body-rejected'], 'golden-no-lancamento': ['pistol-factory-launch'], 'sem-alca-golden': ['pistol-golden-ads'] };
+const expected = { 'body-noop': ['pistol-body', 'pistol-siblings', 'pistol-body-first', 'ak-body', 'ak-siblings', 'ak-body-first', 'named-body-order'], 'mag-unpainted': ['pistol-siblings', 'ak-siblings'], 'hand-painted': ['hands-excluded', 'mint-factory-preserved'], 'ak-base-changed': ['ak-unpainted'], 'first-mesh': ['named-body-order', 'duplicate-body-rejected'], 'golden-no-lancamento': ['pistol-factory-launch'], 'sem-alca-golden': ['pistol-golden-ads'], 'pintura-golden': ['pistol-paint-factory-route'] };
 const ok = mutant ? JSON.stringify(failed) === JSON.stringify(expected[mutant].sort()) : failed.length === 0;
 console.log('GOLDEN-SKIN/1 ' + JSON.stringify({ ok, mutant, failed, expected: mutant ? expected[mutant] : [], checks, sourcePins: sourceBefore, selected, loadCalls, applyCallCount: applyCalls.length, fixture: { realGameController: true, actualGameSwitch: true, fullLoadFamily: true, copyChange: 'NODE_RUNTIME load guard removed; imports relocated; golden-no-lancamento forces gold#pistol in entryKeyFor', textureBoundary: 'Exact shipping GLB parsed; neutral 1x1 texture decode; no pixel claim', poses: ['Idle from load', 'Equip start', 'Reload start'], limits: ['Node harness DOM/renderer/sfx; no browser download/appearance/decal/contact/anatomy/mobile/MP approval', 'Mint/factory and unknown selector cases are small API fixtures, not loaded private assets', 'No persistent model export or source writes by this checker'] } }));
 if (!ok) process.exitCode = 1;

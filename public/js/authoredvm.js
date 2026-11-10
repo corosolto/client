@@ -231,7 +231,8 @@ export function preloadAuthoredFamilies(keys = []) {
 
 // Chaves que o boot deve esperar: as READY do loadout (arma assada tem chave
 // própria — família#arma) + granada, se aberta.
-const skinnedEntryKey = (weapon, weaponSkins) => weaponSkins?.[weapon] && GOLDEN_VER[weapon] ? `gold#${weapon}` : entryKeyFor(weapon);
+// `pinturaNaFabrica` (vmconfig): a pintura fica na rota sem pintura e só troca o material.
+const skinnedEntryKey = (weapon, weaponSkins) => weaponSkins?.[weapon] && GOLDEN_VER[weapon] && !VM_WEAPON[weapon]?.pinturaNaFabrica ? `gold#${weapon}` : entryKeyFor(weapon);
 export function authoredBootFamilies(weaponIds = [], weaponSkins = null) {
   const keys = new Set(weaponIds.map((id) => skinnedEntryKey(id, weaponSkins)).filter(Boolean));
   if (!AUTHORED_KILLED && familyReady('grenade')) keys.add('grenade');
@@ -455,7 +456,7 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
     const k = weaponLength / alvo;
     if (k > 1.5) mount.scale.multiplyScalar(1 / k);
   }
-  // golden: a câmera do GLB é a composição, salvo goldFrame (PT-38 a 55°, eval:vm-enquadramento-idle).
+  // golden: a câmera do GLB é a composição, salvo goldFrame (PT-38 a 60°, pistola-ref).
   // O clamp pelo fov da família só vale para o molde goldsrc/retarget.
   return {
     scene, mount, cameraFov: molde ? Math.max(cameraFov, frame.fov) : frame.fov, cameraAspect,

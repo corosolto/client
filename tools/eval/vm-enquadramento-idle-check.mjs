@@ -16,17 +16,19 @@
      node tools/eval/vm-enquadramento-idle-check.mjs --assar         (+ grava o placar
           tools/eval/vm-enquadramento-idle.json que o CI confere: eval:vm-enquadramento-placar)
      --armas=pistol,m4  --rotas=pintura  --aspectos=16x9  --porta=8179  --fotos=<dir>
-     --mutante=pistola-longe    goldFrame de 06/11 (60°, x −7,5, y −5,5) ao vivo na
-                                gold#pistol: tem de REPROVAR (é o quadro do dono)
-     --mutante=pistola-cortada  gold#pistol 6 un. abaixo: a arma sai pela borda de baixo (E1)
+     --mutante=pistola-longe    pistola pintada com a lente 1,6× mais aberta ao vivo: menor e
+                                fora do centro da sem pintura (P1/P2) — tem de REPROVAR
+     --mutante=pistola-girada   pistola pintada girada 35° em volta da câmera: cano e centro
+                                saem da referência (P1/P3)
      --mutante=fuzil-fora       gold#m4 girado 30° em volta da câmera: a frente sai pela direita (E2)
+   Pintada × referência (P1 centro, P2 área ±20%, P3 eixo ≤ 15°): lib/vm-enquadramento.mjs.
    Saída ≠ 0: célula VERMELHA/NÃO MEDE (sem mutante) ou mutante que não reprovou.
    ============================================================================ */
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync, spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { ASPECTOS, ENTRADAS, LIMIARES, MASCARA_SOBRE, PINTADAS, PLACAR_ARQ, REDUCAO, SOBRE, hashDasEntradas, julgar, medir } from './lib/vm-enquadramento.mjs';
+import { ASPECTOS, ENTRADAS, LIMIARES, MASCARA_SOBRE, PINTADAS, PLACAR_ARQ, REDUCAO, REFERENCIA_DA_PINTURA, SOBRE, comparar, hashDasEntradas, julgar, medir } from './lib/vm-enquadramento.mjs';
 
 const ROOT = process.cwd();
 const arg = (n, d = '') => { const h = process.argv.find((a) => a.startsWith(`--${n}=`)); return h ? h.slice(n.length + 3) : d; };
@@ -34,9 +36,9 @@ const flag = (n) => process.argv.includes(`--${n}`);
 const { WEAPON_IDS } = await import(pathToFileURL(path.join(ROOT, 'public/js/weapons.js')).href);
 const { TRETA_WEAPON_SKINS = [], TRETA_PACKS = [] } = await import(pathToFileURL(path.join(ROOT, 'public/js/treta-catalog.js')).href);
 
-const MUTANTES = {
-  'pistola-longe': { arma: 'pistol', rota: 'pintura', aplicar: (e) => { e.cameraFov = 60; e.frame = { ...e.frame, x: -7.5, y: -5.5, z: 0 }; } },
-  'pistola-cortada': { arma: 'pistol', rota: 'pintura', aplicar: (e) => { e.frame = { ...e.frame, y: e.frame.y - 6 }; } },
+const MUTANTES = {   // aplicados só na célula alvo (arma + rota); a referência é medida intacta
+  'pistola-longe': { arma: 'pistol', rota: 'pintura', aplicar: (e) => { e.cameraFov *= 1.6; } },
+  'pistola-girada': { arma: 'pistol', rota: 'pintura', aplicar: (e) => { const r = e.frame.rotDeg || [0, 0, 0]; e.frame = { ...e.frame, rotDeg: [r[0], r[1] + 35, r[2]] }; } },
   // O pacote está no espaço da câmera: girar o mount em volta dela empurra o fuzil para a direita.
   'fuzil-fora': { arma: 'm4', rota: 'pintura', aplicar: (e) => { const r = e.frame.rotDeg || [0, 0, 0]; e.frame = { ...e.frame, rotDeg: [r[0], r[1] - 30, r[2]] }; } },
 };
@@ -48,8 +50,9 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   if (MUT && flag('assar')) throw new Error('--assar não aceita mutante');
   const aspectos = arg('aspectos', Object.keys(ASPECTOS).join(',')).split(',');
   for (const a of aspectos) if (!ASPECTOS[a]) throw new Error(`aspecto desconhecido: ${a}`);
-  const rotas = MUT ? [MUT.rota] : arg('rotas', 'padrao,pintura').split(',');
-  const filtro = MUT ? [MUT.arma] : (arg('armas') ? arg('armas').split(',') : null);
+  // O mutante mede também a referência sem pintura (a comparação P1–P3 precisa dela).
+  const rotas = MUT ? ['padrao', 'pintura'] : arg('rotas', 'padrao,pintura').split(',');
+  const filtro = MUT ? [MUT.arma, REFERENCIA_DA_PINTURA[MUT.arma]] : (arg('armas') ? arg('armas').split(',') : null);
   const pinturaDe = (arma) => {
     const p = TRETA_WEAPON_SKINS.find((s) => s.weapon === arma);
     if (p) return { ...p, slot: 'weapon' };
@@ -114,7 +117,10 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
             if (g.player.weapon !== w) return false;
             if (w === 'knife') return Boolean(g.vm.melee?.active && g.vm.melee.scene);
             const e = g.vm.authored?.entry?.(w);
-            return Boolean(e && g.vm.authored.active(w) && e.mount?.visible && (!p || e.key.startsWith('gold#')));
+            // Pintada = alguma peça da arma carrega a pintura (a rota pode ser gold# ou fab#).
+            let pintada = false;
+            e?.mount?.traverse((o) => { if (o.userData?.weaponSkin) pintada = true; });
+            return Boolean(e && g.vm.authored.active(w) && e.mount?.visible && (!p || pintada || e.key.startsWith('gold#')));
           };
           let ok = false;
           for (let k = 0; k < 6 && !ok; k++) {
@@ -138,7 +144,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
             console.log(`… ${aspecto} ${rota} ${c.arma}: NÃO MEDE (viewmodel autorado não ativou)`);
             continue;
           }
-          if (MUT) {
+          if (MUT && c.arma === MUT.arma && rota === MUT.rota) {
             await page.evaluate(({ w, src }) => {
               const e = window.__game.vm.authored.entry(w);
               // eslint-disable-next-line no-new-func
@@ -165,6 +171,17 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     srv.kill();
   }
 
+  // Pintada × referência sem pintura no mesmo aspecto (o mutante só mexe na célula pintada).
+  for (const r of resultados) {
+    if (r.rota !== 'pintura' || !r.clausulas) continue;
+    const ref = resultados.find((x) => x.rota === 'padrao' && x.aspecto === r.aspecto && x.arma === REFERENCIA_DA_PINTURA[r.arma]);
+    const pares = comparar(r.medida, ref?.medida);
+    r.clausulas.push(...pares);
+    if (pares.some((x) => !x.ok)) {
+      r.estado = 'VERMELHO';
+      console.log(`… ${r.aspecto} pintura ${r.arma} × padrão ${REFERENCIA_DA_PINTURA[r.arma]}: ${pares.filter((x) => !x.ok).map((x) => `${x.id} ${x.msg}`).join('; ')}`);
+    }
+  }
   let falhou = false;
   if (MUT) {
     const alvo = resultados.filter((r) => r.arma === MUT.arma && r.rota === MUT.rota);

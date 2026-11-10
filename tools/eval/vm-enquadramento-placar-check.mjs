@@ -18,8 +18,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { ASPECTOS, PINTADAS, PLACAR_ARQ, hashDasEntradas, julgar } from './lib/vm-enquadramento.mjs';
-
+import { ASPECTOS, PINTADAS, PLACAR_ARQ, REFERENCIA_DA_PINTURA, comparar, hashDasEntradas, julgar } from './lib/vm-enquadramento.mjs';
 const ROOT = process.cwd();
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').slice('--mutante='.length);
 const MUTANTES = ['goldframe-antigo', 'sem-pistola-pintada', 'pistola-longe'];
@@ -59,6 +58,11 @@ for (const e of esperadas) {
   if (!c) continue;
   const j = c.medida ? julgar(c.arma, c.medida) : { estado: c.estado || 'NAO_MEDE', clausulas: [] };
   if (j.estado !== 'VERDE') falhas.push(`Q3 ${e.aspecto}/${e.rota}/${e.arma} ${j.estado}: ${j.clausulas.filter((x) => !x.ok).map((x) => `${x.id} ${x.msg}`).join('; ') || c.msg || 'sem medida'}`);
+  if (e.rota !== 'pintura') continue;
+  // Q4 pintura não muda o quadro: centro, área e eixo contra a referência sem pintura.
+  const ref = achar({ aspecto: e.aspecto, rota: 'padrao', arma: REFERENCIA_DA_PINTURA[e.arma] });
+  const ruins = comparar(c.medida, ref?.medida).filter((x) => !x.ok);
+  if (ruins.length) falhas.push(`Q4 ${e.aspecto}/pintura/${e.arma} × padrão ${REFERENCIA_DA_PINTURA[e.arma]}: ${ruins.map((x) => `${x.id} ${x.msg}`).join('; ')}`);
 }
 
 if (falhas.length) {

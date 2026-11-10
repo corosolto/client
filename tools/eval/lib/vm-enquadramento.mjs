@@ -145,14 +145,14 @@ export function medir(m, S = SOBRE) {
     id++;
     let topo = 0;
     pilha[topo++] = s; rot[s] = id;
-    const c = { n: 0, nDentro: 0, x0: w, x1: -1, y0: h, y1: -1 };
+    const c = { n: 0, nDentro: 0, x0: w, x1: -1, y0: h, y1: -1, sx: 0, sy: 0, sxx: 0, syy: 0, sxy: 0 };
     while (topo) {
       const p = pilha[--topo];
       const x = p % w;
       const y = (p - x) / w;
       c.n++;
       if (x < c.x0) c.x0 = x; if (x > c.x1) c.x1 = x; if (y < c.y0) c.y0 = y; if (y > c.y1) c.y1 = y;
-      if (dentro(x, y)) c.nDentro++;
+      if (dentro(x, y)) { c.nDentro++; c.sx += x; c.sy += y; c.sxx += x * x; c.syy += y * y; c.sxy += x * y; }
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
         const xx = x + dx, yy = y + dy;
         if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
@@ -168,7 +168,9 @@ export function medir(m, S = SOBRE) {
   if (!melhor || !melhor.nDentro) return { arma: null, braco: +(braco / tela).toFixed(4) };
   return {
     arma: { x0: fx(melhor.x0), x1: fx(melhor.x1 + 1), y0: fy(melhor.y0), y1: fy(melhor.y1 + 1),
-      area: +(melhor.nDentro / tela).toFixed(4), naTela: +(melhor.nDentro / melhor.n).toFixed(3) },
+      area: +(melhor.nDentro / tela).toFixed(4), naTela: +(melhor.nDentro / melhor.n).toFixed(3),
+      // Centro e eixo principal (≈ direção do cano) da parte visível, em pixels de tela quadrados.
+      ...eixo(melhor, fx, fy, (sx1 - sx0) / (sy1 - sy0)) },
     braco: +(braco / tela).toFixed(4),
     componentes: id,
   };
@@ -200,4 +202,31 @@ export function julgar(arma, medida, limiares = LIMIARES) {
     }
   }
   return { classe, estado: cl.every((x) => x.ok) ? 'VERDE' : 'VERMELHO', clausulas: cl };
+}
+
+function eixo(c, fx, fy, aspecto) {
+  const n = c.nDentro;
+  const mx = c.sx / n, my = c.sy / n;
+  const vxx = c.sxx / n - mx * mx, vyy = c.syy / n - my * my, vxy = c.sxy / n - mx * my;
+  const graus = (Math.atan2(2 * vxy, vxx - vyy) / 2) * (180 / Math.PI);
+  return { cx: fx(mx), cy: fy(my), eixoGraus: +(((graus % 180) + 180) % 180).toFixed(1), aspecto: +aspecto.toFixed(3) };
+}
+
+/* Pintura não muda o quadro: a rota pintada fica com o mesmo centro, área e eixo da
+   referência sem pintura (a pistola contra ela mesma; fuzis pintados contra a AK golden
+   aprovada, cuja composição eles herdam). Pedido do dono, 10/11 (#1315). */
+export const REFERENCIA_DA_PINTURA = Object.freeze({ pistol: 'pistol', ak: 'ak', m4: 'ak', scar: 'ak' });
+export const PAREAMENTO = Object.freeze({ centroMax: 0.06, areaTol: 0.2, eixoMax: 15 });
+export function comparar(pintada, referencia, P = PAREAMENTO) {
+  const a = pintada?.arma, r = referencia?.arma;
+  if (!a || !r || a.cx == null || r.cx == null) return [{ id: 'P0', ok: false, msg: 'sem medida de centro/eixo para comparar com a referência' }];
+  const centro = r3(Math.hypot(a.cx - r.cx, (a.cy - r.cy) / (a.aspecto || 1)));
+  const razao = r3(a.area / r.area);
+  const d = Math.abs(a.eixoGraus - r.eixoGraus) % 180;
+  const eixoDif = r3(Math.min(d, 180 - d));
+  return [
+    { id: 'P1', ok: centro <= P.centroMax, valor: centro, msg: `centro a ${centro} da referência ≤ ${P.centroMax}` },
+    { id: 'P2', ok: Math.abs(razao - 1) <= P.areaTol, valor: razao, msg: `área ${razao}× a referência (±${P.areaTol * 100}%)` },
+    { id: 'P3', ok: eixoDif <= P.eixoMax, valor: eixoDif, msg: `eixo do cano a ${eixoDif}° da referência ≤ ${P.eixoMax}°` },
+  ];
 }
