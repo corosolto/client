@@ -5,32 +5,34 @@
    Nenhuma régua via isso. select-mount mede a palma e a arma, não o braço; os tetos dela
    vêm de corpos humanos.
 
-   Causa, medida nos nós do GLB (bind) dos packs Studio 0.2.0: o joint *Arm desses rigs nasceu
-   quase no punho (clavícula 0,28–0,45 m, braço 0,06–0,09 m) e a malha do braço pesa no
-   *Shoulder. Todo clipe gira um toco de 6 cm e o braço visível fica onde o bind deixou, em T.
+   Causa, medida nos nós do GLB (bind) dos packs Studio 0.2.0/0.2.1: o joint *Arm desses rigs
+   nasceu quase no punho (clavícula 0,28–0,45 m, braço 0,06–0,09 m; razão 3,9–7,5) e a malha do
+   braço pesa no *Shoulder. Todo clipe gira um toco de 6 cm e o braço visível fica em T. Os packs
+   0.2.2 reposicionaram os joints (razão 0,7–2,1) e o paliativo do client saiu.
    No Bebê Reborn a palma do idle1h nasce na altura do pescoço; a faixa vizinha do perfil do
    tronco pegava a cabeça de boneca (raio 0,37 m) e o empurrão TP_CLEAR tirava a pistola da mão.
-   Correções em glbchars.js: BRAÇO NO OMBRO e TORSO_SEM_CABECA.
+   Correção em glbchars.js: TORSO_SEM_CABECA.
 
    Mede TODO id com GLB (legado + releases Studio), no caminho de jogo (preview:false) e no de
    vitrine (preview:true), 60 updates de 1/60 s, mesmo buildCharacterModel do pvSetChar:
 
      PB1  BRAÇO-T  arma de 1 mão (pistola): a mão da arma tem que SAIR do ombro, para baixo
           ou para a frente. porte = max(queda, frente) da mão em relação à origem do
-          *Shoulder, em frações do comprimento da cadeia ombro→mão. Antes: os 4 em T mediam
+          *Shoulder, em frações do comprimento da cadeia ombro→mão. Os 4 rigs em T mediam
           −0,02…0,05; o pior corpo são (esbirro, legado) mede 0,10. Piso 0,075 = meio do vão.
      PB2  FOLGA    arma própria do personagem (CHAR_WEAPON): empurrão da arma para fora do
           corpo ≤ 0,12. Antes: Bebê Reborn 0,152; o maior legítimo é o Saci com mp5, 0,094.
-     PB3  ALCANCE  BRAÇO NO OMBRO só pode pegar os corpos medidos com razão
-          clavícula/braço > 3: clovis, bebezão, coronel e boneca. Legado mede no máximo 0,87.
+     PB3  JUNTA    clavícula/braço (distância *Shoulder→*Arm sobre *Arm→*ForeArm) ≤ 3 nos dois
+          lados. Legado mede no máximo 0,87 e os Studio sãos no máximo 2,16; os rigs com o
+          joint no punho mediam 3,9–7,5.
 
    MUTANTES (o vermelho tem que aparecer):
-     --mutante=bracoombro   ?bracoombro=0 desliga a mira da clavícula → PB1 reprova os 4.
-     --mutante=torsocabeca  ?torsocabeca=1 volta a cabeça ao perfil → PB2 reprova o Bebê Reborn.
+     --mutante=junta-no-punho  encurta o *Arm→*ForeArm direito do Clóvis para 15% → PB3 reprova.
+     --mutante=torsocabeca     ?torsocabeca=1 volta a cabeça ao perfil → PB2 reprova o Bebê Reborn.
 
    Sem STUDIO_PACK_ROOT (ou sem algum pacote fixado instalado) sai 78 = NÃO MEDIDO, nunca verde.
    Porta: PORTA ou a 1ª livre a partir de 9481. Rode sob with-browser-lock.sh.
-   uso: node tools/eval/porte-braco-browser.mjs [--mutante=bracoombro|torsocabeca] [--ids=a,b] [--out=arquivo.json] */
+   uso: node tools/eval/porte-braco-browser.mjs [--mutante=junta-no-punho|torsocabeca] [--ids=a,b] [--out=arquivo.json] */
 import { execSync, spawn } from 'node:child_process';
 import net from 'node:net';
 import { existsSync, writeFileSync } from 'node:fs';
@@ -43,15 +45,14 @@ const ROOT = join(import.meta.dirname, '../..');
 const RAIZ = process.env.STUDIO_PACK_ROOT;
 const arg = (k) => process.argv.find((a) => a.startsWith(`--${k}=`))?.slice(k.length + 3);
 const MUT = arg('mutante') || null;
-const QUERY = { bracoombro: 'bracoombro=0', torsocabeca: 'torsocabeca=1' };
-if (MUT && !QUERY[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
+const QUERY = { 'junta-no-punho': '', torsocabeca: 'torsocabeca=1' };
+if (MUT && !(MUT in QUERY)) throw new Error(`mutante desconhecido: ${MUT}`);
 const IDS = (arg('ids') || '').split(',').filter(Boolean);
 const OUT = arg('out');
 
 const PISO_PORTE = 0.075;
 const TETO_EMPURRAO = 0.12;
-const BRACO_OMBRO_ESPERADO = ['bebezao-de-feira:Left', 'bebezao-de-feira:Right', 'boneca-da-cristaleira:Left',
-  'boneca-da-cristaleira:Right', 'clovis-fora-do-ar:Left', 'clovis-fora-do-ar:Right', 'coronel-arrego:Right'];
+const TETO_RAZAO_JUNTA = 3;
 
 if (!RAIZ) {
   console.log('UNRUN: STUDIO_PACK_ROOT ausente — os corpos Studio não foram medidos (não é verde).');
@@ -90,7 +91,7 @@ const browser = await chromium.launch({
 const page = await browser.newPage({ viewport: { width: 64, height: 64 } });
 const erros = [];
 page.on('pageerror', (e) => erros.push(e.message));
-await page.goto(`${BASE}/eval-character.html?debug=1${MUT ? `&${QUERY[MUT]}` : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+await page.goto(`${BASE}/eval-character.html?debug=1${MUT && QUERY[MUT] ? `&${QUERY[MUT]}` : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 const alvos = IDS.length ? IDS : await page.evaluate(async () => {
   const C = await import('./js/characters.js'); const G = await import('./js/glbchars.js');
   return C.CHARACTERS.filter((c) => G.GLB_CHARS.has(c.id)).map((c) => c.id);
@@ -98,7 +99,7 @@ const alvos = IDS.length ? IDS : await page.evaluate(async () => {
 
 const medidas = [];
 for (const id of alvos) {
-  medidas.push(await page.evaluate(async (cid) => {
+  medidas.push(await page.evaluate(async ([cid, mut]) => {
     const THREE = await import('three');
     const G = await import('./js/glbchars.js'); const C = await import('./js/characters.js');
     const def = C.CHARACTERS.find((c) => c.id === cid);
@@ -126,14 +127,19 @@ for (const id of alvos) {
       const c = cadeia / model.getWorldScale(new THREE.Vector3()).x;
       const queda = (sh.y - mao.y) / c, frente = (mao.z - sh.z) / c;
       r[preview ? 'vitrine' : 'jogo'] = { clipe: m.ctrl.curName, queda: +queda.toFixed(3), frente: +frente.toFixed(3), porte: +Math.max(queda, frente).toFixed(3) };
-      if (!preview) r.bracoOmbro = (m.ctrl.bracoOmbro || []).map((b) => b.sh.name.replace(/Shoulder$/, ''));
+      if (!preview) {
+        // PB3: razão no corpo montado (distâncias de mundo não dependem da pose)
+        if (mut === 'junta-no-punho' && cid === 'clovis-fora-do-ar') { ossos.RightForeArm.position.multiplyScalar(0.15); model.updateMatrixWorld(true); }
+        r.razaoJunta = Math.max(...['Right', 'Left'].map((l) => W(`${l}Shoulder`).distanceTo(W(`${l}Arm`)) / W(`${l}Arm`).distanceTo(W(`${l}ForeArm`))));
+        r.razaoJunta = +r.razaoJunta.toFixed(2);
+      }
       m.group.removeFromParent();
     }
     const propria = monta(C.charWeapon(cid), false);
     r.empurrao = +(propria.ctrl.tpMount?.empurrao || 0).toFixed(3);
     propria.group.removeFromParent();
     return r;
-  }, id));
+  }, [id, MUT]));
 }
 await browser.close();
 
@@ -144,32 +150,27 @@ for (const r of medidas) {
     if (!(r[modo].porte >= PISO_PORTE)) falhas.push(`PB1 BRAÇO-T ${r.id} (${modo}, ${r[modo].clipe}): porte ${r[modo].porte} < ${PISO_PORTE} (queda ${r[modo].queda}, frente ${r[modo].frente})`);
   }
   if (!(r.empurrao <= TETO_EMPURRAO)) falhas.push(`PB2 FOLGA ${r.id} (${r.arma}): empurrão ${r.empurrao} > ${TETO_EMPURRAO}`);
-}
-if (!IDS.length) {
-  const visto = medidas.filter((r) => !r.erro).flatMap((r) => r.bracoOmbro.map((l) => `${r.id}:${l}`)).sort();
-  const esperado = MUT === 'bracoombro' ? [] : BRACO_OMBRO_ESPERADO;
-  if (JSON.stringify(visto) !== JSON.stringify(esperado)) falhas.push(`PB3 ALCANCE: BRAÇO NO OMBRO em [${visto.join(', ')}], esperado [${esperado.join(', ')}]`);
+  if (!(r.razaoJunta <= TETO_RAZAO_JUNTA)) falhas.push(`PB3 JUNTA ${r.id}: clavícula/braço ${r.razaoJunta} > ${TETO_RAZAO_JUNTA} (joint *Arm no punho)`);
 }
 if (erros.length) falhas.push(`erros de página: ${[...new Set(erros)].join(' | ')}`);
 
 console.log(`\n=== PORTE DE 1 MÃO — ${medidas.length} corpos${MUT ? ` (mutante=${MUT})` : ''} ===`);
-console.log('id                        porte jogo  porte vitrine  empurrão  braço-no-ombro');
+console.log('id                        porte jogo  porte vitrine  empurrão  clav/braço');
 for (const r of [...medidas].sort((a, b) => (a.jogo?.porte ?? -9) - (b.jogo?.porte ?? -9)).slice(0, 12)) {
   if (r.erro) { console.log(`${r.id.padEnd(26)}ERRO ${r.erro}`); continue; }
-  console.log(`${r.id.padEnd(26)}${String(r.jogo.porte).padStart(10)}${String(r.vitrine.porte).padStart(15)}${String(r.empurrao).padStart(10)}  ${r.bracoOmbro.join(',')}`);
+  console.log(`${r.id.padEnd(26)}${String(r.jogo.porte).padStart(10)}${String(r.vitrine.porte).padStart(15)}${String(r.empurrao).padStart(10)}  ${r.razaoJunta}`);
 }
+console.log(`maior clavícula/braço: ${Math.max(...medidas.filter((r) => !r.erro).map((r) => r.razaoJunta))}`);
 console.log('(12 menores portes; --out grava todos)');
 if (OUT) writeFileSync(OUT, `${JSON.stringify({ gerado: new Date().toISOString(), mutante: MUT, piso: PISO_PORTE, teto: TETO_EMPURRAO, medidas }, null, 1)}\n`);
 if (falhas.length) console.log(`\nVERMELHO (${falhas.length}):\n  ${falhas.join('\n  ')}`);
 /* Com mutante, sair 0 só quando a régua MORDEU nos corpos que o mutante quebra. */
 if (MUT) {
-  const alvo = MUT === 'bracoombro'
-    ? ['clovis-fora-do-ar', 'bebezao-de-feira', 'coronel-arrego', 'boneca-da-cristaleira'].map((id) => `PB1 BRAÇO-T ${id} `)
-    : ['PB2 FOLGA bebe-reborn '];
+  const alvo = MUT === 'junta-no-punho' ? ['PB3 JUNTA clovis-fora-do-ar:'] : ['PB2 FOLGA bebe-reborn '];
   const mordeu = alvo.every((p) => falhas.some((f) => f.startsWith(p)));
   console.log(mordeu ? `\nMUTANTE ${MUT} REPROVADO, como esperado.` : `\nMUTANTE ${MUT} PASSOU: a régua não morde.`);
   process.exit(mordeu ? 0 : 1);
 }
 if (falhas.length) process.exit(1);
-console.log('\nVERDE: PB1 BRAÇO-T, PB2 FOLGA e PB3 ALCANCE.');
+console.log('\nVERDE: PB1 BRAÇO-T, PB2 FOLGA e PB3 JUNTA.');
 process.exit(0);

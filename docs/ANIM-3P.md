@@ -145,45 +145,33 @@ nova, não parâmetro. Armas de 2 mãos não foram tocadas.
 
 ### Braço no ombro (10/11): rigs Studio com o joint do braço no punho
 
-Com pistola, Clóvis, Bebezão, Coronel e Boneca da Cristaleira abriam os braços em T, e o
-overlay acima não mudava nada (`?porte1h=0` dava a mesma imagem). A causa está nos nós do
-GLB (bind) dos packs Studio 0.2.0: o joint `*Arm` nasceu quase no punho.
+Com pistola, Clóvis, Bebezão, Coronel e Boneca da Cristaleira abriam os braços em T nos packs
+0.2.0/0.2.1, e o overlay acima não mudava nada (`?porte1h=0` dava a mesma imagem). Nos nós do
+GLB (bind) o joint `*Arm` tinha nascido quase no punho: clavícula 0,28–0,45 m contra braço de
+0,06–0,09 m (razão clavícula/braço 3,9–7,5; legado ≤ 0,87, outros Studio ≤ 2,16). A malha do
+braço pesava no `*Shoulder`, o clipe girava um toco de 6 cm e o +50° do overlay girava o braço-T
+em torno do próprio eixo.
 
-| Rig | Clavícula / braço / antebraço (m) | Clavícula ÷ braço |
-|---|---|---|
-| clovis-fora-do-ar | 0,441 / 0,059 / 0,059 | 7,5 |
-| coronel-arrego (R) | 0,410 / 0,060 / 0,071 | 6,8 |
-| boneca-da-cristaleira | 0,283 / 0,065 / 0,064 | 4,2–4,4 |
-| bebezao-de-feira | 0,355 / 0,091 / 0,078 | 3,9–4,1 |
-| outros Studio (máx.) | — | 2,16 (bebe-reborn) |
-| legado (máx.) | — | 0,87 (marina-silva) |
-
-A malha do braço pesa no `*Shoulder`, então o clipe gira um toco de 6 cm e o braço visível
-fica onde o bind deixou. O +50° do overlay gira esse braço-T em torno do próprio eixo.
-
-Correção (`BRAÇO NO OMBRO`, glbchars.js): no build, todo lado com clavícula/braço > 3 entra
-em `ctrl.bracoOmbro`. Durante o porte de 1 mão, a clavícula mira o vetor ombro→mão para um
-alvo no espaço do modelo (lado da arma `0,35/−0,6/0,7`, outro lado `0,35/−0,9/0,15`). O
-`*Arm` desfaz o mesmo giro em mundo, então a mão mantém a orientação da arma. Os alvos saíram
-de um A/B de três variantes (`private-assets/porte-1h-fora-do-ar-20261110/`). `?bracoombro=0`
-desliga. O conserto de verdade é reposicionar os joints no Studio; isso fica com o rig.
-
-Medido nos 93 corpos com GLB, pistola, jogo e vitrine: 89 com braços bit a bit iguais e só
-os 4 mudam. A elevação do braço visível (ombro→mão) cai de 85–92° para 47–49°.
+O client chegou a compensar com uma mira da clavícula no porte de 1 mão (89 dos 93 corpos com
+braços bit a bit iguais; elevação ombro→mão 85–92° → 47–49°), com `IK_L_SKIP` e arma inicial
+de uma mão. O conserto de verdade veio no rig: os packs 0.2.2 desses quatro têm o ombro na axila
+e o cotovelo no meio (razão 0,7–2,1), e a compensação saiu do `glbchars.js`. Com o rig novo, a
+palma L no guarda-mão (idle de jogo) mede 5,3 cm no Clóvis (shotgun) e 3,1 cm no Bebezão (lmg),
+que voltaram às armas originais e ao IK. O Coronel mede 10,3 cm com a md97 e segue com pistola e
+em `IK_L_SKIP`.
 
 Bebê Reborn: a palma do `idle1h` dela nasce na altura do pescoço, e a faixa vizinha do perfil
 do tronco pegava a cabeça de boneca (raio 0,37 m contra 0,09–0,13 do tronco). O empurrão
-`TP_CLEAR` era de 0,152 e tirava a pistola da palma. Com `TORSO_SEM_CABECA` (pescoço/cabeça
-fora do perfil, só nela) o empurrão vai a 0. O Saci também mudaria (0,094 → 0 com a mp5), mas
-legado não muda; os outros 92 corpos ficam com empurrão idêntico, com a arma própria e com
-pistola.
+`TP_CLEAR` era de 0,152 e tirava a pistola da palma. Com `TORSO_SEM_CABECA` (pescoço/cabeça fora
+do perfil, só nela) o empurrão vai a 0. O Saci também mudaria (0,094 → 0 com a mp5), mas legado
+não muda; os outros 92 corpos ficam com empurrão idêntico.
 
 Gate: `npm run eval:porte-braco:browser` (`tools/eval/porte-braco-browser.mjs`, precisa de
-`STUDIO_PACK_ROOT`; sem ele sai 78, NÃO MEDIDO). PB1 `BRAÇO-T` exige que a mão saia do ombro
-para baixo ou para a frente (piso 0,075 da cadeia; os T mediam −0,02…0,05 e o pior corpo são,
-esbirro, mede 0,10). PB2 `FOLGA` limita o empurrão a 0,12. PB3 `ALCANCE` fixa os 7 lados que
-recebem a correção. Mutantes `bracoombro` (reprova os 4 no PB1) e `torsocabeca` (reprova o Bebê
-Reborn no PB2).
+`STUDIO_PACK_ROOT`; sem ele sai 78, NÃO MEDIDO). PB1 `BRAÇO-T` exige que a mão da pistola saia
+do ombro para baixo ou para a frente (piso 0,075 da cadeia; os T mediam −0,02…0,05, o pior corpo
+são, esbirro, 0,10). PB2 `FOLGA` limita o empurrão a 0,12. PB3 `JUNTA` reprova rig com
+clavícula/braço > 3 (maior hoje: 2,16). Mutantes `junta-no-punho` (PB3) e `torsocabeca` (PB2).
+Imagens antes/depois: `private-assets/porte-1h-fora-do-ar-20261110/`.
 
 ## Fora de escopo, declarado
 
