@@ -12,7 +12,11 @@ import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
 import { clientUuid, getAnonId } from './client-id.js';
 import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
-import {carregarPasse,trocarContaPasse,personagemTravado,nivelDoPersonagem,PASSE_EVENTO} from './passe.js';
+import {carregarPasse,trocarContaPasse,personagemTravado as travadoNoPasse,nivelDoPersonagem,PASSE_EVENTO} from './passe.js';
+import { passeDebugAtivo } from './passe-debug.js';
+/* QA local (passe-debug.js): só loopback + ?debug=1&passeDev=1 joga com o elenco do passe sem resgate. */
+const passeDev = passeDebugAtivo();
+const personagemTravado = (def) => !passeDev && travadoNoPasse(def);
 import {tretaPack} from './data/pack-definitions.js';
 import {retratoFontes} from './data/retratos.js';
 import {characterRelease} from './data/content-releases.js';
@@ -27,6 +31,7 @@ import { preloadMapAmbientLife } from './ambientlife.js';   // fauna do mapa (MA
 import { apiUrl, fetchComRetry, versaoComOrigem } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
 import { MAPS, DEFAULT_MAP, ehMapaJavaporcos, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS, comMapaCarregado, defineSeedHavan } from './maps.js';
 import { PALETA } from './paleta.js';
+import { FACTIONS } from './factions.js';
 import { preloadWeapons, WEAPON_IDS } from './weapons.js';
 import {preloadWeaponSkinCandidate} from './weapon-skins.js';
 import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
@@ -42,7 +47,7 @@ import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
 /* E/B são os dois times de gameplay; as demais chaves são grupos do elenco. */
-const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV', P: 'POLÍTICOS' };
+const FACTION_NAME = { ...Object.fromEntries(FACTIONS.map((f) => [f.id, f.name])), P: 'POLÍTICOS' };
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
@@ -4262,10 +4267,10 @@ function ensureTeamPreviews() {
   }
 }
 function pickTeam(faction) {
-  /* Time sem elenco disponível não abre lista vazia. */
-  if (!CHARACTERS.some(c => podeNoLado(c, faction))) { ui.back(); return; }
-  const lado = faction;
-  currentTeam = lado;
+  const lado = faction === 'E' || faction === 'B' ? faction : null;
+  /* Time ou grupo sem elenco disponível não abre lista vazia. */
+  if (!CHARACTERS.some(c => lado ? podeNoLado(c, lado) : c.team === faction)) { ui.back(); return; }
+  currentTeam = lado || currentTeam;
   currentFaction = currentTeam;
   // estado de seleção persistente nos cards: ao voltar do personagem, a tela diz qual é o SEU lado
   for (const f of ['e', 'b']) {
