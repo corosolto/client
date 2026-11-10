@@ -1,6 +1,6 @@
 {
  "o_que_e": "Placar do FP parado (idle) medido no navegador por tools/eval/vm-enquadramento-idle-check.mjs --assar; o CI confere com eval:vm-enquadramento-placar.",
- "hash": "87abdb3729814dca",
+ "hash": "4aa316f30d1151ec",
  "entradas": [
   "public/js/data/vmconfig.js",
   "public/js/data/vmframe.js",
@@ -36,7 +36,7 @@
   {"aspecto":"16x9","rota":"padrao","arma":"shotgun","pintura":null,"chave":"fab#shotgun","vmFov":57,"medida":{"arma":{"x0":0.592,"x1":1.209,"y0":0.539,"y1":1.443,"area":0.0756,"naTela":0.416},"braco":0.0379,"componentes":3},"estado":"VERDE"},
   {"aspecto":"16x9","rota":"padrao","arma":"deagle","pintura":null,"chave":"fab#deagle","vmFov":55,"medida":{"arma":{"x0":0.505,"x1":0.644,"y0":0.698,"y1":0.98,"area":0.0158,"naTela":1},"braco":0.0122,"componentes":1},"estado":"VERDE"},
   {"aspecto":"16x9","rota":"padrao","arma":"pistol","pintura":null,"chave":"fab#pistol","vmFov":55,"medida":{"arma":{"x0":0.519,"x1":0.622,"y0":0.73,"y1":0.907,"area":0.0083,"naTela":1},"braco":0.0181,"componentes":1},"estado":"VERDE"},
-  {"aspecto":"16x9","rota":"padrao","arma":"knife","pintura":null,"chave":"melee","vmFov":42.95,"medida":{"arma":{"x0":0.582,"x1":0.744,"y0":0.53,"y1":0.813,"area":0.0132,"naTela":1},"braco":0.087,"componentes":2},"estado":"VERDE"},
+  {"aspecto":"16x9","rota":"padrao","arma":"knife","pintura":null,"chave":"melee","vmFov":42.95,"medida":{"arma":{"x0":0.581,"x1":0.745,"y0":0.53,"y1":0.811,"area":0.0133,"naTela":1},"braco":0.0872,"componentes":3},"estado":"VERDE"},
   {"aspecto":"16x9","rota":"padrao","arma":"m92","pintura":null,"chave":"fab#m92","vmFov":57,"medida":{"arma":{"x0":0.399,"x1":0.832,"y0":0.515,"y1":1.4,"area":0.0747,"naTela":0.613},"braco":0.0487,"componentes":2},"estado":"VERDE"},
   {"aspecto":"16x9","rota":"padrao","arma":"akm","pintura":null,"chave":"fab#akm","vmFov":57,"medida":{"arma":{"x0":0.576,"x1":2,"y0":0.559,"y1":2,"area":0.0775,"naTela":0.144},"braco":0.0331,"componentes":3},"estado":"VERDE"},
   {"aspecto":"16x9","rota":"padrao","arma":"g3","pintura":null,"chave":"fab#g3","vmFov":57,"medida":{"arma":{"x0":0.554,"x1":1.184,"y0":0.55,"y1":1.48,"area":0.0641,"naTela":0.425},"braco":0.0435,"componentes":5},"estado":"VERDE"},
@@ -60,7 +60,7 @@
   {"aspecto":"16x9","rota":"pintura","arma":"m4","pintura":"ondas-cariocas","chave":"gold#m4","vmFov":50.13,"medida":{"arma":{"x0":0.588,"x1":1.125,"y0":0.524,"y1":1.335,"area":0.0831,"naTela":0.674},"braco":0.0348,"componentes":3},"estado":"VERDE"},
   {"aspecto":"16x9","rota":"pintura","arma":"scar","pintura":"mosaico-paulista","chave":"gold#scar","vmFov":50.13,"medida":{"arma":{"x0":0.584,"x1":1.1,"y0":0.55,"y1":1.187,"area":0.093,"naTela":0.689},"braco":0.0379,"componentes":2},"estado":"VERDE"},
   {"aspecto":"3x2","rota":"padrao","arma":"awp","pintura":null,"chave":"fab#awp","vmFov":51.17,"medida":{"arma":{"x0":0.605,"x1":2,"y0":0.476,"y1":2,"area":0.0951,"naTela":0.129},"braco":0.0364,"componentes":2},"estado":"VERDE"},
-  {"aspecto":"3x2","rota":"padrao","arma":"ak","pintura":null,"chave":"gold#ak","vmFov":58,"medida":{"arma":{"x0":0.581,"x1":1.067,"y0":0.512,"y1":1.162,"area":0.077,"naTela":0.854},"braco":0.0464,"componentes":1},"estado":"VERDE"},
+  {"aspecto":"3x2","rota":"padrao","arma":"ak","pintura":null,"chave":"gold#ak","vmFov":58,"medida":{"arma":{"x0":0.581,"x1":1.067,"y0":0.512,"y1":1.164,"area":0.077,"naTela":0.854},"braco":0.0464,"componentes":1},"estado":"VERDE"},
   {"aspecto":"3x2","rota":"padrao","arma":"m4","pintura":null,"chave":"fab#m4","vmFov":65.52,"medida":{"arma":{"x0":0.591,"x1":2,"y0":0.552,"y1":2,"area":0.0606,"naTela":0.121},"braco":0.0477,"componentes":4},"estado":"VERDE"},
   {"aspecto":"3x2","rota":"padrao","arma":"mp5","pintura":null,"chave":"fab#mp5","vmFov":65.52,"medida":{"arma":{"x0":0.621,"x1":2,"y0":0.572,"y1":2,"area":0.0669,"naTela":0.177},"braco":0.0429,"componentes":5},"estado":"VERDE"},
   {"aspecto":"3x2","rota":"padrao","arma":"shotgun","pintura":null,"chave":"fab#shotgun","vmFov":65.52,"medida":{"arma":{"x0":0.592,"x1":1.209,"y0":0.532,"y1":1.294,"area":0.0693,"naTela":0.452},"braco":0.0494,"componentes":4},"estado":"VERDE"},
@@ -86,7 +86,7 @@
   {"aspecto":"3x2","rota":"padrao","arma":"g3sg1","pintura":null,"chave":"fab#g3sg1","vmFov":65.52,"medida":{"arma":{"x0":0.555,"x1":1.235,"y0":0.526,"y1":1.478,"area":0.0758,"naTela":0.404},"braco":0.0495,"componentes":5},"estado":"VERDE"},
   {"aspecto":"3x2","rota":"padrao","arma":"sks","pintura":null,"chave":"fab#sks","vmFov":57.86,"medida":{"arma":{"x0":0.699,"x1":1.341,"y0":0.528,"y1":1.038,"area":0.055,"naTela":0.419},"braco":0.043,"componentes":10},"estado":"VERDE"},
   {"aspecto":"3x2","rota":"pintura","arma":"pistol","pintura":"trabalho-13-pistola","chave":"gold#pistol","vmFov":55,"medida":{"arma":{"x0":0.637,"x1":0.723,"y0":0.698,"y1":0.868,"area":0.0101,"naTela":1},"braco":0.0256,"componentes":2},"estado":"VERDE"},
-  {"aspecto":"3x2","rota":"pintura","arma":"ak","pintura":"trabalho-13-ak","chave":"gold#ak","vmFov":58,"medida":{"arma":{"x0":0.581,"x1":1.067,"y0":0.512,"y1":1.162,"area":0.077,"naTela":0.854},"braco":0.0464,"componentes":1},"estado":"VERDE"},
+  {"aspecto":"3x2","rota":"pintura","arma":"ak","pintura":"trabalho-13-ak","chave":"gold#ak","vmFov":58,"medida":{"arma":{"x0":0.581,"x1":1.067,"y0":0.512,"y1":1.164,"area":0.077,"naTela":0.854},"braco":0.0464,"componentes":1},"estado":"VERDE"},
   {"aspecto":"3x2","rota":"pintura","arma":"m4","pintura":"ondas-cariocas","chave":"gold#m4","vmFov":58,"medida":{"arma":{"x0":0.588,"x1":1.125,"y0":0.52,"y1":1.204,"area":0.0802,"naTela":0.771},"braco":0.0472,"componentes":3},"estado":"VERDE"},
   {"aspecto":"3x2","rota":"pintura","arma":"scar","pintura":"mosaico-paulista","chave":"gold#scar","vmFov":58,"medida":{"arma":{"x0":0.585,"x1":1.1,"y0":0.542,"y1":1.078,"area":0.09,"naTela":0.791},"braco":0.0487,"componentes":2},"estado":"VERDE"}
  ]

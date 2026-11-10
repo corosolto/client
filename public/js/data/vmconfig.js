@@ -95,10 +95,7 @@ export const VM_WEAPON = {
   // (coro/pistol-hires.glb) só com pintura ou ?vmgolden=pistol. Ads abaixo: tabela da golden.
   pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay',
     // A câmera do piloto (fov 34°) dava 1,99× a PT-38 aprovada (playtest 06/11). Unidades do
-    // piloto (~97 un/m). O 60° de 06/11 batia a ÁREA (1,05×) mas afastava a pistola: dono
-    // 10/11 (#1298) viu ela minúscula no meio-baixo com os dois braços esticados (braço/arma
-    // 6,2 em 16:9 e 10,9 em 3:2). 55° e a arma no canto de baixo à direita: área 1,4× a X18,
-    // braço/arma 1,1 / 2,5, base a 0,06 / 0,13 da borda (eval:vm-enquadramento-idle).
+    // piloto (~97 un/m). 60° afastava a pistola: docs/viewmodels/pistola-pintada-enquadramento-20261110.md.
     goldFrame: { x: -2, y: -11, z: 0, fov: 55 },
     ads: { auto: true, off: [0, 0.04, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 36.9, estilo: 'foco',
       linha: { off: [0, -7.8, 0], estilo: 'foco' },
