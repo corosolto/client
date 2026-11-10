@@ -8,7 +8,7 @@ const edits={
  'invalid-alias':['return Number.isInteger(id) && id >= 0 && id <= 0xffffffff ? id : null;','return Number.isInteger(id) && id >= 0 && id <= 0xffffffff ? id : 0;'],
  'signed-attacker':['this._netMap.get(aId)','this._netMap.get(aId | 0)'],
  'signed-victim':['this._netMap.get(vId)','this._netMap.get(vId | 0)'],
- 'signed-hit':['vId !== meu','(vId | 0) !== meu'],
+ 'signed-hit':['if (!att || this.espectador || vId !== meu) return;','if (!att || this.espectador || (vId | 0) !== meu) return;'],
  'signed-nade':['this._netMap.get(oId) || (oId === meu ? p : null)','this._netMap.get(oId | 0) || ((oId | 0) === meu ? p : null)'],
  'signed-boom':['const dono = oId == null ? null : (this._netMap.get(oId) || null);','const dono = oId == null ? null : (this._netMap.get(oId | 0) || null);'],
 };
