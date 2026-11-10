@@ -208,7 +208,7 @@ def cloudflare_failures(build: str, deploy: str, smoke: str) -> list[str]:
         errors.append('CF4 comentário precisa executar o script do checkout confiável')
     if not re.search(r'- name: Aguarda URL sticky do Cloudflare\n\s+if: github\.event_name == \'pull_request\'', smoke):
         errors.append('CF5 dispatch manual não pode esperar sticky de PR')
-    if '${BASE_URL:-}' not in smoke:
+    if '${BASE_URL:-}' not in smoke or not re.search(r"- name: Confirma host do smoke manual\n\s+if: github\.event_name == 'workflow_dispatch'", smoke):
         errors.append('CF6 dispatch manual precisa falhar imediatamente se BASE_URL estiver vazio')
     return errors
 
@@ -277,6 +277,7 @@ def selftest(source: str) -> list[str]:
         'cf-artefato-na-raiz': (cf_build, cf_deploy.replace('path: dist', 'path: .', 1), smoke),
         'cf-dispatch-espera-sticky': (cf_build, cf_deploy, smoke.replace("- name: Aguarda URL sticky do Cloudflare\n        if: github.event_name == 'pull_request'", '- name: Aguarda URL sticky do Cloudflare')),
         'cf-dispatch-sem-host': (cf_build, cf_deploy, smoke.replace('${BASE_URL:-}', '${BASE_URL}')),
+        'cf-guarda-no-evento-errado': (cf_build, cf_deploy, smoke.replace("- name: Confirma host do smoke manual\n        if: github.event_name == 'workflow_dispatch'", "- name: Confirma host do smoke manual\n        if: github.event_name == 'pull_request'")),
     }
     missed += [name for name, (b, d, s) in cf_mutants.items() if not cloudflare_failures(b, d, s)]
     return missed
