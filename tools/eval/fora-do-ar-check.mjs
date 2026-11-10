@@ -12,7 +12,7 @@ const read = (p) => readFileSync(resolve(root, p), 'utf8');
 const arg = (key) => process.argv.find((v) => v.startsWith(`--${key}=`))?.split('=')[1];
 const slice = arg('slice');
 const mutant = arg('mutante');
-const targets = { 'remove-faccao': 'FA1', 'lista-fixa': 'FA2', 'sem-avatar': 'FA4' };
+const targets = { 'remove-faccao': 'FA1', 'lista-fixa': 'FA2', 'sem-avatar': 'FA4', 'perde-selecao': 'FA5' };
 assert(!mutant || targets[mutant], 'mutante desconhecido');
 const data = (src) => `data:text/javascript,${encodeURIComponent(src)}`;
 let source = read('public/js/factions.js');
@@ -58,15 +58,52 @@ check('FA3', slice ? roster.some((c) => c.id === slice) : roster.length === 30,
   `elenco Fora do Ar tem ${roster.length}; esperado ${slice ? `piloto ${slice}` : '30 personagens'}`);
 const releases = await import(new URL('../../public/js/data/content-releases.js', import.meta.url));
 const selected = slice ? roster.filter((c) => c.id === slice) : roster;
+try {
+  let main = read('public/js/main.js');
+  if (mutant === 'perde-selecao') {
+    const changed = main.replace(/const rememberedDef = [^\n]+;/,
+      'const rememberedDef = CHARACTERS.find((c) => c.id === rememberedChar && !personagemTravado(c));');
+    assert.notEqual(changed, main, 'MUTAÇÃO NÃO APLICOU: perde-selecao');
+    main = changed;
+  }
+  const start = main.indexOf('const routeChar =');
+  const end = main.indexOf('function returnPreviewToSelection');
+  const listener = main.match(/document\.addEventListener\(PASSE_EVENTO, \(\) => \{[\s\S]*?\n\}\);/)?.[0];
+  assert(start >= 0 && end > start && listener, 'ciclo de preferência não encontrado');
+  const candidate = roster.find((c) => c.passe);
+  if (candidate) for (const origin of ['storage', 'url']) {
+    const writes = [];
+    let onPass;
+    const context = vm.createContext({
+      CHARACTERS: chars, HUB_ENABLED: true, URLSearchParams,
+      location: { search: origin === 'url' ? `?personagem=${candidate.id}` : '' },
+      localStorage: {
+        getItem: (key) => key === 'csbr-home-character' && origin === 'storage' ? candidate.id : null,
+        setItem: (key, value) => writes.push([key, value]),
+      },
+      personagemTravado: (def) => Boolean(def?.passe),
+      podeNoLado: () => true, ladosDe: () => ['E', 'B'],
+      crypto: { getRandomValues: (array) => array.fill(0) },
+      PASSE_EVENTO: 'cs-passe-state', hubRosterRender: null,
+      document: { addEventListener: (_event, handler) => { onPass = handler; }, querySelectorAll: () => [] },
+    });
+    vm.runInContext(`${main.slice(start, end)}\n${listener}`, context);
+    check('FA5', vm.runInContext('currentChar', context) === candidate.id && writes.length === 0,
+      `${origin}: preferência de passe foi descartada antes do inventário responder`);
+    onPass();
+    check('FA5', vm.runInContext('currentChar', context) === candidate.id,
+      `${origin}: inventário ainda pendente apagou o personagem lembrado`);
+  }
+} catch (e) { check('FA5', false, `preferência não executável: ${e.message}`); }
 let missingApplied = false;
 for (const character of selected) {
   const pin = releases.characterRelease(character.id);
   check('FA3', character.passe?.season === 'sessao-da-treta-s1' && Number.isInteger(character.passe.level)
     && character.passe.level >= 1 && character.passe.level <= 15,
   `${character.id}: passe sem temporada/nível contratados`);
-  check('FA3', pin?.version === '0.2.0' && /^[a-f0-9]{64}$/.test(pin.manifestSha256)
-    && pin.manifestUrl === `/packs/character/${character.id}/0.2.0/manifest.json`,
-  `${character.id}: release não fixada ao pack 0.2.0`);
+  check('FA3', pin?.id === character.id && /^[a-f0-9]{64}$/.test(pin.manifestSha256)
+    && pin.manifestUrl === `/packs/character/${character.id}/${pin.version}/manifest.json`,
+  `${character.id}: release não fixada ao próprio pack por versão e SHA`);
   for (const relative of [`img/chars/avatars/${character.id}.webp`, `img/chars/${character.id}.webp`,
     `img/chars-hero/${character.id}.webp`, `img/resultado/${character.id}-vitoria.webp`,
     `img/resultado/${character.id}-derrota.webp`, `video/chars/${character.id}.webm`]) {

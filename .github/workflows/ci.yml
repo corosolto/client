@@ -124,6 +124,8 @@ jobs:
         run: npm run eval:studiochar
       - name: Fora do Ar — registro, packs, arte, passe e catálogo (com mutantes)
         run: npm run eval:fora-do-ar
+      - name: Palma anatômica, espaço da arma e orientação de contato (com mutantes)
+        run: npm run eval:tphandownership
       - name: Pixel do X insere o script do uwt.js (#1231, com mutante)
         run: npm run eval:xpixel
       - name: Acúmulo de armas no chão tem teto
