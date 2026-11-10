@@ -9,12 +9,14 @@
         vmfabrica, vmbytes, goldenver, authoredvm e da própria régua, mais PISTOLS,
         CFG.len e a pintura de cada célula) — mexeu no goldFrame, no frame de uma
         arma, num GLB, no tamanho do molde ou na pintura medida sem re-medir = vermelho;
-     Q2 cobertura: 16:9 e 3:2 × (26 armas sem pintura + pistol/ak/m4/scar pintadas);
+     Q2 cobertura: 16:9 e 3:2 × (26 armas sem pintura + pistol/ak/m4/scar pintadas), cada
+        célula exatamente uma vez e nenhuma fora da lista (duplicada escondia medida ruim);
      Q3 toda célula, RE-JULGADA com a régua atual, é VERDE (não confia no estado gravado).
    Mutantes (todos reprovam): --mutante=goldframe-antigo (goldFrame da PT-38 com o
    fov de outra calibragem, em memória: Q1), --mutante=len-do-molde (CFG.len da AK +10%: Q1),
    --mutante=outra-pintura (outra pistola pintada na célula: Q1),
-   --mutante=sem-pistola-pintada (tira a célula: Q2),
+   --mutante=sem-pistola-pintada (tira a célula: Q2), --mutante=celula-duplicada (2ª
+   célula pintura/pistol/16x9 com a medida do quadro do dono depois da boa: Q2),
    --mutante=pistola-longe (grava na célula a medida do quadro do dono: Q3).
    Conserto quando Q1 reprova: `npm run eval:vm-enquadramento-idle -- --assar` (local).
    ============================================================================ */
@@ -24,7 +26,7 @@ import { pathToFileURL } from 'node:url';
 import { ASPECTOS, PINTADAS, PLACAR_ARQ, REFERENCIA_DA_PINTURA, comparar, derivadas, hashDasEntradas, julgar } from './lib/vm-enquadramento.mjs';
 const ROOT = process.cwd();
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').slice('--mutante='.length);
-const MUTANTES = ['goldframe-antigo', 'len-do-molde', 'outra-pintura', 'sem-pistola-pintada', 'pistola-longe'];
+const MUTANTES = ['goldframe-antigo', 'len-do-molde', 'outra-pintura', 'sem-pistola-pintada', 'celula-duplicada', 'pistola-longe'];
 if (MUT && !MUTANTES.includes(MUT)) { console.error(`mutante desconhecido: ${MUT} (há: ${MUTANTES.join(', ')})`); process.exit(2); }
 const { WEAPON_IDS } = await import(pathToFileURL(path.join(ROOT, 'public/js/weapons.js')).href);
 
@@ -48,11 +50,13 @@ if (MUT === 'outra-pintura') {
   valores.pinturas.pistol = `${valores.pinturas.pistol}-outra`;
 }
 if (MUT === 'sem-pistola-pintada') placar.celulas = placar.celulas.filter((c) => !(c.rota === 'pintura' && c.arma === 'pistol'));
-if (MUT === 'pistola-longe') {
-  // Medida do quadro do dono (staging 10/11, gold#pistol 16:9, goldFrame 60°).
+// Medida do quadro do dono (staging 10/11, gold#pistol 16:9, goldFrame 60°).
+const QUADRO_DO_DONO = { arma: { x0: 0.56, x1: 0.63, y0: 0.6, y1: 0.776, area: 0.0085, naTela: 1 }, braco: 0.0524 };
+if (MUT === 'pistola-longe' || MUT === 'celula-duplicada') {
   const c = placar.celulas.find((x) => x.rota === 'pintura' && x.arma === 'pistol' && x.aspecto === '16x9');
   if (!c) throw new Error('mutante não aplicou: célula pintura/pistol/16x9 ausente');
-  c.medida = { arma: { x0: 0.56, x1: 0.63, y0: 0.6, y1: 0.776, area: 0.0085, naTela: 1 }, braco: 0.0524 };
+  if (MUT === 'pistola-longe') c.medida = QUADRO_DO_DONO;
+  else placar.celulas.push({ ...c, medida: QUADRO_DO_DONO });
 }
 
 const falhas = [];
@@ -63,9 +67,16 @@ for (const aspecto of Object.keys(ASPECTOS)) {
   for (const arma of WEAPON_IDS) esperadas.push({ aspecto, rota: 'padrao', arma });
   for (const arma of PINTADAS) esperadas.push({ aspecto, rota: 'pintura', arma });
 }
-const achar = (e) => placar.celulas.find((c) => c.aspecto === e.aspecto && c.rota === e.rota && c.arma === e.arma);
+const chave = (c) => `${c.aspecto}/${c.rota}/${c.arma}`;
+const porChave = Map.groupBy(placar.celulas, chave);
+const achar = (e) => porChave.get(chave(e))?.[0];
 const faltam = esperadas.filter((e) => !achar(e));
-if (faltam.length) falhas.push(`Q2 ${faltam.length} célula(s) sem medida: ${faltam.map((e) => `${e.aspecto}/${e.rota}/${e.arma}`).join(', ')}`);
+if (faltam.length) falhas.push(`Q2 ${faltam.length} célula(s) sem medida: ${faltam.map(chave).join(', ')}`);
+const duplicadas = [...porChave].filter(([, cs]) => cs.length > 1).map(([k, cs]) => `${k} ×${cs.length}`);
+if (duplicadas.length) falhas.push(`Q2 célula(s) repetida(s): ${duplicadas.join(', ')}`);
+const esperadasChaves = new Set(esperadas.map(chave));
+const sobras = [...porChave.keys()].filter((k) => !esperadasChaves.has(k));
+if (sobras.length) falhas.push(`Q2 célula(s) fora da lista: ${sobras.join(', ')}`);
 for (const e of esperadas) {
   const c = achar(e);
   if (!c) continue;
