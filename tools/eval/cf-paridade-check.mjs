@@ -13,9 +13,9 @@
    x-content-type-options, referrer-policy, permissions-policy, content-type, location).
    Headers de plataforma (x-vercel-*, cf-ray, server, date, etag, age) ficam de fora.
 
-   Sai 1 quando algum status difere ou um header comparado difere, salvo nas rotas
-   marcadas `tolera` (proxy sem segredo no spike, por exemplo): nelas a diferença é
-   impressa e não derruba.
+   Sai 1 quando algum status ou um header comparado difere. A avaliação das divergências
+   conhecidas fica em `cf-paridade-allowlist.json`, aplicada pelo workflow de staging.
+
 
    NORMALIZAÇÕES (diferenças de plataforma, não do site; cada uma documentada no runbook):
    - `s-maxage` e `stale-while-revalidate`: a Vercel consome e tira da resposta; o Workers
@@ -36,31 +36,16 @@ if (!ALVO) { console.error('uso: --alvo https://<worker>.workers.dev'); process.
 const COMPARADOS = ['content-security-policy', 'strict-transport-security', 'cache-control', 'x-content-type-options',
   'referrer-policy', 'permissions-policy', 'content-type', 'location', 'x-robots-tag'];
 
-/* `tolera`: diferença esperada no spike (sem segredo do proxy, sem Supabase); vai na tabela mas não reprova. */
-export const ROTAS = [
-  { rota: '/' },
-  { rota: '/en' },
-  { rota: '/api/geo-lang', metodo: 'GET', comparaCorpo: true },
-  { rota: '/api/og/pagina.png?rota=/en&titulo=x', metodo: 'GET' },
-  { rota: '/u/00000000-0000-4000-8000-00000000c0de', tolera: 'proxy social sem API_PROXY_SECRET no spike' },
-  { rota: '/mapa' },
-  { rota: '/sala/ABC' },
-  { rota: '/sitemap.xml' },
-  { rota: '/api/health', tolera: 'proxy sem API_PROXY_SECRET no spike' },
-  { rota: '/discord' },
-  { rota: '/jogar' },
-  { rota: '/?janela=configuracoes' },
-  { rota: '/?secao=comunidade&social=feed' },
-  { rota: '/docs/en/status' },
-  { rota: '/audio/manifest.json' },
-  { rota: '/img/reticle.png' },
-  { rota: '/models/nao-existe.glb' },
-  { rota: '/api/badge/00000000-0000-4000-8000-00000000c0de.png', metodo: 'GET', tolera: 'Supabase sem credencial no spike' },
-  { rota: '/api/profile-card/00000000-0000-4000-8000-00000000c0de.png', metodo: 'GET', tolera: 'proxy social sem API_PROXY_SECRET no spike' },
-];
+import { ROTAS as ROTAS_ORIGINAIS } from './cf-paridade-routes.mjs';
 
-async function pedir(base, regra) {
-  const { rota, metodo = 'HEAD', comparaCorpo = false } = regra;
+/* A API de idioma precisa comparar o JSON, além do status e headers. */
+export const ROTAS = ROTAS_ORIGINAIS.map((regra) => regra.rota === '/api/geo-lang'
+  ? { ...regra, metodo: 'GET', comparaCorpo: true }
+  : regra);
+
+/* Divergências conhecidas são avaliadas por tools/eval/cf-paridade-allowlist-check.mjs.
+   Esta régua continua estrita: o workflow captura o JSON mesmo quando ela sai 1. */
+async function pedir(base, { rota, metodo = 'HEAD', comparaCorpo = false }) {
   const inicio = performance.now();
   try {
     const r = await fetch(base + rota, { method: metodo, redirect: 'manual', headers: { 'user-agent': 'cf-paridade-check' }, signal: AbortSignal.timeout(20000) });
@@ -100,8 +85,8 @@ for (const r of ROTAS) {
     diferentes.push(`body: prod=${JSON.stringify(prod.corpo ?? null)} alvo=${JSON.stringify(alvo.corpo ?? null)}`);
   }
   const igual = prod.status === alvo.status && diferentes.length === 0;
-  if (!igual && !r.tolera) reprova++;
-  linhas.push({ rota: r.rota, prod: prod.status, alvo: alvo.status, ms: alvo.ms, msProd: prod.ms, diferentes, tolera: r.tolera || '', ok: igual });
+  if (!igual) reprova++;
+  linhas.push({ rota: r.rota, prod: prod.status, alvo: alvo.status, ms: alvo.ms, msProd: prod.ms, diferentes, ok: igual });
 }
 
 if (process.argv.includes('--json')) {
@@ -112,9 +97,9 @@ if (process.argv.includes('--json')) {
   console.log(`| ${'rota'.padEnd(largura)} | prod | spike | ms spike | headers que diferem |`);
   console.log(`|${'-'.repeat(largura + 2)}|------|-------|----------|---------------------|`);
   for (const l of linhas) {
-    const marca = l.ok ? '' : l.tolera ? ` (tolerado: ${l.tolera})` : ' ✗';
+    const marca = l.ok ? '' : ' ✗';
     console.log(`| ${l.rota.padEnd(largura)} | ${String(l.prod).padEnd(4)} | ${String(l.alvo).padEnd(5)} | ${String(l.ms).padEnd(8)} | ${l.diferentes.join('; ') || (l.prod === l.alvo ? 'nenhum' : '')}${marca} |`);
   }
-  console.log(`\n${reprova ? '✗' : '✓'} cf-paridade: ${linhas.length} rotas, ${linhas.filter((l) => l.ok).length} idênticas, ${reprova} divergência(s) não tolerada(s)`);
+  console.log(`\n${reprova ? '✗' : '✓'} cf-paridade: ${linhas.length} rotas, ${linhas.filter((l) => l.ok).length} idênticas, ${reprova} divergência(s)`);
 }
 process.exit(reprova ? 1 : 0);
