@@ -189,6 +189,8 @@ function avaliaIf(cond, c) {
   const x = e
     .replace(/steps\.([\w-]+)\.outcome\s*(==|!=)\s*'(success|failure|cancelled|skipped)'/g,
       (_m, id, op, v) => String(op === '==' ? c.steps[id]?.outcome === v : c.steps[id]?.outcome !== v))
+    .replace(/steps\.([\w-]+)\.outputs\.([\w-]+)\s*(==|!=)\s*'([^']*)'/g,
+      (_m, id, key, op, v) => String(op === '==' ? (c.steps[id]?.outputs?.[key] ?? '') === v : (c.steps[id]?.outputs?.[key] ?? '') !== v))
     .replace(/github\.event_name\s*(==|!=)\s*'(push|pull_request|merge_group)'/g,
       (_m, op, v) => String(op === '==' ? c.event === v : c.event !== v))
     .replace(/startsWith\(github\.event\.head_commit\.message,\s*'([^']*)'\)/g,
