@@ -211,6 +211,8 @@ const CASOS = [
   ['playwright.config.mjs', 'browser', 'eval:vm-troca-sem-legado'],
   ['public/js/transporte.js', 'network', 'eval:netcode'],
   ['tools/eval/lib/vm-enquadramento.mjs', 'vm', 'eval:vm-enquadramento-placar'],
+  ['tools/fabrica/fabrica-candidates.json', 'vm', 'eval:vm-enquadramento-placar'],
+  ['public/models/viewmodels/coro/p90-hires.glb', 'vm', 'eval:vm-enquadramento-placar'],
 ];
 for (const [arquivo, suite, passo] of CASOS) {
   test(`diff de ${suite} seleciona core + ${suite}`, () => {
