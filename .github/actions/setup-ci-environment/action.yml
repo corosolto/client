@@ -14,7 +14,7 @@ runs:
       uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
       with:
         name: pr-fast-dist-${{ github.run_id }}
-        path: dist
+        path: .
 
     - name: Validate shared environment
       shell: bash
@@ -22,3 +22,4 @@ runs:
         set -euo pipefail
         test -x node_modules/.bin/astro || { echo '::error::shared node_modules is incomplete'; exit 1; }
         test -f dist/client/index.html || { echo '::error::shared dist is incomplete'; exit 1; }
+        test -d .vercel/output/functions || { echo '::error::shared Vercel functions are incomplete'; exit 1; }

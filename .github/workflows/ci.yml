@@ -57,7 +57,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: pr-fast-dist-${{ github.run_id }}
-          path: dist
+          path: |
+            dist
+            .vercel/output
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
