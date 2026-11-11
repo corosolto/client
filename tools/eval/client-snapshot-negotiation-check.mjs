@@ -6,7 +6,7 @@ import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 const V8 = 'coro-snapshot-v8';
-const IDS = ['N1','N2','N3','N4','N5','N6','N7','N8','N9','N10','N11','N12','N13','N14','N15','N16','N17','N18','N19','N20','N21'];
+const IDS = ['N1','N2','N3','N4','N5','N6','N7','N8','N9','N10','N11','N12','N13','N14','N15','N16','N17','N18','N19','N20','N21','N22'];
 const sha = b => createHash('sha256').update(b).digest('hex');
 const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
 const flush = () => new Promise(resolve => setImmediate(resolve));
@@ -28,6 +28,10 @@ const specs = {
     ["assenta(reject, new Error('closed'));\n            if (accepted) this.onClose?.();", "assenta(reject, new Error('closed'));\n            this.onClose?.();"]] },
   'callback-before-close': { failed:['N21'], file:'net.js', edits:[
     ['tp.fechar(codigo, motivo);\n        if (accepted) this.onClose?.();', 'if (accepted) this.onClose?.();\n        tp.fechar(codigo, motivo);']] },
+  'failover-notify': { failed:['N11'], file:'net.js', edits:[
+    ['this.tp = null; this.connected = false;\n        try { console.info', 'this.tp = null; this.connected = false; this.onClose?.();\n        try { console.info']] },
+  'accepted-close-notify': { failed:['N22'], file:'net.js', edits:[
+    ["assenta(reject, new Error('closed'));\n            if (accepted) this.onClose?.();", "assenta(reject, new Error('closed'));"]] },
 };
 class Infra extends Error {}
 function replaceOne(s,a,b) { if (a === b || s.split(a).length !== 2) throw new Infra('anchor_count:' + a.slice(0,90)); return s.replace(a,b); }
@@ -39,7 +43,7 @@ for (const a of process.argv.slice(2)) {
   else { console.error('CLI inválida'); process.exit(2); }
 }
 if (Object.keys(process.env).some(k => k.startsWith('COROSOLTO_NEGOTIATION_'))) { console.error('Ambiente interno não aceito'); process.exit(2); }
-const sourceNames = ['net.js','transporte.js','netcodec.js'];
+const sourceNames = ['net.js','nos-rede.js','transporte.js','netcodec.js'];
 let sourceBytes, sourcePins;
 const processDeadline = setTimeout(() => { console.error('INFRA: harness deadline60000ms; no semantic detection credit'); process.exit(3); }, 60000);
 const report = { schema:'client-snapshot-negotiation/1', scope:'real modules, browser boundaries faked; no backend/QUIC/browser/codec approval', runs:[] };
@@ -135,7 +139,7 @@ async function run(mutant) {
     }
     await add('N9',{},x=>regression(x,false,7));
     await add('N10',{},x=>regression(x,false,undefined));
-    await add('N11',{wtFailure:true},async x=>{const n=x.make(true);const r=await x.outcome(n.connect());return r.ok&&n.tp.ws===x.sockets[0]&&equal(x.sockets[0].protocols,[V8])&&x.sockets[0].protocol===V8&&new URL(x.quics[0].url).searchParams.get('sp')===V8&&x.quics[0].closeCalls.length>0&&x.timers.size===0;});
+    await add('N11',{wtFailure:true},async x=>{const n=x.make(true);const r=await x.outcome(n.connect());return r.ok&&n.tp.ws===x.sockets[0]&&equal(x.sockets[0].protocols,[V8])&&x.sockets[0].protocol===V8&&new URL(x.quics[0].url).searchParams.get('sp')===V8&&x.quics[0].closeCalls.length>0&&x.getCloses()===0&&x.timers.size===0;});
     await add('N12',{wtVersion:7},async x=>{const n=x.make(true);const r=await x.outcome(n.connect());if(!r.ok||x.sockets.length!==1)return false;const old=n.meta;x.resetCloses();x.quics[0].emit(metadata('welcome',8,99));x.quics[0].emit(metadata('partida',8,99));x.quics[0].resolveClosed();await flush();return n.meta===old&&n.connected&&n.tp.ws===x.sockets[0]&&x.sockets[0].closeCalls.length===0&&x.getCloses()===0;});
     await add('N13',{},async x=>{const n=x.make();let closes=0;const tp={abrir(h){h.aberto();h.mensagem(JSON.stringify(metadata('welcome',8)),false,0);},fechar(){closes++;}};const r=await x.outcome(n._conectar(8000,()=>tp));x.evidence.result=r;return r.ok&&n.meta.protocolVersion===8&&closes===0&&x.timers.size===0;});
     await add('N14',{},async x=>{const n=x.make();const r=await x.outcome(n._conectar(8000,()=>{throw new Error('factory_boundary');}));return !r.ok&&r.error==='factory_boundary'&&x.timers.size===0;});
@@ -154,6 +158,11 @@ async function run(mutant) {
         await flush();x.evidence.caught=caught;x.evidence.calls=calls;
         return caught==='controlled_onclose'&&calls===1&&x.sockets[0].closeCalls.length===1&&!n.connected&&n.meta===old&&x.timers.size===0;
       } finally {n.onClose=previous;}
+    });
+    await add('N22',{},async x=>{
+      const {n,r}=await connect(x);if(!r.ok)return false;
+      x.resetCloses();x.sockets[0].close(1012,'fixture_close');await flush();
+      return x.getCloses()===1&&!n.connected&&x.timers.size===0;
     });
     if(!equal(rows.map(r=>r.id),IDS)||rows.some(r=>typeof r.ok!=='boolean'))throw new Infra('row_protocol');
     const current=sourceNames.map(f=>sha(fs.readFileSync(path.join(root,'public/js',f))));
