@@ -144,7 +144,8 @@ for (const [mapId, wet] of [
 }
 
 /* CLEANUP REAL do 139: Game novo, SEM _tintFx fake — material e CanvasTexture de verdade,
-   contados por addEventListener('dispose'). O puff é compartilhado e não pode cair. */
+   contados por addEventListener('dispose'). O puff é compartilhado entre sistemas DESTE Game,
+   mas continua sendo um recurso dessa instância e deve ser descartado uma vez no teardown. */
 {
   const life = bootGame('corrego', { textures: initTextures(), seed: 12345, settings: { quality: 'high' } });
   const spawn = (surface) => {
@@ -165,14 +166,16 @@ for (const [mapId, wet] of [
       res.addEventListener('dispose', () => disposed.set(res, disposed.get(res) + 1));
     }
   }
-  const shared = [];
+  const puffDisposed = new Map();
   for (const res of [life.puffFx?.points?.material, life.puffFx?.uniforms?.uTex?.value]) {
-    res?.addEventListener?.('dispose', () => shared.push(res));
+    puffDisposed.set(res, 0);
+    res?.addEventListener?.('dispose', () => puffDisposed.set(res, puffDisposed.get(res) + 1));
   }
   life.dispose();
   for (const count of disposed.values()) assert.equal(count, 1,
     'dispose real: cada material próprio descartado exatamente 1 vez');
-  assert(shared.length === 0, 'dispose descartou material/textura compartilhados do puff');
+  for (const count of puffDisposed.values()) assert.equal(count, 1,
+    'dispose real: material/textura do puff deste Game descartados exatamente 1 vez');
   life.dispose();
   for (const count of disposed.values()) assert.equal(count, 1,
     'dispose repetido descartou recurso duas vezes');
