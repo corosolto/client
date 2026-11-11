@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.141`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.144`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -26,6 +26,7 @@
 ## Unreleased — 2026-11-04
 
 ### Added
+- Pacotes do Studio em produção pelo R2: em produção e preview o resolvedor busca os pacotes fixados em `https://assets.corosolto.com.br/packs/<kind>/<id>/<versão>/` (`public/js/data/pack-origin.js`; host local segue em `/packs/` com `STUDIO_PACK_ROOT`, `?packorigin=cdn|local` força), com a mesma verificação de SHA-256; a CSP lista a origem no `connect-src`. `npm run publish:packs` (`scripts/publish-studio-packs.mjs`) sobe só pacote fixado e íntegro, com `Content-Type` pela extensão, `Cache-Control` imutável, `If-None-Match: *`, pula o que já está igual, recusa sobrescrever conteúdo diferente, tem `--dry-run` e confere cada objeto pela origem pública (SHA-256, bytes, MIME, cache, CORS). Réguas: `eval:studiochar` R19 (4 mutantes novos: origem errada, origem ignorada, sempre CDN, CSP sem origem) e `eval:packpublish` (13 mutantes), as duas no pr-fast.
 - Passe grátis "Sessão da Treta" (temporada 1, facção Fora do Ar): aba PASSE no lobby (só aparece com `GET /api/passe` respondendo), tela com os 15 níveis e as 5 recompensas de cada um, barra de XP, missões diárias e semanais, convites, bônus de XP ativo e RESGATAR; anúncio uma vez por versão do passe (visitante vai para o convite de login, que ganhou `abrirLoginPrompt`). Personagem com `passe:{season, level}` em `characters.js` aparece com cadeado e "Nível N" e só é escolhido quando `unlocked.characters` do servidor o lista; a partida offline e o pedido de personagem no multiplayer passam pela mesma trava. O client só manda `{action:'claim', level}` e, com consentimento de medição (`window.__csPrivacy`), o funil do painel `{action:'analytics', event:'modal_view'|'open'}`. `/api/passe` entra no proxy em rollout (404 do backend vira 503). Réguas: `eval:passe` (pr-fast + `check:fast`, 20 mutantes; os caminhos de main.js rodam num vm) e `tools/eval/passe-browser.mjs` (lobby real com o mock `tools/eval/passe-mock.mjs`; `PASSE_MOCK=conta|visitante` no `serve.mjs` para dev local).
 - `/app`: a light landing for visitors who open the game inside an app's browser (TikTok, Instagram, Facebook, LinkedIn, X). On 08/11 the TikTok paid campaign sent 517 visits in one hour; 72% loaded the 8 MB game inside the WebView and 85% left in under a minute without entering. Both edges (`middleware.js` on Vercel, `src/middleware.ts` on Workers) now answer the home with a 302 to `/app` when `server-traffic.mjs` classifies the user agent as `app/*` (`desvioParaApp`): only the home, query kept intact, `?jogo=1` and `?sala=` pass through, the redirected request is not counted (the landing is). The page weighs about 1.4 MB (6 s vertical gameplay clip + poster from `launch-media/2026-10-18-tricolor-morumbi`), is static and `noindex`, puts both calls above the fold and rewrites every link to the home with the visitor's `utm_*` plus `jogo=1`; ABRIR NO NAVEGADOR tries `intent://` on Android and `x-safari-https://` on iOS, with the in-app menu tip after 1.8 s if nothing opened. Origem shows it as landing `/app` under the app agents; Campanhas keeps attribution by source. `server-traffic-check` gains the redirect matrix (home, query, `jogo=1`, `sala`, deep route, open Chrome, preview bot, HEAD, foreign host) and the Vercel middleware 302 case; mutants "sem UA" and "loop jogo=1" die.
 - itch.io listing package: `tools/portal/itch/index.html` is a one-file HTML upload that embeds `https://www.corosolto.com.br/?lang=en&utm_source=itch&utm_medium=portal` in a full-viewport iframe (`allow="pointer-lock; fullscreen; autoplay; gamepad"`). itch serves uploads from `html-classic.itch.zone` inside `*.itch.io`, and `frame-ancestors` checks every ancestor, so `https://*.itch.zone` joins the CSP in `vercel.json` (only `*.itch.io` was listed; the wrapper rendered a black frame). `eval:portalembed` (pr-fast + `check:fast`) ties each `tools/portal/*` wrapper to the CSP list, the site origin, the UTM and the pointer-lock permission, with 4 mutants. Publishing on itch stays with the owner (`tools/portal/README.md`).
@@ -245,6 +246,55 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.144] — 2026-11-10
+
+### Mudado
+- Anima reações e saque dos personagens remotos (#1273)
+- fix(ci): pass Cloudflare preview SHA through the environment (#1310)
+- Merge CI fix for the Cloudflare sticky preview comment. Owner explicitly authorized this merge; required checks are green and the only failing check is the smoke-cf failure fixed by this PR. (#1309)
+- Pre-push: edge entry points select network, not full deploy (#1303)
+- release: daily batch 2026-11-10 (#1316)
+- test: cover invalid CF comment arity
+- fix: accept positional SHA in CF preview comment
+- fix(ci): corrigir argumentos do comentário Cloudflare
+- ci(pre-push): bordas de contagem (middleware.js e src/middleware.ts) são network
+- Preserva ordem da régua de animação
+- Restaura mutação do hit local
+- Corrige câmera do arnês de mantle remoto
+- Documenta arnês remoto fora do código
+- Aplica direção à morte remota atrasada
+- Enquadra arma durante saque remoto
+- Evita morte atrasada após respawn remoto
+- Documenta limite de dano em bots remotos
+- Mantém apoio da arma durante saque remoto
+- Preserva dano local e morte sem evento
+- Aplica LOD de animação aos remotos
+- Mede animações de remotos com mutantes
+- Anima saque na troca de arma remota
+- Direciona morte remota pelo autor
+- Anima reação de remotos ao dano
+- Anima inclinação lateral de remotos
+
+## [2.1.0-alpha.143] — 2026-11-10
+
+### Mudado
+- Merge main-only CI hotfix. Owner explicitly authorized CI correction and release. All checks are green. (#1314)
+- chore(bots): standardize csbrasil-bot public output in English (#1311)
+- Merge account modal polish 2.1.0-alpha.142. Owner explicitly authorized CI correction and release. All checks, including smoke-cf, are green; all review threads are resolved with evidence. (#1307)
+- test: cover invalid CF comment arity
+- fix: accept positional SHA in CF preview comment
+- chore(bots): standardize csbrasil-bot public output in English
+- test: reject transient stale guest error
+
+## [2.1.0-alpha.142] — 2026-11-10
+
+### Mudado
+- fix(ci): protege preview Cloudflare e smoke manual (#1300)
+- chore: versiona módulos do modal atualizado
+- test(ci): limita regras CF ao passo exato
+- test(ci): prende guarda do smoke ao dispatch
+- fix(ci): isola artefato e corrige smoke manual
 
 ## [2.1.0-alpha.141] — 2026-11-10
 

@@ -497,4 +497,4 @@ if (!MUT) {
    dois números congelados no arquivo ao lado. O teto global não mudou; personagem novo
    fora dele, ou dívida que piore em qualquer métrica, deixa o portão vermelho. */
 if (reprovados) console.log(`\nPORTÃO VERMELHO — ${reprovados} personagem(ns) novo(s) fora do teto ou dívida piorada.`);
-process.exit(reprovados ? 1 : 0);
+process.exit(reprovados ? 1 : studioNaoMedido.length ? 78 : 0);

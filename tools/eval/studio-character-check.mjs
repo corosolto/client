@@ -28,6 +28,11 @@
      R15c extra conhecido fora de files → studio_role_unknown_file;  R15d extra duplicando arquivo de estado → studio_role_duplicate
      R15e extras contam no orçamento → studio_budget_exceeded antes de baixar;  R15f extra não-objeto/entrada sem file → studio_manifest_invalid
      R18 validador do esqueleto do adaptador rejeita juntas ausentes, extras e multiplicidade errada
+     R19a origem dos pacotes: produção/preview → https://assets.corosolto.com.br/packs/...; host local → /packs/;
+          ?packorigin=cdn|local força; URL absoluta passa intacta
+     R19b pacote servido pela origem R2 resolve com TODOS os pedidos sob https://assets.corosolto.com.br/packs/...
+     R19c manifesto ou arquivo adulterado na origem R2 → studio_manifest_sha_mismatch / studio_file_sha_mismatch
+     R19d a CSP do vercel.json (connect-src) permite a origem R2
      S1  /packs/ serve com MIME certo e Cache-Control: no-store (pelo plugin Vite real)
      S4  travessia/forma não canônica → 404;  S5 symlink para fora da raiz → 404
      S6  diretório e extensão de código → 404;  S7 sem STUDIO_PACK_ROOT → 404;  S8 método ≠ GET/HEAD → 405
@@ -54,11 +59,13 @@ const SKELETON = 'public/js/studio-skeleton.js';
 const mutante = process.argv.find((a) => a.startsWith('--mutante='))?.split('=')[1];
 const RES = 'public/js/studio-character.js';
 const SRV = 'scripts/studio-pack-serving.mjs';
+const ORIGEM = 'public/js/data/pack-origin.js';
+const CDN = 'https://assets.corosolto.com.br';
 
 /* [arquivo, trecho original, trecho mutado, prefixos de cláusula que têm de morder] */
 const mutacoes = {
-  'sha-manifesto-ignorado': [RES, 'if (manifestSha256 !== pin.manifestSha256) fail(', 'if (false) fail(', ['R2:']],
-  'sha-arquivo-ignorado': [RES, 'if (sha256 !== entry.sha256) fail(', 'if (false) fail(', ['R3:']],
+  'sha-manifesto-ignorado': [RES, 'if (manifestSha256 !== pin.manifestSha256) fail(', 'if (false) fail(', ['R2:', 'R19c:']],
+  'sha-arquivo-ignorado': [RES, 'if (sha256 !== entry.sha256) fail(', 'if (false) fail(', ['R3:', 'R19c:']],
   'estado-opcional': [RES, "if (!Object.hasOwn(manifest.animations, state)) fail('studio_state_missing', state);", '', ['R5:']],
   'estado-desconhecido': [RES, "if (!STUDIO_CHARACTER_STATES.includes(state)) fail('studio_state_unknown', state);", '', ['R6:']],
   'dono-duplicado': [RES, "if (owners.has(path) && tipoDe(owners.get(path)) !== tipoDe(role)) {", 'if (false) {', ['R6b:', 'R15d:']],
@@ -83,6 +90,10 @@ const mutacoes = {
   'servidor-serve-codigo': [SRV, "  '.webp': 'image/webp',\n", "  '.webp': 'image/webp',\n  '.js': 'text/javascript',\n", ['S6:']],
   'servidor-sem-raiz': [SRV, 'if (!root) return deny(404);', "if (!root) root = '.';", ['S7:']],
   'esqueleto-validacao-ignorada': [SKELETON, 'return invalid ? detail : null;', 'return null;', ['R18:']],
+  'origem-errada': [ORIGEM, `'${CDN}'`, "'https://assets.corosolto.com'", ['R19a:', 'R19b:', 'R19c:', 'R19d:']],
+  'origem-ignorada': [RES, 'new URL(studioPackUrl(pin.manifestUrl), baseHref())', 'new URL(pin.manifestUrl, baseHref())', ['R19b:', 'R19c:']],
+  'origem-sempre-cdn': [ORIGEM, "return !host || HOST_LOCAL.test(host) ? '' : STUDIO_PACK_CDN_ORIGIN;", 'return STUDIO_PACK_CDN_ORIGIN;', ['R19a:']],
+  'csp-sem-origem': ['vercel.json', `connect-src 'self' https: ${CDN} `, "connect-src 'self' ", ['R19d:']],
 };
 if (mutante && !mutacoes[mutante]) throw new Error(`mutante desconhecido: ${mutante}`);
 if (process.argv.includes('--mutantes')) {
@@ -104,7 +115,7 @@ let base = ROOT;
 if (mutante) {
   const [alvo, de, para] = mutacoes[mutante];
   base = join(temporario, 'repo');
-  for (const rel of [RES, SRV, SKELETON, 'public/js/version.js', 'public/js/data/content-releases.js']) {
+  for (const rel of [RES, SRV, SKELETON, ORIGEM, 'vercel.json', 'public/js/version.js', 'public/js/data/content-releases.js']) {
     mkdirSync(dirname(join(base, rel)), { recursive: true });
     copyFileSync(join(ROOT, rel), join(base, rel));
   }
@@ -117,6 +128,7 @@ const importa = (rel) => import(pathToFileURL(join(base, rel)).href);
 const R = await importa(RES);
 const S = await importa(SRV);
 const K = await importa(SKELETON);
+const O = await importa(ORIGEM);
 const { CHARACTER_RELEASES, STUDIO_CHARACTER_STATES, STUDIO_SKELETON_JOINTS } = await importa('public/js/data/content-releases.js');
 const { VERSION } = await importa('public/js/version.js');
 
@@ -216,7 +228,7 @@ try {
     const bones = STUDIO_SKELETON_JOINTS.flatMap((name) =>
       Array.from({ length: name.startsWith('Curl_') ? 2 : 1 }, () => ({ name })));
     if (K.studioSkeletonMismatch(bones)) falha('R18: esqueleto sintético válido rejeitado');
-    if (K.studioSkeletonMismatch([...bones, bones[0]])) falha('R18: bone repetido por identidade alterou a contagem');
+    if (!K.studioSkeletonMismatch([...bones, bones[0]])?.includes('total 29')) falha('R18: bone repetido por identidade não alterou a contagem');
     const semHead = bones.filter((bone) => bone.name !== 'Head');
     if (!K.studioSkeletonMismatch(semHead)?.includes('sem Head')) falha('R18: junta ausente aceita');
     const comExtra = [...bones, { name: 'UnexpectedBone' }];
@@ -479,6 +491,68 @@ try {
     if (r.families instanceof Map && r.families.size !== 2) falha('R17: families mudou com states.glb (extras seguem iguais)');
   }
 
+  // ── R19: origem R2 dos pacotes ──────────────────────────────────────────────
+  const localAntes = Object.getOwnPropertyDescriptor(globalThis, 'location');
+  const emPagina = (href) => Object.defineProperty(globalThis, 'location', { value: new URL(href), configurable: true, writable: true });
+  try {
+    if (O.STUDIO_PACK_CDN_ORIGIN !== CDN) falha(`R19a: origem R2 é ${O.STUDIO_PACK_CDN_ORIGIN}, devia ser ${CDN}`);
+    const casos = [
+      ['https://www.corosolto.com.br/', true], ['https://corosolto.com.br/?lang=en', true], ['https://csbrasil-git-x.vercel.app/', true],
+      ['http://localhost:4321/', false], ['http://127.0.0.1:9421/', false], ['http://192.168.0.12:4321/', false], ['http://[::1]:4321/', false],
+      ['http://localhost:4321/?packorigin=cdn', true], ['https://www.corosolto.com.br/?packorigin=local', false],
+    ];
+    for (const pin of Object.values(CHARACTER_RELEASES)) {
+      for (const [href, cdn] of casos) {
+        const obtido = O.studioPackUrl(pin.manifestUrl, new URL(href));
+        const esperado = cdn ? `${CDN}${pin.manifestUrl}` : pin.manifestUrl;
+        if (obtido !== esperado) { falha(`R19a: ${pin.id} em ${href} → ${obtido}, devia ser ${esperado}`); break; }
+      }
+    }
+    if (O.studioPackUrl('https://pack.test/x/manifest.json', new URL(casos[0][0])) !== 'https://pack.test/x/manifest.json') falha('R19a: URL absoluta foi reescrita');
+
+    const PASTA = '/packs/character/sintetico/1.2.3/';
+    const naOrigem = (caso, estraga = () => {}) => pacote(caso, (c, fase) => {
+      if (fase === 'antes') {
+        c.dir = `${CDN}${PASTA}`;
+        c.pin.manifestUrl = `${PASTA}manifest.json`;
+        c.manifest.campoFuturo = { caso }; // SHA próprio por caso: o cache por URL+SHA não mistura casos
+      } else c.servidos.set('manifest.json', c.manifestServido);
+      estraga(c, fase);
+    });
+    emPagina('https://www.corosolto.com.br/');
+    {
+      const ctx = naOrigem('r19b');
+      const r = await resolve(ctx).catch((e) => { falha(`R19b: pacote na origem R2 rejeitado: ${e?.code} ${e?.message}`); return null; });
+      const fora = ctx.pedidos.filter((u) => !u.startsWith(`${CDN}${PASTA}`));
+      if (!ctx.pedidos.length || fora.length) falha(`R19b: ${fora.length}/${ctx.pedidos.length} pedido(s) fora da origem R2 (${fora[0] ?? 'nenhum pedido'})`);
+      if (r && r.manifestSha256 !== ctx.pin.manifestSha256) falha('R19b: manifesto resolvido não é o do pin');
+    }
+    await exigeFalha('R19c:', naOrigem('r19c-manifesto', (c, fase) => {
+      if (fase === 'depois') c.servidos.set('manifest.json', new TextEncoder().encode(`${new TextDecoder().decode(c.manifestBytes)} `));
+    }), 'studio_manifest_sha_mismatch');
+    await exigeFalha('R19c:', naOrigem('r19c-arquivo', (c, fase) => {
+      if (fase === 'depois') { const b = new Uint8Array(c.servidos.get('model/sintetico.glb')); b[3] ^= 1; c.servidos.set('model/sintetico.glb', b); }
+    }), 'studio_file_sha_mismatch');
+  } finally {
+    if (localAntes) Object.defineProperty(globalThis, 'location', localAntes);
+    else delete globalThis.location;
+  }
+  {
+    // CSP: a mesma regra do navegador para connect-src (fetch do resolvedor).
+    const vercel = JSON.parse(readFileSync(join(base, 'vercel.json'), 'utf8'));
+    const csps = (vercel.headers || []).flatMap((r) => (r.headers || []).filter((h) => h.key === 'Content-Security-Policy').map((h) => h.value));
+    if (!csps.length) falha('R19d: vercel.json sem Content-Security-Policy');
+    const origem = new URL(O.STUDIO_PACK_CDN_ORIGIN);
+    const permite = (fonte) => fonte === '*' || fonte === `${origem.protocol}` || fonte === origem.origin
+      || (fonte.startsWith(`${origem.protocol}//*.`) && origem.hostname.endsWith(fonte.slice(`${origem.protocol}//*`.length)));
+    for (const csp of csps) {
+      const diretivas = new Map(csp.split(';').map((d) => d.trim().split(/\s+/)).filter((p) => p[0]).map(([nome, ...fontes]) => [nome, fontes]));
+      const fontes = diretivas.get('connect-src') ?? diretivas.get('default-src') ?? [];
+      if (!fontes.some(permite)) falha(`R19d: connect-src (${fontes.join(' ')}) não permite ${origem.origin}`);
+      if (!fontes.includes(origem.origin)) falha(`R19d: connect-src sem a origem R2 explícita ${origem.origin}`);
+    }
+  }
+
   // ── S: servidor de /packs/ (plugin Vite real) ───────────────────────────────
   const raiz = join(temporario, 'studio-packs');
   const pasta = join(raiz, 'character', 'x', '1.0.0');
@@ -579,6 +653,6 @@ if (mutante) {
   for (const f of falhas) console.error(`  ✗ ${f}`);
   process.exitCode = 1;
 } else {
-  console.log(`personagem do Studio confere: ${Object.keys(CHARACTER_RELEASES).length} release(s) fixada(s), resolvedor fecha em ${Object.keys(mutacoes).length} mutantes de código, /packs/ canônico, contido e no-store.`);
+  console.log(`personagem do Studio confere: ${Object.keys(CHARACTER_RELEASES).length} release(s) fixada(s), resolvedor fecha em ${Object.keys(mutacoes).length} mutantes de código, /packs/ canônico, contido e no-store, origem R2 ${CDN} na CSP.`);
 }
 process.exit(process.exitCode || 0);

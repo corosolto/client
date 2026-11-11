@@ -1,6 +1,6 @@
 {
   "name": "coro-solto",
-  "version": "2.1.0-alpha.141",
+  "version": "2.1.0-alpha.144",
   "license": "AGPL-3.0-only",
   "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS satírico de navegador em dois times (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
@@ -800,6 +800,8 @@
     "eval:characterkit": "node --test tools/character-kit/*.test.mjs",
     "eval:studiochar": "node tools/eval/studio-character-check.mjs && node tools/eval/studio-character-check.mjs --mutantes",
     "eval:studiochar:browser": "sh tools/eval/with-browser-lock.sh node tools/eval/studio-character-browser.mjs",
+    "eval:packpublish": "node tools/eval/publish-packs-check.mjs && node tools/eval/publish-packs-check.mjs --mutantes",
+    "publish:packs": "node scripts/publish-studio-packs.mjs",
     "eval:porte-braco:browser": "sh tools/eval/with-browser-lock.sh node tools/eval/porte-braco-browser.mjs && sh tools/eval/with-browser-lock.sh node tools/eval/porte-braco-browser.mjs --mutante=junta-no-punho && sh tools/eval/with-browser-lock.sh node tools/eval/porte-braco-browser.mjs --mutante=torsocabeca",
     "eval:tpjumpownership": "node tools/eval/tp-jump-ownership-check.mjs",
     "//eval:tpjumpownership": "Ownership de salto interrompido e retorno com guards reais; CPU sem aprovação de pose, física ou Gamewire.",
@@ -991,6 +993,7 @@
     "acorn": "8.17.0",
     "aeo.js": "^0.0.16",
     "dejavu-fonts-ttf": "^2.37.3",
+    "fast-xml-parser": "^5.3.0",
     "linkedom": "0.18.12",
     "meshoptimizer": "^1.2.0",
     "ndarray-pixels": "^5.2.0",

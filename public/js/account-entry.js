@@ -99,7 +99,7 @@ export function mountAccountEntry(container,{auth=null,config={providers:[]},ret
     if(entryAttempts.has(fn))return entryAttempts.get(fn);
     const pending=(async()=>{try{await fn();}catch(e){if(e.message!=='guest_invalid')throw e;
       linkGuest=false;
-      say('Convidado antigo não encontrado. Entrando sem vincular o histórico local…');
+      say('Preparando sua entrada…');
       await fn();
     }})();
     entryAttempts.set(fn,pending);

@@ -20,12 +20,15 @@ const ORIGIN = (process.env.STUDIO_PACK_ORIGIN || 'https://assets.corosolto.com.
 const ROOT = process.argv[2] ? path.resolve(process.argv[2]) : '';
 if (!ROOT) { console.error('uso: node scripts/fetch-studio-packs.mjs <raiz>'); process.exit(2); }
 const CONCURRENCY = 8;
+// Teto por tentativa (resposta + corpo): origem que aceita e não responde vira erro e cai no retry,
+// em vez de segurar o job até o timeout do runner.
+const TIMEOUT_MS = 60_000;
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
 async function baixar(url) {
   for (let tentativa = 1; ; tentativa++) {
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
       if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
       return Buffer.from(await res.arrayBuffer());
     } catch (error) {
