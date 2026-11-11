@@ -492,7 +492,10 @@ jobs:
           node tools/eval/cla-ssr-check.mjs
           node tools/eval/cla-ssr-check.mjs --mutate
           node tools/eval/rotas-check.mjs --dist
-          ! node tools/eval/rotas-check.mjs --dist --mutante=robots
+          if node tools/eval/rotas-check.mjs --dist --mutante=robots; then
+            echo '::error::rotas-check aceitou o mutante robots'
+            exit 1
+          fi
           node tools/eval/perfil-abas-check.mjs
           node tools/eval/perfil-abas-check.mjs --mutate
           node tools/eval/profile-character-empty-check.mjs
