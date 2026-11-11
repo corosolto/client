@@ -216,7 +216,7 @@ try {
     const bones = STUDIO_SKELETON_JOINTS.flatMap((name) =>
       Array.from({ length: name.startsWith('Curl_') ? 2 : 1 }, () => ({ name })));
     if (K.studioSkeletonMismatch(bones)) falha('R18: esqueleto sintético válido rejeitado');
-    if (K.studioSkeletonMismatch([...bones, bones[0]])) falha('R18: bone repetido por identidade alterou a contagem');
+    if (!K.studioSkeletonMismatch([...bones, bones[0]])?.includes('total 29')) falha('R18: bone repetido por identidade não alterou a contagem');
     const semHead = bones.filter((bone) => bone.name !== 'Head');
     if (!K.studioSkeletonMismatch(semHead)?.includes('sem Head')) falha('R18: junta ausente aceita');
     const comExtra = [...bones, { name: 'UnexpectedBone' }];
