@@ -209,7 +209,13 @@ test('queda do nó mostra estado de reconexão e permite entrar de novo', async 
   await expect(page.locator('#mp-estado')).toHaveText(/NA SALA/, { timeout: 25_000 });
 
   // Fecha DEPOIS do welcome: o NetClient já aceitou a sessão e o onClose de produção é obrigatório.
-  await page.evaluate(() => window.__mpSmokeSockets[0].close());
+  // Sondas podem abrir sockets auxiliares sem onClose; a queda precisa atingir a sessão aceita.
+  const socketsAntes = await page.evaluate(() => {
+    const ativos = window.__mpSmokeSockets.filter((socket) => typeof socket.onclose === 'function');
+    if (ativos.length !== 1) throw new Error(`expected one accepted socket, got ${ativos.length}`);
+    ativos[0].close();
+    return window.__mpSmokeSockets.length;
+  });
   await expect(page.locator('#mp-panel')).toBeVisible();
   await expect(page.locator('#mp-erro')).toBeVisible({ timeout: 25_000 });
   await expect(page.locator('#mp-erro')).toHaveText('A conexão com o servidor caiu. Entre de novo.');
@@ -217,7 +223,7 @@ test('queda do nó mostra estado de reconexão e permite entrar de novo', async 
 
   // Não é só texto: a lista continua utilizável e uma segunda tentativa abre outro socket.
   await page.locator('.mp-sala .mp-entrar[data-lado="E"]').dispatchEvent('click');
-  await expect.poll(() => page.evaluate(() => window.__mpSmokeSockets.length)).toBe(2);
+  await expect.poll(() => page.evaluate(() => window.__mpSmokeSockets.length)).toBe(socketsAntes + 1);
   await expect(page.locator('#mp-estado')).toHaveText(/NA SALA/, { timeout: 25_000 });
   await expect(page.locator('#mp-erro')).toBeHidden();
 });
