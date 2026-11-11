@@ -72,7 +72,7 @@ export function isReferenced(path, corpus) {
   const stem = base.replace(/\.[^.]+$/, '');
   return corpus.includes(path)
     || new RegExp(`(?<![\\w.-])${escaped(base)}(?![\\w.-])`).test(corpus)
-    || (stem.length >= 4 && corpus.includes(stem));
+    || (stem.length >= 4 && new RegExp(`(?<![\\w.-])${escaped(stem)}(?![\\w.-])`).test(corpus));
 }
 
 export function literalReferences(sources) {

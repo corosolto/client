@@ -59,6 +59,15 @@ function mutations() {
     rmSync(join(fixture, 'public/models/props/new-orphan.glb'));
     console.log('AI2: generation refuses a new orphan and the following check still fails.');
 
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const catalog = 'catalog';\n");
+    put(fixture, 'public/models/props/logo.glb', 'unrelated-stem');
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'stem fragment is not an asset reference');
+    assert.match(result.stderr, /orphan-new: models\/props\/logo\.glb/);
+    rmSync(join(fixture, 'public/models/props/logo.glb'));
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    console.log('AI2b: a stem embedded in unrelated text cannot hide an orphan.');
+
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
     reviewed.files['models/props/legacy.glb'] = createHash('sha256')
