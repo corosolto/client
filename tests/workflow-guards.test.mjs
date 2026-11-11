@@ -108,3 +108,27 @@ test('AF4 rejects squash hidden on a shell continuation line', (t) => {
   });
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
+
+test('AF4 ignores a merge flag printed by an earlier shell command', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    workflow.jobs.automerge.steps.push({
+      name: 'Merge flag decoy',
+      if: "env.pular != '1'",
+      run: 'echo --merge; gh pr merge "$PR_NUMBER" --match-head-commit "$head_oid"',
+    });
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
+test('AF4 ignores flags printed after the merge invocation', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    workflow.jobs.automerge.steps.push({
+      name: 'Unsafe merge with trailing decoys',
+      if: "env.pular != '1'",
+      run: 'gh pr merge "$PR_NUMBER" --squash; echo --merge --match-head-commit head_oid',
+    });
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});

@@ -281,9 +281,10 @@ const chamadasMerge = (texto) => {
      ONDE ele roda, mas só o recorte conservador do comando prova seus argumentos. */
   const executavel = texto.split('\n').filter((linha) => !/^\s*#/.test(linha)).join('\n').replace(/\\\n\s*/g, ' ');
   return [...executavel.matchAll(MERGE)].map((match) => {
-    const inicio = executavel.lastIndexOf('\n', match.index) + 1;
-    const fim = executavel.indexOf('\n', match.index);
-    return { pos: match.index, comando: executavel.slice(inicio, fim < 0 ? undefined : fim), executavel };
+    const restante = executavel.slice(match.index, executavel.indexOf('\n', match.index) < 0 ? undefined : executavel.indexOf('\n', match.index));
+    const separador = restante.search(/;|&&|\|\|/);
+    const comando = restante.slice(0, separador < 0 ? undefined : separador);
+    return { pos: match.index, comando, executavel };
   });
 };
 for (const nome of WORKFLOWS) {
