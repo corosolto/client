@@ -108,6 +108,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Packs Studio fixados (R2) no /packs/ do eval:serve
+        uses: ./.github/actions/studio-packs
       - name: Playwright global (mesma versão do devDependency)
         run: npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
 
@@ -163,6 +165,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Packs Studio fixados (R2) no /packs/ do eval:serve
+        uses: ./.github/actions/studio-packs
       - name: Playwright global (mesma versão do devDependency)
         run: npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
 
@@ -234,6 +238,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Packs Studio fixados (R2) no /packs/ do eval:serve
+        uses: ./.github/actions/studio-packs
       - name: Playwright global (mesma versão do devDependency)
         run: npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
 
@@ -297,6 +303,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Packs Studio fixados (R2) no /packs/ do eval:serve
+        uses: ./.github/actions/studio-packs
       - name: Tag exata do pacote de decalques
         id: packs
         run: |
@@ -435,6 +443,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Packs Studio fixados (R2) no /packs/ do eval:serve
+        uses: ./.github/actions/studio-packs
 
       - name: Instala Chromium + libs do sistema
         run: npx playwright install --with-deps chromium
