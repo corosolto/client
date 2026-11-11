@@ -43,11 +43,11 @@ function tufoGeo(semente, laminas = 6) {
 function oficina() {
   const P = [], N = [], U = [], C = [], I = [], v = new THREE.Vector3(), n = new THREE.Vector3(), nm = new THREE.Matrix3();
   const api = {
-    caixa(m, w, h, d, cor) {
+    caixa(m, w, h, d, cor, so = null) {
       nm.getNormalMatrix(m);
       const faces = [[[1, 0, 0], [0, 0, -1], [0, 1, 0], d, h, w], [[-1, 0, 0], [0, 0, 1], [0, 1, 0], d, h, w], [[0, 1, 0], [1, 0, 0], [0, 0, -1], w, d, h],
         [[0, -1, 0], [1, 0, 0], [0, 0, 1], w, d, h], [[0, 0, 1], [1, 0, 0], [0, 1, 0], w, h, d], [[0, 0, -1], [-1, 0, 0], [0, 1, 0], w, h, d]];
-      for (const [nn, tu, tv, su, sv, sn] of faces) { const b = P.length / 3, fase = (P.length % 97) * .013;
+      for (const [nn, tu, tv, su, sv, sn] of so ? so.map((i) => faces[i]) : faces) { const b = P.length / 3, fase = (P.length % 97) * .013;
         for (const [a, c] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
           v.set(nn[0] * sn / 2 + tu[0] * a * su / 2 + tv[0] * c * sv / 2, nn[1] * sn / 2 + tu[1] * a * su / 2 + tv[1] * c * sv / 2, nn[2] * sn / 2 + tu[2] * a * su / 2 + tv[2] * c * sv / 2).applyMatrix4(m);
           n.set(nn[0], nn[1], nn[2]).applyMatrix3(nm).normalize(); P.push(v.x, v.y, v.z); N.push(n.x, n.y, n.z); C.push(cor[0], cor[1], cor[2]);
@@ -181,7 +181,7 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
     const of = oficinas(), mapa = mapaMadeira ? mapaMadeira.clone() : null;
     if (mapa) { mapa.repeat.set(1, 1); mapa.needsUpdate = true; mapa.name = 'hd-cen-madeira'; lixo.push(mapa); }
     const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, map: mapa, vertexColors: true, roughness: .92, name: 'hd-cen-madeira' });
-    if (mapa && kit.relevoDeCor) { mat.normalMap = kit.relevoDeCor(mapa, 2.8); mat.normalScale.set(1.9, 1.9); lixo.push(mat.normalMap); }
+    if (mapa && kit.relevoDeCor) { mat.normalMap = kit.relevoDeCor(mapa, 2.8); mat.normalScale.set(2.6, 2.6); lixo.push(mat.normalMap); }
     lixo.push(mat);
     const a = new THREE.Vector3(), b = new THREE.Vector3();
     const lados = [[-cercaX, -cercaZ, cercaX, -cercaZ], [cercaX, -cercaZ, cercaX, cercaZ], [cercaX, cercaZ, -cercaX, cercaZ], [-cercaX, cercaZ, -cercaX, -cercaZ]];
@@ -258,7 +258,7 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
       const letras = new THREE.Mesh(g, matTxt); letras.name = 'sertao-hd-placa-letras'; grupo.add(letras); lixo.push(g, matTxt, tex);
     }
     const liso = oficinas(), V3 = (x, y, z) => new THREE.Vector3(x, y, z);
-    const TINTAS = [[.5, 1.15, 2.9], [.55, 1.9, 1.05], [3.0, 2.3, .7]], FERRO = [.1, .095, .09], BREU = [.02, .02, .024], BARRO = [.24, .14, .095], CAL = [1, 1, 1], I4 = () => new THREE.Matrix4();
+    const TINTAS = [[.17, .27, .43], [.15, .3, .17], [.4, .385, .28]], pin = oficinas(), FERRO = [.1, .095, .09], BREU = [.02, .02, .024], BARRO = [.24, .14, .095], CAL = [1, 1, 1], I4 = () => new THREE.Matrix4();
     const pl = oficina(), tl = oficina(), panos = [], escondidos = [];
     // Recortes do atlas de letreiros (px num canvas de 1024): [x, y, largura, altura].
     const RT = { bodega: [0, 0, 512, 150], barbearia: [512, 0, 512, 150], mercearia: [0, 150, 512, 150], vote: [512, 150, 512, 150], forro: [0, 300, 1024, 170], queijo: [0, 470, 640, 220], fiado: [640, 470, 384, 220],
@@ -270,23 +270,24 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
     const tinge = (t, g) => [t[0] * g, t[1] * g, t[2] * g];
     // Folha de porta ou janela: `base` põe a origem na dobradiça; sx diz para que lado a folha cresce.
     const folha = (base, sx, lf, h, tinta, tipo, r) => {
-      const em = (x, y, z) => base(sx * x, y, z), g0 = .78 + r() * .3, pint = (k = 1) => r() < .07 ? [1.3 * k, 1.15 * k, 1.0 * k] : tinge(tinta, g0 * k * (.88 + r() * .24));
-      if (tipo === 'almofada') { of.caixa(em(lf / 2, h / 2, 0), lf, h, .035, pint(.72));
+      const em = (x, y, z) => base(sx * x, y, z), g0 = .86 + r() * .24;
+      const tab = (m, w, hh, d, k = 1) => r() < .07 ? of.caixa(m, w, hh, d, [1.3 * k, 1.15 * k, k]) : pin.caixa(m, w, hh, d, tinge(tinta, g0 * k * (.9 + r() * .2)));
+      if (tipo === 'almofada') { tab(em(lf / 2, h / 2, 0), lf, h, .035, .78);
         const np = h > 1.5 ? 3 : 1, ph = (h - .16 - (np - 1) * .1) / np;
-        for (let i = 0; i < np; i++) { const y = .08 + ph / 2 + i * (ph + .1); of.caixa(em(lf / 2, y, .026), lf - .18, ph, .022, pint(.5)); of.caixa(em(lf / 2, y, .044), lf - .3, ph - .12, .02, pint(1.2)); }
-      } else if (tipo === 'rotula') { const e = .06, c0 = pint(), passo = .15, X0 = e, X1 = lf - e, Y0 = e, Y1 = h - e;
-        for (const [x, y, w, hh] of [[e / 2, h / 2, e, h], [lf - e / 2, h / 2, e, h], [lf / 2, e / 2, lf, e], [lf / 2, h - e / 2, lf, e]]) of.caixa(em(x, y, 0), w, hh, .04, c0);
-        for (let c = Y0 - X1 + passo / 2; c < Y1 - X0; c += passo) { const a = Math.max(X0, Y0 - c), b = Math.min(X1, Y1 - c); if (b - a > .04) of.caixa(em((a + b) / 2, (a + b) / 2 + c, -.006).multiply(I4().makeRotationZ(sx * Math.PI / 4)), (b - a) * 1.414, .034, .012, c0); }
-        for (let c = X0 + Y0 + passo / 2; c < X1 + Y1; c += passo) { const a = Math.max(X0, c - Y1), b = Math.min(X1, c - Y0); if (b - a > .04) of.caixa(em((a + b) / 2, c - (a + b) / 2, .006).multiply(I4().makeRotationZ(-sx * Math.PI / 4)), (b - a) * 1.414, .034, .012, c0); }
+        for (let i = 0; i < np; i++) { const y = .08 + ph / 2 + i * (ph + .1); tab(em(lf / 2, y, .026), lf - .18, ph, .022, .55); tab(em(lf / 2, y, .044), lf - .3, ph - .12, .02, 1.15); }
+      } else if (tipo === 'rotula') { const e = .06, nua = r() < .07, c0 = nua ? [1.3, 1.15, 1] : tinge(tinta, g0 * (.9 + r() * .2)), alvo = nua ? of : pin, passo = .15, X0 = e, X1 = lf - e, Y0 = e, Y1 = h - e;
+        for (const [x, y, w, hh] of [[e / 2, h / 2, e, h], [lf - e / 2, h / 2, e, h], [lf / 2, e / 2, lf, e], [lf / 2, h - e / 2, lf, e]]) alvo.caixa(em(x, y, 0), w, hh, .04, c0);
+        for (let c = Y0 - X1 + passo / 2; c < Y1 - X0; c += passo) { const a = Math.max(X0, Y0 - c), b = Math.min(X1, Y1 - c); if (b - a > .04) alvo.caixa(em((a + b) / 2, (a + b) / 2 + c, -.006).multiply(I4().makeRotationZ(sx * Math.PI / 4)), (b - a) * 1.414, .034, .012, c0, [4, 5]); }
+        for (let c = X0 + Y0 + passo / 2; c < X1 + Y1; c += passo) { const a = Math.max(X0, c - Y1), b = Math.min(X1, c - Y0); if (b - a > .04) alvo.caixa(em((a + b) / 2, c - (a + b) / 2, .006).multiply(I4().makeRotationZ(-sx * Math.PI / 4)), (b - a) * 1.414, .034, .012, c0, [4, 5]); }
       } else { const nt = Math.max(2, Math.round(lf / .2)), lt = lf / nt;
-        for (let t = 0; t < nt; t++) of.caixa(em((t + .5) * lt, h / 2 - r() * .02, 0), lt - .014, h, .035, pint());
-        for (const fy of [.14, .86]) of.caixa(em(lf / 2, h * fy, .028), lf - .04, .1, .022, pint(.78));
-        if (h > 1.5 && tipo !== 'postigo') of.caixa(em(lf / 2, h * .5, .027).multiply(I4().makeRotationZ(sx * Math.atan2(h * .72 - .1, lf - .08))), Math.hypot(h * .72 - .1, lf - .08), .09, .02, pint(.78));
-        if (tipo === 'postigo') { const py = Math.min(h - .34, 1.5); of.caixa(em(lf / 2, py, .03), Math.min(.4, lf - .1), .44, .03, pint(.62)); of.caixa(em(lf / 2, py, .05), Math.min(.3, lf - .2), .34, .016, pint(1.18)); liso.caixa(em(lf / 2, py - .1, .064), .07, .02, .02, FERRO); } }
+        for (let t = 0; t < nt; t++) tab(em((t + .5) * lt, h / 2 - r() * .02, 0), lt - .014, h, .035);
+        for (const fy of [.14, .86]) tab(em(lf / 2, h * fy, .028), lf - .04, .1, .022, .8);
+        if (h > 1.5 && tipo !== 'postigo') tab(em(lf / 2, h * .5, .027).multiply(I4().makeRotationZ(sx * Math.atan2(h * .72 - .1, lf - .08))), Math.hypot(h * .72 - .1, lf - .08), .09, .02, .8);
+        if (tipo === 'postigo') { const py = Math.min(h - .34, 1.5); tab(em(lf / 2, py, .03), Math.min(.4, lf - .1), .44, .03, .65); tab(em(lf / 2, py, .05), Math.min(.3, lf - .2), .34, .016, 1.14); liso.caixa(em(lf / 2, py - .1, .064), .07, .02, .02, FERRO); } }
       const tabuas = tipo === 'tabua' || tipo === 'postigo';
       for (const fy of [.17, .83]) liso.caixa(em(.07, h * fy + (tabuas ? .09 : 0), .03), .14, .04, .03, FERRO);
       if (h > 1.5) { liso.caixa(em(lf - .1, h * .52, .04), .18, .028, .028, FERRO); liso.caixa(em(lf - .06, h * .52, .05), .03, .07, .03, FERRO); }
-      else of.caixa(em(lf - .04, h * .5, .042).multiply(I4().makeRotationZ(.6)), .15, .045, .02, pint(.7));
+      else tab(em(lf - .04, h * .5, .042).multiply(I4().makeRotationZ(.6)), .15, .045, .02, .72);
     };
     const LETREIROS = { 'sertao-praca-casa-interior-0': [[1, 'mercearia', 2.15, 3.13, 1.9], [1, 'secos', -2.25, 3.2, 2.5], [1, 'n27', -2.9, 2.2, .4]],
       'sertao-praca-casa-interior-1': [[1, 'barbearia', -2.15, 3.13, 1.9], [1, 'cabelo', 2.2, 3.2, 1.3], [1, 'n104', 2.9, 2.2, .46]],
@@ -412,7 +413,7 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
       cx(pl, 0, 2.95, 2.3, 1.3, 1.1, .6); cx(liso, 0, 1.3, 2.04, 1.3, 2.2, .04, BREU);
       pl.prisma(mz(0, 0, 2.64), [[-.84, 2.42], [.84, 2.42], [.84, 2.5], [.6, 2.62], [.3, 2.7], [0, 2.72], [-.3, 2.7], [-.6, 2.62], [-.84, 2.5]], .09, CAL, [0, 2.45]);
       pl.cilindro(P(0, 3.04, 2.6), P(0, 3.04, 2.67), .31 * k, .31 * k, 16, CAL); liso.cilindro(P(0, 3.04, 2.665), P(0, 3.04, 2.676), .21 * k, .21 * k, 16, [.03, .04, .07]);
-      cx(of, 0, 3.04, 2.682, .42, .03, .012, tinge(TINTAS[0], .9)); cx(of, 0, 3.04, 2.682, .03, .42, .012, tinge(TINTAS[0], .9));
+      for (const [w, h] of [[.42, .03], [.03, .42]]) pin.caixa(mz(0, 3.04, 2.682), w, h, .012, tinge(TINTAS[0], .9));
       for (const sx of [-1, 1]) folha((x, y, z) => mz(-sx * .64 + x, .23 + y, 2.1 + z), sx, .635, 2.16, TINTAS[0], 'almofada', r);
       for (const [y, w, d, h] of [[3.54, 4.5, .72, .08], [3.65, 4.66, .86, .14], [3.75, 4.76, .94, .06]]) cx(pl, 0, y, 2.38, w, h, d);
       cx(pl, 0, 4.14, 2, 1.6, .72, 1.6); for (const sx of [-1, 1]) for (const sz of [-1, 1]) cx(pl, sx * .6, 4.75, 2 + sz * .6, .4, .5, .4);
@@ -475,7 +476,7 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
         const em = (x, y, z) => I4().setPosition(x, y, z).premultiply(W), P = (x, y, z) => V3(x, y, z).applyMatrix4(W), tom = (k = 1) => { const v = (.8 + r() * .35) * k; return [1.05 * v, .92 * v, .76 * v]; };
         const roda = (x, cy, cz) => { const n = 32, R = .7, passo = 2 * R * Math.tan(Math.PI / n) + .004; let camba = tom();
           for (let i = 0; i < n; i++) { const a = i / n * 6.2832, sn = Math.sin(a), cs = Math.cos(a), B = I4().makeBasis(V3(1, 0, 0), V3(0, sn, cs), V3(0, -cs, sn)).setPosition(x, cy + R * sn, cz + R * cs).premultiply(W);
-            if (i % 4 === 0) camba = tom(sn < -.5 ? 1.25 : 1); car.caixa(B, .1, .1, passo, camba); }
+            if (i % 4 === 0) camba = tom(sn < -.5 ? 1.25 : 1); car.caixa(B, .1, .1, passo, camba, [0, 1, 2, 3]); }
           car.cilindro(P(x - .046, cy, cz), P(x + .046, cy, cz), R + .058, R + .058, 32, ferro, { tampas: false });
           for (let i = 0; i < 12; i++) { const a = (i + .5) / 12 * 6.2832, sn = Math.sin(a), cs = Math.cos(a);
             car.cilindro(P(x, cy + .08 * sn, cz + .08 * cs), P(x, cy + (R - .04) * sn, cz + (R - .04) * cs), .034, .027, 5, tom(), { tampas: false }); }
@@ -523,7 +524,7 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
       o.updateWorldMatrix(true, false); const id = +o.name.slice(-1), x = (id % 2 ? 1 : -1) * g.width * .2, z = (id % 3 - 1) * g.depth * .24, y = g.height / 2, em = (dy) => new THREE.Matrix4().setPosition(x, y + dy, z).premultiply(o.matrixWorld);
       liso.caixa(em(.95), .46, 1.15, .46, [.6, .52, .43]); liso.caixa(em(1.56), .6, .08, .6, [.3, .21, .16]); liso.caixa(em(1.67), .3, .14, .3, [.17, .14, .12]); });
     if (opts.flora !== false && opts.arbustos !== false) {
-      const ga = pedraGeo(0, 41, .3), n = 44, ma = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true, name: 'hd-cen-arbusto' }), im = lote(ga, ma, n, 'arbustos'); lixo.push(ga, ma);
+      const ga = pedraGeo(0, 41, .3), n = 44, im = lote(ga, matPedra, n, 'arbustos'); lixo.push(ga);
       for (let i = 0; i < n; i++) { const emX = i % 2 === 0, s = rnd() < .5 ? -1 : 1, fora = 1.7 + Math.pow(rnd(), 1.4) * 4.2;
         const x = emX ? (rnd() * 2 - 1) * (B.maxX + 2) : s * (B.maxX + fora), z = emX ? s * (B.maxZ + fora + 1.2) : (rnd() * 2 - 1) * (B.maxZ + 2), r0 = .5 + rnd() * .65, y = terreno(x, z);
         if (emX && Math.abs(x) < 9.5) { obj.scale.setScalar(0); obj.updateMatrix(); im.setMatrixAt(i, obj.matrix); continue; }
@@ -537,21 +538,21 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
       // Letreiro de pintor de parede: um atlas só, letra a letra com tremor, falha de tinta e escorrido.
       const cv = document.createElement('canvas'); cv.width = cv.height = 1024; const c = cv.getContext('2d', { willReadFrequently: true }), rg = rngDe(1877), escorridos = [];
       c.textAlign = 'center'; c.textBaseline = 'middle';
-      const ANIL = '#15306c', OXIDO = '#7a2416', PRETO = '#141210', VERDE = '#124a2c', SERIFA = { fonte: 'Georgia, "Times New Roman", serif', peso: '900' };
+      const ANIL = '#1c3f8f', OXIDO = '#8a5316', PRETO = '#191613', SERIFA = { fonte: 'Georgia, "Times New Roman", serif', peso: '900' }, GROSSA = { fonte: '"Arial Black", Impact, sans-serif', peso: '900', folga: 1.04 };
       const pinta = (txt, [x, y, w, h], cor, { sombra = null, fonte = 'Impact, "Arial Black", sans-serif', peso = '', escorre = .25, folga = 1.08 } = {}) => {
         const linhas = txt.split('\n'), lh = h / linhas.length;
         linhas.forEach((ln, li) => { let px = lh * .74; c.font = `${peso} ${px}px ${fonte}`; const larg = c.measureText(ln).width * folga; if (larg > w - 28) px *= (w - 28) / larg; c.font = `${peso} ${px}px ${fonte}`;
           let cx = x + (w - c.measureText(ln).width * folga) / 2; const by = y + li * lh + lh * .5;
           for (const ch of ln) { const cw = c.measureText(ch).width * folga, jy = (rg() - .5) * px * .06, ja = (rg() - .5) * .08, js = 1 + (rg() - .5) * .08;
             c.save(); c.translate(cx + cw / 2, by + jy); c.rotate(ja); c.scale(js, js);
-            if (sombra) { c.fillStyle = sombra; c.fillText(ch, px * .05, px * .05); }
+            if (sombra) { c.fillStyle = sombra; c.fillText(ch, px * .045, px * .045); }
             c.fillStyle = cor; c.fillText(ch, 0, 0); c.restore();
             if (ch !== ' ' && ch !== '·' && rg() < escorre) escorridos.push([cx + cw * (.3 + rg() * .4), by + px * .3, Math.min(px * (.2 + rg() * .55), y + h - 4 - (by + px * .3)), cor]);
             cx += cw; } }); };
-      pinta('BODEGA', RT.bodega, ANIL, { sombra: OXIDO }); pinta('BARBEARIA', RT.barbearia, PRETO, SERIFA); pinta('MERCEARIA', RT.mercearia, OXIDO, { sombra: PRETO, escorre: 0 });
+      pinta('BODEGA', RT.bodega, ANIL, GROSSA); pinta('BARBEARIA', RT.barbearia, PRETO, SERIFA); pinta('MERCEARIA', RT.mercearia, PRETO, { ...GROSSA, escorre: .12 });
       pinta('VOTE 00', [RT.vote[0] + 14, RT.vote[1] + 8, RT.vote[2] - 28, RT.vote[3] - 16], PRETO); c.strokeStyle = ANIL; c.lineWidth = 7; c.strokeRect(RT.vote[0] + 9, RT.vote[1] + 9, RT.vote[2] - 18, RT.vote[3] - 18);
-      pinta('FORRÓ HOJE', RT.forro, ANIL, { sombra: PRETO }); pinta('VENDE-SE\nQUEIJO E RAPADURA', RT.queijo, VERDE); pinta('FIADO\nSÓ AMANHÃ', RT.fiado, PRETO, SERIFA);
-      pinta('FARINHA · FEIJÃO · CARNE DE SOL', RT.secos, ANIL, { escorre: .1 }); pinta('CABELO E BARBA', RT.cabelo, OXIDO, { escorre: 0 });
+      pinta('FORRÓ HOJE', RT.forro, ANIL, { ...GROSSA, sombra: OXIDO, escorre: .3 }); pinta('VENDE-SE\nQUEIJO E RAPADURA', RT.queijo, OXIDO, { ...GROSSA, sombra: PRETO }); pinta('FIADO\nSÓ AMANHÃ', RT.fiado, PRETO, SERIFA);
+      pinta('FARINHA · FEIJÃO · CARNE DE SOL', RT.secos, ANIL, { ...GROSSA, escorre: .1 }); pinta('CABELO E BARBA', RT.cabelo, PRETO, { ...GROSSA, escorre: 0 });
       pinta('Nº 27', RT.n27, PRETO, { escorre: 0 }); pinta('Nº 104', RT.n104, ANIL, { escorre: 0 }); pinta('12', RT.n12, PRETO, { escorre: 0 });
       pinta('GRAÇA\nALCANÇADA', RT.graca, ANIL, { fonte: 'Georgia, serif', peso: 'italic 700', escorre: .1 });
       { const [x, y, w, h] = RT.exvoto; c.fillStyle = ANIL; c.save(); c.translate(x + w / 2, y + h * .45); c.rotate(-.03); c.fillRect(-9, -h * .36, 18, h * .72); c.fillRect(-w * .27, -h * .17, w * .54, 17); c.restore();
@@ -561,7 +562,7 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
       for (let yy = 0; yy < 1024; yy++) { const fy = yy / 1024 * G, iy = fy | 0, ty = fy - iy, faixa = .86 + .14 * Math.sin(yy * 1.9 + Math.sin(yy * .13) * 4);
         for (let xx = 0; xx < 1024; xx++) { const i = (yy * 1024 + xx) * 4 + 3; if (!d[i]) continue; const fx = xx / 1024 * G, ix = fx | 0, tx = fx - ix, a = iy * (G + 2) + ix, b = a + G + 2;
           const nn = (grade[a] * (1 - tx) + grade[a + 1] * tx) * (1 - ty) + (grade[b] * (1 - tx) + grade[b + 1] * tx) * ty;
-          d[i] *= Math.min(1, .8 + nn * .4) * (.5 + .5 * faixa) * (rg() < .06 ? rg() : 1); } }
+          d[i] *= Math.min(1, .82 + nn * .36) * (.62 + .38 * faixa) * (rg() < .05 ? rg() : 1); } }
       c.putImageData(img, 0, 0);
       { const [x, y, w, h] = RT.chita; c.fillStyle = '#1e5f86'; c.fillRect(x + 4, y + 4, w - 8, h - 8);
         for (let i = 0; i < 46; i++) { const fx = x + 16 + rg() * (w - 32), fy = y + 14 + rg() * (h - 44), rr = 7 + rg() * 7;
@@ -576,23 +577,41 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
         for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { vq.set(sx * w / 2, sy * h / 2, 0).applyMatrix4(m); Pq.push(vq.x, vq.y, vq.z); Nq.push(nq.x, nq.y, nq.z); Uq.push((rx + (sx > 0 ? rw - 2 : 2)) / 1024, 1 - (ry + (sy > 0 ? 2 : rh - 2)) / 1024); }
         Iq.push(b, b + 1, b + 2, b, b + 2, b + 3); }
       const gq = new THREE.BufferGeometry(); gq.setAttribute('position', new THREE.Float32BufferAttribute(Pq, 3)); gq.setAttribute('normal', new THREE.Float32BufferAttribute(Nq, 3)); gq.setAttribute('uv', new THREE.Float32BufferAttribute(Uq, 2)); gq.setIndex(Iq); gq.computeBoundingSphere();
-      const matL = new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: .03, roughness: 1, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, name: 'hd-cen-letreiro' });
+      const matL = new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: .03, roughness: 1, depthWrite: false, side: THREE.DoubleSide, forceSinglePass: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, name: 'hd-cen-letreiro' });
       // A tinta herda o grão do reboco e falha em placas presas ao mundo; o pano (canto do atlas) fica inteiro.
       matL.onBeforeCompile = (sh) => { sh.uniforms.hdDet = { value: kit.pbrTex('hd_sertao/white_rough_plaster_cor') };
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vHdPos;').replace('#include <project_vertex>', '#include <project_vertex>\nvHdPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>\nvarying vec3 vHdPos; uniform sampler2D hdDet;${kit.RUIDO_GLSL || ''}`).replace('#include <map_fragment>', `#include <map_fragment>
           { float hdPano = step(0.455, vMapUv.x) * step(vMapUv.y, 0.193); vec2 hdQ = vec2(vHdPos.x + vHdPos.z, vHdPos.y);
             float hdG = dot(texture2D(hdDet, hdQ / 1.1).rgb, vec3(0.3, 0.59, 0.11)) / 0.61;
-            float hdF = smoothstep(0.22, 0.42, hdN(hdQ * 2.3 + 7.0) * 0.6 + hdN(hdQ * 9.0) * 0.4 + clamp(hdG, 0.0, 1.2) * 0.25);
-            diffuseColor.rgb *= mix(0.6 * clamp(hdG, 0.7, 1.15), 0.8, hdPano); diffuseColor.a *= mix(mix(0.7, 1.0, hdF), 1.0, hdPano); }`); };
-      matL.customProgramCacheKey = () => 'sertao-hd-letreiro3';
+            float hdF = smoothstep(0.2, 0.4, hdN(hdQ * 2.3 + 7.0) * 0.6 + hdN(hdQ * 9.0) * 0.4 + clamp(hdG, 0.0, 1.2) * 0.25);
+            diffuseColor.rgb *= mix(0.86 * clamp(hdG, 0.75, 1.12), 0.8, hdPano); diffuseColor.a *= mix(mix(0.72, 1.0, hdF), 1.0, hdPano); }`); };
+      matL.customProgramCacheKey = () => 'sertao-hd-letreiro4';
       const letras = new THREE.Mesh(gq, matL); letras.name = 'sertao-hd-letreiros'; letras.receiveShadow = true; letras.userData.nonSolidSurface = true; grupo.add(letras); lixo.push(gq, matL, tex);
+      const placa = grupo.getObjectByName('sertao-hd-placa-letras');
+      if (placa) { const m2 = matL.clone(); m2.map = placa.material.map; m2.onBeforeCompile = matL.onBeforeCompile; m2.customProgramCacheKey = matL.customProgramCacheKey; placa.material = m2; lixo.push(m2); }
     }
     let matCal = null, matTelha = null; scene.traverse((o) => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
       if (!matCal && m?.map?.name === 'oeste-adobe-paupique' && m.color?.getHex() === 0xf6efdd) matCal = m; if (!matTelha && m?.userData?.hdLaje) matTelha = m; } });
     for (const [o, m, nome] of [[pl, matCal, 'matriz'], [tl, matTelha, 'matriz-telha']]) { const g = o.geo(); lixo.push(g); if (!g.index.count) continue;
       const malha = new THREE.Mesh(g, m || matLiso); malha.name = `sertao-hd-${nome}`; malha.castShadow = true; malha.receiveShadow = true; malha.userData.nonSolidSurface = true; grupo.add(malha); }
-    for (const [geos, m, nome] of [[liso.geos(), matLiso, 'barro'], [of.geos(), mat, 'cerca']]) for (const g of geos) { lixo.push(g); if (!g.index.count) continue;
+    // Tinta a óleo queimada de sol sobre a tábua: o veio clareia a cor e a lasca miúda mostra a madeira, mais no pé.
+    const matTinta = new THREE.MeshStandardMaterial({ color: 0xffffff, map: mapa, normalMap: mat.normalMap, vertexColors: true, roughness: .8, name: 'hd-cen-tinta' }); matTinta.normalScale.set(2.2, 2.2); lixo.push(matTinta);
+    // Madeira crua e pintada dividem o mesmo programa: só o uniforme hdTinta muda.
+    if (mapa) for (const [m, tinta] of [[mat, 0], [matTinta, 1]]) { m.onBeforeCompile = (sh) => { sh.uniforms.hdTinta = { value: tinta };
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vHdPos;').replace('#include <project_vertex>', '#include <project_vertex>\nvHdPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>\nvarying vec3 vHdPos; uniform float hdTinta;${kit.RUIDO_GLSL || ''}`).replace('#include <map_fragment>', '').replace('#include <color_fragment>', `
+        if (hdTinta > 0.5) { vec3 hdTx = texture2D(map, vMapUv).rgb, hdL = vec3(0.3, 0.59, 0.11); float hdV = clamp(dot(hdTx, hdL) / max(dot(texture2D(map, vMapUv, 9.0).rgb, hdL), 0.01), 0.3, 1.8);
+          vec2 hdQ = vec2(vHdPos.x + vHdPos.z, vHdPos.y); float hdPe = 1.0 - smoothstep(0.04, 0.5, vHdPos.y);
+          float hdLasca = smoothstep(0.55, 0.62, hdN(hdQ * vec2(23.0, 11.0)) * 0.5 + hdN(hdQ * vec2(61.0, 33.0)) * 0.3 + (1.0 - hdV) * 0.32 + hdPe * 0.34);
+          vec3 hdNua = mix(vec3(dot(hdTx, hdL)), hdTx, 0.45) * 2.3;
+          vec3 hdPint = vColor * mix(0.78, 1.12, hdV - 0.3) * mix(0.82, 1.1, hdN(vec2(hdQ.x * 27.0, hdQ.y * 0.8)));
+          diffuseColor.rgb = mix(hdPint, hdNua, hdLasca) * mix(0.74, 1.0, smoothstep(0.0, 0.35, vHdPos.y)); } else {
+          #include <map_fragment>
+          #include <color_fragment>
+        }`); };
+      m.customProgramCacheKey = () => 'sertao-hd-tinta3'; }
+    for (const [geos, m, nome] of [[liso.geos(), matLiso, 'barro'], [of.geos(), mat, 'cerca'], [pin.geos(), matTinta, 'tinta']]) for (const g of geos) { lixo.push(g); if (!g.index.count) continue;
       const malha = new THREE.Mesh(g, m); malha.name = `sertao-hd-${nome}`; malha.receiveShadow = true; malha.userData.nonSolidSurface = true; grupo.add(malha); }
   }
 
@@ -697,20 +716,20 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
       const s0 = { mats: [], anel: pt.ring, mat0: m, ageo: pt.ring.geometry, ro: pt.ring.renderOrder, rs: pt.ring.receiveShadow, flag: pt.flag, geo: pt.flag?.geometry, obr: pt.flag?.onBeforeRender, sombra: [pt.pole, pt.flag].filter((o) => o && !o.castShadow) }; vistos.set(m, s0);
       for (const o of s0.sombra) o.castShadow = true;
       // Faixa de cal gasta e íntegra: material iluminado (pega sombra como o chão); cor e opacidade seguem vindo do jogo.
-      const cal = new THREE.MeshStandardMaterial({ color: m.color.clone(), transparent: true, opacity: m.opacity, depthWrite: false, roughness: 1, metalness: 0, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3, name: 'hd-cen-anel' });
+      const cal = new THREE.MeshStandardMaterial({ color: m.color.clone(), transparent: true, opacity: m.opacity, depthWrite: false, roughness: 1, metalness: 0, side: THREE.DoubleSide, forceSinglePass: true, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3, name: 'hd-cen-anel' });
       cal.userData.hdCal = true; s0.cal = cal;
       cal.onBeforeCompile = (sh) => { mundoXZ(sh, kit.RUIDO_GLSL || ''); sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
         { float hdAng = atan(vHdL.y, vHdL.x), hdR = (length(vHdL) - 1.0) / 0.066;
           float hdT = dot(texture2D(hdSolo, vHdW / 4.0).rgb, ${LUMA}) / 0.0793, hdT3 = dot(texture2D(hdSolo, vHdW / 1.333 + 0.37).rgb, ${LUMA}) / 0.0793;
           float hdPinc = hdN(vec2(hdAng * 30.0, hdR * 1.6 + 3.0)) * 0.6 + hdN(vec2(hdAng * 110.0, hdR * 4.0)) * 0.4, hdGasto = hdN(vHdW * 1.3) * 0.6 + hdN(vHdW * 5.0 + 4.0) * 0.4;
-          diffuseColor.rgb *= ${(opts.anel?.cal ?? .95).toFixed(3)} * vec3(1.02, 1.0, 0.96) * mix(0.84, 1.08, hdPinc) * mix(0.88, 1.06, hdGasto) * mix(1.0, clamp(hdT, 0.62, 1.3), 0.5) * mix(1.0, clamp(hdT3, 0.7, 1.25), 0.35);
+          diffuseColor.rgb *= ${(opts.anel?.cal ?? 1.3).toFixed(3)} * vec3(1.02, 1.0, 0.96) * mix(0.84, 1.08, hdPinc) * mix(0.88, 1.06, hdGasto) * mix(1.0, clamp(hdT, 0.62, 1.3), 0.5) * mix(1.0, clamp(hdT3, 0.7, 1.25), 0.35);
           diffuseColor.rgb *= 1.0 - 0.14 * (1.0 - smoothstep(0.05, 0.13, abs(abs(hdR) - 0.58)));
           diffuseColor.a = mix(0.86, 1.0, diffuseColor.a) * (1.0 - smoothstep(0.8 + 0.14 * hdN(vec2(hdAng * 45.0, hdR + 2.0)), 1.0, abs(hdR))); }`); };
-      cal.customProgramCacheKey = () => `sertao-hd-anel7-${opts.anel?.cal ?? .95}`;
+      cal.customProgramCacheKey = () => `sertao-hd-anel8-${opts.anel?.cal ?? 1.3}`;
       pt.ring.material = cal; pt.ring.geometry = faixa; pt.ring.renderOrder = 2; pt.ring.receiveShadow = true;
       if (pt.zone?.material) s0.mats.push(troca(pt.zone.material, (sh) => { mundoXZ(sh); sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
         { float hdT = dot(texture2D(hdSolo, vHdW / 4.0).rgb, ${LUMA}) / 0.0793, hdT3 = dot(texture2D(hdSolo, vHdW / 1.333 + 0.37).rgb, ${LUMA}) / 0.0793;
-          diffuseColor.rgb *= mix(1.0, clamp(hdT, 0.45, 1.7), 0.6) * mix(1.0, clamp(hdT3, 0.5, 1.6), 0.45); diffuseColor.a *= ${(opts.anel?.disco ?? .85).toFixed(3)}; }`); }, 'sertao-hd-disco2'));
+          diffuseColor.rgb *= mix(1.0, clamp(hdT, 0.45, 1.7), 0.6) * mix(1.0, clamp(hdT3, 0.5, 1.6), 0.45); diffuseColor.a *= ${(opts.anel?.disco ?? .5).toFixed(3)}; }`); }, `sertao-hd-disco3-${opts.anel?.disco ?? .5}`));
       if (pt.flag?.material && opts.pano !== false) { pt.flag.geometry = pano; pt.flag.onBeforeRender = () => { tempo.value = performance.now() / 1000; };
         s0.mats.push(troca(pt.flag.material, (sh) => { sh.uniforms.hdT = tempo;
           sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float hdT; varying float vHdDobra;').replace('#include <begin_vertex>', `#include <begin_vertex>
