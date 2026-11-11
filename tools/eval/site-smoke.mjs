@@ -31,8 +31,7 @@
 //   SITE_URL=https://... node tools/eval/site-smoke.mjs
 //   node tools/eval/site-smoke.mjs --json
 //   node tools/eval/site-smoke.mjs --mutante=jsonld # prova que o portão morde
-//   node tools/eval/site-smoke.mjs --mutante=proxy-sem-corpo
-//
+//   node tools/eval/site-smoke.mjs --mutante=sitemap-index-curto
 // Sai 1 se qualquer checagem falhar, então serve de gate no CI sem parser.
 // ============================================================================
 import { spawn } from 'node:child_process';
@@ -128,7 +127,10 @@ const CONTRATO = [
       if (!Array.isArray(itens) || !itens.length) return `<${raiz}> sem itens`;
       const semLoc = itens.findIndex((item) => typeof item.loc !== 'string' || !item.loc.trim());
       if (semLoc !== -1) return `<${raiz}> item ${semLoc + 1} sem <loc>`;
-      if (raiz === 'urlset') {
+      if (raiz === 'sitemapindex') {
+        // sitemap.ts só usa índice quando total > 5000; nesse caso há pelo menos dois shards.
+        if (itens.length < 2) return `${itens.length} <sitemap>, mínimo 2 no índice`;
+      } else {
         const minimo = EXTERNO ? 8 : (RANKING_ON ? 9 : 8);
         if (itens.length < minimo) return `${itens.length} <url>, mínimo ${minimo} no urlset`;
       }
@@ -175,6 +177,10 @@ async function pegar(rota, redirect = 'follow') {
   // --mutante: fecha <loc> com a tag errada para provar que o parser morde.
   if (MUTANTE === 'sitemap-malformado' && rota === '/sitemap.xml') {
     corpo = corpo.replace(/<\/loc>/i, '</url>');
+  }
+  // --mutante: remove um shard para provar o mínimo do sitemapindex.
+  if (MUTANTE === 'sitemap-index-curto' && rota === '/sitemap.xml') {
+    corpo = corpo.replace(/<sitemap>[\s\S]*?<\/sitemap>/i, '');
   }
   return { status: r.status, corpo, headers: r.headers };
 }
