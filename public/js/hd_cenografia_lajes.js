@@ -31,6 +31,8 @@ export function ruidoTex() {
   t.generateMipmaps = true; t.anisotropy = 4; t.name = 'hd-ruido'; t.needsUpdate = true; return t;
 }
 
+// Depois de subir para a GPU a cópia em JS não serve para nada (ninguém faz raycast nestas malhas).
+export function soltaAoSubir(g) { g.computeBoundingSphere(); for (const a of [...Object.values(g.attributes), g.index]) a?.onUpload(function () { this.array = null; }); return g; }
 // Malha fundida com cor por vértice: caixas, tubos e panos viram um draw call só.
 function fundidor() {
   const pos = [], cor = [], c = new THREE.Color(), m = new THREE.Matrix4(), e = new THREE.Euler(), q = new THREE.Quaternion();
@@ -60,7 +62,7 @@ function fundidor() {
       return F;
     },
     tris: () => pos.length / 9,
-    geo() { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(cor, 3)); g.computeVertexNormals(); return g; },
+    geo() { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(cor, 3)); g.computeVertexNormals(); return soltaAoSubir(g); },
   };
   return F;
 }
@@ -192,7 +194,7 @@ export function ceuLajes(scene, sol, U, { nuvens = true, raio = 100 } = {}) {
         vec2 p = d.xz / (d.y + 0.40);
         float f = texture2D(hdRuido, p * 0.21 + 0.63).r * 0.60 + texture2D(hdRuido, p * 0.77 + 0.4).g * 0.28 + texture2D(hdRuido, p * 2.6).a * 0.12;
         float n = smoothstep(0.555, 0.61, f) * smoothstep(0.012, 0.05, d.y) * uNuvem, miolo = smoothstep(0.56, 0.82, f);
-        vec3 nu = mix(vec3(0.95, 0.95, 0.94), vec3(0.42, 0.48, 0.60), miolo * 0.8) * (1.0 - 0.25 * pow(s, 3.0));
+        vec3 nu = mix(vec3(0.74, 0.75, 0.76), vec3(0.40, 0.45, 0.56), miolo * 0.8) * (1.0 - 0.25 * pow(s, 3.0));
         c = mix(c, nu, n);
         float a = atan(d.z, d.x), h = 0.050 + 0.020 * sin(a * 3.0 + 1.0) + 0.012 * sin(a * 7.0 + 2.3) + 0.006 * sin(a * 17.0);
         c = mix(c, mix(uH * 0.84, vec3(0.10, 0.16, 0.22), 0.45), smoothstep(h, h - 0.004, d.y));
@@ -460,7 +462,7 @@ export function cenografiaLajes(scene, opts = {}) {
   if (lig('fios')) info.fios = fios(grupo, rngDe(7717), topo, mundo, mat);
   if (lig('fachada')) info.fachada = fachada(grupo, rngDe(9311), mundo, opts.janelas || [], mat);
   if (lig('telhados')) info.telhados = telhados(grupo, rngDe(40123), topo, mundo, () => vivo, mat);
-  grupo.traverse((o) => { if (o.isMesh) o.castShadow = false; });
+  grupo.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.raycast = () => {}; } });
   scene.add(grupo);
   return { grupo, info, morro: lig('morro'), desliga() {
     vivo = false; scene.remove(grupo); voltaMorro(); mat.dispose();

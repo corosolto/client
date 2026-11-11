@@ -88,8 +88,8 @@ function tijolos(P, r) {
   const h = .158, w = .262; let l = 0;
   for (let y = .012; y < 1; y += h + .018, l++) for (let x = -(l % 2) * w * .5 - .01; x < 1; x += w + .016) {
     const g = .8 + r() * .38, yy = y + (r() - .5) * .008;
-    P.ret(x, yy, w, h, tom([142, 68, 58], g), .75);
-    for (let k = 1; k < 6; k++) P.ret(x, yy + k * h / 6, w, .006, tom([106, 50, 44], g), .6);
+    P.ret(x, yy, w, h, tom([150, 90, 66], g), .75);
+    for (let k = 1; k < 6; k++) P.ret(x, yy + k * h / 6, w, .006, tom([116, 68, 52], g), .6);
   }
   for (let i = 0; i < 44; i++) P.ret(r(), r(), .02 + r() * .06, .008 + r() * .02, '#9a968c', .85);
 }
@@ -170,12 +170,13 @@ export function atlasPortas() {
 }
 
 // Pichação. [arquivo em /img/decals, altura no atlas (px), tinta de uma cor só ou null, categoria]
-const ARTE = [['or-graf-coro', 140, null, 'graf'], ['or-graf-treta', 140, null, 'graf'], ['or-stencil-capivara', 140, null, 'alto'],
+const ARTE = [['or-graf-coro', 150, null, 'graf'], ['or-graf-treta', 150, null, 'graf'], ['or-mitico-mural', 200, null, 'graf'], ['or-stencil-capivara', 140, null, 'alto'], ['or-stencil-pomba', 140, null, 'alto'],
+  ['or-pixo-rj-subida', 56, null, 'fino'], ['or-pixo-rj-colina', 56, '#20418c', 'fino'], ['or-pixo-rj-encosta', 56, null, 'fino'],
   ['or-pixo-rj-baile', 60, null, 'tag'], ['or-pixo-rj-pipa', 64, '#20418c', 'tag'], ['or-pixo-rj-samba', 68, null, 'tag'], ['or-pixo-rj-bonde', 64, '#e4e2da', 'tag'], ['or-pixo-rj-grau', 80, null, 'tag'],
   ['or-pixo-rj-funk', 60, '#b4b8bc', 'tag'], ['or-pixo-rj-zn', 60, '#20418c', 'tag'], ['or-pixo-rj-pique', 60, null, 'tag'],
   ['or-pixo-sp-antena', 170, null, 'alto'], ['or-pixo-sp-andaime', 150, null, 'alto'], ['or-pixo-sp-norte26', 170, '#e4e2da', 'alto'], ['or-pixo-sp-zl26', 170, null, 'alto'],
   ['or-pixo-sp-dupla-portao-grade', 120, '#20418c', 'alto'], ['or-pixo-sp-laje', 170, null, 'alto'], ['or-pixo-sp-morro', 170, '#b4b8bc', 'alto']];
-export const FRASES = [['PROIBIDO', 'JOGAR LIXO', '#1c1c1c'], ['VENDE-SE', 'GELO', '#1d3f8a'], ['GELADINHO', 'R$1', '#1f6a3a'], ['CONSERTA-SE', 'FOGÃO', '#1c1c1c'], ['DEUS É FIEL', '', '#1d3f8a'], ['LAVA JATO', '', '#e6e4dc'], ['NÃO', 'ESTACIONE', '#e6e4dc']];
+export const FRASES = [['PROIBIDO', 'JOGAR LIXO', '#1c1c1c'], ['VENDE-SE', 'GELO', '#1d3f8a'], ['GELADINHO', 'R$1', '#1f6a3a'], ['CONSERTA-SE', 'FOGÃO', '#1c1c1c'], ['DEUS É FIEL', '', '#1d3f8a'], ['LAVA JATO', '', '#e6e4dc'], ['NÃO', 'ESTACIONE', '#e6e4dc'], ['ÁGUA E GÁS', 'ENTREGA', '#1d3f8a'], ['CUIDADO', 'CÃO BRAVO', '#1c1c1c']];
 const NUMEROS = ['27', '112', '9-A', '48'];
 const FONTE = '"Arial Narrow", "Helvetica Neue", Arial, sans-serif';
 // Letra pintada à mão: cada letra com giro, altura e peso de pincel próprios.
@@ -202,6 +203,8 @@ function montaAtlas(imgs) {
     letreiro(g, r, 'MATERIAL DE CONSTRUÇÃO', x + 16, y + 38, 348, 34, 'rgba(29,63,138,.85)'); letreiro(g, r, 'AREIA · PEDRA · CIMENTO', x + 16, y + 78, 348, 28, 'rgba(28,28,28,.8)'); letreiro(g, r, 'ENTREGA NA LAJE', x + 16, y + 112, 348, 26, 'rgba(29,63,138,.85)');
     gasta(g, r, x, y, 380, 140, 900); } });
   NUMEROS.forEach((n, i) => itens.push({ id: `num${i}`, cat: 'num', w: 78, h: 44, pinta(x, y) { g.fillStyle = i % 2 ? '#1d3f8a' : '#e6e4dc'; g.fillRect(x + 2, y + 3, 74, 38); letreiro(g, r, n, x + 6, y + 23, 66, 30, i % 2 ? '#e6e4dc' : '#1c1c1c'); gasta(g, r, x, y, 78, 44, 40); } }));
+  itens.push({ id: 'escorrido', cat: 'esc', w: 96, h: 128, pinta(x, y) { for (let i = 0; i < 26; i++) { const sx = x + 4 + r() * 86, h = 30 + r() * r() * 94, gr = g.createLinearGradient(0, y, 0, y + h);
+    gr.addColorStop(0, `rgba(26,24,20,${.25 + r() * .4})`); gr.addColorStop(1, 'rgba(26,24,20,0)'); g.fillStyle = gr; g.fillRect(sx, y + 1, 1 + r() * 4, h); } } });
   itens.sort((p, q) => q.h - p.h);
   let x = 2, y = 2, linha = 0; const ok = [];
   for (const it of itens) { if (x + it.w + 2 > N) { x = 2; y += linha + 4; linha = 0; } if (y + it.h + 2 > N) continue;
@@ -211,11 +214,11 @@ function montaAtlas(imgs) {
   return { t, itens: ok };
 }
 
-const PAREDES = new Set(['cream', 'ochre', 'rose', 'sage', 'adobe', 'brick', 'concrete']);
-const MEDIDAS = { tag: [1.0, 1.5, 1.25, 2.0], frase: [1.5, 1.9, 1.5, 2.1], alto: [0, 0, 0, 0], graf: [2.7, 3.1, 0, 0], reclame: [2.9, 3.1, 0, 0] };
+const PAREDES = new Set(['cream', 'ochre', 'rose', 'sage', 'adobe', 'brick', 'concrete']), TIJOLO = new Set(['brick', 'ochre', 'rose']), UMA_COR = new Set(['tag', 'fino', 'alto', 'frase']);
+const MEDIDAS = { tag: [1.3, 1.9, 1.25, 2.0], fino: [1.3, 1.8, 1.2, 1.8], frase: [1.7, 2.3, 1.5, 2.1], alto: [0, 0, 0, 0], graf: [3.0, 3.6, 0, 0], reclame: [2.9, 3.3, 0, 0] };
 // Decalques colados à parede (8 mm), sem colisão. Cada lugar é conferido com raios: 15 pontos na mesma parede lisa.
 // Na faixa do corpo só entra traço fino: tag de spray com mais de 80 cm de largura sobe para acima de 2 m.
-export function pichacoes(scene, mundo, U, portas = []) {
+export function pichacoes(scene, mundo, U, portas = [], janelas = []) {
   let vivo = true, malha = null, tex = null, mat = null; const info = { n: 0, usados: [] };
   const carrega = (nome) => new Promise((ok) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = `/img/decals/${nome}.png`; });
   Promise.all(ARTE.map(([nome]) => carrega(nome))).then((imgs) => {
@@ -223,8 +226,9 @@ export function pichacoes(scene, mundo, U, portas = []) {
     const { t, itens } = montaAtlas(imgs); tex = t;
     const alvos = []; scene.traverse((o) => { if (o.isMesh && o.visible && /^lajes-(alvenaria|entorno)/.test(o.name)) alvos.push(o); });
     const raio = new THREE.Raycaster(), de = new THREE.Vector3(), dir = new THREE.Vector3(), r = rngDe(60611), cols = mundo.colliders || [], niveis = mundo.levels || [];
+    let parede = '';
     const toca = (x, y, z, nx, nz) => { raio.set(de.set(x + nx * .5, y, z + nz * .5), dir.set(-nx, 0, -nz)); raio.far = .62; let h = null; try { h = raio.intersectObjects(alvos, false)[0]; } catch (e) { h = null; }
-      return h && PAREDES.has(h.object.material.name) ? h.distance : null; };
+      parede = h ? h.object.material.name : ''; return PAREDES.has(parede) ? h.distance : null; };
     const livre = (x, y, z) => Math.abs(x) < 18.6 && Math.abs(z) < 31.6 && !cols.some((c) => x > c.minX && x < c.maxX && z > c.minZ && z < c.maxZ && y > c.minY && y < c.maxY);
     const base = (x, z) => (niveis.some((l) => x > l.x0 && x < l.x1 && z > l.z0 && z < l.z1) ? 3.1 : 0);
     const pos = [], uv = [], hw = [];
@@ -232,9 +236,10 @@ export function pichacoes(scene, mundo, U, portas = []) {
       const tx = -nz, tz = nx; let mn = 9, mx = -9;
       for (const a of [-.46, -.23, 0, .23, .46]) for (const b of [-.44, 0, .44]) { const d = toca(x + tx * a * w, yc + b * h, z + tz * a * w, nx, nz); if (d === null) return false; mn = Math.min(mn, d); mx = Math.max(mx, d); }
       if (mx - mn > .012) return false;
+      if (TIJOLO.has(parede) && UMA_COR.has(it.cat)) op = -op;
       const f = .5 - mn + .008, P = (a, b) => [x + nx * f + tx * a * w / 2, yc + b * h / 2, z + nz * f + tz * a * w / 2], [u0, v0, u1, v1] = it.uv, s = x * tx + z * tz;
       for (const [a, b, u, v] of [[1, -1, u0, v0], [-1, -1, u1, v0], [-1, 1, u1, v1], [1, -1, u0, v0], [-1, 1, u1, v1], [1, 1, u0, v1]]) { pos.push(...P(a, b)); uv.push(u, v); hw.push(s + a * w / 2, yc + b * h / 2, op); }
-      info.n++; info.usados.push(it.id); return true;
+      info.n++; info.usados.push(`${it.id} ${x.toFixed(1)} ${yc.toFixed(1)} ${z.toFixed(1)} ${w.toFixed(1)}`); return true;
     };
     // Faces de casa viradas para onde se anda; o beco central e a praça vêm primeiro e são varridos de 70 em 70 cm.
     const faces = []; let nf = 0;
@@ -246,13 +251,17 @@ export function pichacoes(scene, mundo, U, portas = []) {
           if (!livre(x + nx * .7, b + 1.3, z + nz * .7) || c.maxY < b + 2.3) continue;
           faces.push({ x, z, nx, nz, b, s, id: nf, centro, teto: c.maxY, ordem: centro + r() }); } } }
     faces.sort((p, q) => p.ordem - q.ordem);
-    const fila = []; for (const it of itens) { if (it.cat === 'num') continue; fila.push(it); if (it.cat === 'tag' || it.cat === 'frase' || it.cat === 'reclame') fila.push(it); }
+    const fila = []; for (const it of itens) { if (it.cat === 'num' || it.cat === 'esc') continue; fila.push(it); if (it.cat === 'tag' || it.cat === 'frase' || it.cat === 'reclame') fila.push(it); }
     for (let i = fila.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [fila[i], fila[j]] = [fila[j], fila[i]]; }
     const postas = [];
-    for (const f of faces) { if (!fila.length || info.n >= 56) break;
+    // Grafite grande primeiro, em parede alta (acima de 2,1 m), antes que as tags ocupem o lugar.
+    for (const it of itens.filter((q) => q.cat === 'graf')) for (const f of faces) { if (f.teto < f.b + 5 || postas.some((p) => Math.hypot(p.x - f.x, p.z - f.z) < 4 && Math.abs(p.b - f.b) < 1)) continue;
+      const w = 3.0 + r() * .6, h = w * it.h / it.w; if (!cola(it, f.x, f.b + 2.15 + h / 2, f.z, f.nx, f.nz, w, h, .95) && !cola(it, f.x, f.b + 2.15 + h * .4, f.z, f.nx, f.nz, w * .8, h * .8, .95)) continue;
+      postas.push(f); fila.splice(fila.indexOf(it), 1); break; }
+    for (const f of faces) { if (!fila.length || info.n >= 70) break;
       if (postas.some((p) => Math.hypot(p.x - f.x, p.z - f.z) < 1.9 && Math.abs(p.b - f.b) < 1)) continue;
       feito: for (let k = 0; k < Math.min(3, fila.length); k++) for (const esc of f.centro < 2 ? [1, .72, .52] : [1, .55]) { const it = fila[k], m = MEDIDAS[it.cat], asp = it.w / it.h; let w, h, yc;
-        if (it.cat === 'alto') { h = (1.25 + r() * .3) * esc; w = h * asp; yc = f.b + 2.15 + r() * .35 + h / 2; }
+        if (it.cat === 'alto') { h = (1.5 + r() * .4) * esc; w = h * asp; yc = f.b + 2.15 + r() * .35 + h / 2; }
         else { w = (m[0] + r() * (m[1] - m[0])) * esc; h = w / asp; yc = m[2] ? f.b + m[2] + r() * (m[3] - m[2]) : f.b + 2.1 + r() * .3 + h / 2;
           if (it.cat === 'tag' && w > .8) yc = f.b + 2.0 + r() * .3 + h / 2; }
         if (yc + h / 2 > f.teto - .15) continue;
@@ -260,19 +269,23 @@ export function pichacoes(scene, mundo, U, portas = []) {
     // Número da casa pintado à mão ao lado de algumas portas.
     const nums = itens.filter((it) => it.cat === 'num'), v = new THREE.Vector3();
     portas.forEach((p, i) => { const n = p.userData.facadeNormal; if (!n || !nums.length || r() > .5) return; p.getWorldPosition(v);
-      cola(nums[i % nums.length], v.x - n[0] * .07, v.y + .62, v.z + (r() < .5 ? .78 : -.78), n[0], n[2], .3, .17, .95); });
+      cola(nums[i % nums.length], v.x - n[0] * .07, v.y + 1.24, v.z + (r() < .5 ? .78 : -.78), n[0], n[2], .3, .17, .95); });
+    // Escorrido sob o peitoril: tenta os dois lados do vão, o raio só acha parede pelo lado de fora.
+    const esc = itens.find((it) => it.cat === 'esc'); info.escorridos = 0;
+    if (esc) for (const j of janelas) for (const sn of [1, -1]) { const nx = j.eixo === 0 ? sn : 0, nz = j.eixo === 0 ? 0 : sn;
+      if (cola(esc, j.x, j.y - j.h / 2 - .34, j.z, nx, nz, j.w * .92, .4, .6)) { info.escorridos++; info.n--; info.usados.pop(); break; } }
     if (!pos.length) { t.dispose(); tex = null; return; }
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-    geo.setAttribute('hdW', new THREE.Float32BufferAttribute(hw, 3)); geo.computeVertexNormals();
+    geo.setAttribute('hdW', new THREE.Float32BufferAttribute(hw, 3)); geo.computeVertexNormals(); geo.computeBoundingSphere(); for (const a of Object.values(geo.attributes)) a.onUpload(function () { this.array = null; });
     mat = new THREE.MeshStandardMaterial({ map: t, transparent: true, depthWrite: false, roughness: .95, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, name: 'hd-pichacao' });
     // A tinta some em manchas e perto do pé da parede, como spray velho sobre reboco.
     mat.onBeforeCompile = (s) => { s.uniforms.hdRuido = U.hdRuido;
       s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute vec3 hdW; varying vec3 vHdW;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHdW = hdW;');
       s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vHdW; uniform sampler2D hdRuido;')
         .replace('#include <map_fragment>', `#include <map_fragment>
-          { vec4 hdN = texture2D(hdRuido, vHdW.xy * 0.71); diffuseColor.a *= vHdW.z * (0.5 + 0.5 * smoothstep(0.25, 0.55, hdN.r * 0.55 + hdN.b * 0.45)); diffuseColor.rgb *= 0.82; }`); };
-    mat.customProgramCacheKey = () => 'hd-pichacao2';
-    malha = new THREE.Mesh(geo, mat); malha.name = 'hd-pichacao'; malha.castShadow = false; malha.receiveShadow = true; malha.renderOrder = 2; scene.add(malha);
+          { vec4 hdN = texture2D(hdRuido, vHdW.xy * 0.71); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.82, 0.81, 0.77), step(vHdW.z, 0.0)); diffuseColor.a *= abs(vHdW.z) * (0.68 + 0.32 * smoothstep(0.25, 0.55, hdN.r * 0.55 + hdN.b * 0.45)); diffuseColor.rgb *= 0.88; }`); };
+    mat.customProgramCacheKey = () => 'hd-pichacao4';
+    malha = new THREE.Mesh(geo, mat); malha.name = 'hd-pichacao'; malha.castShadow = false; malha.raycast = () => {}; malha.receiveShadow = true; malha.renderOrder = 2; scene.add(malha);
   }).catch(() => {});
   return { info, desliga() { vivo = false; if (malha) { scene.remove(malha); malha.geometry.dispose(); } mat?.dispose(); tex?.dispose(); } };
 }
