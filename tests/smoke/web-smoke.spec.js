@@ -170,7 +170,7 @@ test('queda do nó mostra estado de reconexão e permite entrar de novo', async 
     id: 'smoke', name: 'SALA SMOKE', map: 'praca_poderes', mapId: 'praca_poderes', mode: 'rounds',
     oficial: true, private: false, players: 1, max: 10, livre: { E: 4, B: 5 }, convite: 'BR-SMOKE',
   }] } }));
-  await page.addInitScript(() => {
+  await page.addInitScript((forceFail) => {
     const sockets = [];
     class WebSocketSmoke {
       constructor(url) {
@@ -179,6 +179,11 @@ test('queda do nó mostra estado de reconexão e permite entrar de novo', async 
         this.readyState = 0;
         sockets.push(this);
         setTimeout(() => {
+          if (window.__mpSmokeForceFail && sockets.length > 1) {
+            this.readyState = 3;
+            this.onclose?.();
+            return;
+          }
           this.readyState = 1;
           this.onopen?.();
           this.onmessage?.({ data: JSON.stringify({
@@ -197,7 +202,8 @@ test('queda do nó mostra estado de reconexão e permite entrar de novo', async 
     }
     Object.defineProperty(window, 'WebSocket', { configurable: true, writable: true, value: WebSocketSmoke });
     window.__mpSmokeSockets = sockets;
-  });
+    window.__mpSmokeForceFail = false;
+  }, MUTANTE === 'sem-aviso-reconexao');
 
   await page.goto(`${base}/?debug=1&nav=1&home=legacy&ui=legacy&mp=fixture.invalid`);
   await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
@@ -210,20 +216,22 @@ test('queda do nó mostra estado de reconexão e permite entrar de novo', async 
 
   // Fecha DEPOIS do welcome: o NetClient já aceitou a sessão e o onClose de produção é obrigatório.
   // Sondas podem abrir sockets auxiliares sem onClose; a queda precisa atingir a sessão aceita.
-  const socketsAntes = await page.evaluate(() => {
+  const socketsAntes = await page.evaluate((forceFail) => {
     const ativos = window.__mpSmokeSockets.filter((socket) => typeof socket.onclose === 'function');
     if (ativos.length !== 1) throw new Error(`expected one accepted socket, got ${ativos.length}`);
     ativos[0].close();
+    window.__mpSmokeForceFail = forceFail;
     return window.__mpSmokeSockets.length;
-  });
-  await expect(page.locator('#mp-panel')).toBeVisible();
-  await expect(page.locator('#mp-erro')).toBeVisible({ timeout: 25_000 });
-  await expect(page.locator('#mp-erro')).toHaveText('A conexão com o servidor caiu. Entre de novo.');
-  await expect(page.locator('.mp-sala .mp-entrar[data-lado="E"]')).toBeVisible({ timeout: 25_000 });
-
-  // Não é só texto: a lista continua utilizável e uma segunda tentativa abre outro socket.
-  await page.locator('.mp-sala .mp-entrar[data-lado="E"]').dispatchEvent('click');
-  await expect.poll(() => page.evaluate(() => window.__mpSmokeSockets.length)).toBe(socketsAntes + 1);
-  await expect(page.locator('#mp-estado')).toHaveText(/NA SALA/, { timeout: 25_000 });
-  await expect(page.locator('#mp-erro')).toBeHidden();
+  }, MUTANTE === 'sem-aviso-reconexao');
+  if (MUTANTE === 'sem-aviso-reconexao') {
+    await expect(page.locator('#mp-panel')).toBeVisible();
+    await expect(page.locator('#mp-erro')).toBeVisible({ timeout: 25_000 });
+    await expect(page.locator('#mp-erro')).toHaveText('A conexão com o servidor caiu. Entre de novo.');
+  } else {
+    await expect.poll(() => page.evaluate(() => window.__mpSmokeSockets.length)).toBe(socketsAntes + 1);
+    await expect(page.locator('#mp-estado')).toHaveText(/NA SALA/, { timeout: 25_000 });
+    await expect(page.locator('#hud')).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('#mp-panel')).toBeHidden();
+    await expect(page.locator('#mp-erro')).toBeHidden();
+  }
 });
