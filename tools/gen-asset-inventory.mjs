@@ -67,12 +67,28 @@ function referenceCorpus(root = ROOT) {
 
 const escaped = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const dynamicCache = new Map();
+function dynamicPatterns(corpus) {
+  if (dynamicCache.has(corpus)) return dynamicCache.get(corpus);
+  const patterns = [];
+  for (const match of corpus.matchAll(/['"`]([^'"`\r\n]*\$\{[^'"`\r\n]*\.(?:glb|webp|jpe?g|png|json))['"`]/g)) {
+    const template = match[1].replace(/^\//, '').split(/[?#]/)[0];
+    if (!ROOT_PATTERN.test(template)) continue;
+    const expression = `^${escaped(template).replace(/\\\$\\\{[^}]+\\\}/g, '(.+)')}$`;
+    patterns.push(new RegExp(expression));
+  }
+  dynamicCache.set(corpus, patterns);
+  return patterns;
+}
+
 export function isReferenced(path, corpus) {
   const base = basename(path);
-  const stem = base.replace(/\.[^.]+$/, '');
-  return corpus.includes(path)
-    || new RegExp(`(?<![\\w.-])${escaped(base)}(?![\\w.-])`).test(corpus)
-    || (stem.length >= 4 && new RegExp(`(?<![\\w.-])${escaped(stem)}(?![\\w.-])`).test(corpus));
+  if (corpus.includes(path) || new RegExp(`(?<![\\w.-])${escaped(base)}(?![\\w.-])`).test(corpus)) return true;
+  for (const pattern of dynamicPatterns(corpus)) {
+    const match = pattern.exec(path);
+    if (match && match.slice(1).every((value) => new RegExp(`['"\`]${escaped(value)}['"\`]`).test(corpus))) return true;
+  }
+  return false;
 }
 
 export function literalReferences(sources) {
