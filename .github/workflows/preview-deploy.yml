@@ -1,18 +1,24 @@
 # preview-deploy — PUBLICA o que já veio compilado, sem executar nada do fork.
 #
-# Metade 2 de 2 do preview de fork. Este job TEM o `VERCEL_TOKEN`, e por isso a
-# regra dele é uma só: nunca rodar código que veio do PR. Ele não faz checkout da
-# branch do fork, não roda `npm ci`, não roda script de build. Baixa o artefato
-# produzido pelo `preview-build.yml` — bytes estáticos de `.vercel/output` — e
-# chama `vercel deploy --prebuilt`, que apenas envia arquivo.
+# Aposentado com o build (fase 2): o preview de PR agora é cf-preview.yml (Cloudflare).
+# Este workflow continua em `workflow_run` porque é o que publica o preview de
+# EMERGÊNCIA: alguém com write dispara `preview-build` por `workflow_dispatch`, e a
+# conclusão dele acende este job com o contexto base e o VERCEL_TOKEN. Como o build
+# não roda mais por push de PR, nenhum PR gasta Vercel aqui.
 #
-# `workflow_run` é o que torna isso possível: ele roda no contexto do repositório
-# BASE, com segredo, mesmo quando o PR original veio de fork.
+# O desenho de segurança é o mesmo desde 22/08: este job TEM o `VERCEL_TOKEN`, e por
+# isso a regra dele é uma só: nunca rodar código que veio do PR. Ele não faz checkout
+# da branch do fork, não roda `npm ci`, não roda script de build. Baixa o artefato
+# produzido pelo `preview-build.yml` — bytes estáticos de `.vercel/output` — e chama
+# `vercel deploy --prebuilt`, que apenas envia arquivo.
 #
 # ATENÇÃO A QUEM FOR MEXER: qualquer passo aqui que execute conteúdo do artefato
 # (um `npm run`, um `node` sobre arquivo baixado, um `bash` de script do fork)
 # desfaz a separação inteira e devolve o token para as mãos de quem abriu o PR. É
 # o que a régua PRV3 guarda.
+#
+# `workflow_run` roda no contexto do repositório BASE, com segredo, mesmo quando o
+# build veio de dispatch sobre ref de PR.
 name: preview-deploy
 
 on:
