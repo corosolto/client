@@ -4257,7 +4257,7 @@ function ensureTeamPreviews() {
     const box = document.querySelector(`#${btn} .team-chars`);
     if (!box || !(box.checkVisibility?.() ?? box.getClientRects().length > 0)) continue;
     if (teamPreviewsDone.has(lado) || teamPreviewsPending.has(lado)) continue;
-    const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id)).slice(0, 4);
+    const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id) && !personagemTravado(c)).slice(0, 4);
     if (!chars.length) continue;
     teamPreviewsPending.add(lado);
     box.innerHTML = chars.map(() => '<span class="tc-slot"></span>').join('');
@@ -4332,7 +4332,9 @@ function pickTeam(faction) {
   // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
   // nada de thumbnails de caixa montando aos poucos (o "minecraft" que o dono viu)
   showLoading('CARREGANDO PERSONAGENS…');
-  preloadCharacterAssets(chars.map(c => c.id)).catch(() => {}).then(mountCharList);
+  /* Travado pelo passe não é escolhível (o clique só explica o nível): a fileira usa o avatar
+     estático e o pack Studio dele não é baixado aqui. */
+  preloadCharacterAssets(chars.filter(c => !personagemTravado(c)).map(c => c.id)).catch(() => {}).then(mountCharList);
 }
 /* Ficha do personagem (tela de seleção): raridade + atributos derivados da arma inicial
    (charWeapon) e de um hash estável do id. É FLAVOR de apresentação no estilo CS2/Valorant —

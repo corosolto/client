@@ -755,6 +755,11 @@ const _rosterPool = (pool, want, quem, fallback, pinned = []) => {
    faz uma sala 5v5 ter DEZ vagas de gente, e não nove com um manequim do lado. */
 /* E e B são LADOS (pool único, `podeNoLado`); outra letra é facção de sala multiplayer antiga. */
 const _doLado = (f) => (c) => (f === 'E' || f === 'B' ? podeNoLado(c, f) : c.team === f);
+/* Personagem do passe (`passe` em characters.js) não entra no SORTEIO de bot: o corpo dele é
+   pack Studio (/packs/, R2 ainda não publicado) e ele fica travado até o servidor destravar
+   para quem joga. Sorteá-lo punha ~1/3 dos bots baixando pack, e sem pack o bot caía em caixa
+   (ARM2). Escalação explícita (pin no seletor) continua valendo. */
+const _sorteavel = (c) => !c.passe;
 /* Pin escalado pelo jogador: só vale se pode jogar no lado pedido e não está em uso. */
 const _pinnedDefs = (ids, doLado, usados) => (ids || [])
   .map((id) => CHARACTERS.find((c) => c.id === id))
@@ -765,18 +770,18 @@ export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCha
   const want = typeof teamSize === 'number'
     ? { ally: Math.max(0, teamSize - (dedicado ? 0 : 1)), enemy: teamSize }
     : { ally: Math.max(0, teamSize.allies | 0), enemy: Math.max(0, teamSize.enemies | 0) };
-  const allies = CHARACTERS.filter(_doLado(playerFaction));
+  const allies = CHARACTERS.filter((c) => _doLado(playerFaction)(c) && _sorteavel(c));
   const others = allies.filter(c => c.id !== playerCharId);
   const pinAlly = _pinnedDefs(pinned && pinned.ally, _doLado(playerFaction), new Set([playerCharId]));
   const allyDefs = _rosterPool(others.length ? others : allies,
-    want.ally, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId), pinAlly);
+    want.ally, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId && _sorteavel(c)), pinAlly);
   const usados = new Set([playerCharId, ...allyDefs.map(d => d.id)]);
-  const enemies = CHARACTERS.filter(_doLado(enemyFaction));
+  const enemies = CHARACTERS.filter((c) => _doLado(enemyFaction)(c) && _sorteavel(c));
   const pinEnemy = _pinnedDefs(pinned && pinned.enemy, _doLado(enemyFaction), usados);
   const enemiesLivres = enemies.filter(c => !usados.has(c.id));
   return {
     allyDefs,
-    enemyDefs: _rosterPool(enemiesLivres.length >= want.enemy ? enemiesLivres : enemies, want.enemy, `inimigos (${enemyFaction})`, CHARACTERS, pinEnemy),
+    enemyDefs: _rosterPool(enemiesLivres.length >= want.enemy ? enemiesLivres : enemies, want.enemy, `inimigos (${enemyFaction})`, CHARACTERS.filter(_sorteavel), pinEnemy),
   };
 }
 
@@ -3591,7 +3596,7 @@ export class Game {
     if (swapBot) {
       swapBot.team = oldTeam;
       const emCampo = new Set(this.bots.map(b => b.def?.id));
-      const doLadoVelho = CHARACTERS.filter(c => _doLado(oldFaction)(c) && c.id !== p.def.id);
+      const doLadoVelho = CHARACTERS.filter(c => _doLado(oldFaction)(c) && _sorteavel(c) && c.id !== p.def.id);
       const livres = doLadoVelho.filter(c => !emCampo.has(c.id));
       const defs = livres.length ? livres : doLadoVelho;
       // prefere GLB já carregado no preload da partida; fora dele o bot cairia no procedural
