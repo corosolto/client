@@ -47,7 +47,7 @@ export const ENTRADAS = Object.freeze([
   'public/models/viewmodels/coro/famas-hires.glb', 'public/models/viewmodels/coro/lmg-hires.glb',
   'public/models/viewmodels/coro/m4-hires.glb', 'public/models/viewmodels/coro/m92-hires.glb',
   'public/models/viewmodels/coro/md97-hires.glb', 'public/models/viewmodels/coro/mosin-hires.glb',
-  'public/models/viewmodels/coro/mp5-hires.glb', 'public/models/viewmodels/coro/pistol-hires.glb',
+  'public/models/viewmodels/coro/mp5-hires.glb', 'public/models/viewmodels/coro/p90-hires.glb', 'public/models/viewmodels/coro/pistol-hires.glb',
   'public/models/viewmodels/coro/scar-hires.glb', 'public/models/viewmodels/coro/sks-hires.glb',
   'public/models/viewmodels/coro/svd-hires.glb', 'public/models/viewmodels/coro/uzi-hires.glb',
   'public/models/viewmodels/coro/melee/knife-hires.glb',

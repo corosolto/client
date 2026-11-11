@@ -1,6 +1,6 @@
 {
  "o_que_e": "Placar do FP parado (idle) medido no navegador por tools/eval/vm-enquadramento-idle-check.mjs --assar; o CI confere com eval:vm-enquadramento-placar.",
- "hash": "0be2d52032b41d89",
+ "hash": "3cad5cc307b87e6a",
  "entradas": [
   "public/js/data/vmconfig.js",
   "public/js/data/vmframe.js",
@@ -19,6 +19,7 @@
   "public/models/viewmodels/coro/md97-hires.glb",
   "public/models/viewmodels/coro/mosin-hires.glb",
   "public/models/viewmodels/coro/mp5-hires.glb",
+  "public/models/viewmodels/coro/p90-hires.glb",
   "public/models/viewmodels/coro/pistol-hires.glb",
   "public/models/viewmodels/coro/scar-hires.glb",
   "public/models/viewmodels/coro/sks-hires.glb",
