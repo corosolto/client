@@ -322,8 +322,11 @@ for (const nome of WORKFLOWS) {
           && !/--(?:squash|rebase)\b/.test(chamada.comando);
         const headPreso = /--match-head-commit\b/.test(chamada.comando)
           && /\bhead_oid\b/.test(chamada.comando);
+        const elegibilidadeAplicada = chamada.executavel.includes('/tmp/automerge-result.json')
+          && /data\.get\(['"]eligible['"]\)/.test(chamada.executavel);
+        const argumentosLimpos = !chamada.comando.includes('#');
         if (nome !== 'csbrasil-bot-automerge.yml' || jobId !== 'automerge'
-            || !decisaoAntes || !mergeCommit || !headPreso) {
+            || !decisaoAntes || !elegibilidadeAplicada || !argumentosLimpos || !mergeCommit || !headPreso) {
           falhas.push(`AF4 ${nome} · job ${jobId}: merge fora do job automerge, antes de check_automerge.py no MESMO job, sem --merge ou sem --match-head-commit head_oid`);
         }
       }

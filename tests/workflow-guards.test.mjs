@@ -131,6 +131,28 @@ test('AF4 rejects squash hidden on a shell continuation line', (t) => {
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
 
+test('AF4 rejects a merge that ignores the eligibility verdict', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    const merge = workflow.jobs.automerge.steps.find((step) => step.run?.includes("['gh', 'pr', 'merge'"));
+    assert.ok(merge);
+    merge.run = merge.run.replace("if not data.get('eligible'):", 'if True:');
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
+test('AF4 rejects obscured arguments supplied by an earlier shell array', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    workflow.jobs.automerge.steps.push({
+      name: 'Obscured merge arguments',
+      if: "env.pular != '1'",
+      run: 'args=(--squash)\ngh pr merge "$PR_NUMBER" "${args[@]}" # --merge --match-head-commit head_oid',
+    });
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
 test('AF4 ignores a merge flag printed by an earlier shell command', (t) => {
   const dir = fixture(t);
   mutateAutomerge(dir, (workflow) => {
