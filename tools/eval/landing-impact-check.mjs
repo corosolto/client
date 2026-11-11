@@ -179,6 +179,8 @@ for (const [mapId, wet] of [
   life.dispose();
   for (const count of disposed.values()) assert.equal(count, 1,
     'dispose repetido descartou recurso duas vezes');
+  for (const count of puffDisposed.values()) assert.equal(count, 1,
+    'dispose repetido descartou o puff duas vezes');
   assert((life._landingFxSystems || []).length === 0
     && !Object.keys(life).some((k) => k.startsWith('_fx_land_')),
     'dispose não esvaziou as refs e o cache próprios de pouso');
