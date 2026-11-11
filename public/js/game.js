@@ -756,7 +756,7 @@ const _rosterPool = (pool, want, quem, fallback, pinned = []) => {
 /* E e B são LADOS (pool único, `podeNoLado`); outra letra é facção de sala multiplayer antiga. */
 const _doLado = (f) => (c) => (f === 'E' || f === 'B' ? podeNoLado(c, f) : c.team === f);
 /* Personagem do passe (`passe` em characters.js) não entra no SORTEIO de bot: o corpo dele é
-   pack Studio (/packs/, R2 ainda não publicado) e ele fica travado até o servidor destravar
+   pack Studio (/packs/), ainda não publicado, e ele fica travado até o servidor destravar
    para quem joga. Sorteá-lo punha ~1/3 dos bots baixando pack, e sem pack o bot caía em caixa
    (ARM2). Escalação explícita (pin no seletor) continua valendo. */
 const _sorteavel = (c) => !c.passe;
