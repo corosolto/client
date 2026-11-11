@@ -5,6 +5,7 @@ import sys
 
 def decide(payload: dict) -> dict:
     reviews = payload.get("reviews") or []
+    labels = {label.get("name") for label in payload.get("labels") or []}
     status_rollup = payload.get("statusCheckRollup") or []
     head_oid = payload.get("headRefOid")
     review_requests = payload.get("reviewRequests") or []
@@ -52,8 +53,9 @@ def decide(payload: dict) -> dict:
     precisa = (
         reviewer_requested
         or request_review
-        or new_estragacodigo_review
-        or ((has_estragacodigo_review or has_estragacodigo_check) and not current_resolution)
+        or (new_estragacodigo_review and not current_resolution)
+        or has_estragacodigo_check
+        or (has_estragacodigo_review and not current_resolution)
     )
     return {
         "needs_resolution": precisa,
@@ -61,6 +63,7 @@ def decide(payload: dict) -> dict:
         "labels_remove": ["estragacodigo-resolved"]
         if reviewer_requested or request_review
         or (new_estragacodigo_review and not current_resolution)
+        or has_estragacodigo_check and "estragacodigo-resolved" in labels
         or (reviewed_head and not current_resolution) else [],
         "request_review": request_review,
     }
@@ -140,6 +143,16 @@ def selftest() -> int:
          {"needs_resolution": False,
           "labels_add": [],
           "labels_remove": []}),
+        ("check estraga permanece bloqueante após resolução",
+         {"headRefOid": "abc", "reviews": [
+             {"author": {"login": "estraga-codigo"}, "commit": {"oid": "abc"},
+              "state": "COMMENTED", "submittedAt": "2026-10-31T08:00:00Z"}
+         ], "estragacodigo_resolved_at": "2026-10-31T08:05:00Z",
+          "statusCheckRollup": [{"__typename": "CheckRun", "name": "estraga-codigo"}],
+          "labels": [{"name": "estragacodigo-resolved"}]},
+         {"needs_resolution": True,
+          "labels_add": ["needs-estragacodigo-resolution"],
+          "labels_remove": ["estragacodigo-resolved"]}),
         ("timestamps iguais não confirmam resolução",
          {"headRefOid": "abc", "reviews": [
              {"author": {"login": "estraga-codigo"}, "commit": {"oid": "abc"},
@@ -154,8 +167,8 @@ def selftest() -> int:
               "state": "COMMENTED", "submittedAt": "2026-10-31T08:00:00Z"}
          ], "estragacodigo_resolved_at": "2026-10-31T08:05:00Z",
           "new_estragacodigo_review": True},
-         {"needs_resolution": True,
-          "labels_add": ["needs-estragacodigo-resolution"],
+         {"needs_resolution": False,
+          "labels_add": [],
           "labels_remove": []}),
         ("nova review atual invalida resolução anterior",
          {"headRefOid": "abc", "reviews": [
