@@ -5,7 +5,7 @@ runs:
   steps:
     - name: Configure Playwright browser path
       shell: bash
-      run: echo 'PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers' >> "$GITHUB_ENV"
+      run: echo "PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright" >> "$GITHUB_ENV"
 
     - name: Playwright global (mesma versão do devDependency)
       shell: bash
