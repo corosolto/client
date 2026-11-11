@@ -185,7 +185,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
 
   const lost = result.findings.filter((finding) => finding.code === 'referenced-file-lost');
   const reviewedUnreferenced = new Set(published.data?.unreferenced || []);
-  const newUnreviewed = result.next.unreferenced.filter((path) => !reviewedUnreferenced.has(path));
+  const newUnreviewed = published.data
+    ? result.next.unreferenced.filter((path) => !reviewedUnreferenced.has(path))
+    : [];
   if (lost.length || newUnreviewed.length) {
     printFindings([...lost, ...newUnreviewed.map((path) => ({ code: 'orphan-new', path }))]);
     if (lost.length) console.error('ASSET-INVENTORY: refusing to erase a still-referenced file from the manifest; restore the file or remove its runtime reference first');
