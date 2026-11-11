@@ -133,13 +133,14 @@ for (const id of alvos) {
     const R = await import('./js/data/content-releases.js');
     const def = C.CHARACTERS.find((c) => c.id === cid);
     if (!def) return { id: cid, erro: 'sem definição de personagem' };
-    /* Pack Studio: sem STUDIO_PACK_ROOT o /packs/ responde 404 (CI; o pack fica fora do repo
-       até o R2) e o jogo falha fechado, sem corpo para medir. NÃO MEDIDO, listado; com a raiz
-       exportada o 404 é ERRO. Personagem legado nunca passa por aqui. */
+    /* Pack Studio: sem STUDIO_PACK_ROOT o /packs/ responde 404 e o jogo falha fechado, sem corpo
+       para medir. Fora de CI isso é NÃO MEDIDO, listado; com a raiz exportada OU em CI (onde o
+       job recebe os packs pela action studio-packs) o 404 é ERRO — portão não fica verde por
+       ausência de dado. Personagem legado nunca passa por aqui. */
     const release = R.characterRelease(cid);
     if (release) {
       const head = await fetch(release.manifestUrl, { method: 'HEAD', cache: 'no-store' });
-      if (head.status === 404) return exigePack ? { id: cid, erro: `pack ${release.id}@${release.version} 404 em /packs/ com STUDIO_PACK_ROOT` } : { id: cid, naoMedido: true };
+      if (head.status === 404) return exigePack ? { id: cid, erro: `pack ${release.id}@${release.version} 404 em /packs/ (STUDIO_PACK_ROOT ou CI exigem o pack)` } : { id: cid, naoMedido: true };
     }
     await G.preloadCharacterAssets([cid]);
     if (!G.hasModel(cid)) return { id: cid, erro: 'sem GLB carregado' };
@@ -403,7 +404,7 @@ for (const id of alvos) {
       renderer.render(scene, camera);
     }
     return result;
-  }, [id, MUT, !!FOTO_DIR, DIAG, !!process.env.STUDIO_PACK_ROOT]);
+  }, [id, MUT, !!FOTO_DIR, DIAG, !!(process.env.STUDIO_PACK_ROOT || process.env.CI)]);
   if (r?.naoMedido) { studioNaoMedido.push(id); continue; }
   if (r) out.push(r);
   else console.error('sem modelo:', id);

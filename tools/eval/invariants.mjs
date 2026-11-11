@@ -1942,10 +1942,14 @@ bloco('chars-mat', ['CHR1','CHR2','CHR3','CHR5','CHR5B','CHR6','CHR7'], async ()
     const pares = j.C6topo || [];
     const iguais = pares.filter((x) => x.pior > 0.98);
     const inter = (j.C6interTimePior || [])[0];
+    /* Em CI os jobs que rodam esta família recebem os packs (.github/actions/studio-packs exporta
+       STUDIO_PACK_ROOT). Pack NÃO MEDIDO lá é job sem pack, e não pode sair verde por ausência de
+       dado; NÃO MEDIDO só é aceito fora de CI (máquina sem os packs baixados). */
+    const naoMedidoNoCI = !!process.env.CI && studioNaoMedido.length > 0;
     put('CHR6', 'nenhum par de personagens com a MESMA silhueta (IoU par a par ≤ 0,98)',
-      iguais.length === 0,
+      iguais.length === 0 && !naoMedidoNoCI,
       `${j.C6silhuetasDistintas ?? '?'} silhuetas distintas para ${P.length} personagens; `
-      + (studioNaoMedido.length ? `${studioNaoMedido.length} pack(s) Studio NÃO MEDIDOS (sem STUDIO_PACK_ROOT); ` : '')
+      + (studioNaoMedido.length ? `${studioNaoMedido.length} pack(s) Studio NÃO MEDIDOS (sem STUDIO_PACK_ROOT${naoMedidoNoCI ? ' — em CI isto REPROVA' : ''}); ` : '')
       + `${iguais.length} pares acima de 0,98`
       + (iguais.length ? ` [${iguais.slice(0, 4).map((x) => `${x.a}×${x.b} ${x.pior.toFixed(3)}`).join(', ')}]` : '')
       + (j.C6grupos && j.C6grupos.length ? ` | maior grupo de clones: ${j.C6grupos[0].length} (${j.C6grupos[0].slice(0, 5).join(', ')}${j.C6grupos[0].length > 5 ? '…' : ''})` : '')
