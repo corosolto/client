@@ -17,10 +17,10 @@ SENSITIVE_LABELS = {
 BOT_LABELS = {"bot-fixable", "needs-repro", "covered-by-pr", "crash-auto"}
 
 LABEL_REASONS = {
-    "bot-fixable": "escopo pequeno e determinístico — dá pra um bot rascunhar o conserto",
-    "needs-repro": "relato curto demais — falta contexto antes de alguém atacar",
-    "covered-by-pr": "já existe PR aberta que fecha esta issue",
-    "crash-auto": "report automático de crash em produção",
+    "bot-fixable": "small and deterministic scope — a bot can draft the fix",
+    "needs-repro": "report is too short — more context is needed before investigation",
+    "covered-by-pr": "an open PR already covers this issue",
+    "crash-auto": "automated production crash report",
 }
 
 
@@ -34,7 +34,7 @@ def render_comment(issue: dict, labels_add: list[str], covered: dict | None) -> 
 
     linhas = ["## csbrasil-bot issue review", ""]
 
-    # ── veredito: a caixa colorida muda com a natureza da issue ───────────
+    # ── verdict: the callout changes with the issue type ────────────────
     if covered:
         tipo = "IMPORTANT"
     elif "needs-repro" in labels_add:
@@ -43,47 +43,47 @@ def render_comment(issue: dict, labels_add: list[str], covered: dict | None) -> 
         tipo = "TIP"
     else:
         tipo = "NOTE"
-    quem = f"aberta por **@{author}**" if author else ""
+    quem = f"opened by **@{author}**" if author else ""
     veredito = f"**Issue #{number} — {title}** {quem}".strip()
     detalhe = ""
     if "needs-repro" in labels_add:
-        detalhe = f"\n> O relato tem **{len(body)} caracteres** — curto demais pra reproduzir. Descreva o que fez, o que esperava e o que aconteceu."
+        detalhe = f"\n> The report has **{len(body)} characters** — too short to reproduce. Describe what you did, what you expected and what happened."
     elif "bot-fixable" in labels_add:
-        detalhe = "\n> Mantainer pode comentar `/bot-fix` pra o bot abrir branch + draft PR."
+        detalhe = "\n> A maintainer can comment `/bot-fix` to have the bot open a branch and draft PR."
     linhas += [f"> [!{tipo}]", f"> {veredito}", detalhe, ""]
 
-    # ── ficha da triagem: máximo de detalhe que o payload sustenta ────────
-    linhas += ["### Ficha da triagem", ""]
+    # ── triage details: only state what the payload supports ─────────────
+    linhas += ["### Triage details", ""]
     if labels_existing:
-        linhas.append(f"- **labels existentes:** {', '.join(f'`{l}`' for l in labels_existing)}")
+        linhas.append(f"- **existing labels:** {', '.join(f'`{l}`' for l in labels_existing)}")
     else:
-        linhas.append("- **labels existentes:** nenhuma")
+        linhas.append("- **existing labels:** none")
     if labels_add:
-        linhas.append("- **labels do bot:**")
-        linhas += [f"  - `{l}` — {LABEL_REASONS.get(l, 'critério da triagem')}" for l in labels_add]
+        linhas.append("- **bot labels:**")
+        linhas += [f"  - `{l}` — {LABEL_REASONS.get(l, 'triage rule')}" for l in labels_add]
     else:
-        linhas.append("- **labels do bot:** nenhuma — fora dos critérios automáticos")
-    linhas.append(f"- **tamanho do relato:** {len(body)} caracteres")
+        linhas.append("- **bot labels:** none — no automatic criteria matched")
+    linhas.append(f"- **report length:** {len(body)} characters")
     linhas.append(f"- **link:** {url}")
     linhas.append("")
 
-    # ── cobertura por PR: a informação que muda a decisão de quem chegou ──
+    # ── PR coverage: the decision-changing context for new readers ─────
     if covered:
-        linhas += ["### Já tem PR cobrindo", "",
+        linhas += ["### Already covered by a PR", "",
                    f"**PR #{covered['number']} — {covered['title']}**", f"{covered['url']}", "",
                    "> [!TIP]",
-                   "> Se o conserto dessa PR resolver, dá close nela que a issue fecha junto.", ""]
+                   "> If this PR fixes the issue, closing it will close the issue as well.", ""]
 
-    # ── próximo passo: quem lê sabe o que fazer ────────────────────────────
-    linhas += ["### Próximo passo", ""]
+    # ── next step ───────────────────────────────────────────────────────
+    linhas += ["### Next step", ""]
     if covered:
-        linhas.append("- revisar a PR que já cobre — não abrir frente paralela")
+        linhas.append("- review the existing covering PR — do not open parallel work")
     elif "needs-repro" in labels_add:
-        linhas.append("- autor completa o relato (passos, esperado, aconteceu)")
+        linhas.append("- author adds reproduction steps, expected result and actual result")
     elif "bot-fixable" in labels_add:
-        linhas.append("- maintainer avalia `/bot-fix` (bot abre rascunho; humano revisa)")
+        linhas.append("- maintainer evaluates `/bot-fix` (bot opens a draft; human reviews)")
     else:
-        linhas.append("- triagem humana: esta issue não casou nenhum critério automático")
+        linhas.append("- human triage: no automatic criterion matched this issue")
     return "\n".join(linhas).rstrip() + "\n"
 
 
@@ -131,18 +131,18 @@ def selftest() -> int:
     r = review_issue({"issue": base, "prs": []})
     c = r["comment"]
     casos += [
-        ("heading presente", "## csbrasil-bot issue review" in c),
-        ("bot-fixable vira caixa TIP", "> [!TIP]" in c),
-        ("ficha cita tamanho do relato", "80 caracteres" in c),
-        ("label com motivo humano", "rascunhar o conserto" in c),
-        ("próximo passo menciona /bot-fix", "/bot-fix" in c),
-        ("labels_add coerente", r["labels_add"] == ["bot-fixable"]),
+        ("heading present", "## csbrasil-bot issue review" in c),
+        ("bot-fixable uses TIP callout", "> [!TIP]" in c),
+        ("report length is shown", "80 characters" in c),
+        ("label reason is English", "draft the fix" in c),
+        ("next step mentions /bot-fix", "/bot-fix" in c),
+        ("labels_add is coherent", r["labels_add"] == ["bot-fixable"]),
     ]
     curta = dict(base, body="trava", labels=[])
     r2 = review_issue({"issue": curta, "prs": []})
     casos += [
-        ("relato curto vira WARNING", "> [!WARNING]" in r2["comment"]),
-        ("needs-repro com contagem", "5 caracteres" in r2["comment"]),
+        ("short report uses WARNING", "> [!WARNING]" in r2["comment"]),
+        ("needs-repro includes length", "5 characters" in r2["comment"]),
     ]
     pr_cobre = dict(base, labels=[])
     r3 = review_issue({"issue": pr_cobre, "prs": [
