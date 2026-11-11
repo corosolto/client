@@ -755,10 +755,8 @@ const _rosterPool = (pool, want, quem, fallback, pinned = []) => {
    faz uma sala 5v5 ter DEZ vagas de gente, e não nove com um manequim do lado. */
 /* E e B são LADOS (pool único, `podeNoLado`); outra letra é facção de sala multiplayer antiga. */
 const _doLado = (f) => (c) => (f === 'E' || f === 'B' ? podeNoLado(c, f) : c.team === f);
-/* Personagem do passe (`passe` em characters.js) não entra no SORTEIO de bot: o corpo dele é
-   pack Studio (/packs/), ainda não publicado, e ele fica travado até o servidor destravar
-   para quem joga. Sorteá-lo punha ~1/3 dos bots baixando pack, e sem pack o bot caía em caixa
-   (ARM2). Escalação explícita (pin no seletor) continua valendo. */
+/* Personagem do passe (`passe` em characters.js) fica fora do SORTEIO de bot; o pin no seletor
+   continua valendo. Motivo (pack Studio travado, ARM2): docs/faccoes/fora-do-ar.md. */
 const _sorteavel = (c) => !c.passe;
 /* Pin escalado pelo jogador: só vale se pode jogar no lado pedido e não está em uso. */
 const _pinnedDefs = (ids, doLado, usados) => (ids || [])
