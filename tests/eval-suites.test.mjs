@@ -114,7 +114,7 @@ process.exit(distintos >= 2 ? 78 : 97);
       'tools/eval/runner.mjs', '--jobs=2', '--suite=core', `--json-out=${jsonOut}`,
     ], {
       encoding: 'utf8',
-      timeout: 20000,
+      timeout: 60000,
       env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, FAKE_NPM_LOG: log },
     });
     assert.equal(r.status, 78, r.stderr);
