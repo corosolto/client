@@ -128,12 +128,12 @@ jobs:
               raise SystemExit(0)
           body = (
               "> [!TIP]\n"
-              "> **Possível duplicata detectada automaticamente.**\n"
-              f"> \n> - candidata: **#{dup['number']}** — {dup['title']}\n"
-              f"> - similaridade: **{dup['score']}**\n"
-              f"> - comparar: {dup['url']}\n"
+              "> **Possible duplicate detected automatically.**\n"
+              f"> \n> - candidate: **#{dup['number']}** — {dup['title']}\n"
+              f"> - similarity: **{dup['score']}**\n"
+              f"> - compare: {dup['url']}\n"
               "\n"
-              "Sugestão de bot — o fechamento continua sendo humano."
+              "Bot suggestion only — closing the issue remains a human decision."
           )
           subprocess.run([
               'gh', 'issue', 'comment', os.environ['ISSUE_NUMBER'],

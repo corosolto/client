@@ -3,7 +3,7 @@
 <!-- BEGIN:GERADO — não edite à mão, rode `npm run arch` -->
 
 > Gerado por `node tools/gen-arch.mjs`. **Não edite este bloco à mão.**
-> Versão do jogo: 2.1.0-alpha.141 · `npm run arch` para regenerar · `npm run arch:check` no CI.
+> Versão do jogo: 2.1.0-alpha.144 · `npm run arch` para regenerar · `npm run arch:check` no CI.
 
 ## Tamanho dos arquivos indexados
 
@@ -11,7 +11,7 @@
 |---|---:|---:|
 | `public/js/game.js` | 10189 | 432 |
 | `public/js/main.js` | 5642 | 439 |
-| `public/js/glbchars.js` | 1526 | 109 |
+| `public/js/glbchars.js` | 1548 | 110 |
 | `public/js/characters.js` | 1111 | 40 |
 | `public/js/vmattach.js` | 353 | 3 |
 | `public/js/springs.js` | 260 | 28 |
@@ -140,6 +140,7 @@ Cobertura: **4143 de 10189 linhas (41%)** do `game.js` têm dono declarado. O re
 | 1560 | `_vmFrame` | 285 |
 | 1845 | `_vmFrame` | 142 |
 | 1987 | `_vmMontarTardio` | 14 |
+| 2006 | `_texLocal()` | 2 |
 | 2001 | `_makePuffTexture()` | 10 |
 | 2011 | `_makeBloodTex()` | 19 |
 | 2030 | `_makeBloodPoolTex()` | 21 |
