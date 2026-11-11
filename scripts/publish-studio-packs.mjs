@@ -141,9 +141,12 @@ export async function planoLocal(root, pins) {
 /* ── cliente S3 mínimo ───────────────────────────────────────────────────────── */
 function clienteS3({ endpoint, creds, fetchImpl }) {
   const urlDe = (key) => `${endpoint.replace(/\/$/, '')}/${creds.R2_BUCKET}/${key}`;
+  /* `accept-encoding: identity`: sem ele o R2 devolve JSON comprimido no HEAD, sem
+     content-length, e um objeto igual passava por conflito. */
   const pedir = (method, key, { headers = {}, body, payloadSha256 } = {}) => {
     const url = urlDe(key);
-    return fetchImpl(url, { method, body, headers: assinar({ method, url, headers, payloadSha256, creds }) });
+    const h = { 'accept-encoding': 'identity', ...headers };
+    return fetchImpl(url, { method, body, headers: assinar({ method, url, headers: h, payloadSha256, creds }) });
   };
   return {
     async estado(objeto) {
