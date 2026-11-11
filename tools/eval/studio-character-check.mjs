@@ -223,6 +223,15 @@ try {
     if (!K.studioSkeletonMismatch(comExtra)?.includes('inesperadas UnexpectedBone')) falha('R18: junta extra aceita');
     const curl = bones.findIndex((bone) => bone.name === 'Curl_L');
     if (!K.studioSkeletonMismatch(bones.slice(0, curl).concat(bones.slice(curl + 1)))?.includes('Curl_L=1')) falha('R18: multiplicidade Curl aceita');
+    /* Como o GLTFLoader entrega: o segundo Curl_* vira Curl_*_1 no objeto. Contado pelo nome
+       do glTF (o que o glbchars passa) é válido; pelo nome do objeto, todo pack falhava. */
+    const vistos = new Set();
+    const carregados = bones.map((bone) => {
+      const dup = vistos.has(bone.name); vistos.add(bone.name);
+      return { name: dup ? `${bone.name}_1` : bone.name, gltf: bone.name };
+    });
+    if (K.studioSkeletonMismatch(carregados, (bone) => bone.gltf)) falha('R18: Curl renomeado pelo GLTFLoader rejeitado pelo nome do glTF');
+    if (!K.studioSkeletonMismatch(carregados)?.includes('inesperadas Curl_R_1')) falha('R18: contagem pelo nome renomeado não acusou o Curl_R_1');
   }
 
   // ── R1 ──────────────────────────────────────────────────────────────────────
