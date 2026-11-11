@@ -12,12 +12,12 @@ export function studioSkeletonMismatch(bones) {
   const missing = [...STUDIO_SKELETON_COUNTS.keys()].filter((name) => !joints.has(name));
   const unexpected = [...joints.keys()].filter((name) => !STUDIO_SKELETON_COUNTS.has(name));
   const wrongCount = [...joints].filter(([name, count]) => STUDIO_SKELETON_COUNTS.get(name) !== count);
-  const invalid = missing.length || unexpected.length || wrongCount.length || unique.size !== STUDIO_SKELETON_TOTAL;
+  const invalid = missing.length || unexpected.length || wrongCount.length || bones.length !== STUDIO_SKELETON_TOTAL;
   const detail = [
     missing.length ? `sem ${missing.join(',')}` : '',
     unexpected.length ? `inesperadas ${unexpected.join(',')}` : '',
     wrongCount.length ? `multiplicidade inválida ${wrongCount.map(([name, count]) => `${name}=${count}`).join(',')}` : '',
-    unique.size !== STUDIO_SKELETON_TOTAL ? `total ${unique.size} (esperado ${STUDIO_SKELETON_TOTAL})` : '',
+    bones.length !== STUDIO_SKELETON_TOTAL ? `total ${bones.length} (esperado ${STUDIO_SKELETON_TOTAL})` : '',
   ].filter(Boolean).join('; ');
   return invalid ? detail : null;
 }
