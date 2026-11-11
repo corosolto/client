@@ -322,11 +322,11 @@ jobs:
             exit 1
           fi
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Dispara classify só quando head, rollup ou reviews mudaram
+      - name: Dispara classify só quando base, head, labels, rollup ou reviews mudaram
         run: |
           python3 scripts/ci/bot_sweep.py --selftest
           gh pr list --repo "$REPO" --state open --limit 100 \
-            --json number,headRefOid,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
+            --json number,baseRefOid,labels,headRefOid,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
             > /tmp/classify-sweep.json
           python3 - <<'PY'
           import json, os, subprocess
@@ -343,7 +343,7 @@ jobs:
               except subprocess.CalledProcessError:
                   comments = []  # Sem estado legível, reavalia em vez de suprimir.
               if not should_dispatch(pr, comments, 'classify'):
-                  print(f'PR #{number}: unchanged head/rollup/reviews; skipping classify')
+                  print(f'PR #{number}: unchanged base/head/labels/rollup/reviews; skipping classify')
                   continue
               subprocess.run([
                   'gh', 'workflow', 'run', 'csbrasil-bot-pr-classify.yml',

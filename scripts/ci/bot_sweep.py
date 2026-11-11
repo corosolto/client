@@ -20,14 +20,20 @@ def _digest(value):
 
 
 def fingerprint(pr):
-    """Head and rollup are the primary debounce keys.
+    """Base, head, labels, rollup, and reviews are the debounce keys.
 
     Review state is included because fork review events cannot authenticate the
     classifier. External DCO/status changes are already represented by the rollup.
+    Base advancement changes the diff and labels change classification or eligibility,
+    even when the head and check rollup stay fixed.
     """
     return {
         "version": 1,
+        "base_oid": pr.get("baseRefOid"),
         "head_oid": pr.get("headRefOid"),
+        "label_digest": _digest(sorted(
+            label.get("name") for label in pr.get("labels") or []
+        )),
         "rollup_digest": _digest(pr.get("statusCheckRollup")),
         "review_digest": _digest({
             "latestReviews": pr.get("latestReviews"),
@@ -59,8 +65,10 @@ def decode_state(marker, kind):
         raise ValueError("unsupported sweep state")
     if not re.fullmatch(r"[0-9a-f]{40}", state.get("head_oid") or ""):
         raise ValueError("sweep state has no canonical evaluated head")
+    if not re.fullmatch(r"[0-9a-f]{40}", state.get("base_oid") or ""):
+        raise ValueError("sweep state has no canonical evaluated base")
     if any(not re.fullmatch(r"[0-9a-f]{64}", state.get(field) or "")
-           for field in ("rollup_digest", "review_digest")):
+           for field in ("label_digest", "rollup_digest", "review_digest")):
         raise ValueError("sweep state has malformed digests")
     return state
 
@@ -92,7 +100,9 @@ def should_dispatch(pr, comments, kind):
 def selftest():
     failures = 0
     pr = {
+        "baseRefOid": "c" * 40,
         "headRefOid": "a" * 40,
+        "labels": [{"name": "release"}, {"name": "safe-automerge"}],
         "statusCheckRollup": [{"__typename": "CheckRun", "name": "dco", "conclusion": "SUCCESS"}],
         "latestReviews": [],
         "reviewRequests": [],
@@ -113,6 +123,12 @@ def selftest():
         comments = [{"body": f"bot result\n{marker}", "user": {"login": BOT_AUTHOR}}]
         check(f"{kind}: first evaluation dispatches", True, comments=[], kind=kind)
         check(f"{kind}: unchanged head and rollup debounce", False, comments=comments, kind=kind)
+        check(f"{kind}: reordered labels debounce", False,
+              current=dict(pr, labels=list(reversed(pr["labels"]))), comments=comments, kind=kind)
+        check(f"{kind}: base advancement with fixed head/rollup/reviews dispatches", True,
+              current=dict(pr, baseRefOid="d" * 40), comments=comments, kind=kind)
+        check(f"{kind}: label change with fixed head/rollup/reviews dispatches", True,
+              current=dict(pr, labels=[{"name": "release"}]), comments=comments, kind=kind)
         check(f"{kind}: github-actions bot state debounces", False, comments=[{
             "body": f"fallback token result\n{marker}", "user": {"login": "github-actions[bot]"},
         }], kind=kind)

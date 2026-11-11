@@ -113,24 +113,29 @@ jobs:
       - name: Merge when eligible
         if: env.pular != '1'
         run: |
-          gh pr view "$PR_NUMBER" --json baseRefName,baseRefOid,headRefName,headRefOid,headRepository > /tmp/automerge-current.json
+          gh pr view "$PR_NUMBER" --json isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,latestReviews,reviewRequests,files,changedFiles,baseRefName,baseRefOid,headRefName,headRefOid,headRepository > /tmp/automerge-current-raw.json
           python3 - <<'PY'
           import json, os
           payload = json.load(open('/tmp/automerge-attestation-input.json'))
-          payload['pr'] = json.load(open('/tmp/automerge-current.json'))
+          payload['pr'] = json.load(open('/tmp/automerge-current-raw.json'))
           payload['expected_repository'] = os.environ['GITHUB_REPOSITORY']
           open('/tmp/automerge-revalidate.json', 'w').write(json.dumps(payload))
           PY
-          python3 scripts/ci/pr_attestation.py --validate < /tmp/automerge-revalidate.json > /tmp/automerge-validated.json
+          # Applying the attestation also revalidates the current head/base, live refs,
+          # ancestry, and complete diff before producing the current eligibility input.
+          python3 scripts/ci/pr_attestation.py --apply < /tmp/automerge-revalidate.json > /tmp/automerge-current.json
           python3 - <<'PY'
           import json, os, re, subprocess, sys
+          from scripts.ci.check_automerge import revalidate_decision
+          evaluated = json.load(open('/tmp/automerge.json'))
           data = json.load(open('/tmp/automerge-result.json'))
           status = json.load(open('/tmp/automerge-current.json'))
           pr = os.environ['PR_NUMBER']
           head_oid = status.get('headRefOid') or ''
           if not re.fullmatch(r'[0-9a-f]{40}', head_oid):
               raise RuntimeError('automerge requires the evaluated canonical head OID')
-          if not data.get('eligible'):
+          current_data = revalidate_decision(evaluated, data, status)
+          if not current_data.get('eligible'):
               print('pronto-pra-merge: not eligible')
               subprocess.run(['gh', 'pr', 'edit', pr, '--remove-label', 'pronto-pra-merge'], check=False)
               sys.exit(0)
@@ -139,12 +144,12 @@ jobs:
                               capture_output=True, text=True).stdout.strip() == 'true'
           subprocess.run(['gh', 'pr', 'edit', pr, '--add-label', 'pronto-pra-merge'], check=True)
           if not ja:
-              kind = 'the daily release batch' if data.get('merge_kind') == 'release-batch' else 'a safe change'
+              kind = 'the daily release batch' if current_data.get('merge_kind') == 'release-batch' else 'a safe change'
               subprocess.run(['gh', 'pr', 'comment', pr, '--body',
                               f'🤖 **csbrasil-bot**: required checks passed and the diff meets the '
                               f'`check_automerge` criteria. Merging automatically as {kind}.'], check=True)
           command = ['gh', 'pr', 'merge', pr, '--merge', '--match-head-commit', head_oid]
-          if data.get('merge_kind') != 'release-batch':
+          if current_data.get('merge_kind') != 'release-batch':
               command.append('--delete-branch')
           subprocess.run(command, check=True)
           PY
@@ -209,7 +214,7 @@ jobs:
         run: |
           python3 scripts/ci/bot_sweep.py --selftest
           gh pr list --repo "$REPO" --state open --limit 100 \
-            --json number,labels,headRefOid,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
+            --json number,baseRefOid,labels,headRefOid,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
             > /tmp/automerge-sweep.json
           python3 - <<'PY'
           import json, os, subprocess
@@ -232,7 +237,7 @@ jobs:
               except subprocess.CalledProcessError:
                   comments = []  # Sem estado legível, reavalia em vez de suprimir.
               if not should_dispatch(pr, comments, 'automerge'):
-                  print(f'PR #{number}: unchanged head/rollup/reviews; skipping automerge')
+                  print(f'PR #{number}: unchanged base/head/labels/rollup/reviews; skipping automerge')
                   continue
               result = subprocess.run([
                   'gh', 'workflow', 'run', 'csbrasil-bot-automerge.yml',
