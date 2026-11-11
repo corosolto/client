@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.141`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.144`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -245,6 +245,55 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.144] — 2026-11-10
+
+### Mudado
+- Anima reações e saque dos personagens remotos (#1273)
+- fix(ci): pass Cloudflare preview SHA through the environment (#1310)
+- Merge CI fix for the Cloudflare sticky preview comment. Owner explicitly authorized this merge; required checks are green and the only failing check is the smoke-cf failure fixed by this PR. (#1309)
+- Pre-push: edge entry points select network, not full deploy (#1303)
+- release: daily batch 2026-11-10 (#1316)
+- test: cover invalid CF comment arity
+- fix: accept positional SHA in CF preview comment
+- fix(ci): corrigir argumentos do comentário Cloudflare
+- ci(pre-push): bordas de contagem (middleware.js e src/middleware.ts) são network
+- Preserva ordem da régua de animação
+- Restaura mutação do hit local
+- Corrige câmera do arnês de mantle remoto
+- Documenta arnês remoto fora do código
+- Aplica direção à morte remota atrasada
+- Enquadra arma durante saque remoto
+- Evita morte atrasada após respawn remoto
+- Documenta limite de dano em bots remotos
+- Mantém apoio da arma durante saque remoto
+- Preserva dano local e morte sem evento
+- Aplica LOD de animação aos remotos
+- Mede animações de remotos com mutantes
+- Anima saque na troca de arma remota
+- Direciona morte remota pelo autor
+- Anima reação de remotos ao dano
+- Anima inclinação lateral de remotos
+
+## [2.1.0-alpha.143] — 2026-11-10
+
+### Mudado
+- Merge main-only CI hotfix. Owner explicitly authorized CI correction and release. All checks are green. (#1314)
+- chore(bots): standardize csbrasil-bot public output in English (#1311)
+- Merge account modal polish 2.1.0-alpha.142. Owner explicitly authorized CI correction and release. All checks, including smoke-cf, are green; all review threads are resolved with evidence. (#1307)
+- test: cover invalid CF comment arity
+- fix: accept positional SHA in CF preview comment
+- chore(bots): standardize csbrasil-bot public output in English
+- test: reject transient stale guest error
+
+## [2.1.0-alpha.142] — 2026-11-10
+
+### Mudado
+- fix(ci): protege preview Cloudflare e smoke manual (#1300)
+- chore: versiona módulos do modal atualizado
+- test(ci): limita regras CF ao passo exato
+- test(ci): prende guarda do smoke ao dispatch
+- fix(ci): isola artefato e corrige smoke manual
 
 ## [2.1.0-alpha.141] — 2026-11-10
 
