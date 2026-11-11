@@ -209,7 +209,7 @@ const CASOS = [
   ['public/audio/manifest.json', 'audio', 'audio:check'],
   ['playwright.config.mjs', 'browser', 'eval:vm-troca-sem-legado'],
   ['public/js/transporte.js', 'network', 'eval:netcode'],
-  ['tools/viewmodels/validate_paid_catalog.mjs', 'vm', 'eval:vm-presence'],
+  ['tools/eval/lib/vm-enquadramento.mjs', 'vm', 'eval:vm-enquadramento-placar'],
 ];
 for (const [arquivo, suite, passo] of CASOS) {
   test(`diff de ${suite} seleciona core + ${suite}`, () => {
