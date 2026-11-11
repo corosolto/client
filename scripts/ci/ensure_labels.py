@@ -17,7 +17,7 @@ LABELS = {
     "crash-auto": ("B60205", "crash de produção reportado por /api/jserror ou prod-watch"),
     "stale-backlog": ("c2e0c6", "Issue antiga ou desalinhada com o checkout atual; precisa revalidação"),
     "needs-repro": ("f9d0c4", "Issue precisa passos de reprodução mais concretos"),
-    "preview-autorizado": ("0e8a16", "Mantenedor revisou o SHA atual e liberou preview do fork na Vercel"),
+    "preview-autorizado": ("0e8a16", "Aposentado: preview de PR é Cloudflare; Vercel só por dispatch de emergência"),
     "pronto-pra-merge": ("0e8a16", "Required checks passed and the diff is eligible for automatic merge"),
     "bugfix": ("d93f0b", "Bug fix routed to the configured bugfix assignee"),
     "hotfix": ("b60205", "Urgent production fix; targets main for an immediate release"),
