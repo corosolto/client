@@ -12,8 +12,21 @@ import {
 } from '../tools/eval/lib/duration-shards.mjs';
 
 const AGORA = Date.parse('2026-11-10T12:00:00.000Z');
+const CHAVE_CACHE_DURACOES = "eval-durations-v1-${{ hashFiles('tools/eval/out/durations.json') }}";
+const WORKFLOW_PRODUTOR = readFileSync(new URL('../.github/workflows/eval-duration-calibration.yml', import.meta.url), 'utf8');
+const WORKFLOW_CONSUMIDOR = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
 const relatorio = (resultados) => ({ resultados });
 const ok = (passo, duracao) => ({ passo, duracao, status: 'ok' });
+
+function validarChavesCache(workflow) {
+  const chaves = [...workflow.matchAll(/^\s+key:\s*(eval-durations[^\n]*)$/gm)].map((match) => match[1]);
+  assert.ok(chaves.length, 'workflow precisa declarar a chave do manifesto');
+  for (const chave of chaves) {
+    assert.doesNotMatch(chave, /github\.run_(?:id|attempt)/);
+    assert.equal(chave, CHAVE_CACHE_DURACOES);
+  }
+  return chaves;
+}
 
 function manifesto(dir, duracoes, geradoEm = new Date().toISOString()) {
   const caminho = join(dir, 'durations.json');
@@ -81,6 +94,31 @@ test('CLI de calibração é byte-determinístico para os mesmos artefatos', () 
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('produtor e CI compartilham cache endereçado por conteúdo com fallback estável', () => {
+  validarChavesCache(WORKFLOW_PRODUTOR);
+  validarChavesCache(WORKFLOW_CONSUMIDOR);
+  assert.match(WORKFLOW_PRODUTOR, /actions\/cache\/save@0057852bfaa89a56745cba8c7296529d2fc39830/);
+  assert.match(WORKFLOW_CONSUMIDOR, /actions\/cache\/restore@0057852bfaa89a56745cba8c7296529d2fc39830/);
+  assert.match(WORKFLOW_CONSUMIDOR, /restore-keys:\s*\|\n\s+eval-durations-v1-\n/);
+
+  const inicio = WORKFLOW_CONSUMIDOR.indexOf('  contratos-visuais-personagens-camera:');
+  const fim = WORKFLOW_CONSUMIDOR.indexOf('\n  contratos-visuais-ferro-balcao:', inicio);
+  assert.ok(inicio >= 0 && fim > inicio);
+  const job = WORKFLOW_CONSUMIDOR.slice(inicio, fim);
+  const restore = job.indexOf('Restore calibrated duration manifest');
+  const shard = job.indexOf('--shard=${{ matrix.shard }}/3');
+  assert.ok(restore >= 0 && shard > restore, 'cache precisa ser restaurado antes do passo shardado');
+  assert.match(job, /matrix:\n\s+shard: \[1, 2, 3\]/);
+  assert.doesNotMatch(job, /--shard=off/);
+});
+
+test('contrato do cache rejeita chave exclusiva de run_id e run_attempt', () => {
+  const runIdOnly = 'eval-durations-${{ github.run_id }}-${{ github.run_attempt }}';
+  const mutante = WORKFLOW_PRODUTOR.replace(CHAVE_CACHE_DURACOES, runIdOnly);
+  assert.notEqual(mutante, WORKFLOW_PRODUTOR);
+  assert.throws(() => validarChavesCache(mutante));
 });
 
 test('balanceamento guloso cobre cada passo uma vez e reage à mutação de duração', () => {
@@ -158,19 +196,22 @@ test('runner preserva --jobs=2 depois do shard', () => {
   }
 });
 
-test('runner não executa npm com manifesto ausente, vencido ou passo sem histórico', () => {
-  for (const caso of ['ausente', 'vencido', 'incompleto']) {
+test('runner não executa npm com manifesto ausente, vencido, inválido ou passo sem histórico', () => {
+  for (const caso of ['ausente', 'vencido', 'invalido', 'incompleto']) {
     const dir = mkdtempSync(join(tmpdir(), `runner-shard-${caso}-`));
     try {
       const log = npmFake(dir);
       const caminho = caso === 'ausente' ? join(dir, 'missing.json')
-        : manifesto(dir, caso === 'incompleto' ? { alpha: 1 } : { alpha: 1, beta: 1 },
-          caso === 'vencido' ? new Date(Date.now() - IDADE_MAXIMA_MANIFESTO_MS - 60000).toISOString() : undefined);
+        : caso === 'invalido' ? join(dir, 'invalido.json')
+          : manifesto(dir, caso === 'incompleto' ? { alpha: 1 } : { alpha: 1, beta: 1 },
+            caso === 'vencido' ? new Date(Date.now() - IDADE_MAXIMA_MANIFESTO_MS - 60000).toISOString() : undefined);
+      if (caso === 'invalido') writeFileSync(caminho, '{');
       const r = rodarRunner(dir, ['alpha', 'beta', '--shard=1/2', `--durations=${caminho}`], log);
       assert.equal(r.status, 2, caso);
       assert.match(r.stderr, {
         ausente: /não foi possível ler manifesto/,
         vencido: /velho ou futuro/,
+        invalido: /não foi possível ler manifesto/,
         incompleto: /sem duração válida para: beta/,
       }[caso]);
       assert.match(r.stderr, /--shard=off/);

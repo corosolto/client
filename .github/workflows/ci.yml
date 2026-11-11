@@ -172,24 +172,37 @@ jobs:
   contratos-visuais-personagens-camera:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
           cache: npm
+      - name: Restore calibrated duration manifest
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        # Mesma chave do produtor; sem o arquivo local, o prefixo encontra a
+        # calibração mais recente. Ausência não desliga o shard: o runner falha.
+        with:
+          path: tools/eval/out/durations.json
+          key: eval-durations-v1-${{ hashFiles('tools/eval/out/durations.json') }}
+          restore-keys: |
+            eval-durations-v1-
       - name: Dependências (npm ci)
         id: deps
         run: npm ci
-      - name: Contratos visuais de personagens e câmera
+      - name: Contratos visuais de personagens e câmera (shard ${{ matrix.shard }}/3)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:knife-skin-markings --json-out=tools/eval/out/contratos-visuais-personagens-camera.json
+        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:knife-skin-markings --shard=${{ matrix.shard }}/3 --json-out=tools/eval/out/contratos-visuais-personagens-camera-shard-${{ matrix.shard }}.json
       - name: Tempos dos contratos visuais de personagens e câmera
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: contratos-visuais-personagens-camera-tempos-${{ github.run_id }}
-          path: tools/eval/out/contratos-visuais-personagens-camera.json
+          name: contratos-visuais-personagens-camera-tempos-${{ github.run_id }}-${{ matrix.shard }}
+          path: tools/eval/out/contratos-visuais-personagens-camera-shard-${{ matrix.shard }}.json
           if-no-files-found: warn
 
   contratos-visuais-ferro-balcao:
