@@ -2,7 +2,7 @@
   "name": "CORO SOLTO - CI local",
   "build": {
     "context": "..",
-    "dockerfile": ".devcontainer/Dockerfile"
+    "dockerfile": "Dockerfile"
   },
   "remoteUser": "node",
   "remoteEnv": {
