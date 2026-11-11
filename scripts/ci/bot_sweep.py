@@ -32,6 +32,10 @@ def fingerprint(pr):
         "title_digest": _digest(pr.get("title")),
         "body_digest": _digest(pr.get("body")),
         "base_oid": pr.get("baseRefOid"),
+        "merge_state": pr.get("mergeStateStatus"),
+        "assignee_digest": _digest(sorted(
+            (assignee.get("login") or "").lower() for assignee in pr.get("assignees") or []
+        )),
         "head_oid": pr.get("headRefOid"),
         "label_digest": _digest(sorted(
             label.get("name") for label in pr.get("labels") or []
@@ -70,7 +74,7 @@ def decode_state(marker, kind):
     if not re.fullmatch(r"[0-9a-f]{40}", state.get("base_oid") or ""):
         raise ValueError("sweep state has no canonical evaluated base")
     if any(not re.fullmatch(r"[0-9a-f]{64}", state.get(field) or "")
-           for field in ("title_digest", "body_digest", "label_digest", "rollup_digest", "review_digest")):
+           for field in ("title_digest", "body_digest", "assignee_digest", "label_digest", "rollup_digest", "review_digest")):
         raise ValueError("sweep state has malformed digests")
     return state
 
@@ -78,7 +82,7 @@ def decode_state(marker, kind):
 def last_evaluated(comments, kind):
     markers = []
     for comment in comments or []:
-        if (comment.get("user") or {}).get("login") not in BOT_AUTHORS:
+        if ((comment.get("user") or {}).get("login") or "").lower() not in BOT_AUTHORS:
             continue
         body = comment.get("body") or ""
         matches = [match for match in STATE_RE.finditer(body) if match.group(1) == kind]
@@ -109,6 +113,8 @@ def selftest():
         "latestReviews": [],
         "reviewRequests": [],
         "reviewDecision": "APPROVED",
+        "mergeStateStatus": "CLEAN",
+        "assignees": [{"login": "nunreasonable"}],
     }
 
     def check(name, expected, current=pr, comments=None, kind="classify"):
@@ -138,6 +144,13 @@ def selftest():
         check(f"{kind}: github-actions bot state debounces", False, comments=[{
             "body": f"fallback token result\n{marker}", "user": {"login": "github-actions[bot]"},
         }], kind=kind)
+        check(f"{kind}: canonical bot login debounces", False, comments=[{
+            "body": f"production bot result\n{marker}", "user": {"login": "csbrasil-BOT"},
+        }], kind=kind)
+        check(f"{kind}: mergeability change dispatches", True,
+              current=dict(pr, mergeStateStatus="BLOCKED"), comments=comments, kind=kind)
+        check(f"{kind}: assignee change dispatches", True,
+              current=dict(pr, assignees=[]), comments=comments, kind=kind)
         check(f"{kind}: new head dispatches", True,
               current=dict(pr, headRefOid="b" * 40), comments=comments, kind=kind)
         check(f"{kind}: external DCO rollup change dispatches", True,

@@ -170,7 +170,7 @@ jobs:
           comments = [comment for page in pages for comment in page]
           mine = [
               comment for comment in comments
-              if (comment.get('user') or {}).get('login') in BOT_AUTHORS
+              if BOT_AUTHORS.has((comment.get('user') or {}).get('login', '').toLowerCase())
               and PREFIX + 'automerge:' in (comment.get('body') or '')
           ]
           for extra in mine[1:]:
@@ -214,7 +214,7 @@ jobs:
         run: |
           python3 scripts/ci/bot_sweep.py --selftest
           gh pr list --repo "$REPO" --state open --limit 100 \
-            --json number,title,body,baseRefOid,labels,headRefOid,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
+            --json number,title,body,baseRefOid,mergeStateStatus,assignees,labels,headRefOid,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
             > /tmp/automerge-sweep.json
           python3 - <<'PY'
           import json, os, subprocess
