@@ -87,7 +87,8 @@ def _bool(value, field):
 
 
 def validate_attestation(attestation, pr, expected_repository, pr_number,
-                         remote_base_oid, remote_staging_oid, remote_main_oid):
+                         remote_base_oid, remote_staging_oid, remote_main_oid,
+                         diff_files=_diff_files, diff_digest=_diff_digest):
     """Validate schema, current PR identity, and live base/staging/main refs.
 
     The remote OIDs are explicit so this function stays deterministic in selftests;
@@ -139,6 +140,10 @@ def validate_attestation(attestation, pr, expected_repository, pr_number,
         raise ValueError("changed_files does not match diff_files")
     if attestation.get("full_diff_verified") is not True:
         raise ValueError("complete diff was not verified")
+    if files != diff_files(base_oid, head_oid):
+        raise ValueError("diff_files do not match the attested base/head diff")
+    if attestation["diff_digest"] != diff_digest(base_oid, head_oid):
+        raise ValueError("diff_digest does not match the attested base/head diff")
 
     main_is_ancestor = _bool(attestation.get("main_is_ancestor"), "main_is_ancestor")
     staging_disjoint = _bool(attestation.get("staging_disjoint"), "staging_disjoint")
@@ -157,7 +162,8 @@ def validate_attestation(attestation, pr, expected_repository, pr_number,
     return attestation
 
 
-def apply_attestation(payload, resolve_remote=_remote_oid):
+def apply_attestation(payload, resolve_remote=_remote_oid,
+                      diff_files=_diff_files, diff_digest=_diff_digest):
     attestation = payload.get("attestation")
     pr = payload.get("pr")
     if not isinstance(pr, dict):
@@ -167,6 +173,7 @@ def apply_attestation(payload, resolve_remote=_remote_oid):
     validate_attestation(
         attestation, pr, expected_repository, pr_number,
         resolve_remote(pr.get("baseRefName")), resolve_remote("staging"), resolve_remote("main"),
+        diff_files, diff_digest,
     )
     result = dict(pr)
     result.update({
@@ -294,12 +301,28 @@ def _fixture():
 def selftest():
     failures = 0
 
+    def expected_diff_files(base_oid, head_oid):
+        if (base_oid, head_oid) != ("a" * 40, "b" * 40):
+            raise ValueError("selftest diff file recomputation used wrong OIDs")
+        return ["docs/a.md"]
+
+    def expected_diff_digest(base_oid, head_oid):
+        if (base_oid, head_oid) != ("a" * 40, "b" * 40):
+            raise ValueError("selftest diff digest recomputation used wrong OIDs")
+        return "d" * 64
+
+    diff_kwargs = {
+        "diff_files": expected_diff_files,
+        "diff_digest": expected_diff_digest,
+    }
+
     def rejected(name, attestation, pr, base=None, staging=None, main=None):
         nonlocal failures
         try:
             validate_attestation(
                 attestation, pr, "corosolto/client", 42,
                 base or "a" * 40, staging or "c" * 40, main or "a" * 40,
+                **diff_kwargs,
             )
         except ValueError:
             print(f"  ok   {name}")
@@ -309,7 +332,10 @@ def selftest():
 
     attestation, pr = _fixture()
     try:
-        validate_attestation(attestation, pr, "corosolto/client", 42, "a" * 40, "c" * 40, "a" * 40)
+        validate_attestation(
+            attestation, pr, "corosolto/client", 42,
+            "a" * 40, "c" * 40, "a" * 40, **diff_kwargs,
+        )
         print("  ok   valid current attestation")
     except ValueError as error:
         failures += 1
@@ -323,6 +349,8 @@ def selftest():
     rejected("stale main evidence is rejected", attestation, pr, main="e" * 40)
     for name, mutation in (
         ("malformed digest", {"diff_digest": "not-a-digest"}),
+        ("stale diff digest", {"diff_digest": "e" * 64}),
+        ("fabricated diff paths", {"diff_files": ["docs/forged.md"]}),
         ("incomplete files", {"changed_files": 2}),
         ("unsorted files", {"diff_files": ["z", "a"]}),
         ("unverified diff", {"full_diff_verified": False}),
@@ -334,6 +362,7 @@ def selftest():
     applied = apply_attestation(
         {"attestation": attestation, "pr": pr, "expected_repository": "corosolto/client", "pr_number": 42},
         resolve_remote=lambda name: "a" * 40 if name == "main" else "c" * 40,
+        **diff_kwargs,
     )
     if applied["full_diff_verified"] is True and applied["files"] == [{"path": "docs/a.md"}]:
         print("  ok   consumer receives complete verified files")
