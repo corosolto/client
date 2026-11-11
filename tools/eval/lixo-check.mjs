@@ -39,8 +39,8 @@
    o commit com --depth=1 se o checkout raso não o tem) > merge-base origin/main.
    Uso: node tools/eval/lixo-check.mjs [--base=<ref>] [--head=<ref>]
         node tools/eval/lixo-check.mjs --mutate
-          clone de rascunho + 1 commit por cláusula (6 mutantes vermelhos, um é rename) +
-          2 controles positivos (régua ligada e asset citado ficam verdes).
+          clone de rascunho + 1 commit por cláusula (7 mutantes vermelhos, um é rename) +
+          3 controles positivos (régua ligada, asset citado e atlas de mão com estilo ficam verdes).
    ============================================================================ */
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -190,8 +190,12 @@ export function classificar(novos, { mencoes, assets }) {
       /* Arte de resultado: game.js/main.js montam `/img/resultado/${id}-${pose}.webp`; pedida
          quando o id do personagem está no corpus e o molde da URL também. */
       const resultado = /^img\/resultado\/(.{4,})-(?:vitoria|derrota)\.webp$/.exec(rel);
+      /* Atlas de mão do viewmodel: vmhands.js monta `/models/viewmodels/coro/hands/${layout}/${papel}-${estilo}.webp`
+         (e `-height`); pedido quando o id do estilo está no corpus e o molde da URL também. */
+      const maos = /^models\/viewmodels\/coro\/hands\/[^/]+\/(?:cloth|glove|skin|combined)-(.{4,}?)(?:-height)?\.webp$/.exec(rel);
       const pedido = c.includes(rel) || c.includes(base) || (stem.length >= 4 && c.includes(stem))
-        || Boolean(resultado && c.includes(`'${resultado[1]}'`) && c.includes('/img/resultado/${'));
+        || Boolean(resultado && c.includes(`'${resultado[1]}'`) && c.includes('/img/resultado/${'))
+        || Boolean(maos && c.includes(`'${maos[1]}'`) && c.includes('/models/viewmodels/coro/hands/${'));
       if (!pedido) falhas.LX5.push(p);
     }
   }
@@ -236,6 +240,7 @@ const MUTANTES = [
   { nome: 'regua-orfa', acende: 'LX3', arquivos: { [regua('orfa')]: 'process.exit(0);\n' } },
   { nome: 'continuation-novo', acende: 'LX4', arquivos: { 'docs/reports/FOO-CONTINUATION-20261109.md': '# foo\n' } },
   { nome: 'asset-sem-dono', acende: 'LX5', arquivos: { 'public/img/chars/molde/zzz-sem-dono.png': 'png' } },
+  { nome: 'atlas-de-mao-sem-estilo', acende: 'LX5', arquivos: { 'public/models/viewmodels/coro/hands/ak/cloth-zzz-sem-estilo.webp': 'webp' } },
   {
     nome: 'renomeado-para-progress',
     acende: 'LX1',
@@ -256,6 +261,13 @@ const CONTROLES = [
   {
     nome: 'asset-citado',
     arquivos: () => ({ 'public/img/zzz-controle.webp': 'webp', 'public/js/zzz-controle.js': "export const CAPA = '/img/zzz-controle.webp';\n" }),
+  },
+  {
+    nome: 'atlas-de-mao-com-estilo',
+    arquivos: () => ({
+      'public/models/viewmodels/coro/hands/ak/cloth-zzz-estilo-controle-height.webp': 'webp',
+      'public/js/zzz-estilo-controle.js': "export const ESTILO = { id: 'zzz-estilo-controle' };\n",
+    }),
   },
 ];
 
