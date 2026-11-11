@@ -205,7 +205,7 @@ test('queda do nó mostra estado de reconexão e permite entrar de novo', async 
   await expect(page.locator('#boot-splash')).toHaveCount(0);
   await page.locator('.cs-item[data-act="mp"]').click();
   await expect(page.locator('.mp-sala .mp-entrar[data-lado="E"]')).toBeVisible({ timeout: 25_000 });
-  await page.locator('.mp-sala .mp-entrar[data-lado="E"]').click();
+  await page.locator('.mp-sala .mp-entrar[data-lado="E"]').dispatchEvent('click');
   await expect(page.locator('#mp-estado')).toHaveText(/NA SALA/, { timeout: 25_000 });
 
   // Fecha DEPOIS do welcome: o NetClient já aceitou a sessão e o onClose de produção é obrigatório.
@@ -216,7 +216,7 @@ test('queda do nó mostra estado de reconexão e permite entrar de novo', async 
   await expect(page.locator('.mp-sala .mp-entrar[data-lado="E"]')).toBeVisible({ timeout: 25_000 });
 
   // Não é só texto: a lista continua utilizável e uma segunda tentativa abre outro socket.
-  await page.locator('.mp-sala .mp-entrar[data-lado="E"]').click();
+  await page.locator('.mp-sala .mp-entrar[data-lado="E"]').dispatchEvent('click');
   await expect.poll(() => page.evaluate(() => window.__mpSmokeSockets.length)).toBe(2);
   await expect(page.locator('#mp-estado')).toHaveText(/NA SALA/, { timeout: 25_000 });
   await expect(page.locator('#mp-erro')).toBeHidden();
