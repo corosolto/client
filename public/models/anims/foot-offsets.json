@@ -1,5 +1,5 @@
 {
- "gerado": "2026-11-11T01:57:55.676Z",
+ "gerado": "2026-11-11T02:52:16.854Z",
  "fonte": "tools/eval/char_probe.json (C3.faixaPorPose[0], o pé mais baixo do ciclo; bind = C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -(pé mais baixo do ciclo).",
  "tolerancia": 0.01,
@@ -349,16 +349,13 @@
    "run": 0.0222
   },
   "dracula": {
-   "run": 0.0113,
-   "crouch": -0.3061
+   "run": 0.0113
   },
   "boneca-da-cristaleira": {
    "run": 0.0363
   },
   "satanista-talkshow": {
-   "run": 0.0113,
-   "crouch": -0.3285,
-   "crouchwalk": -0.0641
+   "run": 0.0113
   },
   "clovis-fora-do-ar": {
    "run": 0.0298
@@ -421,9 +418,6 @@
   },
   "corisco": {
    "run": 0.0182
-  },
-  "vlad": {
-   "crouch": -0.1323
   }
  },
  "suspeitos": [

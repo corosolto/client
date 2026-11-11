@@ -1,5 +1,5 @@
 {
- "gerado": "2026-11-11T01:57:55.676Z",
+ "gerado": "2026-11-11T02:55:41.510Z",
  "protocolo": "node puro; DOM stubado + three vendorizado (mesmo protocolo de botsim.mjs/pickup-check.mjs); GLB lido por tp-mount-probe.mjs",
  "fontes": {
   "glb": 93,
@@ -73,91 +73,91 @@
   "porMapa": [
    {
     "mapa": "campomorro",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "mansao",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "amazonia",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "escadao",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "praca_poderes",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "piscina_treta",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "loja_h",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "ferro_velho",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "quebrada",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "corrego",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "lajes",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "posto_treta",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "upa_24h",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "obras_prefeitura",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "atacadao_treta",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "parque_treta",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "velho_oeste",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "invasao_javaporcos",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "distrito_rural",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "vila_da_mata",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "operacao_flavio",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    },
    {
     "mapa": "penitenciaria",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-repintura-pesos-20261111/tools/eval/char-probe.mjs:1026:15"
    }
   ],
   "total": {
@@ -9857,7 +9857,7 @@
     "ossosInvertidos": [],
     "raioSkinP50": 0.102,
     "raioSkinP95": 0.237,
-    "desalinhamentoRMS": 0.1282,
+    "desalinhamentoRMS": 0.1292,
     "piorJunta": "RightLeg",
     "piorDesalinhamento": 0.223,
     "antebraco": 0.183,
@@ -9920,7 +9920,7 @@
      "run": 0.030244930668289236,
      "shoot": -0.004094181924722881,
      "crouch": -0.0028448168954360465,
-     "crouchwalk": -0.0053330397134272265
+     "crouchwalk": -0.005333013106501675
     },
     "faixaPorPose": {
      "idle": [
@@ -9944,11 +9944,11 @@
       -0.0023155214754255198
      ],
      "crouchwalk": [
-      -0.0053330397134272265,
+      -0.005333013106501675,
       0.005155087571232966
      ]
     },
-    "afunda": -0.0053330397134272265,
+    "afunda": -0.005333013106501675,
     "flutua": 0.030244930668289236,
     "piorDesvio": 0.030244930668289236
    },
@@ -10288,8 +10288,8 @@
     "cabeca": 0.28612705441762065,
     "ombroLargura": 0.2458588239560673,
     "cinturaLargura": 0.25442037876504564,
-    "torsoLargura": 0.24571428361745656,
-    "torsoProfundidade": 0.20532290008586068,
+    "torsoLargura": 0.24998593756085144,
+    "torsoProfundidade": 0.205322896846334,
     "braco": 0.42369379177718436,
     "perna": 0.7861411778348327,
     "larguraMax": 1.4439922490861288
@@ -10331,7 +10331,7 @@
      "cabecaSobreAltura": 0.1663529386148957,
      "ombroSobreAltura": 0.14294117671864376,
      "cinturaSobreOmbro": 1.0348230528041091,
-     "larguraTorsoSobreAltura": 0.14285714163805613,
+     "larguraTorsoSobreAltura": 0.14534066137258803,
      "bracoSobreAltura": 0.246333599870456,
      "pernaSobreAltura": 0.4570588243225771
     },
@@ -10339,17 +10339,17 @@
      "cabecaSobreAltura": -0.17806321081873977,
      "ombroSobreAltura": -0.28130675093529595,
      "cinturaSobreOmbro": -0.03863456863468595,
-     "larguraTorsoSobreAltura": -0.3302752303142147,
+     "larguraTorsoSobreAltura": -0.3186323074393222,
      "bracoSobreAltura": -0.07142982763590365,
      "pernaSobreAltura": 0.15167133763504853
     },
-    "piorPct": -0.3302752303142147,
+    "piorPct": -0.3186323074393222,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
      "cabecaSobreAltura": -0.871466907660883,
      "ombroSobreAltura": -1.306221018896822,
      "cinturaSobreOmbro": -0.2621205780424508,
-     "larguraTorsoSobreAltura": -1.6187783579103725,
+     "larguraTorsoSobreAltura": -1.5617128869249621,
      "bracoSobreAltura": -0.5771393775236339,
      "pernaSobreAltura": 1.578621925766832
     },
@@ -10357,16 +10357,16 @@
      "cabecaSobreAltura": 0.27963798934535145,
      "ombroSobreAltura": -0.44810356479288127,
      "cinturaSobreOmbro": 0.3984095308163637,
-     "larguraTorsoSobreAltura": -0.17898194460887276,
+     "larguraTorsoSobreAltura": -0.16470884268627567,
      "bracoSobreAltura": -0.4401509093853273,
      "pernaSobreAltura": -0.1376248597687225
     },
     "elencoDegenerado": false,
-    "piorZ": -1.6187783579103725,
-    "piorZRazao": "larguraTorsoSobreAltura",
+    "piorZ": 1.578621925766832,
+    "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": -0.44810356479288127,
     "piorDesvioRefRazao": "ombroSobreAltura",
-    "indiceBalao": 0.8210180553911273
+    "indiceBalao": 0.8352911573137244
    },
    "C2": {
     "alturaM": 1.7200000000000002,
@@ -10597,7 +10597,7 @@
     "ombroLargura": 0.43961178523038263,
     "cinturaLargura": 0.4067652875268269,
     "torsoLargura": 0.38708416406295615,
-    "torsoProfundidade": 0.3059050311274313,
+    "torsoProfundidade": 0.3104891979543729,
     "braco": 0.31459345711014913,
     "perna": 0.664729442799451,
     "larguraMax": 1.3968688951307555
@@ -10620,13 +10620,13 @@
     "impressaoEsqueleto": 559.9,
     "curlDuplicado": 4,
     "convencaoSkinPai": 0,
-    "convencaoSkinFilho": 16,
+    "convencaoSkinFilho": 17,
     "ossosInvertidos": [],
-    "raioSkinP50": 0.085,
-    "raioSkinP95": 0.169,
-    "desalinhamentoRMS": 0.1283,
-    "piorJunta": "RightUpLeg",
-    "piorDesalinhamento": 0.224,
+    "raioSkinP50": 0.087,
+    "raioSkinP95": 0.175,
+    "desalinhamentoRMS": 0.1326,
+    "piorJunta": "LeftShoulder",
+    "piorDesalinhamento": 0.257,
     "antebraco": 0.162,
     "dPalmaOsso": 0.1,
     "alavancaPalma": 0.62,
@@ -10839,8 +10839,8 @@
      "walk": 0.011724889062110819,
      "run": 0.039474501520763886,
      "shoot": 0.00005004888753789451,
-     "crouch": 0.312319312935961,
-     "crouchwalk": 0.07249789967358745
+     "crouch": 0.0009129119814637673,
+     "crouchwalk": 0.0096150229125317
     },
     "faixaPorPose": {
      "idle": [
@@ -10860,21 +10860,21 @@
       0.00005004888753789451
      ],
      "crouch": [
-      0.3060747640847363,
-      0.312319312935961
+      0.0005359428583497531,
+      0.0009129119814637673
      ],
      "crouchwalk": [
-      -0.001174318332756351,
-      0.07249789967358745
+      -0.006838492242195777,
+      0.0096150229125317
      ]
     },
     "corpoPorPose": {
-     "crouch": 0.004737111133524824,
-     "crouchwalk": -0.001174318332756351
+     "crouch": -0.30709464014496984,
+     "crouchwalk": -0.07355860227517447
     },
     "afunda": -0.0005018017432486378,
-    "flutua": 0.312319312935961,
-    "piorDesvio": 0.312319312935961
+    "flutua": 0.039474501520763886,
+    "piorDesvio": 0.039474501520763886
    },
    "C5": {
     "materiais": 1,
@@ -11150,11 +11150,11 @@
     "porPose": {
      "bind": 0,
      "idle": -0.00028989384135138515,
-     "walk": 0.026283125203716656,
+     "walk": 0.013941964377330942,
      "run": 0.03352350662906959,
      "shoot": -0.00044507505359002306,
-     "crouch": 0.33410424731590205,
-     "crouchwalk": 0.12740196409332488
+     "crouch": -0.0034411688397448887,
+     "crouchwalk": 0.00749667842816883
     },
     "faixaPorPose": {
      "idle": [
@@ -11162,8 +11162,8 @@
       -0.00003343756454803559
      ],
      "walk": [
-      -0.0030129261370297204,
-      0.026283125203716656
+      -0.004080104934031106,
+      0.013941964377330942
      ],
      "run": [
       -0.011315304371785271,
@@ -11174,21 +11174,22 @@
       -0.0003117251226772917
      ],
      "crouch": [
-      0.3285296351650265,
-      0.33410424731590205
+      -0.0034411688397448887,
+      -0.002886661517216599
      ],
      "crouchwalk": [
-      0.06409721031343837,
-      0.12740196409332488
+      -0.007239276252394656,
+      0.00749667842816883
      ]
     },
     "corpoPorPose": {
-     "crouch": 0.0001664830950253743,
-     "crouchwalk": -0.0023494340331964678
+     "run": -0.03469726243810735,
+     "crouch": -0.3375424552396724,
+     "crouchwalk": -0.13612817450490508
     },
-    "afunda": -0.00044507505359002306,
-    "flutua": 0.33410424731590205,
-    "piorDesvio": 0.33410424731590205
+    "afunda": -0.0034411688397448887,
+    "flutua": 0.03352350662906959,
+    "piorDesvio": 0.03352350662906959
    },
    "C5": {
     "materiais": 1,
@@ -11373,8 +11374,8 @@
     "cabeca": 0.49403681959416557,
     "ombroLargura": 0.10187693129046638,
     "cinturaLargura": 0.07145082573677952,
-    "torsoLargura": 0.10771037657502265,
-    "torsoProfundidade": 0.09424656325269348,
+    "torsoLargura": 0.10434442754843518,
+    "torsoProfundidade": 0.0942465630488104,
     "braco": 0.352612439813362,
     "perna": 0.730073905014018,
     "larguraMax": 1.2958904354130139
@@ -11397,11 +11398,11 @@
     "impressaoEsqueleto": 410.7,
     "curlDuplicado": 4,
     "convencaoSkinPai": 0,
-    "convencaoSkinFilho": 19,
+    "convencaoSkinFilho": 17,
     "ossosInvertidos": [],
     "raioSkinP50": 0.096,
     "raioSkinP95": 0.21,
-    "desalinhamentoRMS": 0.1234,
+    "desalinhamentoRMS": 0.1237,
     "piorJunta": "LeftUpLeg",
     "piorDesalinhamento": 0.251,
     "antebraco": 0.176,
@@ -11414,7 +11415,7 @@
      "cabecaSobreAltura": 0.2872307090663753,
      "ombroSobreAltura": 0.059230774006085105,
      "cinturaSobreOmbro": 0.7013445029381826,
-     "larguraTorsoSobreAltura": 0.06262231196222247,
+     "larguraTorsoSobreAltura": 0.06066536485374138,
      "bracoSobreAltura": 0.20500723244962907,
      "pernaSobreAltura": 0.4244615726825686
     },
@@ -11422,17 +11423,17 @@
      "cabecaSobreAltura": 0.41918434822968303,
      "ombroSobreAltura": -0.7021938786831164,
      "cinturaSobreOmbro": -0.3484409157915308,
-     "larguraTorsoSobreAltura": -0.7064220033020849,
+     "larguraTorsoSobreAltura": -0.7155963150409781,
      "bracoSobreAltura": -0.2272121981258405,
      "pernaSobreAltura": 0.06953460073883794
     },
-    "piorPct": -0.7064220033020849,
+    "piorPct": -0.7155963150409781,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
      "cabecaSobreAltura": 2.0515483575292186,
      "ombroSobreAltura": -3.2605701805128167,
      "cinturaSobreOmbro": -2.3640365995679358,
-     "larguraTorsoSobreAltura": -3.4623869595342405,
+     "larguraTorsoSobreAltura": -3.5073530239815027,
      "bracoSobreAltura": -1.8358312057050397,
      "pernaSobreAltura": 0.7237283394302083
     },
@@ -11440,16 +11441,16 @@
      "cabecaSobreAltura": 1.2094669928182717,
      "ombroSobreAltura": -0.7713097528722582,
      "cinturaSobreOmbro": -0.052237158191645094,
-     "larguraTorsoSobreAltura": -0.640101655389526,
+     "larguraTorsoSobreAltura": -0.651348477852061,
      "bracoSobreAltura": -0.5340744717053885,
      "pernaSobreAltura": -0.19912910814609697
     },
     "elencoDegenerado": false,
-    "piorZ": -3.4623869595342405,
+    "piorZ": -3.5073530239815027,
     "piorZRazao": "larguraTorsoSobreAltura",
     "piorDesvioRef": 1.2094669928182717,
     "piorDesvioRefRazao": "cabecaSobreAltura",
-    "indiceBalao": 0.359898344610474
+    "indiceBalao": 0.348651522147939
    },
    "C2": {
     "alturaM": 1.72,
@@ -11526,8 +11527,8 @@
     "cabeca": 0.3033270776489667,
     "ombroLargura": 0.4057176416501975,
     "cinturaLargura": 0.24372979259980818,
-    "torsoLargura": 0.2827397164661791,
-    "torsoProfundidade": 0.27600781584886447,
+    "torsoLargura": 0.28273971634577666,
+    "torsoProfundidade": 0.27600781570592103,
     "braco": 0.38334701413277544,
     "perna": 0.8266117536863127,
     "larguraMax": 1.4843835534066807
@@ -11554,7 +11555,7 @@
     "ossosInvertidos": [],
     "raioSkinP50": 0.08,
     "raioSkinP95": 0.153,
-    "desalinhamentoRMS": 0.1218,
+    "desalinhamentoRMS": 0.1223,
     "piorJunta": "LeftLeg",
     "piorDesalinhamento": 0.252,
     "antebraco": 0.164,
@@ -11567,7 +11568,7 @@
      "cabecaSobreAltura": 0.17635295212149227,
      "ombroSobreAltura": 0.23588234979662648,
      "cinturaSobreOmbro": 0.6007374774448374,
-     "larguraTorsoSobreAltura": 0.16438355608498786,
+     "larguraTorsoSobreAltura": 0.16438355601498644,
      "bracoSobreAltura": 0.2228761710074276,
      "pernaSobreAltura": 0.4805882288873911
     },
@@ -11575,7 +11576,7 @@
      "cabecaSobreAltura": -0.12865393039473147,
      "ombroSobreAltura": 0.185991722357517,
      "cinturaSobreOmbro": -0.4419062828411959,
-     "larguraTorsoSobreAltura": -0.22935781874960032,
+     "larguraTorsoSobreAltura": -0.22935781907777214,
      "bracoSobreAltura": -0.1598540977071227,
      "pernaSobreAltura": 0.21095941913982785
     },
@@ -11585,7 +11586,7 @@
      "cabecaSobreAltura": -0.6296507985225862,
      "ombroSobreAltura": 0.8636347911184377,
      "cinturaSobreOmbro": -2.9981628989881073,
-     "larguraTorsoSobreAltura": -1.1241517350730719,
+     "larguraTorsoSobreAltura": -1.1241517366815408,
      "bracoSobreAltura": -1.2915906071558,
      "pernaSobreAltura": 2.1957026930328274
     },
@@ -11593,7 +11594,7 @@
      "cabecaSobreAltura": 0.35656117016532507,
      "ombroSobreAltura": -0.08925733669256189,
      "cinturaSobreOmbro": -0.188192598047517,
-     "larguraTorsoSobreAltura": -0.05526691905179382,
+     "larguraTorsoSobreAltura": -0.05526691945410084,
      "bracoSobreAltura": -0.49346324771039185,
      "pernaSobreAltura": -0.09322975681624324
     },
@@ -11602,7 +11603,7 @@
     "piorZRazao": "cinturaSobreOmbro",
     "piorDesvioRef": -0.49346324771039185,
     "piorDesvioRefRazao": "bracoSobreAltura",
-    "indiceBalao": 0.9447330809482062
+    "indiceBalao": 0.9447330805458991
    },
    "C2": {
     "alturaM": 1.72,
@@ -11834,7 +11835,7 @@
     "cabeca": 0.27418827147775127,
     "ombroLargura": 0.28329410840584,
     "cinturaLargura": 0.2955304135007174,
-    "torsoLargura": 0.27937377241207684,
+    "torsoLargura": 0.27937377298782207,
     "torsoProfundidade": 0.2400248133565555,
     "braco": 0.3593997899293893,
     "perna": 0.821552914376936,
@@ -11864,9 +11865,9 @@
     ],
     "raioSkinP50": 0.067,
     "raioSkinP95": 0.173,
-    "desalinhamentoRMS": 0.1368,
+    "desalinhamentoRMS": 0.1341,
     "piorJunta": "RightLeg",
-    "piorDesalinhamento": 0.353,
+    "piorDesalinhamento": 0.351,
     "antebraco": 0.213,
     "dPalmaOsso": 0.109,
     "alavancaPalma": 0.51,
@@ -11877,7 +11878,7 @@
      "cabecaSobreAltura": 0.15941178574287865,
      "ombroSobreAltura": 0.16470587698013955,
      "cinturaSobreOmbro": 1.043192938828604,
-     "larguraTorsoSobreAltura": 0.16242661186748653,
+     "larguraTorsoSobreAltura": 0.16242661220222213,
      "bracoSobreAltura": 0.20895336623801705,
      "pernaSobreAltura": 0.47764704324240465
     },
@@ -11885,17 +11886,17 @@
      "cabecaSobreAltura": -0.21235890136887423,
      "ombroSobreAltura": -0.1718761200636695,
      "cinturaSobreOmbro": -0.0308588246883049,
-     "larguraTorsoSobreAltura": -0.23853211693536827,
+     "larguraTorsoSobreAltura": -0.2385321153661032,
      "bracoSobreAltura": -0.21233699582301943,
      "pernaSobreAltura": 0.20354838356685762
     },
-    "piorPct": -0.23853211693536827,
+    "piorPct": -0.2385321153661032,
     "piorPctRazao": "larguraTorsoSobreAltura",
     "zElenco": {
      "cabecaSobreAltura": -1.0393149389998462,
      "ombroSobreAltura": -0.7980903406233524,
      "cinturaSobreOmbro": -0.20936516831579438,
-     "larguraTorsoSobreAltura": -1.169117733092386,
+     "larguraTorsoSobreAltura": -1.1691177254009455,
      "bracoSobreAltura": -1.7156424094874625,
      "pernaSobreAltura": 2.1185673329143624
     },
@@ -11903,7 +11904,7 @@
      "cabecaSobreAltura": 0.2262445057144511,
      "ombroSobreAltura": -0.36406997304965427,
      "cinturaSobreOmbro": 0.40972018760622175,
-     "larguraTorsoSobreAltura": -0.06651372489950266,
+     "larguraTorsoSobreAltura": -0.06651372297573484,
      "bracoSobreAltura": -0.5251059858226885,
      "pernaSobreAltura": -0.09877916369357619
     },
@@ -11912,7 +11913,7 @@
     "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": -0.5251059858226885,
     "piorDesvioRefRazao": "bracoSobreAltura",
-    "indiceBalao": 0.9334862751004973
+    "indiceBalao": 0.9334862770242651
    },
    "C2": {
     "alturaM": 1.72,
@@ -12788,7 +12789,7 @@
     "ossosInvertidos": [],
     "raioSkinP50": 0.097,
     "raioSkinP95": 0.219,
-    "desalinhamentoRMS": 0.1012,
+    "desalinhamentoRMS": 0.0993,
     "piorJunta": "Head",
     "piorDesalinhamento": 0.192,
     "antebraco": 0.139,
@@ -13069,7 +13070,7 @@
     "cabeca": 0.6000776315175127,
     "ombroLargura": 0.46541177169826203,
     "cinturaLargura": 0.4867820146656543,
-    "torsoLargura": 0.436936698592443,
+    "torsoLargura": 0.4369366984342655,
     "torsoProfundidade": 0.4568191681101338,
     "braco": 0.33487731045603036,
     "perna": 0.4117882414808535,
@@ -13096,7 +13097,7 @@
     "convencaoSkinFilho": 15,
     "ossosInvertidos": [],
     "raioSkinP50": 0.1,
-    "raioSkinP95": 0.236,
+    "raioSkinP95": 0.237,
     "desalinhamentoRMS": 0.1136,
     "piorJunta": "Head",
     "piorDesalinhamento": 0.206,
@@ -13110,7 +13111,7 @@
      "cabecaSobreAltura": 0.3488823439055306,
      "ombroSobreAltura": 0.27058823935945464,
      "cinturaSobreOmbro": 1.0459168509842658,
-     "larguraTorsoSobreAltura": 0.25403296429793193,
+     "larguraTorsoSobreAltura": 0.2540329642059683,
      "bracoSobreAltura": 0.1946961107302502,
      "pernaSobreAltura": 0.2394117683028218
     },
@@ -13118,7 +13119,7 @@
      "cabecaSobreAltura": 0.7238002282339412,
      "ombroSobreAltura": 0.36048929614401065,
      "cinturaSobreOmbro": -0.028328271298106465,
-     "larguraTorsoSobreAltura": 0.19092518971209613,
+     "larguraTorsoSobreAltura": 0.19092518928096402,
      "bracoSobreAltura": -0.2660806272693515,
      "pernaSobreAltura": -0.3967435770318125
     },
@@ -13128,7 +13129,7 @@
      "cabecaSobreAltura": 3.5423821898020647,
      "ombroSobreAltura": 1.6738976016218532,
      "cinturaSobreOmbro": -0.19219634410351674,
-     "larguraTorsoSobreAltura": 0.935781847133486,
+     "larguraTorsoSobreAltura": 0.9357818450203776,
      "bracoSobreAltura": -2.14988069656412,
      "pernaSobreAltura": -4.1293768445334305
     },
@@ -13136,7 +13137,7 @@
      "cabecaSobreAltura": 1.6837103377348506,
      "ombroSobreAltura": 0.044742236909091244,
      "cinturaSobreOmbro": 0.41340114997873756,
-     "larguraTorsoSobreAltura": 0.4599595649306434,
+     "larguraTorsoSobreAltura": 0.45995956440211694,
      "bracoSobreAltura": -0.5575088392494314,
      "pernaSobreAltura": -0.548279682447506
     },
@@ -13145,7 +13146,7 @@
     "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 1.6837103377348506,
     "piorDesvioRefRazao": "cabecaSobreAltura",
-    "indiceBalao": 1.4599595649306434
+    "indiceBalao": 1.4599595644021168
    },
    "C2": {
     "alturaM": 1.7200000000000002,
@@ -13222,8 +13223,8 @@
     "cabeca": 0.2840023666949514,
     "ombroLargura": 0.2848117598831653,
     "cinturaLargura": 0.3398139620857358,
-    "torsoLargura": 0.3130332654115998,
-    "torsoProfundidade": 0.24810425233338204,
+    "torsoLargura": 0.3063013628372956,
+    "torsoProfundidade": 0.24810425139943143,
     "braco": 0.3624611236013831,
     "perna": 0.831670574152618,
     "larguraMax": 1.3968688663390008
@@ -13246,16 +13247,16 @@
     "impressaoEsqueleto": 558.78,
     "curlDuplicado": 4,
     "convencaoSkinPai": 0,
-    "convencaoSkinFilho": 14,
+    "convencaoSkinFilho": 13,
     "ossosInvertidos": [],
     "raioSkinP50": 0.091,
     "raioSkinP95": 0.17,
-    "desalinhamentoRMS": 0.1308,
+    "desalinhamentoRMS": 0.1325,
     "piorJunta": "LeftLeg",
     "piorDesalinhamento": 0.362,
     "antebraco": 0.182,
-    "dPalmaOsso": 0.116,
-    "alavancaPalma": 0.64,
+    "dPalmaOsso": 0.109,
+    "alavancaPalma": 0.6,
     "abducaoBraco": 87.7
    },
    "C1": {
@@ -13263,7 +13264,7 @@
      "cabecaSobreAltura": 0.16511765505520432,
      "ombroSobreAltura": 0.16558823249021243,
      "cinturaSobreOmbro": 1.1931177358165734,
-     "larguraTorsoSobreAltura": 0.18199608454162783,
+     "larguraTorsoSobreAltura": 0.17808218769610212,
      "bracoSobreAltura": 0.210733211396153,
      "pernaSobreAltura": 0.48352940357710356
     },
@@ -13271,7 +13272,7 @@
      "cabecaSobreAltura": -0.1841666497554669,
      "ombroSobreAltura": -0.16743972907458016,
      "cinturaSobreOmbro": 0.10842345815042155,
-     "larguraTorsoSobreAltura": -0.1467889920955376,
+     "larguraTorsoSobreAltura": -0.16513762789622305,
      "bracoSobreAltura": -0.2056277562952374,
      "pernaSobreAltura": 0.2183704271083095
     },
@@ -13281,7 +13282,7 @@
      "cabecaSobreAltura": -0.9013380137238926,
      "ombroSobreAltura": -0.7774903829660054,
      "cinturaSobreOmbro": 0.735611151569442,
-     "larguraTorsoSobreAltura": -0.7194570521006648,
+     "larguraTorsoSobreAltura": -0.8093892413934284,
      "bracoSobreAltura": -1.6614330343163715,
      "pernaSobreAltura": 2.272837765838926
     },
@@ -13289,7 +13290,7 @@
      "cabecaSobreAltura": 0.27013580811695626,
      "ombroSobreAltura": -0.3606631950184849,
      "cinturaSobreOmbro": 0.6123212646169911,
-     "larguraTorsoSobreAltura": 0.04595450885993012,
+     "larguraTorsoSobreAltura": 0.023460848828173193,
      "bracoSobreAltura": -0.5210608831905613,
      "pernaSobreAltura": -0.08768037060923863
     },
@@ -13298,7 +13299,7 @@
     "piorZRazao": "pernaSobreAltura",
     "piorDesvioRef": 0.6123212646169911,
     "piorDesvioRefRazao": "cinturaSobreOmbro",
-    "indiceBalao": 1.04595450885993
+    "indiceBalao": 1.0234608488281731
    },
    "C2": {
     "alturaM": 1.7199999999999998,
@@ -13681,7 +13682,7 @@
     "cabeca": 0.4534729645197382,
     "ombroLargura": 0.240294112734593,
     "cinturaLargura": 0.28610565755791584,
-    "torsoLargura": 0.2591780601820595,
+    "torsoLargura": 0.2591780602473417,
     "torsoProfundidade": 0.2389823750409564,
     "braco": 0.33041731443956424,
     "perna": 0.6394352810453171,
@@ -13704,14 +13705,16 @@
     "clipesNoGLB": 0,
     "impressaoEsqueleto": 514.35,
     "curlDuplicado": 4,
-    "convencaoSkinPai": 0,
-    "convencaoSkinFilho": 18,
-    "ossosInvertidos": [],
+    "convencaoSkinPai": 1,
+    "convencaoSkinFilho": 17,
+    "ossosInvertidos": [
+     "neck"
+    ],
     "raioSkinP50": 0.087,
-    "raioSkinP95": 0.165,
-    "desalinhamentoRMS": 0.1099,
-    "piorJunta": "LeftLeg",
-    "piorDesalinhamento": 0.21,
+    "raioSkinP95": 0.166,
+    "desalinhamentoRMS": 0.1108,
+    "piorJunta": "RightLeg",
+    "piorDesalinhamento": 0.213,
     "antebraco": 0.173,
     "dPalmaOsso": 0.11,
     "alavancaPalma": 0.64,
@@ -13722,7 +13725,7 @@
      "cabecaSobreAltura": 0.26364707239519664,
      "ombroSobreAltura": 0.1397058794968564,
      "cinturaSobreOmbro": 1.190647803651861,
-     "larguraTorsoSobreAltura": 0.15068491871049972,
+     "larguraTorsoSobreAltura": 0.15068491874845447,
      "bracoSobreAltura": 0.19210308979044433,
      "pernaSobreAltura": 0.37176469828216113
     },
@@ -13730,7 +13733,7 @@
      "cabecaSobreAltura": 0.30265945384473764,
      "ombroSobreAltura": -0.2975734861433957,
      "cinturaSobreOmbro": 0.1061288558079849,
-     "larguraTorsoSobreAltura": -0.2935780366220976,
+     "larguraTorsoSobreAltura": -0.2935780364441629,
      "bracoSobreAltura": -0.27585518462687597,
      "pernaSobreAltura": -0.06324804473322672
     },
@@ -13740,7 +13743,7 @@
      "cabecaSobreAltura": 1.4812588018807462,
      "ombroSobreAltura": -1.381754049536873,
      "cinturaSobreOmbro": 0.7200431637897863,
-     "larguraTorsoSobreAltura": -1.4389143611815585,
+     "larguraTorsoSobreAltura": -1.4389143603094472,
      "bracoSobreAltura": -2.2288572548955474,
      "pernaSobreAltura": -0.6582967601828598
     },
@@ -13748,7 +13751,7 @@
      "cabecaSobreAltura": 1.028054403039974,
      "ombroSobreAltura": -0.46059505985769733,
      "cinturaSobreOmbro": 0.6089835184484609,
-     "larguraTorsoSobreAltura": -0.13399472005459928,
+     "larguraTorsoSobreAltura": -0.13399471983646852,
      "bracoSobreAltura": -0.5634020686580811,
      "pernaSobreAltura": -0.2985571730525262
     },
@@ -13757,7 +13760,7 @@
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": 1.028054403039974,
     "piorDesvioRefRazao": "cabecaSobreAltura",
-    "indiceBalao": 0.8660052799454008
+    "indiceBalao": 0.8660052801635315
    },
    "C2": {
     "alturaM": 1.72,
@@ -13780,7 +13783,7 @@
       -0.00014871474353245721
      ],
      "walk": [
-      -0.004077741080158133,
+      -0.002151658146323246,
       0.008968230900120167
      ],
      "run": [
@@ -13834,8 +13837,8 @@
     "cabeca": 0.3472376350254627,
     "ombroLargura": 0.3369176495091952,
     "cinturaLargura": 0.3613971142267598,
-    "torsoLargura": 0.36015655081561737,
-    "torsoProfundidade": 0.3231311054989934,
+    "torsoLargura": 0.36015655052340867,
+    "torsoProfundidade": 0.32313110719260907,
     "braco": 0.36451518106498626,
     "perna": 0.7153176522612643,
     "larguraMax": 1.4776516863944429
@@ -13858,11 +13861,11 @@
     "impressaoEsqueleto": 565.01,
     "curlDuplicado": 4,
     "convencaoSkinPai": 0,
-    "convencaoSkinFilho": 16,
+    "convencaoSkinFilho": 15,
     "ossosInvertidos": [],
     "raioSkinP50": 0.093,
     "raioSkinP95": 0.18,
-    "desalinhamentoRMS": 0.1099,
+    "desalinhamentoRMS": 0.1115,
     "piorJunta": "LeftLeg",
     "piorDesalinhamento": 0.198,
     "antebraco": 0.185,
@@ -13875,7 +13878,7 @@
      "cabecaSobreAltura": 0.20188234594503646,
      "ombroSobreAltura": 0.1958823543658112,
      "cinturaSobreOmbro": 1.0726571159249896,
-     "larguraTorsoSobreAltura": 0.20939334349745195,
+     "larguraTorsoSobreAltura": 0.20939334332756318,
      "bracoSobreAltura": 0.2119274308517362,
      "pernaSobreAltura": 0.4158823559658513
     },
@@ -13883,7 +13886,7 @@
      "cabecaSobreAltura": -0.002515202916977837,
      "ombroSobreAltura": -0.01512406064272467,
      "cinturaSobreOmbro": -0.003486182334295906,
-     "larguraTorsoSobreAltura": -0.018348630390000134,
+     "larguraTorsoSobreAltura": -0.01834863118645116,
      "bracoSobreAltura": -0.20112607010100883,
      "pernaSobreAltura": 0.047917168876217366
     },
@@ -13893,7 +13896,7 @@
      "cabecaSobreAltura": -0.012309764033344198,
      "ombroSobreAltura": -0.0702271304791442,
      "cinturaSobreOmbro": -0.023652396310350356,
-     "larguraTorsoSobreAltura": -0.08993216277336562,
+     "larguraTorsoSobreAltura": -0.08993216667701194,
      "bracoSobreAltura": -1.6250602688494435,
      "pernaSobreAltura": 0.498730311132886
     },
@@ -13901,7 +13904,7 @@
      "cabecaSobreAltura": 0.5529411226541265,
      "ombroSobreAltura": -0.24369747349107648,
      "cinturaSobreOmbro": 0.4495366431418778,
-     "larguraTorsoSobreAltura": 0.20341002010029866,
+     "larguraTorsoSobreAltura": 0.2034100191239264,
      "bracoSobreAltura": -0.5183467480642359,
      "pernaSobreAltura": -0.21531630949839375
     },
@@ -13910,7 +13913,7 @@
     "piorZRazao": "bracoSobreAltura",
     "piorDesvioRef": 0.5529411226541265,
     "piorDesvioRefRazao": "cabecaSobreAltura",
-    "indiceBalao": 1.2034100201002986
+    "indiceBalao": 1.2034100191239263
    },
    "C2": {
     "alturaM": 1.72,
@@ -13950,7 +13953,7 @@
      ],
      "crouchwalk": [
       -0.0059450105106331535,
-      0.001469430420401272
+      -0.00035047278304777533
      ]
     },
     "afunda": -0.0059450105106331535,
@@ -14383,7 +14386,7 @@
      "walk": 0.007467418174760084,
      "run": 0.03594910590451085,
      "shoot": -0.0007279527121645715,
-     "crouch": 0.13639213249367663,
+     "crouch": -0.0012983134677232416,
      "crouchwalk": -0.006678275690747916
     },
     "faixaPorPose": {
@@ -14404,8 +14407,8 @@
       -0.0006198189368287336
      ],
      "crouch": [
-      0.13232854691720453,
-      0.13639213249367663
+      -0.0012983134677232416,
+      -0.0007745449343127383
      ],
      "crouchwalk": [
       -0.006678275690747916,
@@ -14413,11 +14416,11 @@
      ]
     },
     "corpoPorPose": {
-     "crouch": 0.0006480702763196755
+     "crouch": -0.13764809659293348
     },
     "afunda": -0.006678275690747916,
-    "flutua": 0.13639213249367663,
-    "piorDesvio": 0.13639213249367663
+    "flutua": 0.03594910590451085,
+    "piorDesvio": 0.03594910590451085
    },
    "C5": {
     "materiais": 1,
