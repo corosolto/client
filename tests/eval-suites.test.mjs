@@ -14,7 +14,10 @@ const BASELINE = {
   fast: { quantidade: 338, sha256: '05c5d2027a8229f379a4556ee991daf1bc0e9f45b04ee3515d4e458259d6bfdf' },
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
-const NOVOS = { fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:shareorigin', 'eval:passe', 'eval:fora-do-ar']), deploy: new Set() };
+const NOVOS = {
+  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar']),
+  deploy: new Set(['eval:weapon-passe']),
+};
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
 
 for (const [nome, baseline] of Object.entries(BASELINE)) {
@@ -41,6 +44,8 @@ test('staging adiciona portalembed, lixo, envruntime, servertraffic, shareorigin
   assert.ok(SUITES.fast.includes('eval:envruntime'));
   assert.ok(SUITES.fast.includes('eval:servertraffic'));
   assert.ok(SUITES.fast.includes('eval:shareorigin'));
+  assert.ok(SUITES.fast.includes('eval:vm-enquadramento-placar'));
+  assert.ok(SUITES.fast.includes('eval:pintura-fabrica'));
   assert.ok(SUITES.fast.includes('eval:passe'));
 });
 
