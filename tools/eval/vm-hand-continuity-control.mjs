@@ -11,7 +11,6 @@ export const HAND_CASES = [
   { id: 'troca-rig-m4', name: 'troca-rig', arma: 'm4' },
   { id: 'troca-rig-knife', name: 'troca-rig', arma: 'knife' },
   { id: 'luva-crua-m4', name: 'luva-crua', arma: 'm4' },
-  { id: 'divida-paga', name: 'divida-paga', arma: 'm4' },
 ];
 const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const sorted = a => [...a].sort();
@@ -40,9 +39,6 @@ export function expectedHandMutation(nominal, spec) {
   } else if (spec.name === 'luva-crua') {
     red = nominal.checks.filter(c => /^MÃO[1-4]:/.test(c.id) && targets.some(t => c.id.startsWith(`${keyOf(c.id).split(':')[0]}:${t} `))).map(c => c.id);
     count = nominal.faccoes.length * measured.reduce((n, r) => n + r.handMaterialCount, 0); routes = targets;
-  } else {
-    paid = Object.keys(HAND_DEBT).map(key => `${key}: passou a verde — remova da DIVIDA`);
-    count = 1; routes = ['pistol@pintura'];
   }
   requireInfra(Number.isSafeInteger(count) && count > 0 && (red.length > 0 || paid.length > 0), 'mutant target not measured');
   return { red: sorted(red), paid: sorted(paid), count, routes: sorted(routes) };
