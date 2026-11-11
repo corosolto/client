@@ -968,6 +968,7 @@
     "acorn": "8.17.0",
     "aeo.js": "^0.0.16",
     "dejavu-fonts-ttf": "^2.37.3",
+    "fast-xml-parser": "^5.3.0",
     "linkedom": "0.18.12",
     "meshoptimizer": "^1.2.0",
     "ndarray-pixels": "^5.2.0",

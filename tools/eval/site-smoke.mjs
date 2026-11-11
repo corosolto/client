@@ -39,6 +39,7 @@ import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 
+import { XMLParser, XMLValidator } from 'fast-xml-parser';
 // O CONTRATO DEPENDE DE UMA FLAG. `RANKING_ON` (src/lib/site.ts) muda o que
 // duas rotas devem responder, e a issue #45 escreveu o contrato assumindo ela
 // ligada. Hardcodar um dos dois estados deixaria o portão errado metade do
@@ -108,27 +109,29 @@ const CONTRATO = [
       if (status !== 200) return `status ${status}`;
       if (!/^\s*<\?xml[^>]*>\s*<(sitemapindex|urlset)\b[^>]*>/i.test(corpo))
         return 'raiz XML não é <urlset> nem <sitemapindex>';
-      const raiz = /^\s*<\?xml[^>]*>\s*<(sitemapindex|urlset)\b/i.exec(corpo)[1].toLowerCase();
-      if (!new RegExp(`</${raiz}>\\s*$`, 'i').test(corpo))
-        return `<${raiz}> sem fechamento`;
-      const locs = corpo.match(/<loc>/g) || [];
-      if (raiz === 'sitemapindex') {
-        const abertas = (corpo.match(/<sitemap>/g) || []).length;
-        const fechadas = (corpo.match(/<\/sitemap>/g) || []).length;
-        if (!abertas) return 'índice sem nenhum <sitemap>';
-        if (abertas !== fechadas) return `<sitemap> desbalanceado: ${abertas} abre, ${fechadas} fecha`;
-        if (locs.length !== abertas) return `${locs.length} <loc> para ${abertas} <sitemap>`;
-      } else {
-        const minimo = EXTERNO ? 8 : (RANKING_ON ? 9 : 8);
-        if (locs.length < minimo) return `${locs.length} <loc>, mínimo ${minimo} no urlset`;
-        const abertas = (corpo.match(/<url>/g) || []).length;
-        const fechadas = (corpo.match(/<\/url>/g) || []).length;
-        if (abertas !== fechadas) return `<url> desbalanceado: ${abertas} abre, ${fechadas} fecha`;
+      const validacao = XMLValidator.validate(corpo);
+      if (validacao !== true) return `XML malformado: ${validacao.err.msg}`;
+      let arvore;
+      try {
+        arvore = new XMLParser({
+          ignoreDeclaration: true,
+          ignoreAttributes: false,
+          isArray: (nome) => nome === 'url' || nome === 'sitemap',
+        }).parse(corpo);
+      } catch (erro) {
+        return `XML não pode ser parseado: ${erro.message}`;
       }
-      // XML mal formado é o modo de falha silenciosa aqui: um & solto derruba o
-      // parse de quem consome e o status continua 200.
-      const amp = corpo.match(/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-f]+;)/i);
-      if (amp) return `& não escapado perto de ${JSON.stringify(corpo.slice(Math.max(0, amp.index - 30), amp.index + 30))}`;
+      const raizes = Object.keys(arvore).filter((nome) => nome === 'urlset' || nome === 'sitemapindex');
+      if (raizes.length !== 1) return 'XML precisa ter uma raiz <urlset> ou <sitemapindex>';
+      const raiz = raizes[0];
+      const itens = arvore[raiz]?.[raiz === 'sitemapindex' ? 'sitemap' : 'url'];
+      if (!Array.isArray(itens) || !itens.length) return `<${raiz}> sem itens`;
+      const semLoc = itens.findIndex((item) => typeof item.loc !== 'string' || !item.loc.trim());
+      if (semLoc !== -1) return `<${raiz}> item ${semLoc + 1} sem <loc>`;
+      if (raiz === 'urlset') {
+        const minimo = EXTERNO ? 8 : (RANKING_ON ? 9 : 8);
+        if (itens.length < minimo) return `${itens.length} <url>, mínimo ${minimo} no urlset`;
+      }
       return null;
     } },
 
@@ -168,7 +171,12 @@ const RE_JSONLD = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?
 
 async function pegar(rota, redirect = 'follow') {
   const r = await fetch(BASE + rota, { redirect });
-  return { status: r.status, corpo: await r.text(), headers: r.headers };
+  let corpo = await r.text();
+  // --mutante: fecha <loc> com a tag errada para provar que o parser morde.
+  if (MUTANTE === 'sitemap-malformado' && rota === '/sitemap.xml') {
+    corpo = corpo.replace(/<\/loc>/i, '</url>');
+  }
+  return { status: r.status, corpo, headers: r.headers };
 }
 
 function checaJsonLd(rota, corpo) {
