@@ -26,9 +26,9 @@ jobs:
           REPO: ${{ github.repository }}
         run: gh pr edit "$PR" --repo "$REPO" --remove-label "preview-autorizado" 2>/dev/null || true
 
-      # O job `preview` abaixo só dispara em `labeled` com esta etiqueta. Ela nunca foi
-      # criada no repositório, então o caminho inteiro era código morto: o bot pedia um
-      # rótulo que ninguém tinha como aplicar. Criar aqui é o que liga o mecanismo.
+      # Classificação do diff para o revisor (área sensível ou diff grande). Não
+      # promete preview: o de PR é Cloudflare (cf-preview.yml) e o da Vercel virou
+      # emergência por dispatch.
       - name: classifica o diff sem executar código do fork
         env:
           GH_TOKEN: ${{ github.token }}
@@ -40,15 +40,14 @@ jobs:
           TOTAL=$(gh api "repos/$REPO/pulls/$PR" --jq '.additions + .deletions')
           PERIGO=$(grep -cE '^\.github/|^scripts/|^package(-lock)?\.json|^vercel\.json|^src/pages/api/|^supabase/|^\.env' /tmp/arquivos.txt || true)
           if [ "$PERIGO" -gt 0 ] || [ "$TOTAL" -gt 3000 ]; then
-            TEXTO="sensitive area or large diff; manual review is required before applying"
+            TEXTO="sensitive area or large diff; manual review is required"
           else
-            TEXTO="preview candidate; a maintainer must review the commit SHA before applying"
+            TEXTO="fork PR gets no preview URL: in-repo PR previews are Cloudflare (cf-preview.yml); Vercel preview is dispatch-only emergency"
           fi
-          gh pr comment "$PR" --repo "$REPO" --body "🤖 **cs-brasil-ai-bot**: $TEXTO \`preview-autorizado\`."
+          gh pr comment "$PR" --repo "$REPO" --body "🤖 **cs-brasil-ai-bot**: $TEXTO."
 
-# O JOB `preview` SAIU DAQUI (22/08). Ele publicava com `vercel build`, ou seja,
-# executava o build do fork com o VERCEL_TOKEN no ambiente — e era por isso que
-# exigia um mantenedor aprovar cada push. O preview agora é feito em duas metades
-# que não precisam de aprovação nenhuma: `preview-build.yml` compila o código do
-# fork SEM segredo, e `preview-deploy.yml` publica COM segredo sem executar nada
-# do PR. Este arquivo ficou só com a classificação do diff, que continua útil.
+# O JOB `preview` SAIU DAQUI (22/08) e o par Vercel foi aposentado (10/11, fase 2):
+# o preview de PR é `cf-preview.yml` (Cloudflare). `preview-build.yml`/`preview-deploy.yml`
+# ficam só para emergência, por `workflow_dispatch`. Este arquivo ficou com a
+# classificação do diff, que continua útil. O label `preview-autorizado` não gatinga
+# nada desde 22/08; a revogação acima é só higiene até o label ser removido do repo.
