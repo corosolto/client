@@ -66,7 +66,7 @@ const mutacoes = {
   'caminho-inseguro': [RES, "path.split('/').every((segment) => SEGMENT.test(segment))", 'true', ['R7:', 'S4:']],
   'runtime-ignorado': [RES, 'if (compareRuntimeVersions(minimo, VERSION) > 0) fail(', 'if (false) fail(', ['R8:']],
   'esqueleto-ignorado': [RES, 'if (manifest.skeleton !== pin.skeleton) fail(', 'if (false) fail(', ['R9:']],
-  'sem-webcrypto': [RES, "if (!subtle || typeof subtle.digest !== 'function') fail('studio_webcrypto_unavailable', 'crypto.subtle ausente: sem verificação não há carga');", '', ['R10:']],
+  'sem-webcrypto': [RES, "if (!subtle || typeof subtle.digest !== 'function') fail('studio_webcrypto_unavailable', 'crypto.subtle ausente: sem verificação não há carga');", "if (false) fail('studio_webcrypto_unavailable', 'crypto.subtle ausente: sem verificação não há carga');", ['R10:']],
   'vaza-parcial': [RES, 'for (const url of created) URL.revokeObjectURL(url);', '', ['R11:']],
   'cache-eterno': [RES, 'request.catch(() => { if (_requests.get(key) === request) _requests.delete(key); });', 'request.catch(() => {});', ['R12:']],
   'extra-tudo-baixa': [RES, 'if (!isStudioExtraClipName(name)) {', 'if (false) {', ['R15b:']],
@@ -336,7 +336,8 @@ try {
   await exigeFalha('R9:', pacote('r9', (c, fase) => { if (fase === 'antes') c.manifest.skeleton = 'mixamo-65'; }), 'studio_skeleton_mismatch');
   {
     const ctx = pacote('r10');
-    await exigeFalha('R10:', ctx, 'studio_webcrypto_unavailable', { subtle: null });
+    const e = await exigeFalha('R10:', ctx, 'studio_webcrypto_unavailable', { subtle: null });
+    if (!e || e.code !== 'studio_webcrypto_unavailable') falha(`R10: rejeição sem WebCrypto não foi exata (${e?.code || e?.name || 'sem erro'})`);
     if (ctx.pedidos.length) falha(`R10: ${ctx.pedidos.length} pedido(s) sem WebCrypto; nada pode ser buscado sem verificação`);
   }
   await exigeFalha('R13:', pacote('r13', (c, fase) => { if (fase === 'antes') c.manifest.id = 'outro'; }), 'studio_identity_mismatch');

@@ -121,6 +121,7 @@ jobs:
       - name: Retrato hero só para personagem com arquivo (#1231, com mutantes)
         run: npm run eval:retratohero
       - name: Personagem do Studio por release fixada, verificação fail-closed e /packs/ (com mutantes)
+        if: always()
         run: npm run eval:studiochar
       - name: Fora do Ar — registro, packs, arte, passe e catálogo (com mutantes)
         run: npm run eval:fora-do-ar
