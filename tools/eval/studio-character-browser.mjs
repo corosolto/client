@@ -18,7 +18,7 @@
          toca a mão (peso ≥ 0,25) estica mais que 2,5× em 3 instantes de cada um dos 11
          clipes do pacote, no corpo montado pelo jogo
      B8  controle negativo de B7: a release anterior conhecida com mão em lâmina
-         (CONTROLE_LAMINA, se ainda instalada na raiz) TEM que passar de 2,5× na mesma conta
+         (CONTROLE_LAMINA) TEM que passar de 2,5× na mesma conta; sem ela instalada sai 78
 
    Sem STUDIO_PACK_ROOT (ou sem o pacote instalado nele) sai 78 = NÃO MEDIDO, nunca
    verde. Porta: PORTA ou a 1ª livre a partir de 9461 (lane 9100-9900). Rode sob with-browser-lock.sh. */
@@ -58,6 +58,10 @@ const DIR_PACOTE = PIN.manifestUrl.replace(/manifest\.json$/, '');
 const LIMITE_MAO = 2.5;
 /* capitao-caveira@0.1.0: rig sem encaixe de cotovelo/punho, mão a 23 cm da junta (client #1253). */
 const CONTROLE_LAMINA = { 'capitao-caveira': { version: '0.1.0', manifestSha256: '7f8e149a28a41f14df203f9a229c07b460424a082688a210176dc31635a7852e' } }[ID];
+if (CONTROLE_LAMINA && !existsSync(join(RAIZ, 'character', ID, CONTROLE_LAMINA.version, 'manifest.json'))) {
+  console.log(`UNRUN: controle negativo ${ID}@${CONTROLE_LAMINA.version} ausente na raiz — B7 sem calibração (não é verde).`);
+  process.exit(NAO_MEDIDO);
+}
 /* Conta de B7/B8 injetada na página: maior esticamento de aresta da mão sob cada clipe. */
 const MEDE_MAOS = `window.__medeMaos = (THREE, raiz, pele, clips) => {
   const nomes = pele.skeleton.bones.map((b) => b.name);
@@ -223,7 +227,7 @@ try {
   await ctx.close();
 
   // ── B8: controle negativo de B7 contra a release com mão em lâmina ─────────
-  if (CONTROLE_LAMINA && existsSync(join(RAIZ, 'character', ID, CONTROLE_LAMINA.version, 'manifest.json'))) {
+  if (CONTROLE_LAMINA) {
     const ctx3 = await browser.newContext();
     await ctx3.addInitScript(MEDE_MAOS);
     const p3 = await ctx3.newPage();
@@ -245,7 +249,7 @@ try {
     else if (!(ctrl.pior > LIMITE_MAO)) falha(`B8: controle ${ID}@${CONTROLE_LAMINA.version} (mão em lâmina conhecida) mediu só ${ctrl.pior.toFixed(2)}× — B7 não morde`);
     else console.log(`controle negativo ${ID}@${CONTROLE_LAMINA.version}: mão estica ${ctrl.pior.toFixed(2)}× (${ctrl.estado}) > ${LIMITE_MAO}×, B7 morde`);
     await ctx3.close();
-  } else if (CONTROLE_LAMINA) console.log(`controle negativo ${ID}@${CONTROLE_LAMINA.version}: não instalado na raiz, B8 não medido`);
+  }
 
   // ── B6: pacote adulterado no fio ───────────────────────────────────────────
   const ctx2 = await browser.newContext();

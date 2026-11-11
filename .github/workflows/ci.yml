@@ -910,6 +910,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Packs Studio fixados (R2, SHA conferido) para o CHR medir o corpo real
+        uses: ./.github/actions/studio-packs
       - name: Invariantes de personagens, materiais e pickups
         env:
           INVARIANTES_FAMILIA: chars-mat

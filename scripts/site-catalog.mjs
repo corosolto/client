@@ -7,6 +7,9 @@ const sourcePath = resolve(root, 'public/js/characters.js');
 const outputPath = resolve(root, 'src/data/catalog.generated.ts');
 
 const unescapeString = (value) => value.replace(/\\([\\'])/g, '$1');
+/* Texto público do site segue o CONTRIBUTING.md (régua travessao:check): ` - ` no lugar de
+   `—`/`–`. O jogo (characters.js) mantém o texto dele; o catálogo era escrito assim à mão. */
+const textoDoSite = (value) => unescapeString(value).replace(/\s*[—–]\s*/g, ' - ');
 
 export function parseCharacters(source) {
   const block = source.match(/export const CHARACTERS = \[([\s\S]*?)\n\];/);
@@ -17,8 +20,8 @@ export function parseCharacters(source) {
     const character = {
       id: unescapeString(id),
       grupoChave: unescapeString(tribe || team),
-      nome: unescapeString(name),
-      blurb: unescapeString(blurb),
+      nome: textoDoSite(name),
+      blurb: textoDoSite(blurb),
     };
     if (season) character.passe = { season: unescapeString(season), level: Number(level) };
     return character;
@@ -34,7 +37,7 @@ export function parseCharacters(source) {
 const renderEntries = (characters) => characters.map((character) => `  ${JSON.stringify(character)},`).join('\n');
 
 export function renderCatalog(characters) {
-  return `// Gerado de public/js/characters.js por scripts/site-catalog.mjs.\n// Não edite: rode node scripts/site-catalog.mjs após alterar CHARACTERS.\nimport { FACTIONS } from '../../public/js/factions.js';\n\nexport interface Personagem {\n  id: string;\n  grupo: string;\n  nome: string;\n  blurb: string;\n  passe?: { season: string; level: number };\n}\n\nexport interface Grupo {\n  id: string;\n  nome: string;\n  lema: string;\n  cor: string;\n  nota: string;\n  art: string | null;\n}\n\nconst CATALOG_CHARACTERS = [\n${renderEntries(characters)}\n] as const;\n\nconst grupoId = (key: string) =>\n  FACTIONS.find((f) => f.catalogId === key || f.id === key || f.slug === key)?.catalogId || key;\n\nexport const PERSONAGENS: Personagem[] = Object.freeze(CATALOG_CHARACTERS.map((character) => ({\n  id: character.id,\n  grupo: grupoId(character.grupoChave),\n  nome: character.nome,\n  blurb: character.blurb,\n  ...(character.passe ? { passe: character.passe } : {}),\n})));\n\nconst POLITICAL_GROUP: Grupo = {\n  id: 'P',\n  nome: 'Políticos',\n  lema: 'A treta atravessa os dois lados!',\n  cor: '#d6b55a',\n  nota: 'Caricaturas satíricas de figuras públicas. Na escalação do menu, é o primeiro grupo.',\n  art: null,\n};\n\nconst factionGroups = FACTIONS\n  .filter((f) => f.ready && PERSONAGENS.some((character) => character.grupo === f.catalogId))\n  .map((f): Grupo => ({\n    id: f.catalogId,\n    nome: f.catalogName,\n    lema: f.slogan,\n    cor: f.color,\n    nota: f.description,\n    art: f.art || null,\n  }));\n\nconst politicalPosition = factionGroups.findIndex((group) => group.id === 'B');\nif (politicalPosition < 0) factionGroups.unshift(POLITICAL_GROUP);\nelse factionGroups.splice(politicalPosition + 1, 0, POLITICAL_GROUP);\n\nexport const GRUPOS: Grupo[] = Object.freeze(factionGroups);\nexport const capaDoGrupo = (id: string) => {\n  const art = GRUPOS.find((group) => group.id === id)?.art;\n  return art ? \`/img/faccoes/\${art}.webp\` : null;\n};\n`;
+  return `// Gerado de public/js/characters.js por scripts/site-catalog.mjs.\n// Não edite: rode node scripts/site-catalog.mjs após alterar CHARACTERS.\nimport { FACTIONS } from '../../public/js/factions.js';\n\nexport interface Personagem {\n  id: string;\n  grupo: string;\n  nome: string;\n  blurb: string;\n  passe?: { season: string; level: number };\n}\n\nexport interface Grupo {\n  id: string;\n  nome: string;\n  lema: string;\n  cor: string;\n  nota: string;\n  art: string | null;\n}\n\nconst CATALOG_CHARACTERS = [\n${renderEntries(characters)}\n] as const;\n\nconst grupoId = (key: string) =>\n  FACTIONS.find((f) => f.catalogId === key || f.id === key || f.slug === key)?.catalogId || key;\n\nexport const PERSONAGENS: readonly Personagem[] = Object.freeze(CATALOG_CHARACTERS.map((character) => ({\n  id: character.id,\n  grupo: grupoId(character.grupoChave),\n  nome: character.nome,\n  blurb: character.blurb,\n  ...('passe' in character ? { passe: character.passe } : {}),\n})));\n\nconst POLITICAL_GROUP: Grupo = {\n  id: 'P',\n  nome: 'Políticos',\n  lema: 'A treta atravessa os dois lados!',\n  cor: '#d6b55a',\n  nota: 'Caricaturas satíricas de figuras públicas. Na escalação do menu, é o primeiro grupo.',\n  art: null,\n};\n\nconst factionGroups = FACTIONS\n  .filter((f) => f.ready && PERSONAGENS.some((character) => character.grupo === f.catalogId))\n  .map((f): Grupo => ({\n    id: f.catalogId,\n    nome: f.catalogName,\n    lema: f.slogan,\n    cor: f.color,\n    nota: f.description,\n    art: f.art || null,\n  }));\n\nconst politicalPosition = factionGroups.findIndex((group) => group.id === 'B');\nif (politicalPosition < 0) factionGroups.unshift(POLITICAL_GROUP);\nelse factionGroups.splice(politicalPosition + 1, 0, POLITICAL_GROUP);\n\nexport const GRUPOS: readonly Grupo[] = Object.freeze(factionGroups);\nexport const capaDoGrupo = (id: string) => {\n  const art = GRUPOS.find((group) => group.id === id)?.art;\n  return art ? \`/img/faccoes/\${art}.webp\` : null;\n};\n`;
 }
 
 const characters = parseCharacters(readFileSync(sourcePath, 'utf8'));

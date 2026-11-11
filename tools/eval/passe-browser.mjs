@@ -248,7 +248,7 @@ async function medir(mutante = '') {
       const r = (e) => e?.getBoundingClientRect();
       const dentro = (a, b) => a && b && a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1;
       const cruza = (a, b) => a && b && a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
-      return [...document.querySelectorAll('#hub-roster-grid .hub-roster-cell')].filter((c) => c.checkVisibility?.()).slice(0, 12).map((c) => {
+      return [...document.querySelectorAll('#hub-roster-grid .hub-roster-cell')].filter((c) => c.checkVisibility?.()).map((c) => {
         const cel = r(c), card = r(c.querySelector(':scope>button:not(.hub-roster-pin)')), pin = r(c.querySelector('.hub-roster-pin')), travaEl = c.querySelector('.hub-roster-trava');
         const trava = travaEl ? (() => { const g = document.createRange(); g.selectNodeContents(travaEl); return g.getBoundingClientRect(); })() : null;
         return { nome: c.textContent.trim().slice(0, 18), travado: c.classList.contains('hub-roster-cell--travado'), larguraIgual: !!card && Math.abs(card.width - cel.width) <= 1,
@@ -256,9 +256,10 @@ async function medir(mutante = '') {
       });
     });
     const ruins = geo.filter((g) => !g.larguraIgual || !g.pinDentro || !g.pinNoTopo || !g.pinLivre);
-    const travadoComPin = geo.find((g) => g.travado)?.temPin;
-    add('PB7', geo.length >= 8 && !ruins.length && travadoComPin,
-      `${geo.length} células: ${ruins.length ? `fora do lugar ${JSON.stringify(ruins.slice(0, 3))}` : 'card ocupa a célula e o ＋ fica no canto de cima'}; travado ${travadoComPin ? 'com' : 'SEM'} chip ＋`);
+    const medido = geo.find((g) => /Capitão Caveira/.test(g.nome));   // o personagem do passe injetado tem de estar na conta
+    const travadoComPin = medido?.travado && medido.temPin;
+    add('PB7', geo.length >= 8 && !ruins.length && !!travadoComPin,
+      `${geo.length} células: ${ruins.length ? `fora do lugar ${JSON.stringify(ruins.slice(0, 3))}` : 'card ocupa a célula e o ＋ fica no canto de cima'}; Capitão Caveira ${medido ? (travadoComPin ? 'travado com chip ＋' : 'SEM cadeado ou chip') : 'NÃO MEDIDO'}`);
     await page.evaluate(() => document.querySelector('.hub-roster-cell--travado')?.scrollIntoView({ block: 'center' }));
     await foto(page, 'seletor-travado-desktop', mutante);
     await page.evaluate(() => [...document.querySelectorAll('.hub-roster-cell button')].find((b) => /Capitão Caveira/.test(b.textContent))?.click());

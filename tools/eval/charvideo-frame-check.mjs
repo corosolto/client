@@ -25,7 +25,11 @@ if (mediaArg >= 0) {
   }
   console.log(`CF4: ${files.length} PNGs completos, zero pixels alfa na borda`);
 }
-if (args.includes('--media-only')) process.exit(0);
+if (args.includes('--media-only')) {
+  // CF4 sozinho sem captura não mede nada: verde aqui seria aceite sem prova.
+  assert.ok(mediaArg >= 0, 'CF4: --media-only exige --media <pasta do capture>');
+  process.exit(0);
+}
 const mutation = args.find(a => a.startsWith('--mutante='))?.split('=')[1];
 const mutations = {
   'sem-skin': ['mesh.getVertexPosition(i, vertex);', 'vertex.fromBufferAttribute(position, i);'],
@@ -90,4 +94,4 @@ for (const [width, height] of [[1024, 1536], [640, 854], [768, 1024], [512, 512]
   }
   console.log(`CF3 ${width}×${height}: NDC máximo=${largest}, distância=${fit.distance}`);
 }
-console.log(`charvideo-frame: CF1–CF3 PASS; CF4 ${mediaArg >= 0 ? 'PASS' : 'requer --media'} (não é aceite visual)`);
+console.log(`charvideo-frame: CF1–CF3 PASS; CF4 ${mediaArg >= 0 ? 'PASS' : 'NÃO MEDIDO (sem --media; este verde cobre só CF1–CF3)'} (não é aceite visual)`);

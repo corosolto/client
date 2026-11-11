@@ -32,6 +32,19 @@
     "dama": { "p99": 0.852, "ruins1e4": 73.7, "origem": "PR #773" },
     "senador": { "p99": 0.834, "ruins1e4": 64.8, "origem": "PR #773" },
     "professor": { "p99": 0.696, "ruins1e4": 56.3, "origem": "PR #773" },
-    "capitao": { "p99": 0.758, "ruins1e4": 55.7, "origem": "PR #773" }
+    "capitao": { "p99": 0.758, "ruins1e4": 55.7, "origem": "PR #773" },
+    "assombracao-lanhouse": { "p99": 0.635, "ruins1e4": 56.1, "origem": "PR #1302: pack Studio 0.2.x, repintura de pesos em andamento" },
+    "bicho-do-bueiro": { "p99": 0.691, "ruins1e4": 52.9, "origem": "PR #1302: pack Studio 0.2.x, repintura de pesos em andamento" },
+    "coelho-pascoa-shopping": { "p99": 0.728, "ruins1e4": 47.1, "origem": "PR #1302: pack Studio 0.2.x, repintura de pesos em andamento" },
+    "bebezao-de-feira": { "p99": 0.779, "ruins1e4": 39.6, "origem": "PR #1302: pack Studio 0.2.x, repintura de pesos em andamento" },
+    "prata": { "p99": 0.558, "ruins1e4": 34.6, "origem": "PR #1302: pack Studio 0.2.x, repintura de pesos em andamento" },
+    "dracula": { "p99": 0.501, "ruins1e4": 33.3, "origem": "PR #1302: pack Studio 0.2.x, repintura de pesos em andamento" },
+    "roqueiro-mistico-70": { "p99": 0.613, "ruins1e4": 31.5, "origem": "PR #1302: pack Studio 0.2.x, repintura de pesos em andamento" },
+    "dom-pedro-i": { "p99": 0.649, "ruins1e4": 29.4, "origem": "PR #1302: pack Studio 0.2.x, repintura de pesos em andamento" },
+    "chupa-cabra": { "p99": 0.612, "ruins1e4": 28.8, "origem": "PR #1302: pack Studio 0.2.x, repintura de pesos em andamento" },
+    "teletreco-chiadinho": { "p99": 0.446, "ruins1e4": 28.1, "origem": "PR #1302: pack Studio 0.2.x, repintura de pesos em andamento" },
+    "capitao-caveira": { "p99": 0.605, "ruins1e4": 24.7, "origem": "PR #1302: pack Studio 0.2.x, repintura de pesos em andamento" },
+    "nanica": { "p99": 0.538, "ruins1e4": 24.2, "origem": "PR #1302: pack Studio 0.2.x, repintura de pesos em andamento" },
+    "sorridente-onibus": { "p99": 0.55, "ruins1e4": 23.7, "origem": "PR #1302: pack Studio 0.2.x, repintura de pesos em andamento" }
   }
 }

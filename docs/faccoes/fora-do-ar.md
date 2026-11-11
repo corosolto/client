@@ -20,3 +20,4 @@ Identidade: TV analógica brasileira, assombração de bairro e lendas de madrug
 - Gate anterior à integração: `tools/eval/fora-do-ar-check.mjs`; remove-faccao, lista-fixa e sem-avatar precisam reprovar a cláusula correta. `tools/eval/passe-debug-check.mjs` impede bypass sem debug explícito ou fora de loopback.
 - Voz não gerada: o pipeline existente só oferece OpenRouter/ElevenLabs pagos. O pedido autoriza registrar esta pendência, não clonar voz nem criar fallback falso.
 - Distribuição dos packs em produção depende de R2 configurado pelo dono; `STUDIO_PACK_ROOT` serve somente a instalação local, sem copiar modelos para o legado.
+- Bots: personagem do passe não entra no sorteio de bot (`_sorteavel` em `public/js/game.js`). O corpo é pack Studio (`/packs/`) e fica travado até o servidor destravar para quem joga; sorteá-lo punha ~1/3 dos bots baixando pack, e sem pack o bot caía em caixa (ARM2). Escalação explícita (pin no seletor) continua valendo.

@@ -1423,7 +1423,7 @@ const rememberedChar = routeCharacterId || storedCharacterId;
 const rememberedSide = localStorage.getItem('csbr-home-side') === 'B' ? 'B' : 'E';
 const randomInitialCharacter = () => {
   const eligible = CHARACTERS.filter((character) => podeNoLado(character, rememberedSide) && !personagemTravado(character));
-  if (!eligible.length) return CHARACTERS[0];
+  if (!eligible.length) return CHARACTERS.find((character) => !personagemTravado(character)) || CHARACTERS[0];
   const seed = new Uint32Array(1);
   crypto.getRandomValues(seed);
   return eligible[seed[0] % eligible.length];
@@ -2237,7 +2237,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const playerWeaponSkins = Object.fromEntries(['ak','pistol','m4','scar']
     .map((weaponId)=>[weaponId,playerPack?.weaponSkins[weaponId] || equippedTretaWeaponSkin(weaponId)])
     .filter(([,skinId])=>skinId));
-  const playerKnifeSkinId = playerPack?.knifeSkin || null;
+  const playerKnifeSkinId = playerPack?.knifeSkin || equippedTretaWeaponSkin('knife') || null;
   const matchEyewear = [playerEyewearId,...matchRoster.allyDefs.map(d=>d.eyewearId),...matchRoster.enemyDefs.map(d=>d.eyewearId)];
   const matchSkins = [playerSkinId, ...matchRoster.allyDefs.map(d=>d.skinId), ...matchRoster.enemyDefs.map(d=>d.skinId)];
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
@@ -4257,7 +4257,7 @@ function ensureTeamPreviews() {
     const box = document.querySelector(`#${btn} .team-chars`);
     if (!box || !(box.checkVisibility?.() ?? box.getClientRects().length > 0)) continue;
     if (teamPreviewsDone.has(lado) || teamPreviewsPending.has(lado)) continue;
-    const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id)).slice(0, 4);
+    const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id) && !personagemTravado(c)).slice(0, 4);
     if (!chars.length) continue;
     teamPreviewsPending.add(lado);
     box.innerHTML = chars.map(() => '<span class="tc-slot"></span>').join('');
@@ -4332,7 +4332,9 @@ function pickTeam(faction) {
   // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
   // nada de thumbnails de caixa montando aos poucos (o "minecraft" que o dono viu)
   showLoading('CARREGANDO PERSONAGENS…');
-  preloadCharacterAssets(chars.map(c => c.id)).catch(() => {}).then(mountCharList);
+  /* Travado pelo passe não é escolhível (o clique só explica o nível): a fileira usa o avatar
+     estático e o pack Studio dele não é baixado aqui. */
+  preloadCharacterAssets(chars.filter(c => !personagemTravado(c)).map(c => c.id)).catch(() => {}).then(mountCharList);
 }
 /* Ficha do personagem (tela de seleção): raridade + atributos derivados da arma inicial
    (charWeapon) e de um hash estável do id. É FLAVOR de apresentação no estilo CS2/Valorant —
@@ -5174,7 +5176,14 @@ async function mpEntrarPorConvite(txt) {
   mpEstado('conectando', `PROCURANDO ${alvo.convite}…`);
   const http = httpDoNo(alvo.no);
   mpNoAtual = { ...alvo.no, http, ticketNode: alvo.no.id };
-  const sala = await salaPorConvite(http, alvo.codigo);
+  let sala;
+  try { sala = await salaPorConvite(http, alvo.codigo); }
+  catch (e) {
+    await abrirMultiplayer();
+    return mpErro(String(e && e.message || '').includes('http_429')
+      ? 'Calma aí: muitas tentativas seguidas. Espere um minuto antes de abrir outro convite.'
+      : 'Não deu pra procurar a sala agora. Tente novamente em instantes.');
+  }
   if (!sala) { await abrirMultiplayer(); return mpErro(`A sala ${alvo.convite} não existe mais. Escolha outra abaixo.`); }
   mpEntrar(sala, 'auto');
 }
@@ -5396,6 +5405,8 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
     return mpErro(m.includes('bad_password') ? 'Senha errada.'
       : m.includes('room_full') ? 'Sala cheia.'
       : m.includes('room_not_found') ? 'Essa sala não existe mais.'
+      : m.includes('muitas_tentativas') ? 'Muitas tentativas seguidas. Espere um minuto e tente de novo.'
+      : m.includes('protocolo_incompativel') ? 'Este servidor fala uma versão antiga do jogo. Recarregue a página; se continuar, escolha outra região.'
       : m.includes('timeout') ? 'O servidor demorou demais pra responder. Tente de novo ou escolha outra região.'
       : 'Não deu pra conectar nesse servidor.');
   }
@@ -5551,14 +5562,22 @@ function mpAvisoPersonagem(texto, oferta = null) {
   }
 }
 
-/* Conexão caiu no meio da partida. Nada de "reconectar sozinho e fingir que não houve nada":
-   o jogador precisa SABER, porque o corpo dele já voltou a ser bot no servidor. */
+/* Conexão caiu no meio da partida. O servidor segura o corpo por 45 s (SLOT_IDLE_MS):
+ * em vez de derrubar o jogador pro menu na primeira queda, TENTA RECONECTAR — o slot
+ * ainda está lá, o placar continua, a economia não perde. Se todas as tentativas
+ * falharem, a mensagem antiga ("entre de novo") aparece. */
+let mpReconectando = false;
 function mpDesconectou() {
   if (!mpSessao) return;
+  if (mpReconectando) return;   // desconectou DURANTE tentativa de reconexão — o loop cuida
+  const sessao = mpSessao;
+  const { sala, no } = sessao;
+  const team = sessao.net?._lastTeam || 'auto';
+  /* limpeza igual à antiga — mas SEM enviar 'quit' de telemetria: a partida continua no
+   * servidor; se a reconexão falhar, o quit sai na última tentativa */
   mpPararContagemProximo();
   mpLimparIdentidade();
-  try { if (game) { sendTelemetry(); sendMatchEvent('quit'); } } catch { /* diagnóstico não bloqueia a saída */ }
-  mpSessao.chat?.destruir();
+  sessao.chat?.destruir();
   mpSessao = null;
   mpDevolverEscolhaSp();
   clearTelemetryGameContext();
@@ -5567,8 +5586,28 @@ function mpDesconectou() {
   soltarPartida();
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
   show('mp-panel');
-  /* o aviso entra DEPOIS da sondagem: abrirMultiplayer começa com mpErro('') — na ordem
-     antiga a mensagem "caiu" vivia um frame e era apagada antes de alguém ler */
+  mpTentarReconectar(sala, no, team);
+}
+
+async function mpTentarReconectar(sala, no, team) {
+  const MAX = 3, INTERVALO = 2000;
+  mpReconectando = true;
+  for (let i = 0; i < MAX; i++) {
+    mpEstado('conectando', `RECONNECTING · ${i + 1}/${MAX}…`);
+    await new Promise((r) => setTimeout(r, i === 0 ? 600 : INTERVALO));
+    if (!document.getElementById('mp-panel') || document.getElementById('mp-panel').hidden) {
+      mpReconectando = false; return;   // jogador navegou para fora — cancela
+    }
+    mpNoAtual = no;
+    mpConectando = false;   // mpEntrar guarda com este flag — reseta da tentativa anterior
+    try {
+      await mpEntrar(sala, team);
+      if (mpSessao) { mpReconectando = false; return; }   // reconectou
+    } catch { /* tenta de novo */ }
+  }
+  mpReconectando = false;
+  /* saiu de todas — agora sim o quit de telemetria e a mensagem honesta */
+  try { sendTelemetry(); sendMatchEvent('quit'); } catch { /* diagnóstico não bloqueia */ }
   abrirMultiplayer().then(() => mpErro('A conexão com o servidor caiu. Entre de novo.'));
 }
 
