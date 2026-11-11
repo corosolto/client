@@ -103,20 +103,36 @@ const CONTRATO = [
     },
   })),
 
-  { rota: '/sitemap.xml', esperado: `200 + XML válido + >= ${XML_LOC_MIN} <loc>`,
-    checa: ({ status, corpo }) => {
+  // O sitemap pode vir FLAT (dev, poucas URLs) ou ÍNDICE com shards de 5.000
+  // (produção: perfis /u/*, sitemap-1.xml…). No índice, o que vale é a soma
+  // das URLs do primeiro shard, e as shards têm que ser same-origin.
+  { rota: '/sitemap.xml', esperado: `200 + XML válido + >= ${XML_LOC_MIN} <loc> (flat ou em shards)`,
+    checa: async ({ status, corpo }) => {
       if (status !== 200) return `status ${status}`;
       if (!/^\s*<\?xml/.test(corpo)) return 'não começa com declaração XML';
+      const valida = (xml) => {
+        const abertas = (xml.match(/<url>/g) || []).length;
+        const fechadas = (xml.match(/<\/url>/g) || []).length;
+        if (abertas !== fechadas) return `<url> desbalanceado: ${abertas} abre, ${fechadas} fecha`;
+        const amp = xml.match(/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-f]+;)/i);
+        if (amp) return `& não escapado perto de ${JSON.stringify(xml.slice(Math.max(0, amp.index - 30), amp.index + 30))}`;
+        return null;
+      };
+      if (corpo.includes('<sitemapindex')) {
+        const shards = [...corpo.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+        if (!shards.length) return 'índice sem nenhuma shard <loc>';
+        const origem = new URL(BASE).origin;
+        if (shards.some((u) => !u.startsWith(origem + '/'))) return `shard de outra origem: ${shards.find((u) => !u.startsWith(origem + '/'))}`;
+        const primeiro = await pegar(new URL(shards[0], BASE).pathname);
+        const erro = valida(primeiro.corpo);
+        if (erro) return `shard ${shards[0]}: ${erro}`;
+        const locs = (primeiro.corpo.match(/<loc>/g) || []).length;
+        if (locs < XML_LOC_MIN) return `índice ok mas a shard tem ${locs} <loc>, mínimo ${XML_LOC_MIN}`;
+        return null;
+      }
       const locs = corpo.match(/<loc>/g) || [];
       if (locs.length < XML_LOC_MIN) return `${locs.length} <loc>, mínimo ${XML_LOC_MIN}`;
-      // XML mal formado é o modo de falha silenciosa aqui: um & solto derruba o
-      // parse de quem consome e o status continua 200.
-      const abertas = (corpo.match(/<url>/g) || []).length;
-      const fechadas = (corpo.match(/<\/url>/g) || []).length;
-      if (abertas !== fechadas) return `<url> desbalanceado: ${abertas} abre, ${fechadas} fecha`;
-      const amp = corpo.match(/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-f]+;)/i);
-      if (amp) return `& não escapado perto de ${JSON.stringify(corpo.slice(Math.max(0, amp.index - 30), amp.index + 30))}`;
-      return null;
+      return valida(corpo);
     } },
 
   ...['/robots.txt', '/llms.txt'].map((rota) => ({
@@ -125,17 +141,19 @@ const CONTRATO = [
   })),
 
   /* A rota migrada passa pelo proxy same-origin para previews dinâmicos não dependerem de
-     CORS. No CI, o upstream é o stub local abaixo; nunca a rede ou o backend publicado. */
+     CORS. No CI, o upstream é o stub local abaixo; nunca a rede ou o backend publicado.
+     Quem decide ligado/desligado é o ENV do backend (RANKING_ON lá) desde de21edac, então
+     o portão aceita os três desdobramentos válidos e reprova só o que é defeito. */
   { rota: '/api/leaderboard',
-    esperado: '200 + JSON do backend via proxy same-origin',
+    esperado: '200 + JSON: {players} (ligado) | {disabled:true} (desligado de propósito)',
     checa: ({ status, corpo, headers }) => {
       if (status !== 200) return `status ${status}`;
       if (!/application\/json/i.test(headers.get('content-type') || '')) return 'content-type não é JSON';
       let payload;
       try { payload = JSON.parse(corpo); } catch { return 'corpo não é JSON válido'; }
-      if (RANKING_ON ? !Array.isArray(payload.players) : payload.disabled !== true)
-        return `contrato inesperado: ${JSON.stringify(payload).slice(0, 120)}`;
-      return null;
+      if (Array.isArray(payload.players)) return null;
+      if (payload.disabled === true) return null;
+      return `contrato inesperado: ${JSON.stringify(payload).slice(0, 120)}`;
     } },
 
   { rota: '/naoexiste', esperado: '404',
@@ -249,7 +267,7 @@ try {
     let falha = null;
     try {
       const res = await pegar(c.rota, c.redirect);
-      falha = c.checa(res);
+      falha = await c.checa(res);
       if (!falha && PAGINAS_JSONLD.includes(c.rota) && /text\/html/i.test(res.headers.get('content-type') || '')) {
         const { n, erros } = checaJsonLd(c.rota, res.corpo);
         if (erros.length) falha = `JSON-LD inválido (${n} bloco(s)): ${erros.join(' · ')}`;
