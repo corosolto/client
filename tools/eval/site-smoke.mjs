@@ -119,15 +119,22 @@ const CONTRATO = [
         return null;
       };
       if (corpo.includes('<sitemapindex')) {
+        const erroIndice = valida(corpo);
+        if (erroIndice) return `índice: ${erroIndice}`;
         const shards = [...corpo.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
         if (!shards.length) return 'índice sem nenhuma shard <loc>';
         const origem = new URL(BASE).origin;
-        if (shards.some((u) => !u.startsWith(origem + '/'))) return `shard de outra origem: ${shards.find((u) => !u.startsWith(origem + '/'))}`;
-        const primeiro = await pegar(new URL(shards[0], BASE).pathname);
-        const erro = valida(primeiro.corpo);
-        if (erro) return `shard ${shards[0]}: ${erro}`;
-        const locs = (primeiro.corpo.match(/<loc>/g) || []).length;
-        if (locs < XML_LOC_MIN) return `índice ok mas a shard tem ${locs} <loc>, mínimo ${XML_LOC_MIN}`;
+        const estranha = shards.find((u) => !u.startsWith(origem + '/'));
+        if (estranha) return `shard de outra origem: ${estranha}`;
+        let total = 0;
+        for (const shard of shards) {
+          const resposta = await pegar(new URL(shard, BASE).pathname);
+          if (resposta.status !== 200) return `shard ${shard}: status ${resposta.status}`;
+          const erro = valida(resposta.corpo);
+          if (erro) return `shard ${shard}: ${erro}`;
+          total += (resposta.corpo.match(/<loc>/g) || []).length;
+        }
+        if (total < XML_LOC_MIN) return `índice ok mas as shards somam ${total} <loc>, mínimo ${XML_LOC_MIN}`;
         return null;
       }
       const locs = corpo.match(/<loc>/g) || [];
