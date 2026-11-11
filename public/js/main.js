@@ -5163,7 +5163,14 @@ async function mpEntrarPorConvite(txt) {
   mpEstado('conectando', `PROCURANDO ${alvo.convite}…`);
   const http = httpDoNo(alvo.no);
   mpNoAtual = { ...alvo.no, http, ticketNode: alvo.no.id };
-  const sala = await salaPorConvite(http, alvo.codigo);
+  let sala;
+  try { sala = await salaPorConvite(http, alvo.codigo); }
+  catch (e) {
+    await abrirMultiplayer();
+    return mpErro(String(e && e.message || '').includes('http_429')
+      ? 'Calma aí: muitas tentativas seguidas. Espere um minuto antes de abrir outro convite.'
+      : 'Não deu pra procurar a sala agora. Tente novamente em instantes.');
+  }
   if (!sala) { await abrirMultiplayer(); return mpErro(`A sala ${alvo.convite} não existe mais. Escolha outra abaixo.`); }
   mpEntrar(sala, 'auto');
 }
@@ -5385,6 +5392,8 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
     return mpErro(m.includes('bad_password') ? 'Senha errada.'
       : m.includes('room_full') ? 'Sala cheia.'
       : m.includes('room_not_found') ? 'Essa sala não existe mais.'
+      : m.includes('muitas_tentativas') ? 'Muitas tentativas seguidas. Espere um minuto e tente de novo.'
+      : m.includes('protocolo_incompativel') ? 'Este servidor fala uma versão antiga do jogo. Recarregue a página; se continuar, escolha outra região.'
       : m.includes('timeout') ? 'O servidor demorou demais pra responder. Tente de novo ou escolha outra região.'
       : 'Não deu pra conectar nesse servidor.');
   }
@@ -5540,14 +5549,22 @@ function mpAvisoPersonagem(texto, oferta = null) {
   }
 }
 
-/* Conexão caiu no meio da partida. Nada de "reconectar sozinho e fingir que não houve nada":
-   o jogador precisa SABER, porque o corpo dele já voltou a ser bot no servidor. */
+/* Conexão caiu no meio da partida. O servidor segura o corpo por 45 s (SLOT_IDLE_MS):
+ * em vez de derrubar o jogador pro menu na primeira queda, TENTA RECONECTAR — o slot
+ * ainda está lá, o placar continua, a economia não perde. Se todas as tentativas
+ * falharem, a mensagem antiga ("entre de novo") aparece. */
+let mpReconectando = false;
 function mpDesconectou() {
   if (!mpSessao) return;
+  if (mpReconectando) return;   // desconectou DURANTE tentativa de reconexão — o loop cuida
+  const sessao = mpSessao;
+  const { sala, no } = sessao;
+  const team = sessao.net?._lastTeam || 'auto';
+  /* limpeza igual à antiga — mas SEM enviar 'quit' de telemetria: a partida continua no
+   * servidor; se a reconexão falhar, o quit sai na última tentativa */
   mpPararContagemProximo();
   mpLimparIdentidade();
-  try { if (game) { sendTelemetry(); sendMatchEvent('quit'); } } catch { /* diagnóstico não bloqueia a saída */ }
-  mpSessao.chat?.destruir();
+  sessao.chat?.destruir();
   mpSessao = null;
   mpDevolverEscolhaSp();
   clearTelemetryGameContext();
@@ -5556,8 +5573,28 @@ function mpDesconectou() {
   soltarPartida();
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
   show('mp-panel');
-  /* o aviso entra DEPOIS da sondagem: abrirMultiplayer começa com mpErro('') — na ordem
-     antiga a mensagem "caiu" vivia um frame e era apagada antes de alguém ler */
+  mpTentarReconectar(sala, no, team);
+}
+
+async function mpTentarReconectar(sala, no, team) {
+  const MAX = 3, INTERVALO = 2000;
+  mpReconectando = true;
+  for (let i = 0; i < MAX; i++) {
+    mpEstado('conectando', `RECONNECTING · ${i + 1}/${MAX}…`);
+    await new Promise((r) => setTimeout(r, i === 0 ? 600 : INTERVALO));
+    if (!document.getElementById('mp-panel') || document.getElementById('mp-panel').hidden) {
+      mpReconectando = false; return;   // jogador navegou para fora — cancela
+    }
+    mpNoAtual = no;
+    mpConectando = false;   // mpEntrar guarda com este flag — reseta da tentativa anterior
+    try {
+      await mpEntrar(sala, team);
+      if (mpSessao) { mpReconectando = false; return; }   // reconectou
+    } catch { /* tenta de novo */ }
+  }
+  mpReconectando = false;
+  /* saiu de todas — agora sim o quit de telemetria e a mensagem honesta */
+  try { sendTelemetry(); sendMatchEvent('quit'); } catch { /* diagnóstico não bloqueia */ }
   abrirMultiplayer().then(() => mpErro('A conexão com o servidor caiu. Entre de novo.'));
 }
 

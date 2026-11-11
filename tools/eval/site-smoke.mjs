@@ -31,14 +31,14 @@
 //   SITE_URL=https://... node tools/eval/site-smoke.mjs
 //   node tools/eval/site-smoke.mjs --json
 //   node tools/eval/site-smoke.mjs --mutante=jsonld # prova que o portão morde
-//   node tools/eval/site-smoke.mjs --mutante=proxy-sem-corpo
-//
+//   node tools/eval/site-smoke.mjs --mutante=sitemap-index-curto
 // Sai 1 se qualquer checagem falhar, então serve de gate no CI sem parser.
 // ============================================================================
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 
+import { XMLParser, XMLValidator } from 'fast-xml-parser';
 // O CONTRATO DEPENDE DE UMA FLAG. `RANKING_ON` (src/lib/site.ts) muda o que
 // duas rotas devem responder, e a issue #45 escreveu o contrato assumindo ela
 // ligada. Hardcodar um dos dois estados deixaria o portão errado metade do
@@ -59,9 +59,10 @@ const BASE = EXTERNO || `http://127.0.0.1:${PORTA}`;
 // ---------------------------------------------------------------------------
 // O CONTRATO. Uma linha por rota. `checa` recebe { status, corpo, headers }.
 // ---------------------------------------------------------------------------
-// 8 páginas indexáveis hoje; /ranking entra na conta só com o ranking ligado —
-// desligado a cópia do hub em /ranking é noindex, e noindex no sitemap é contradição.
-const XML_LOC_MIN = RANKING_ON ? 9 : 8;
+// O smoke local lê o modo do código; um alvo externo pode ter configuração de
+// ambiente diferente (por exemplo, produção com ranking ligado). O sitemap
+// também pode ser um urlset ou um índice de shards; cada forma tem contrato
+// próprio e não deve ser confundida por uma contagem fixa de <loc>.
 
 const CONTRATO = [
   { rota: '/', esperado: '200 + <title> com "CORO SOLTO"',
@@ -102,20 +103,37 @@ const CONTRATO = [
       return null;
     },
   })),
-
-  { rota: '/sitemap.xml', esperado: `200 + XML válido + >= ${XML_LOC_MIN} <loc>`,
+  { rota: '/sitemap.xml', esperado: '200 + XML válido (urlset ou índice)',
     checa: ({ status, corpo }) => {
       if (status !== 200) return `status ${status}`;
-      if (!/^\s*<\?xml/.test(corpo)) return 'não começa com declaração XML';
-      const locs = corpo.match(/<loc>/g) || [];
-      if (locs.length < XML_LOC_MIN) return `${locs.length} <loc>, mínimo ${XML_LOC_MIN}`;
-      // XML mal formado é o modo de falha silenciosa aqui: um & solto derruba o
-      // parse de quem consome e o status continua 200.
-      const abertas = (corpo.match(/<url>/g) || []).length;
-      const fechadas = (corpo.match(/<\/url>/g) || []).length;
-      if (abertas !== fechadas) return `<url> desbalanceado: ${abertas} abre, ${fechadas} fecha`;
-      const amp = corpo.match(/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-f]+;)/i);
-      if (amp) return `& não escapado perto de ${JSON.stringify(corpo.slice(Math.max(0, amp.index - 30), amp.index + 30))}`;
+      if (!/^\s*<\?xml[^>]*>\s*<(sitemapindex|urlset)\b[^>]*>/i.test(corpo))
+        return 'raiz XML não é <urlset> nem <sitemapindex>';
+      const validacao = XMLValidator.validate(corpo);
+      if (validacao !== true) return `XML malformado: ${validacao.err.msg}`;
+      let arvore;
+      try {
+        arvore = new XMLParser({
+          ignoreDeclaration: true,
+          ignoreAttributes: false,
+          isArray: (nome) => nome === 'url' || nome === 'sitemap',
+        }).parse(corpo);
+      } catch (erro) {
+        return `XML não pode ser parseado: ${erro.message}`;
+      }
+      const raizes = Object.keys(arvore).filter((nome) => nome === 'urlset' || nome === 'sitemapindex');
+      if (raizes.length !== 1) return 'XML precisa ter uma raiz <urlset> ou <sitemapindex>';
+      const raiz = raizes[0];
+      const itens = arvore[raiz]?.[raiz === 'sitemapindex' ? 'sitemap' : 'url'];
+      if (!Array.isArray(itens) || !itens.length) return `<${raiz}> sem itens`;
+      const semLoc = itens.findIndex((item) => typeof item.loc !== 'string' || !item.loc.trim());
+      if (semLoc !== -1) return `<${raiz}> item ${semLoc + 1} sem <loc>`;
+      if (raiz === 'sitemapindex') {
+        // sitemap.ts só usa índice quando total > 5000; nesse caso há pelo menos dois shards.
+        if (itens.length < 2) return `${itens.length} <sitemap>, mínimo 2 no índice`;
+      } else {
+        const minimo = EXTERNO ? 8 : (RANKING_ON ? 9 : 8);
+        if (itens.length < minimo) return `${itens.length} <url>, mínimo ${minimo} no urlset`;
+      }
       return null;
     } },
 
@@ -127,13 +145,16 @@ const CONTRATO = [
   /* A rota migrada passa pelo proxy same-origin para previews dinâmicos não dependerem de
      CORS. No CI, o upstream é o stub local abaixo; nunca a rede ou o backend publicado. */
   { rota: '/api/leaderboard',
-    esperado: '200 + JSON do backend via proxy same-origin',
+    esperado: EXTERNO
+      ? '200 + JSON em um dos modos publicados'
+      : '200 + JSON do backend via proxy same-origin',
     checa: ({ status, corpo, headers }) => {
       if (status !== 200) return `status ${status}`;
       if (!/application\/json/i.test(headers.get('content-type') || '')) return 'content-type não é JSON';
       let payload;
       try { payload = JSON.parse(corpo); } catch { return 'corpo não é JSON válido'; }
-      if (RANKING_ON ? !Array.isArray(payload.players) : payload.disabled !== true)
+      const modoValido = payload.disabled === true || Array.isArray(payload.players);
+      if (EXTERNO ? !modoValido : (RANKING_ON ? !Array.isArray(payload.players) : payload.disabled !== true))
         return `contrato inesperado: ${JSON.stringify(payload).slice(0, 120)}`;
       return null;
     } },
@@ -152,7 +173,16 @@ const RE_JSONLD = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?
 
 async function pegar(rota, redirect = 'follow') {
   const r = await fetch(BASE + rota, { redirect });
-  return { status: r.status, corpo: await r.text(), headers: r.headers };
+  let corpo = await r.text();
+  // --mutante: fecha <loc> com a tag errada para provar que o parser morde.
+  if (MUTANTE === 'sitemap-malformado' && rota === '/sitemap.xml') {
+    corpo = corpo.replace(/<\/loc>/i, '</url>');
+  }
+  // --mutante: remove um shard para provar o mínimo do sitemapindex.
+  if (MUTANTE === 'sitemap-index-curto' && rota === '/sitemap.xml') {
+    corpo = corpo.replace(/<sitemap>[\s\S]*?<\/sitemap>/i, '');
+  }
+  return { status: r.status, corpo, headers: r.headers };
 }
 
 function checaJsonLd(rota, corpo) {
