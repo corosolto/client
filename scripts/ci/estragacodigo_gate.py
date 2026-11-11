@@ -40,22 +40,20 @@ def decide(payload: dict) -> dict:
         for review in reviews
         if ((review.get("author") or {}).get("login") or "").lower() == "estraga-codigo"
         and ((review.get("commit") or {}).get("oid") or "") == head_oid
-        and (review.get("state") or "").upper() != "DISMISSED"
     ]
     latest_current_review_at = max(current_review_times, default="")
     resolved_at = str(payload.get("estragacodigo_resolved_at") or "")
     current_resolution = bool(
         latest_current_review_at and resolved_at
-        and resolved_at >= latest_current_review_at
+        and resolved_at > latest_current_review_at
     )
-    request_review = bool(head_oid) and not reviewer_requested and not reviewed_head
-
+    request_review = bool(head_oid) and not reviewer_requested and not reviewed_head and not current_resolution
 
     precisa = (
         reviewer_requested
         or request_review
-        or has_estragacodigo_review
-        or has_estragacodigo_check
+        or new_estragacodigo_review
+        or ((has_estragacodigo_review or has_estragacodigo_check) and not current_resolution)
     )
     return {
         "needs_resolution": precisa,
@@ -131,9 +129,25 @@ def selftest() -> int:
              {"author": {"login": "estraga-codigo"}, "commit": {"oid": "abc"},
               "state": "COMMENTED", "submittedAt": "2026-10-31T08:00:00Z"}
          ], "estragacodigo_resolved_at": "2026-10-31T08:05:00Z"},
+         {"needs_resolution": False,
+          "labels_add": [],
+          "labels_remove": []}),
+        ("review dismissado com resolução confirmada não pede de novo",
+         {"headRefOid": "abc", "reviews": [
+             {"author": {"login": "estraga-codigo"}, "commit": {"oid": "abc"},
+              "state": "DISMISSED", "submittedAt": "2026-10-31T08:00:00Z"}
+         ], "estragacodigo_resolved_at": "2026-10-31T08:05:00Z"},
+         {"needs_resolution": False,
+          "labels_add": [],
+          "labels_remove": []}),
+        ("timestamps iguais não confirmam resolução",
+         {"headRefOid": "abc", "reviews": [
+             {"author": {"login": "estraga-codigo"}, "commit": {"oid": "abc"},
+              "state": "DISMISSED", "submittedAt": "2026-10-31T08:00:00Z"}
+         ], "estragacodigo_resolved_at": "2026-10-31T08:00:00Z"},
          {"needs_resolution": True,
           "labels_add": ["needs-estragacodigo-resolution"],
-          "labels_remove": []}),
+          "labels_remove": ["estragacodigo-resolved"]}),
         ("resolução posterior vence corrida do evento de review",
          {"headRefOid": "abc", "reviews": [
              {"author": {"login": "estraga-codigo"}, "commit": {"oid": "abc"},
