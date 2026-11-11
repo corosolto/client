@@ -319,6 +319,7 @@
     "eval:troca-personagem": "node tools/eval/troca-personagem-check.mjs",
     "eval:launchwatchdog": "node tools/eval/launch-watchdog-check.mjs",
     "eval:launchrace": "node tools/eval/launch-race-check.mjs && node --test tests/menu-backdrop.test.mjs",
+    "eval:prodcrash": "node --test tests/module-compat.test.mjs tests/module-retry.test.mjs tests/objective-result.test.mjs",
     "eval:spawn": "node tools/eval/spawn-settle-check.mjs",
     "check:deploy": "node tools/eval/runner.mjs --suite=deploy",
     "check:prepush": "node tools/eval/selecao-pre-push.mjs",

@@ -487,8 +487,10 @@ const directRoute = document.documentElement.hasAttribute('data-direct-route')
   || Object.keys(estadoDaUrl(location.href) || {}).length > 0;
 const menuBackdropReady = MOBILE_AUTO ? Promise.resolve() : loadMenuBackdrop();
 if (MOBILE_AUTO) _splashSetReady();
-else if (directRoute) menuBackdropReady.then(_splashSetReady).catch((error) => console.error('[menu-background]', error));
-else { await menuBackdropReady; _splashSetReady(); }
+else menuBackdropReady.then(_splashSetReady).catch((error) => {
+  console.warn('[menu-background]', error);
+  _splashSetReady();
+});
 
 /* ---------------- screens ---------------- */
 const screens = ['main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
@@ -1711,11 +1713,12 @@ let heartbeatOff = false;
 /* CONTADOR "N ONLINE" no topo do menu. GET /api/online lê a view online_now
    (heartbeat < 2 min). Fica `hidden` até ter resposta autoritativa e volta a sumir
    em qualquer falha, sem manter número velho. Atualiza a cada 60 s só no menu. */
-// o idioma por país resolve ANTES de traduzir o menu (o fetch começou no <head>)
-await resolveGeoLang();
-document.documentElement.lang = LANG === 'en' ? 'en' : 'pt-BR';
-// EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)
-translateDom(document.body);
+// o idioma por país atualiza o menu assim que a consulta iniciada no <head> termina.
+// Sem top-level await: Safari 14 entende módulos, mas rejeitava o arquivo inteiro nessa sintaxe.
+void resolveGeoLang().then(() => {
+  document.documentElement.lang = LANG === 'en' ? 'en' : 'pt-BR';
+  translateDom(document.body);
+});
 syncMenuMusicToggle();
 // links do rodapé por idioma: EN vai pras gêmeas que EXISTEM (characters, how-to-play,
 // weapons, maps, about, whats-new, docs/en); /mapa continua só PT (issue #54)
@@ -2251,7 +2254,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
         playerKnifeSkinId ? preloadWeaponSkinCandidate(playerKnifeSkinId) : null,
         sfx.preloadWeaponSamples(_armasDaPartida),
-        ehMapaJavaporcos(currentMap) ? sfx.preloadJavaporcos().catch(e => console.error('JAV-AUDIO: preload falhou', e)) : null,
+        ehMapaJavaporcos(currentMap) ? sfx.preloadJavaporcos().catch(e => console.warn('JAV-AUDIO: preload falhou', e)) : null,
         preloadMapProps(mapPropIds(mapaPartida)),
         preloadMapAmbientLife(mapaPartida, { mobileAuto: MOBILE_AUTO }),
         mapaPartida.preload ? mapaPartida.preload() : null,
@@ -5439,7 +5442,7 @@ function mpPreCarregarProximo(m) {
   Promise.all([
     plano.chars.length ? preloadCharacterAssets(plano.chars, { weapons: armas }) : null,
     sfx.preloadWeaponSamples(armas),
-    ehMapaJavaporcos(plano.mapId) ? sfx.preloadJavaporcos().catch(e => console.error('JAV-AUDIO: preload falhou', e)) : null,
+    ehMapaJavaporcos(plano.mapId) ? sfx.preloadJavaporcos().catch(e => console.warn('JAV-AUDIO: preload falhou', e)) : null,
     mapaReady.then((mapa) => preloadMapProps(mapPropIds(mapa))),
     mapaReady.then((mapa) => preloadMapAmbientLife(mapa, { mobileAuto: MOBILE_AUTO })),
     mapaReady.then((mapa) => mapa.preload ? mapa.preload() : null),
