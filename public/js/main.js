@@ -2296,6 +2296,11 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     onTrainingFrames: sendTrainingFrames,
   });
   window.__game = game;
+  // Demo de gráficos: kit HD por mapa só com ?hd=1 (map_*_hd.js); sem a flag nada carrega.
+  const kitHD = { velho_oeste: ['./map_sertao_hd.js', 'aplicaSertaoHD', {}], lajes: ['./map_lajes_hd.js', 'aplicaLajesHD', {}] }[game._mapId];
+  if (kitHD && new URLSearchParams(location.search).get('hd') === '1') {
+    void import(kitHD[0]).then((m) => { if (window.__game === game) window.__kitHD = m[kitHD[1]](game.scene, game.renderer, kitHD[2]); }).catch(() => {});
+  }
   /* RÉGUA:launch-race nascimento fim */
   if (ADAPTATIVA && escada.degrau) aplicaDegrau(escada.degrau);   // Game.applySettings não pode desfazer o perfil móvel
   /* Resto das armas em ocioso no desktop usa malha real em cada drop. Mobile conserva
