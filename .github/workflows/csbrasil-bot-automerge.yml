@@ -71,7 +71,7 @@ jobs:
         run: python3 scripts/ci/ensure_labels.py pronto-pra-merge
       - name: Fetch PR status
         if: env.pular != '1'
-        run: gh pr view "$PR_NUMBER" --json isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,latestReviews,reviewRequests,files,changedFiles,baseRefName,baseRefOid,headRefName,headRefOid,headRepository > /tmp/automerge.json
+        run: gh pr view "$PR_NUMBER" --json title,body,assignees,isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,latestReviews,reviewRequests,files,changedFiles,baseRefName,baseRefOid,headRefName,headRefOid,headRepository > /tmp/automerge.json
       - name: Attest complete Git evidence
         if: env.pular != '1'
         run: |
@@ -113,7 +113,7 @@ jobs:
       - name: Merge when eligible
         if: env.pular != '1'
         run: |
-          gh pr view "$PR_NUMBER" --json isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,latestReviews,reviewRequests,files,changedFiles,baseRefName,baseRefOid,headRefName,headRefOid,headRepository > /tmp/automerge-current-raw.json
+          gh pr view "$PR_NUMBER" --json title,body,assignees,isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,latestReviews,reviewRequests,files,changedFiles,baseRefName,baseRefOid,headRefName,headRefOid,headRepository > /tmp/automerge-current-raw.json
           python3 - <<'PY'
           import json, os
           payload = json.load(open('/tmp/automerge-attestation-input.json'))
@@ -170,7 +170,7 @@ jobs:
           comments = [comment for page in pages for comment in page]
           mine = [
               comment for comment in comments
-              if BOT_AUTHORS.has((comment.get('user') or {}).get('login', '').toLowerCase())
+              if (comment.get('user') or {}).get('login', '').lower() in BOT_AUTHORS
               and PREFIX + 'automerge:' in (comment.get('body') or '')
           ]
           for extra in mine[1:]:
