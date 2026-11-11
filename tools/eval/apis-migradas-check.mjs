@@ -85,7 +85,7 @@ try {
     .replace('../../lib/x-conversions', 'data:text/javascript,export const sendXConversion=async()=>({ok:true,status:200})')
     .replace('../../lib/x-pixel', 'data:text/javascript,export const X_EVENT_IDS={match_start:"tw-rh4bd-rii9f",match_end:"tw-rh4bd-rii9g"}');
   if(mut==='perfil-404')route=route.replace('return resposta;',"return resposta.status===404 ? new Response(null,{status:503}) : resposta;");
-  if(mut==='treta-rollout')route=route.replace("['social-auth','treta','clans']","['social-auth','clans']");
+  if(mut==='treta-rollout')route=route.replace("['social-auth','treta','clans','passe']","['social-auth','clans']");
   const {GET}=await importaFonte(route);
   globalThis.fetch=async()=>new Response('{"error":"not_found"}',{status:404,headers:{'content-type':'application/json'}});
   for(const endpoint of ['social','social-avatar']) {
@@ -93,9 +93,11 @@ try {
     const response=await GET({params:{rota:endpoint},url,request:new Request(url),clientAddress:'203.0.113.8'});
     if(response.status!==404 || (await response.json()).error!=='not_found')falhas.push(`proxy altera 404 legítimo de ${endpoint}`);
   }
-  const url=new URL('https://preview.vercel.app/api/treta');
-  const response=await GET({params:{rota:'treta'},url,request:new Request(url),clientAddress:'203.0.113.8'});
-  if(response.status!==503 || (await response.json()).error!=='upstream_unavailable')falhas.push('proxy apresenta carteira ainda não publicada como rota inexistente');
+  for(const [rota,nome] of [['treta','carteira ainda não publicada'],['passe','passe da temporada ainda não publicado']]) {
+    const url=new URL(`https://preview.vercel.app/api/${rota}`);
+    const response=await GET({params:{rota},url,request:new Request(url),clientAddress:'203.0.113.8'});
+    if(response.status!==503 || (await response.json()).error!=='upstream_unavailable')falhas.push(`proxy apresenta ${nome} como rota inexistente`);
+  }
 } finally {globalThis.fetch=fetchOriginal;}
 const locationOriginal = globalThis.location;
 try {
