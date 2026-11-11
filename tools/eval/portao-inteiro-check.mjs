@@ -52,10 +52,12 @@ for (const portao of PORTOES) {
   const suite = portao.slice('check:'.length);
   if (!linha) { falhas.push(`PI1 o portão \`${portao}\` não existe em scripts`); continue; }
   const prefixo = `node tools/eval/runner.mjs --suite=${suite}`;
-  if (!linha.startsWith(prefixo)) {
+  const partes = linha.trim().split(/\s+/);
+  const comando = partes.slice(0, 3).join(' ');
+  if (comando !== prefixo) {
     falhas.push(`PI1 ${portao} precisa expandir --suite=${suite} pelo runner`);
   } else {
-    const extras = linha.slice(prefixo.length).trim().split(/\s+/).filter(Boolean);
+    const extras = partes.slice(3);
     for (const extra of extras) {
       if (!/^eval:[\w:-]+$/.test(extra) || !scripts[extra]) {
         falhas.push(`PI1 ${portao} cita passo extra \`${extra}\`, que não é eval:* definido em scripts`);
