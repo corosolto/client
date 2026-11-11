@@ -2,6 +2,7 @@
 /* Behavioral proof for the non-audio inventory and the public-audio orphan ratchet. */
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -36,24 +37,38 @@ function mutations() {
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
     put(fixture, 'public/models/skins/manifest.json', '{"hero":{"model":"/models/skins/hero-ab12.glb"}}\n');
     put(fixture, 'public/models/skins/hero-ab12.glb', 'post-rewrite-model');
-    put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     put(fixture, 'public/img/textures/kept.webp', 'texture');
     put(fixture, 'public/posters/kept.jpg', 'poster');
 
+    const manifestPath = join(fixture, 'tools/asset-inventory.json');
     let result = runInventory(fixture);
     expectStatus(result, 0, 'initial non-audio inventory generation');
     result = runInventory(fixture, ['--check']);
     expectStatus(result, 0, 'initial non-audio inventory check');
-    console.log('AI1: post-rewrite JSON reference and reviewed orphan baseline pass.');
+    console.log('AI1: post-rewrite JSON reference baseline passes.');
 
     put(fixture, 'public/models/props/new-orphan.glb', 'unreviewed');
+    const beforeOrphan = readFileSync(manifestPath, 'utf8');
+    result = runInventory(fixture);
+    expectStatus(result, 1, 'unreviewed orphan generation');
+    assert.match(result.stderr, /orphan-new: models\/props\/new-orphan\.glb/);
+    assert.equal(readFileSync(manifestPath, 'utf8'), beforeOrphan);
     result = runInventory(fixture, ['--check']);
-    expectStatus(result, 1, 'orphan-new mutant');
+    expectStatus(result, 1, 'generate then check cannot self-approve an orphan');
     assert.match(result.stderr, /orphan-new: models\/props\/new-orphan\.glb/);
     rmSync(join(fixture, 'public/models/props/new-orphan.glb'));
-    console.log('AI2: orphan-new mutant fails without touching the asset.');
+    console.log('AI2: generation refuses a new orphan and the following check still fails.');
 
-    const manifestPath = join(fixture, 'tools/asset-inventory.json');
+    put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
+    const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    reviewed.files['models/props/legacy.glb'] = createHash('sha256')
+      .update(readFileSync(join(fixture, 'public/models/props/legacy.glb'))).digest('hex');
+    reviewed.unreferenced.push('models/props/legacy.glb');
+    writeFileSync(manifestPath, `${JSON.stringify(reviewed, null, 2)}\n`);
+    expectStatus(runInventory(fixture), 0, 'explicitly reviewed orphan generation');
+    expectStatus(runInventory(fixture, ['--check']), 0, 'explicitly reviewed orphan check');
+    console.log('AI3: an explicitly reviewed orphan remains valid through generate and check.');
+
     const beforeLost = readFileSync(manifestPath, 'utf8');
     rmSync(join(fixture, 'public/models/skins/hero-ab12.glb'));
     result = runInventory(fixture, ['--check']);
@@ -63,7 +78,7 @@ function mutations() {
     expectStatus(result, 1, 'generator cannot erase a live reference');
     assert.equal(readFileSync(manifestPath, 'utf8'), beforeLost);
     put(fixture, 'public/models/skins/hero-ab12.glb', 'post-rewrite-model');
-    console.log('AI3: referenced-file-lost fails and generation refuses to hide it.');
+    console.log('AI4: referenced-file-lost fails and generation refuses to hide it.');
 
     put(fixture, 'public/textures/added.webp', 'safe-add');
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const ADDED = '/textures/added.webp';\n");
@@ -75,7 +90,7 @@ function mutations() {
     expectStatus(runInventory(fixture), 0, 'safe reviewed orphan removal generation');
     expectStatus(runInventory(fixture, ['--check']), 0, 'safe reviewed orphan removal check');
     assert.ok(!JSON.parse(readFileSync(manifestPath, 'utf8')).files['models/props/legacy.glb']);
-    console.log('AI4: referenced add and reviewed orphan removal migrate safely.');
+    console.log('AI5: referenced add and reviewed orphan removal migrate safely.');
 
     writeFileSync(orphans, '{"schema":1,"allow":["legacy/old.mp3"]}\n');
     put(fixture, 'public/audio/time-e/ingame/used.mp3', 'used');
@@ -110,7 +125,7 @@ function mutations() {
     assert.ok(existsSync(join(fixture, 'public/audio/time-e/ingame/added.mp3')));
     console.log('AU4: audio referenced add and manual orphan removal pass.');
 
-    console.log('ASSET-INVENTORY mutations OK: 2 orphan-new, 2 referenced-file-lost, safe add/remove for both inventories.');
+    console.log('ASSET-INVENTORY mutations OK: generate/check orphan refusal, explicit review, 2 referenced-file-lost, safe add/remove for both inventories.');
     return 0;
   } finally {
     rmSync(fixture, { recursive: true, force: true });

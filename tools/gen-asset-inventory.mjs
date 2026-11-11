@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Generates and checks the reviewed inventory of runtime models, textures and posters.
  * References use the same trusted source classes as tools/eval/lixo-check.mjs.
- * The checker never deletes an asset; writing the manifest is the explicit review step. */
+ * The checker never deletes an asset; new orphans require explicit review in the manifest. */
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'node:path';
@@ -184,9 +184,12 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
   }
 
   const lost = result.findings.filter((finding) => finding.code === 'referenced-file-lost');
-  if (lost.length) {
-    printFindings(lost);
-    console.error('ASSET-INVENTORY: refusing to erase a still-referenced file from the manifest; restore the file or remove its runtime reference first');
+  const reviewedUnreferenced = new Set(published.data?.unreferenced || []);
+  const newUnreviewed = result.next.unreferenced.filter((path) => !reviewedUnreferenced.has(path));
+  if (lost.length || newUnreviewed.length) {
+    printFindings([...lost, ...newUnreviewed.map((path) => ({ code: 'orphan-new', path }))]);
+    if (lost.length) console.error('ASSET-INVENTORY: refusing to erase a still-referenced file from the manifest; restore the file or remove its runtime reference first');
+    if (newUnreviewed.length) console.error('ASSET-INVENTORY: refusing to approve unreviewed orphans; add their reviewed file hashes and unreferenced paths to the manifest first');
     process.exit(1);
   }
   mkdirSync(dirname(MANIFEST), { recursive: true });
