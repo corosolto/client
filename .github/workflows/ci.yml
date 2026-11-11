@@ -183,14 +183,35 @@ jobs:
           node-version: 22
           cache: npm
       - name: Restore calibrated duration manifest
+        id: duration-cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
         # Mesma chave do produtor; sem o arquivo local, o prefixo encontra a
-        # calibração mais recente. Ausência não desliga o shard: o runner falha.
+        # calibração mais recente. Cache vazio é reconstruído com dados reais da main;
+        # o shard nunca é desligado silenciosamente.
         with:
           path: tools/eval/out/durations.json
           key: eval-durations-v1-${{ hashFiles('tools/eval/out/durations.json') }}
           restore-keys: |
             eval-durations-v1-
+      - name: Bootstrap duration manifest on an empty cache
+        if: steps.duration-cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mapfile -t ids < <(gh run list --repo "$REPO" --workflow ci.yml --branch main \
+            --event push --status success --limit 3 --json databaseId --jq '.[].databaseId')
+          if [ "${#ids[@]}" -eq 0 ]; then
+            echo '::error::No successful main CI timing source found' >&2
+            exit 1
+          fi
+          for id in "${ids[@]}"; do
+            destino="tools/eval/out/timing-artifacts/$id"
+            mkdir -p "$destino"
+            gh run download "$id" --repo "$REPO" --dir "$destino" --pattern '*-tempos-*'
+          done
+          node tools/eval/calibrate-durations.mjs
       - name: Dependências (npm ci)
         id: deps
         run: npm ci
