@@ -118,12 +118,12 @@ const CATALOG_CHARACTERS = [
 const grupoId = (key: string) =>
   FACTIONS.find((f) => f.catalogId === key || f.id === key || f.slug === key)?.catalogId || key;
 
-export const PERSONAGENS: Personagem[] = Object.freeze(CATALOG_CHARACTERS.map((character) => ({
+export const PERSONAGENS: readonly Personagem[] = Object.freeze(CATALOG_CHARACTERS.map((character) => ({
   id: character.id,
   grupo: grupoId(character.grupoChave),
   nome: character.nome,
   blurb: character.blurb,
-  ...(character.passe ? { passe: character.passe } : {}),
+  ...('passe' in character ? { passe: character.passe } : {}),
 })));
 
 const POLITICAL_GROUP: Grupo = {
@@ -150,7 +150,7 @@ const politicalPosition = factionGroups.findIndex((group) => group.id === 'B');
 if (politicalPosition < 0) factionGroups.unshift(POLITICAL_GROUP);
 else factionGroups.splice(politicalPosition + 1, 0, POLITICAL_GROUP);
 
-export const GRUPOS: Grupo[] = Object.freeze(factionGroups);
+export const GRUPOS: readonly Grupo[] = Object.freeze(factionGroups);
 export const capaDoGrupo = (id: string) => {
   const art = GRUPOS.find((group) => group.id === id)?.art;
   return art ? `/img/faccoes/${art}.webp` : null;
