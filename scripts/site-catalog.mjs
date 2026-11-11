@@ -7,6 +7,9 @@ const sourcePath = resolve(root, 'public/js/characters.js');
 const outputPath = resolve(root, 'src/data/catalog.generated.ts');
 
 const unescapeString = (value) => value.replace(/\\([\\'])/g, '$1');
+/* Texto público do site segue o CONTRIBUTING.md (régua travessao:check): ` - ` no lugar de
+   `—`/`–`. O jogo (characters.js) mantém o texto dele; o catálogo era escrito assim à mão. */
+const textoDoSite = (value) => unescapeString(value).replace(/\s*[—–]\s*/g, ' - ');
 
 export function parseCharacters(source) {
   const block = source.match(/export const CHARACTERS = \[([\s\S]*?)\n\];/);
@@ -17,8 +20,8 @@ export function parseCharacters(source) {
     const character = {
       id: unescapeString(id),
       grupoChave: unescapeString(tribe || team),
-      nome: unescapeString(name),
-      blurb: unescapeString(blurb),
+      nome: textoDoSite(name),
+      blurb: textoDoSite(blurb),
     };
     if (season) character.passe = { season: unescapeString(season), level: Number(level) };
     return character;
