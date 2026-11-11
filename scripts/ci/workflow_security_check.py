@@ -4,8 +4,33 @@ import re
 import tempfile
 from pathlib import Path
 
+try:
+    from .workflow_yaml import (
+        iter_steps,
+        named_step,
+        parse_workflow,
+        read_only_permissions,
+        triggers,
+    )
+except ImportError:
+    from workflow_yaml import (
+        iter_steps,
+        named_step,
+        parse_workflow,
+        read_only_permissions,
+        triggers,
+    )
+
 
 WORKFLOW = Path('.github/workflows/preview-bot.yml')
+
+
+def _parse_guardado(source: str, label: str, errors: list[str]) -> dict:
+    try:
+        return parse_workflow(source)
+    except ValueError as exc:
+        errors.append(f'{label}: {exc}')
+        return {}
 
 
 def preview_failures(source: str) -> list[str]:
@@ -75,10 +100,14 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
         return '\n'.join(l for l in texto.splitlines() if not l.lstrip().startswith('#'))
 
     build, deploy = codigo(build), codigo(deploy)
+    build_doc = _parse_guardado(build, 'PRV1 preview-build.yml', errors)
+    deploy_doc = _parse_guardado(deploy, 'PRV2 preview-deploy.yml', errors)
+    build_triggers = triggers(build_doc)
+    deploy_triggers = triggers(deploy_doc)
 
-    if 'pull_request_target' in build:
+    if 'pull_request_target' in build_triggers:
         errors.append('PRV1 o job que COMPILA usa pull_request_target — passaria a enxergar segredo rodando código do fork')
-    if 'pull_request:' not in build:
+    if 'pull_request' not in build_triggers:
         errors.append('PRV1 o job que COMPILA não roda em pull_request')
     if 'secrets.' in build:
         errors.append('PRV1 o job que COMPILA referencia `secrets.` — ele roda código do fork e não pode ter o que roubar')
@@ -89,23 +118,19 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
     if 'upload-artifact' in build and 'include-hidden-files: true' not in build:
         errors.append('PRV5 o artefato do build não inclui arquivo oculto — o .vc-config.json fica de fora e o deploy falha')
 
-    if 'workflow_run:' not in deploy:
+    if 'workflow_run' not in deploy_triggers:
         errors.append('PRV2 o job que PUBLICA não roda em workflow_run — sem contexto base não há segredo em PR de fork')
     if 'secrets.VERCEL_TOKEN' not in deploy:
         errors.append('PRV2 o job que PUBLICA não usa o token da Vercel')
 
     # PRV4: `${{ }}` só pode aparecer em `env:`/`with:`/`if:`, nunca dentro do script.
-    dentro_de_run = False
-    for linha in deploy.splitlines():
-        despido = linha.strip()
-        if re.match(r'run:\s*\|', despido):
-            dentro_de_run = True
+    for _, step in iter_steps(deploy_doc):
+        run = step.get('run')
+        if not isinstance(run, str):
             continue
-        if dentro_de_run:
-            # o bloco acaba quando a indentação volta para o nível da chave do passo
-            if despido and not linha.startswith('          '):
-                dentro_de_run = False
-            elif '${{' in linha:
+        for linha in run.splitlines():
+            despido = linha.strip()
+            if '${{' in linha:
                 errors.append(f'PRV4 `{despido[:60]}` interpola expressão dentro de run: — passe por env:')
 
     # PRV6: função serverless compilada do fork roda na Vercel com o ambiente de Preview.
@@ -136,30 +161,8 @@ def supply_failures(workflows: dict[Path, str]) -> list[str]:
     return errors
 
 
-def _chave_topo(codigo: str, chave: str) -> tuple[str, list[str]] | None:
-    """Valor inline e linhas indentadas de uma chave de coluna 0, lidos linha a linha."""
-    linhas = codigo.splitlines()
-    for i, linha in enumerate(linhas):
-        nome, sep, resto = linha.partition(':')
-        if not sep or nome.strip('\'"') != chave or linha[:1].isspace():
-            continue
-        bloco = []
-        for seguinte in linhas[i + 1:]:
-            if seguinte.strip() and not seguinte[:1].isspace():
-                break
-            bloco.append(seguinte)
-        return resto.strip(), bloco
-    return None
-
-
 def escuta_merge_group(codigo: str) -> bool:
-    on = _chave_topo(codigo, 'on')
-    if not on:
-        return False
-    inline, bloco = on
-    if re.search(r'\bmerge_group\b', inline):
-        return True
-    return any(re.match(r'\s+(?:-\s*)?merge_group\b', l) for l in bloco)
+    return 'merge_group' in triggers(parse_workflow(codigo))
 
 
 def merge_group_failures(workflows: dict[Path, str]) -> list[str]:
@@ -168,14 +171,15 @@ def merge_group_failures(workflows: dict[Path, str]) -> list[str]:
     errors = []
     for path, source in workflows.items():
         codigo = '\n'.join(l for l in source.splitlines() if not l.lstrip().startswith('#'))
-        if not escuta_merge_group(codigo):
+        workflow = _parse_guardado(codigo, f'MGQ1 {path}', errors)
+        eventos = triggers(workflow)
+        if 'merge_group' not in eventos:
             continue
-        if 'pull_request_target' in codigo:
+        if 'pull_request_target' in eventos:
             errors.append(f'MGQ1 {path}: escuta merge_group e pull_request_target no mesmo arquivo')
         for nome in sorted(set(re.findall(r'secrets\.(\w+)', codigo)) - {'GITHUB_TOKEN'}):
             errors.append(f'MGQ1 {path}: escuta merge_group e lê secrets.{nome} — o lote roda código de PR')
-        topo = _chave_topo(codigo, 'permissions')
-        if not topo or 'write' in topo[0] + '\n'.join(topo[1]):
+        if 'permissions' not in workflow or not read_only_permissions(workflow['permissions']):
             errors.append(f'MGQ1 {path}: escuta merge_group sem `permissions:` só de leitura no topo')
     return errors
 
@@ -195,39 +199,27 @@ CF_DEPLOY = Path('.github/workflows/cf-preview-deploy.yml')
 SMOKE_WEB = Path('.github/workflows/smoke-web.yml')
 
 
-def passo(source: str, nome: str) -> str:
-    linhas = source.splitlines()
-    for i, linha in enumerate(linhas):
-        if linha.strip() != f'- name: {nome}':
-            continue
-        indentacao = len(linha) - len(linha.lstrip())
-        bloco = []
-        for seguinte in linhas[i + 1:]:
-            atual = len(seguinte) - len(seguinte.lstrip())
-            if seguinte.strip() and atual <= indentacao and seguinte.lstrip().startswith('- '):
-                break
-            bloco.append(seguinte)
-        return '\n'.join(bloco)
-    return ''
-
-
 def cloudflare_failures(build: str, deploy: str, smoke: str) -> list[str]:
     errors = []
-    if 'pull_request:' not in build or 'pull_request_target' in build or 'secrets.' in build:
+    build_doc = _parse_guardado(build, 'CF1 cf-preview.yml', errors)
+    deploy_doc = _parse_guardado(deploy, 'CF2 cf-preview-deploy.yml', errors)
+    smoke_doc = _parse_guardado(smoke, 'CF5 smoke-web.yml', errors)
+    if 'pull_request' not in triggers(build_doc) or 'pull_request_target' in triggers(build_doc) or 'secrets.' in build:
         errors.append('CF1 build Cloudflare precisa usar pull_request sem segredos')
-    if 'workflow_run:' not in deploy:
+    if 'workflow_run' not in triggers(deploy_doc):
         errors.append('CF2 deploy Cloudflare precisa usar workflow_run')
-    download = passo(deploy, 'Baixa somente os assets compilados')
-    destino = re.search(r'(?m)^\s*path:\s*(\S+)\s*$', download)
-    if not destino or destino.group(1) != 'dist':
+    download = named_step(deploy_doc, 'Baixa somente os assets compilados')
+    destino = download.get('with', {}).get('path') if isinstance(download.get('with'), dict) else None
+    if destino != 'dist':
         errors.append('CF3 artefato do PR precisa ficar isolado em dist, fora do checkout confiável')
     if 'python3 scripts/ci/cf_preview_comment.py' not in deploy:
         errors.append('CF4 comentário precisa executar o script do checkout confiável')
-    sticky = passo(smoke, 'Aguarda URL sticky do Cloudflare')
-    if "if: github.event_name == 'pull_request'" not in sticky:
+    sticky = named_step(smoke_doc, 'Aguarda URL sticky do Cloudflare')
+    if sticky.get('if') != "github.event_name == 'pull_request'":
         errors.append('CF5 dispatch manual não pode esperar sticky de PR')
-    guarda = passo(smoke, 'Confirma host do smoke manual')
-    if '${BASE_URL:-}' not in guarda or "if: github.event_name == 'workflow_dispatch'" not in guarda:
+    guarda = named_step(smoke_doc, 'Confirma host do smoke manual')
+    run = guarda.get('run') if isinstance(guarda.get('run'), str) else ''
+    if '${BASE_URL:-}' not in run or guarda.get('if') != "github.event_name == 'workflow_dispatch'":
         errors.append('CF6 dispatch manual precisa falhar imediatamente se BASE_URL estiver vazio')
     return errors
 
@@ -284,6 +276,9 @@ def selftest(source: str) -> list[str]:
         'fila-inline': re.sub(r'(?m)^on:$', 'on: [push, pull_request, merge_group]\nantes_on:', ci.read_text(encoding='utf-8'), count=1)
         + '\n        env:\n          X: ${{ secrets.VERCEL_TOKEN }}\n',
         'fila-escreve-inline': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: write-all', 1),
+        'fila-permissao-so-no-job': ci.read_text(encoding='utf-8')
+        .replace('permissions:\n  contents: read\n', '', 1)
+        .replace('  reguas-e-site:\n', '  reguas-e-site:\n    permissions:\n      contents: read\n', 1),
     }
     missed += [n for n, mutado in fila.items() if not merge_group_failures({ci: mutado})]
     with tempfile.TemporaryDirectory() as tmp:

@@ -79,6 +79,9 @@ aprovação humana definida nos quality gates antes de entrar em `staging`.
   `origin/main...origin/staging` via Git e exigem que `origin/staging` seja o `headRefOid`
   avaliado; sem diff completo verificado, não há merge.
 - Rollup vazio ou desconhecido não conta como verde.
+- `npm run eval:workflowguards` faz parse estrutural dos workflows e comprova, com mutantes, que
+  todo merge ocorre depois da decisão de elegibilidade no mesmo job e que os passos com token do
+  bot ficam inertes com aviso quando o segredo não existe. O guard roda em FAST, DEPLOY, CORE e CI.
 - Crash automático gera sugestão de duplicata; fechamento continua humano.
 
 ## Secrets
