@@ -45,6 +45,7 @@ class Netcode {
     this._alvoSpec = null;      // quem o espectador está seguindo
     this.specDist = 1.7;        // câmera do espectador: metros atrás do ombro do alvo (BUG-117)
     this._evOn = !!(net.meta && net.meta.events);   // servidor manda `ev`; sem a flag, heurística velha (BUG-90)
+    this._pickPendente = null;   // null = nada pendente; ID 0 é um pedido válido (bug do truthiness, 10/11)
     /* FLASH online: o servidor de hoje só aceita `nade` 'smoke'|'frag' e não emite `boom` da
        flash. Até ele anunciar `meta.flash` (com `ev`), o jogo recusa equipar a flash online
        (game._flashLiberada) em vez de gastar o estoque num pedido que o servidor descarta. */
@@ -182,7 +183,7 @@ class Netcode {
     }
     // px/py/pz = a posição PREDITA de onde você mira. O servidor atira DESTA origem (validada
     // dentro de 3 m); sem isso o raio sai da posição dele — atrasada pelo RTT — e passa ao lado.
-    const tinhaIntent = p.weapon !== this._authWeapon || this._pickPendente
+    const tinhaIntent = p.weapon !== this._authWeapon || this._pickPendente != null
       || this._pickupWeaponPendente || this._reloadPendente;
     const shotAim = anguloDeDisparo(p, this.game.camView);
     const seq = this.net.sendInput({
@@ -195,7 +196,7 @@ class Netcode {
       // duração DESTE passo (teto do laço do navegador): o servidor integra o comando por ela,
       // e não pelo tick dele — senão o ack compara poses de instantes diferentes (BUG-152).
       dtms: Math.min(50, Math.max(1, Math.round((Number(dt) || 0) * 100000) / 100)),
-      ...(this._pickPendente ? { pick: this._pickPendente } : {}),
+      ...(this._pickPendente != null ? { pick: this._pickPendente } : {}),
       ...(this._pickupWeaponPendente ? { pickupWeapon: this._pickupWeaponPendente } : {}),
       ...(this._reloadPendente ? { reload: this._reloadPendente } : {}),
       ...(this._nadePendente ? { nade: this._nadePendente } : {}),
@@ -205,7 +206,7 @@ class Netcode {
       if (this._predSeq.length > 180) { this._predSeq.shift(); this._predX.shift(); this._predY.shift(); this._predZ.shift(); }
       if (tinhaIntent) this._loadoutSeq = seq;
       this._armaEnviada = p.weapon;
-      this._pickPendente = 0;   // um pedido por E; o servidor responde com `gone` + `drop` da antiga
+      this._pickPendente = null;   // um pedido por E; o servidor responde com `gone` + `drop` da antiga; null = nada (ID 0 é válido)
       this._pickupWeaponPendente = '';
       this._reloadPendente = '';
       this._nadePendente = '';  // um pedido por tecla; o servidor responde com `nade` (fase 3)
@@ -215,7 +216,7 @@ class Netcode {
   // E num drop/rack: pede ao servidor; a troca local é só predição até o ack do v4.
   pedirPick(pk) {
     if (!pk) return;
-    if (pk._nid) this._pickPendente = pk._nid;
+    if (pk._nid != null) this._pickPendente = pk._nid;
     else if (WEAPONS[pk.weapon]) this._pickupWeaponPendente = pk.weapon;
   }
   pedirReload(w) { if (!this.espectador && WEAPONS[w]) this._reloadPendente = w; }
@@ -229,7 +230,7 @@ class Netcode {
   // Drops de rede (com `_nid`) somem; o rack do spawn fica. Chamado no countdown e no `partida`.
   limparDropsDeRede() {
     const game = this.game;
-    for (let i = game.drops.length - 1; i >= 0; i--) if (game.drops[i]._nid) game._sumirDrop(i);
+    for (let i = game.drops.length - 1; i >= 0; i--) if (game.drops[i]._nid != null) game._sumirDrop(i);
   }
   _dropDeRede(e) {
     const game = this.game;
