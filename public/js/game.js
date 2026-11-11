@@ -10187,10 +10187,11 @@ export class Game {
        vídeo crescia partida após partida, até webglcontextlost. Texturas COMPARTILHADAS
        (bundle do initTextures e estáticas dos módulos de mapa) ficam de fora: o próximo
        Game as usa. */
-    for (const t of this._texLocais || []) if (t !== this.puffTex) t.dispose();
+    for (const t of this._texLocais || []) t.dispose();
     this._texLocais = null;
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     // Partículas de pouso são donas do material; a textura já pertence a _texLocais.
+    this.puffFx?.points?.material?.dispose();
     for (const fx of this._landingFxSystems || []) {
       if (fx === this.puffFx) continue;
       fx.points?.material?.dispose();
