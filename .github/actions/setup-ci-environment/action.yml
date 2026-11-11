@@ -21,4 +21,4 @@ runs:
       run: |
         set -euo pipefail
         test -x node_modules/.bin/astro || { echo '::error::shared node_modules is incomplete'; exit 1; }
-        test -f dist/index.html || { echo '::error::shared dist is incomplete'; exit 1; }
+        test -f dist/client/index.html || { echo '::error::shared dist is incomplete'; exit 1; }
