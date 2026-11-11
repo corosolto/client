@@ -214,7 +214,7 @@ jobs:
         run: |
           python3 scripts/ci/bot_sweep.py --selftest
           gh pr list --repo "$REPO" --state open --limit 100 \
-            --json number,baseRefOid,labels,headRefOid,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
+            --json number,title,body,baseRefOid,labels,headRefOid,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
             > /tmp/automerge-sweep.json
           python3 - <<'PY'
           import json, os, subprocess

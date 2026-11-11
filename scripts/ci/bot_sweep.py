@@ -29,6 +29,8 @@ def fingerprint(pr):
     """
     return {
         "version": 1,
+        "title_digest": _digest(pr.get("title")),
+        "body_digest": _digest(pr.get("body")),
         "base_oid": pr.get("baseRefOid"),
         "head_oid": pr.get("headRefOid"),
         "label_digest": _digest(sorted(
@@ -68,7 +70,7 @@ def decode_state(marker, kind):
     if not re.fullmatch(r"[0-9a-f]{40}", state.get("base_oid") or ""):
         raise ValueError("sweep state has no canonical evaluated base")
     if any(not re.fullmatch(r"[0-9a-f]{64}", state.get(field) or "")
-           for field in ("label_digest", "rollup_digest", "review_digest")):
+           for field in ("title_digest", "body_digest", "label_digest", "rollup_digest", "review_digest")):
         raise ValueError("sweep state has malformed digests")
     return state
 
@@ -125,6 +127,10 @@ def selftest():
         check(f"{kind}: unchanged head and rollup debounce", False, comments=comments, kind=kind)
         check(f"{kind}: reordered labels debounce", False,
               current=dict(pr, labels=list(reversed(pr["labels"]))), comments=comments, kind=kind)
+        check(f"{kind}: title edit dispatches", True,
+              current=dict(pr, title="New English title"), comments=comments, kind=kind)
+        check(f"{kind}: body edit dispatches", True,
+              current=dict(pr, body="New English body"), comments=comments, kind=kind)
         check(f"{kind}: base advancement with fixed head/rollup/reviews dispatches", True,
               current=dict(pr, baseRefOid="d" * 40), comments=comments, kind=kind)
         check(f"{kind}: label change with fixed head/rollup/reviews dispatches", True,
