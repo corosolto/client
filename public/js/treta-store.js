@@ -1,6 +1,6 @@
 import {TRETA_ITEMS_ENABLED} from './treta-features.js';
 import {initTretaRewards,updateTretaRewards} from './treta-rewards.js';
-import {TRETA_SKINS,TRETA_WEAPON_SKINS,TRETA_GLOVES,TRETA_PACKS,TRETA_COINS,TRETA_DEFAULT_REWARDS,TRETA_COIN_ART,TRETA_EYEWEAR} from './treta-catalog.js';
+import {TRETA_SKINS,TRETA_WEAPON_SKINS,TRETA_PASSE_WEAPON_SKINS,TRETA_GLOVES,TRETA_PACKS,TRETA_COINS,TRETA_DEFAULT_REWARDS,TRETA_COIN_ART,TRETA_EYEWEAR} from './treta-catalog.js';
 import {TRETA_ACCESSORY_PROPOSALS} from './treta-proposals.js';
 import {loadAccount,socialApi} from './account-entry.js';
 import {byId} from './characters.js';
@@ -41,7 +41,7 @@ const $=id=>document.getElementById(id);
 const owned=id=>state?.inventory?.some(s=>s.skin_id===id);
 const equipped=id=>state?.inventory?.some(s=>s.skin_id===id && s.equipped);
 const item=id=>state?.catalog?.find(s=>s.id===id);
-const product=id=>STORE_SKINS.find(s=>s.id===id) || TRETA_EYEWEAR.find(s=>s.id===id);
+const product=id=>STORE_SKINS.find(s=>s.id===id) || TRETA_PASSE_WEAPON_SKINS.find(s=>s.id===id) || TRETA_EYEWEAR.find(s=>s.id===id);
 const campaignActive=()=>Boolean(state?.campaign?.starts_at && Date.now()>=Date.parse(state.campaign.starts_at) && Date.now()<Date.parse(state.campaign.ends_at));
 const asset=id=>eyeManifest.eyewear[id] || manifest.skins[id];
 const available=id=>{
@@ -129,7 +129,7 @@ export function abrirTretaSkin(id) {
   return Boolean(skin);
 }
 export async function equiparTretaSkin(id) {
-  const skin=STORE_SKINS.find(s=>s.id===id);
+  const skin=STORE_SKINS.find(s=>s.id===id) || TRETA_PASSE_WEAPON_SKINS.find(s=>s.id===id);
   if(!skin || !owned(id) || !available(id))return false;
   return equip(skin);
 }

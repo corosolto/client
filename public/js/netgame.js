@@ -45,6 +45,7 @@ class Netcode {
     this._alvoSpec = null;      // quem o espectador está seguindo
     this.specDist = 1.7;        // câmera do espectador: metros atrás do ombro do alvo (BUG-117)
     this._evOn = !!(net.meta && net.meta.events);   // servidor manda `ev`; sem a flag, heurística velha (BUG-90)
+    this._pickPendente = null;   // null = nada pendente; ID 0 é um pedido válido (bug do truthiness, 10/11)
     /* FLASH online: o servidor de hoje só aceita `nade` 'smoke'|'frag' e não emite `boom` da
        flash. Até ele anunciar `meta.flash` (com `ev`), o jogo recusa equipar a flash online
        (game._flashLiberada) em vez de gastar o estoque num pedido que o servidor descarta. */
@@ -68,6 +69,26 @@ class Netcode {
     // economia de partida (docs/ECONOMIA-PARTIDA.md): resposta do nó vai para o menu de compra
     net.onCompra = (m) => { try { this.game._compra?.respostaRemota(m); } catch { /* HUD */ } };
     net.startPing();
+    /* CAPTURA TOTAL (meta do dono: "sem amostra não existe"): a janela parcial que
+     estava sendo acumulada era DESCARTADA ao ocultar a aba (mobile troca de app) e ao
+     sair da página — o jogador que jogou 8 s visível não deixava amostra nenhuma.
+     Agora ocultar/sair/fechar o WS faz o flush do que acumulou; e voltar à aba
+     antecipa a próxima janela (2 s) em vez de empurrar 10 s. */
+    this._flushStatsParcial = () => {
+      const game = this.game;
+      if (game._disposed || !game.online || !this.net) return;
+      if (!(this._nsFps > 0)) return;                 // nunca renderizou visível: sem janela útil
+      try { this.enviarJanelaStats(); } catch { /* flush nunca derruba o jogo */ }
+    };
+    this._onPageHide = () => this._flushStatsParcial();
+    this._onVisChange = () => { if (typeof document !== 'undefined' && document.hidden) this._flushStatsParcial(); };
+    globalThis.addEventListener?.('pagehide', this._onPageHide);
+    // harness sem DOM: `document` pode nem existir como global — o encadeamento
+    // opcional não protege global indefinido, só propriedade. O guard é o typeof.
+    if (typeof document !== 'undefined') document.addEventListener?.('visibilitychange', this._onVisChange);
+    this._prevOnClose = net.onClose;
+    this._onCloseNetGame = (motivo) => { this._flushStatsParcial(); this._prevOnClose?.(motivo); };
+    net.onClose = this._onCloseNetGame;
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
     this._nsTimer = setInterval(() => { this.updateStats(); this._pulsoDePausa(); }, 250);
     this._statsInactive = false;
@@ -105,6 +126,9 @@ class Netcode {
 
   dispose() {
     if (this._nsTimer) { clearInterval(this._nsTimer); this._nsTimer = null; }
+    globalThis.removeEventListener?.('pagehide', this._onPageHide);
+    if (typeof document !== 'undefined') document.removeEventListener?.('visibilitychange', this._onVisChange);
+    if (this.net?.onClose === this._onCloseNetGame) this.net.onClose = this._prevOnClose;
     try { this.net.stopPing(); } catch { /* já fechada */ }
     if (this.net.onSlot === this._onSlot) this.net.onSlot = this._prevOnSlot;
     if (this.net.onPersonagem === this._onPersonagem) this.net.onPersonagem = this._prevOnPersonagem;
@@ -182,7 +206,7 @@ class Netcode {
     }
     // px/py/pz = a posição PREDITA de onde você mira. O servidor atira DESTA origem (validada
     // dentro de 3 m); sem isso o raio sai da posição dele — atrasada pelo RTT — e passa ao lado.
-    const tinhaIntent = p.weapon !== this._authWeapon || this._pickPendente
+    const tinhaIntent = p.weapon !== this._authWeapon || this._pickPendente != null
       || this._pickupWeaponPendente || this._reloadPendente;
     const shotAim = anguloDeDisparo(p, this.game.camView);
     const seq = this.net.sendInput({
@@ -195,7 +219,7 @@ class Netcode {
       // duração DESTE passo (teto do laço do navegador): o servidor integra o comando por ela,
       // e não pelo tick dele — senão o ack compara poses de instantes diferentes (BUG-152).
       dtms: Math.min(50, Math.max(1, Math.round((Number(dt) || 0) * 100000) / 100)),
-      ...(this._pickPendente ? { pick: this._pickPendente } : {}),
+      ...(this._pickPendente != null ? { pick: this._pickPendente } : {}),
       ...(this._pickupWeaponPendente ? { pickupWeapon: this._pickupWeaponPendente } : {}),
       ...(this._reloadPendente ? { reload: this._reloadPendente } : {}),
       ...(this._nadePendente ? { nade: this._nadePendente } : {}),
@@ -205,7 +229,7 @@ class Netcode {
       if (this._predSeq.length > 180) { this._predSeq.shift(); this._predX.shift(); this._predY.shift(); this._predZ.shift(); }
       if (tinhaIntent) this._loadoutSeq = seq;
       this._armaEnviada = p.weapon;
-      this._pickPendente = 0;   // um pedido por E; o servidor responde com `gone` + `drop` da antiga
+      this._pickPendente = null;   // um pedido por E; o servidor responde com `gone` + `drop` da antiga; null = nada (ID 0 é válido)
       this._pickupWeaponPendente = '';
       this._reloadPendente = '';
       this._nadePendente = '';  // um pedido por tecla; o servidor responde com `nade` (fase 3)
@@ -215,7 +239,7 @@ class Netcode {
   // E num drop/rack: pede ao servidor; a troca local é só predição até o ack do v4.
   pedirPick(pk) {
     if (!pk) return;
-    if (pk._nid) this._pickPendente = pk._nid;
+    if (pk._nid != null) this._pickPendente = pk._nid;
     else if (WEAPONS[pk.weapon]) this._pickupWeaponPendente = pk.weapon;
   }
   pedirReload(w) { if (!this.espectador && WEAPONS[w]) this._reloadPendente = w; }
@@ -229,15 +253,17 @@ class Netcode {
   // Drops de rede (com `_nid`) somem; o rack do spawn fica. Chamado no countdown e no `partida`.
   limparDropsDeRede() {
     const game = this.game;
-    for (let i = game.drops.length - 1; i >= 0; i--) if (game.drops[i]._nid) game._sumirDrop(i);
+    for (let i = game.drops.length - 1; i >= 0; i--) if (game.drops[i]._nid != null) game._sumirDrop(i);
   }
   _dropDeRede(e) {
     const game = this.game;
     if (!e || !Number.isInteger(e.i) || game.drops.some((d) => d._nid === e.i)) return;
     if (!WEAPONS[e.w]) return;
-    game._dropWeapon(+e.x || 0, +e.z || 0, e.w, false, 0.01, 0);   // sem prazo local: quem some é o `gone`
+    game._dropWeapon(+e.x || 0, +e.z || 0, e.w, false, 0.01, 0);   // quem some é o `gone` — ou o prazo abaixo
     const d = game.drops[game.drops.length - 1];
-    if (d) d._nid = e.i;
+    // TTL do servidor quando vem (> 0, no evento e no welcome); sem ele, teto local de 25 s
+    const ttl = Number.isFinite(e.ttl) && e.ttl > 0 ? e.ttl : 25;
+    if (d) { d._nid = e.i; d._expiraRedeEm = game.time + ttl + 2; }
   }
 
   _clearPrediction() {
@@ -581,11 +607,20 @@ class Netcode {
      tick de entrada é estado herdado (como `primeiroSnap`), e lote com 3 s de atraso (pausa) some. */
   _drenar(snap, primeiroSnap) {
     const fila = this.net.events;
-    if (!fila || !fila.length) return;
-    while (fila.length && fila[0].tick <= snap.tick) {
-      const lote = fila.shift();
-      if (primeiroSnap || snap.tick - lote.tick > 90) continue;
-      for (const e of lote.list) { try { this._evento(e); } catch { /* HUD ainda não montado */ } }
+    if (fila && fila.length) {
+      while (fila.length && fila[0].tick <= snap.tick) {
+        const lote = fila.shift();
+        if (primeiroSnap || snap.tick - lote.tick > 90) continue;
+        for (const e of lote.list) { try { this._evento(e); } catch { /* HUD ainda não montado */ } }
+      }
+    }
+    /* `gone` perdido (lote atrasado) deixava ARMA FANTASMA no chão até a virada da rodada.
+       O servidor manda o TTL do drop no próprio evento e no welcome: ele é a rede de
+       segurança — quem passar do prazo some sozinho, como o `gone` faria. */
+    const game = this.game;
+    for (let i = game.drops.length - 1; i >= 0; i--) {
+      const d = game.drops[i];
+      if (d._nid && d._expiraRedeEm != null && game.time >= d._expiraRedeEm) game._sumirDrop(i);
     }
   }
   // IDs uint32 de eventos não podem truncar para signed nem coagir inválidos em zero.
@@ -635,7 +670,11 @@ class Netcode {
       const origem = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0), dir = new THREE.Vector3(+e.vx || 0, +e.vy || 0, +e.vz || 0);
       game._spawnGrenade(origem, dir.lengthSq() ? dir.clone().normalize() : new THREE.Vector3(0, 0, -1), kind, dono);
       const gr = game._grenades[game._grenades.length - 1];
-      if (gr) { gr._nid = e.i; gr.v.copy(dir); gr.mesh.position.copy(origem); gr.fuse = 1e9; }   // quem estoura é o `boom`
+      /* Quem estoura é o `boom` autoritativo — mas o lote dele pode ser descartado quando
+         chega atrasado (jitter > 1,5 s), e a granada ficava CONGELADA em cena para sempre
+         (fuse 1e9). O fuse local de 8 s é a rede de segurança: estoura visualmente como o
+         boom faria, só que tarde, em vez de virar fantasma. */
+      if (gr) { gr._nid = e.i; gr.v.copy(dir); gr.mesh.position.copy(origem); gr.fuse = 8; }
     } else if (e.k === 'boom') {
       const i = game._grenades.findIndex((x) => x._nid === e.i);
       if (i >= 0) { game.scene.remove(game._grenades[i].mesh); game._grenades.splice(i, 1); }
@@ -1069,7 +1108,9 @@ class Netcode {
       this._reconcileWindow.length = 0;
       this.net.drainRttSamples?.();
       this.net.drainGapSamples?.();
-      this._nextClientStats = now + 10000;
+      // Voltou a ficar VISÍVEL: a próxima janela sai em 2 s (não 10) — quem abre e
+      // fecha a aba rápido (mobile) ainda produz amostra na sessão.
+      this._nextClientStats = now + (inactive ? 10000 : 2000);
     }
     if (this._nsT0 == null) { this._nsT0 = now; this._nsF0 = game._rafFrames || 0; }
     const dframes = (game._rafFrames || 0) - this._nsF0, dtime = now - this._nsT0;
@@ -1077,28 +1118,35 @@ class Netcode {
       if (dframes > 0) this._nsFps = Math.round((dframes * 1000) / dtime);   // pausado (0 frames) mantém o último fps de jogo
       this._nsT0 = now; this._nsF0 = game._rafFrames || 0;
     }
+    if (!inactive && now >= this._nextClientStats && this._nsFps > 0) this.enviarJanelaStats();
+  }
+
+  /* Uma janela de client_stats saindo — tanto a fechada de 10 s quanto o FLUSH PARCIAL
+   * de quem ocultou a aba/saiu da página no meio (meta: jogador que jogou pouco visível
+   * ainda deixa amostra). Amostras drenadas não se repetem; a janela nova recomeça. */
+  enviarJanelaStats() {
+    const game = this.game;
+    if (game._disposed || !game.online || !this.net) return;
     const s = this.net.computeStats();
-    if (!inactive && now >= this._nextClientStats && this._nsFps > 0) {
-      this._nextClientStats = now + 10000;
-      const correcoes = this._reconcileWindow;
-      // O HUD conserva o pior gap recente; a telemetria usa p95 dos intervalos
-      // desta janela para que um pico isolado não defina a qualidade inteira.
-      const gaps = this.net.drainGapSamples?.();
-      this.net.sendClientStats?.({
-        fps: this._nsFps, rtt: s.ping, rttSamples: this.net.drainRttSamples?.(), snap: s.hz, gap: this._percentil(gaps, 0.95),
-        reconcileP95: this._percentil(correcoes, 0.95),
-        // O p95 da sessão precisa dos eventos, não do p95 de cada janela. Em uma
-        // janela anormalmente cheia, distribuir as 512 amostras por toda ela.
-        reconcileSamples: correcoes.length <= 512 ? correcoes.slice() : Array.from({ length: 512 }, (_, i) =>
-          correcoes[Math.floor((i + 0.5) * correcoes.length / 512)]),
-        reconcileMax: correcoes.length ? +Math.max(...correcoes).toFixed(3) : null,
-        reconcileCount: correcoes.length,
-        quality: game.settings?.quality || null,
-      });
-      // A próxima janela não repete os mesmos eventos. Os totais acima continuam vivos
-      // para o registro da sessão; o servidor soma somente os eventos novos de cada 10 s.
-      correcoes.length = 0;
-    }
+    this._nextClientStats = this._now() + 10000;
+    const correcoes = this._reconcileWindow;
+    // O HUD conserva o pior gap recente; a telemetria usa p95 dos intervalos
+    // desta janela para que um pico isolado não defina a qualidade inteira.
+    const gaps = this.net.drainGapSamples?.();
+    this.net.sendClientStats?.({
+      fps: this._nsFps, rtt: s.ping, rttSamples: this.net.drainRttSamples?.(), snap: s.hz, gap: this._percentil(gaps, 0.95),
+      reconcileP95: this._percentil(correcoes, 0.95),
+      // O p95 da sessão precisa dos eventos, não do p95 de cada janela. Em uma
+      // janela anormalmente cheia, distribuir as 512 amostras por toda ela.
+      reconcileSamples: correcoes.length <= 512 ? correcoes.slice() : Array.from({ length: 512 }, (_, i) =>
+        correcoes[Math.floor((i + 0.5) * correcoes.length / 512)]),
+      reconcileMax: correcoes.length ? +Math.max(...correcoes).toFixed(3) : null,
+      reconcileCount: correcoes.length,
+      quality: game.settings?.quality || null,
+    });
+    // A próxima janela não repete os mesmos eventos. Os totais acima continuam vivos
+    // para o registro da sessão; o servidor soma somente os eventos novos de cada 10 s.
+    correcoes.length = 0;
   }
 
   _percentil(values, q) {

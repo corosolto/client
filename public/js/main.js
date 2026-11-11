@@ -12,6 +12,7 @@ import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
 import { clientUuid, getAnonId } from './client-id.js';
 import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
+import {carregarPasse,trocarContaPasse,personagemTravado,nivelDoPersonagem,PASSE_EVENTO} from './passe.js';
 import {tretaPack} from './data/pack-definitions.js';
 import {retratoFontes} from './data/retratos.js';
 import {characterRelease} from './data/content-releases.js';
@@ -1414,8 +1415,8 @@ const storedCharacterId = localStorage.getItem('csbr-home-character');
 const rememberedChar = routeCharacterId || storedCharacterId;
 const rememberedSide = localStorage.getItem('csbr-home-side') === 'B' ? 'B' : 'E';
 const randomInitialCharacter = () => {
-  const eligible = CHARACTERS.filter((character) => podeNoLado(character, rememberedSide));
-  if (!eligible.length) return CHARACTERS[0];
+  const eligible = CHARACTERS.filter((character) => podeNoLado(character, rememberedSide) && !personagemTravado(character));
+  if (!eligible.length) return CHARACTERS.find((character) => !personagemTravado(character)) || CHARACTERS[0];
   const seed = new Uint32Array(1);
   crypto.getRandomValues(seed);
   return eligible[seed[0] % eligible.length];
@@ -1426,6 +1427,11 @@ if (!routeCharacterId && !rememberedDef) {
   try { localStorage.setItem('csbr-home-character', initialChar.id); } catch {}
 }
 const ladoValido = (def, lado) => (podeNoLado(def, lado) ? lado : ladosDe(def)[0]);
+/* Passe Sessão da Treta (passe.js): personagem do passe só joga com o inventário do SERVIDOR dizendo
+   que está destravado. A escolha salva fica guardada; até o servidor confirmar, entra um livre do lado. */
+const personagemLivre = (def, lado) => (def && !personagemTravado(def) ? def
+  : CHARACTERS.find((c) => !personagemTravado(c) && podeNoLado(c, lado || ladosDe(def)[0])) || CHARACTERS.find((c) => !personagemTravado(c)));
+const ICONE_CADEADO_PASSE = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const initialSide = ladoValido(initialChar, rememberedSide);
 let game = null, currentTeam = initialSide, currentFaction = initialSide, currentChar = initialChar.id, selChar = null, tretaStoreReady = Promise.resolve();
 function returnPreviewToSelection() {
@@ -1438,7 +1444,7 @@ function syncHomeCharacter() {
   const box = document.querySelector('.char-preview-box');
   const host = $('hub-character');
   if (box && host && box.parentElement !== host) host.appendChild(box);
-  const def = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
+  const def = personagemLivre(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);
   const lado = ladoValido(def, currentTeam);
   $('hub-character-name').textContent = `${tr(FACTION_NAME[lado])} · ${def.name}`;
   $('hub-character-crest').src = `/img/brasoes/${lado.toLowerCase()}.png`;
@@ -1541,15 +1547,30 @@ function openHubRoster(updateRoute = true) {
       const equipada = skinsDoChar.find((s) => s.equipped) || null;
       /* Célula = card (escolhe SEU personagem, como sempre) + chip ＋ (trava quem entra).
          Papel do escalado: pode no seu lado = aliado, senão inimigo; montagem re-filtra. */
+      const travado = personagemTravado(def), nivel = nivelDoPersonagem(def);
+      /* escolhido de fato: com a escolha salva ainda travada pelo passe, é o livre que o lobby mostra */
+      const efetivo = personagemLivre(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam)?.id;
       const cell = document.createElement('div'); cell.className = 'hub-roster-cell';
+      if (travado) cell.classList.add('hub-roster-cell--travado');
       const button = document.createElement('button'); button.type = 'button';
-      button.setAttribute('aria-pressed', String(def.id === currentChar && !equipada));
+      button.setAttribute('aria-pressed', String(!travado && def.id === efetivo && !equipada));
       const avatar = document.createElement('img'); avatar.src = `/img/chars/avatars/${def.id}.webp`;
       avatar.alt = ''; avatar.loading = 'lazy';
       const name = document.createElement('span'); name.textContent = def.name;
       button.append(avatar, name);
+      /* Passe: cadeado e o nível onde destrava; o clique só explica, quem decide é o servidor. */
+      if (travado) {
+        const trava = document.createElement('b'); trava.className = 'hub-roster-trava';
+        trava.dataset.passeNivel = String(nivel || '');
+        trava.innerHTML = ICONE_CADEADO_PASSE;
+        trava.append(frase('passeTravado', nivel || '?'));
+        button.setAttribute('aria-disabled', 'true');
+        button.title = frase('passeTravadoAviso', def.name, nivel || '?');
+        button.append(trava);
+      }
       button.onclick = async () => {
         ui.click();
+        if (personagemTravado(def)) { $('hub-roster-selected').textContent = frase('passeTravadoAviso', def.name, nivel || '?'); return; }
         // Voltar ao personagem base com skin equipada TIRA a skin no servidor antes de trocar.
         if (equipada) {
           try { if (!await desequiparTretaSkin()) throw new Error('unequip_recusado'); }
@@ -1558,7 +1579,7 @@ function openHubRoster(updateRoute = true) {
         escolher(def.id);
       };
       cell.appendChild(button);
-      if (def.id !== currentChar) {
+      if (def.id !== efetivo) {
         const pin = document.createElement('button'); pin.type = 'button';
         const ehPin = settings.pinnedChars.includes(def.id);
         const papel = podeNoLado(def, currentTeam) ? tr('ALIADO') : tr('INIMIGO');
@@ -1594,7 +1615,7 @@ function openHubRoster(updateRoute = true) {
         grid.appendChild(skinCell);
       }
     }
-    const selected = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
+    const selected = personagemLivre(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);
     const skinAtual = armario.find((s) => s.equipped && s.character === selected.id) || null;
     $('hub-roster-selected').textContent = frase('selecionado', tr(FACTION_NAME[ladoValido(selected, currentTeam)]), selected.name, skinAtual ? skinAtual.name : '');
     /* ESCALAÇÃO travada: contagem por papel contra as VAGAS do formato escolhido —
@@ -2104,6 +2125,10 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // Offline a identidade visual é o próprio lado (E Esquerda, B Direita) e o adversário é o
   // lado oposto; online a facção ainda vem da sala do servidor.
   if (sessao) team = ladoOnline(team, sessao.net);
+  /* Passe: personagem travado não entra em partida offline, venha de onde vier (rota, armário local,
+     troca no M). Online o corpo é o que o servidor da sala deu. */
+  const escolhidoDef = CHARACTERS.find(c => c.id === charId);
+  if (!online && escolhidoDef && personagemTravado(escolhidoDef)) charId = personagemLivre(escolhidoDef, team).id;
   const charDef = CHARACTERS.find(c => c.id === charId) || {};
   if (!online && !podeNoLado(charDef, team)) team = ladosDe(charDef)[0];
   if (!online && ehMapaJavaporcos(currentMap)) team = 'E';
@@ -2205,7 +2230,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const playerWeaponSkins = Object.fromEntries(['ak','pistol','m4','scar']
     .map((weaponId)=>[weaponId,playerPack?.weaponSkins[weaponId] || equippedTretaWeaponSkin(weaponId)])
     .filter(([,skinId])=>skinId));
-  const playerKnifeSkinId = playerPack?.knifeSkin || null;
+  const playerKnifeSkinId = playerPack?.knifeSkin || equippedTretaWeaponSkin('knife') || null;
   const matchEyewear = [playerEyewearId,...matchRoster.allyDefs.map(d=>d.eyewearId),...matchRoster.enemyDefs.map(d=>d.eyewearId)];
   const matchSkins = [playerSkinId, ...matchRoster.allyDefs.map(d=>d.skinId), ...matchRoster.enemyDefs.map(d=>d.skinId)];
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
@@ -3719,7 +3744,7 @@ function abrirTrocaOnline() {
 }
 $('char-confirm').onclick = () => {
   sfx.uiClick();
-  if (!selChar) return;
+  if (!selChar || personagemTravado(selChar)) return;
   // Only take the in-match "switch team" path when there's a live game to switch;
   // a stale switchMode flag (e.g. backed out of M) must NOT hit game._switchTeam on a
   // disposed game — that used to throw and leave the next match unable to load.
@@ -4257,8 +4282,8 @@ function pickTeam(faction) {
     hideLoading();
     const list = $('char-list');
     list.innerHTML = '';
-    let firstRow = null;
-    chars.forEach((c, i) => {
+    let firstRow = null, firstChar = null;
+    chars.forEach((c) => {
       const row = document.createElement('button');
       row.className = 'char-row';
       // Avatar = busto cortado da ARTE APROVADA (molde/neutro), não do GLB low-poly —
@@ -4266,6 +4291,13 @@ function pickTeam(faction) {
       const thumb0 = `/img/chars/avatars/${c.id}.webp?v=${VERSION}`;
       row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false'); row.title = c.name;
       row.innerHTML = `<img src="${thumb0}" alt="${c.name}" loading="lazy"><span>${c.name}</span>`;
+      if (personagemTravado(c)) {
+        row.classList.add('char-row--travado'); row.setAttribute('aria-disabled', 'true');
+        const trava = document.createElement('b'); trava.className = 'hub-roster-trava';
+        trava.dataset.passeNivel = String(nivelDoPersonagem(c) || '');
+        trava.innerHTML = ICONE_CADEADO_PASSE; trava.append(frase('passeTravado', nivelDoPersonagem(c) || '?'));
+        row.append(trava);
+      }
       row.onmouseenter = () => ui.hover();
       // A faixa é horizontal, mas ↑↓ continuam aceitos para quem já usava o fluxo antigo.
       row.onkeydown = (e) => {
@@ -4277,13 +4309,16 @@ function pickTeam(faction) {
         if (n < 0) return;
         e.preventDefault(); rows[n].focus(); rows[n].click();
       };
-      row.onclick = () => selectCharacterFromAvatar(c, row, chars);
+      row.onclick = () => {
+        if (personagemTravado(c)) { $('char-info-blurb').textContent = frase('passeTravadoAviso', c.name, nivelDoPersonagem(c) || '?'); return; }
+        selectCharacterFromAvatar(c, row, chars);
+      };
       list.appendChild(row);
-      if (i === 0) firstRow = row;
+      if (!firstRow && !personagemTravado(c)) { firstRow = row; firstChar = c; }
     });
     // seleciona DEPOIS de gerar todos os thumbs — senão o preview fica com o último
     show('char-select');
-    if (firstRow) selectChar(chars[0], firstRow);
+    if (firstRow) selectChar(firstChar, firstRow);
   };
   if (navOnly || previewUsesStills()) { mountCharList(); return; }
   // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
@@ -4728,9 +4763,11 @@ function mpDevolverEscolhaSp() {
   syncHomeCharacter();
 }
 // O personagem do jogador: dentro do MP é o guardado na entrada (a sala só empresta o corpo).
+// Passe travado: pede o mesmo livre que o lobby mostra (personagemLivre), sem apagar a escolha salva.
 function personagemEscolhido() {
   const id = escolhaSpAntesDoMp ? escolhaSpAntesDoMp.char : currentChar;
-  return CHARACTERS.find((c) => c.id === id) || null;
+  const def = CHARACTERS.find((c) => c.id === id);
+  return def ? personagemLivre(def, escolhaSpAntesDoMp?.team || currentTeam) : null;
 }
 let mpNoAtual = null;
 let mpConectando = false;   // trava de reentrada do mpEntrar (BUG-88)
@@ -5129,7 +5166,14 @@ async function mpEntrarPorConvite(txt) {
   mpEstado('conectando', `PROCURANDO ${alvo.convite}…`);
   const http = httpDoNo(alvo.no);
   mpNoAtual = { ...alvo.no, http, ticketNode: alvo.no.id };
-  const sala = await salaPorConvite(http, alvo.codigo);
+  let sala;
+  try { sala = await salaPorConvite(http, alvo.codigo); }
+  catch (e) {
+    await abrirMultiplayer();
+    return mpErro(String(e && e.message || '').includes('http_429')
+      ? 'Calma aí: muitas tentativas seguidas. Espere um minuto antes de abrir outro convite.'
+      : 'Não deu pra procurar a sala agora. Tente novamente em instantes.');
+  }
   if (!sala) { await abrirMultiplayer(); return mpErro(`A sala ${alvo.convite} não existe mais. Escolha outra abaixo.`); }
   mpEntrar(sala, 'auto');
 }
@@ -5351,6 +5395,8 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
     return mpErro(m.includes('bad_password') ? 'Senha errada.'
       : m.includes('room_full') ? 'Sala cheia.'
       : m.includes('room_not_found') ? 'Essa sala não existe mais.'
+      : m.includes('muitas_tentativas') ? 'Muitas tentativas seguidas. Espere um minuto e tente de novo.'
+      : m.includes('protocolo_incompativel') ? 'Este servidor fala uma versão antiga do jogo. Recarregue a página; se continuar, escolha outra região.'
       : m.includes('timeout') ? 'O servidor demorou demais pra responder. Tente de novo ou escolha outra região.'
       : 'Não deu pra conectar nesse servidor.');
   }
@@ -5506,14 +5552,22 @@ function mpAvisoPersonagem(texto, oferta = null) {
   }
 }
 
-/* Conexão caiu no meio da partida. Nada de "reconectar sozinho e fingir que não houve nada":
-   o jogador precisa SABER, porque o corpo dele já voltou a ser bot no servidor. */
+/* Conexão caiu no meio da partida. O servidor segura o corpo por 45 s (SLOT_IDLE_MS):
+ * em vez de derrubar o jogador pro menu na primeira queda, TENTA RECONECTAR — o slot
+ * ainda está lá, o placar continua, a economia não perde. Se todas as tentativas
+ * falharem, a mensagem antiga ("entre de novo") aparece. */
+let mpReconectando = false;
 function mpDesconectou() {
   if (!mpSessao) return;
+  if (mpReconectando) return;   // desconectou DURANTE tentativa de reconexão — o loop cuida
+  const sessao = mpSessao;
+  const { sala, no } = sessao;
+  const team = sessao.net?._lastTeam || 'auto';
+  /* limpeza igual à antiga — mas SEM enviar 'quit' de telemetria: a partida continua no
+   * servidor; se a reconexão falhar, o quit sai na última tentativa */
   mpPararContagemProximo();
   mpLimparIdentidade();
-  try { if (game) { sendTelemetry(); sendMatchEvent('quit'); } } catch { /* diagnóstico não bloqueia a saída */ }
-  mpSessao.chat?.destruir();
+  sessao.chat?.destruir();
   mpSessao = null;
   mpDevolverEscolhaSp();
   clearTelemetryGameContext();
@@ -5522,8 +5576,28 @@ function mpDesconectou() {
   soltarPartida();
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
   show('mp-panel');
-  /* o aviso entra DEPOIS da sondagem: abrirMultiplayer começa com mpErro('') — na ordem
-     antiga a mensagem "caiu" vivia um frame e era apagada antes de alguém ler */
+  mpTentarReconectar(sala, no, team);
+}
+
+async function mpTentarReconectar(sala, no, team) {
+  const MAX = 3, INTERVALO = 2000;
+  mpReconectando = true;
+  for (let i = 0; i < MAX; i++) {
+    mpEstado('conectando', `RECONNECTING · ${i + 1}/${MAX}…`);
+    await new Promise((r) => setTimeout(r, i === 0 ? 600 : INTERVALO));
+    if (!document.getElementById('mp-panel') || document.getElementById('mp-panel').hidden) {
+      mpReconectando = false; return;   // jogador navegou para fora — cancela
+    }
+    mpNoAtual = no;
+    mpConectando = false;   // mpEntrar guarda com este flag — reseta da tentativa anterior
+    try {
+      await mpEntrar(sala, team);
+      if (mpSessao) { mpReconectando = false; return; }   // reconectou
+    } catch { /* tenta de novo */ }
+  }
+  mpReconectando = false;
+  /* saiu de todas — agora sim o quit de telemetria e a mensagem honesta */
+  try { sendTelemetry(); sendMatchEvent('quit'); } catch { /* diagnóstico não bloqueia */ }
   abrirMultiplayer().then(() => mpErro('A conexão com o servidor caiu. Entre de novo.'));
 }
 
@@ -5618,6 +5692,14 @@ void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params
 document.addEventListener('cs-account-change',(e)=>{contaNick=e.detail?.profile?.nick || '';const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);});
 tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
 document.addEventListener('cs-treta-inventory-change',refreshMenuEquipment);
+/* Passe Sessão da Treta: o GET com conta também registra o login do dia no servidor. Conta trocada
+   esquece o status anterior; fim de partida pergunta de novo depois que o resultado foi enviado. */
+if(!testMode){
+  void carregarPasse();
+  document.addEventListener('cs-account-change',()=>{void trocarContaPasse();});
+  document.addEventListener('cs-match-end',()=>{setTimeout(()=>{void carregarPasse();},4000);});
+}
+document.addEventListener(PASSE_EVENTO,refreshMenuEquipment);
 // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
 if (directRoute) document.getElementById('boot-splash')?.remove();
 const abrirVitrine=()=>{if(!tretaVitrine()?.length)return;document.removeEventListener('cs-treta-state',abrirVitrine);void import('./treta-vitrine.js').then(m=>m.iniciarVitrine()).catch(()=>{});};
