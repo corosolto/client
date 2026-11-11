@@ -71,8 +71,11 @@ const dynamicCache = new Map();
 function dynamicPatterns(corpus) {
   if (dynamicCache.has(corpus)) return dynamicCache.get(corpus);
   const patterns = [];
-  for (const match of corpus.matchAll(/['"`]([^'"`\r\n]*\$\{[^'"`\r\n]*\.(?:glb|webp|jpe?g|png|json))['"`]/g)) {
-    const template = match[1].replace(/^\//, '').split(/[?#]/)[0];
+  const bindings = Object.fromEntries([...corpus.matchAll(/\b([A-Za-z_$][\w$]*)\s*=\s*['"`](\/?(?:models|img\/textures|textures|posters)\/[^'"`]+)['"`]/g)]
+    .map((match) => [match[1], match[2].replace(/^\//, '')]));
+  for (const match of corpus.matchAll(/['"`]([^'"`\r\n]*\$\{[^'"`\r\n]*(?:\.(?:glb|webp|jpe?g|png|json))?)['"`]/g)) {
+    const template = match[1].replace(/^\//, '').split(/[?#]/)[0]
+      .replace(/\$\{([A-Za-z_$][\w$]*)\}/g, (full, name) => bindings[name] ?? full);
     if (!ROOT_PATTERN.test(template)) continue;
     const expression = `^${escaped(template).replace(/\\\$\\\{[^}]+\\\}/g, '(.+)')}$`;
     patterns.push(new RegExp(expression));
@@ -82,8 +85,7 @@ function dynamicPatterns(corpus) {
 }
 
 export function isReferenced(path, corpus) {
-  const base = basename(path);
-  if (corpus.includes(path) || new RegExp(`(?<![\\w.-])${escaped(base)}(?![\\w.-])`).test(corpus)) return true;
+  if (corpus.includes(path)) return true;
   for (const pattern of dynamicPatterns(corpus)) {
     const match = pattern.exec(path);
     if (match && match.slice(1).every((value) => new RegExp(`['"\`]${escaped(value)}['"\`]`).test(corpus))) return true;
