@@ -85,7 +85,7 @@ function dynamicPatterns(corpus) {
 }
 
 export function isReferenced(path, corpus) {
-  if (corpus.includes(path)) return true;
+  if (new RegExp(`(?<![\\w.-])${escaped(path)}(?![\\w.-])`).test(corpus)) return true;
   for (const pattern of dynamicPatterns(corpus)) {
     const match = pattern.exec(path);
     if (match && match.slice(1).every((value) => new RegExp(`['"\`]${escaped(value)}['"\`]`).test(corpus))) return true;

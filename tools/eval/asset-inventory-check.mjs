@@ -59,7 +59,7 @@ function mutations() {
     rmSync(join(fixture, 'public/models/props/new-orphan.glb'));
     console.log('AI2: generation refuses a new orphan and the following check still fails.');
 
-    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const catalog = 'catalog';\nexport const logo = 'unrelated';\n");
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const catalog = 'catalog';\nexport const logo = 'unrelated';\nexport const backup = 'models/props/logo.glb.backup';\n");
     put(fixture, 'public/models/props/logo.glb', 'unrelated-stem');
     result = runInventory(fixture, ['--check']);
     expectStatus(result, 1, 'stem fragment is not an asset reference');
