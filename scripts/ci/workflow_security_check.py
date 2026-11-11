@@ -283,6 +283,10 @@ def selftest(source: str) -> list[str]:
         'fila-inline': re.sub(r'(?m)^on:$', 'on: [push, pull_request, merge_group]\nantes_on:', ci.read_text(encoding='utf-8'), count=1)
         + '\n        env:\n          X: ${{ secrets.VERCEL_TOKEN }}\n',
         'fila-escreve-inline': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: write-all', 1),
+        'fila-permissao-null': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: null', 1),
+        'fila-permissao-vazia': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: ""', 1),
+        'fila-permissao-lista': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: []', 1),
+        'fila-permissao-mapa-vazio': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: {}', 1),
         'fila-permissao-so-no-job': ci.read_text(encoding='utf-8')
         .replace('permissions:\n  contents: read\n', '', 1)
         .replace('  reguas-e-site:\n', '  reguas-e-site:\n    permissions:\n      contents: read\n', 1),

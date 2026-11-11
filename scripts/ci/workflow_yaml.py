@@ -72,11 +72,9 @@ def named_step(workflow: Mapping[str, Any] | None, name: str) -> Mapping[str, An
 
 
 def read_only_permissions(value: Any) -> bool:
-    """No write token at any nesting depth; malformed permissions fail closed."""
+    """Only explicit read-only forms; malformed or missing permissions fail closed."""
     if isinstance(value, str):
-        return 'write' not in value
+        return value in {'read', 'read-all', 'none'}
     if isinstance(value, Mapping):
-        return all(read_only_permissions(item) for item in value.values())
-    if isinstance(value, list):
-        return all(read_only_permissions(item) for item in value)
-    return value is None
+        return bool(value) and all(read_only_permissions(item) for item in value.values())
+    return False
