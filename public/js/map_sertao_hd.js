@@ -1,6 +1,5 @@
 // Kit visual HD do Sertão, atrás de ?hd=1 (demo de gráficos, desligado por padrão).
-// Reboco PBR projetado no mundo, telhado de telha real nas casas de laje, barrado pintado e
-// luz com ambiente por imagem. Tudo reversível por desliga() para A/B na mesma sessão.
+// Tudo reversível por desliga() para A/B na mesma sessão.
 import * as THREE from 'three';
 import { cenografiaSertaoHD } from './hd_cenografia_sertao.js';
 
@@ -53,8 +52,6 @@ export const RUIDO_GLSL = `
   float hdN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
     return mix(mix(hdH(i), hdH(i + vec2(1.0, 0.0)), f.x), mix(hdH(i + vec2(0.0, 1.0)), hdH(i + vec2(1.0, 1.0)), f.x), f.y); }
 `;
-// Parede com idade: variação macro, escorrido abaixo do beiral e sujeira no pé. Na faixa do corpo
-// (0,6 a 1,9 m) a variação fica contida para não camuflar inimigo.
 // Grão fino de superfície; some quando o passo vira menor que o pixel, para não cintilar ao longe.
 export const GRAO_GLSL = `
   float hdGrao(vec2 q){ float a = smoothstep(0.5, 0.12, fwidth(q.x) * 34.0);
@@ -268,10 +265,8 @@ function baseHD(scene, { pedraMetros = 1.6, madeira = 2.2, chao = 300, telha = 2
     roughness: s.roughness, onBeforeCompile: s.obc, customProgramCacheKey: s.key }); s.m.color.copy(s.cor); s.m.normalScale.set(s.ns, s.ns); delete s.m.userData.hdLaje; s.m.needsUpdate = true; } };
 }
 
-// Madeira em caixa: o mapa vinha com repeat (3,5) por FACE e o veio esmagava em peça comprida.
-// Clone só para malhas de caixa (barril e tronco seguem no material original), com UV em metros
-// locais e o veio sempre no eixo mais longo da face. Vale para caixa sem subdivisão: em todo
-// vértice |position| é meia dimensão, então a dimensão da face sai do próprio atributo.
+// Só vale para caixa sem subdivisão: em todo vértice |position| é meia dimensão, e a dimensão
+// da face sai do próprio atributo. Barril e tronco seguem no material original.
 function madeiraHD(scene, { metros = 1.3, relevo = 2.6 } = {}) {
   const TINTAS = { '3b2115': 0x6a4a36, 'd9b17a': 0xa88f72 };
   const clones = new Map(), trocas = [];
