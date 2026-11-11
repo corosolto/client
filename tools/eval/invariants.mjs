@@ -1812,7 +1812,11 @@ bloco('chars-mat', ['CHR1','CHR2','CHR3','CHR5','CHR5B','CHR6','CHR7'], async ()
     const P = j.personagens || [];
     const ref = j.refHumano || {};
     const fonteGLB = P.filter((c) => c.fonte === 'glb').length;
-    const nota = fonteGLB ? `${fonteGLB}/${P.length} medidos no GLB` : `0/${P.length} no GLB — TODOS no fallback procedural (nenhum .glb de personagem nesta árvore)`;
+    /* Pack Studio sem STUDIO_PACK_ROOT (CI): fora das coortes e DITO aqui, nunca medido no
+       procedural que o jogo não desenha (char-probe.mjs, bloco PERSONAGEM DO STUDIO). */
+    const studioNaoMedido = j.studioNaoMedido || [];
+    const nota = (fonteGLB ? `${fonteGLB}/${P.length} medidos no GLB` : `0/${P.length} no GLB — TODOS no fallback procedural (nenhum .glb de personagem nesta árvore)`)
+      + (studioNaoMedido.length ? ` · ${studioNaoMedido.length} pack(s) Studio NÃO MEDIDOS (sem STUDIO_PACK_ROOT)` : '');
 
     // ── CHR1 PROPORÇÃO ────────────────────────────────────────────────────────
     // Duas condições, porque "balão" tem duas leituras e as duas importam:
@@ -1941,6 +1945,7 @@ bloco('chars-mat', ['CHR1','CHR2','CHR3','CHR5','CHR5B','CHR6','CHR7'], async ()
     put('CHR6', 'nenhum par de personagens com a MESMA silhueta (IoU par a par ≤ 0,98)',
       iguais.length === 0,
       `${j.C6silhuetasDistintas ?? '?'} silhuetas distintas para ${P.length} personagens; `
+      + (studioNaoMedido.length ? `${studioNaoMedido.length} pack(s) Studio NÃO MEDIDOS (sem STUDIO_PACK_ROOT); ` : '')
       + `${iguais.length} pares acima de 0,98`
       + (iguais.length ? ` [${iguais.slice(0, 4).map((x) => `${x.a}×${x.b} ${x.pior.toFixed(3)}`).join(', ')}]` : '')
       + (j.C6grupos && j.C6grupos.length ? ` | maior grupo de clones: ${j.C6grupos[0].length} (${j.C6grupos[0].slice(0, 5).join(', ')}${j.C6grupos[0].length > 5 ? '…' : ''})` : '')

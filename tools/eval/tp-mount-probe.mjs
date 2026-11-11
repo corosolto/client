@@ -84,11 +84,13 @@ export function worldMats(sc) {
   sc.roots.forEach((r) => rec(r, mIdent()));
   return W;
 }
-// pose = clipe externo (GLB só de animação) casado por NOME de nó; devolve W animado
-export function poseWith(sc, file, tt) {
+// pose = clipe externo (GLB só de animação) casado por NOME de nó; devolve W animado.
+// `clipe` escolhe a animação pelo nome (pack Studio: states.glb guarda os 11 estados).
+export function poseWith(sc, file, tt, clipe = null) {
   const saved = sc.nodes.map((n) => ({ t: n.t, q: n.q, s: n.s }));
   const ag = readGLB(file);
-  const an = ag.json.animations && ag.json.animations[0];
+  const an = clipe ? (ag.json.animations || []).find((a) => a.name === clipe) : ag.json.animations && ag.json.animations[0];
+  if (clipe && !an) throw new Error(`${file}: sem o clipe ${clipe}`);
   if (an) {
     const byName = new Map(sc.nodes.map((n) => [n.name, n]));
     for (const ch of an.channels) {

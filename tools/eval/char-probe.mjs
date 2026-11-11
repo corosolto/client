@@ -76,6 +76,8 @@
          node tools/eval/char-probe.mjs --sem-c4        (pula o tp-mount-probe, mais rápido)
    ============================================================================ */
 import fs from 'node:fs';
+import crypto from 'node:crypto';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
@@ -796,11 +798,72 @@ const DIR_ANIM = path.join(PUB, 'models/anims');
 const registros = [];
 const semGLB = [];
 
+/* PERSONAGEM DO STUDIO (release fixada em data/content-releases.js) NÃO TEM CORPO PROCEDURAL
+   NO JOGO: o glbchars.js resolve o pack em /packs/ e falha fechado sem ele. Esta sonda media
+   o buildCharacter() deles (não há public/models/characters/<id>.glb), ou seja, 30 bonecos
+   procedurais de mesma proporção que o jogador nunca vê, e o CHR6 acusava "clones" entre eles
+   (clovis-fora-do-ar × tiradentes 0,993). O corpo medido agora é o model/*.glb do pack, lido de
+   STUDIO_PACK_ROOT com o SHA-256 do manifest conferido contra o pin e o de cada arquivo contra
+   o manifest; os clipes do C3 são os estados do próprio pack. Sem a raiz (CI: os packs ficam
+   fora do repo até o R2) o personagem sai NÃO MEDIDO, listado em `studioNaoMedido`, e fica
+   fora das coortes. Raiz presente com pack ausente ou adulterado = ERRO, nunca procedural. */
+const { characterRelease } = await import(`${JS}/data/content-releases.js`);
+const STUDIO_ROOT = process.env.STUDIO_PACK_ROOT || '';
+const studioNaoMedido = [];
+const sha256 = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+/* Os clipes do pack vêm com EXT_meshopt_compression, que o leitor cru do tp-mount-probe não
+   entende: descomprime uma vez (gltf-transform + meshoptimizer, como tools/viewmodels) num
+   cache do tmp chaveado pelo SHA do arquivo. O modelo do pack é GLB plano e é lido direto. */
+const DIR_DESCOMPRIMIDO = path.join(os.tmpdir(), 'char-probe-studio');
+let _io = null;
+async function semMeshopt(arquivo, sha) {
+  const saida = path.join(DIR_DESCOMPRIMIDO, `${sha}.glb`);
+  if (fs.existsSync(saida)) return saida;
+  if (!_io) {
+    const [{ NodeIO }, { ALL_EXTENSIONS }, { MeshoptDecoder }] = await Promise.all([
+      import('@gltf-transform/core'), import('@gltf-transform/extensions'), import('meshoptimizer')]);
+    await MeshoptDecoder.ready;
+    _io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.decoder': MeshoptDecoder });
+  }
+  const doc = await _io.read(arquivo);
+  for (const ext of doc.getRoot().listExtensionsUsed()) if (ext.extensionName === 'EXT_meshopt_compression') ext.dispose();
+  fs.mkdirSync(DIR_DESCOMPRIMIDO, { recursive: true });
+  await _io.write(saida, doc);
+  return saida;
+}
+async function packDoStudio(release) {
+  const dir = path.join(STUDIO_ROOT, release.kind, release.id, release.version);
+  const nome = `${release.id}@${release.version}`;
+  const manifestPath = path.join(dir, 'manifest.json');
+  if (!fs.existsSync(manifestPath)) throw new Error(`pack ${nome} ausente em STUDIO_PACK_ROOT`);
+  const bytes = fs.readFileSync(manifestPath);
+  if (sha256(bytes) !== release.manifestSha256) throw new Error(`manifest de ${nome} não bate com o SHA do pin`);
+  const manifest = JSON.parse(bytes.toString('utf8'));
+  const conferido = (rel) => {
+    const entrada = (manifest.files || []).find((f) => f.path === rel);
+    const arquivo = path.join(dir, rel);
+    if (!entrada || !fs.existsSync(arquivo) || sha256(fs.readFileSync(arquivo)) !== entrada.sha256) throw new Error(`${nome}: ${rel} fora do manifest`);
+    return { arquivo, sha: entrada.sha256 };
+  };
+  const clipes = {};
+  for (const estado of ['idle', 'walk', 'run', 'shoot', 'crouch']) {
+    if (typeof manifest.animations?.[estado] !== 'string') continue;
+    const { arquivo, sha } = conferido(manifest.animations[estado]);
+    clipes[estado] = await semMeshopt(arquivo, sha);
+  }
+  return { modelo: conferido(manifest.model).arquivo, clipes, studio: nome };
+}
+
 for (const def of CHARACTERS) {
   const arq = path.join(DIR_GLB, `${def.id}.glb`);
+  const release = characterRelease(def.id);
+  if (release && !STUDIO_ROOT) { studioNaoMedido.push(def.id); continue; }
   let med;
   try {
-    if (fs.existsSync(arq)) med = medirGLB(def.id, arq);
+    if (release) {
+      const pack = await packDoStudio(release);
+      med = { ...medirGLB(def.id, pack.modelo), clipesDoPack: pack.clipes, studio: pack.studio };
+    } else if (fs.existsSync(arq)) med = medirGLB(def.id, arq);
     else { semGLB.push(def.id); med = medirProcedural(def); }
   } catch (e) {
     med = { fonte: 'ERRO', erro: String(e && e.message || e), marcos: {}, acab: {}, bb: null };
@@ -838,11 +901,13 @@ for (const r of registros) {
     for (const clipe of ['idle', 'walk', 'run', 'shoot', 'crouch']) {
       const proprio = path.join(DIR_ANIM, r.id, `${clipe}.glb`);
       const comum = path.join(DIR_ANIM, 'mixamo', `${clipe}.glb`);
-      const f = fs.existsSync(proprio) ? proprio : (fs.existsSync(comum) ? comum : null);
+      // Studio: o estado vem do próprio pack (states.glb com um clipe por nome).
+      const f = r.clipesDoPack ? r.clipesDoPack[clipe] || null
+        : fs.existsSync(proprio) ? proprio : (fs.existsSync(comum) ? comum : null);
       if (!f) continue;
       let pior = 0, mn = Infinity, mx = -Infinity, piorCorpo = 0;
       for (const t of [0, 0.2, 0.4, 0.6, 0.8]) {
-        const Wp = poseWith(sc, f, t);
+        const Wp = poseWith(sc, f, t, r.clipesDoPack ? clipe : null);
         const vs = skinVerts(sc, g, Wp, 5);
         const y0 = (peMin(vs) - bbRaw[1]) * S;
         const yc = (bboxOf(vs)[1] - bbRaw[1]) * S;
@@ -1034,8 +1099,9 @@ const _c6 = (() => {
 const saida = {
   gerado: new Date().toISOString(),
   protocolo: 'node puro; DOM stubado + three vendorizado (mesmo protocolo de botsim.mjs/pickup-check.mjs); GLB lido por tp-mount-probe.mjs',
-  fontes: { glb: registros.filter((r) => r.fonte === 'glb').length, procedural: registros.filter((r) => r.fonte === 'procedural').length, erro: registros.filter((r) => r.fonte === 'ERRO').length },
+  fontes: { glb: registros.filter((r) => r.fonte === 'glb').length, procedural: registros.filter((r) => r.fonte === 'procedural').length, erro: registros.filter((r) => r.fonte === 'ERRO').length, studioNaoMedido: studioNaoMedido.length },
   semGLB,
+  studioNaoMedido,
   avisoDeProcedencia: semGLB.length
     ? `${semGLB.length} personagens SEM GLB em public/models/characters/ — medidos no fallback procedural de characters.js.`
     : null,
