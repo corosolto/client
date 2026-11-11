@@ -14,6 +14,8 @@ import { makeNetcode } from '../../public/js/netgame.js';
 import { WEAPONS } from '../../public/js/game.js';
 import { unloadWeaponModel, setWeaponModel, hasWeapon } from '../../public/js/weapons.js';
 import * as THREE from 'three';
+import { InterpolationClock, pushEntitySample, sampleEntityBuffer } from '../../public/js/net-interpolation.js';
+import { injectedClock, interpolationEntity, interpolationSample, interpolationSnapshot } from './net-interpolation-fixture.mjs';
 
 let ok = 0, falhas = 0;
 const cobra = (c, m) => { if (c) { ok++; console.log(`  ok   ${m}`); } else { falhas++; console.log(`  FALHA ${m}`); } };
@@ -495,6 +497,115 @@ console.log('\n· cadência de 30 Hz reduz a latência visual sem perder o buffe
   g.dispose();
 }
 
+console.log('\n· relógio extraído: jitter determinístico produz a mesma trajetória');
+function tracoInterpolacaoCaotica() {
+  const relogio = injectedClock(1000);
+  const interp = new InterpolationClock({ snapshotHz: 30, now: relogio.now, ping: () => 60 });
+  const ent = interpolationEntity(), out = { vx: 0, vz: 0, segYaw: null };
+  const jitter = [0, 25, -10, 45];
+  for (let k = 0; k < 48; k++) {
+    if (k) relogio.advance(1000 / 30 + jitter[k % jitter.length]);
+    const snap = interpolationSnapshot(100 + k / 30, k + 1, k * 0.1);
+    interp.observe(snap, relogio.now());
+    pushEntitySample(ent, interp.snapshotTime(snap, relogio.now()), snap.ents[0]);
+  }
+  sampleEntityBuffer(ent, interp.serverNow() - interp.delayMs, out);
+  return { delay: interp.delayMs, renderTime: interp.renderTime(), x: ent.pos.x, times: ent._bufAt.slice() };
+}
+{
+  const a = tracoInterpolacaoCaotica(), b = tracoInterpolacaoCaotica();
+  cobra(JSON.stringify(a) === JSON.stringify(b),
+    'a mesma sequência injetada de jitter gera buffer, renderTime e pose bit a bit iguais');
+  cobra(a.delay > 80 && a.delay <= 140 && a.times.length === 10,
+    `jitter repetido adapta o atraso dentro do teto e mantém o cap de 10 amostras (${a.delay.toFixed(1)} ms)`);
+}
+
+console.log('\n· snapshot fora de ordem entra no lugar certo, sem duplicar amostra');
+{
+  const ent = interpolationEntity(), out = { vx: 0, vz: 0, segYaw: null };
+  pushEntitySample(ent, 10000, interpolationSample(0));
+  pushEntitySample(ent, 10100, interpolationSample(1));
+  pushEntitySample(ent, 10050, interpolationSample(0.5));
+  const duplicada = pushEntitySample(ent, 10050, interpolationSample(99));
+  sampleEntityBuffer(ent, 10075, out);
+  cobra(ent._bufAt.join(',') === '10000,10050,10100' && Math.abs(ent.pos.x - 0.75) < 1e-9,
+    `reordenação por tempo do servidor preserva o segmento e interpola x=${ent.pos.x}`);
+  cobra(!duplicada && ent._bufX[1] === 0.5 && ent._bufAt.length === 3,
+    'repetição do mesmo tempo de servidor é stale e não substitui nem duplica a amostra');
+  for (let k = 3; k < 16; k++) pushEntitySample(ent, 10000 + k * 50, interpolationSample(k * 0.5));
+  cobra(ent._bufAt.length === 10 && ent._bufAt.every((t, i, a) => !i || a[i - 1] < t),
+    'rajada reordenada continua ordenada e limitada às 10 amostras mais recentes');
+}
+
+console.log('\n· lote stale do mesmo tick não envelhece o relógio nem o buffer');
+{
+  const net = fakeNet(1, 5, false, 30), g = montaJogo(net), relogio = injectedClock(4000);
+  g._mp._now = relogio.now;
+  net.snap = snapshot(700, 1); g._mp.applySnapshot();
+  const ent = g._mp._netMap.get(6);
+  relogio.advance(250);
+  net.events.push({ type: 'ev', tick: 1, t: 700, list: [] });
+  g._mp.applySnapshot();
+  cobra(g._mp._tAt.length === 1 && ent._bufAt.length === 1 && g._mp.interpAtrasoMs === 80,
+    'reenvio do lote já reconhecido para antes da deduplicação de tick e não cria gap fantasma');
+  relogio.advance(33.333);
+  net.snap = snapshot(700.033333, 2, { mover: 0.1 }); g._mp.applySnapshot();
+  cobra(g._mp._netTick === 2 && g._mp._tAt.length === 2 && ent._bufAt.length === 2,
+    'o próximo tick novo continua sendo aceito depois do lote stale');
+  g.dispose();
+}
+
+console.log('\n· perda de snapshots limita rewind e pose à janela realmente reconhecida');
+{
+  const relogio = injectedClock(10000);
+  const interp = new InterpolationClock({ snapshotHz: 30, now: relogio.now });
+  const ent = interpolationEntity(), out = { vx: 0, vz: 0, segYaw: null };
+  const primeiro = interpolationSnapshot(20, 1, 0);
+  interp.observe(primeiro, relogio.now());
+  pushEntitySample(ent, interp.snapshotTime(primeiro), primeiro.ents[0]);
+  // Os ticks 2 e 3 se perderam: nenhum relógio ou amostra intermediária pode ser inventado.
+  relogio.set(10100);
+  const quarto = interpolationSnapshot(20.1, 4, 1);
+  interp.observe(quarto, relogio.now());
+  pushEntitySample(ent, interp.snapshotTime(quarto), quarto.ents[0]);
+  relogio.set(10120);
+  sampleEntityBuffer(ent, interp.serverNow() - interp.delayMs, out);
+  cobra(interp.serverTimes.join(',') === '20,20.1' && Math.abs(interp.renderTime() - 20.04) < 1e-9
+    && Math.abs(ent.pos.x - 0.4) < 1e-9,
+    'a perda vira um único segmento conhecido; rewind e pose coincidem sem preencher pacotes ausentes');
+  relogio.set(10500);
+  sampleEntityBuffer(ent, interp.serverNow() - interp.delayMs, out);
+  cobra(interp.renderTime() === 20.1 && ent.pos.x === 1,
+    'estourada a janela de ack, rewind e pose clampam no último snapshot e nunca extrapolam');
+}
+
+console.log('\n· recuo curto é reorder; recuo grande é partida nova');
+{
+  const ent = interpolationEntity();
+  pushEntitySample(ent, 100000, interpolationSample(0));
+  pushEntitySample(ent, 101000, interpolationSample(1));
+  pushEntitySample(ent, 100500, interpolationSample(0.5));
+  cobra(ent._bufAt.join(',') === '100000,100500,101000',
+    'recuo de 500 ms entra ordenado no histórico em vez de derrubar a partida');
+  pushEntitySample(ent, 97000, interpolationSample(9));
+  cobra(ent._bufAt.join(',') === '97000' && ent._bufX.join(',') === '9',
+    'recuo maior que 1 s esvazia o relógio da partida anterior antes da nova amostra');
+  const mutante = interpolationEntity();
+  pushEntitySample(mutante, 100000, interpolationSample(0));
+  pushEntitySample(mutante, 101000, interpolationSample(1));
+  pushEntitySample(mutante, 100500, interpolationSample(0.5), false, true);
+  cobra(mutante._bufAt.join(',') === '100500',
+    'MUTANTE __mutOrdemAntiga/semOrdem volta a descartar o histórico no reorder (a cláusula morde)');
+  const relogio = injectedClock(100000);
+  const clock = new InterpolationClock({ snapshotHz: 30, now: relogio.now });
+  clock.observe({ t: 100 }, relogio.now());
+  relogio.set(100500); clock.observe({ t: 100 }, relogio.now());
+  const offsetReorder = clock.offsetMs;
+  clock.observe({ t: 97 }, relogio.now());
+  cobra(offsetReorder === 0 && clock.offsetMs === 3500,
+    `offset não desliza com dois timestamps iguais (${offsetReorder}) e reancora na partida nova (${clock.offsetMs})`);
+}
+
 console.log('\n· troca de vaga preserva UI e remonta o casamento de corpos');
 {
   const net = fakeNet(1);
@@ -567,7 +678,8 @@ console.log('\n· connect() tem PRAZO: nó que aceita e não responde vira erro,
 
 console.log('\n· server browser mede RTT aquecido, não o custo único de TLS');
 {
-  const { NetClient, createRoom, sondarNos } = await import('../../public/js/net.js');
+  const { NetClient } = await import('../../public/js/net.js');
+  const { createRoom, sondarNos } = await import('../../public/js/nos-rede.js');
   const fetchReal = globalThis.fetch;
   let chamadas = 0;
   const fetchSonda = async () => {
