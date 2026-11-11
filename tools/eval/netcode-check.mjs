@@ -537,6 +537,19 @@ console.log('\n· snapshot fora de ordem entra no lugar certo, sem duplicar amos
     'rajada reordenada continua ordenada e limitada às 10 amostras mais recentes');
 }
 
+console.log('\n· renderTime usa os limites do servidor mesmo com chegada fora de ordem');
+{
+  const relogio = injectedClock(100000);
+  const interp = new InterpolationClock({ snapshotHz: 30, now: relogio.now });
+  // Uma rajada no mesmo instante local isola o clamp do tratamento de relógio novo.
+  for (const t of [101, 100, 102]) interp.observe({ t }, relogio.now());
+  const rt = interp.renderTime(0, 101120);
+  cobra(interp.serverTimes.join(',') === '101,100,102' && Math.abs(rt - 101.04) < 1e-9,
+    `101,100,102 mantêm a janela real [100,102] e renderTime=${rt}, sem clamp no primeiro pacote`);
+  cobra(interp.renderTime(0, 100050) === 100 && interp.renderTime(0, 102500) === 102,
+    'o clamp inferior e o superior usam o mínimo e o máximo observados, não os extremos de chegada');
+}
+
 console.log('\n· lote stale do mesmo tick não envelhece o relógio nem o buffer');
 {
   const net = fakeNet(1, 5, false, 30), g = montaJogo(net), relogio = injectedClock(4000);
@@ -557,23 +570,24 @@ console.log('\n· lote stale do mesmo tick não envelhece o relógio nem o buffe
 
 console.log('\n· perda de snapshots limita rewind e pose à janela realmente reconhecida');
 {
-  const relogio = injectedClock(10000);
+  // Linha do tempo com offset zero: t=20 s chega no relógio local de 20000 ms.
+  const relogio = injectedClock(20000);
   const interp = new InterpolationClock({ snapshotHz: 30, now: relogio.now });
   const ent = interpolationEntity(), out = { vx: 0, vz: 0, segYaw: null };
   const primeiro = interpolationSnapshot(20, 1, 0);
   interp.observe(primeiro, relogio.now());
   pushEntitySample(ent, interp.snapshotTime(primeiro), primeiro.ents[0]);
   // Os ticks 2 e 3 se perderam: nenhum relógio ou amostra intermediária pode ser inventado.
-  relogio.set(10100);
+  relogio.set(20100);
   const quarto = interpolationSnapshot(20.1, 4, 1);
   interp.observe(quarto, relogio.now());
   pushEntitySample(ent, interp.snapshotTime(quarto), quarto.ents[0]);
-  relogio.set(10120);
+  relogio.set(20120);
   sampleEntityBuffer(ent, interp.serverNow() - interp.delayMs, out);
   cobra(interp.serverTimes.join(',') === '20,20.1' && Math.abs(interp.renderTime() - 20.04) < 1e-9
     && Math.abs(ent.pos.x - 0.4) < 1e-9,
     'a perda vira um único segmento conhecido; rewind e pose coincidem sem preencher pacotes ausentes');
-  relogio.set(10500);
+  relogio.set(20500);
   sampleEntityBuffer(ent, interp.serverNow() - interp.delayMs, out);
   cobra(interp.renderTime() === 20.1 && ent.pos.x === 1,
     'estourada a janela de ack, rewind e pose clampam no último snapshot e nunca extrapolam');

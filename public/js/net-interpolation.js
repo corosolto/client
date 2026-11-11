@@ -76,8 +76,9 @@ export class InterpolationClock {
   renderTime(fallback = 0, serverNowMs = null) {
     const t = this.serverTimes;
     if (!t.length) return fallback;
+    const first = Math.min(...t), last = Math.max(...t);
     const rt = ((serverNowMs == null ? this.serverNow() : serverNowMs) - this.delayMs) / 1000;
-    return Math.min(t[t.length - 1], Math.max(t[0], rt));
+    return Math.min(last, Math.max(first, rt));
   }
 }
 
