@@ -1,4 +1,4 @@
-/* Origem dos pacotes do Studio: produção e previews no R2, host de desenvolvimento em /packs/ local.
+/* Origem dos pacotes do Studio: produção e previews usam a origem pública; desenvolvimento usa /packs/ local.
    ?packorigin=cdn|local força um dos dois. Contrato: docs/studio-character-release.md. */
 export const STUDIO_PACK_CDN_ORIGIN = 'https://assets.corosolto.com.br';
 export const STUDIO_PACK_PREFIX = '/packs/';
