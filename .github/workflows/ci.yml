@@ -171,6 +171,9 @@ jobs:
 
   contratos-visuais-personagens-camera:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
     timeout-minutes: 30
     strategy:
       fail-fast: false
