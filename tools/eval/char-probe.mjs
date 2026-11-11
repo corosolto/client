@@ -666,14 +666,14 @@ function acabamentoGLB(g) {
    percorrida material a material. É a única contagem que descreve o que o dono vê. */
 async function escalaDoMundo() {
   try {
-    const { MAPS } = await import(`${JS}/maps.js`);
+    const { MAPS, comMapaCarregado } = await import(`${JS}/maps.js`);
     const { initTextures } = await import(`${JS}/textures.js`);
     const T = initTextures();
     const porMapa = [];
     for (const id of Object.keys(MAPS)) {
       const cena = new THREE.Scene();
       let W = null;
-      try { W = MAPS[id].build(cena, T); } catch (e) { porMapa.push({ mapa: id, erro: String(e && e.stack || e).slice(0, 300) }); continue; }
+      try { W = await comMapaCarregado(id, (mapa) => mapa.build(cena, T)); } catch (e) { porMapa.push({ mapa: id, erro: String(e && e.stack || e).slice(0, 300) }); continue; }
       const vistos = new Set();
       const c = { materiais: 0, map: 0, normalMap: 0, roughnessMap: 0, aoMap: 0, meshes: 0, triangulos: 0 };
       const conta = (o) => {
