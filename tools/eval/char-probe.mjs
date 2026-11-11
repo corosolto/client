@@ -846,7 +846,7 @@ async function packDoStudio(release) {
     return { arquivo, sha: entrada.sha256 };
   };
   const clipes = {};
-  for (const estado of ['idle', 'walk', 'run', 'shoot', 'crouch']) {
+  for (const estado of ['idle', 'walk', 'run', 'shoot', 'crouch', 'crouchwalk']) {
     if (typeof manifest.animations?.[estado] !== 'string') continue;
     const { arquivo, sha } = conferido(manifest.animations[estado]);
     clipes[estado] = await semMeshopt(arquivo, sha);
@@ -876,6 +876,7 @@ for (const def of CHARACTERS) {
    equivalente é o poseCharacter(), que é o que o jogo chama por quadro. Um personagem
    que afunda 4 cm no chão a meio ciclo de caminhada é o "pé enterrado" — e ele nunca
    apareceu numa bind pose, que é onde todo mundo olha. */
+const AMOSTRAS_C3 = 24;   // quadros por clipe, espalhados pela duração inteira
 for (const r of registros) {
   if (r.fonte === 'ERRO') { r.C3 = { erro: r.erro }; continue; }
   const base = { bind: r.bb ? r.bb[1] : null };
@@ -898,7 +899,9 @@ for (const r of registros) {
       return mn === Infinity ? bboxOf(vs)[1] : mn;
     };
     const faixa = {}, corpo = {};
-    for (const clipe of ['idle', 'walk', 'run', 'shoot', 'crouch']) {
+    // crouchwalk desde 11/11: o glbchars.js aplica foot-offset por estado, e este era o
+    // único estado de chão que a sonda não media (legado afundava até 7 cm agachado andando).
+    for (const clipe of ['idle', 'walk', 'run', 'shoot', 'crouch', 'crouchwalk']) {
       const proprio = path.join(DIR_ANIM, r.id, `${clipe}.glb`);
       const comum = path.join(DIR_ANIM, 'mixamo', `${clipe}.glb`);
       // Studio: o estado vem do próprio pack (states.glb com um clipe por nome).
@@ -906,7 +909,16 @@ for (const r of registros) {
         : fs.existsSync(proprio) ? proprio : (fs.existsSync(comum) ? comum : null);
       if (!f) continue;
       let pior = 0, mn = Infinity, mx = -Infinity, piorCorpo = 0;
-      for (const t of [0, 0.2, 0.4, 0.6, 0.8]) {
+      /* O CLIPE INTEIRO, não os primeiros 0,8 s (até 11/11 eram 5 amostras em t=0…0,8 s):
+         o gerador compensa pelo pé MAIS BAIXO do ciclo, e um mínimo que a amostra não viu
+         vira offset que enterra o pé no quadro que ela pulou. Medido no jogo: dracula/
+         crouchwalk tinha mínimo 0,019 nas 5 amostras e -0,001 no ciclo real. */
+      const glbClipe = readGLB(f);
+      const anim = r.clipesDoPack ? (glbClipe.json.animations || []).find((a) => a.name === clipe) : (glbClipe.json.animations || [])[0];
+      const dur = anim ? Math.max(0, ...anim.samplers.map((s) => glbClipe.json.accessors[s.input].max?.[0] || 0)) : 0;
+      const N = dur > 0 ? AMOSTRAS_C3 : 1;
+      for (let k = 0; k < N; k++) {
+        const t = (dur * k) / N;
         const Wp = poseWith(sc, f, t, r.clipesDoPack ? clipe : null);
         const vs = skinVerts(sc, g, Wp, 5);
         const y0 = (peMin(vs) - bbRaw[1]) * S;
