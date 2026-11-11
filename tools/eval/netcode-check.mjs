@@ -1358,7 +1358,7 @@ console.log('\n· granada online: o clique pede ao servidor e não spawna local;
   net.snap = snapshot(960.033, 2); g._mp.applySnapshot();
   const gr = g._grenades.find((x) => x._nid === 9301);
   cobra(!!gr && gr.kind === 'frag' && Math.abs(gr.v.z - (-15)) < 1e-6 && gr.owner === p, 'o `nade` do servidor desenha a granada com a velocidade dele e o dono certo');
-  cobra(gr.fuse > 1000, 'o pavio local é infinito: quem estoura é o `boom`');
+  cobra(gr.fuse > 0 && gr.fuse <= 8, 'o pavio local tem fallback de segurança: quem estoura é o `boom` ou o fuse de 8 s');
   let explosoes = 0; const ex0 = g._explodeFrag.bind(g); g._explodeFrag = (...a) => { explosoes++; return ex0(...a); };
   net.events.push({ type: 'ev', tick: 3, t: 960.066, list: [{ k: 'boom', i: 9301, kind: 'frag', x: b.pos.x, y: 0.2, z: b.pos.z }] });
   net.snap = snapshot(960.066, 3); g._mp.applySnapshot();
