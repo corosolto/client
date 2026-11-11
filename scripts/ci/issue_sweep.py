@@ -36,11 +36,11 @@ def sweep(payload: dict) -> dict:
                         comment,
                         "",
                         "> [!TIP]",
-                        "> **Possível duplicata detectada na varredura.**",
+                        "> **Possible duplicate detected during the sweep.**",
                         "> ",
-                        f"> - candidata: **#{duplicate['number']}** — {duplicate['title']}",
-                        f"> - similaridade: **{duplicate['score']}**",
-                        f"> - comparar: {duplicate['url']}",
+                        f"> - candidate: **#{duplicate['number']}** — {duplicate['title']}",
+                        f"> - similarity: **{duplicate['score']}**",
+                        f"> - compare: {duplicate['url']}",
                     ]
                 )
             actions.append(
