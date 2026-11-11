@@ -96,3 +96,15 @@ test('AF4 rejects a direct unsafe merge even after a valid decision', (t) => {
   });
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
+
+test('AF4 rejects squash hidden on a shell continuation line', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    workflow.jobs.automerge.steps.push({
+      name: 'Unsafe continued merge',
+      if: "env.pular != '1'",
+      run: 'gh pr merge "$PR_NUMBER" --merge --match-head-commit "$head_oid" \\\n  --squash',
+    });
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});

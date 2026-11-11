@@ -279,7 +279,7 @@ const chamadasMerge = (texto) => {
   /* Comentários não executam; todo o resto continua suspeito até ser classificado.
      Em particular, não descartamos `gh pr merge` direto no shell: o YAML estrutura
      ONDE ele roda, mas só o recorte conservador do comando prova seus argumentos. */
-  const executavel = texto.split('\n').filter((linha) => !/^\s*#/.test(linha)).join('\n');
+  const executavel = texto.split('\n').filter((linha) => !/^\s*#/.test(linha)).join('\n').replace(/\\\n\s*/g, ' ');
   return [...executavel.matchAll(MERGE)].map((match) => {
     const inicio = executavel.lastIndexOf('\n', match.index) + 1;
     const fim = executavel.indexOf('\n', match.index);
