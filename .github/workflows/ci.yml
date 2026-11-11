@@ -209,7 +209,9 @@ jobs:
           for id in "${ids[@]}"; do
             destino="tools/eval/out/timing-artifacts/$id"
             mkdir -p "$destino"
-            gh run download "$id" --repo "$REPO" --dir "$destino" --pattern '*-tempos-*'
+            if ! gh run download "$id" --repo "$REPO" --dir "$destino" --pattern '*-tempos-*'; then
+              echo "::warning::Run $id has no downloadable timing artifact; skipping it"
+            fi
           done
           node tools/eval/calibrate-durations.mjs
       - name: Dependências (npm ci)
