@@ -47,6 +47,7 @@ test('staging adiciona portalembed, lixo, envruntime, servertraffic, shareorigin
   assert.ok(SUITES.fast.includes('eval:vm-enquadramento-placar'));
   assert.ok(SUITES.fast.includes('eval:pintura-fabrica'));
   assert.ok(SUITES.fast.includes('eval:passe'));
+  assert.ok(SUITES.deploy.includes('eval:dispose'));
 });
 
 test('suites temáticas só reutilizam passos existentes, sem duplicar execução', () => {
