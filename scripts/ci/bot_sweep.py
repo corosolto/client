@@ -10,6 +10,7 @@ import sys
 PREFIX = "<!-- csbrasil-bot-sweep:"
 SUFFIX = " -->"
 BOT_AUTHOR = "csbrasil-bot"
+BOT_AUTHORS = {BOT_AUTHOR, "github-actions[bot]"}
 STATE_RE = re.compile(r"<!-- csbrasil-bot-sweep:(classify|automerge):([A-Za-z0-9_-]+) -->")
 
 
@@ -67,7 +68,7 @@ def decode_state(marker, kind):
 def last_evaluated(comments, kind):
     markers = []
     for comment in comments or []:
-        if (comment.get("user") or {}).get("login") != BOT_AUTHOR:
+        if (comment.get("user") or {}).get("login") not in BOT_AUTHORS:
             continue
         body = comment.get("body") or ""
         matches = [match for match in STATE_RE.finditer(body) if match.group(1) == kind]
@@ -112,6 +113,9 @@ def selftest():
         comments = [{"body": f"bot result\n{marker}", "user": {"login": BOT_AUTHOR}}]
         check(f"{kind}: first evaluation dispatches", True, comments=[], kind=kind)
         check(f"{kind}: unchanged head and rollup debounce", False, comments=comments, kind=kind)
+        check(f"{kind}: github-actions bot state debounces", False, comments=[{
+            "body": f"fallback token result\n{marker}", "user": {"login": "github-actions[bot]"},
+        }], kind=kind)
         check(f"{kind}: new head dispatches", True,
               current=dict(pr, headRefOid="b" * 40), comments=comments, kind=kind)
         check(f"{kind}: external DCO rollup change dispatches", True,

@@ -154,7 +154,7 @@ jobs:
           python3 scripts/ci/bot_sweep.py --selftest
           python3 - <<'PY'
           import json, os, subprocess
-          from scripts.ci.bot_sweep import BOT_AUTHOR, PREFIX, encode_state
+          from scripts.ci.bot_sweep import BOT_AUTHORS, PREFIX, encode_state
           repo = os.environ['GITHUB_REPOSITORY']
           number = os.environ['PR_NUMBER']
           body = encode_state('automerge', json.load(open('/tmp/automerge.json')))
@@ -165,7 +165,7 @@ jobs:
           comments = [comment for page in pages for comment in page]
           mine = [
               comment for comment in comments
-              if (comment.get('user') or {}).get('login') == BOT_AUTHOR
+              if (comment.get('user') or {}).get('login') in BOT_AUTHORS
               and PREFIX + 'automerge:' in (comment.get('body') or '')
           ]
           for extra in mine[1:]:
