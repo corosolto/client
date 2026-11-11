@@ -15,6 +15,7 @@ eval:shareorigin
 eval:vm-enquadramento-placar
 eval:pintura-fabrica
 eval:weapon-passe
+eval:passe
 `);
 
 const DEPLOY = lista(`
