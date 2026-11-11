@@ -46,11 +46,6 @@ function versaoLocal(nome) {
   catch { return ''; }
 }
 
-function rootGlobal() {
-  const r = captura('npm', ['root', '--global']);
-  return r.status === 0 ? r.stdout.trim() : '';
-}
-
 function validarRuntime(problemas) {
   const nodeOk = process.versions.node.split('.')[0] === String(NODE_CI);
   console.log(`  ${nodeOk ? '✓' : '✗'} Node ${process.versions.node} (CI: ${NODE_CI}.x)`);
@@ -73,18 +68,14 @@ async function diagnosticar() {
   console.log(`  ${depsOk ? '✓' : '✗'} dependências da worktree${pwLocal ? ` (Playwright ${pwLocal})` : ''}`);
   if (!depsOk) problemas.push('dependências ausentes ou divergentes do lock; rode `node scripts/ci-local.mjs --setup`');
 
-  const globalRoot = rootGlobal();
-  const globalPkg = globalRoot ? path.join(globalRoot, 'playwright', 'package.json') : '';
-  let pwGlobal = '';
   let chromium;
   try {
-    pwGlobal = JSON.parse(readFileSync(globalPkg, 'utf8')).version;
-    const modulo = await import(pathToFileURL(path.join(globalRoot, 'playwright', 'index.js')).href);
+    const modulo = await import(pathToFileURL(path.join(RAIZ, 'node_modules', 'playwright', 'index.js')).href);
     chromium = modulo.chromium || modulo.default?.chromium;
   } catch { /* diagnosticado abaixo sem transformar import ausente em falha de teste */ }
-  const globalOk = pwGlobal === PW_CI && !!chromium;
-  console.log(`  ${globalOk ? '✓' : '✗'} Playwright global ${pwGlobal || 'não encontrado'} (lock: ${PW_CI})`);
-  if (!globalOk) problemas.push(`Playwright global ${PW_CI} ausente; rode \`node scripts/ci-local.mjs --setup\``);
+  const localOk = pwLocal === PW_CI && !!chromium;
+  console.log(`  ${localOk ? '✓' : '✗'} Playwright local ${pwLocal || 'não encontrado'} (lock: ${PW_CI})`);
+  if (!localOk) problemas.push(`Playwright local ${PW_CI} ausente; rode \`node scripts/ci-local.mjs --setup\``);
 
   let chromeBin = process.env.CHROME_BIN || '';
   if (chromium) {
@@ -139,9 +130,7 @@ async function preparar() {
   }
   let status = executa(process.execPath, ['scripts/setup.mjs']);
   if (status) return SAIDA_AMBIENTE;
-  status = executa('npm', ['install', '--global', '--no-audit', '--no-fund', `playwright@${PW_CI}`]);
-  if (status) return SAIDA_AMBIENTE;
-  const cli = path.join(rootGlobal(), 'playwright', 'cli.js');
+  const cli = path.join(RAIZ, 'node_modules', 'playwright', 'cli.js');
   const args = [cli, 'install', ...(process.platform === 'linux' ? ['--with-deps'] : []), 'chromium'];
   status = executa(process.execPath, args);
   if (status) return SAIDA_AMBIENTE;
