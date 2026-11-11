@@ -254,14 +254,25 @@ function selftest() {
   assert(falhasArvoreDependencias({ status: 1, stdout: JSON.stringify(ausente) }).some((f) => f.includes('missing:')));
   assert(falhasArvoreDependencias({ status: 0, stdout: '{json quebrado' }).some((f) => f.includes('JSON válido')));
   console.log('CI-ENV selftest ok: parsing nativo, ambiente filho e árvore completa de dependências cobertos.');
+  for (const modo of ['--diagnose', '--selftest']) {
+    const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), modo, 'check:fast'], { encoding: 'utf8' });
+    assert.equal(r.status, 64, `${modo} com script extra deve ser rejeitado em vez de ignorar o script`);
+  }
   return 0;
 }
 
 async function main() {
   const args = process.argv.slice(2);
-  if (args.includes('--selftest')) return selftest();
-  if (args.includes('--setup')) return preparar();
-  if (args.includes('--diagnose')) return (await diagnosticar()).ok ? 0 : SAIDA_AMBIENTE;
+  const modo = ['--selftest', '--setup', '--diagnose'].find((flag) => args.includes(flag));
+  if (modo) {
+    if (args.length !== 1) {
+      console.error('Uso: node scripts/ci-local.mjs [--setup|--diagnose|--selftest] [script-npm]');
+      return 64;
+    }
+    if (modo === '--selftest') return selftest();
+    if (modo === '--setup') return preparar();
+    return (await diagnosticar()).ok ? 0 : SAIDA_AMBIENTE;
+  }
   if (args.some((a) => a.startsWith('-')) || args.length > 1) {
     console.error('Uso: node scripts/ci-local.mjs [--setup|--diagnose|--selftest] [script-npm]');
     return 64;
