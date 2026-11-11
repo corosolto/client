@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Compra: front.png do piloto (10/11/2026), 1024×1536, 353 pixels alfa na última linha.
+// Defeito de origem (CF4 o rejeita): front.png do piloto (10/11/2026), 1024×1536, 353 pixels alfa na última linha.
 // Sem teto estético novo: todo vértice desenhado cabe no frustum; a borda raster fica vazia.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

@@ -1,5 +1,5 @@
 {
- "gerado": "2026-11-11T01:57:55.676Z",
+ "gerado": "2026-11-11T22:02:47.256Z",
  "protocolo": "node puro; DOM stubado + three vendorizado (mesmo protocolo de botsim.mjs/pickup-check.mjs); GLB lido por tp-mount-probe.mjs",
  "fontes": {
   "glb": 93,
@@ -73,98 +73,230 @@
   "porMapa": [
    {
     "mapa": "campomorro",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 85,
+    "map": 34,
+    "normalMap": 5,
+    "roughnessMap": 5,
+    "aoMap": 0,
+    "meshes": 724,
+    "triangulos": 52059
    },
    {
     "mapa": "mansao",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 563,
+    "map": 26,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 1193,
+    "triangulos": 51149
    },
    {
     "mapa": "amazonia",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 57,
+    "map": 16,
+    "normalMap": 1,
+    "roughnessMap": 1,
+    "aoMap": 0,
+    "meshes": 359,
+    "triangulos": 37156
    },
    {
     "mapa": "escadao",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 154,
+    "map": 35,
+    "normalMap": 9,
+    "roughnessMap": 9,
+    "aoMap": 0,
+    "meshes": 1138,
+    "triangulos": 31052
    },
    {
     "mapa": "praca_poderes",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 62,
+    "map": 33,
+    "normalMap": 18,
+    "roughnessMap": 18,
+    "aoMap": 0,
+    "meshes": 221,
+    "triangulos": 7609
    },
    {
     "mapa": "piscina_treta",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 57,
+    "map": 29,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 236,
+    "triangulos": 3732
    },
    {
     "mapa": "loja_h",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 220,
+    "map": 42,
+    "normalMap": 21,
+    "roughnessMap": 21,
+    "aoMap": 0,
+    "meshes": 456,
+    "triangulos": 21138
    },
    {
     "mapa": "ferro_velho",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 212,
+    "map": 163,
+    "normalMap": 1,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 649,
+    "triangulos": 24278
    },
    {
     "mapa": "quebrada",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 189,
+    "map": 48,
+    "normalMap": 10,
+    "roughnessMap": 10,
+    "aoMap": 0,
+    "meshes": 982,
+    "triangulos": 26100
    },
    {
     "mapa": "corrego",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 127,
+    "map": 61,
+    "normalMap": 18,
+    "roughnessMap": 18,
+    "aoMap": 0,
+    "meshes": 454,
+    "triangulos": 27684
    },
    {
     "mapa": "lajes",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 122,
+    "map": 60,
+    "normalMap": 7,
+    "roughnessMap": 6,
+    "aoMap": 0,
+    "meshes": 625,
+    "triangulos": 173706
    },
    {
     "mapa": "posto_treta",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 188,
+    "map": 60,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 333,
+    "triangulos": 4808
    },
    {
     "mapa": "upa_24h",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 81,
+    "map": 37,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 460,
+    "triangulos": 6940
    },
    {
     "mapa": "obras_prefeitura",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 49,
+    "map": 23,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 387,
+    "triangulos": 15632
    },
    {
     "mapa": "atacadao_treta",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 151,
+    "map": 97,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 625,
+    "triangulos": 7810
    },
    {
     "mapa": "parque_treta",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 75,
+    "map": 60,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 558,
+    "triangulos": 29097
    },
    {
     "mapa": "velho_oeste",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 83,
+    "map": 48,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 765,
+    "triangulos": 49936
    },
    {
     "mapa": "invasao_javaporcos",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 83,
+    "map": 79,
+    "normalMap": 73,
+    "roughnessMap": 74,
+    "aoMap": 0,
+    "meshes": 1717,
+    "triangulos": 112225
    },
    {
     "mapa": "distrito_rural",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 39,
+    "map": 37,
+    "normalMap": 33,
+    "roughnessMap": 33,
+    "aoMap": 0,
+    "meshes": 1036,
+    "triangulos": 99570
    },
    {
     "mapa": "vila_da_mata",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 39,
+    "map": 38,
+    "normalMap": 33,
+    "roughnessMap": 33,
+    "aoMap": 0,
+    "meshes": 1198,
+    "triangulos": 99368
    },
    {
     "mapa": "operacao_flavio",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 30,
+    "map": 8,
+    "normalMap": 2,
+    "roughnessMap": 2,
+    "aoMap": 0,
+    "meshes": 455,
+    "triangulos": 9342
    },
    {
     "mapa": "penitenciaria",
-    "erro": "TypeError: MAPS[id].build is not a function\n    at escalaDoMundo (file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:676:26)\n    at async file:///private/tmp/corosolto-faccao-fora-do-ar-v2-20261111/tools/eval/char-probe.mjs:1026:15"
+    "materiais": 44,
+    "map": 18,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 502,
+    "triangulos": 24236
    }
   ],
   "total": {
-   "materiais": 0,
-   "map": 0,
-   "normalMap": 0,
-   "roughnessMap": 0,
+   "materiais": 2710,
+   "map": 1052,
+   "normalMap": 231,
+   "roughnessMap": 230,
    "aoMap": 0
   }
  },

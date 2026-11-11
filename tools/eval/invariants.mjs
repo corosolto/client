@@ -1912,9 +1912,12 @@ bloco('chars-mat', ['CHR1','CHR2','CHR3','CHR5','CHR5B','CHR6','CHR7'], async ()
     const mundo = j.escalaDoMundoC5 || {};
     const melhorMapa = (mundo.porMapa || []).reduce((a, m) => (((m.normalMap || 0) > (a.normalMap || 0)) ? m : a), { normalMap: 0 });
     const semSuperficie = P.filter((c) => (c.C5.mapasDeSuperficie || 0) === 0).length;
+    const mundoComErro = mundo.erro ? ['(sonda)'] : (mundo.porMapa || []).filter((m) => m.erro).map((m) => m.mapa);
+    const mundoMedido = mundoComErro.length === 0 && (mundo.porMapa || []).length > 0;
     put('CHR5', 'todo personagem tem geometria e material (e o acabamento é medido contra o mundo)',
-      vazios.length === 0,
+      vazios.length === 0 && mundoMedido,
       `${vazios.length ? 'SEM GEOMETRIA: ' + vazios.join(', ') + ' | ' : ''}`
+      + `${mundoMedido ? '' : `MUNDO NÃO MEDIDO (${mundoComErro.join(', ') || 'sem mapas'}) | `}`
       + `personagens: mediana ${P.map((c) => c.C5.triangulos).sort((a, b) => a - b)[P.length >> 1]} triângulos, `
       + `${semSuperficie}/${P.length} com ZERO mapa de superfície (normal+rough+ao). `
       + `Mundo MEDIDO em runtime: ${(mundo.porMapa || []).length} mapas, ${(mundo.total || {}).materiais || 0} materiais, `
