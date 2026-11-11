@@ -124,13 +124,23 @@ const alvos = IDS.length ? IDS : await page.evaluate(async () => {
 });
 
 const out = [];
+const studioNaoMedido = [];
 for (const id of alvos) {
-  const r = await page.evaluate(async ([cid, mut, foto, diagnostico]) => {
+  const r = await page.evaluate(async ([cid, mut, foto, diagnostico, exigePack]) => {
     const THREE = await import('three');
     const G = await import('./js/glbchars.js');
     const C = await import('./js/characters.js');
+    const R = await import('./js/data/content-releases.js');
     const def = C.CHARACTERS.find((c) => c.id === cid);
     if (!def) return { id: cid, erro: 'sem definição de personagem' };
+    /* Pack Studio: sem STUDIO_PACK_ROOT o /packs/ responde 404 (CI; o pack fica fora do repo
+       até o R2) e o jogo falha fechado, sem corpo para medir. NÃO MEDIDO, listado; com a raiz
+       exportada o 404 é ERRO. Personagem legado nunca passa por aqui. */
+    const release = R.characterRelease(cid);
+    if (release) {
+      const head = await fetch(release.manifestUrl, { method: 'HEAD', cache: 'no-store' });
+      if (head.status === 404) return exigePack ? { id: cid, erro: `pack ${release.id}@${release.version} 404 em /packs/ com STUDIO_PACK_ROOT` } : { id: cid, naoMedido: true };
+    }
     await G.preloadCharacterAssets([cid]);
     if (!G.hasModel(cid)) return { id: cid, erro: 'sem GLB carregado' };
 
@@ -393,7 +403,8 @@ for (const id of alvos) {
       renderer.render(scene, camera);
     }
     return result;
-  }, [id, MUT, !!FOTO_DIR, DIAG]);
+  }, [id, MUT, !!FOTO_DIR, DIAG, !!process.env.STUDIO_PACK_ROOT]);
+  if (r?.naoMedido) { studioNaoMedido.push(id); continue; }
   if (r) out.push(r);
   else console.error('sem modelo:', id);
   if (r && FOTO_DIR) {
@@ -469,6 +480,7 @@ for (const r of out) {
     String(r.max).padStart(8), String(r.pct25).padStart(6), String(r.ruins1e4).padStart(10));
 }
 console.log(`\nREPROVADOS: ${reprovados}/${out.length} · DÍVIDA CONGELADA: ${dividas}/${out.length}`);
+if (studioNaoMedido.length) console.log(`NÃO MEDIDOS: ${studioNaoMedido.length} pack(s) Studio sem /packs/ (exporte STUDIO_PACK_ROOT para medir): ${studioNaoMedido.join(', ')}`);
 if (dividaPiorou.length) console.log('DÍVIDA PIOROU: ' + dividaPiorou.join(' · '));
 if (out.some((r) => r.semcurlDesfez)) {
   console.log('ablação semcurl (ossos revertidos, maior giro desfeito):');
@@ -476,7 +488,7 @@ if (out.some((r) => r.semcurlDesfez)) {
 }
 // execução mutante NÃO sobrescreve o baseline: senão o teto congelado vira o do mutante
 if (!MUT) {
-  fs.writeFileSync('tools/eval/select_inflate.json', JSON.stringify({ gerado: new Date().toISOString(), mutante: null, refs: REFS, folga: FOLGA, teto, personagens: out }, null, 1));
+  fs.writeFileSync('tools/eval/select_inflate.json', JSON.stringify({ gerado: new Date().toISOString(), mutante: null, refs: REFS, folga: FOLGA, teto, personagens: out, studioNaoMedido }, null, 1));
   console.log('-> tools/eval/select_inflate.json');
 }
 /* A dívida antiga era apenas uma contagem máxima: um personagem podia piorar ou trocar
