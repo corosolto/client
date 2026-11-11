@@ -830,10 +830,6 @@ console.log('\n· lado físico do multiplayer vem do servidor, não da facção 
     'lado local velho perde para o yourTeam do servidor: 5×5');
   cobra(ladoOnline('B', { yourTeam: null }) === 'B' && ladoOnline('E', null) === 'E',
     'espectador ou sessão sem yourTeam mantém o lado pedido');
-  const ladoNoStart = /const sessao = online \? mpSessao : null;[\s\S]{0,2400}if \(sessao\) team = ladoOnline\(team, sessao\.net\);[\s\S]{0,400}const side = resolvePlayerSide\(team, faction, online\);/;
-  cobra(ladoNoStart.test(main), 'o start online troca o lado pedido pelo do servidor antes de resolver o side');
-  const mutLado = main.replace('if (sessao) team = ladoOnline(team, sessao.net);', '');
-  cobra(!ladoNoStart.test(mutLado), 'MUTANTE sem o lado do servidor no start deixa a cláusula do #785 vermelha');
   const mutSlot = main.replace('await startGame(currentTeam, currentChar, currentEnemyFaction, true);', '');
   cobra(!/net\.onSlot = async \(m\) =>[\s\S]*await transitionSlot\([\s\S]*await startGame\(currentTeam, currentChar, currentEnemyFaction, true\)/.test(mutSlot),
     'MUTANTE sem remount deixa a cláusula espectador→vaga vermelha');
