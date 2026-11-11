@@ -13,17 +13,18 @@ import {
 
 const AGORA = Date.parse('2026-11-10T12:00:00.000Z');
 const CHAVE_CACHE_DURACOES = "eval-durations-v1-${{ hashFiles('tools/eval/out/durations.json') }}";
+const PREFIXO_CACHE_CONSUMIDOR = 'eval-durations-v1-';
 const WORKFLOW_PRODUTOR = readFileSync(new URL('../.github/workflows/eval-duration-calibration.yml', import.meta.url), 'utf8');
 const WORKFLOW_CONSUMIDOR = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
 const relatorio = (resultados) => ({ resultados });
 const ok = (passo, duracao) => ({ passo, duracao, status: 'ok' });
 
-function validarChavesCache(workflow) {
+function validarChavesCache(workflow, esperada) {
   const chaves = [...workflow.matchAll(/^\s+key:\s*(eval-durations[^\n]*)$/gm)].map((match) => match[1]);
   assert.ok(chaves.length, 'workflow precisa declarar a chave do manifesto');
   for (const chave of chaves) {
     assert.doesNotMatch(chave, /github\.run_(?:id|attempt)/);
-    assert.equal(chave, CHAVE_CACHE_DURACOES);
+    assert.equal(chave, esperada);
   }
   return chaves;
 }
@@ -96,12 +97,15 @@ test('CLI de calibração é byte-determinístico para os mesmos artefatos', () 
   }
 });
 
-test('produtor e CI compartilham cache endereçado por conteúdo com fallback estável', () => {
-  validarChavesCache(WORKFLOW_PRODUTOR);
-  validarChavesCache(WORKFLOW_CONSUMIDOR);
+test('produtor grava por conteúdo e consumidor aceita qualquer match do prefixo', () => {
+  validarChavesCache(WORKFLOW_PRODUTOR, CHAVE_CACHE_DURACOES);
+  validarChavesCache(WORKFLOW_CONSUMIDOR, PREFIXO_CACHE_CONSUMIDOR);
+  assert.match(WORKFLOW_PRODUTOR, /permissions:\n\s+actions: write\n\s+contents: read/);
   assert.match(WORKFLOW_PRODUTOR, /actions\/cache\/save@0057852bfaa89a56745cba8c7296529d2fc39830/);
   assert.match(WORKFLOW_CONSUMIDOR, /actions\/cache\/restore@0057852bfaa89a56745cba8c7296529d2fc39830/);
   assert.match(WORKFLOW_CONSUMIDOR, /restore-keys:\s*\|\n\s+eval-durations-v1-\n/);
+  assert.match(WORKFLOW_CONSUMIDOR, /cache-matched-key == ''/);
+  assert.doesNotMatch(WORKFLOW_CONSUMIDOR, /cache-hit != 'true'/);
 
   const inicio = WORKFLOW_CONSUMIDOR.indexOf('  contratos-visuais-personagens-camera:');
   const fim = WORKFLOW_CONSUMIDOR.indexOf('\n  contratos-visuais-ferro-balcao:', inicio);
@@ -118,7 +122,7 @@ test('contrato do cache rejeita chave exclusiva de run_id e run_attempt', () => 
   const runIdOnly = 'eval-durations-${{ github.run_id }}-${{ github.run_attempt }}';
   const mutante = WORKFLOW_PRODUTOR.replace(CHAVE_CACHE_DURACOES, runIdOnly);
   assert.notEqual(mutante, WORKFLOW_PRODUTOR);
-  assert.throws(() => validarChavesCache(mutante));
+  assert.throws(() => validarChavesCache(mutante, CHAVE_CACHE_DURACOES));
 });
 
 test('balanceamento guloso cobre cada passo uma vez e reage à mutação de duração', () => {

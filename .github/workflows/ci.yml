@@ -190,11 +190,11 @@ jobs:
         # o shard nunca é desligado silenciosamente.
         with:
           path: tools/eval/out/durations.json
-          key: eval-durations-v1-${{ hashFiles('tools/eval/out/durations.json') }}
+          key: eval-durations-v1-
           restore-keys: |
             eval-durations-v1-
       - name: Bootstrap duration manifest on an empty cache
-        if: steps.duration-cache.outputs.cache-hit != 'true'
+        if: steps.duration-cache.outputs.cache-matched-key == ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}

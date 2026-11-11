@@ -11,7 +11,7 @@ on:
         default: '10'
 
 permissions:
-  actions: read
+  actions: write
   contents: read
 
 concurrency:
