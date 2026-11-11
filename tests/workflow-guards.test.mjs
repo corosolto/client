@@ -74,6 +74,28 @@ test('AF4 rejects an eligibility decision placed in another job', (t) => {
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
 
+test('AF4 rejects a skipped eligibility decision', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    const check = workflow.jobs.automerge.steps.find((step) => step.run?.includes(DECISAO));
+    assert.ok(check);
+    check.if = false;
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
+for (const forma of ['echo', 'comment']) {
+  test(`AF4 rejects an eligibility decision that is only ${forma} text`, (t) => {
+    const dir = fixture(t);
+    mutateAutomerge(dir, (workflow) => {
+      const check = workflow.jobs.automerge.steps.find((step) => step.run?.includes(DECISAO));
+      assert.ok(check);
+      check.run = check.run.replace(DECISAO, forma === 'echo' ? `echo "${DECISAO}"` : `# ${DECISAO}`);
+    });
+    assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+  });
+}
+
 for (const job of ['automerge', 'sweep']) {
   test(`WSEC2 rejects a missing token guard in ${job}`, (t) => {
     const dir = fixture(t);

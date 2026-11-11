@@ -311,8 +311,13 @@ for (const nome of WORKFLOWS) {
       const run = runDe(passo);
       for (const chamada of chamadasMerge(run)) {
         estruturadas += 1;
-        const decisaoAntes = passos.slice(0, indice).some((anterior) => runDe(anterior).includes(decisao))
-          || chamada.executavel.slice(0, chamada.pos).includes(decisao);
+        const decisaoAntes = passos.slice(0, indice).some((anterior) => {
+          const condicao = ifDe(anterior);
+          const condicaoMerge = ifDe(passo);
+          const pulada = anterior.if === false || /^(?:\$\{\{\s*)?false(?:\s*\}\})?$/.test(condicao);
+          const executavel = runDe(anterior).split('\n').some((linha) => linha.trim() === decisao);
+          return !pulada && executavel && (!condicao || condicao === condicaoMerge);
+        });
         const mergeCommit = /--merge\b/.test(chamada.comando)
           && !/--(?:squash|rebase)\b/.test(chamada.comando);
         const headPreso = /--match-head-commit\b/.test(chamada.comando)
