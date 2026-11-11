@@ -1,6 +1,6 @@
 {
  "o_que_e": "Placar do FP parado (idle) medido no navegador por tools/eval/vm-enquadramento-idle-check.mjs --assar; o CI confere com eval:vm-enquadramento-placar.",
- "hash": "846f2ed2bf30c9ca",
+ "hash": "0be2d52032b41d89",
  "entradas": [
   "public/js/data/vmconfig.js",
   "public/js/data/vmframe.js",
@@ -8,7 +8,23 @@
   "public/js/data/vmbytes.js",
   "public/js/data/goldenver.js",
   "public/js/authoredvm.js",
-  "tools/eval/lib/vm-enquadramento.mjs"
+  "tools/eval/lib/vm-enquadramento.mjs",
+  "tools/fabrica/fabrica-candidates.json",
+  "public/models/viewmodels/coro/ak-hires.glb",
+  "public/models/viewmodels/coro/akm-hires.glb",
+  "public/models/viewmodels/coro/famas-hires.glb",
+  "public/models/viewmodels/coro/lmg-hires.glb",
+  "public/models/viewmodels/coro/m4-hires.glb",
+  "public/models/viewmodels/coro/m92-hires.glb",
+  "public/models/viewmodels/coro/md97-hires.glb",
+  "public/models/viewmodels/coro/mosin-hires.glb",
+  "public/models/viewmodels/coro/mp5-hires.glb",
+  "public/models/viewmodels/coro/pistol-hires.glb",
+  "public/models/viewmodels/coro/scar-hires.glb",
+  "public/models/viewmodels/coro/sks-hires.glb",
+  "public/models/viewmodels/coro/svd-hires.glb",
+  "public/models/viewmodels/coro/uzi-hires.glb",
+  "public/models/viewmodels/coro/melee/knife-hires.glb"
  ],
  "limiares": {
   "curta": {

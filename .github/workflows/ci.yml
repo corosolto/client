@@ -114,8 +114,6 @@ jobs:
         run: npm run eval:treta-coins
       - name: Skin equipada aguarda manifesto e conta vigente no boot
         run: npm run eval:treta-manifest-ready
-      - name: Passe Sessão da Treta obedece ao servidor (sem XP do client, com mutantes)
-        run: npm run eval:passe
       - name: Preview mobile preserva skin e propriedade da mídia
         run: npm run eval:character-preview-media
       - name: Retrato hero só para personagem com arquivo (#1231, com mutantes)
@@ -166,6 +164,8 @@ jobs:
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node --test tests/eval-suites.test.mjs
 
+      - name: Passe Sessão da Treta obedece ao servidor (sem XP do client, com mutantes)
+        run: npm run eval:passe
   contratos-visuais-personagens-camera:
     runs-on: ubuntu-latest
     timeout-minutes: 30

@@ -39,8 +39,19 @@ import { TRETA_PACKS, TRETA_WEAPON_SKINS } from '../../../public/js/treta-catalo
 export const PLACAR_ARQ = 'tools/eval/vm-enquadramento-idle.json';
 // Tudo que decide o quadro parado: composição/FOV por arma e rota, a escolha da rota e o goldFrame
 // (authoredvm.js), revisões dos GLBs e a régua.
-export const ENTRADAS = Object.freeze(['public/js/data/vmconfig.js', 'public/js/data/vmframe.js', 'public/js/data/vmfabrica.js',
-  'public/js/data/vmbytes.js', 'public/js/data/goldenver.js', 'public/js/authoredvm.js', 'tools/eval/lib/vm-enquadramento.mjs']);
+export const ENTRADAS = Object.freeze([
+  'public/js/data/vmconfig.js', 'public/js/data/vmframe.js', 'public/js/data/vmfabrica.js',
+  'public/js/data/vmbytes.js', 'public/js/data/goldenver.js', 'public/js/authoredvm.js', 'tools/eval/lib/vm-enquadramento.mjs',
+  'tools/fabrica/fabrica-candidates.json',
+  'public/models/viewmodels/coro/ak-hires.glb', 'public/models/viewmodels/coro/akm-hires.glb',
+  'public/models/viewmodels/coro/famas-hires.glb', 'public/models/viewmodels/coro/lmg-hires.glb',
+  'public/models/viewmodels/coro/m4-hires.glb', 'public/models/viewmodels/coro/m92-hires.glb',
+  'public/models/viewmodels/coro/md97-hires.glb', 'public/models/viewmodels/coro/mosin-hires.glb',
+  'public/models/viewmodels/coro/mp5-hires.glb', 'public/models/viewmodels/coro/pistol-hires.glb',
+  'public/models/viewmodels/coro/scar-hires.glb', 'public/models/viewmodels/coro/sks-hires.glb',
+  'public/models/viewmodels/coro/svd-hires.glb', 'public/models/viewmodels/coro/uzi-hires.glb',
+  'public/models/viewmodels/coro/melee/knife-hires.glb',
+]);
 // Armas com rota de pintura (main.js: playerWeaponSkins; authoredvm.js: gold#<arma>).
 export const PINTADAS = Object.freeze(['pistol', 'ak', 'm4', 'scar']);
 // Pintura da loja que a célula `pintura` equipa: a 1ª skin avulsa da arma, senão a do pack.
