@@ -15,7 +15,7 @@ const BASELINE = {
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
 const NOVOS = {
-  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:workflowguards']),
+  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:workflowguards']),
   deploy: new Set(['eval:weapon-passe', 'eval:workflowguards']),
 };
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
@@ -38,7 +38,7 @@ for (const [nome, baseline] of Object.entries(BASELINE)) {
   });
 }
 
-test('staging adiciona portalembed, lixo, envruntime, servertraffic e shareorigin sem apagar os passos migrados', () => {
+test('staging adiciona portalembed, lixo, envruntime, servertraffic, shareorigin e passe sem apagar os passos migrados', () => {
   assert.ok(SUITES.fast.includes('eval:portalembed'));
   assert.ok(SUITES.fast.includes('eval:lixo'));
   assert.ok(SUITES.fast.includes('eval:envruntime'));
@@ -46,6 +46,7 @@ test('staging adiciona portalembed, lixo, envruntime, servertraffic e shareorigi
   assert.ok(SUITES.fast.includes('eval:shareorigin'));
   assert.ok(SUITES.fast.includes('eval:vm-enquadramento-placar'));
   assert.ok(SUITES.fast.includes('eval:pintura-fabrica'));
+  assert.ok(SUITES.fast.includes('eval:passe'));
 });
 
 test('suites temáticas só reutilizam passos existentes, sem duplicar execução', () => {

@@ -16,6 +16,7 @@ eval:vm-enquadramento-placar
 eval:pintura-fabrica
 eval:weapon-passe
 eval:workflowguards
+eval:passe
 `);
 
 const DEPLOY = lista(`

@@ -778,6 +778,30 @@ const DICT = {
   'Falta confirmar seu e-mail para receber novidades.': 'Confirm your email to get news.',
   'Cancelar inscrição pendente': 'Cancel pending signup',
   // tp:fim-ajustes
+
+  // tp:passe (tp/passe.js, passe-anuncio.js e a trava do seletor em main.js)
+  'PASSE': 'PASS', 'SESSÃO DA TRETA': 'SESSÃO DA TRETA', 'PASSE GRÁTIS · TEMPORADA 1 · FORA DO AR': 'FREE PASS · SEASON 1 · FORA DO AR',
+  'TEMPORADA 1 · PASSE GRÁTIS': 'SEASON 1 · FREE PASS', 'Fechar o passe': 'Close the pass',
+  'Sessão da Treta, temporada 1: o passe grátis da facção Fora do Ar': 'Sessão da Treta, season 1: the free pass of the Fora do Ar faction',
+  'Passe grátis com 15 níveis: 30 personagens da facção Fora do Ar, skins de arma, T$ e bônus de XP. Jogue partidas e cumpra missões para subir de nível.':
+    'Free pass with 15 levels: 30 characters from the Fora do Ar faction, weapon skins, T$ and XP boosts. Play matches and complete missions to level up.',
+  'Seu progresso já está contando.': 'Your progress is already counting.',
+  'Para ganhar XP e resgatar as recompensas, entre na sua conta.': 'Sign in to earn XP and claim the rewards.',
+  'VER O PASSE': 'SEE THE PASS', 'ENTRAR E JOGAR O PASSE': 'SIGN IN AND PLAY THE PASS', 'ENTRAR PARA JOGAR': 'SIGN IN TO PLAY',
+  'SEU NÍVEL': 'YOUR LEVEL', 'XP do nível': 'Level XP', 'NÍVEL MÁXIMO': 'MAX LEVEL', 'Níveis do passe': 'Pass levels',
+  'Entre na sua conta para ganhar XP nas partidas e nas missões e resgatar as recompensas. O passe é grátis.':
+    'Sign in to earn XP from matches and missions and claim the rewards. The pass is free.',
+  'RESGATAR': 'CLAIM', 'RESGATANDO…': 'CLAIMING…', 'RESGATADO': 'CLAIMED', 'ENTRE PARA LIBERAR': 'SIGN IN TO UNLOCK',
+  'SKIN DE ARMA': 'WEAPON SKIN', 'CONVITES': 'INVITES', 'Consultando o passe…': 'Checking the pass…',
+  'MISSÕES DIÁRIAS': 'DAILY MISSIONS', 'MISSÕES SEMANAIS': 'WEEKLY MISSIONS', '· renovam 00:00': '· reset at 00:00 (BRT)',
+  'Entrar no jogo hoje': 'Log in today', 'Jogar 3 partidas': 'Play 3 matches', 'Vencer 1 partida': 'Win 1 match',
+  'Jogar 1 partida multiplayer': 'Play 1 multiplayer match', 'Jogar em 5 dias diferentes': 'Play on 5 different days',
+  'Vencer 10 partidas': 'Win 10 matches', 'Jogar 10 partidas multiplayer': 'Play 10 multiplayer matches',
+  'Esse nível ainda não chegou. Jogue mais um pouco.': 'You have not reached this level yet. Play a bit more.',
+  'A temporada fechou para resgates.': 'The season is closed for claims.',
+  'Espere um momento antes de tentar novamente.': 'Wait a moment before trying again.',
+  'O passe não respondeu agora. Tente de novo em instantes.': 'The pass did not answer. Try again in a moment.',
+  // tp:fim-passe
 };
 
 /* Índice por espaço NORMALIZADO: o mesmo parágrafo quebrado em duas linhas no
@@ -916,6 +940,22 @@ const FRASES = {
   carteiraEntrarAria: { pt: () => 'Entre para ver seu saldo TRETA$', en: () => 'Sign in to see your TRETA$ balance' },
   carteiraErroAria: { pt: () => 'Carteira TRETA$ indisponível. Abra a loja para tentar novamente.', en: () => 'TRETA$ wallet unavailable. Open the store to try again.' },
   carteiraConsultandoAria: { pt: () => 'Consultando carteira TRETA$', en: () => 'Checking TRETA$ wallet' },
+  // passe Sessão da Treta (tp/passe.js e a trava do seletor em main.js)
+  passeNivel: { pt: (n) => `NÍVEL ${n}`, en: (n) => `LEVEL ${n}` },
+  passeTravado: { pt: (n) => `Nível ${n}`, en: (n) => `Level ${n}` },
+  passeTravadoAviso: {
+    pt: (nome, n) => `${nome} destrava no nível ${n} do passe Sessão da Treta.`,
+    en: (nome, n) => `${nome} unlocks at level ${n} of the Sessão da Treta pass.`,
+  },
+  passeSkinArma: { pt: (n) => `SKIN DE ARMA ${n}`, en: (n) => `WEAPON SKIN ${n}` },
+  passeBoostPremio: { pt: (p) => `+${p}% XP · 24 h`, en: (p) => `+${p}% XP · 24 h` },
+  passeBoostAtivo: { pt: (p, ate) => `+${p}% XP ATÉ ${ate}`, en: (p, ate) => `+${p}% XP UNTIL ${ate}` },
+  passeResgatado: { pt: (n) => `Nível ${n} resgatado. As recompensas já estão na sua conta.`, en: (n) => `Level ${n} claimed. The rewards are in your account.` },
+  passeResgatarNivel: { pt: (n) => `RESGATAR NÍVEL ${n}`, en: (n) => `CLAIM LEVEL ${n}` },
+  passeFaltaXp: { pt: (x) => `FALTAM ${x} XP`, en: (x) => `${x} XP TO GO` },
+  passeFaltaProximo: { pt: (x, n) => `faltam ${x} XP para o nível ${n}`, en: (x, n) => `${x} XP to level ${n}` },
+  passeTermina: { pt: (d) => `TERMINA EM ${d}`, en: (d) => `ENDS ${d}` },
+  passeConvite: { pt: (xp) => `+${xp} XP por amigo que confirma o e-mail e joga uma partida`, en: (xp) => `+${xp} XP per friend who confirms their email and plays a match` },
 };
 export const frase = (id, ...args) => {
   const f = FRASES[id];
