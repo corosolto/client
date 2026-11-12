@@ -69,11 +69,8 @@ class Netcode {
     // economia de partida (docs/ECONOMIA-PARTIDA.md): resposta do nó vai para o menu de compra
     net.onCompra = (m) => { try { this.game._compra?.respostaRemota(m); } catch { /* HUD */ } };
     net.startPing();
-    /* CAPTURA TOTAL (meta do dono: "sem amostra não existe"): a janela parcial que
-     estava sendo acumulada era DESCARTADA ao ocultar a aba (mobile troca de app) e ao
-     sair da página — o jogador que jogou 8 s visível não deixava amostra nenhuma.
-     Agora ocultar/sair/fechar o WS faz o flush do que acumulou; e voltar à aba
-     antecipa a próxima janela (2 s) em vez de empurrar 10 s. */
+    /* Ocultar/sair/fechar o WS envia a janela parcial de stats; voltar à aba
+     * antecipa a próxima janela para preservar amostras curtas. */
     this._flushStatsParcial = () => {
       const game = this.game;
       if (game._disposed || !game.online || !this.net) return;
@@ -670,10 +667,8 @@ class Netcode {
       const origem = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0), dir = new THREE.Vector3(+e.vx || 0, +e.vy || 0, +e.vz || 0);
       game._spawnGrenade(origem, dir.lengthSq() ? dir.clone().normalize() : new THREE.Vector3(0, 0, -1), kind, dono);
       const gr = game._grenades[game._grenades.length - 1];
-      /* Quem estoura é o `boom` autoritativo — mas o lote dele pode ser descartado quando
-         chega atrasado (jitter > 1,5 s), e a granada ficava CONGELADA em cena para sempre
-         (fuse 1e9). O fuse local de 8 s é a rede de segurança: estoura visualmente como o
-         boom faria, só que tarde, em vez de virar fantasma. */
+      /* Se o boom autoritativo atrasar, o fuse visual local de 8 s impede que
+       * a granada fique congelada para sempre. */
       if (gr) { gr._nid = e.i; gr.v.copy(dir); gr.mesh.position.copy(origem); gr.fuse = 8; }
     } else if (e.k === 'boom') {
       const i = game._grenades.findIndex((x) => x._nid === e.i);
@@ -1121,9 +1116,8 @@ class Netcode {
     if (!inactive && now >= this._nextClientStats && this._nsFps > 0) this.enviarJanelaStats();
   }
 
-  /* Uma janela de client_stats saindo — tanto a fechada de 10 s quanto o FLUSH PARCIAL
-   * de quem ocultou a aba/saiu da página no meio (meta: jogador que jogou pouco visível
-   * ainda deixa amostra). Amostras drenadas não se repetem; a janela nova recomeça. */
+  /* Envia janelas fechadas e flushes parciais uma única vez; depois reinicia
+   * a contagem para não repetir amostras. */
   enviarJanelaStats() {
     const game = this.game;
     if (game._disposed || !game.online || !this.net) return;
