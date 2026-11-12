@@ -170,7 +170,7 @@ export function dynamicCallReferences(textByPath) {
       if (!resolved) continue;
       const { definition, modulePath } = resolved;
       const constants = literalBindings(textByPath.get(modulePath) || '');
-      const callPattern = new RegExp(`(?<![\\w$.?])${escaped(binding.local)}\\s*\\(([^)]*)\\)`, 'g');
+      const callPattern = new RegExp(`(?<![\\w$.?])${escaped(binding.local)}\\s*\\(([^)]*)\\)(?!\\s*\\{)`, 'g');
       for (const call of callerText.matchAll(callPattern)) {
         const args = call[1].split(',').map((value) => value.trim());
         if (args.length !== definition.params.length) continue;

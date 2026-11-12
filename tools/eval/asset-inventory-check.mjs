@@ -172,6 +172,17 @@ function mutations() {
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
     console.log('AI2i: a property call cannot masquerade as the imported binding.');
 
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\n");
+    put(fixture, 'public/js/consumer.js', "import { clipUrl } from './refs.js';\nconst id = 'dead';\nconst state = 'idle';\nexport const helpers = { clipUrl(id, state) { return null; } };\n");
+    put(fixture, 'public/models/anims/dead/idle.glb', 'method-declaration');
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'method declaration cannot prove an imported template call');
+    assert.match(result.stderr, /orphan-new: models\/anims\/dead\/idle\.glb/);
+    rmSync(join(fixture, 'public/models/anims/dead/idle.glb'));
+    rmSync(join(fixture, 'public/js/consumer.js'));
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    console.log('AI2j: an object method signature is not a template call.');
+
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
     reviewed.files['models/props/legacy.glb'] = createHash('sha256')
