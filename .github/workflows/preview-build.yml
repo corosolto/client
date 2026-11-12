@@ -15,10 +15,19 @@ on:
       pr_number:
         description: 'Número do PR do qual o preview de emergência é compilado'
         required: true
-
+        type: string
+      pr_head_sha:
+        description: 'SHA exato do head do PR (validado contra o número acima)'
+        required: true
+        type: string
+      pr_head_repo:
+        description: 'Repositório completo do head do PR (owner/repo)'
+        required: true
+        type: string
 # Só leitura. Este job não comenta, não rotula e não publica.
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: preview-build-${{ inputs.pr_number || github.event.pull_request.number }}
@@ -34,13 +43,39 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          repository: ${{ inputs.pr_head_repo }}
+          ref: ${{ inputs.pr_head_sha }}
           persist-credentials: false
-
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with: { node-version: 22, cache: npm }
 
-      - run: npm ci
+      - name: Valida PR e SHA
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+          PR_HEAD_SHA: ${{ inputs.pr_head_sha }}
+          PR_HEAD_REPO: ${{ inputs.pr_head_repo }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          case "$PR_NUMBER" in ''|*[!0-9]*) echo "::error::número de PR inválido"; exit 1 ;; esac
+          if ! printf '%s\n' "$PR_HEAD_REPO" | grep -Eq '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
+            echo "::error::repositório do head inválido"
+            exit 1
+          fi
+          if ! printf '%s\n' "$PR_HEAD_SHA" | grep -Eq '^[0-9a-fA-F]{40}$'; then
+            echo "::error::SHA do head inválido"
+            exit 1
+          fi
+          REAL_REPO=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .head.repo.full_name)
+          REAL_SHA=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .head.sha)
+          if [ "$REAL_REPO" != "$PR_HEAD_REPO" ] || [ "$REAL_SHA" != "$PR_HEAD_SHA" ]; then
+            echo "::error::o head fornecido não corresponde ao PR #$PR_NUMBER (repo $PR_HEAD_REPO != $REAL_REPO ou SHA $PR_HEAD_SHA != $REAL_SHA)"
+            exit 1
+          fi
+          git cat-file -e "$PR_HEAD_SHA^{commit}"
 
+      - name: Dependências
+        run: npm ci
       - name: Tags e checksum dos pacotes de assets
         id: packs
         env:
@@ -95,14 +130,13 @@ jobs:
       - name: Build
         run: npm run build
 
-      # O número do PR viaja junto: o job de deploy roda em `workflow_run`, onde o
-      # contexto não sabe de qual PR veio. No dispatch o número vem do input; o SHA é
-      # o da ref despachada (a head do PR quando disparado sobre ela).
+      # O número, o repositório e o SHA do PR são inputs obrigatórios e já foram validados contra a API.
       - name: Anota o PR
         run: |
           mkdir -p .vercel/output
-          echo "${{ inputs.pr_number || github.event.pull_request.number }}" > /tmp/pr-numero.txt
-          echo "${{ github.event.pull_request.head.sha || github.sha }}" > /tmp/pr-sha.txt
+          echo "${{ inputs.pr_number }}" > /tmp/pr-numero.txt
+          echo "${{ inputs.pr_head_sha }}" > /tmp/pr-sha.txt
+          echo "${{ inputs.pr_head_repo }}" > /tmp/pr-repo.txt
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -122,6 +156,7 @@ jobs:
           path: |
             /tmp/pr-numero.txt
             /tmp/pr-sha.txt
-          retention-days: 3
+            /tmp/pr-repo.txt
           if-no-files-found: error
+          retention-days: 3
           include-hidden-files: true

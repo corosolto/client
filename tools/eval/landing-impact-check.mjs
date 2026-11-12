@@ -166,21 +166,26 @@ for (const [mapId, wet] of [
       res.addEventListener('dispose', () => disposed.set(res, disposed.get(res) + 1));
     }
   }
-  const puffDisposed = new Map();
-  for (const res of [life.puffFx?.points?.material, life.puffFx?.uniforms?.uTex?.value]) {
-    puffDisposed.set(res, 0);
-    res?.addEventListener?.('dispose', () => puffDisposed.set(res, puffDisposed.get(res) + 1));
+  /* Desde o #1293 a textura do puff nasce via _texLocal: é da partida e o registro de VRAM
+     do Game a descarta exatamente 1 vez. O material do puff segue compartilhado com os
+     impactos e o laço de pouso não pode tocá-lo (0 descartes). */
+  const puffMat = life.puffFx?.points?.material, puffTex = life.puffFx?.uniforms?.uTex?.value;
+  assert(puffMat && puffTex?.isTexture, 'puff sem material/textura reais');
+  const puffDescartes = new Map([[puffMat, 0], [puffTex, 0]]);
+  for (const res of puffDescartes.keys()) {
+    res.addEventListener('dispose', () => puffDescartes.set(res, puffDescartes.get(res) + 1));
   }
   life.dispose();
   for (const count of disposed.values()) assert.equal(count, 1,
     'dispose real: cada material próprio descartado exatamente 1 vez');
-  for (const count of puffDisposed.values()) assert.equal(count, 1,
-    'dispose real: material/textura do puff deste Game descartados exatamente 1 vez');
+  assert(puffDescartes.get(puffMat) === 0, 'dispose descartou o material compartilhado do puff');
+  assert(puffDescartes.get(puffTex) === 1,
+    `textura do puff descartada ${puffDescartes.get(puffTex)} vez(es); o registro da partida deve descartá-la 1 vez`);
   life.dispose();
   for (const count of disposed.values()) assert.equal(count, 1,
     'dispose repetido descartou recurso duas vezes');
-  for (const count of puffDisposed.values()) assert.equal(count, 1,
-    'dispose repetido descartou o puff duas vezes');
+  assert(puffDescartes.get(puffMat) === 0 && puffDescartes.get(puffTex) === 1,
+    'dispose repetido descartou recurso do puff de novo');
   assert((life._landingFxSystems || []).length === 0
     && !Object.keys(life).some((k) => k.startsWith('_fx_land_')),
     'dispose não esvaziou as refs e o cache próprios de pouso');

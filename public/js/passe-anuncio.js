@@ -54,3 +54,27 @@ export function anunciarPasse({ abrirPasse = () => {}, entrar = () => {} } = {})
   registrarEventoPasse('modal_view');
   return dialog;
 }
+
+/* Resolve quando não há <dialog> aberto. Observa o documento inteiro: o diálogo pode fechar
+   (atributo open) ou sair do DOM, e outro pode abrir logo em seguida. */
+function semDialogoAberto() {
+  return new Promise((resolve) => {
+    const livre = () => !document.querySelector('dialog[open]');
+    const obs = new MutationObserver(() => { if (livre()) { obs.disconnect(); resolve(); } });
+    obs.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['open'] });
+    if (livre()) { obs.disconnect(); resolve(); }
+  });
+}
+
+/* Na vez do passe: com outro <dialog> aberto (no 1º acesso o anúncio da Operação Flávio abre
+   antes), espera ele fechar e anuncia NA MESMA visita, em vez de desistir até a próxima. Continua
+   uma vez por versão. seguir() falso (a partida começou enquanto esperava) desiste sem marcar. */
+export async function anunciarPasseNaVez(opcoes = {}, { seguir = () => true } = {}) {
+  for (;;) {
+    const dialog = anunciarPasse(opcoes);
+    if (dialog) return dialog;
+    if (!document.querySelector('dialog[open]') || !passeAnuncioDevido({ status: passeEstado(), embutido: embutido() })) return null;
+    await semDialogoAberto();
+    if (!seguir()) return null;
+  }
+}
