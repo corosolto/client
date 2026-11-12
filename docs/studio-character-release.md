@@ -23,7 +23,9 @@ publicação em R2. Cada um desses é um PR próprio.
 1. Sem `crypto.subtle` → `studio_webcrypto_unavailable`, sem nenhum fetch. Nunca se pula o digest.
 2. SHA-256 dos **bytes exatos** do `manifest.json` antes do parse → `studio_manifest_sha_mismatch`.
 3. Identidade (`studio_identity_mismatch`), esqueleto (`studio_skeleton_mismatch`), `minRuntime`
-   do pin e do manifesto ≤ `VERSION` (`studio_runtime_too_old`), caminhos seguros
+   ≤ `VERSION` (`studio_runtime_too_old`): o do pin é obrigatório (pin sem ele → `studio_pin_invalid`,
+   antes de qualquer fetch); o do manifesto é piso extra opcional, aplicado quando declarado
+   (os packs do Studio não o emitem; o piso do release é o do pin), caminhos seguros
    (`studio_unsafe_path`), inventário sem duplicata (`studio_inventory_invalid`), orçamento
    ≤ `budgets.bytes` e ≤ 16 MiB antes de baixar (`studio_budget_exceeded`), os 11 estados
    exatos (`studio_state_missing`/`studio_state_unknown`), dono por TIPO de papel
