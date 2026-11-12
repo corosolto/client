@@ -117,9 +117,9 @@ function analyzeModule(text) {
   let program;
   try { program = parse(text, { ecmaVersion: 'latest', sourceType: 'module' }); }
   catch { return null; }
-  const analysis = { imports: [], reexports: [], templates: [], literals: {}, shadowed: new Set(), calls: [] };
+  const analysis = { imports: [], reexports: [], templates: [], directExports: new Set(), literals: {}, shadowed: new Set(), calls: [] };
   const topLevelDeclarations = new Set();
-  const readDeclaration = (declaration) => {
+  const readDeclaration = (declaration, directlyExported = false) => {
     if (declaration?.type !== 'VariableDeclaration' || declaration.kind !== 'const') return;
     topLevelDeclarations.add(declaration);
     for (const declarator of declaration.declarations) {
@@ -129,7 +129,10 @@ function analyzeModule(text) {
       }
       if (declarator.init?.type !== 'ArrowFunctionExpression' || !declarator.init.params.every((param) => param.type === 'Identifier')) continue;
       const template = templateText(declarator.init.body);
-      if (template?.includes('${')) analysis.templates.push({ name: declarator.id.name, params: declarator.init.params.map((param) => param.name), template });
+      if (template?.includes('${')) {
+        analysis.templates.push({ name: declarator.id.name, params: declarator.init.params.map((param) => param.name), template });
+        if (directlyExported) analysis.directExports.add(declarator.id.name);
+      }
     }
   };
   for (const statement of program.body) {
@@ -140,7 +143,7 @@ function analyzeModule(text) {
     }
     if (statement.type === 'VariableDeclaration') readDeclaration(statement);
     if (statement.type !== 'ExportNamedDeclaration') continue;
-    readDeclaration(statement.declaration);
+    readDeclaration(statement.declaration, true);
     for (const specifier of statement.specifiers || []) {
       analysis.reexports.push({ local: specifier.local.name, exported: specifier.exported.name, specifier: statement.source?.value || '' });
     }
@@ -177,14 +180,18 @@ function resolveExportedTemplate(modulePath, exportedName, analyses, seen) {
   seen.add(key);
   const analysis = analyses.get(modulePath);
   if (!analysis) return null;
-  const definition = analysis.templates.find((candidate) => candidate.name === exportedName);
-  if (definition) return { definition, modulePath };
   const reexport = analysis.reexports.find((candidate) => candidate.exported === exportedName);
-  if (!reexport) return null;
-  if (reexport.specifier.startsWith('.')) {
-    return resolveExportedTemplate(resolve(dirname(modulePath), reexport.specifier), reexport.local, analyses, seen);
+  if (reexport) {
+    if (reexport.specifier.startsWith('.')) {
+      return resolveExportedTemplate(resolve(dirname(modulePath), reexport.specifier), reexport.local, analyses, seen);
+    }
+    const aliased = analysis.templates.find((candidate) => candidate.name === reexport.local);
+    if (aliased) return { definition: aliased, modulePath };
+    return resolveTemplateBinding(modulePath, reexport.local, analyses, seen);
   }
-  return resolveTemplateBinding(modulePath, reexport.local, analyses, seen);
+  if (!analysis.directExports.has(exportedName)) return null;
+  const definition = analysis.templates.find((candidate) => candidate.name === exportedName);
+  return definition ? { definition, modulePath } : null;
 }
 
 function resolveTemplateBinding(callerPath, localName, analyses, seen = new Set()) {

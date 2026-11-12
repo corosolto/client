@@ -238,6 +238,17 @@ function mutations() {
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
     console.log('AI2o: a named function expression cannot reuse the imported callee binding.');
 
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nconst clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\nconst other = (id, state) => null;\nexport { other as clipUrl };\n");
+    put(fixture, 'public/js/consumer.js', "import { clipUrl } from './refs.js';\nexport const url = clipUrl('dead', 'idle');\n");
+    put(fixture, 'public/models/anims/dead/idle.glb', 'private-template-alias');
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'private same-named template cannot satisfy an export alias');
+    assert.match(result.stderr, /orphan-new: models\/anims\/dead\/idle\.glb/);
+    rmSync(join(fixture, 'public/models/anims/dead/idle.glb'));
+    rmSync(join(fixture, 'public/js/consumer.js'));
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    console.log('AI2p: an export alias never resolves to a same-named private template.');
+
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
     reviewed.files['models/props/legacy.glb'] = createHash('sha256')
