@@ -7,6 +7,14 @@ export const HERO_IDS = new Set([
   'metaleiro', 'mistico', 'mst', 'oakley', 'ostentacao', 'padata', 'padati', 'pagodeiro',
   'palhacomal', 'proerd', 'punk', 'rapper', 'raul', 'reggae', 'sertanejo', 'sindicato', 'skatista',
   'titica', 'trapfunk',
+  /* Fora do Ar: render do pack Studio (tools/gen-pack-media.mjs). */
+  'capitao-caveira', 'teletreco-sinal-fraco', 'bebe-reborn', 'chupa-cabra', 'teletreco-antenao',
+  'assombracao-lanhouse', 'dracula', 'boneca-da-cristaleira', 'satanista-talkshow',
+  'clovis-fora-do-ar', 'teletreco-chiadinho', 'bicho-do-bueiro', 'coronel-arrego',
+  'sorridente-onibus', 'bebezao-de-feira', 'boneco-falante-87', 'padre-parapsicologo',
+  'muro-de-caco', 'teletreco-fora-do-ar', 'coelho-pascoa-shopping', 'pm-arrego', 'nanica',
+  'roqueiro-mistico-70', 'profeta-auditorio', 'bicheiro-barracao', 'prata', 'dom-pedro-i',
+  'tiradentes', 'corisco', 'vlad',
 ]);
 /* Recorte do modelo (/img/chars/<id>.webp): o folclore só tem o busto de avatars/. */
 export const RECORTE_IDS = new Set([
@@ -17,6 +25,14 @@ export const RECORTE_IDS = new Set([
   'mistico', 'mst', 'oakley', 'ostentacao', 'padata', 'padati', 'pagodeiro', 'palhacomal', 'proerd',
   'professor', 'punk', 'rapper', 'raul', 'reggae', 'senador', 'sertanejo', 'sindicato', 'skatista',
   'titica', 'trapfunk',
+  /* Fora do Ar: render do pack Studio (tools/gen-pack-media.mjs). */
+  'capitao-caveira', 'teletreco-sinal-fraco', 'bebe-reborn', 'chupa-cabra', 'teletreco-antenao',
+  'assombracao-lanhouse', 'dracula', 'boneca-da-cristaleira', 'satanista-talkshow',
+  'clovis-fora-do-ar', 'teletreco-chiadinho', 'bicho-do-bueiro', 'coronel-arrego',
+  'sorridente-onibus', 'bebezao-de-feira', 'boneco-falante-87', 'padre-parapsicologo',
+  'muro-de-caco', 'teletreco-fora-do-ar', 'coelho-pascoa-shopping', 'pm-arrego', 'nanica',
+  'roqueiro-mistico-70', 'profeta-auditorio', 'bicheiro-barracao', 'prata', 'dom-pedro-i',
+  'tiradentes', 'corisco', 'vlad',
 ]);
 
 /* URLs sem query: cada chamador mantém a convenção de ?v= que já usava. */
