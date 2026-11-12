@@ -5590,20 +5590,24 @@ function mpDesconectou() {
 }
 
 async function mpTentarReconectar(sala, no, team) {
-  const MAX = 3, INTERVALO = 2000;
+  const PRAZO = 45_000, INTERVALO = 2000, inicio = Date.now();
   mpReconectando = true;
-  for (let i = 0; i < MAX; i++) {
-    mpEstado('conectando', `RECONNECTING · ${i + 1}/${MAX}…`);
-    await new Promise((r) => setTimeout(r, i === 0 ? 600 : INTERVALO));
+  let tentativa = 0;
+  while (Date.now() - inicio < PRAZO) {
+    tentativa += 1;
+    mpEstado('conectando', `RECONNECTING · tentativa ${tentativa}…`);
+    const restante = PRAZO - (Date.now() - inicio);
+    await new Promise((r) => setTimeout(r, Math.min(tentativa === 1 ? 600 : INTERVALO, restante)));
     if (!document.getElementById('mp-panel') || document.getElementById('mp-panel').hidden) {
       mpReconectando = false; return;   // jogador navegou para fora — cancela
     }
+    if (Date.now() - inicio >= PRAZO) break;
     mpNoAtual = no;
     mpConectando = false;   // mpEntrar guarda com este flag — reseta da tentativa anterior
     try {
       await mpEntrar(sala, team);
       if (mpSessao) { mpReconectando = false; return; }   // reconectou
-    } catch { /* tenta de novo */ }
+    } catch { /* tenta de novo até SLOT_IDLE_MS */ }
   }
   mpReconectando = false;
   /* saiu de todas — agora sim o quit de telemetria e a mensagem honesta */

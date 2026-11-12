@@ -71,22 +71,54 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
     if not build or not deploy:
         return ['preview por separação incompleto: falta preview-build.yml ou preview-deploy.yml']
 
-    # Só a INSTRUÇÃO conta. Os dois arquivos explicam em comentário o que NÃO fazem
-    # ("não roda npm ci", "não usa pull_request_target") e ler o comentário como se
-    # fosse código acusaria justamente quem documentou a trava.
+    # Só a INSTRUÇÃO conta. Remova comentários inline sem destruir `#` dentro de
+    # strings YAML; depois normalize chaves de evento entre aspas para que o gate
+    # não dependa da grafia escolhida pelo autor.
     def codigo(texto: str) -> str:
-        sem_comentario = '\n'.join(l for l in texto.splitlines() if not l.lstrip().startswith('#'))
+        linhas = []
+        for linha in texto.splitlines():
+            aspas = None
+            escapado = False
+            limpa = []
+            for caractere in linha:
+                if escapado:
+                    limpa.append(caractere)
+                    escapado = False
+                    continue
+                if caractere == '\\' and aspas == '"':
+                    limpa.append(caractere)
+                    escapado = True
+                    continue
+                if caractere in ("'", '"'):
+                    if aspas is None:
+                        aspas = caractere
+                    elif aspas == caractere:
+                        aspas = None
+                if caractere == '#' and aspas is None:
+                    break
+                limpa.append(caractere)
+            if ''.join(limpa).strip():
+                linhas.append(''.join(limpa))
+        sem_comentario = '\n'.join(linhas)
         return re.sub(r"(['\"])(pull_request|push|schedule|workflow_dispatch|workflow_run)\1\s*:", r"\2:", sem_comentario)
+
+    def tem_trigger(codigo: str, evento: str) -> bool:
+        chave = rf'(?<![A-Za-z0-9_-]){re.escape(evento)}(?![A-Za-z0-9_-])'
+        return bool(
+            re.search(rf'(?m)^\s*on\s*:\s*\[[^\]]*{chave}', codigo)
+            or re.search(rf'(?m)^\s*on\s*:\s*\{{[^}}]*{chave}\s*:', codigo)
+            or re.search(rf'(?m)^\s+{re.escape(evento)}\s*:', codigo)
+        )
 
     build, deploy = codigo(build), codigo(deploy)
 
     if 'pull_request_target' in build:
         errors.append('PRV1 o job que COMPILA usa pull_request_target — passaria a enxergar segredo rodando código do fork')
-    if 'workflow_dispatch:' not in build:
+    if not tem_trigger(build, 'workflow_dispatch'):
         errors.append('PRV1 o job que COMPILA não roda por workflow_dispatch — preview de PR é cf-preview; Vercel é emergência manual')
-    for disparo in ('pull_request:', 'push:', 'schedule:'):
-        if disparo in build:
-            errors.append(f'PRV1 o job que COMPILA volta a disparar sozinho por {disparo.rstrip(":")} — cada push de PR voltaria a buildar na Vercel')
+    for disparo in ('pull_request', 'push', 'schedule'):
+        if tem_trigger(build, disparo):
+            errors.append(f'PRV1 o job que COMPILA volta a disparar sozinho por {disparo} — cada push de PR voltaria a buildar na Vercel')
     if 'secrets.' in build:
         errors.append('PRV1 o job que COMPILA referencia `secrets.` — ele roda código do fork e não pode ter o que roubar')
 
@@ -251,6 +283,7 @@ def selftest(source: str) -> list[str]:
         'compila-volta-pr': (build.replace('  workflow_dispatch:', '  pull_request:\n  workflow_dispatch:'), deploy),
         'compila-volta-pr-quoted': (build.replace('  workflow_dispatch:', '  "pull_request":\n  workflow_dispatch:'), deploy),
         'compila-volta-pr-flow': (build.replace('on:\n  workflow_dispatch:', 'on: {"pull_request": {}, "workflow_dispatch": {}}'), deploy),
+        'compila-inline-trigger-comment': (build.replace('on:\n  workflow_dispatch:', 'on: [pull_request] # workflow_dispatch: emergency'), deploy),
         'publica-sem-run': (build, deploy.replace('  workflow_run:', '  schedule:')),
         'publica-faz-checkout': (build, deploy + '\n      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683\n'),
         'publica-constroi': (build, deploy.replace('--prebuilt', '')),
@@ -275,7 +308,7 @@ def selftest(source: str) -> list[str]:
     # exigir mordida de uma régua que não tem mais o que guardar. O contrato novo é
     # medido pelas mutações de `separacao` logo acima.
     antigo_vivo = 'vercel deploy' in source
-    missed = [
+    missed = missed_sep + [
         name for name, mutated in mutations.items()
         if antigo_vivo and not (preview_failures(mutated) + supply_failures({WORKFLOW: mutated}))
     ]
