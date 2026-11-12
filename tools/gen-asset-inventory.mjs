@@ -120,7 +120,7 @@ function literalBindings(text) {
     .map((match) => [match[1], match[3]]));
   for (const name of Object.keys(values)) {
     const reassigned = new RegExp(`(?:^|[;\\n}])\\s*${name}\\s*(?:=|\\+=|-=|\\*=|\\/=|\\+\\+|--)`, 'm').test(text);
-    const shadowedParameter = new RegExp(`\\bfunction\\s+[A-Za-z_$][\\w$]*\\s*\\([^)]*\\b${name}\\b|\\([^)]*\\b${name}\\b[^)]*\\)\\s*=>`).test(text);
+    const shadowedParameter = new RegExp(`\\bfunction\\s+[A-Za-z_$][\\w$]*\\s*\\([^)]*\\b${name}\\b|\\([^)]*\\b${name}\\b[^)]*\\)\\s*=>|\\b${name}\\s*=>`).test(text);
     const imported = new RegExp(`\\bimport\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from`).test(text);
     if (reassigned || shadowedParameter || imported) delete values[name];
   }

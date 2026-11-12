@@ -129,15 +129,15 @@ function mutations() {
     console.log('AI2e: values from a two-level reverse importer chain prove a dynamic reference.');
 
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\n");
-    put(fixture, 'public/js/consumer.js', "import { clipUrl } from './refs.js';\nconst character = 'dead';\ncharacter = runtimeId;\nconst state = 'idle';\nexport const url = clipUrl(character, state);\n");
-    put(fixture, 'public/models/anims/dead/idle.glb', 'reassigned-literal');
+    put(fixture, 'public/js/consumer.js', "import { clipUrl } from './refs.js';\nconst character = 'dead';\nconst state = 'idle';\nexport const load = (items) => items.map(character => clipUrl(character, state));\n");
+    put(fixture, 'public/models/anims/dead/idle.glb', 'shadowed-literal');
     result = runInventory(fixture, ['--check']);
-    expectStatus(result, 1, 'reassigned constant cannot prove a dynamic reference');
+    expectStatus(result, 1, 'shadowed constant cannot prove a dynamic reference');
     assert.match(result.stderr, /orphan-new: models\/anims\/dead\/idle\.glb/);
     rmSync(join(fixture, 'public/models/anims/dead/idle.glb'));
     rmSync(join(fixture, 'public/js/consumer.js'));
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
-    console.log('AI2f: a reassigned binding cannot self-approve its stale literal.');
+    console.log('AI2f: a bare-arrow parameter cannot self-approve the shadowed module literal.');
 
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
