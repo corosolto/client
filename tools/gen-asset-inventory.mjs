@@ -84,11 +84,42 @@ function dynamicPatterns(corpus) {
   return patterns;
 }
 
-export function isReferenced(path, corpus) {
-  if (new RegExp(`(?<![\\w.-])${escaped(path)}(?![\\w.-])`).test(corpus)) return true;
-  for (const pattern of dynamicPatterns(corpus)) {
-    const match = pattern.exec(path);
-    if (match && match.slice(1).every((value) => new RegExp(`['"\`]${escaped(value)}['"\`]`).test(corpus))) return true;
+function importedSources(sourcePath, textByPath, seen = new Set()) {
+  if (!sourcePath || seen.has(sourcePath)) return [];
+  seen.add(sourcePath);
+  const text = textByPath.get(sourcePath) || '';
+  const sources = [text];
+  for (const match of text.matchAll(/\b(?:import|export)\s+(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]/g)) {
+    const specifier = match[1];
+    if (!specifier.startsWith('.')) continue;
+    const imported = resolve(dirname(sourcePath), specifier);
+    if (!textByPath.has(imported)) continue;
+    sources.push(...importedSources(imported, textByPath, seen));
+  }
+  return sources;
+}
+
+export function isReferenced(path, corpus, publicDir = PUBLIC, sources = [corpus], sourcePaths = []) {
+  const qualified = new RegExp(`(?<![\\w./-])\\/?(?:public/)?${escaped(path)}(?![\\w./-])`);
+  if (qualified.test(corpus)) return true;
+  if (path.startsWith('models/anims/')) {
+    const indexPath = join(publicDir, 'models/anims/index.json');
+    if (existsSync(indexPath)) {
+      const index = JSON.parse(readFileSync(indexPath, 'utf8'));
+      const parts = path.split('/');
+      if (parts.length === 4 && parts[3].endsWith('.glb')) {
+        const state = basename(parts[3], '.glb');
+        return Array.isArray(index.clipes?.[parts[2]]) && index.clipes[parts[2]].includes(state);
+      }
+    }
+  }
+  const textByPath = new Map(sourcePaths.map((sourcePath, index) => [sourcePath, sources[index] || '']));
+  for (let index = 0; index < sources.length; index++) {
+    const allowedTexts = sourcePaths.length ? importedSources(sourcePaths[index], textByPath) : [sources[index]];
+    for (const pattern of dynamicPatterns(sources[index])) {
+      const match = pattern.exec(path);
+      if (match && match.slice(1).every((value) => allowedTexts.some((text) => new RegExp(`['"\`]${escaped(value)}['"\`]`).test(text)))) return true;
+    }
   }
   return false;
 }
@@ -99,7 +130,7 @@ export function literalReferences(sources) {
     for (const match of text.matchAll(/'([^']*)'|"([^"]*)"|`([^`]*)`/g)) {
       const value = match[1] ?? match[2] ?? match[3];
       if (value.includes('${') || /[\r\n]/.test(value)) continue;
-      let path = value.trim().replace(/^\.\//, '').replace(/^\//, '');
+      let path = value.trim().replace(/^\.\//, '').replace(/^\//, '').replace(/^public\//, '');
       if (!ROOT_PATTERN.test(path)) continue;
       path = path.split(/[?#]/)[0];
       try { path = decodeURIComponent(path); } catch { continue; }
@@ -153,7 +184,7 @@ export function measureInventory({ root = ROOT, previous = null } = {}) {
   const disk = diskAssets(publicDir);
   const onDisk = new Set(disk);
   const files = Object.fromEntries(disk.map((path) => [path, sha256(join(publicDir, ...path.split('/')))]));
-  const unreferenced = disk.filter((path) => !isReferenced(path, corpus));
+  const unreferenced = disk.filter((path) => !isReferenced(path, corpus, publicDir, sources, sourcePaths));
   const next = { schema: 'asset-inventory-v1', roots: [...ROOTS], files, unreferenced };
   const findings = [];
   const add = (code, path) => findings.push({ code, path });
@@ -163,7 +194,7 @@ export function measureInventory({ root = ROOT, previous = null } = {}) {
   }
   if (previous) {
     for (const path of Object.keys(previous.files)) {
-      if (!onDisk.has(path) && isReferenced(path, corpus)) add('referenced-file-lost', path);
+      if (!onDisk.has(path) && isReferenced(path, corpus, publicDir, sources, sourcePaths)) add('referenced-file-lost', path);
     }
     for (const [path, hash] of Object.entries(files)) {
       if (!Object.hasOwn(previous.files, path)) add(isReferenced(path, corpus) ? 'inventory-new' : 'orphan-new', path);
@@ -203,9 +234,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
 
   const lost = result.findings.filter((finding) => finding.code === 'referenced-file-lost');
   const reviewedUnreferenced = new Set(published.data?.unreferenced || []);
-  const newUnreviewed = published.data
-    ? result.next.unreferenced.filter((path) => !reviewedUnreferenced.has(path))
-    : [];
+  const newUnreviewed = result.next.unreferenced.filter((path) => !reviewedUnreferenced.has(path));
   if (lost.length || newUnreviewed.length) {
     printFindings([...lost, ...newUnreviewed.map((path) => ({ code: 'orphan-new', path }))]);
     if (lost.length) console.error('ASSET-INVENTORY: refusing to erase a still-referenced file from the manifest; restore the file or remove its runtime reference first');

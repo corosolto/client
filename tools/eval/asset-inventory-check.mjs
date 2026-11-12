@@ -41,6 +41,21 @@ function mutations() {
     put(fixture, 'public/posters/kept.jpg', 'poster');
 
     const manifestPath = join(fixture, 'tools/asset-inventory.json');
+    mkdirSync(join(fixture, 'tools'), { recursive: true });
+    const reviewedPath = 'models/skins/manifest.json';
+    writeFileSync(manifestPath, `${JSON.stringify({
+      schema: 'asset-inventory-v1',
+      roots: ['models', 'img/textures', 'textures', 'posters'],
+      files: {
+        [reviewedPath]: createHash('sha256')
+          .update(readFileSync(join(fixture, 'public/models/skins/manifest.json'))).digest('hex'),
+      },
+      unreferenced: [reviewedPath],
+    }, null, 2)}\n`);
+    const initialReview = readFileSync(manifestPath, 'utf8');
+    rmSync(manifestPath);
+    expectStatus(runInventory(fixture), 1, 'bootstrap without a reviewed manifest');
+    writeFileSync(manifestPath, initialReview);
     let result = runInventory(fixture);
     expectStatus(result, 0, 'initial non-audio inventory generation');
     result = runInventory(fixture, ['--check']);
@@ -59,7 +74,7 @@ function mutations() {
     rmSync(join(fixture, 'public/models/props/new-orphan.glb'));
     console.log('AI2: generation refuses a new orphan and the following check still fails.');
 
-    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const catalog = 'catalog';\nexport const logo = 'unrelated';\nexport const backup = 'models/props/logo.glb.backup';\n");
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const catalog = 'catalog';\nexport const logo = 'unrelated';\nexport const backup = 'models/props/logo.glb.backup';\nexport const preview = 'models/props/logo.glb/preview';\nexport const prefix = 'backup/models/props/logo.glb';\n");
     put(fixture, 'public/models/props/logo.glb', 'unrelated-stem');
     result = runInventory(fixture, ['--check']);
     expectStatus(result, 1, 'stem fragment is not an asset reference');
@@ -76,6 +91,16 @@ function mutations() {
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
     expectStatus(runInventory(fixture), 0, 'dynamic reference removal generation');
     console.log('AI2c: a template with literal path values proves a dynamic reference.');
+
+    put(fixture, 'public/js/refs.js', "export const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\n");
+    put(fixture, 'public/models/anims/other.json', '{"id":"adjim","state":"crouch"}\n');
+    put(fixture, 'public/models/anims/adjim/crouch.glb', 'dynamic-reference');
+    result = runInventory(fixture);
+    expectStatus(result, 1, 'values from another module do not prove a dynamic reference');
+    rmSync(join(fixture, 'public/models/anims/adjim/crouch.glb'));
+    rmSync(join(fixture, 'public/models/anims/other.json'));
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    console.log('AI2d: dynamic values must come from the template module.');
 
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
@@ -110,11 +135,11 @@ function mutations() {
     assert.ok(!JSON.parse(readFileSync(manifestPath, 'utf8')).files['models/props/legacy.glb']);
     console.log('AI5: referenced add and reviewed orphan removal migrate safely.');
 
-    writeFileSync(orphans, '{"schema":1,"allow":["legacy/old.mp3"]}\n');
     put(fixture, 'public/audio/time-e/ingame/used.mp3', 'used');
     put(fixture, 'public/audio/legacy/old.mp3', 'reviewed-old-orphan');
     put(fixture, 'public/audio/curated/needed.mp3', 'needed');
     put(fixture, 'public/audio/manifest.json', '{"general":{"needed":"audio/curated/needed.mp3"}}\n');
+    writeFileSync(orphans, `${JSON.stringify({ schema: 2, allow: [{ path: 'legacy/old.mp3', sha256: createHash('sha256').update('reviewed-old-orphan').digest('hex') }] })}\n`);
     expectStatus(runAudio(fixture, orphans), 0, 'audio baseline generation');
     expectStatus(runAudio(fixture, orphans, ['--check']), 0, 'audio baseline check');
     console.log('AU1: allowlisted audio orphan and referenced recording pass.');
@@ -125,6 +150,13 @@ function mutations() {
     assert.match(result.stderr, /orphan-new: legacy\/new\.mp3/);
     rmSync(join(fixture, 'public/audio/legacy/new.mp3'));
     console.log('AU2: audio orphan-new mutant fails.');
+
+    put(fixture, 'public/audio/legacy/old.mp3', 'tampered-content');
+    result = runAudio(fixture, orphans, ['--check']);
+    expectStatus(result, 1, 'approved audio with changed bytes is rejected');
+    assert.match(result.stderr, /orphan-new: legacy\/old\.mp3/);
+    put(fixture, 'public/audio/legacy/old.mp3', 'reviewed-old-orphan');
+    console.log('AU2b: an allowlisted path with different bytes is rejected.');
 
     rmSync(join(fixture, 'public/audio/curated/needed.mp3'));
     result = runAudio(fixture, orphans, ['--check']);
@@ -137,7 +169,7 @@ function mutations() {
     expectStatus(runAudio(fixture, orphans), 0, 'safe audio add generation');
     expectStatus(runAudio(fixture, orphans, ['--check']), 0, 'safe audio add check');
     rmSync(join(fixture, 'public/audio/legacy/old.mp3'));
-    writeFileSync(orphans, '{"schema":1,"allow":[]}\n');
+    writeFileSync(orphans, '{"schema":2,"allow":[]}\n');
     expectStatus(runAudio(fixture, orphans), 0, 'safe audio orphan removal generation');
     expectStatus(runAudio(fixture, orphans, ['--check']), 0, 'safe audio orphan removal check');
     assert.ok(existsSync(join(fixture, 'public/audio/time-e/ingame/added.mp3')));

@@ -60,6 +60,13 @@ if (politicaOrfaos.erro) {
   process.exit(1);
 }
 const orfaosPermitidos = politicaOrfaos.allow;
+function aprovadoOrfao(rel) {
+  const expected = orfaosPermitidos.get(rel);
+  if (!expected) return false;
+  const path = join(AUDIO, rel);
+  if (!existsSync(path)) return false;
+  return createHash('sha256').update(readFileSync(path)).digest('hex') === expected;
+}
 
 function referenciasAudio(value) {
   const refs = [];
@@ -129,8 +136,8 @@ if (prev?._privateBuild?.format === 'content-addressed-v1') {
     ? readdirSync(opaqueDir).filter((name) => AUDIO_EXT.test(name)).map((name) => `audio/a/${name}`)
     : [];
   const orphanOpaque = opaque.filter((ref) => !unique.has(ref));
-  const newOrphanOpaque = orphanOpaque.filter((ref) => !orfaosPermitidos.has(ref.slice('audio/'.length)));
-  const staleOrphanAllow = [...orfaosPermitidos].filter((rel) => !orphanOpaque.includes(`audio/${rel}`));
+  const newOrphanOpaque = orphanOpaque.filter((ref) => !aprovadoOrfao(ref.slice('audio/'.length)));
+  const staleOrphanAllow = [...orfaosPermitidos.keys()].filter((rel) => !orphanOpaque.includes(`audio/${rel}`));
   const menuExpected = MENU_MUSIC_ACTIVE_IDS.map((id) => `audio/menu-music/${id}.mp3`);
   const missingMenuMirror = menuExpected.filter((ref) => !existsSync(join(PUBLICO, ref)));
   const extraMenuMirror = listAudio(join(AUDIO, 'menu-music')).map(toUrl).filter((ref) => !menuExpected.includes(ref));
@@ -304,8 +311,8 @@ const total = (function count(d) {
 
 const missingRefs = [...new Set(referenciasAudio(out))]
   .filter((ref) => !existsSync(join(PUBLICO, decodeURIComponent(ref))));
-const newOrphans = orphans.filter((rel) => !orfaosPermitidos.has(rel));
-const staleOrphanAllow = [...orfaosPermitidos].filter((rel) => !orphans.includes(rel));
+const newOrphans = orphans.filter((rel) => !aprovadoOrfao(rel));
+const staleOrphanAllow = [...orfaosPermitidos.keys()].filter((rel) => !orphans.includes(rel));
 
 const next = JSON.stringify(out, null, 1) + '\n';
 const same = existsSync(MANIFEST) && readFileSync(MANIFEST, 'utf8') === next;
