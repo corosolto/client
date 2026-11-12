@@ -75,7 +75,8 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
     # ("não roda npm ci", "não usa pull_request_target") e ler o comentário como se
     # fosse código acusaria justamente quem documentou a trava.
     def codigo(texto: str) -> str:
-        return '\n'.join(l for l in texto.splitlines() if not l.lstrip().startswith('#'))
+        sem_comentario = '\n'.join(l for l in texto.splitlines() if not l.lstrip().startswith('#'))
+        return re.sub(r"(['\"])(pull_request|push|schedule|workflow_dispatch|workflow_run)\1\s*:", r"\2:", sem_comentario)
 
     build, deploy = codigo(build), codigo(deploy)
 
@@ -248,6 +249,8 @@ def selftest(source: str) -> list[str]:
         'compila-com-segredo': (build + '\n        env:\n          X: ${{ secrets.VERCEL_TOKEN }}\n', deploy),
         'compila-com-target': (build.replace('  workflow_dispatch:', '  pull_request_target:'), deploy),
         'compila-volta-pr': (build.replace('  workflow_dispatch:', '  pull_request:\n  workflow_dispatch:'), deploy),
+        'compila-volta-pr-quoted': (build.replace('  workflow_dispatch:', '  "pull_request":\n  workflow_dispatch:'), deploy),
+        'compila-volta-pr-flow': (build.replace('on:\n  workflow_dispatch:', 'on: {"pull_request": {}, "workflow_dispatch": {}}'), deploy),
         'publica-sem-run': (build, deploy.replace('  workflow_run:', '  schedule:')),
         'publica-faz-checkout': (build, deploy + '\n      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683\n'),
         'publica-constroi': (build, deploy.replace('--prebuilt', '')),
