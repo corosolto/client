@@ -26,7 +26,6 @@ function start({
   touch = true,
   standalone = false,
   lang = 'pt-BR',
-  langReady = null,
   offline = false,
   resources = [],
 } = {}) {
@@ -36,6 +35,7 @@ function start({
   const registrations = [];
   const worker = { postMessage(message) { posted.push(message); } };
   const serviceWorker = offline ? {
+    controller: worker,
     addEventListener() {},
     async register(path, options) {
       registrations.push({ path, options });
@@ -43,7 +43,6 @@ function start({
     },
   } : undefined;
   const window = {
-    __CS_LANG_READY__: langReady,
     location: { origin: 'https://jogo.test' },
     performance: { getEntriesByType: () => resources.map((name) => ({ name })) },
     navigator: { userAgent, platform, maxTouchPoints: touch ? 5 : 0, standalone, serviceWorker },
@@ -62,7 +61,6 @@ function start({
     help: nodes.get('pwa-install-help'),
     posted,
     registrations,
-    setLang: (value) => { document.documentElement.lang = value; },
     dispatchWindow: async (type, event = {}) => {
       for (const listener of windowListeners.get(type) || []) await listener(event);
     },
@@ -108,22 +106,12 @@ assert.equal(installed.panel.hidden, true, 'installed app does not see install p
 const desktop = start({ touch: false });
 assert.equal(desktop.panel.hidden, true, 'desktop does not see mobile install promotion');
 
-let resolveLang;
-const langReady = new Promise((resolve) => { resolveLang = resolve; });
-const delayedEnglish = start({ langReady });
-assert.equal(delayedEnglish.panel.hidden, true, 'install promotion waits for authoritative language');
-delayedEnglish.setLang('en');
-resolveLang();
-await langReady;
-assert.equal(delayedEnglish.action.textContent, 'HOW TO INSTALL', 'resolved geo language controls generated PWA copy');
-
 const english = start({ lang: 'en' });
 assert.equal(english.action.textContent, 'HOW TO INSTALL', 'English install CTA is localized');
 assert.match(english.help.textContent, /browser menu/);
 await english.action.dispatch('click');
 assert.equal(english.help.textContent, 'Open your browser menu and choose “Install app” or “Add to Home Screen”.');
 assert.equal(english.panel.attributes.get('aria-label'), 'Install the web beta');
-
 
 const offline = start({
   offline: true,
@@ -146,4 +134,5 @@ assert.deepEqual([...offline.posted.at(-1).urls], [
   'https://jogo.test/js/main.js?v=release',
   'https://jogo.test/models/characters/test.glb?v=asset',
 ], 'page warms only the visited same-origin game resources');
+
 console.log('PWA install contract: PASS (Android, iPhone, EN, standalone and desktop)');

@@ -2,7 +2,6 @@
    Só mostra o que o cliente mede; régua em tools/eval/ui-v3-resultado.mjs. */
 import { tr } from '../i18n.js';
 import { compartilhar, linkCompartilhavel } from '../compartilhar.js';
-import { timesComTerritorio } from '../objective-result.js';
 
 const $ = (id) => document.getElementById(id);
 const TIME = { E: 'Time E', B: 'Time B' };
@@ -55,12 +54,11 @@ function dados(fim) {
        02/11: vencedor dizia um time e a tela mostrava DERROTA pelo placar de rodadas,
        que não representa o modo). Sem objetivo, mantém a classe do jogo. */
     const vencedorObjetivo = g.objective?.state?.winner;
-    const timesTerritorio = timesComTerritorio(g.objective);
     const abates = g.player.kills | 0;
     return {
       nomes: g.world?.mode === 'horde' ? { E: g._teamName('E'), B: g._teamName('B'), J: g._teamName('J') } : null,
       empate: vencedorObjetivo === 'draw',
-      territorio: timesTerritorio ? timesTerritorio.map(team=>[g._teamName(team),Math.round((g.objective.state.territorio[team] || 0)*100)]) : null,
+      territorio: g.objective ? (g.objective.regras.times === 3 ? ['E','B','J'] : ['E','J']).map(team=>[g._teamName(team),Math.round((g.objective.state.territorio?.[team] || 0)*100)]) : null,
       venceu: vencedorObjetivo ? vencedorObjetivo === eu && vencedorObjetivo !== 'draw' : venceu,
       vencedor: vencedorObjetivo || (venceu ? eu : eles), placar: [g.roundsWon[eu] | 0, g.roundsWon[eles] | 0],
       abates, mortes: g.player.deaths | 0, hs: abates ? Math.round((100 * (g.player.headshots | 0)) / abates) : 0,

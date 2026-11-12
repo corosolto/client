@@ -2,14 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-export const HAND_DEBT = Object.freeze({
-  'RIG:pistol@pintura': Object.freeze({
-    rigHash: 'f468adc9279d',
-    motivo: '#1128 — coro/pistol-hires.glb (gold#pistol, rota da pintura; sem pintura o X18 da fábrica desde 06/11) '
-      + 'traz a malha armmesh_Mat_0 do rig L da faca (R_wrist_026) com o material CoroSolto_FP_Gloves; a linha '
-      + 'golden é o rig A da AK (Requests_Studio_Hands + .001). Conserto é re-rig do GLB no Blender, não arnês.',
-  }),
-});
+// Vazia desde 10/11 (#1315): a pistola pintada saiu da gold#pistol (rig L) para o X18 da fábrica.
+export const HAND_DEBT = Object.freeze({});
 export const HAND_INPUTS = ['tools/eval/vm-hand-continuity-check.mjs', 'tools/eval/vm-hand-continuity-support.mjs',
   'tools/eval/vm-hand-continuity-control.mjs', 'public/js/authoredvm.js', 'public/js/meleevm.js', 'public/js/vmhands.js',
   'public/js/weapons.js', 'public/js/factions.js', 'public/js/game.js', 'public/js/data/vmconfig.js',
@@ -26,7 +20,7 @@ export function parseHandOptions(args) {
     if (!key || seen.has(key)) throw Error(`CLI: flag inválida/repetida: ${arg}`);
     seen.add(key); options[key] = match ? match[2] : true;
   }
-  if (options.mutante && !['luva-por-arma', 'pbr-por-arma', 'troca-rig', 'luva-crua', 'divida-paga'].includes(options.mutante)) throw Error('CLI: mutante desconhecido');
+  if (options.mutante && !['luva-por-arma', 'pbr-por-arma', 'troca-rig', 'luva-crua'].includes(options.mutante)) throw Error('CLI: mutante desconhecido');
   return options;
 }
 export function readHandWeaponIds(root) {

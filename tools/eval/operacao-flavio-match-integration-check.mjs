@@ -16,8 +16,8 @@ if (mutation) {
       'this.objective?.state?.winner',
     ],
     'stats-de-territorio': [
-      'const timesTerritorio = timesComTerritorio(this.objective);',
-      'const timesTerritorio = this.objective.regras.times;',
+      "this.el.matchStats.innerHTML = escort\n      ? frase('statsFim', this.roundsWon.E, this.roundsWon.B, this.player.kills, this.player.name, this.player.deaths)\n      : this.objective",
+      'this.el.matchStats.innerHTML = this.objective',
     ],
     'timeout-fora-escolta': [
       "if (this.world.mode === 'escort' && this.state === 'live') {",

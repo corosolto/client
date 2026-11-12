@@ -1,6 +1,5 @@
 import { JAVAPORCO_GRAVACOES } from './data/javaporcos_audio.js';
 import { normalizarManifestAudio } from './audio_manifest.js';
-import { fetchComRetry } from './apibase.js';
 // Procedural WebAudio SFX + user sample packs (audio/manifest.json).
 // Registre samples próprios e licenciados na família `jogo` de audio/manifest.json.
 /* Fator global do tiro — ver shotWeapon(). 0,42 = -7,5 dB, revisão pedida pelo dono no
@@ -1086,7 +1085,7 @@ export class Sfx {
     this._boarSamples ||= new Map();
     if (!this._boarLoading) this._boarLoading = Promise.all(Object.entries(JAVAPORCO_GRAVACOES).map(async ([key, sample]) => {
       if (this._boarSamples.has(key)) return;
-      const response = await fetchComRetry(sample.file, {}, { tentativas: 2, esperaMs: 350 });
+      const response = await fetch(sample.file);
       if (!response.ok) throw new Error(`JAV-AUDIO: HTTP ${response.status} em ${sample.file}`);
       const decoded = await this.ctx.decodeAudioData(await response.arrayBuffer());
       if (!(decoded.duration > 0)) throw new Error(`JAV-AUDIO: gravação vazia em ${sample.file}`);
