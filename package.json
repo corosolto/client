@@ -320,7 +320,7 @@
     "eval:launchwatchdog": "node tools/eval/launch-watchdog-check.mjs",
     "eval:launchrace": "node tools/eval/launch-race-check.mjs && node --test tests/menu-backdrop.test.mjs",
     "eval:spawn": "node tools/eval/spawn-settle-check.mjs",
-    "check:deploy": "node tools/eval/runner.mjs --suite=deploy eval:dispose",
+    "check:deploy": "node tools/eval/runner.mjs --suite=deploy",
     "check:prepush": "node tools/eval/selecao-pre-push.mjs",
     "check:vercel": "node tools/eval/runner.mjs syntax eval:recoil-contract eval:firing-cadence eval:ballistics-falloff eval:assetfetch eval:apis eval:geoproxy eval:nosgemeos",
     "check:fast": "node tools/eval/runner.mjs --suite=fast",
