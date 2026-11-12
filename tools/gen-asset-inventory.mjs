@@ -88,22 +88,16 @@ function dynamicPatterns(corpus) {
 function identifiers(pattern, found = []) {
   if (!pattern || typeof pattern !== 'object') return found;
   if (pattern.type === 'Identifier') { found.push(pattern.name); return found; }
-  for (const value of Object.values(pattern)) {
-    if (Array.isArray(value)) value.forEach((child) => identifiers(child, found));
-    else if (value && typeof value.type === 'string') identifiers(value, found);
-  }
+  if (pattern.type === 'RestElement') return identifiers(pattern.argument, found);
+  if (pattern.type === 'AssignmentPattern') return identifiers(pattern.left, found);
+  if (pattern.type === 'ArrayPattern') pattern.elements.forEach((element) => identifiers(element, found));
+  if (pattern.type === 'ObjectPattern') pattern.properties.forEach((property) => identifiers(property.value, found));
   return found;
 }
 
 function assignmentIdentifiers(pattern, found = []) {
-  if (!pattern || typeof pattern !== 'object') return found;
-  if (pattern.type === 'Identifier') { found.push(pattern.name); return found; }
-  if (pattern.type === 'MemberExpression') return found;
-  if (pattern.type === 'RestElement') return assignmentIdentifiers(pattern.argument, found);
-  if (pattern.type === 'AssignmentPattern') return assignmentIdentifiers(pattern.left, found);
-  if (pattern.type === 'ArrayPattern') pattern.elements.forEach((element) => assignmentIdentifiers(element, found));
-  if (pattern.type === 'ObjectPattern') pattern.properties.forEach((property) => assignmentIdentifiers(property.value, found));
-  return found;
+  if (pattern?.type === 'MemberExpression') return found;
+  return identifiers(pattern, found);
 }
 
 function templateText(node) {

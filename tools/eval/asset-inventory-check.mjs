@@ -205,6 +205,17 @@ function mutations() {
     expectStatus(runInventory(fixture), 0, 'member assignment cleanup');
     console.log('AI2l: member writes do not invalidate same-named lexical constants.');
 
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\n");
+    put(fixture, 'public/js/consumer.js', "import { clipUrl } from './refs.js';\nconst id = 'adjim';\nconst state = 'idle';\nfunction inspect({ id: other }) { return other; }\nexport const url = clipUrl(id, state);\n");
+    put(fixture, 'public/models/anims/adjim/idle.glb', 'destructuring-alias');
+    expectStatus(runInventory(fixture), 0, 'destructuring key does not shadow outer literal');
+    expectStatus(runInventory(fixture, ['--check']), 0, 'destructuring alias reference check');
+    rmSync(join(fixture, 'public/models/anims/adjim/idle.glb'));
+    rmSync(join(fixture, 'public/js/consumer.js'));
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    expectStatus(runInventory(fixture), 0, 'destructuring alias cleanup');
+    console.log('AI2m: an aliased property key is not a lexical binding.');
+
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
     reviewed.files['models/props/legacy.glb'] = createHash('sha256')
