@@ -258,7 +258,7 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
       const letras = new THREE.Mesh(g, matTxt); letras.name = 'sertao-hd-placa-letras'; grupo.add(letras); lixo.push(g, matTxt, tex);
     }
     const liso = oficinas(), V3 = (x, y, z) => new THREE.Vector3(x, y, z);
-    const TINTAS = [[.17, .27, .43], [.15, .3, .17], [.4, .385, .28]], pin = oficinas(), FERRO = [.1, .095, .09], BREU = [.02, .02, .024], BARRO = [.24, .14, .095], CAL = [1, 1, 1], I4 = () => new THREE.Matrix4();
+    const TINTAS = [[.17, .27, .43], [.15, .3, .17], [.4, .385, .28]], pin = oficinas(), FERRO = [.1, .095, .09], BREU = [.02, .02, .024], BARRO = [.15, .05, .024], CAL = [1.1, 1.08, 1.04], ANIL = [.07, .16, .42], ANIL_PORTA = [.11, .2, .43], DEGRAU = [.5, .47, .43], I4 = () => new THREE.Matrix4();
     const pl = oficina(), tl = oficina(), panos = [], escondidos = [];
     // Recortes do atlas de letreiros (px num canvas de 1024): [x, y, largura, altura].
     const RT = { bodega: [0, 0, 512, 150], barbearia: [512, 0, 512, 150], mercearia: [0, 150, 512, 150], vote: [512, 150, 512, 150], forro: [0, 300, 1024, 170], queijo: [0, 470, 640, 220], fiado: [640, 470, 384, 220],
@@ -396,39 +396,38 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
       for (const sx of [-1, 1]) { liso.caixa(I4().setPosition(hx + sx * .21, .82, hz), .02, .52, .045, [.14, .09, .06]); liso.caixa(I4().setPosition(hx + sx * .21, .54, hz), .03, .09, .13, FERRO); }
       liso.cilindro(V3(hx, 1.06, hz + .8), V3(hx + .1, .55, hz + .86), .012, .012, 3, [.14, .09, .06], { tampas: false }); liso.cilindro(V3(hx, 1.06, hz + .9), V3(hx - .08, .6, hz + .82), .012, .012, 3, [.14, .09, .06], { tampas: false });
     }
-    // Matriz sertaneja em volume: frontispício com cunhais, cimalha, volutas, sineira aberta com sino, óculo e porta almofadada recuada.
+    // Capela caiada: frontão triangular, torre sineira baixa no eixo, barra e guarnições de anil, cruz de ferro.
     const matriz = (M, k) => {
       const mz = (x, y, z) => M.clone().multiply(I4().setPosition(x, y, z)), P = (x, y, z) => V3(x, y, z).applyMatrix4(M), cx = (o, x, y, z, w, h, d, cor = CAL) => o.caixa(mz(x, y, z), w, h, d, cor), r = rngDe(53);
       cx(pl, 0, 1.6, -.55, 4, 3.2, 5); pl.prisma(mz(0, 0, -3.02), [[-2, 3.2], [2, 3.2], [0, 4.16]], .06, CAL, [0, 3.4]);
       for (const s of [-1, 1]) tl.caixa(M.clone().multiply(I4().makeRotationZ(-s * .43).setPosition(s * 1.08, 3.69, -.5)), 2.55, .1, 5.35, CAL);
       tl.cilindro(P(0, 4.2, -3.2), P(0, 4.2, 2.05), .1 * k, .1 * k, 6, CAL);
-      for (const s of [-1, 1]) { cx(pl, s * 1.4, 1.75, 2.3, 1.5, 3.5, .6); cx(pl, s * 1.4, .4, 2.625, 1.5, .8, .07); cx(pl, s * 1.97, 1.75, 2.65, .36, 3.5, .12); cx(pl, s * 1.97, 3.36, 2.67, .46, .1, .18);
-        cx(pl, s * .74, 1.33, 2.63, .16, 2.22, .08); cx(pl, s * 1.97, 3.95, 2.38, .36, .34, .36); pl.cilindro(P(s * 1.97, 4.12, 2.38), P(s * 1.97, 4.66, 2.38), .22 * k, .02 * k, 4, CAL, { giro: Math.PI / 4 });
-        const vol = [[.8, 3.78], [1.78, 3.78], [1.78, 3.96], [1.66, 4.06], [1.5, 4.1], [1.34, 4.18], [1.2, 4.32], [1.1, 4.5], [1.04, 4.7], [.98, 4.86], [.9, 4.96], [.8, 4.98]];
-        pl.prisma(mz(0, 0, 2.42), s > 0 ? vol : vol.map(([x, y]) => [-x, y]).reverse(), .36, CAL, [s * .86, 3.84]);
-        pl.cilindro(P(s * 1.58, 3.97, 2.6), P(s * 1.58, 3.97, 2.67), .13 * k, .13 * k, 10, CAL); pl.cilindro(P(s * .95, 4.8, 2.6), P(s * .95, 4.8, 2.66), .1 * k, .1 * k, 10, CAL);
+      cx(pl, 0, .43, -3.065, 4.04, .86, .03, ANIL);
+      for (const s of [-1, 1]) { cx(pl, s * 1.4, 1.75, 2.3, 1.5, 3.5, .6); cx(pl, s * 1.97, 1.75, 2.63, .36, 3.5, .07);
+        cx(pl, s * 1.3, .43, 2.615, 1.3, .86, .03, ANIL); cx(pl, s * 1.97, .43, 2.68, .38, .86, .03, ANIL); cx(pl, s * 2.015, .43, -.55, .03, .86, 5, ANIL);
+        cx(pl, s * .74, 1.33, 2.63, .16, 2.22, .08, ANIL);
+        pl.caixa(M.clone().multiply(I4().makeRotationZ(-s * .388).setPosition(s * 1.2, 4.06, 2.32)), 2.06, .1, .7, CAL);
         for (const zc of [-2.2, -.6]) { const F = M.clone().multiply(I4().makeRotationY(s * Math.PI / 2).setPosition(s * 2.0, 0, zc)), fm = (x, y, z) => F.clone().multiply(I4().setPosition(x, y, z));
-          pl.caixa(fm(0, 2.52, .04), .74, .1, .1, CAL); pl.caixa(fm(0, 1.56, .04), .7, .07, .12, CAL);
-          for (const sx of [-1, 1]) folha((x, y, z) => fm(-sx * .27 + x, 1.6 + y, .03 + z), sx, .265, .86, TINTAS[0], 'tabua', r); } }
+          pl.caixa(fm(0, 2.52, .04), .74, .1, .1, ANIL); pl.caixa(fm(0, 1.56, .04), .7, .07, .12, ANIL);
+          for (const sx of [-1, 1]) folha((x, y, z) => fm(-sx * .27 + x, 1.6 + y, .03 + z), sx, .265, .86, ANIL_PORTA, 'tabua', r); } }
       cx(pl, 0, 2.95, 2.3, 1.3, 1.1, .6); cx(liso, 0, 1.3, 2.04, 1.3, 2.2, .04, BREU);
-      pl.prisma(mz(0, 0, 2.64), [[-.84, 2.42], [.84, 2.42], [.84, 2.5], [.6, 2.62], [.3, 2.7], [0, 2.72], [-.3, 2.7], [-.6, 2.62], [-.84, 2.5]], .09, CAL, [0, 2.45]);
-      pl.cilindro(P(0, 3.04, 2.6), P(0, 3.04, 2.67), .31 * k, .31 * k, 16, CAL); liso.cilindro(P(0, 3.04, 2.665), P(0, 3.04, 2.676), .21 * k, .21 * k, 16, [.03, .04, .07]);
-      for (const [w, h] of [[.42, .03], [.03, .42]]) pin.caixa(mz(0, 3.04, 2.682), w, h, .012, tinge(TINTAS[0], .9));
-      for (const sx of [-1, 1]) folha((x, y, z) => mz(-sx * .64 + x, .23 + y, 2.1 + z), sx, .635, 2.16, TINTAS[0], 'almofada', r);
-      for (const [y, w, d, h] of [[3.54, 4.5, .72, .08], [3.65, 4.66, .86, .14], [3.75, 4.76, .94, .06]]) cx(pl, 0, y, 2.38, w, h, d);
+      pl.prisma(mz(0, 0, 2.64), [[-.84, 2.42], [.84, 2.42], [.84, 2.5], [.6, 2.62], [.3, 2.7], [0, 2.72], [-.3, 2.7], [-.6, 2.62], [-.84, 2.5]], .09, ANIL, [0, 2.45]);
+      pl.cilindro(P(0, 3.08, 2.6), P(0, 3.08, 2.67), .31 * k, .31 * k, 16, ANIL); liso.cilindro(P(0, 3.08, 2.665), P(0, 3.08, 2.676), .21 * k, .21 * k, 16, [.03, .04, .07]);
+      for (const [w, h] of [[.42, .03], [.03, .42]]) liso.caixa(mz(0, 3.08, 2.682), w, h, .012, FERRO);
+      for (const sx of [-1, 1]) folha((x, y, z) => mz(-sx * .64 + x, .23 + y, 2.1 + z), sx, .635, 2.16, ANIL_PORTA, 'almofada', r);
+      cx(pl, 0, 3.56, 2.34, 4.5, .12, .72); pl.prisma(mz(0, 0, 2.3), [[-2.15, 3.62], [2.15, 3.62], [0, 4.5]], .56, CAL, [0, 3.9]);
       cx(pl, 0, 4.14, 2, 1.6, .72, 1.6); for (const sx of [-1, 1]) for (const sz of [-1, 1]) cx(pl, sx * .6, 4.75, 2 + sz * .6, .4, .5, .4);
       const arco = (a, b) => { const pts = b > a ? [[-b, 5], [-a, 5]] : [[-a, 5]]; for (let i = 1; i < 8; i++) pts.push([-a * Math.cos(i / 8 * Math.PI), 5 + a * Math.sin(i / 8 * Math.PI)]);
         pts.push([a, 5]); if (b > a) pts.push([b, 5]); pts.push([b, 5.5], [-b, 5.5]); return pts; };
       for (const sz of [-1, 1]) pl.prisma(mz(0, 0, 2 + sz * .6), arco(.4, .8), .4, CAL, [0, 5.48]);
       for (const sx of [-1, 1]) pl.prisma(M.clone().multiply(I4().makeRotationY(Math.PI / 2).setPosition(sx * .6, 0, 2)), arco(.4, .4), .4, CAL, [0, 5.48]);
-      cx(pl, 0, 5.54, 2, 1.72, .08, 1.72); cx(pl, 0, 5.64, 2, 1.9, .12, 1.9);
-      const cant = [[-.8, 2.8], [.8, 2.8], [.8, 1.2], [-.8, 1.2]].map(([x, z]) => P(x, 5.7, z)), apice = P(0, 6.62, 2);
+      cx(pl, 0, 5.54, 2, 1.72, .08, 1.72, ANIL); cx(pl, 0, 5.64, 2, 1.9, .12, 1.9);
+      const cant = [[-.8, 2.8], [.8, 2.8], [.8, 1.2], [-.8, 1.2]].map(([x, z]) => P(x, 5.7, z)), apice = P(0, 6.5, 2);
       for (let i = 0; i < 4; i++) pl.tri(cant[i], cant[(i + 1) % 4], apice, CAL);
-      for (const sx of [-1, 1]) for (const sz of [-1, 1]) { cx(pl, sx * .8, 5.78, 2 + sz * .8, .16, .16, .16); pl.cilindro(P(sx * .8, 5.86, 2 + sz * .8), P(sx * .8, 6.14, 2 + sz * .8), .09 * k, .015 * k, 4, CAL, { giro: Math.PI / 4 }); }
-      liso.cilindro(P(0, 6.58, 2), P(0, 6.7, 2), .07 * k, .07 * k, 6, FERRO, { aneis: [[0, .3], [.5, 1], [1, .3]] }); cx(liso, 0, 7, 2, .05, .78, .05, FERRO); cx(liso, 0, 7.1, 2, .46, .05, .05, FERRO);
+      liso.cilindro(P(0, 6.46, 2), P(0, 6.58, 2), .07 * k, .07 * k, 6, FERRO, { aneis: [[0, .3], [.5, 1], [1, .3]] }); cx(liso, 0, 6.98, 2, .05, .86, .05, FERRO); cx(liso, 0, 7.1, 2, .5, .05, .05, FERRO);
       cx(of, 0, 5.02, 2, 1.3, .08, .08, [.5, .42, .34]); liso.cilindro(P(0, 4.98, 2), P(0, 4.54, 2), .27 * k, .27 * k, 10, [.2, .15, .07], { aneis: [[0, .3], [.12, .52], [.55, .68], [.85, .88], [1, 1.08]] });
       liso.cilindro(P(0, 4.62, 2), P(0, 4.46, 2), .035 * k, .05 * k, 5, FERRO);
-      cx(pl, 0, .055, 3.05, 3.4, .11, 1.3); cx(pl, 0, .165, 2.8, 2.1, .11, .7);
+      cx(pl, 0, .055, 3.05, 3.4, .11, 1.3, DEGRAU); cx(pl, 0, .165, 2.8, 2.1, .11, .7, DEGRAU);
     };
     const igreja = opts.matriz !== false && scene.getObjectByName('sertao-igrejinha-0');
     if (igreja) { igreja.updateWorldMatrix(true, false); for (const c of igreja.children) if (c.visible) { c.visible = false; escondidos.push(c); } matriz(igreja.matrixWorld.clone(), 1); }
@@ -445,6 +444,15 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
       const lenha = (p, rumo) => { const e = V3(Math.cos(rumo), 0, Math.sin(rumo)), t = V3(-e.z, 0, e.x);
         [[0, .05], [.1, .05], [-.1, .05], [.05, .13], [-.05, .13], [0, .21]].forEach(([dx, dy]) => { const v = .7 + rnd() * .4, a = p.clone().addScaledVector(t, dx).add(V3(0, dy, 0)).addScaledVector(e, -.42 + (rnd() - .5) * .08);
           of.cilindro(a, a.clone().addScaledVector(e, .84), .05, .045, 5, [.5 * v, .43 * v, .36 * v]); }); };
+      // Calçada das casas da praça: mercadoria e tralha encostadas na parede da frente e no oitão que dá para o largo.
+      [['sertao-praca-casa-interior-0', 1], ['sertao-praca-casa-interior-1', -1]].forEach(([nome, s]) => { const casa = scene.getObjectByName(nome), pc = casa?.userData?.interior; if (!pc || opts.objetos === false) return;
+        casa.updateWorldMatrix(true, false); const q = quadro(casa.matrixWorld, 0, -(pc.halfD + .14), Math.PI), o0 = q.p(0, 0, 0), o1 = q.p(1, 0, 0), rumo = Math.atan2(o1.z - o0.z, o1.x - o0.x);
+        saca(q.p(s * 2.2, 0, .36), rumo); saca(q.p(s * 2.95, 0, .38), rumo + .15); saca(q.p(s * 2.55, .35, .35), rumo - .1, .92);
+        const b = q.p(s * 1.42, 0, .38), cb = (y) => b.clone().add(V3(0, y, 0)); liso.cilindro(b, cb(.3), .19, .25, 10, [.6, .47, .24], { aneis: [[0, .9], [.15, 1], [.85, 1], [1, 1.07]] }); liso.cilindro(cb(.27), cb(.37), .23, .08, 8, [.82, .56, .16]);
+        of.cilindro(q.p(s * 1.08, .28, .2), q.p(s * 1.18, 1.5, .06), .016, .016, 4, [.6, .5, .4], { tampas: false }); of.cilindro(q.p(s * 1.05, 0, .25), q.p(s * 1.08, .32, .2), .11, .035, 6, [.78, .66, .36]);
+        lenha(q.p(-s * 2.55, 0, .32), rumo); pote(q.p(-s * 1.5, 0, .36), .95); pote(q.p(-s * 1.92, 0, .32), .66);
+        const c0 = q.p(-s * 3.3, 0, .42); pote(V3(c0.x, caixote(c0.x, c0.z, .5, rumo + .12, 0), c0.z), .6);
+        const qL = quadro(casa.matrixWorld, s * (pc.halfW + .14), 0, s * Math.PI / 2); feixe(qL, 2.3, .3); pote(qL.p(-2.4, 0, .34), 1.05); pote(qL.p(-2.0, 0, .3), .7); });
       const naZona = (x, z, L) => zonas.some(([zx, zz]) => Math.hypot(x - zx, z - zz) < 5.4 + L / 2);
       const tabua = (x, z, L, ry, esteira = false) => { if (!naArena(x, z, 1) || naZona(x, z, L) || (!esteira && dentroDeCasa(x, z))) return; const v = .8 + rnd() * .3;
         of.caixa(new THREE.Matrix4().makeRotationY(ry).setPosition(x, esteira ? .015 : .03, z), L, esteira ? .03 : .05, esteira ? 1 : .2, esteira ? [.8 * v, .68 * v, .4 * v] : [.6 * v, .53 * v, .46 * v]); };
@@ -469,26 +477,50 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
     }
     if (opts.carroca !== false) {
       // Carroção de tábua no mesmo volume do colisor; a malha de caixas do mapa fica oculta enquanto o kit estiver ligado.
-      const car = oficina(), ocultos = [], ferro = [.15, .14, .14];
-      scene.traverse((o) => { if (o.name !== 'carroca') return; o.updateWorldMatrix(true, false);
+      const cars = [], sombras = [], ocultos = [], ferro = [.15, .14, .14]; let car = null;
+      scene.traverse((o) => { if (o.name !== 'carroca') return; o.updateWorldMatrix(true, false); cars.push(car = oficina());
         const W = o.matrixWorld, r = rngDe(Math.round(o.position.x * 13 + o.position.z * 7) + 99), I4 = () => new THREE.Matrix4();
         for (const c of o.children) if (c.visible) { c.visible = false; ocultos.push(c); }
         const em = (x, y, z) => I4().setPosition(x, y, z).premultiply(W), P = (x, y, z) => V3(x, y, z).applyMatrix4(W), tom = (k = 1) => { const v = (.8 + r() * .35) * k; return [1.05 * v, .92 * v, .76 * v]; };
-        const roda = (x, cy, cz) => { const n = 32, R = .7, passo = 2 * R * Math.tan(Math.PI / n) + .004; let camba = tom();
+        const roda = (x, cy, cz) => { const n = 24, R = .7, passo = 2 * R * Math.tan(Math.PI / n) + .004, fora = Math.sign(x); let camba = tom();
           for (let i = 0; i < n; i++) { const a = i / n * 6.2832, sn = Math.sin(a), cs = Math.cos(a), B = I4().makeBasis(V3(1, 0, 0), V3(0, sn, cs), V3(0, -cs, sn)).setPosition(x, cy + R * sn, cz + R * cs).premultiply(W);
-            if (i % 4 === 0) camba = tom(sn < -.5 ? 1.25 : 1); car.caixa(B, .1, .1, passo, camba, [0, 1, 2, 3]); }
-          car.cilindro(P(x - .046, cy, cz), P(x + .046, cy, cz), R + .058, R + .058, 32, ferro, { tampas: false });
+            if (i % 4 === 0) { camba = tom(sn < -.5 ? 1.25 : 1); const a2 = (i - .5) / n * 6.2832;
+              car.caixa(I4().makeBasis(V3(1, 0, 0), V3(0, Math.sin(a2), Math.cos(a2)), V3(0, -Math.cos(a2), Math.sin(a2))).setPosition(x, cy + (R + .004) * Math.sin(a2), cz + (R + .004) * Math.cos(a2)).premultiply(W), .122, .13, .05, ferro); }
+            car.caixa(B, .1, .1, passo, camba, [0, 1, 2, 3]); }
+          car.cilindro(P(x - .052, cy, cz), P(x + .052, cy, cz), R + .06, R + .06, n, ferro, { tampas: false });
           for (let i = 0; i < 12; i++) { const a = (i + .5) / 12 * 6.2832, sn = Math.sin(a), cs = Math.cos(a);
-            car.cilindro(P(x, cy + .08 * sn, cz + .08 * cs), P(x, cy + (R - .04) * sn, cz + (R - .04) * cs), .034, .027, 5, tom(), { tampas: false }); }
-          car.cilindro(P(x - .14, cy, cz), P(x + .14, cy, cz), .12, .12, 10, tom(.85), { aneis: [[0, .7], [.25, 1], [.75, 1], [1, .7]] }); car.cilindro(P(x - .17, cy, cz), P(x + .17, cy, cz), .05, .05, 6, ferro); };
-        for (let i = 0; i < 10; i++) car.caixa(em(-1.395 + i * .31, 1 + r() * .012, 0), .296, .05, 3, tom());
-        for (const sx of [-1, 1]) { for (let j = 0; j < 3; j++) car.caixa(em(sx * 1.55, 1.13 + j * .19, (r() - .5) * .04), .04, .175, 3.04, tom());
-          for (const z of [-1.3, -.45, .45, 1.3]) { car.caixa(em(sx * 1.6, 1.27, z), .06, .7, .07, tom(.9)); car.caixa(em(sx * 1.635, 1.5, z), .012, .05, .09, ferro); } }
-        for (const sz of [-1, 1]) for (let j = 0; j < 3; j++) car.caixa(em((r() - .5) * .04, 1.13 + j * .19, sz * 1.5), 3.06, .175, .04, tom());
+            car.cilindro(P(x, cy + .1 * sn, cz + .1 * cs), P(x, cy + (R - .045) * sn, cz + (R - .045) * cs), .031, .031, 5, tom(), { tampas: false, aneis: [[0, 1.45], [.12, 1.45], [.17, .9], [1, .85]] });
+            car.cilindro(P(x + fora * .048, cy + R * sn, cz + R * cs), P(x + fora * .066, cy + R * sn, cz + R * cs), .017, .004, 4, ferro, { tampas: false }); }
+          car.cilindro(P(x - .15, cy, cz), P(x + .15, cy, cz), .1, .1, 10, tom(.82), { aneis: [[0, .66], [.14, .8], [.22, 1.1], [.4, 1.24], [.6, 1.24], [.78, 1.1], [.86, .8], [1, .66]] });
+          car.cilindro(P(x + fora * .13, cy, cz), P(x + fora * .2, cy, cz), .05, .042, 6, ferro); car.caixa(em(x + fora * .18, cy, cz), .014, .13, .02, ferro); };
+        for (let i = 0; i < 10; i++) car.caixa(em(-1.395 + i * .31, 1 + r() * .014, (r() - .5) * .05), .284, .05, 2.96 + r() * .07, tom());
+        for (const sx of [-1, 1]) { for (let j = 0; j < 3; j++) (j === 2 ? pin : car).caixa(em(sx * 1.55, 1.13 + j * .19, (r() - .5) * .04), .04, .168, 3.04, j === 2 ? tinge(ANIL_PORTA, .85 + r() * .25) : tom());
+          for (const z of [-1.3, -.45, .45, 1.3]) { car.caixa(em(sx * 1.6, 1.27, z), .06, .7, .07, tom(.9)); car.caixa(em(sx * 1.635, 1.5, z), .012, .05, .09, ferro); car.caixa(em(sx * 1.635, 1.08, z), .012, .05, .09, ferro); } }
+        for (const sz of [-1, 1]) { for (let j = 0; j < 3; j++) (j === 2 ? pin : car).caixa(em((r() - .5) * .04, 1.13 + j * .19, sz * 1.5), 3.06, .168, .04, j === 2 ? tinge(ANIL_PORTA, .85 + r() * .25) : tom());
+          for (const sx of [-1, 1]) car.caixa(em(sx * 1.56, 1.3, sz * 1.515), .1, .6, .012, ferro); }
         for (const x of [-.9, .9]) car.caixa(em(x, .92, 0), .11, .13, 3, tom(.85));
         for (const sz of [-1, 1]) { const z = sz * .88; car.caixa(em(0, .84, z), 3.3, .1, .12, tom(.85)); car.cilindro(P(-1.86, .77, z), P(1.86, .77, z), .045, .045, 6, ferro); for (const sx of [-1, 1]) roda(sx * 1.75, .77, z); }
-        car.cilindro(P(0, .86, -1.5), P(0, .62, -4.7), .07, .05, 8, tom()); car.caixa(em(0, .7, -4.2), 1.5, .07, .08, tom()); });
-      const gc = car.geo(), mc = new THREE.Mesh(gc, mat); mc.name = 'sertao-hd-carrocas'; mc.castShadow = true; mc.receiveShadow = true; mc.userData.nonSolidSurface = true; grupo.add(mc); lixo.push(gc);
+        // Cabeçalho com balancim torneado, tirantes e a coalheira pendurada; tudo junto da lança que já colide.
+        const couro = [.6, .36, .22];
+        car.cilindro(P(0, .86, -1.5), P(0, .62, -4.7), .07, .05, 8, tom()); car.cilindro(P(0, .63, -4.56), P(0, .618, -4.72), .058, .054, 8, ferro);
+        car.cilindro(P(-.75, .7, -4.2), P(.75, .7, -4.2), .04, .04, 6, tom(), { aneis: [[0, .7], [.1, 1], [.5, 1.25], [.9, 1], [1, .7]] });
+        for (const sx of [-1, 1]) { car.cilindro(P(sx * .7, .7, -4.2), P(sx * .9, .9, -1.52), .011, .011, 3, ferro, { tampas: false }); car.caixa(em(sx * .7, .7, -4.2), .05, .1, .1, ferro); }
+        for (let i = 0; i < 10; i++) { const a0 = i / 10 * 6.2832, a1 = (i + 1) / 10 * 6.2832, pt = (a) => P(Math.sin(a) * .19, .4 + Math.cos(a) * .29, -3.5 + Math.sin(a) * .04);
+          car.cilindro(pt(a0), pt(a1), .042, .042, 5, couro, { tampas: false }); }
+        car.cilindro(P(.02, .7, -3.62), P(.24, .03, -3.86), .012, .012, 3, couro, { tampas: false }); car.cilindro(P(-.02, .7, -3.3), P(-.2, .03, -3.12), .012, .012, 3, couro, { tampas: false });
+        // Só esta malha magra, escondida dentro das peças, lança sombra: a carroça detalhada triplicava o passe de sombra.
+        const sb = oficina(), c0 = [.3, .3, .3]; sombras.push(sb); sb.caixa(em(0, 1, 0), 3, .02, 2.9, c0); sb.cilindro(P(0, .86, -1.5), P(0, .62, -4.7), .03, .02, 4, c0);
+        for (const s of [-1, 1]) { sb.caixa(em(s * 1.55, 1.32, 0), .015, .52, 3, c0); sb.caixa(em(0, 1.32, s * 1.5), 3, .52, .015, c0); }
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const x = sx * 1.75, z = sz * .88; sb.cilindro(P(x - .03, .77, z), P(x + .03, .77, z), .7, .7, 16, c0, { tampas: false });
+          for (let i = 0; i < 6; i++) { const a = (i + .5) / 12 * 6.2832, sn = Math.sin(a), cs = Math.cos(a); sb.caixa(I4().makeBasis(V3(1, 0, 0), V3(0, sn, cs), V3(0, -cs, sn)).setPosition(x, .77, z).premultiply(W), .02, 1.3, .02, c0); } } });
+      // Barris do mapa eram cilindros lisos quase pretos: aduelas com bojo e arcos de ferro no mesmo volume.
+      scene.traverse((o) => { if (o.name !== 'obstaculo-barris-empilhados') return; o.updateWorldMatrix(true, true); cars.push(car = oficina()); const r = rngDe(417), bojo = [[0, .86], [.2, 1], [.5, 1.09], [.8, 1], [1, .86]];
+        for (const c of o.children) { const g = c.geometry?.parameters; if (!c.isMesh || !c.visible || c.geometry.type !== 'CylinderGeometry') continue; c.visible = false; ocultos.push(c);
+          const a = V3(0, -g.height / 2, 0).applyMatrix4(c.matrixWorld), b = V3(0, g.height / 2, 0).applyMatrix4(c.matrixWorld), rr = g.radiusTop * .915, v = .85 + r() * .3;
+          car.cilindro(a, b, rr, rr, 14, [1.0 * v, .82 * v, .62 * v], { aneis: bojo });
+          for (const [f, kb] of [[.08, .93], [.27, 1.03], [.73, 1.03], [.92, .93]]) car.cilindro(a.clone().lerp(b, f - .022), a.clone().lerp(b, f + .022), rr * kb * 1.012, rr * kb * 1.012, 14, ferro, { tampas: false }); } });
+      for (const c of [...cars, ...sombras]) { const gc = c.geo(), mc = new THREE.Mesh(gc, mat), magra = sombras.includes(c); mc.name = magra ? 'sertao-hd-carrocas-sombra' : 'sertao-hd-carrocas';
+        mc.castShadow = magra || c === cars[cars.length - 1]; mc.receiveShadow = !magra; mc.userData.nonSolidSurface = true; grupo.add(mc); lixo.push(gc); }
       desfaz.push(() => { for (const c of ocultos) c.visible = true; });
     }
     if (opts.contato !== false) {
@@ -591,8 +623,21 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
       const placa = grupo.getObjectByName('sertao-hd-placa-letras');
       if (placa) { const m2 = matL.clone(); m2.map = placa.material.map; m2.onBeforeCompile = matL.onBeforeCompile; m2.customProgramCacheKey = matL.customProgramCacheKey; placa.material = m2; lixo.push(m2); }
     }
-    let matCal = null, matTelha = null; scene.traverse((o) => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
-      if (!matCal && m?.map?.name === 'oeste-adobe-paupique' && m.color?.getHex() === 0xf6efdd) matCal = m; if (!matTelha && m?.userData?.hdLaje) matTelha = m; } });
+    let matTelha = null; scene.traverse((o) => { if (!o.isMesh) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (!matTelha && m?.userData?.hdLaje) matTelha = m; });
+    // Cal nova sobre reboco: branca, com a pincelada da brocha e só o pé descascado e respingado de terra.
+    const matCal = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: .95, normalMap: kit.pbrTex('hd_sertao/white_rough_plaster_normal'), name: 'hd-cen-cal' }); matCal.normalScale.set(1.5, 1.5); lixo.push(matCal);
+    if (kit.projetaMundo) { kit.projetaMundo(matCal, 1.3); const uvMundo = matCal.onBeforeCompile;
+      matCal.onBeforeCompile = (sh) => { uvMundo(sh); sh.uniforms.hdDet = { value: kit.pbrTex('hd_sertao/white_rough_plaster_cor') };
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vHdPos;').replace('#include <project_vertex>', '#include <project_vertex>\nvHdPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>\nvarying vec3 vHdPos; uniform sampler2D hdDet;${kit.RUIDO_GLSL || ''}`).replace('#include <color_fragment>', `#include <color_fragment>
+          { vec2 hdQ = vec2(vHdPos.x + vHdPos.z, vHdPos.y); float hdD = dot(texture2D(hdDet, vNormalMapUv).rgb, vec3(0.3, 0.59, 0.11)) / 0.61;
+            float hdBrocha = hdN(vec2(hdQ.x * 1.4, hdQ.y * 11.0)) * 0.6 + hdN(hdQ * vec2(0.5, 0.9) + 7.0) * 0.4;
+            diffuseColor.rgb *= mix(0.93, 1.04, hdBrocha) * mix(1.0, clamp(hdD, 0.75, 1.12), 0.4);
+            float hdPe = 1.0 - smoothstep(0.06, 0.5, vHdPos.y + (hdN(vec2(hdQ.x * 2.3, 0.0)) - 0.5) * 0.22);
+            float hdCasca = smoothstep(0.52, 0.6, hdN(hdQ * vec2(6.0, 9.0)) * 0.6 + hdN(hdQ * 23.0) * 0.4 + hdPe * 0.3) * hdPe;
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.3, 0.24, 0.19) * mix(0.8, 1.15, hdN(hdQ * 41.0)), hdCasca * 0.85);
+            diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.78, 0.66, 0.54), hdPe * 0.5); }`); };
+      matCal.customProgramCacheKey = () => 'sertao-hd-cal1'; }
     for (const [o, m, nome] of [[pl, matCal, 'matriz'], [tl, matTelha, 'matriz-telha']]) { const g = o.geo(); lixo.push(g); if (!g.index.count) continue;
       const malha = new THREE.Mesh(g, m || matLiso); malha.name = `sertao-hd-${nome}`; malha.castShadow = true; malha.receiveShadow = true; malha.userData.nonSolidSurface = true; grupo.add(malha); }
     // Tinta a óleo queimada de sol sobre a tábua: o veio clareia a cor e a lasca miúda mostra a madeira, mais no pé.
@@ -651,6 +696,23 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
     im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; im.computeBoundingSphere();
   }
 
+  if (opts.pe !== false && scene.getObjectByName('sertao-solo')?.material) {
+    // Terra juntada no pé das paredes: cunha de até 12 cm com o material e a UV do chão; não entra nas casas.
+    const casas = [], v = new THREE.Vector3(), P = [], U = [], I = [];
+    scene.traverse((o) => { if (o.userData?.interior) { o.updateWorldMatrix(true, false); casas.push([o.matrixWorld.clone().invert(), o.userData.interior]); } });
+    const dentro = (x, z) => casas.some(([inv, pc]) => { v.set(x, 0, z).applyMatrix4(inv); return Math.abs(v.x) < pc.halfW && Math.abs(v.z) < pc.halfD; });
+    const tira = (x0, z0, x1, z1, nx, nz) => { const mx = (x0 + x1) / 2 + nx * .3, mz = (z0 + z1) / 2 + nz * .3; if (!naArena(mx, mz, .2) || dentro(mx, mz) || !livre(mx, mz)) return;
+      const n = Math.max(1, Math.round(Math.hypot(x1 - x0, z1 - z0) / .9)), b = P.length / 3, sobe = nz * (x1 - x0) - nx * (z1 - z0) > 0;
+      for (let i = 0; i <= n; i++) { const t = i / n, x = x0 + (x1 - x0) * t, z = z0 + (z1 - z0) * t, ponta = i === 0 || i === n, h = ponta ? .0 : .07 + rnd() * .05, w = ponta ? .16 : .38 + rnd() * .3;
+        for (const [f, y] of [[.09, h], [w, -.012]]) { const X = x + nx * f, Z = z + nz * f; P.push(X, y, Z); U.push((X + 600) / 1200, (600 - Z) / 1200); }
+        if (i) { const a = b + 2 * (i - 1); if (sobe) I.push(a, a + 1, a + 2, a + 2, a + 1, a + 3); else I.push(a, a + 2, a + 1, a + 2, a + 3, a + 1); } } };
+    for (const c of paredes) { if (c.hx || c.minY > .08) continue;
+      if (c.maxX - c.minX > 1.2) { tira(c.minX, c.minZ, c.maxX, c.minZ, 0, -1); tira(c.minX, c.maxZ, c.maxX, c.maxZ, 0, 1); }
+      if (c.maxZ - c.minZ > 1.2) { tira(c.minX, c.minZ, c.minX, c.maxZ, -1, 0); tira(c.maxX, c.minZ, c.maxX, c.maxZ, 1, 0); } }
+    if (I.length) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.setIndex(I); g.computeVertexNormals();
+      const pe = new THREE.Mesh(g, scene.getObjectByName('sertao-solo').material); pe.name = 'sertao-hd-pe-terra'; pe.receiveShadow = true; pe.userData.nonSolidSurface = true; grupo.add(pe); lixo.push(g); }
+  }
+
   if (opts.capela !== false) {
     // Outeiro com a mesma terra do chão (UV casada com o plano de 1200 m) e a matriz no alto, logo depois do limite norte.
     const [cx, cz, H, R] = opts.capela?.pos ?? [-24, -56.5, 2.2, 10.5], solo = scene.getObjectByName('sertao-solo');
@@ -707,7 +769,7 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
     // Anel, disco e pano são do JOGO: ele recria os três a cada rodada e reescreve cor/opacidade por quadro.
     // O ajuste entra no shader (cor e símbolo do objetivo ficam intactos) e um relógio reaplica nos novos.
     const vistos = new Map(), jogo = typeof window !== 'undefined' ? window.__game : null, tempo = { value: 0 }, LUMA = 'vec3(0.3, 0.59, 0.11)';
-    const pano = new THREE.PlaneGeometry(1.7, 1.05, 14, 8), faixa = new THREE.RingGeometry(.934, 1.066, 96, 1); faixa.translate(0, 0, .02); lixo.push(pano, faixa);
+    const pano = new THREE.PlaneGeometry(1.7, 1.05, 14, 8), faixa = new THREE.RingGeometry(.911, 1.089, 96, 1); faixa.translate(0, 0, .02); lixo.push(pano, faixa);
     const soloTex = kit.pbrTex('hd_sertao/dry_ground_rocks_cor', true), mundoXZ = (sh, extra = '') => { sh.uniforms.hdSolo = { value: soloTex };
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vHdW; varying vec2 vHdL;').replace('#include <project_vertex>', '#include <project_vertex>\nvHdW = (modelMatrix * vec4(transformed, 1.0)).xz * vec2(1.0, -1.0); vHdL = position.xy;');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>\nvarying vec2 vHdW; varying vec2 vHdL; uniform sampler2D hdSolo;${extra}`); };
@@ -719,13 +781,13 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
       const cal = new THREE.MeshStandardMaterial({ color: m.color.clone(), transparent: true, opacity: m.opacity, depthWrite: false, roughness: 1, metalness: 0, side: THREE.DoubleSide, forceSinglePass: true, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3, name: 'hd-cen-anel' });
       cal.userData.hdCal = true; s0.cal = cal;
       cal.onBeforeCompile = (sh) => { mundoXZ(sh, kit.RUIDO_GLSL || ''); sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
-        { float hdAng = atan(vHdL.y, vHdL.x), hdR = (length(vHdL) - 1.0) / 0.066;
+        { float hdAng = atan(vHdL.y, vHdL.x), hdR = (length(vHdL) - 1.0) / 0.089;
           float hdT = dot(texture2D(hdSolo, vHdW / 4.0).rgb, ${LUMA}) / 0.0793, hdT3 = dot(texture2D(hdSolo, vHdW / 1.333 + 0.37).rgb, ${LUMA}) / 0.0793;
           float hdPinc = hdN(vec2(hdAng * 30.0, hdR * 1.6 + 3.0)) * 0.6 + hdN(vec2(hdAng * 110.0, hdR * 4.0)) * 0.4, hdGasto = hdN(vHdW * 1.3) * 0.6 + hdN(vHdW * 5.0 + 4.0) * 0.4;
-          diffuseColor.rgb *= ${(opts.anel?.cal ?? 1.3).toFixed(3)} * vec3(1.02, 1.0, 0.96) * mix(0.84, 1.08, hdPinc) * mix(0.88, 1.06, hdGasto) * mix(1.0, clamp(hdT, 0.62, 1.3), 0.5) * mix(1.0, clamp(hdT3, 0.7, 1.25), 0.35);
+          diffuseColor.rgb *= ${(opts.anel?.cal ?? 1.75).toFixed(3)} * vec3(0.86, 0.98, 1.14) * mix(0.9, 1.06, hdPinc) * mix(0.92, 1.05, hdGasto) * mix(1.0, clamp(hdT, 0.7, 1.2), 0.28) * mix(1.0, clamp(hdT3, 0.8, 1.15), 0.2);
           diffuseColor.rgb *= 1.0 - 0.14 * (1.0 - smoothstep(0.05, 0.13, abs(abs(hdR) - 0.58)));
-          diffuseColor.a = mix(0.86, 1.0, diffuseColor.a) * (1.0 - smoothstep(0.8 + 0.14 * hdN(vec2(hdAng * 45.0, hdR + 2.0)), 1.0, abs(hdR))); }`); };
-      cal.customProgramCacheKey = () => `sertao-hd-anel8-${opts.anel?.cal ?? 1.3}`;
+          diffuseColor.a = mix(0.93, 1.0, diffuseColor.a) * (1.0 - smoothstep(0.84 + 0.1 * hdN(vec2(hdAng * 45.0, hdR + 2.0)), 1.0, abs(hdR))); }`); };
+      cal.customProgramCacheKey = () => `sertao-hd-anel9-${opts.anel?.cal ?? 1.75}`;
       pt.ring.material = cal; pt.ring.geometry = faixa; pt.ring.renderOrder = 2; pt.ring.receiveShadow = true;
       if (pt.zone?.material) s0.mats.push(troca(pt.zone.material, (sh) => { mundoXZ(sh); sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
         { float hdT = dot(texture2D(hdSolo, vHdW / 4.0).rgb, ${LUMA}) / 0.0793, hdT3 = dot(texture2D(hdSolo, vHdW / 1.333 + 0.37).rgb, ${LUMA}) / 0.0793;
