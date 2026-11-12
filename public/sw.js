@@ -60,7 +60,7 @@ async function navigationResponse(request) {
   const cache = await caches.open(CACHE_NAME);
   try {
     const response = await fetch(request);
-    if (response.ok) await cache.put('/', response.clone());
+    if (response.ok) await cache.put(request, response.clone());
     return response;
   } catch {
     return (await cache.match(request)) || (await cache.match('/')) || Response.error();

@@ -64,6 +64,9 @@ const cache = await caches.open('coro-solto-offline-v1');
 assert.equal(await (await cache.match('/')).text(), 'asset:/', 'install keeps an offline navigation shell');
 assert.equal(await (await cache.match('/js/map_brasilia.js')).text(), 'asset:/js/map_brasilia.js', 'install keeps the default single-player map');
 
+const deepRoute = { method: 'GET', headers: new Headers(), mode: 'navigate', url: `${ORIGIN}/u/jogador` };
+assert.equal(await (await request(deepRoute)).text(), 'asset:/u/jogador', 'online deep route reaches the network');
+
 online = false;
 const offlineHome = await request({ method: 'GET', headers: new Headers(), mode: 'navigate', url: `${ORIGIN}/` });
 assert.equal(await offlineHome.text(), 'asset:/', 'offline navigation falls back to the installed shell');
