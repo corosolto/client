@@ -6,10 +6,8 @@ export const STUDIO_CHARACTER_STATES = Object.freeze([
   'idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'crouchwalk', 'jump', 'idle1h', 'walk1h', 'walkfire',
 ]);
 
-// Clipes extras opcionais do pacote (animations.extra do Studio): nomes fixos do vocabulário
-// ou prefixo emote_ com pelo menos um sufixo. Autoritativo: corosolto/studio tools/lib/character-pack.mjs
-// (68 nomes: coreExtraClipNames + converterExtraClipNames — os 45 últimos espelham a biblioteca de
-// conversão de animações, feat/animation-conversion-20261109, na mesma ordem ordenada do Studio).
+// Clipes extras opcionais: nomes fixos do Studio ou prefixo emote_ com sufixo.
+// Autoridade: corosolto/studio tools/lib/character-pack.mjs, na mesma ordem.
 export const STUDIO_EXTRA_CLIPS = Object.freeze([
   // Núcleo do contrato (locomoção cardinal, armas, dano, melee, resultado de rodada).
   'strafe_left', 'strafe_right', 'walk_back', 'run_back',
