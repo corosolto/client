@@ -281,7 +281,7 @@ const chamadasMerge = (texto) => {
      ONDE ele roda, mas só o recorte conservador do comando prova seus argumentos. */
   const executavel = texto.split('\n').filter((linha) => !/^\s*#/.test(linha)).join('\n').replace(/\\\n\s*/g, ' ');
   let resolvido = executavel;
-  for (const assignment of executavel.matchAll(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*[A-Za-z]*(?:'([^'\r\n]*(?:\/pulls\/[^'\r\n]*\/merge|\bmergePullRequest\b)[^'\r\n]*)'|"([^"\r\n]*(?:\/pulls\/[^"\r\n]*\/merge|\bmergePullRequest\b)[^"\r\n]*)")/gm)) {
+  for (const assignment of executavel.matchAll(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*(?:\:\s*[^=\r\n]+)?\s*=\s*[A-Za-z]*(?:'([^'\r\n]*(?:\/pulls\/[^'\r\n]*\/merge|\bmergePullRequest\b)[^'\r\n]*)'|"([^"\r\n]*(?:\/pulls\/[^"\r\n]*\/merge|\bmergePullRequest\b)[^"\r\n]*)")/gm)) {
     const nome = assignment[1];
     const endpoint = assignment[2] ?? assignment[3];
     resolvido = resolvido.replace(new RegExp(`\\$\\{${nome}\\}|\\$${nome}\\b|\\b${nome}\\b`, 'g'), endpoint);
