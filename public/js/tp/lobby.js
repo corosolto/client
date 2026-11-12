@@ -9,7 +9,7 @@ import { anunciarJavaporcos } from '../javaporcos_novidade.js';
 import { montarPainelFlavio } from './flavio.js';
 import { abrirPasse } from './passe.js';
 import { passeEstado, passeFalhou, carregarPasse, PASSE_EVENTO } from '../passe.js';
-import { anunciarPasse } from '../passe-anuncio.js';
+import { anunciarPasseNaVez } from '../passe-anuncio.js';
 import { abrirLoginPrompt } from '../login-prompt.js';
 
 const $ = (id) => document.getElementById(id);
@@ -674,13 +674,16 @@ function esperarPasse() {
 }
 
 /* Novidades ao entrar no lobby, uma por vez: o passe (temporada no ar segundo o servidor) vem antes da
-   caça ao Javaporco, que espera a resposta do passe para não abrir na frente dele. */
+   caça ao Javaporco, que espera a resposta do passe para não abrir na frente dele. Com outro anúncio
+   aberto (Operação Flávio no 1º acesso), o passe espera ele fechar e abre na mesma visita. */
 async function anunciarNovidades() {
   if (new URLSearchParams(location.search).has('auto')) return;
   await semSplash();
   await esperarPasse();
-  if (menu()?.classList.contains('hidden')) return;   // a partida começou enquanto o servidor respondia
-  if (anunciarPasse({ abrirPasse, entrar: () => abrirLoginPrompt('passe') })) return;
+  const noLobby = () => !menu()?.classList.contains('hidden');   // falso: a partida começou
+  if (!noLobby()) return;
+  if (await anunciarPasseNaVez({ abrirPasse, entrar: () => abrirLoginPrompt('passe') }, { seguir: noLobby })) return;
+  if (!noLobby()) return;
   anunciarJavaporcos({
     jogar: () => $('tp-lobby-invasao')?.click(), multiplayer: () => $('hub-mp')?.click(),
   });
