@@ -23,22 +23,24 @@
 
    COMO A RÉGUA MEDE
 
-   Ela não simula um watchdog parecido: EXTRAI o `lancamento` real e os dois predicados
+   Ela não simula um watchdog parecido: EXTRAI o `lancamento` real e os três predicados
    reais (`RÉGUA:launch-watchdog` em index.astro e main.js, `RÉGUA:launch-watchdog menu`
-   em index.astro) e roda esse código num `vm` com relógio falso (`setTimeout` E `Date.now`)
-   e DOM controlável. Mexeu no laço sem mexer aqui? A régua lê o código novo.
+   e `RÉGUA:launch-watchdog entrada` em index.astro) e roda esse código num `vm` com
+   relógio falso (`setTimeout` E `Date.now`) e DOM controlável.
 
    CLÁUSULAS
      LW1  aba oculta durante a carga NÃO gera falha (renova)
      LW2  transição de rodada (countdown/roundEnd) NÃO gera falha
      LW3  travamento DE VERDADE ainda falha -> ANTIVACUIDADE
      LW4  a SESSÃO do relatório de 13/09: 7 min de partida aberta, 0 falhas
-     LW5  as três regiões marcadas existem nos arquivos (a extração não silenciou)
+     LW5  as quatro regiões marcadas existem nos arquivos (a extração não silenciou)
      LW6  aba que ocultou e VOLTOU volta a poder falhar -> antivacuidade da LW1
      LW7  #671: no hub, quem NAVEGA (input nos últimos 3 s, menu aberto, hub-quick oculto)
           NÃO gera falha de menu
      LW8  #671: no hub, PARADO sem input por 3 s ainda gera a falha de menu
           -> ANTIVACUIDADE da LW7: renovar não é desarmar
+     LW9  entrada aceita pelo fallback da splash não cai no watchdog do boot;
+          clique sem aceite continua chegando ao watchdog
 
    uso: node tools/eval/launch-watchdog-check.mjs [--mutante=<nome>]
      sovivo       predicado de partida volta a `state === 'live'` na ordem original -> LW2/LW4
@@ -80,17 +82,37 @@ function regiao(arquivo, rotulo) {
 const SRC_LANC = regiao(ASTRO, 'launch-watchdog');
 const SRC_PRED = regiao(MAIN, 'launch-watchdog');
 const SRC_MENU = regiao(ASTRO, 'launch-watchdog menu');
+const SRC_ENTRY = regiao(ASTRO, 'launch-watchdog entrada');
 
-if (!SRC_LANC || !SRC_PRED || !SRC_MENU) {
-  nok('LW5', 'as três regiões marcadas existem nos arquivos',
-    `index.astro(lanç) ${SRC_LANC ? 'ok' : 'SEM MARCADOR'}   main.js ${SRC_PRED ? 'ok' : 'SEM MARCADOR'}   index.astro(menu) ${SRC_MENU ? 'ok' : 'SEM MARCADOR'}`);
+if (!SRC_LANC || !SRC_PRED || !SRC_MENU || !SRC_ENTRY) {
+  nok('LW5', 'as quatro regiões marcadas existem nos arquivos',
+    `index.astro(lanç) ${SRC_LANC ? 'ok' : 'SEM MARCADOR'}   main.js ${SRC_PRED ? 'ok' : 'SEM MARCADOR'}   index.astro(menu) ${SRC_MENU ? 'ok' : 'SEM MARCADOR'}   index.astro(entrada) ${SRC_ENTRY ? 'ok' : 'SEM MARCADOR'}`);
   console.log(`\n${linhas.join('\n\n')}\n`);
   console.log('LW1–LW4 · não medidas: sem a região marcada a régua não lê o código de produção');
   console.log('\nREPROVA (launch-watchdog-check)');
   process.exit(1);
 }
-ok('LW5', 'as três regiões marcadas existem nos arquivos',
-  `index.astro(lanç) ${SRC_LANC.split('\n').length} linhas   main.js ${SRC_PRED.split('\n').length} linhas   index.astro(menu) ${SRC_MENU.split('\n').length} linhas`);
+ok('LW5', 'as quatro regiões marcadas existem nos arquivos',
+  `index.astro(lanç) ${SRC_LANC.split('\n').length} linhas   main.js ${SRC_PRED.split('\n').length} linhas   index.astro(menu) ${SRC_MENU.split('\n').length} linhas   index.astro(entrada) ${SRC_ENTRY.split('\n').length} linhas`);
+
+/* LW9 — só o gesto que o handler capture pode aceitar agora escapa do watchdog. O estado
+   armado não mascara clique antes do failsafe, e a intenção pendente não mascara um
+   clique posterior caso finishBoot continue travado. */
+{
+  const roda = (armed, pronto) => vm.runInNewContext(`(() => {\n${SRC_ENTRY}\nreturn 'watchdog';\n})()`, {
+    pronto,
+    window: { __CS_BOOT_FALLBACK_ARMED__: armed },
+  });
+  const aceitaAgora = roda(true, true);
+  const cedoDemais = roda(true, false);
+  const posterior = roda(false, true);
+  const d = `armado+pronto ${aceitaAgora === undefined ? 'suprimido' : 'watchdog'}   armado+cedo ${cedoDemais}   clique posterior ${posterior}`;
+  if (aceitaAgora === undefined && cedoDemais === 'watchdog' && posterior === 'watchdog') {
+    ok('LW9', 'só o gesto aceito pela splash deixa de virar falha de boot', d);
+  } else {
+    nok('LW9', 'só o gesto aceito pela splash deixa de virar falha de boot', d);
+  }
+}
 
 /* ---------------------------------------------------------------- o banco de testes */
 /* Relógio falso em `setTimeout` E em `Date.now`: as cláusulas LW7/LW8 medem RENOVAÇÃO por
@@ -329,6 +351,6 @@ function banco({ oculta = false, predicado = SRC_PRED, mutante = MUT } = {}) {
 console.log(`\n${linhas.join('\n\n')}\n`);
 if (MUT) console.log(`mutante aplicado: --mutante=${MUT}\n`);
 console.log(falhas.length === 0
-  ? 'PASSA (launch-watchdog-check) — 8/8 cláusulas'
+  ? 'PASSA (launch-watchdog-check) — 9/9 cláusulas'
   : `REPROVA (launch-watchdog-check) — ${falhas.join(', ')}`);
 process.exit(falhas.length === 0 ? 0 : 1);
