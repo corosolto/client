@@ -77,7 +77,7 @@ test('portao-browser.yml: Sertão em dois shards balanceados, cobertura exata e 
   assert.match(corpo, /ARTIFACT_DIR: artifacts\/sertao-astra\/livestock-runtime-\$\{\{ matrix\.shard\.nome \}\}/);
   assert.match(corpo, /name: sertao-livestock-runtime-\$\{\{ matrix\.shard\.nome \}\}/);
   assert.match(corpo, /path: artifacts\/sertao-astra\/livestock-runtime-\$\{\{ matrix\.shard\.nome \}\}\//);
-  assert.match(jobs.portao, /^ {4}needs: \[decide, portao-fauna, portao-armas, portao-controles, portao-core\]$/m, 'agregação do portao mudou');
+  assert.match(jobs.portao, /^ {4}needs: \[decide, portao-fauna, portao-armas, portao-controles, portao-core, portao-passe\]$/m, 'agregação do portao mudou');
 
   for (const [nome, corpoJob] of Object.entries(jobs)) {
     if (!/run: npm run eval:/.test(corpoJob)) continue;

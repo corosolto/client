@@ -58,7 +58,9 @@ for (const id of Object.keys(CHARACTER_RELEASES)) GLB_CHARS.add(id);
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando
 // (caso do Dollynho na tela de seleção). Neles, a mão L segue a pose do clipe.
 // Exportado para a select-mount.mjs: nesses, MÃO-L não se aplica (é decisão, não defeito).
-export const IK_L_SKIP = new Set(['dollynho', 'gotinha', 'et', 'canarinho']);
+// Fora do Ar: o Coronel (rig 0.2.2) ainda deixa a palma L a 10,3 cm do guarda-mão da md97 no
+// idle de jogo; segue com arma de uma mão e fora do IK. Clóvis (5,3 cm) e Bebezão (3,1) voltaram.
+export const IK_L_SKIP = new Set(['dollynho', 'gotinha', 'et', 'canarinho', 'coronel-arrego']);
 
 const STATES = ['idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'crouchwalk', 'jump'];
 // Clipes OPCIONAIS: 1 mão (pistolas) + andando atirando. Se o arquivo não existir,
@@ -174,6 +176,10 @@ const TP_CLEAR = parseFloat(qp.get('tpclear')) || 0.06;   // folga mínima entre
 // propósito: arma longe da mão é mão solta (C7), que é pior que um encosto na roupa.
 const TP_BURIED_TOL = 0.10;
 const TP_CLEAR_MAX = 0.20;
+/* Corpos cuja cabeça é mais larga que o tronco logo abaixo e cuja palma nasce na altura do
+   pescoço: o raio do tronco é medido sem pescoço/cabeça (torsoProfile). Saci mudaria também
+   (empurrão 0,094 -> 0 com mp5), mas legado fica como está. ?torsocabeca=1 desliga (mutante). */
+const TORSO_SEM_CABECA = new Set(qp.get('torsocabeca') === '1' ? [] : ['bebe-reborn']);
 /* CLAMP DE FRENTE (04-05/08, BUG do dono: "arma por trás do corpo" — jozo, trapfunk,
    coach). O clipe assentado da seleção deixa a mão direita de alguns rigs ATRÁS do plano
    do corpo (select-mount.mjs: coach frenteZ -0,052 m, esbirro -0,065) e a arma, que é
@@ -470,7 +476,11 @@ function torsoProfile(id, model) {
   if (sk) {
     const bones = sk.skeleton.bones;
     const arm = new Set();
-    bones.forEach((b, i) => { if (/arm|hand|shoulder|clavicle|curl/i.test(b.name)) arm.add(i); });
+    /* Pescoço/cabeça fora do perfil só em TORSO_SEM_CABECA: no Bebê Reborn a palma do idle1h
+       nasce na altura do pescoço, a faixa vizinha pegava a cabeça de boneca (raio 0,37 m contra
+       tronco de 0,09–0,13) e o empurrão tirava a pistola 15 cm da palma. */
+    const fora = TORSO_SEM_CABECA.has(id) ? /arm|hand|shoulder|clavicle|curl|^neck$|^head$/i : /arm|hand|shoulder|clavicle|curl/i;
+    bones.forEach((b, i) => { if (fora.test(b.name)) arm.add(i); });
     const excluded = withBoneDescendants(bones, arm);
     const pos = sk.geometry.attributes.position, si = sk.geometry.attributes.skinIndex, sw = sk.geometry.attributes.skinWeight;
     const at = (a, i, k) => (k === 0 ? a.getX(i) : k === 1 ? a.getY(i) : k === 2 ? a.getZ(i) : a.getW(i));
@@ -917,7 +927,10 @@ export function buildCharacterModel(def, opts = {}) {
       mount.position.copy(handBone.worldToLocal(model.localToWorld(palmM)));
       // A âncora da palma em espaço do OSSO: é o que o clamp de frente por-quadro
       // (CharController.update) reprojeta no espaço do modelo a cada frame.
-      if (ctrl.tpMount) ctrl.tpMount.palmLocal = mount.position.clone();
+      if (ctrl.tpMount) {
+        ctrl.tpMount.palmLocal = mount.position.clone();
+        ctrl.tpMount.empurrao = need > 0.005 ? need : 0;   // régua porte-braco-browser (PB2)
+      }
       if(ctrl.tpMount){
         const carryPalm=mount.position.clone();
         handBone.localToWorld(carryPalm);model.worldToLocal(carryPalm);

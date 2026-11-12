@@ -120,9 +120,15 @@ jobs:
         run: npm run eval:character-preview-media
       - name: Retrato hero só para personagem com arquivo (#1231, com mutantes)
         run: npm run eval:retratohero
-      - name: Personagem do Studio por release fixada, verificação fail-closed e /packs/ (com mutantes)
+      - name: Personagem do Studio por release fixada, verificação fail-closed, /packs/ e origem R2 (com mutantes)
         if: always()
         run: npm run eval:studiochar
+      - name: Publicador R2 dos pacotes do Studio — imutável, MIME, Cache-Control, CORS, SHA (com mutantes)
+        if: always()
+        run: npm run eval:packpublish
+      - name: Fora do Ar — registro, packs, arte, passe e catálogo (com mutantes)
+        if: always()
+        run: npm run eval:fora-do-ar
       - name: Pixel do X insere o script do uwt.js (#1231, com mutante)
         run: npm run eval:xpixel
       - name: Acúmulo de armas no chão tem teto
@@ -907,6 +913,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Packs Studio fixados (R2, SHA conferido) para o CHR medir o corpo real
+        uses: ./.github/actions/studio-packs
       - name: Invariantes de personagens, materiais e pickups
         env:
           INVARIANTES_FAMILIA: chars-mat

@@ -2,7 +2,7 @@
 // /grupos/<id> - um recorte por grupo editorial do elenco.
 // A fonte é src/data/jogo.ts. Grupos não são times: toda partida usa Time E e Time B.
 import Layout from '../../layouts/Layout.astro';
-import { GRUPOS, PERSONAGENS } from '../../data/jogo';
+import { GRUPOS, PERSONAGENS, capaDoGrupo } from '../../data/jogo';
 import { BRAND_FULL, GAME_ID, abs } from '../../lib/site';
 
 export function getStaticPaths() {
@@ -14,12 +14,7 @@ const elenco = PERSONAGENS.filter((p) => p.grupo === grupo.id);
 const outros = GRUPOS.filter((g) => g.id !== grupo.id);
 const url = abs(`/grupos/${grupo.id}`);
 
-/* O id do grupo não deriva o nome do arquivo de key art; o mapa fica explícito. */
-const PLACA: Record<string, string> = {
-  E: 'time-e', B: 'time-b', urbanas: 'tribos',
-  palhacos: 'palhacos', funkeiros: 'funkeiros', mitico: 'mitico',
-};
-const placa = PLACA[grupo.id] ? `/img/faccoes/${PLACA[grupo.id]}.webp` : null;
+const placa = capaDoGrupo(grupo.id);
 
 const jsonld = [
   {

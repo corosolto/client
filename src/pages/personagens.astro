@@ -2,20 +2,13 @@
 // /personagens - catálogo completo. Os blocos são grupos editoriais do elenco;
 // a partida usa apenas Time E e Time B.
 import Layout from '../layouts/Layout.astro';
-import { GRUPOS, PERSONAGENS } from '../data/jogo';
+import { GRUPOS, PERSONAGENS, capaDoGrupo } from '../data/jogo';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
 
 const grupos = GRUPOS.map(g => ({ ...g, elenco: PERSONAGENS.filter(p => p.grupo === g.id) }));
 const total = PERSONAGENS.length;
 
-/* Os ids do catálogo não derivam o nome dos arquivos de key art.
-   O mapa explícito faz grupo sem arte aparecer como ausente, nunca com arte errada. */
-const PLACA: Record<string, string> = {
-  E: 'time-e', B: 'time-b', urbanas: 'tribos',
-  palhacos: 'palhacos', funkeiros: 'funkeiros', mitico: 'mitico',
-};
-/* /img/faccoes/: a key-art nova (06/08) gerada fiel aos GLBs - substitui as placas team-*. */
-const placa = (id: string) => (PLACA[id] ? `/img/faccoes/${PLACA[id]}.webp` : null);
+const placa = capaDoGrupo;
 const slug = (nome: string) =>
   nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');

@@ -16,6 +16,8 @@ eval:vm-enquadramento-placar
 eval:pintura-fabrica
 eval:weapon-passe
 eval:passe
+eval:fora-do-ar
+eval:packpublish
 `);
 
 const DEPLOY = lista(`
