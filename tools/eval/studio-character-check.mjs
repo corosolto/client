@@ -31,6 +31,8 @@
      R15c extra conhecido fora de files → studio_role_unknown_file;  R15d extra duplicando arquivo de estado → studio_role_duplicate
      R15e extras contam no orçamento → studio_budget_exceeded antes de baixar;  R15f extra não-objeto/entrada sem file → studio_manifest_invalid
      R18 validador do esqueleto do adaptador rejeita juntas ausentes, extras e multiplicidade errada
+     R18g nomes como o GLTFLoader entrega (2º Curl_R vira Curl_R_1, original em userData.name) são aceitos;
+          Curl_R_1 sem userData (nome de fato no glTF) segue recusado
      R19a origem dos pacotes: produção/preview → https://assets.corosolto.com.br/packs/...; host local → /packs/;
           ?packorigin=cdn|local força; URL absoluta passa intacta
      R19b pacote servido pela origem R2 resolve com TODOS os pedidos sob https://assets.corosolto.com.br/packs/...
@@ -93,7 +95,8 @@ const mutacoes = {
   'servidor-segue-symlink': [SRV, 'if (!contained(rootReal, real)) return deny(404);', '', ['S5:']],
   'servidor-serve-codigo': [SRV, "  '.webp': 'image/webp',\n", "  '.webp': 'image/webp',\n  '.js': 'text/javascript',\n", ['S6:']],
   'servidor-sem-raiz': [SRV, 'if (!root) return deny(404);', "if (!root) root = '.';", ['S7:']],
-  'esqueleto-validacao-ignorada': [SKELETON, 'return invalid ? detail : null;', 'return null;', ['R18:']],
+  'esqueleto-validacao-ignorada': [SKELETON, 'return invalid ? detail : null;', 'return null;', ['R18:', 'R18g:']],
+  'esqueleto-nome-do-loader': [SKELETON, "(typeof bone.userData?.name === 'string' ? bone.userData.name : bone.name)", 'bone.name', ['R18g:']],
   'origem-errada': [ORIGEM, `'${CDN}'`, "'https://assets.corosolto.com'", ['R19a:', 'R19b:', 'R19c:', 'R19d:']],
   'origem-ignorada': [RES, 'new URL(studioPackUrl(pin.manifestUrl), baseHref())', 'new URL(pin.manifestUrl, baseHref())', ['R19b:', 'R19c:']],
   'origem-sempre-cdn': [ORIGEM, "return !host || HOST_LOCAL.test(host) ? '' : STUDIO_PACK_CDN_ORIGIN;", 'return STUDIO_PACK_CDN_ORIGIN;', ['R19a:']],
@@ -239,15 +242,19 @@ try {
     if (!K.studioSkeletonMismatch(comExtra)?.includes('inesperadas UnexpectedBone')) falha('R18: junta extra aceita');
     const curl = bones.findIndex((bone) => bone.name === 'Curl_L');
     if (!K.studioSkeletonMismatch(bones.slice(0, curl).concat(bones.slice(curl + 1)))?.includes('Curl_L=1')) falha('R18: multiplicidade Curl aceita');
-    /* Como o GLTFLoader entrega: o segundo Curl_* vira Curl_*_1 no objeto. Contado pelo nome
-       do glTF (o que o glbchars passa) é válido; pelo nome do objeto, todo pack falhava. */
-    const vistos = new Set();
-    const carregados = bones.map((bone) => {
-      const dup = vistos.has(bone.name); vistos.add(bone.name);
-      return { name: dup ? `${bone.name}_1` : bone.name, gltf: bone.name };
+    /* GLTFLoader (vendor r160, loadNode): node.name = createUniqueName(nodeDef.name) e
+       userData.name = nodeDef.name — o pack real chega com Curl_R e Curl_R_1. */
+    const vistos = new Map();
+    const doLoader = bones.map(({ name }) => {
+      const n = vistos.get(name) || 0;
+      vistos.set(name, n + 1);
+      return { name: n ? `${name}_${n}` : name, userData: { name } };
     });
-    if (K.studioSkeletonMismatch(carregados, (bone) => bone.gltf)) falha('R18: Curl renomeado pelo GLTFLoader rejeitado pelo nome do glTF');
-    if (!K.studioSkeletonMismatch(carregados)?.includes('inesperadas Curl_R_1')) falha('R18: contagem pelo nome renomeado não acusou o Curl_R_1');
+    const r18g = K.studioSkeletonMismatch(doLoader);
+    if (r18g) falha(`R18g: esqueleto com nomes do GLTFLoader rejeitado (${r18g})`);
+    const curlR = bones.findIndex((bone) => bone.name === 'Curl_R');
+    const renomeado = bones.map((bone, i) => (i === curlR ? { name: 'Curl_R_1' } : bone));
+    if (!K.studioSkeletonMismatch(renomeado)?.includes('inesperadas Curl_R_1')) falha('R18g: Curl_R_1 sem userData aceito');
   }
 
   // ── R1 ──────────────────────────────────────────────────────────────────────
