@@ -30,7 +30,14 @@ function expectStatus(result, status, label) {
   assert.equal(result.status, status, `${label}\n${result.stdout || ''}${result.stderr || ''}`);
 }
 
+function combinedStatus(...results) {
+  return results.every((result) => result.status === 0) ? 0 : 1;
+}
+
 function mutations() {
+  assert.equal(combinedStatus({ status: 0 }, { status: 0 }), 0);
+  assert.equal(combinedStatus({ status: 0 }, { status: null }), 1);
+  assert.equal(combinedStatus({ status: null }, { status: 0 }), 1);
   const fixture = mkdtempSync(join(tmpdir(), 'asset-inventory-'));
   const orphans = join(fixture, 'audio-orphans.json');
   try {
@@ -101,6 +108,36 @@ function mutations() {
     rmSync(join(fixture, 'public/models/anims/other.json'));
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
     console.log('AI2d: dynamic values must come from the template module.');
+
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\n");
+    put(fixture, 'public/js/mid.js', "export { clipUrl } from './refs.js';\n");
+    put(fixture, 'public/js/consumer.js', "import { clipUrl } from './mid.js';\nexport const character = 'adjim';\nexport const state = 'crouch';\nexport const url = clipUrl(character, state);\n");
+    put(fixture, 'public/models/anims/adjim/crouch.glb', 'dynamic-reference-from-importers');
+    expectStatus(runInventory(fixture), 0, 'reverse importer graph generation');
+    expectStatus(runInventory(fixture, ['--check']), 0, 'reverse importer graph check');
+    put(fixture, 'public/js/consumer.js', "import { clipUrl } from './mid.js';\nexport const character = 'adjim';\nexport const state = 'crouch';\nexport const unrelated = 'doidinho-bairro';\nexport const url = clipUrl(character, state);\n");
+    put(fixture, 'public/models/anims/doidinho-bairro.glb', 'unrelated-importer-literal');
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'unrelated importer literal remains an orphan');
+    assert.match(result.stderr, /orphan-new: models\/anims\/doidinho-bairro\.glb/);
+    rmSync(join(fixture, 'public/models/anims/doidinho-bairro.glb'));
+    rmSync(join(fixture, 'public/models/anims/adjim/crouch.glb'));
+    rmSync(join(fixture, 'public/js/mid.js'));
+    rmSync(join(fixture, 'public/js/consumer.js'));
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    expectStatus(runInventory(fixture), 0, 'reverse importer graph cleanup');
+    console.log('AI2e: values from a two-level reverse importer chain prove a dynamic reference.');
+
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\n");
+    put(fixture, 'public/js/consumer.js', "import { clipUrl } from './refs.js';\nconst character = 'dead';\ncharacter = runtimeId;\nconst state = 'idle';\nexport const url = clipUrl(character, state);\n");
+    put(fixture, 'public/models/anims/dead/idle.glb', 'reassigned-literal');
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'reassigned constant cannot prove a dynamic reference');
+    assert.match(result.stderr, /orphan-new: models\/anims\/dead\/idle\.glb/);
+    rmSync(join(fixture, 'public/models/anims/dead/idle.glb'));
+    rmSync(join(fixture, 'public/js/consumer.js'));
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    console.log('AI2f: a reassigned binding cannot self-approve its stale literal.');
 
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
@@ -185,4 +222,4 @@ function mutations() {
 if (process.argv.includes('--mutations')) process.exit(mutations());
 const result = spawnSync(process.execPath, [GENERATOR, '--check'], { cwd: ROOT, stdio: 'inherit' });
 const audioResult = spawnSync(process.execPath, [AUDIO_GENERATOR, '--check'], { cwd: ROOT, stdio: 'inherit' });
-process.exit((result.status || audioResult.status) ? 1 : 0);
+process.exit(combinedStatus(result, audioResult));

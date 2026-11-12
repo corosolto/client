@@ -84,6 +84,107 @@ function dynamicPatterns(corpus) {
   return patterns;
 }
 
+function templateDefinitions(text) {
+  return [...text.matchAll(/\bexport\s+const\s+([A-Za-z_$][\w$]*)\s*=\s*\(([^)]*)\)\s*=>\s*`([^`\r\n]*\$\{[^`\r\n]*)`/g)]
+    .map((match) => ({ name: match[1], params: match[2].split(',').map((value) => value.trim()), template: match[3] }))
+    .filter((definition) => definition.params.every((param) => /^[A-Za-z_$][\w$]*$/.test(param)));
+}
+
+function importedBindings(text) {
+  const bindings = [];
+  for (const match of text.matchAll(/\b(?:import|export)\s*\{([^}]+)\}\s*from\s*['"]([^'"]+)['"]/g)) {
+    for (const item of match[1].split(',')) {
+      const binding = item.trim().match(/^([A-Za-z_$][\w$]*)(?:\s+as\s+([A-Za-z_$][\w$]*))?$/);
+      if (binding) bindings.push({ imported: binding[1], local: binding[2] || binding[1], specifier: match[2] });
+    }
+  }
+  return bindings;
+}
+
+function reexportedBindings(text) {
+  const bindings = [];
+  for (const match of text.matchAll(/\bexport\s*\{([^}]+)\}(?:\s*from\s*['"]([^'"]+)['"])?/g)) {
+    for (const item of match[1].split(',')) {
+      const binding = item.trim().match(/^([A-Za-z_$][\w$]*)(?:\s+as\s+([A-Za-z_$][\w$]*))?$/);
+      if (binding) bindings.push({ local: binding[1], exported: binding[2] || binding[1], specifier: match[2] || '' });
+    }
+  }
+  return bindings;
+}
+
+function literalBindings(text) {
+  const declarations = [...text.matchAll(/\b(const|let|var)\s+(?:[[{]\s*)?([A-Za-z_$][\w$]*)/g)];
+  const counts = declarations.reduce((map, match) => map.set(match[2], (map.get(match[2]) || 0) + 1), new Map());
+  const values = Object.fromEntries([...text.matchAll(/\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*(['"])([^'"\r\n]*)\2/g)]
+    .filter((match) => counts.get(match[1]) === 1)
+    .map((match) => [match[1], match[3]]));
+  for (const name of Object.keys(values)) {
+    const reassigned = new RegExp(`(?:^|[;\\n}])\\s*${name}\\s*(?:=|\\+=|-=|\\*=|\\/=|\\+\\+|--)`, 'm').test(text);
+    const shadowedParameter = new RegExp(`\\bfunction\\s+[A-Za-z_$][\\w$]*\\s*\\([^)]*\\b${name}\\b|\\([^)]*\\b${name}\\b[^)]*\\)\\s*=>`).test(text);
+    const imported = new RegExp(`\\bimport\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from`).test(text);
+    if (reassigned || shadowedParameter || imported) delete values[name];
+  }
+  return values;
+}
+
+function resolveExportedTemplate(modulePath, exportedName, textByPath, seen) {
+  const key = `${modulePath}#${exportedName}`;
+  if (seen.has(key) || !textByPath.has(modulePath)) return null;
+  seen.add(key);
+  const definition = templateDefinitions(textByPath.get(modulePath) || '')
+    .find((candidate) => candidate.name === exportedName);
+  if (definition) return { definition, modulePath };
+  const reexport = reexportedBindings(textByPath.get(modulePath) || '')
+    .find((candidate) => candidate.exported === exportedName);
+  if (!reexport) return null;
+  if (reexport.specifier.startsWith('.')) {
+    return resolveExportedTemplate(resolve(dirname(modulePath), reexport.specifier), reexport.local, textByPath, seen);
+  }
+  return resolveTemplateBinding(modulePath, reexport.local, textByPath, seen);
+}
+
+function resolveTemplateBinding(callerPath, localName, textByPath, seen = new Set()) {
+  const callerText = textByPath.get(callerPath) || '';
+  for (const binding of importedBindings(callerText)) {
+    if (binding.local !== localName || !binding.specifier.startsWith('.')) continue;
+    const modulePath = resolve(dirname(callerPath), binding.specifier);
+    const resolved = resolveExportedTemplate(modulePath, binding.imported, textByPath, seen);
+    if (resolved) return resolved;
+  }
+  return null;
+}
+
+export function dynamicCallReferences(textByPath) {
+  const references = new Set();
+  for (const [callerPath, callerText] of textByPath) {
+    const literals = literalBindings(callerText);
+    for (const binding of importedBindings(callerText)) {
+      const resolved = resolveTemplateBinding(callerPath, binding.local, textByPath);
+      if (!resolved) continue;
+      const { definition, modulePath } = resolved;
+      const constants = literalBindings(textByPath.get(modulePath) || '');
+      const callPattern = new RegExp(`\\b${escaped(binding.local)}\\s*\\(([^)]*)\\)`, 'g');
+      for (const call of callerText.matchAll(callPattern)) {
+        const args = call[1].split(',').map((value) => value.trim());
+        if (args.length !== definition.params.length) continue;
+        const values = args.map((arg) => {
+          const literal = arg.match(/^(['"])([^'"\r\n]*)\1$/);
+          return literal ? literal[2] : literals[arg];
+        });
+        if (values.some((value) => typeof value !== 'string')) continue;
+        let path = definition.template;
+        definition.params.forEach((param, index) => {
+          path = path.replace(new RegExp(`\\$\\{${escaped(param)}\\}`, 'g'), values[index]);
+        });
+        path = path.replace(/\$\{([A-Za-z_$][\w$]*)\}/g, (full, name) => constants[name] ?? full);
+        path = path.replace(/^\//, '').split(/[?#]/)[0];
+        if (!path.includes('${') && ROOT_PATTERN.test(path) && !path.includes('..')) references.add(path);
+      }
+    }
+  }
+  return references;
+}
+
 function importedSources(sourcePath, textByPath, seen = new Set()) {
   if (!sourcePath || seen.has(sourcePath)) return [];
   seen.add(sourcePath);
@@ -100,14 +201,6 @@ function importedSources(sourcePath, textByPath, seen = new Set()) {
     }
   };
   visit(sourcePath);
-  for (const [otherPath, otherText] of textByPath) {
-    if (seen.has(otherPath)) continue;
-    for (const specifier of importsOf(otherPath)) {
-      if (resolve(dirname(otherPath), specifier) !== sourcePath) continue;
-      seen.add(otherPath);
-      sources.push(...importedSources(otherPath, textByPath, seen));
-    }
-  }
   return sources;
 }
 
@@ -194,7 +287,9 @@ export function measureInventory({ root = ROOT, previous = null } = {}) {
   const corpus = sources.join('\n');
   const textByPath = new Map(sourcePaths.map((sourcePath, index) => [sourcePath, sources[index] || '']));
   const linkedSources = sourcePaths.map((sourcePath) => importedSources(sourcePath, textByPath));
-  const referencedRuntime = (path) => isReferenced(path, corpus, publicDir, sources, sourcePaths, linkedSources);
+  const callReferences = dynamicCallReferences(textByPath);
+  const referencedRuntime = (path) => callReferences.has(path)
+    || isReferenced(path, corpus, publicDir, sources, sourcePaths, linkedSources);
   const literal = literalReferences(sources);
   const disk = diskAssets(publicDir);
   const onDisk = new Set(disk);
