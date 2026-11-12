@@ -71,10 +71,23 @@ def named_step(workflow: Mapping[str, Any] | None, name: str) -> Mapping[str, An
     return {}
 
 
+PERMISSION_SCOPES = frozenset({
+    'actions', 'attestations', 'checks', 'contents', 'deployments', 'discussions',
+    'id-token', 'issues', 'models', 'packages', 'pages', 'pull-requests',
+    'repository-projects', 'security-events', 'statuses',
+})
+WRITE_ONLY_PERMISSION_SCOPES = frozenset({'id-token'})
+
+
 def read_only_permissions(value: Any) -> bool:
-    """Only explicit read-only forms; malformed or missing permissions fail closed."""
+    """Accept GitHub's explicit read-all/none shorthand or a flat read/none scope map."""
     if isinstance(value, str):
-        return value in {'read', 'read-all', 'none'}
-    if isinstance(value, Mapping):
-        return bool(value) and all(read_only_permissions(item) for item in value.values())
-    return False
+        return value in {'read-all', 'none'}
+    if not isinstance(value, Mapping) or not value:
+        return False
+    return all(
+        isinstance(scope, str) and scope in PERMISSION_SCOPES
+        and isinstance(permission, str)
+        and (permission == 'none' or (permission == 'read' and scope not in WRITE_ONLY_PERMISSION_SCOPES))
+        for scope, permission in value.items()
+    )

@@ -274,17 +274,22 @@ if (MUT === 'push-sem-trava') wf = wf.replace("(steps.trava.outputs.commitar == 
 }
 
 /* ---- AF4: merge só no automerge, depois da guarda e por merge commit ---- */
-const MERGE = /\bgh\s+pr\s+merge\b|['"]gh['"]\s*,\s*['"]pr['"]\s*,\s*['"]merge['"]|\bgh\s+api\b(?=[^\n]*\/pulls\/[^\n]*\/merge\b)|['"]gh['"]\s*,\s*['"]api['"](?=[^\n]*\/pulls\/[^\n]*\/merge\b)/g;
+const MERGE = /\bgh\s+pr\s+merge\b|['"]gh['"]\s*,\s*['"]pr['"]\s*,\s*['"]merge['"]|\bgh\s+api\b(?=[\s\S]*\/pulls\/[\s\S]*\/merge\b)|['"]gh['"]\s*,\s*['"]api['"](?=[\s\S]*\/pulls\/[\s\S]*\/merge\b)|\bautomerge_merge\.py(?!\s+--selftest)\b|\bscripts\.ci\.automerge_merge\b/gi;
 const chamadasMerge = (texto) => {
   /* Comentários não executam; todo o resto continua suspeito até ser classificado.
      Em particular, não descartamos `gh pr merge` direto no shell: o YAML estrutura
      ONDE ele roda, mas só o recorte conservador do comando prova seus argumentos. */
   const executavel = texto.split('\n').filter((linha) => !/^\s*#/.test(linha)).join('\n').replace(/\\\n\s*/g, ' ');
-  return [...executavel.matchAll(MERGE)].map((match) => {
-    const restante = executavel.slice(match.index, executavel.indexOf('\n', match.index) < 0 ? undefined : executavel.indexOf('\n', match.index));
+  let resolvido = executavel;
+  for (const assignment of executavel.matchAll(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*[A-Za-z]*(['"])([^'"\r\n]*\/pulls\/[^'"\r\n]*\/merge)\2/gm)) {
+    const [, nome, , endpoint] = assignment;
+    resolvido = resolvido.replace(new RegExp(`\\$\\{${nome}\\}|\\$${nome}\\b|\\b${nome}\\b`, 'g'), endpoint);
+  }
+  return [...resolvido.matchAll(MERGE)].map((match) => {
+    const restante = resolvido.slice(match.index, resolvido.indexOf('\n', match.index) < 0 ? undefined : resolvido.indexOf('\n', match.index));
     const separador = restante.search(/;|&&|\|\|/);
     const comando = restante.slice(0, separador < 0 ? undefined : separador);
-    return { pos: match.index, comando, executavel };
+    return { pos: match.index, comando, executavel: resolvido };
   });
 };
 for (const nome of WORKFLOWS) {
@@ -294,7 +299,7 @@ for (const nome of WORKFLOWS) {
   }
   const decisao = 'python3 scripts/ci/check_automerge.py < /tmp/automerge.json > /tmp/automerge-result.json';
   if (MUT === 'automerge-fora-ordem' && nome === 'csbrasil-bot-automerge.yml') {
-    texto = texto.replace(decisao, '').replace('subprocess.run(command, check=True)', `subprocess.run(command, check=True)\n          ${decisao}`);
+    texto = texto.replace(decisao, '').replace('          python3 scripts/ci/automerge_merge.py\n', `          python3 scripts/ci/automerge_merge.py\n          ${decisao}\n`);
   }
   if (MUT === 'automerge-cheque-outro-job' && nome === 'csbrasil-bot-automerge.yml') {
     texto = texto.replace(decisao, '');
@@ -316,29 +321,15 @@ for (const nome of WORKFLOWS) {
           const condicaoMerge = ifDe(passo);
           const pulada = anterior.if === false || /^(?:\$\{\{\s*)?false(?:\s*\}\})?$/.test(condicao)
             || anterior['continue-on-error'] === true || /\bif\s+false\b/.test(runDe(anterior));
-          const linhas = runDe(anterior).split('\n');
-          let heredoc = false;
-          const semHeredocs = linhas.filter((linha) => {
-            if (/^\s*python3 - <<'PY'\s*$/.test(linha)) { heredoc = true; return false; }
-            if (/^\s*PY\s*$/.test(linha)) { heredoc = false; return false; }
-            return !heredoc;
-          }).join('\n');
           const executavel = anterior.name === 'Check eligibility'
-            && semHeredocs.split('\n').some((linha) => linha.trim() === decisao);
+            && runDe(anterior).trim() === `python3 scripts/ci/check_automerge.py --selftest\n${decisao}`;
           return !pulada && executavel && (!condicao || condicao === condicaoMerge);
         });
-        const mergeCommit = /--merge\b/.test(chamada.comando)
-          && !/--(?:squash|rebase)\b/.test(chamada.comando);
-        const headPreso = /--match-head-commit\b/.test(chamada.comando)
-          && /\bhead_oid\b/.test(chamada.comando);
-        const elegibilidadeAplicada = chamada.executavel.includes('/tmp/automerge-result.json')
-          && /data\.get\(['"]eligible['"]\)/.test(chamada.executavel)
-          && /if\s+not\s+data\.get\(['"]eligible['"]\)/.test(chamada.executavel)
-          && /sys\.exit\(0\)/.test(chamada.executavel);
-        const argumentosLimpos = !chamada.comando.includes('#')
-          && !/command\.append\((?!['"]--delete-branch['"]\))/.test(chamada.executavel);
+        const mergeCanonico = passo.name === 'Merge when eligible'
+          && run.trim() === 'python3 scripts/ci/automerge_merge.py --selftest\npython3 scripts/ci/automerge_merge.py'
+          && chamadasMerge(run).length === 1;
         if (nome !== 'csbrasil-bot-automerge.yml' || jobId !== 'automerge'
-            || !decisaoAntes || !elegibilidadeAplicada || !argumentosLimpos || !mergeCommit || !headPreso) {
+            || !decisaoAntes || !mergeCanonico) {
           falhas.push(`AF4 ${nome} · job ${jobId}: merge fora do job automerge, antes de check_automerge.py no MESMO job, sem --merge ou sem --match-head-commit head_oid`);
         }
       }

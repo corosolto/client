@@ -2,11 +2,13 @@
 import argparse
 import re
 import tempfile
+from collections.abc import Mapping
 from pathlib import Path
 
 try:
     from .workflow_yaml import (
         iter_steps,
+        jobs,
         named_step,
         parse_workflow,
         read_only_permissions,
@@ -15,6 +17,7 @@ try:
 except ImportError:
     from workflow_yaml import (
         iter_steps,
+        jobs,
         named_step,
         parse_workflow,
         read_only_permissions,
@@ -187,6 +190,17 @@ def merge_group_failures(workflows: dict[Path, str]) -> list[str]:
             errors.append(f'MGQ1 {path}: escuta merge_group e lê secrets.{nome} — o lote roda código de PR')
         if 'permissions' not in workflow or not read_only_permissions(workflow['permissions']):
             errors.append(f'MGQ1 {path}: escuta merge_group sem `permissions:` só de leitura no topo')
+        for job_id, job in jobs(workflow).items():
+            condicao = job.get('if') if isinstance(job.get('if'), str) else ''
+            permissoes = job.get('permissions')
+            release_de_tag = (
+                job_id == 'release'
+                and condicao.strip() == "startsWith(github.ref, 'refs/tags/v')"
+                and isinstance(permissoes, Mapping)
+                and dict(permissoes) == {'contents': 'write'}
+            )
+            if 'permissions' in job and not read_only_permissions(permissoes) and not release_de_tag:
+                errors.append(f'MGQ1 {path}: job {job_id} tem `permissions:` inválidas ou com escrita')
     return errors
 
 
@@ -287,6 +301,12 @@ def selftest(source: str) -> list[str]:
         'fila-permissao-vazia': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: ""', 1),
         'fila-permissao-lista': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: []', 1),
         'fila-permissao-mapa-vazio': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: {}', 1),
+        'fila-permissao-aninhada': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions:\n  contents:\n    nested: read', 1),
+        'fila-permissao-escopo-desconhecido': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions:\n  made-up: read', 1),
+        'fila-id-token-read': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions:\n  id-token: read', 1),
+        'fila-job-escreve': ci.read_text(encoding='utf-8').replace('  reguas-e-site:\n', '  reguas-e-site:\n    permissions:\n      contents: write\n', 1),
+        'fila-release-if-aberto': ci.read_text(encoding='utf-8').replace("if: startsWith(github.ref, 'refs/tags/v')", "if: startsWith(github.ref, 'refs/tags/v') || true", 1),
+        'fila-release-permissao-malformada': ci.read_text(encoding='utf-8').replace('    permissions:\n      contents: write', '    permissions: []', 1),
         'fila-permissao-so-no-job': ci.read_text(encoding='utf-8')
         .replace('permissions:\n  contents: read\n', '', 1)
         .replace('  reguas-e-site:\n', '  reguas-e-site:\n    permissions:\n      contents: read\n', 1),

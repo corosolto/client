@@ -72,6 +72,9 @@ aprovação humana definida nos quality gates antes de entrar em `staging`.
   mergeável e nenhuma pendência do estraga-codigo. Gameplay, backend e workflows não entram nesse caminho.
 - Todo merge usa `--match-head-commit` com o SHA avaliado; push entre decisão e merge aborta em
   vez de publicar código não verificado.
+- O workflow executa somente comandos fixos: `check_automerge.py` injeta `GITHUB_REPOSITORY` na
+  decisão e `automerge_merge.py` contém a guarda e o argv do merge. Não há heredoc executável
+  entre os selftests e a operação; o AF4 rejeita qualquer chamada adicional ou alteração da sequência.
 - A PR oficial `staging → main` usa o caminho `release-batch`: exige `estragacodigo-resolved`
   sem `CHANGES_REQUESTED`, não exige `reviewDecision=APPROVED`, e continua bloqueada por checks
   vermelhos, conflito, draft e pelas labels `needs-human-gameplay`, `needs-human-backend` e

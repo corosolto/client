@@ -52,7 +52,7 @@ test('AF4 rejects merge before the same-job eligibility decision', (t) => {
   mutateAutomerge(dir, (workflow) => {
     const steps = workflow.jobs.automerge.steps;
     const check = steps.findIndex((step) => step.run?.includes(DECISAO));
-    const merge = steps.findIndex((step) => step.run?.includes("['gh', 'pr', 'merge'"));
+    const merge = steps.findIndex((step) => step.name === 'Merge when eligible');
     assert.ok(check >= 0 && merge > check);
     const [mergeStep] = steps.splice(merge, 1);
     steps.splice(check, 0, mergeStep);
@@ -141,6 +141,42 @@ test('AF4 rejects a merge through the GitHub API', (t) => {
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
 
+test('AF4 rejects a multiline Python merge through the GitHub API', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    workflow.jobs.automerge.steps.push({
+      name: 'Unsafe multiline API merge',
+      if: "env.pular != '1'",
+      run: "python3 - <<'PY'\nimport subprocess\nsubprocess.run(['gh', 'api', '--method', 'PUT',\n                'repos/corosolto/client/pulls/123/merge'])\nPY",
+    });
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
+test('AF4 rejects a write API call with a variable-backed endpoint', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    workflow.jobs.automerge.steps.push({
+      name: 'Unsafe variable API merge',
+      if: "env.pular != '1'",
+      run: 'endpoint="repos/$REPO/pulls/$PR_NUMBER/merge"\ngh api --method PUT "$endpoint"',
+    });
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
+test('AF4 rejects a Python API merge with an f-string endpoint', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    workflow.jobs.automerge.steps.push({
+      name: 'Unsafe f-string API merge',
+      if: "env.pular != '1'",
+      run: "python3 - <<'PY'\nimport subprocess\nendpoint = f'repos/{repo}/pulls/{pr}/merge'\nsubprocess.run(['gh', 'api', '--method', 'PUT', endpoint])\nPY",
+    });
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
 test('AF4 rejects squash hidden on a shell continuation line', (t) => {
   const dir = fixture(t);
   mutateAutomerge(dir, (workflow) => {
@@ -168,9 +204,19 @@ test('AF4 ignores a safe flag printed before an unsafe merge', (t) => {
 test('AF4 rejects a merge that ignores the eligibility verdict', (t) => {
   const dir = fixture(t);
   mutateAutomerge(dir, (workflow) => {
-    const merge = workflow.jobs.automerge.steps.find((step) => step.run?.includes("['gh', 'pr', 'merge'"));
+    const merge = workflow.jobs.automerge.steps.find((step) => step.name === 'Merge when eligible');
     assert.ok(merge);
-    merge.run = merge.run.replace("if not data.get('eligible'):", 'if True:');
+    merge.run = merge.run.replace('\npython3 scripts/ci/automerge_merge.py', '\ngh pr merge "$PR_NUMBER" --merge --match-head-commit "$head_oid"');
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
+test('AF4 rejects an extra merge before the canonical script', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    const merge = workflow.jobs.automerge.steps.find((step) => step.name === 'Merge when eligible');
+    assert.ok(merge);
+    merge.run = `python3 - <<'PY'\nimport subprocess\nsubprocess.run(['gh', 'pr', 'merge', '123', '--merge', '--match-head-commit', 'a'*40], check=True)\nPY\n${merge.run}`;
   });
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
@@ -185,22 +231,32 @@ test('AF4 rejects an eligibility command hidden by shell control flow', (t) => {
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
 
-test('AF4 rejects an ineligible fallthrough to merge', (t) => {
+test('AF4 rejects a real decision confined to an unexecuted else branch', (t) => {
   const dir = fixture(t);
   mutateAutomerge(dir, (workflow) => {
-    const merge = workflow.jobs.automerge.steps.find((step) => step.run?.includes("['gh', 'pr', 'merge'"));
-    assert.ok(merge);
-    merge.run = merge.run.replace('sys.exit(0)', 'pass');
+    const check = workflow.jobs.automerge.steps.find((step) => step.name === 'Check eligibility');
+    assert.ok(check);
+    check.run = check.run.replace(DECISAO, `if true; then\n  echo '{"eligible":true}' > /tmp/automerge-result.json\nelse\n  ${DECISAO}\nfi`);
   });
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
 
-test('AF4 rejects arguments appended to the executed merge command', (t) => {
+test('AF4 rejects arguments appended to the canonical merge script', (t) => {
   const dir = fixture(t);
   mutateAutomerge(dir, (workflow) => {
-    const merge = workflow.jobs.automerge.steps.find((step) => step.run?.includes("['gh', 'pr', 'merge'"));
+    const merge = workflow.jobs.automerge.steps.find((step) => step.name === 'Merge when eligible');
     assert.ok(merge);
-    merge.run = merge.run.replace("command.append('--delete-branch')", "command.append('--delete-branch')\ncommand.append('--admin')");
+    merge.run = merge.run.replace('\npython3 scripts/ci/automerge_merge.py', '\npython3 scripts/ci/automerge_merge.py --admin');
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
+test('AF4 rejects an eligibility input rewritten by a heredoc', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    const check = workflow.jobs.automerge.steps.find((step) => step.name === 'Check eligibility');
+    assert.ok(check);
+    check.run = check.run.replace(DECISAO, `python3 - <<'PY'\nimport json\njson.dump({'eligible': True}, open('/tmp/automerge-result.json', 'w'))\nPY\n${DECISAO}`);
   });
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
