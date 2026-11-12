@@ -283,7 +283,7 @@ const chamadasMerge = (texto) => {
   let resolvido = executavel;
   for (let rodada = 0; rodada < 32; rodada += 1) {
     const antes = resolvido;
-    for (const assignment of resolvido.matchAll(/^\s*(?:(?:export|readonly|local|declare(?:\s+-[A-Za-z]+)?)\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*(?:\:\s*[^=\r\n]+)?\s*=\s*[A-Za-z]*(?:'([^'\r\n]*(?:\/pulls\/[^'\r\n]*\/merge|\bmergePullRequest\b)[^'\r\n]*)'|"([^"\r\n]*(?:\/pulls\/[^"\r\n]*\/merge|\bmergePullRequest\b)[^"\r\n]*)")/gm)) {
+    for (const assignment of resolvido.matchAll(/^\s*(?:(?:export|readonly|local|declare)(?:\s+-[A-Za-z]+)?\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*(?:\:\s*[^=\r\n]+)?\s*=\s*[A-Za-z]*(?:'([^'\r\n]*(?:\/pulls\/[^'\r\n]*\/merge|\bmergePullRequest\b)[^'\r\n]*)'|"([^"\r\n]*(?:\/pulls\/[^"\r\n]*\/merge|\bmergePullRequest\b)[^"\r\n]*)")/gm)) {
       const nome = assignment[1];
       const endpoint = assignment[2] ?? assignment[3];
       resolvido = resolvido.replace(new RegExp(`\\$\\{${nome}\\}|\\$${nome}\\b|\\b${nome}\\b`, 'g'), (referencia) => referencia.startsWith('$') ? endpoint : `'${endpoint}'`);

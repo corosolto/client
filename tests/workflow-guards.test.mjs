@@ -159,7 +159,7 @@ test('AF4 rejects a write API call with a variable-backed endpoint', (t) => {
     workflow.jobs.automerge.steps.push({
       name: 'Unsafe variable API merge',
       if: "env.pular != '1'",
-      run: 'readonly endpoint="repos/$REPO/pulls/$PR_NUMBER/merge"\ngh api --method PUT "$endpoint"',
+      run: 'local -r endpoint="repos/$REPO/pulls/$PR_NUMBER/merge"\ngh api --method PUT "$endpoint"',
     });
   });
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
