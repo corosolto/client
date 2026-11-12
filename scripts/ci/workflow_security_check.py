@@ -76,7 +76,15 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
     # não dependa da grafia escolhida pelo autor.
     def codigo(texto: str) -> str:
         linhas = []
+        escalar_indent = None
         for linha in texto.splitlines():
+            indent = len(linha) - len(linha.lstrip(' '))
+            if escalar_indent is not None:
+                if not linha.strip() or indent > escalar_indent:
+                    # Em `run: |`/`run: >`, `#` é conteúdo do script, não comentário YAML.
+                    linhas.append(linha)
+                    continue
+                escalar_indent = None
             aspas = None
             escapado = False
             limpa = []
@@ -97,8 +105,11 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
                 if caractere == '#' and aspas is None:
                     break
                 limpa.append(caractere)
-            if ''.join(limpa).strip():
-                linhas.append(''.join(limpa))
+            sem_comentario = ''.join(limpa)
+            if sem_comentario.strip():
+                linhas.append(sem_comentario)
+            if re.match(r'^\s*[^#]+:\s*[|>][-+0-9]*\s*$', sem_comentario):
+                escalar_indent = indent
         sem_comentario = '\n'.join(linhas)
         return re.sub(r"(['\"])(pull_request|push|schedule|workflow_dispatch|workflow_run)\1\s*:", r"\2:", sem_comentario)
 
@@ -279,6 +290,7 @@ def selftest(source: str) -> list[str]:
     build, deploy = _ler(BUILD), _ler(DEPLOY)
     separacao = {
         'compila-com-segredo': (build + '\n        env:\n          X: ${{ secrets.VERCEL_TOKEN }}\n', deploy),
+        'compila-segredo-em-scalar': (build + '\n      - run: |\n          echo # ${{ secrets.TOKEN }}\n', deploy),
         'compila-com-target': (build.replace('  workflow_dispatch:', '  pull_request_target:'), deploy),
         'compila-volta-pr': (build.replace('  workflow_dispatch:', '  pull_request:\n  workflow_dispatch:'), deploy),
         'compila-volta-pr-quoted': (build.replace('  workflow_dispatch:', '  "pull_request":\n  workflow_dispatch:'), deploy),
