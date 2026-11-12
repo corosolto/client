@@ -617,7 +617,7 @@ class Netcode {
     const game = this.game;
     for (let i = game.drops.length - 1; i >= 0; i--) {
       const d = game.drops[i];
-      if (d._nid && d._expiraRedeEm != null && game.time >= d._expiraRedeEm) game._sumirDrop(i);
+      if (d._nid != null && d._expiraRedeEm != null && game.time >= d._expiraRedeEm) game._sumirDrop(i);
     }
   }
   // IDs uint32 de eventos não podem truncar para signed nem coagir inválidos em zero.

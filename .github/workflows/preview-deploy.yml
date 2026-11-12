@@ -57,15 +57,23 @@ jobs:
         run: |
           NUM=$(cat /tmp/artefato/preview-meta-*/pr-numero.txt 2>/dev/null | tr -dc '0-9')
           SHA=$(cat /tmp/artefato/preview-meta-*/pr-sha.txt 2>/dev/null | tr -dc '0-9a-f')
-          # Confere contra a API em vez de confiar no arquivo: ele veio de um job que
-          # rodou código do fork, então é entrada não confiável.
+          REPO=$(cat /tmp/artefato/preview-meta-*/pr-repo.txt 2>/dev/null | tr -d '\r\n')
+          # Confere contra a API em vez de confiar nos arquivos: eles vieram de um job
+          # que rodou código do fork, então são entrada não confiável.
           case "$NUM" in ''|*[!0-9]*) echo "número de PR inválido no artefato"; exit 1 ;; esac
-          REAL=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$NUM" --jq .head.sha)
-          if [ "$REAL" != "$SHA" ]; then
-            echo "::warning::o PR #$NUM avançou desde o build ($SHA != $REAL) — preview descartado"
+          case "$SHA" in ''|*[!0-9a-f]*) echo "SHA inválido no artefato"; exit 1 ;; esac
+          if ! printf '%s\n' "$REPO" | grep -Eq '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
+            echo "repositório inválido no artefato"
+            exit 1
+          fi
+          REAL_REPO=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$NUM" --jq .head.repo.full_name)
+          REAL_SHA=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$NUM" --jq .head.sha)
+          if [ "$REAL_REPO" != "$REPO" ] || [ "$REAL_SHA" != "$SHA" ]; then
+            echo "::warning::o PR #$NUM avançou ou mudou de origem desde o build (repo $REPO != $REAL_REPO ou SHA $SHA != $REAL_SHA) — preview descartado"
             echo "pular=1" >> "$GITHUB_OUTPUT"
           fi
           echo "numero=$NUM" >> "$GITHUB_OUTPUT"
+          echo "repositorio=$REPO" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -83,7 +91,7 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+          HEAD_REPO: ${{ steps.pr.outputs.repositorio }}
         run: |
           mkdir -p .vercel/output
           cp -R /tmp/artefato/preview-*/. .vercel/output/ 2>/dev/null || true
