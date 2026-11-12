@@ -59,8 +59,8 @@ export class InterpolationClock {
     const atualOff = nowMs - snap.t * 1000;
     if (this.offsetMs != null && Math.abs(atualOff - this.offsetMs) > 1000) {
       this.offsetMs = atualOff;
-      this.arrivalTimes = [nowMs];
-      this.serverTimes = [snap.t];
+      this.arrivalTimes.length = 0; this.arrivalTimes.push(nowMs);
+      this.serverTimes.length = 0; this.serverTimes.push(snap.t);
     }
     // Offset local↔servidor = MÍNIMO da janela (atraso só aumenta chegada−t); desliza ≤ 4 ms
     // por snapshot, e salto > 1 s é relógio novo (partida nova) — BUG-118.
@@ -108,6 +108,7 @@ export function pushEntitySample(ent, t, e, teleport = false, semOrdem = false) 
   ent._bufMantle ||= [];
   let i = n;
   if (!semOrdem) while (i > 0 && at[i - 1] > t) i--;
+  if (i < n && at[i] === t) return false;
   if (i > 0 && at[i - 1] === t) return false;
   if (i === n) {
     at.push(t); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z);

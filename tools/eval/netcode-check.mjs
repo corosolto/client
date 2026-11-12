@@ -599,12 +599,15 @@ console.log('\n· snapshot fora de ordem entra no lugar certo, sem duplicar amos
 {
   const ent = interpolationEntity(), out = { vx: 0, vz: 0, segYaw: null };
   pushEntitySample(ent, 10000, interpolationSample(0));
+  const duplicadaMaisAntiga = pushEntitySample(ent, 10000, interpolationSample(99));
   pushEntitySample(ent, 10100, interpolationSample(1));
   pushEntitySample(ent, 10050, interpolationSample(0.5));
   const duplicada = pushEntitySample(ent, 10050, interpolationSample(99));
   sampleEntityBuffer(ent, 10075, out);
   cobra(ent._bufAt.join(',') === '10000,10050,10100' && Math.abs(ent.pos.x - 0.75) < 1e-9,
     `reordenação por tempo do servidor preserva o segmento e interpola x=${ent.pos.x}`);
+  cobra(!duplicadaMaisAntiga && ent._bufAt[0] === 10000 && ent._bufX[0] === 0,
+    'repetição da amostra mais antiga também é rejeitada sem duplicar o tempo de servidor');
   cobra(!duplicada && ent._bufX[1] === 0.5 && ent._bufAt.length === 3,
     'repetição do mesmo tempo de servidor é stale e não substitui nem duplica a amostra');
   for (let k = 3; k < 16; k++) pushEntitySample(ent, 10000 + k * 50, interpolationSample(k * 0.5));
@@ -690,7 +693,11 @@ console.log('\n· recuo curto é reorder; recuo grande é partida nova');
   clock.observe({ t: 100 }, relogio.now());
   relogio.set(100500); clock.observe({ t: 100 }, relogio.now());
   const offsetReorder = clock.offsetMs;
+  const tAtAntes = clock.arrivalTimes, tTAntes = clock.serverTimes;
   clock.observe({ t: 97 }, relogio.now());
+  cobra(clock.arrivalTimes === tAtAntes && clock.serverTimes === tTAntes
+    && tAtAntes.length === 1 && tTAntes.length === 1,
+    'recuo grande preserva identidade dos arrays e reinicia com uma amostra');
   cobra(offsetReorder === 0 && clock.offsetMs === 3500,
     `offset não desliza com dois timestamps iguais (${offsetReorder}) e reancora na partida nova (${clock.offsetMs})`);
 }
