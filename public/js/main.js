@@ -365,7 +365,8 @@ let _splashReady = false;
    vazava para o item recém-focado e o JOGAR abria o submenu sozinho (régua ENTRADA1). */
 const ENTRADA_MS = 350;
 let _entradaEm = 0;
-let _splashPorFailsafe = false, _menuBackdropBypass = null;
+let _splashPorFailsafe = false;
+let _menuBackdropBypass = null;
 function _splashSetReady() {
   // Marco do funil: `assets_ready` é o caminho dos assets (menuBackdropReady), nunca o
   // failsafe. splash_ready SEM assets_ready = o botão saiu por tempo, com a carga em pé.
@@ -5742,10 +5743,10 @@ show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de 
     if (!location.pathname.startsWith('/u/')) hubNavigate({ map: currentMap, personagem: currentChar }, true); // /u/<perfil> fica limpo para compartilhar
     restoreHubRoute();
   }
+  /* RÉGUA:boot-pending-entry início */
 window.__CS_MAIN_READY__ = true;
 window.__gameLaunch?.ready('boot');
-  /* RÉGUA:boot-pending-entry início */
-  contagem.evento('game_loaded');
+contagem.evento('game_loaded');
   const entradaPendente = document.getElementById('boot-splash');
   if (entradaPendente?.dataset.csEntradaPendente) {
     delete entradaPendente.dataset.csEntradaPendente;

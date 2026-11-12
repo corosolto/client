@@ -132,7 +132,7 @@ test('failsafe aceita e consome a entrada enquanto a arena termina', async () =>
   assert.equal(f.pendingEntry, undefined, 'a intenção é consumida uma vez');
   assert.equal(f.splashGone, true, 'a splash real entra no fluxo de saída');
   assert.equal(f.removed, true, 'a splash real é removida');
-  assert.deepEqual(f.launchReady, ['entrada']);
+  assert.deepEqual(f.launchReady, ['boot', 'entrada']);
   assert.ok(f.events.includes('splash_enter'));
   assert.equal(f.events[0], 'game_loaded', 'boot completo precede a telemetria da entrada');
 });
