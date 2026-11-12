@@ -20,6 +20,7 @@ const OFFLINE_CORE = [
   '/models/props/drinkstand.glb',
   '/models/props/urna.glb',
 ];
+const OFFLINE_CORE_PATHS = new Set(OFFLINE_CORE);
 const STATIC_PATH = /\.(?:avif|css|glb|gif|ico|jpe?g|js|json|mp3|ogg|png|svg|wasm|wav|webmanifest|webm|webp|woff2?)$/i;
 
 const sameOriginStatic = (value) => {
@@ -29,14 +30,20 @@ const sameOriginStatic = (value) => {
 
 async function cacheResponse(request, response) {
   if (!response?.ok || response.status === 206) return response;
-  const cache = await caches.open(CACHE_NAME);
-  await cache.put(request, response.clone());
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(request, response.clone());
+  } catch {
+    // Falta de espaço não pode transformar uma resposta de rede válida em falha.
+  }
   return response;
 }
 
 async function trimCache(cache) {
   const keys = await cache.keys();
-  await Promise.all(keys.slice(0, Math.max(0, keys.length - CACHE_LIMIT)).map((key) => cache.delete(key)));
+  const removable = keys.filter((request) => !OFFLINE_CORE_PATHS.has(new URL(request.url).pathname));
+  const excess = Math.max(0, keys.length - CACHE_LIMIT);
+  await Promise.all(removable.slice(0, excess).map((request) => cache.delete(request)));
 }
 
 async function cacheUrls(values) {
@@ -60,7 +67,16 @@ async function navigationResponse(request) {
   const cache = await caches.open(CACHE_NAME);
   try {
     const response = await fetch(request);
-    if (response.ok) await cache.put(request, response.clone());
+    if (response.ok) {
+      const url = new URL(request.url);
+      if (url.pathname === '/' && !url.search) {
+        try {
+          await cache.put('/', response.clone());
+        } catch {
+          // O jogo online continua mesmo quando o armazenamento local está cheio.
+        }
+      }
+    }
     return response;
   } catch {
     return (await cache.match(request)) || (await cache.match('/')) || Response.error();

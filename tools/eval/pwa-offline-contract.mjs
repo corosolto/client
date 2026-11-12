@@ -12,7 +12,11 @@ const fetched = [];
 const keyOf = (value) => new URL(typeof value === 'string' ? value : value.url, ORIGIN).href;
 class MemoryCache {
   entries = new Map();
-  async put(request, response) { this.entries.set(keyOf(request), response.clone()); }
+  failWrites = false;
+  async put(request, response) {
+    if (this.failWrites) throw new Error('quota exceeded');
+    this.entries.set(keyOf(request), response.clone());
+  }
   async match(request, options = {}) {
     const key = keyOf(request);
     if (!options.ignoreSearch) return this.entries.get(key)?.clone();
@@ -68,6 +72,8 @@ const deepRoute = { method: 'GET', headers: new Headers(), mode: 'navigate', url
 assert.equal(await (await request(deepRoute)).text(), 'asset:/u/jogador', 'online deep route reaches the network');
 
 online = false;
+const offlineDeep = await request(deepRoute);
+assert.equal(await offlineDeep.text(), 'asset:/', 'offline deep navigation falls back to the root shell');
 const offlineHome = await request({ method: 'GET', headers: new Headers(), mode: 'navigate', url: `${ORIGIN}/` });
 assert.equal(await offlineHome.text(), 'asset:/', 'offline navigation falls back to the installed shell');
 const offlineDefaultMap = await request(new Request(`${ORIGIN}/js/map_brasilia.js?v=release-1`));
@@ -87,5 +93,25 @@ await lifecycle('message', {
 });
 const messageFetches = fetched.slice(beforeMessage);
 assert.deepEqual(messageFetches, [`${ORIGIN}/models/characters/test.glb`], 'warm-up accepts only same-origin static resources');
+
+cache.failWrites = true;
+online = true;
+const uncached = await request(new Request(`${ORIGIN}/js/quota-full.js`));
+assert.equal(await uncached.text(), 'asset:/js/quota-full.js', 'full cache does not break a valid static network response');
+const uncachedHome = await request({ method: 'GET', headers: new Headers(), mode: 'navigate', url: `${ORIGIN}/` });
+assert.equal(await uncachedHome.text(), 'asset:/', 'full cache does not break a valid navigation response');
+cache.failWrites = false;
+
+await lifecycle('message', {
+  type: 'CACHE_OFFLINE_RESOURCES',
+  urls: Array.from({ length: 620 }, (_, index) => `${ORIGIN}/js/visited-${index}.js`),
+});
+assert.ok((await cache.keys()).length <= 600, 'runtime cache stays bounded');
+assert.equal(await (await cache.match('/')).text(), 'asset:/', 'cache trimming preserves the offline shell');
+assert.equal(
+  await (await cache.match('/js/map_brasilia.js')).text(),
+  'asset:/js/map_brasilia.js',
+  'cache trimming preserves the default map',
+);
 
 console.log('PWA offline contract: PASS (install shell, default map, runtime cache and filters)');
