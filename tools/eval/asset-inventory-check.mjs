@@ -194,6 +194,17 @@ function mutations() {
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
     console.log('AI2k: a top-level loop binding shadows the outer literal.');
 
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\n");
+    put(fixture, 'public/js/consumer.js', "import { clipUrl } from './refs.js';\nconst id = 'adjim';\nconst state = 'idle';\nconst record = {};\nrecord.id = runtimeId;\nrecord.state++;\nexport const url = clipUrl(id, state);\n");
+    put(fixture, 'public/models/anims/adjim/idle.glb', 'member-assignment');
+    expectStatus(runInventory(fixture), 0, 'member assignments preserve unrelated lexical constants');
+    expectStatus(runInventory(fixture, ['--check']), 0, 'member assignment reference check');
+    rmSync(join(fixture, 'public/models/anims/adjim/idle.glb'));
+    rmSync(join(fixture, 'public/js/consumer.js'));
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    expectStatus(runInventory(fixture), 0, 'member assignment cleanup');
+    console.log('AI2l: member writes do not invalidate same-named lexical constants.');
+
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
     reviewed.files['models/props/legacy.glb'] = createHash('sha256')

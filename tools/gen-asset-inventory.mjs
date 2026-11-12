@@ -95,6 +95,17 @@ function identifiers(pattern, found = []) {
   return found;
 }
 
+function assignmentIdentifiers(pattern, found = []) {
+  if (!pattern || typeof pattern !== 'object') return found;
+  if (pattern.type === 'Identifier') { found.push(pattern.name); return found; }
+  if (pattern.type === 'MemberExpression') return found;
+  if (pattern.type === 'RestElement') return assignmentIdentifiers(pattern.argument, found);
+  if (pattern.type === 'AssignmentPattern') return assignmentIdentifiers(pattern.left, found);
+  if (pattern.type === 'ArrayPattern') pattern.elements.forEach((element) => assignmentIdentifiers(element, found));
+  if (pattern.type === 'ObjectPattern') pattern.properties.forEach((property) => assignmentIdentifiers(property.value, found));
+  return found;
+}
+
 function templateText(node) {
   if (node?.type !== 'TemplateLiteral') return null;
   let text = '';
@@ -152,8 +163,8 @@ function analyzeModule(text) {
       }
     }
     if (node.type === 'CatchClause' && node.param) identifiers(node.param).forEach((name) => analysis.shadowed.add(name));
-    if (node.type === 'AssignmentExpression') identifiers(node.left).forEach((name) => analysis.shadowed.add(name));
-    if (node.type === 'UpdateExpression') identifiers(node.argument).forEach((name) => analysis.shadowed.add(name));
+    if (node.type === 'AssignmentExpression') assignmentIdentifiers(node.left).forEach((name) => analysis.shadowed.add(name));
+    if (node.type === 'UpdateExpression') assignmentIdentifiers(node.argument).forEach((name) => analysis.shadowed.add(name));
     if (node.type === 'CallExpression' && node.callee.type === 'Identifier') analysis.calls.push(node);
     for (const [key, value] of Object.entries(node)) {
       if (key === 'type') continue;
