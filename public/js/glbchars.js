@@ -613,12 +613,7 @@ function preloadStudioCharacter(id, release) {
     model.scene.traverse((o) => {
       if (o.isSkinnedMesh && o.skeleton) for (const bone of o.skeleton.bones) bones.add(bone);
     });
-    // Nome da junta no glTF, antes do createUniqueName do loader (Curl_R/Curl_R_1).
-    const nomeNoGltf = (bone) => {
-      const no = model.parser?.associations?.get(bone)?.nodes;
-      return no === undefined ? bone.name : model.parser.json.nodes[no].name;
-    };
-    const detalhe = studioSkeletonMismatch([...bones], nomeNoGltf);
+    const detalhe = studioSkeletonMismatch([...bones]);
     if (detalhe) throw new StudioCharacterError('studio_skeleton_mismatch', `${id}: ${detalhe}`);
     const set = {};
     STUDIO_CHARACTER_STATES.forEach((s, i) => {
