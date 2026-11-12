@@ -15,7 +15,7 @@ const BASELINE = {
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
 const NOVOS = {
-  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe']),
+  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish']),
   deploy: new Set(['eval:weapon-passe', 'eval:dispose']),
 };
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
@@ -47,7 +47,13 @@ test('staging adiciona portalembed, lixo, envruntime, servertraffic, shareorigin
   assert.ok(SUITES.fast.includes('eval:vm-enquadramento-placar'));
   assert.ok(SUITES.fast.includes('eval:pintura-fabrica'));
   assert.ok(SUITES.fast.includes('eval:passe'));
+  assert.ok(SUITES.fast.includes('eval:packpublish'));
   assert.ok(SUITES.deploy.includes('eval:dispose'));
+});
+
+test('release de personagem do Studio entra na fast logo depois do characterkit', () => {
+  const i = SUITES.fast.indexOf('eval:characterkit');
+  assert.equal(SUITES.fast[i + 1], 'eval:studiochar');
 });
 
 test('suites temáticas só reutilizam passos existentes, sem duplicar execução', () => {
