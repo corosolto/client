@@ -79,7 +79,8 @@ lock; o `postCreateCommand` executa o mesmo `scripts/setup.mjs` acima e termina 
 diagnóstico do navegador. Num terminal já configurado, o caminho equivalente é:
 
 ```bash
-node scripts/ci-local.mjs --setup       # setup + Playwright local do lock + Chromium e libs
+node scripts/ci-local.mjs --setup       # setup + Playwright local do lock + Chromium (sem root)
+sudo node scripts/ci-local.mjs --setup-system  # Linux: instala as libs nativas do Chromium
 node scripts/ci-local.mjs --diagnose    # só ambiente; não roda teste
 node scripts/ci-local.mjs               # diagnóstico e check:fast
 node scripts/ci-local.mjs eval:boot     # qualquer script npm, com CHROME_BIN já descoberto

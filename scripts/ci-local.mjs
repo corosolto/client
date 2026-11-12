@@ -176,7 +176,7 @@ async function diagnosticar() {
     const ausentes = bibliotecasAusentes(`${ldd.stdout}${ldd.stderr}`);
     nativasOk = ausentes.length === 0;
     console.log(`  ${nativasOk ? '✓' : '✗'} bibliotecas nativas do Chromium${ausentes.length ? `: ${ausentes.join(', ')}` : ''}`);
-    if (ausentes.length) problemas.push(`bibliotecas nativas ausentes (${ausentes.join(', ')}); rode \`node scripts/ci-local.mjs --setup\` para instalar os pacotes do sistema`);
+    if (ausentes.length) problemas.push(`bibliotecas nativas ausentes (${ausentes.join(', ')}); rode \`node scripts/ci-local.mjs --setup-system\` com privilégio para instalar os pacotes do sistema`);
   }
 
   if (chromeOk && chromium && nativasOk) {
@@ -188,7 +188,7 @@ async function diagnosticar() {
       const detalhe = String(e.message || e).slice(0, 1600);
       const nativo = erroNativoNavegador(detalhe);
       console.error(`  ✗ Chromium não abriu (${nativo ? 'dependência nativa/sistema' : 'configuração de processo'})\n${detalhe}`);
-      problemas.push(`Chromium não abriu; ${nativo ? 'instale as dependências nativas com `node scripts/ci-local.mjs --setup`' : 'corrija a configuração antes de rodar testes'}`);
+      problemas.push(`Chromium não abriu; ${nativo ? 'instale as dependências nativas com `node scripts/ci-local.mjs --setup-system`' : 'corrija a configuração antes de rodar testes'}`);
     }
   }
 
@@ -212,10 +212,20 @@ async function preparar() {
   let status = executa(process.execPath, ['scripts/setup.mjs']);
   if (status) return SAIDA_AMBIENTE;
   const cli = path.join(RAIZ, 'node_modules', 'playwright', 'cli.js');
-  const args = [cli, 'install', ...(process.platform === 'linux' ? ['--with-deps'] : []), 'chromium'];
-  status = executa(process.execPath, args);
+  status = executa(process.execPath, [cli, 'install', 'chromium']);
   if (status) return SAIDA_AMBIENTE;
   return (await diagnosticar()).ok ? 0 : SAIDA_AMBIENTE;
+}
+
+async function prepararSistema() {
+  const runtime = [];
+  validarRuntime(runtime);
+  if (runtime.length) {
+    for (const p of runtime) console.error(`  - ${p}`);
+    return SAIDA_AMBIENTE;
+  }
+  const cli = path.join(RAIZ, 'node_modules', 'playwright', 'cli.js');
+  return executa(process.execPath, [cli, 'install-deps', 'chromium']);
 }
 
 function selftest() {
@@ -263,14 +273,15 @@ function selftest() {
 
 async function main() {
   const args = process.argv.slice(2);
-  const modo = ['--selftest', '--setup', '--diagnose'].find((flag) => args.includes(flag));
+  const modo = ['--selftest', '--setup', '--setup-system', '--diagnose'].find((flag) => args.includes(flag));
   if (modo) {
     if (args.length !== 1) {
-      console.error('Uso: node scripts/ci-local.mjs [--setup|--diagnose|--selftest] [script-npm]');
+      console.error('Uso: node scripts/ci-local.mjs [--setup|--setup-system|--diagnose|--selftest] [script-npm]');
       return 64;
     }
     if (modo === '--selftest') return selftest();
     if (modo === '--setup') return preparar();
+    if (modo === '--setup-system') return prepararSistema();
     return (await diagnosticar()).ok ? 0 : SAIDA_AMBIENTE;
   }
   if (args.some((a) => a.startsWith('-')) || args.length > 1) {
