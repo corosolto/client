@@ -16,7 +16,7 @@ const BASELINE = {
 };
 const NOVOS = {
   fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe']),
-  deploy: new Set(['eval:weapon-passe']),
+  deploy: new Set(['eval:weapon-passe', 'eval:dispose']),
 };
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
 
