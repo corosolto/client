@@ -955,7 +955,8 @@
     "//eval:xpixel": "Código-base do pixel do X insere o <script> do uwt.js (ops-diag #1231: insertBefore recebia a função twq). Mutante: insere-funcao.",
     "eval:xpixel": "node tools/eval/x-pixel-snippet-check.mjs && node tools/eval/x-pixel-snippet-check.mjs --mutante=insere-funcao",
     "//eval:servertraffic": "Classificação de user-agent da contagem de borda (src/lib/server-traffic.mjs): bots de busca/IA/preview/automação fora, navegador interno de app (app/tiktok, app/instagram…) nomeado e continuando como browser. Nunca esteve em script desde a #988.",
-    "eval:servertraffic": "node --test tools/eval/server-traffic-check.mjs"
+    "eval:servertraffic": "node --test tools/eval/server-traffic-check.mjs",
+    "eval:dispose": "node tools/eval/dispose-vram-check.mjs && node tools/eval/dispose-vram-check.mjs --mutante=sem-registro"
   },
   "repository": {
     "type": "git",
