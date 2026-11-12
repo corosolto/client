@@ -19,7 +19,7 @@ const dismissSource = region('boot-splash-dismiss');
 const pendingSource = region('boot-pending-entry');
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 
-function fixture() {
+function fixture({ splashReady = true } = {}) {
   let resolveBackdrop;
   let armCalls = 0;
   let removed = false;
@@ -78,7 +78,7 @@ function fixture() {
     _entradaEm: 0,
     _lobbyEntrou() {},
     _menuBackdropBypass: null,
-    _splashReady: true,
+    _splashReady: splashReady,
   });
   vm.runInContext(sequencingSource, context);
   vm.runInContext(dismissSource, context);
@@ -135,6 +135,26 @@ test('failsafe aceita e consome a entrada enquanto a arena termina', async () =>
   assert.deepEqual(f.launchReady, ['boot', 'entrada']);
   assert.ok(f.events.includes('splash_enter'));
   assert.equal(f.events[0], 'game_loaded', 'boot completo precede a telemetria da entrada');
+});
+
+test('gesto antes do failsafe não cria entrada pendente', async () => {
+  const f = fixture({ splashReady: false });
+  f.dispatch('pointerdown', {
+    target: { closest: () => null },
+    preventDefault() { throw new Error('não deveria prevenir'); },
+    stopPropagation() { throw new Error('não deveria parar'); },
+  });
+  await flush();
+
+  assert.equal(f.pendingEntry, undefined);
+  assert.equal(f.armCalls, 0);
+  assert.equal(typeof f.bypass, 'function', 'a arena continua esperando o backdrop');
+  assert.equal(f.armed, true, 'o watchdog continua armado até o fallback ficar pronto');
+
+  f.resolveBackdrop();
+  await f.sequence;
+  await flush();
+  assert.equal(f.armed, false);
 });
 
 test('assets prontos encerram o fallback sem inventar uma entrada', async () => {
