@@ -34,10 +34,8 @@ export const isStudioExtraClipName = (name) =>
   STUDIO_EXTRA_CLIPS.includes(name)
   || STUDIO_EXTRA_CLIP_PREFIXES.some((prefixo) => name.length > prefixo.length && name.startsWith(prefixo));
 
-// Família do clipe (contrato v3): espelho de clipFamily do Studio (tools/lib/character-pack.mjs),
-// que por sua vez espelha packFamily do conversor. 'states' para os 11 estados; emote_ → 'emote'
-// (o conversor chama o pack de 'emotes'); victory|defeat|death_* → 'ceremony';
-// reload_|draw_|holster_|hit_|grenade_|knife_|shoot_ → 'combat'; o resto é 'loco'.
+// Famílias do Studio: states, emote_, ceremony (victory/defeat/death_*),
+// combat (reload_|draw_|holster_|hit_|grenade_|knife_|shoot_) e loco.
 export const STUDIO_CLIP_FAMILIES = Object.freeze(['loco', 'combat', 'ceremony', 'emote']);
 export const studioClipFamily = (name) => {
   if (STUDIO_CHARACTER_STATES.includes(name)) return 'states';
