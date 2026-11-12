@@ -1596,6 +1596,9 @@ function openHubRoster(updateRoute = true) {
         pin.textContent = ehPin ? papel : '＋';
         pin.onclick = (ev) => {
           ev.stopPropagation();
+          /* Escalar personagem travado como bot = jogar com ele de graça: recusa como a escolha,
+             com o mesmo aviso. Tirar um escalado antigo continua valendo. */
+          if (!ehPin && personagemTravado(def)) { ui.click(); $('hub-roster-selected').textContent = frase('passeTravadoAviso', def.name, nivel || '?'); return; }
           settings.pinnedChars = ehPin
             ? settings.pinnedChars.filter((id) => id !== def.id)
             : [...settings.pinnedChars, def.id];
@@ -2203,9 +2206,10 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
      cada jogador da mesma sala ver bonecos diferentes, e o nome do killfeed não bateria com o
      rosto que apareceu na tela. Fora do multiplayer, sorteio normal — com a ESCALAÇÃO do
      jogador (pinnedChars da tela de escalação) entrando primeiro. Papel do escalado: do lado
-     do jogador = aliado; senão inimigo (pickMatchRoster re-filtra por lado). */
+     do jogador = aliado; senão inimigo (pickMatchRoster re-filtra por lado). Escalado travado pelo
+     passe (pin salvo antes da trava ou sem o servidor ter destravado) fica de fora da partida. */
   const _podeNoLadoSp = (id) => { const c = CHARACTERS.find((x) => x.id === id); return !!(c && podeNoLado(c, side)); };
-  const _escalados = sessao ? [] : settings.pinnedChars.filter((id) => id !== charId);
+  const _escalados = sessao ? [] : settings.pinnedChars.filter((id) => id !== charId && !personagemTravado(CHARACTERS.find((c) => c.id === id)));
   const _pinned = sessao ? null : {
     ally: _escalados.filter(_podeNoLadoSp),
     enemy: _escalados.filter((id) => !_podeNoLadoSp(id)),
@@ -5588,20 +5592,24 @@ function mpDesconectou() {
 }
 
 async function mpTentarReconectar(sala, no, team) {
-  const MAX = 3, INTERVALO = 2000;
+  const PRAZO = 45_000, INTERVALO = 2000, inicio = Date.now();
   mpReconectando = true;
-  for (let i = 0; i < MAX; i++) {
-    mpEstado('conectando', `RECONNECTING · ${i + 1}/${MAX}…`);
-    await new Promise((r) => setTimeout(r, i === 0 ? 600 : INTERVALO));
+  let tentativa = 0;
+  while (Date.now() - inicio < PRAZO) {
+    tentativa += 1;
+    mpEstado('conectando', `RECONNECTING · tentativa ${tentativa}…`);
+    const restante = PRAZO - (Date.now() - inicio);
+    await new Promise((r) => setTimeout(r, Math.min(tentativa === 1 ? 600 : INTERVALO, restante)));
     if (!document.getElementById('mp-panel') || document.getElementById('mp-panel').hidden) {
       mpReconectando = false; return;   // jogador navegou para fora — cancela
     }
+    if (Date.now() - inicio >= PRAZO) break;
     mpNoAtual = no;
     mpConectando = false;   // mpEntrar guarda com este flag — reseta da tentativa anterior
     try {
       await mpEntrar(sala, team);
       if (mpSessao) { mpReconectando = false; return; }   // reconectou
-    } catch { /* tenta de novo */ }
+    } catch { /* tenta de novo até SLOT_IDLE_MS */ }
   }
   mpReconectando = false;
   /* saiu de todas — agora sim o quit de telemetria e a mensagem honesta */
