@@ -4,6 +4,7 @@
    Ordem e limites: docs/studio-character-release.md. */
 import { VERSION } from './version.js';
 import { STUDIO_CHARACTER_STATES, STUDIO_CHARACTER_SKELETON, STUDIO_CLIP_FAMILIES, isStudioExtraClipName, studioClipFamily } from './data/content-releases.js';
+import { studioPackUrl } from './data/pack-origin.js';
 
 export class StudioCharacterError extends Error {
   constructor(code, detail = '', options = undefined) {
@@ -216,7 +217,7 @@ async function resolveUncached(pin, fetchImpl, subtle) {
   if (!subtle || typeof subtle.digest !== 'function') fail('studio_webcrypto_unavailable', 'crypto.subtle ausente: sem verificação não há carga');
   if (typeof fetchImpl !== 'function') fail('studio_fetch_failed', 'fetch indisponível');
 
-  const manifestUrl = new URL(pin.manifestUrl, baseHref());
+  const manifestUrl = new URL(studioPackUrl(pin.manifestUrl), baseHref());
   const manifestBytes = await fetchBytes(fetchImpl, manifestUrl.href, MAX_PACK_BYTES);
   const manifestSha256 = await sha256Hex(subtle, manifestBytes);
   if (manifestSha256 !== pin.manifestSha256) fail('studio_manifest_sha_mismatch', `${manifestSha256} ≠ ${pin.manifestSha256}`);
@@ -300,7 +301,7 @@ async function resolveUncached(pin, fetchImpl, subtle) {
    para a vida da página; falha sai do cache para a próxima chamada tentar de novo. */
 const _requests = new Map();
 export function resolveStudioCharacter(pin, { fetchImpl = globalThis.fetch?.bind(globalThis), subtle = globalThis.crypto?.subtle } = {}) {
-  const key = JSON.stringify([pin?.manifestUrl, pin?.manifestSha256, pin?.kind, pin?.id, pin?.version, pin?.minRuntime, pin?.skeleton]);
+  const key = JSON.stringify([studioPackUrl(pin?.manifestUrl), pin?.manifestSha256, pin?.kind, pin?.id, pin?.version, pin?.minRuntime, pin?.skeleton]);
   const cached = _requests.get(key);
   if (cached) return cached;
   const request = resolveUncached(pin, fetchImpl, subtle);
