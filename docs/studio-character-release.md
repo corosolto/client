@@ -6,8 +6,8 @@ virar modelo. Primeiro consumidor: `capitao-caveira@0.1.1` (0.1.0 tinha as mãos
 rig sem encaixe de cotovelo/punho; consertado no `tools/rig-from-donor.mjs`, client #1253).
 
 Este passo NÃO coloca ninguém no elenco: sem entrada em `characters.js`, sem retrato/avatar/
-arte de resultado/WebM, sem allowlist no backend nem `CLIENT_REF`, sem multiplayer e sem
-publicação em R2. Cada um desses é um PR próprio.
+arte de resultado/WebM, sem allowlist no backend nem `CLIENT_REF` e sem multiplayer. Cada um
+desses é um PR próprio. A publicação em R2 está em "Origem em produção (R2)" abaixo.
 
 ## Peças
 
@@ -17,6 +17,8 @@ publicação em R2. Cada um desses é um PR próprio.
 | `public/js/studio-character.js` | Resolvedor só de navegador. `resolveStudioCharacter(pin, { fetchImpl })` → Blob URLs verificadas do modelo, dos 11 clipes (um por arquivo ou um `states.glb` compartilhado), dos clipes extras opcionais e das prévias; extras expostos no Map `extraClipUrls` (nome → `{url, sha256, clip, family, duration, loop, rootMotion}`) — várias chaves podem compartilhar um pack de família (`family` loco/combat/ceremony/emote espelhado de `clipFamily` do Studio) — e `families` (Map família → `{url, keys}`) para carga preguiçosa por família. Cada conteúdo (SHA-256) é baixado uma vez, com uma única Blob URL. |
 | `public/js/glbchars.js` | Adaptador: ids fixados entram no `GLB_CHARS`; `preloadCharacterAssets()` carrega modelo e os 11 clipes SÓ das Blob URLs (sem `animIndex`, GLB mesclado, pasta `models/anims/<id>/` ou clipe compartilhado), tudo ou nada; origem do corpo `{kind:'studio', sha256, manifestSha256}`, que nunca casa com luva pública. |
 | `scripts/studio-pack-serving.mjs` | Handler Node de `/packs/` montado no dev server do Astro (plugin Vite) e em `tools/eval/serve.mjs`. Lê `STUDIO_PACK_ROOT`; sem ela, 404. |
+| `public/js/data/pack-origin.js` | Origem dos pacotes: `studioPackUrl('/packs/…')` vira `https://assets.corosolto.com.br/packs/…` em produção e preview, e fica `/packs/…` em host local (localhost, loopback, rede privada, `*.local`). `?packorigin=cdn\|local` força. URL absoluta passa intacta. |
+| `scripts/publish-studio-packs.mjs` | Publicador R2 (API S3, SigV4 próprio, sem dependência). `npm run publish:packs -- --root <raiz> [--dry-run\|--verify-only] [--pack id@versão]`. |
 
 ## Ordem da verificação (fail-closed)
 
@@ -65,13 +67,38 @@ STUDIO_PACK_ROOT=/caminho/para/local/studio-packs npm run dev
 Ver o piloto no renderer real, sem estar no elenco:
 `/charvideo.html?id=capitao-caveira` (o `window.CHARVID.studio` traz a proveniência).
 
+## Origem em produção (R2)
+
+Bucket `corosolto-assets`, domínio público `https://assets.corosolto.com.br`, chave
+`packs/<kind>/<id>/<versão>/<arquivo>` — o mesmo caminho do pin, então trocar de origem é só o
+prefixo. O resolvedor continua verificando SHA-256 do manifesto e de cada arquivo: a CDN não é
+fonte de confiança, só de bytes. A CSP do `vercel.json` lista a origem no `connect-src`.
+
+O publicador sobe só pacote fixado e íntegro (SHA do `manifest.json` local = pin; bytes e SHA
+de cada arquivo = inventário), com `Content-Type` pela extensão, `Cache-Control: public,
+max-age=31536000, immutable`, `x-amz-meta-sha256` e `If-None-Match: *`. Chave já publicada com o
+mesmo SHA é pulada; com outro conteúdo, a rodada inteira é recusada antes do primeiro PUT. O
+`manifest.json` de cada pacote sobe por último. No fim, baixa cada objeto pela origem pública
+com `Origin: https://www.corosolto.com.br` e confere SHA-256, bytes, `Content-Type`,
+`Cache-Control` e CORS. Credenciais (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
+`R2_SECRET_ACCESS_KEY`, `R2_BUCKET`) vêm do ambiente ou de `~/.config/corosolto/r2.env`
+(`--r2-env` troca o arquivo) e nunca são impressas. Saída 0 ok, 1 falha de envio/verificação,
+2 recusa (pin, inventário, conflito, credencial).
+
+Versão nova de personagem é pasta nova (`<versão>` muda): publique antes, depois troque o pin.
+
 ## Réguas
 
 - `npm run eval:studiochar` (no `check:fast` e no pr-fast do CI): pacote sintético gerado na
   hora (com packs de família loco/ceremony compartilhados por várias chaves, uma cópia byte a
-  byte com o mesmo SHA e um `states.glb` para os 11 estados), servidor `/packs/` e 26 mutantes
+  byte com o mesmo SHA e um `states.glb` para os 11 estados), servidor `/packs/`, origem R2
+  (R19: URL por host, pacote servido pela origem R2, adulteração na CDN, CSP) e 30 mutantes
   de código que precisam ser reprovados na cláusula certa. Com `STUDIO_PACK_ROOT`, também
   resolve o piloto real.
+- `npm run eval:packpublish` (no `check:fast` e no pr-fast do CI): publicador contra um R2 de
+  mentira (SigV4 conferido por implementação própria, If-None-Match, origem pública com CORS):
+  imutabilidade, MIME, Cache-Control, ordem do manifesto, dry-run, verificação pública e
+  segredo fora do log, com 13 mutantes.
 - `STUDIO_PACK_ROOT=… npm run eval:studiochar:browser`: Chrome no `charvideo.html` real —
   Blob URLs com o SHA do pin, 14 pedidos `/packs/` em 200 e nenhum ao acervo legado, 28 juntas
   meshy-28, cada um dos 11 clipes tocando no esqueleto com still em

@@ -15,7 +15,7 @@ const BASELINE = {
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
 const NOVOS = {
-  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar']),
+  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish']),
   deploy: new Set(['eval:weapon-passe', 'eval:dispose']),
 };
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
@@ -47,6 +47,7 @@ test('staging adiciona portalembed, lixo, envruntime, servertraffic, shareorigin
   assert.ok(SUITES.fast.includes('eval:vm-enquadramento-placar'));
   assert.ok(SUITES.fast.includes('eval:pintura-fabrica'));
   assert.ok(SUITES.fast.includes('eval:passe'));
+  assert.ok(SUITES.fast.includes('eval:packpublish'));
 });
 
 test('release de personagem do Studio entra na fast logo depois do characterkit', () => {

@@ -96,6 +96,8 @@ const alvos = IDS.length ? IDS : await page.evaluate(async () => {
   const C = await import('./js/characters.js'); const G = await import('./js/glbchars.js');
   return C.CHARACTERS.filter((c) => G.GLB_CHARS.has(c.id)).map((c) => c.id);
 });
+// Conjunto vazio não é verde: sem corpo medido a régua não provou nada.
+if (!alvos.length) { console.error('porte-braco: nenhum corpo resolvido para medir; régua não mediu nada.'); await browser?.close?.(); process.exit(1); }
 
 const medidas = [];
 for (const id of alvos) {
