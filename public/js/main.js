@@ -12,9 +12,14 @@ import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
 import { clientUuid, getAnonId } from './client-id.js';
 import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
-import {carregarPasse,trocarContaPasse,personagemTravado,nivelDoPersonagem,PASSE_EVENTO} from './passe.js';
+import {carregarPasse,trocarContaPasse,personagemTravado as travadoNoPasse,nivelDoPersonagem,PASSE_EVENTO} from './passe.js';
+import { passeDebugAtivo } from './passe-debug.js';
+/* QA local (passe-debug.js): só loopback + ?debug=1&passeDev=1 joga com o elenco do passe sem resgate. */
+const passeDev = passeDebugAtivo();
+const personagemTravado = (def) => !passeDev && travadoNoPasse(def);
 import {tretaPack} from './data/pack-definitions.js';
 import {retratoFontes} from './data/retratos.js';
+import {characterRelease} from './data/content-releases.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { EMOTES_ENABLED } from './emote-features.js';
@@ -26,6 +31,8 @@ import { preloadMapAmbientLife } from './ambientlife.js';   // fauna do mapa (MA
 import { apiUrl, fetchComRetry, versaoComOrigem } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
 import { MAPS, DEFAULT_MAP, ehMapaJavaporcos, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS, comMapaCarregado, defineSeedHavan } from './maps.js';
 import { PALETA } from './paleta.js';
+import { FACTIONS, faction as factionDefinition } from './factions.js';
+import { urlDoBrasao } from './brasoes_versao.js';
 import { preloadWeapons, WEAPON_IDS } from './weapons.js';
 import {preloadWeaponSkinCandidate} from './weapon-skins.js';
 import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
@@ -41,7 +48,8 @@ import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
 /* E/B são os dois times de gameplay; as demais chaves são grupos do elenco. */
-const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV', P: 'POLÍTICOS' };
+/* Rótulo de grupo no jogo é caixa alta, como os outros; o registro guarda o nome editorial ("Fora do Ar"). */
+const FACTION_NAME = { ...Object.fromEntries(FACTIONS.map((f) => [f.id, f.name.toLocaleUpperCase('pt-BR')])), P: 'POLÍTICOS' };
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
@@ -1448,7 +1456,7 @@ function syncHomeCharacter() {
   const def = personagemLivre(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);
   const lado = ladoValido(def, currentTeam);
   $('hub-character-name').textContent = `${tr(FACTION_NAME[lado])} · ${def.name}`;
-  $('hub-character-crest').src = `/img/brasoes/${lado.toLowerCase()}.png`;
+  $('hub-character-crest').src = '/' + urlDoBrasao(factionDefinition(lado).crest);
   $('hub-change-character').style.setProperty('--hub-faction', PALETA[lado]?.base || '#b4d92e');
   pvSetChar(def);
 }
@@ -1512,7 +1520,7 @@ function openHubRoster(updateRoute = true) {
     lados.replaceChildren(); filters.replaceChildren(); grid.replaceChildren();
     for (const lado of ['E', 'B']) {
       const button = document.createElement('button'); button.type = 'button'; button.setAttribute('role', 'tab');
-      const crest = document.createElement('img'); crest.src = `/img/brasoes/${lado.toLowerCase()}.png`; crest.alt = '';
+      const crest = document.createElement('img'); crest.src = '/' + urlDoBrasao(factionDefinition(lado).crest); crest.alt = '';
       button.append(crest, tr(FACTION_NAME[lado]));
       button.style.setProperty('--lado', PALETA[lado].base);
       button.setAttribute('aria-selected', String(lado === hubRosterLado));
@@ -1590,6 +1598,9 @@ function openHubRoster(updateRoute = true) {
         pin.textContent = ehPin ? papel : '＋';
         pin.onclick = (ev) => {
           ev.stopPropagation();
+          /* Escalar personagem travado como bot = jogar com ele de graça: recusa como a escolha,
+             com o mesmo aviso. Tirar um escalado antigo continua valendo. */
+          if (!ehPin && personagemTravado(def)) { ui.click(); $('hub-roster-selected').textContent = frase('passeTravadoAviso', def.name, nivel || '?'); return; }
           settings.pinnedChars = ehPin
             ? settings.pinnedChars.filter((id) => id !== def.id)
             : [...settings.pinnedChars, def.id];
@@ -2197,9 +2208,10 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
      cada jogador da mesma sala ver bonecos diferentes, e o nome do killfeed não bateria com o
      rosto que apareceu na tela. Fora do multiplayer, sorteio normal — com a ESCALAÇÃO do
      jogador (pinnedChars da tela de escalação) entrando primeiro. Papel do escalado: do lado
-     do jogador = aliado; senão inimigo (pickMatchRoster re-filtra por lado). */
+     do jogador = aliado; senão inimigo (pickMatchRoster re-filtra por lado). Escalado travado pelo
+     passe (pin salvo antes da trava ou sem o servidor ter destravado) fica de fora da partida. */
   const _podeNoLadoSp = (id) => { const c = CHARACTERS.find((x) => x.id === id); return !!(c && podeNoLado(c, side)); };
-  const _escalados = sessao ? [] : settings.pinnedChars.filter((id) => id !== charId);
+  const _escalados = sessao ? [] : settings.pinnedChars.filter((id) => id !== charId && !personagemTravado(CHARACTERS.find((c) => c.id === id)));
   const _pinned = sessao ? null : {
     ally: _escalados.filter(_podeNoLadoSp),
     enemy: _escalados.filter((id) => !_podeNoLadoSp(id)),
@@ -2237,7 +2249,9 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
     .map((d) => (typeof d === 'string' ? d : d.id))
     .filter((id, i, a) => GLB_CHARS.has(id) && a.indexOf(id) === i);
-  const _charsToLoad = _rosterGlb.length ? _rosterGlb : [...GLB_CHARS];
+  // Fallback sem roster GLB: só o acervo legado. Release do Studio só carrega quando está
+  // na partida; aqui baixaria todos os pacotes fixados sem ninguém usá-los.
+  const _charsToLoad = _rosterGlb.length ? _rosterGlb : [...GLB_CHARS].filter((id) => !characterRelease(id));
   /* Armas da partida sorteadas aqui pelo mesmo motivo do roster: as 26 custavam 164 MB de VRAM
      e 7,5 MB de download numa partida que usa ~9. O resto chega em ocioso. Régua: ARM1. */
   /* Armas: no multiplayer também são do servidor (ele é dono do estado de arma de cada corpo).
@@ -2939,7 +2953,8 @@ if (HUB_ENABLED) {
   const factionGrid = $('hub-factions');
   // Grupos saem do elenco jogável: grupo novo em characters.js aparece aqui sem lista à mão.
   // Políticos não têm brasão próprio e jogam pelos dois lados, então mostram os dois.
-  const groupOrder = ['E', 'B', 'P', 'U', 'C', 'F', 'M'];
+  const groupOrder = FACTIONS.map((fac) => fac.id);
+  groupOrder.splice(2, 0, 'P');
   const groups = [...new Set(CHARACTERS.map((c) => c.team))]
     .sort((a, b) => (groupOrder.indexOf(a) + 1 || 99) - (groupOrder.indexOf(b) + 1 || 99));
   for (const fac of groups) {
@@ -2947,8 +2962,8 @@ if (HUB_ENABLED) {
     item.dataset.faction = fac;
     item.style.setProperty('--hub-faction', PALETA[fac]?.base || (fac === 'P' ? '#d6b55a' : '#b4d92e'));
     const crests = document.createElement('span'); crests.className = 'hub-faction-crests';
-    for (const letter of fac === 'P' ? ['e', 'b'] : [fac.toLowerCase()]) {
-      const crest = document.createElement('img'); crest.src = `/img/brasoes/${letter}.png`; crest.alt = ''; crests.appendChild(crest);
+    for (const crestId of fac === 'P' ? ['e', 'b'] : [factionDefinition(fac).crest]) {
+      const crest = document.createElement('img'); crest.src = '/' + urlDoBrasao(crestId); crest.alt = ''; crests.appendChild(crest);
     }
     const name = document.createElement('span'); name.textContent = tr(FACTION_NAME[fac] || fac);
     item.append(crests, name); factionGrid.appendChild(item);
@@ -4248,7 +4263,7 @@ function ensureTeamPreviews() {
     const box = document.querySelector(`#${btn} .team-chars`);
     if (!box || !(box.checkVisibility?.() ?? box.getClientRects().length > 0)) continue;
     if (teamPreviewsDone.has(lado) || teamPreviewsPending.has(lado)) continue;
-    const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id)).slice(0, 4);
+    const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id) && !personagemTravado(c)).slice(0, 4);
     if (!chars.length) continue;
     teamPreviewsPending.add(lado);
     box.innerHTML = chars.map(() => '<span class="tc-slot"></span>').join('');
@@ -4264,10 +4279,10 @@ function ensureTeamPreviews() {
   }
 }
 function pickTeam(faction) {
-  /* Time sem elenco disponível não abre lista vazia. */
-  if (!CHARACTERS.some(c => podeNoLado(c, faction))) { ui.back(); return; }
-  const lado = faction;
-  currentTeam = lado;
+  const lado = faction === 'E' || faction === 'B' ? faction : null;
+  /* Time ou grupo sem elenco disponível não abre lista vazia. */
+  if (!CHARACTERS.some(c => lado ? podeNoLado(c, lado) : c.team === faction)) { ui.back(); return; }
+  currentTeam = lado || currentTeam;
   currentFaction = currentTeam;
   // estado de seleção persistente nos cards: ao voltar do personagem, a tela diz qual é o SEU lado
   for (const f of ['e', 'b']) {
@@ -4323,7 +4338,9 @@ function pickTeam(faction) {
   // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
   // nada de thumbnails de caixa montando aos poucos (o "minecraft" que o dono viu)
   showLoading('CARREGANDO PERSONAGENS…');
-  preloadCharacterAssets(chars.map(c => c.id)).catch(() => {}).then(mountCharList);
+  /* Travado pelo passe não é escolhível (o clique só explica o nível): a fileira usa o avatar
+     estático e o pack Studio dele não é baixado aqui. */
+  preloadCharacterAssets(chars.filter(c => !personagemTravado(c)).map(c => c.id)).catch(() => {}).then(mountCharList);
 }
 /* Ficha do personagem (tela de seleção): raridade + atributos derivados da arma inicial
    (charWeapon) e de um hash estável do id. É FLAVOR de apresentação no estilo CS2/Valorant —
@@ -5579,20 +5596,24 @@ function mpDesconectou() {
 }
 
 async function mpTentarReconectar(sala, no, team) {
-  const MAX = 3, INTERVALO = 2000;
+  const PRAZO = 45_000, INTERVALO = 2000, inicio = Date.now();
   mpReconectando = true;
-  for (let i = 0; i < MAX; i++) {
-    mpEstado('conectando', `RECONNECTING · ${i + 1}/${MAX}…`);
-    await new Promise((r) => setTimeout(r, i === 0 ? 600 : INTERVALO));
+  let tentativa = 0;
+  while (Date.now() - inicio < PRAZO) {
+    tentativa += 1;
+    mpEstado('conectando', `RECONNECTING · tentativa ${tentativa}…`);
+    const restante = PRAZO - (Date.now() - inicio);
+    await new Promise((r) => setTimeout(r, Math.min(tentativa === 1 ? 600 : INTERVALO, restante)));
     if (!document.getElementById('mp-panel') || document.getElementById('mp-panel').hidden) {
       mpReconectando = false; return;   // jogador navegou para fora — cancela
     }
+    if (Date.now() - inicio >= PRAZO) break;
     mpNoAtual = no;
     mpConectando = false;   // mpEntrar guarda com este flag — reseta da tentativa anterior
     try {
       await mpEntrar(sala, team);
       if (mpSessao) { mpReconectando = false; return; }   // reconectou
-    } catch { /* tenta de novo */ }
+    } catch { /* tenta de novo até SLOT_IDLE_MS */ }
   }
   mpReconectando = false;
   /* saiu de todas — agora sim o quit de telemetria e a mensagem honesta */

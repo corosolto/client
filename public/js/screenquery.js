@@ -1,3 +1,5 @@
+import { faction } from './factions.js';
+
 const SCREEN_ALIASES = Object.freeze({
   '00': 'splash',
   '00b': 'loading',
@@ -33,18 +35,17 @@ const SCREEN_ALIASES = Object.freeze({
   defeat: 'defeat',
 });
 
-const FACTIONS = new Set(['E', 'B', 'U', 'C', 'F', 'M']);
 
 export function resolveInspectionScreen(params) {
   const requested = (params.get('tela') || '').trim().toLowerCase();
   const screen = SCREEN_ALIASES[requested];
   if (!screen) return null;
-  const requestedFaction = (params.get('time') || 'E').trim().toUpperCase();
+  const requestedFaction = faction((params.get('time') || 'E').trim())?.id || 'E';
   const hpRaw = params.get('vida') ?? params.get('hp');
   const hpParsed = hpRaw == null ? null : Number(hpRaw);
   return {
     screen,
-    faction: FACTIONS.has(requestedFaction) ? requestedFaction : 'E',
+    faction: requestedFaction,
     character: (params.get('char') || '').trim() || null,
     map: (params.get('map') || '').trim() || null,
     hp: Number.isFinite(hpParsed) ? Math.max(0, Math.min(100, hpParsed)) : (params.get('vidabaixa') === '1' ? 23 : null),

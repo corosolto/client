@@ -156,7 +156,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
           const ruins = juizo.clausulas.filter((x) => !x.ok).map((x) => `${x.id} ${x.msg}`);
           console.log(`… ${aspecto} ${rota} ${c.arma} [${m.chave}] ${juizo.estado}${ruins.length ? ` — ${ruins.join('; ')}` : ''}`);
         }
-        if (erros.length) console.log(`erros de página (${aspecto}/${rota}): ${erros.slice(0, 3).join(' | ')}`);
+        if (erros.length) throw new Error(`erros de página (${aspecto}/${rota}): ${erros.slice(0, 3).join(' | ')}`);
         await ctx.close();
       }
     }

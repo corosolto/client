@@ -463,13 +463,13 @@ console.log('\n· boom/gone PERDIDOS não deixam fantasma (granada congelada e a
   const net3 = fakeNet(1, 5, false, 20, 1);
   const g3 = montaJogo(net3, { teamSize: 5 });
   net3.snap = snapshot(500, 90); g3._mp.applySnapshot();
-  net3.events.push({ tick: 100, list: [{ k: 'drop', i: 91, x: 3, z: 3, w: 'ak', ttl: 3 }] });
+  net3.events.push({ tick: 100, list: [{ k: 'drop', i: 0, x: 3, z: 3, w: 'ak', ttl: 3 }] });
   net3.snap = snapshot(500.1, 100); g3._mp.applySnapshot();
-  const dr = g3.drops.find((x) => x._nid === 91);
+  const dr = g3.drops.find((x) => x._nid === 0);
   cobra(!!dr && dr._expiraRedeEm != null, 'drop de rede ganha prazo com o TTL do servidor (ou teto de 25 s)');
   for (let i = 0; i < 60 * 7; i++) g3.update(1 / 60);
   net3.snap = snapshot(507, 520); g3._mp.applySnapshot();
-  cobra(!g3.drops.some((x) => x._nid === 91), 'gone perdido não vira arma fantasma: passado o TTL, o drop some sozinho');
+  cobra(!g3.drops.some((x) => x._nid === 0), 'gone perdido não vira arma fantasma: passado o TTL, o drop some sozinho');
   g3.dispose();
 }
 
