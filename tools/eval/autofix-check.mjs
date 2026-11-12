@@ -274,7 +274,7 @@ if (MUT === 'push-sem-trava') wf = wf.replace("(steps.trava.outputs.commitar == 
 }
 
 /* ---- AF4: merge só no automerge, depois da guarda e por merge commit ---- */
-const MERGE = /\bgh\s+pr\s+merge\b|['"]gh['"]\s*,\s*['"]pr['"]\s*,\s*['"]merge['"]/g;
+const MERGE = /\bgh\s+pr\s+merge\b|['"]gh['"]\s*,\s*['"]pr['"]\s*,\s*['"]merge['"]|\bgh\s+api\b(?=[^\n]*\/pulls\/[^\n]*\/merge\b)|['"]gh['"]\s*,\s*['"]api['"](?=[^\n]*\/pulls\/[^\n]*\/merge\b)/g;
 const chamadasMerge = (texto) => {
   /* Comentários não executam; todo o resto continua suspeito até ser classificado.
      Em particular, não descartamos `gh pr merge` direto no shell: o YAML estrutura
@@ -314,8 +314,17 @@ for (const nome of WORKFLOWS) {
         const decisaoAntes = passos.slice(0, indice).some((anterior) => {
           const condicao = ifDe(anterior);
           const condicaoMerge = ifDe(passo);
-          const pulada = anterior.if === false || /^(?:\$\{\{\s*)?false(?:\s*\}\})?$/.test(condicao);
-          const executavel = runDe(anterior).split('\n').some((linha) => linha.trim() === decisao);
+          const pulada = anterior.if === false || /^(?:\$\{\{\s*)?false(?:\s*\}\})?$/.test(condicao)
+            || anterior['continue-on-error'] === true || /\bif\s+false\b/.test(runDe(anterior));
+          const linhas = runDe(anterior).split('\n');
+          let heredoc = false;
+          const semHeredocs = linhas.filter((linha) => {
+            if (/^\s*python3 - <<'PY'\s*$/.test(linha)) { heredoc = true; return false; }
+            if (/^\s*PY\s*$/.test(linha)) { heredoc = false; return false; }
+            return !heredoc;
+          }).join('\n');
+          const executavel = anterior.name === 'Check eligibility'
+            && semHeredocs.split('\n').some((linha) => linha.trim() === decisao);
           return !pulada && executavel && (!condicao || condicao === condicaoMerge);
         });
         const mergeCommit = /--merge\b/.test(chamada.comando)
@@ -323,8 +332,11 @@ for (const nome of WORKFLOWS) {
         const headPreso = /--match-head-commit\b/.test(chamada.comando)
           && /\bhead_oid\b/.test(chamada.comando);
         const elegibilidadeAplicada = chamada.executavel.includes('/tmp/automerge-result.json')
-          && /data\.get\(['"]eligible['"]\)/.test(chamada.executavel);
-        const argumentosLimpos = !chamada.comando.includes('#');
+          && /data\.get\(['"]eligible['"]\)/.test(chamada.executavel)
+          && /if\s+not\s+data\.get\(['"]eligible['"]\)/.test(chamada.executavel)
+          && /sys\.exit\(0\)/.test(chamada.executavel);
+        const argumentosLimpos = !chamada.comando.includes('#')
+          && !/command\.append\((?!['"]--delete-branch['"]\))/.test(chamada.executavel);
         if (nome !== 'csbrasil-bot-automerge.yml' || jobId !== 'automerge'
             || !decisaoAntes || !elegibilidadeAplicada || !argumentosLimpos || !mergeCommit || !headPreso) {
           falhas.push(`AF4 ${nome} · job ${jobId}: merge fora do job automerge, antes de check_automerge.py no MESMO job, sem --merge ou sem --match-head-commit head_oid`);

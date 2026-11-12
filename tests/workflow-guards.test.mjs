@@ -84,6 +84,16 @@ test('AF4 rejects a skipped eligibility decision', (t) => {
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
 
+test('AF4 rejects an eligibility decision allowed to fail', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    const check = workflow.jobs.automerge.steps.find((step) => step.run?.includes(DECISAO));
+    assert.ok(check);
+    check['continue-on-error'] = true;
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
 for (const forma of ['echo', 'comment']) {
   test(`AF4 rejects an eligibility decision that is only ${forma} text`, (t) => {
     const dir = fixture(t);
@@ -119,6 +129,18 @@ test('AF4 rejects a direct unsafe merge even after a valid decision', (t) => {
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
 
+test('AF4 rejects a merge through the GitHub API', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    workflow.jobs.automerge.steps.push({
+      name: 'Unsafe API merge',
+      if: "env.pular != '1'",
+      run: 'gh api --method PUT "repos/corosolto/client/pulls/$PR_NUMBER/merge"',
+    });
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
 test('AF4 rejects squash hidden on a shell continuation line', (t) => {
   const dir = fixture(t);
   mutateAutomerge(dir, (workflow) => {
@@ -131,12 +153,54 @@ test('AF4 rejects squash hidden on a shell continuation line', (t) => {
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
 
+test('AF4 ignores a safe flag printed before an unsafe merge', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    workflow.jobs.automerge.steps.push({
+      name: 'Unsafe merge with leading decoy',
+      if: "env.pular != '1'",
+      run: 'echo --merge; gh pr merge "$PR_NUMBER" --squash --match-head-commit "$head_oid"',
+    });
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
 test('AF4 rejects a merge that ignores the eligibility verdict', (t) => {
   const dir = fixture(t);
   mutateAutomerge(dir, (workflow) => {
     const merge = workflow.jobs.automerge.steps.find((step) => step.run?.includes("['gh', 'pr', 'merge'"));
     assert.ok(merge);
     merge.run = merge.run.replace("if not data.get('eligible'):", 'if True:');
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
+test('AF4 rejects an eligibility command hidden by shell control flow', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    const check = workflow.jobs.automerge.steps.find((step) => step.name === 'Check eligibility');
+    assert.ok(check);
+    check.run = `if false; then\n  ${DECISAO}\nfi`;
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
+test('AF4 rejects an ineligible fallthrough to merge', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    const merge = workflow.jobs.automerge.steps.find((step) => step.run?.includes("['gh', 'pr', 'merge'"));
+    assert.ok(merge);
+    merge.run = merge.run.replace('sys.exit(0)', 'pass');
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
+test('AF4 rejects arguments appended to the executed merge command', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    const merge = workflow.jobs.automerge.steps.find((step) => step.run?.includes("['gh', 'pr', 'merge'"));
+    assert.ok(merge);
+    merge.run = merge.run.replace("command.append('--delete-branch')", "command.append('--delete-branch')\ncommand.append('--admin')");
   });
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
