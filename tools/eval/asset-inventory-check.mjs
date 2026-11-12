@@ -216,6 +216,17 @@ function mutations() {
     expectStatus(runInventory(fixture), 0, 'destructuring alias cleanup');
     console.log('AI2m: an aliased property key is not a lexical binding.');
 
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\n");
+    put(fixture, 'public/js/consumer.js', "import { clipUrl } from './refs.js';\nconst id = 'dead';\nconst state = 'idle';\nfunction load({ ...id }) { return clipUrl(id, state); }\n");
+    put(fixture, 'public/models/anims/dead/idle.glb', 'object-rest-binding');
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'object rest binding shadows the outer literal');
+    assert.match(result.stderr, /orphan-new: models\/anims\/dead\/idle\.glb/);
+    rmSync(join(fixture, 'public/models/anims/dead/idle.glb'));
+    rmSync(join(fixture, 'public/js/consumer.js'));
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    console.log('AI2n: an object-rest parameter shadows the outer literal.');
+
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
     reviewed.files['models/props/legacy.glb'] = createHash('sha256')

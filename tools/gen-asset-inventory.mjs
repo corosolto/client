@@ -91,7 +91,7 @@ function identifiers(pattern, found = []) {
   if (pattern.type === 'RestElement') return identifiers(pattern.argument, found);
   if (pattern.type === 'AssignmentPattern') return identifiers(pattern.left, found);
   if (pattern.type === 'ArrayPattern') pattern.elements.forEach((element) => identifiers(element, found));
-  if (pattern.type === 'ObjectPattern') pattern.properties.forEach((property) => identifiers(property.value, found));
+  if (pattern.type === 'ObjectPattern') pattern.properties.forEach((property) => identifiers(property.type === 'RestElement' ? property : property.value, found));
   return found;
 }
 
