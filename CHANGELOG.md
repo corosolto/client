@@ -57,6 +57,7 @@
 - Edge traffic count (`src/lib/server-traffic.mjs`) now names in-app browsers: TikTok (`musical_ly`/`BytedanceWebview`/`TikTok`), Instagram, Facebook (`FBAN`/`FBAV`/`FB_IAB`), LinkedIn (`LinkedInApp`) and X (`TwitterAndroid`/`Twitter for iPhone`) stay `kind: browser` (they are people) with `agent: app/<name>`; open browsers keep the empty agent. Reason: the 08/11 TikTok paid campaign sent 517 visits in one hour, 72% loaded the game and 85% left in under a minute without entering, and the admin had no way to tell them from Chrome. `server-traffic-check.mjs` gains the five UA cases plus the open-Chrome and `facebookexternalhit` counter-cases, and is finally wired as `eval:servertraffic` inside `check:fast` (it had no script since #988).
 
 ### Fixed
+- Production crash recovery: the match result no longer treats every objective as Javaporcos territory (Operação Flávio has no `regras.times`); map downloads retry once after transient module-network failures and failed map promises can be attempted again; optional Javaporcos audio retries its fetch without escalating the fallback to `console.error`; menu scenery failures release the splash instead of aborting boot; and `main.js`/`site-links.js` no longer require top-level `await`, restoring module parsing on Safari 14-era WebViews.
 - Revisão atual do release #1251: o artefato do PR é extraído em `dist`, isolado do checkout confiável usado por Wrangler e pelo comentário sticky; o smoke Cloudflare por `workflow_dispatch` não consulta mais sticky de PR e falha imediatamente se `BASE_URL` estiver vazio. WFS cobre os três caminhos com mutantes; E05 ganhou DOM completo e timeout, confirmando que o retry de `guest_invalid` termina sem alterar o login.
 - Pre-push no longer falls back to the full `check:deploy` when a change touches the two edge entry points: `middleware.js` (Vercel proxy root) and `src/middleware.ts` (Workers) now select `core + network` in `selecao-pre-push.mjs` (the landing PR #1291 burned a full local run because of this). Covered by a new case in `eval-suites.test.mjs`.
 - Revisão do release #1251: `origemCompartilhamento` só usa `corosol.to` no apex ou em subdomínios com fronteira (`*.corosolto.com.br`), sem desviar hosts como `evilcorosolto.com.br`; o middleware Astro devolve `next()` na Vercel, cujo proxy já conta a requisição, e só agenda `/api/server-traffic` no Workers. Regressões comportamentais cobrem apex/subdomínio/host estranho e os dois adaptadores; `eval:shareorigin` ganha o mutante sem fronteira e os builds Vercel/Cloudflare passam. UIR20 deixa de prender a forma `new Set` de `geo.ts` e chama `langFromCountry` para verificar `US/GB → en` e `PT/BR/ausente → pt`.
@@ -243,10 +244,19 @@
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
 
-## [2.1.0-alpha.145] — 2026-11-10
+## [2.1.0-alpha.145] — 2026-11-12
 
 ### Mudado
-- feat: allow Chinese ideographs in player nicknames
+- hotfix: recover production boot and objective crashes (#1336)
+- fix: retain shared profile source contract
+- fix: retain boot readiness source contract
+- fix: keep delayed boot initializers standalone-safe
+- fix: preserve boot sequencing without top-level await
+- fix: share resolved language with dependent UI
+- fix: handle matches without objectives
+- test: target the objective crash regression
+- test: decouple language gate from top-level await
+- fix: recover production boot and objective crashes
 
 ## [2.1.0-alpha.144] — 2026-11-10
 

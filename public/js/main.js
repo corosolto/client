@@ -486,9 +486,12 @@ async function loadMenuBackdrop() {
 const directRoute = document.documentElement.hasAttribute('data-direct-route')
   || Object.keys(estadoDaUrl(location.href) || {}).length > 0;
 const menuBackdropReady = MOBILE_AUTO ? Promise.resolve() : loadMenuBackdrop();
+const menuBackdropSettled = menuBackdropReady.catch((error) => {
+  console.warn('[menu-background]', error);
+});
 if (MOBILE_AUTO) _splashSetReady();
-else if (directRoute) menuBackdropReady.then(_splashSetReady).catch((error) => console.error('[menu-background]', error));
-else { await menuBackdropReady; _splashSetReady(); }
+else void menuBackdropSettled.then(_splashSetReady);
+const moduleSequencingReady = MOBILE_AUTO || directRoute ? Promise.resolve() : menuBackdropSettled;
 
 /* ---------------- screens ---------------- */
 const screens = ['main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
@@ -600,18 +603,19 @@ function applySplashWallpaper() {
   const splash = $('boot-splash');
   if (splash) splash.style.setProperty('--loading-wall', loadingWallUrl(_wallK));
 }
-applySplashWallpaper();
-fetch(`/img/walls.json?v=${VERSION}`)
-  .then((response) => (response.ok ? response.json() : null))
-  .then((manifest) => {
-    if (!manifest) return;
-    if (Array.isArray(manifest.walls) && manifest.walls.length) WALLS.splice(0, WALLS.length, ...manifest.walls);
-    if (Array.isArray(manifest.loading) && manifest.loading.length) LOADING_WALLS.splice(0, LOADING_WALLS.length, ...manifest.loading);
-    _wallK = _wallVisit % WALLS.length;
-    refreshWallpapers();
-    applySplashWallpaper();
-  })
-  .catch(() => {});
+void moduleSequencingReady.then(() => {
+  applySplashWallpaper();
+  return fetch(`/img/walls.json?v=${VERSION}`)
+    .then((response) => (response.ok ? response.json() : null))
+    .then((manifest) => {
+      if (!manifest) return;
+      if (Array.isArray(manifest.walls) && manifest.walls.length) WALLS.splice(0, WALLS.length, ...manifest.walls);
+      if (Array.isArray(manifest.loading) && manifest.loading.length) LOADING_WALLS.splice(0, LOADING_WALLS.length, ...manifest.loading);
+      _wallK = _wallVisit % WALLS.length;
+      refreshWallpapers();
+      applySplashWallpaper();
+    });
+}).catch(() => {});
 function refreshWallpapers() {
   HOME_WALL = wallUrl(0); SETUP_WALL = wallUrl(1); TEAM_WALL = wallUrl(2); CHAR_WALL = wallUrl(3);
   HOME_WALL_3X2 = wall3x2Url(0); SETUP_WALL_3X2 = wall3x2Url(1);
@@ -629,41 +633,45 @@ function applySetupWall() {
   const w = document.querySelector('#main-menu .cs-wallpaper');
   if (w) { w.style.setProperty('--menu-wall', SETUP_WALL); w.style.setProperty('--menu-wall-3x2', SETUP_WALL_3X2); }
 }
-applyHomeWall();
-{ const t = $('team-select'); if (t) t.style.setProperty('--wall', TEAM_WALL); }
-{ const c = $('char-select'); if (c) c.style.setProperty('--wall', CHAR_WALL); }
+void moduleSequencingReady.then(() => {
+  applyHomeWall();
+  const team = $('team-select'); if (team) team.style.setProperty('--wall', TEAM_WALL);
+  const character = $('char-select'); if (character) character.style.setProperty('--wall', CHAR_WALL);
+});
 import { startVisibleRotation } from './media-rotation.js';
-startVisibleRotation(async () => {
-  const next = (_wallK + 1) % WALLS.length;
-  const offset = !$('char-select').classList.contains('hidden') ? 3
-    : !$('team-select').classList.contains('hidden') ? 2
-    : _menuWallSlot;
-  const preload = new Image();
-  const selected = WALLS[(next + offset) % WALLS.length];
-  preload.src = offset < 2 && matchMedia('(min-aspect-ratio:37/25) and (max-aspect-ratio:38/25)').matches
-    ? selected.replace('/img/', '/img/walls-3x2/') : selected;
-  await preload.decode();
-  _wallK = next;
-  try { localStorage.setItem('cs_wallK', String(_wallK)); } catch {}
-  refreshWallpapers();
-/* Rotação de wallpaper fora do char-select (dono, 31/10): fundo girando sob o preview lê como flicker. */
-}, () => !MOBILE_AUTO && ['main-menu', 'team-select'].some(id => !$(id)?.classList.contains('hidden')));
-startVisibleRotation(async () => {
-  const next = (_loadWallI + 1) % LOADING_WALLS.length;
-  const preload = new Image();
-  const horde = $('load-overlay')?.dataset.mode === 'horde';
-  preload.src = horde ? wallpaperJavaporcos(_loadWallModoI + 1) : LOADING_WALLS[next];
-  await preload.decode();
-  _loadWallI = next;
-  $('boot-splash')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
-  if (horde) {
-    _loadWallFixa = wallpaperJavaporcos(++_loadWallModoI);
-    $('load-overlay')?.style.setProperty('--loading-wall', `url('${_loadWallFixa}')`);
-  } else if (!_loadWallFixa) $('load-overlay')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
-}, () => !MOBILE_AUTO && ['boot-splash', 'load-overlay'].some(id => {
-  const element = $(id);
-  return element && !element.classList.contains('gone') && !element.classList.contains('hidden');
-}));
+void moduleSequencingReady.then(() => {
+  startVisibleRotation(async () => {
+    const next = (_wallK + 1) % WALLS.length;
+    const offset = !$('char-select').classList.contains('hidden') ? 3
+      : !$('team-select').classList.contains('hidden') ? 2
+      : _menuWallSlot;
+    const preload = new Image();
+    const selected = WALLS[(next + offset) % WALLS.length];
+    preload.src = offset < 2 && matchMedia('(min-aspect-ratio:37/25) and (max-aspect-ratio:38/25)').matches
+      ? selected.replace('/img/', '/img/walls-3x2/') : selected;
+    await preload.decode();
+    _wallK = next;
+    try { localStorage.setItem('cs_wallK', String(_wallK)); } catch {}
+    refreshWallpapers();
+  /* Rotação de wallpaper fora do char-select (dono, 31/10): fundo girando sob o preview lê como flicker. */
+  }, () => !MOBILE_AUTO && ['main-menu', 'team-select'].some(id => !$(id)?.classList.contains('hidden')));
+  startVisibleRotation(async () => {
+    const next = (_loadWallI + 1) % LOADING_WALLS.length;
+    const preload = new Image();
+    const horde = $('load-overlay')?.dataset.mode === 'horde';
+    preload.src = horde ? wallpaperJavaporcos(_loadWallModoI + 1) : LOADING_WALLS[next];
+    await preload.decode();
+    _loadWallI = next;
+    $('boot-splash')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
+    if (horde) {
+      _loadWallFixa = wallpaperJavaporcos(++_loadWallModoI);
+      $('load-overlay')?.style.setProperty('--loading-wall', `url('${_loadWallFixa}')`);
+    } else if (!_loadWallFixa) $('load-overlay')?.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI));
+  }, () => !MOBILE_AUTO && ['boot-splash', 'load-overlay'].some(id => {
+    const element = $(id);
+    return element && !element.classList.contains('gone') && !element.classList.contains('hidden');
+  }));
+});
 
 // Música de menu (loop, volume baixo). Toca só nas telas de menu; some quando a partida
 // começa e volta ao voltar pro menu. Chrome bloqueia autoplay COM som até o 1º gesto do
@@ -683,7 +691,7 @@ let menuMusicReviewIndex = _menuMusicRequested ? Math.max(0, Number(_menuMusicRe
 // O laboratório mantém o catálogo completo; o jogo normal e o release usam só a seleção.
 const MENU_REVIEW_TRACKS = Array.from({ length: 26 }, (_, i) => `/audio/menu-music/m${String(i + 1).padStart(2, '0')}.mp3`);
 const MENU_TRACKS = (MENU_MUSIC_REVIEW ? MENU_REVIEW_TRACKS : MENU_MUSIC_ACTIVE_IDS.map((id) => `/audio/menu-music/${id}.mp3`));
-fetch(`/audio/manifest.json?v=${VERSION}`)
+void moduleSequencingReady.then(() => fetch(`/audio/manifest.json?v=${VERSION}`)
   .then((response) => (response.ok ? response.json() : null))
   .then((manifest) => {
     if (MENU_MUSIC_REVIEW) return;
@@ -701,8 +709,7 @@ fetch(`/audio/manifest.json?v=${VERSION}`)
        corrente. Recria o player com o catálogo real — interrompe a faixa uma única
        vez, na troca padrão→curada (o próprio startMenuMusic já respeita o toggle). */
     if (musicArmed && menuMusic) startMenuMusic();
-  })
-  .catch(() => {});
+  })).catch(() => {});
 let menuMusic = null, musicArmed = false, musicFade = null, tracksTrocadas = false;
 function syncMenuMusicToggle() {
   const button = $('hub-music-toggle');
@@ -1711,19 +1718,19 @@ let heartbeatOff = false;
 /* CONTADOR "N ONLINE" no topo do menu. GET /api/online lê a view online_now
    (heartbeat < 2 min). Fica `hidden` até ter resposta autoritativa e volta a sumir
    em qualquer falha, sem manter número velho. Atualiza a cada 60 s só no menu. */
-// o idioma por país resolve ANTES de traduzir o menu (o fetch começou no <head>)
-await resolveGeoLang();
-document.documentElement.lang = LANG === 'en' ? 'en' : 'pt-BR';
-// EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)
-translateDom(document.body);
+// O idioma por país atualiza todo consumidor quando a consulta iniciada no <head> termina.
+// Sem top-level await: Safari 14 entende módulos, mas rejeita essa sintaxe.
+window.__CS_LANG_READY__ = moduleSequencingReady.then(() => resolveGeoLang()).then(() => {
+  document.documentElement.lang = LANG === 'en' ? 'en' : 'pt-BR';
+  translateDom(document.body);
+  if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) {
+    const GEMEA = { '/personagens': '/characters', '/como-jogar': '/how-to-play', '/armas': '/weapons', '/mapas': '/maps', '/sobre': '/about', '/changelog': '/whats-new', '/docs/': '/docs/en/' };
+    const h = a.getAttribute('href');
+    if (GEMEA[h]) a.setAttribute('href', GEMEA[h]);
+  }
+  window.dispatchEvent(new Event('cs-lang-ready'));
+});
 syncMenuMusicToggle();
-// links do rodapé por idioma: EN vai pras gêmeas que EXISTEM (characters, how-to-play,
-// weapons, maps, about, whats-new, docs/en); /mapa continua só PT (issue #54)
-if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) {
-  const GEMEA = { '/personagens': '/characters', '/como-jogar': '/how-to-play', '/armas': '/weapons', '/mapas': '/maps', '/sobre': '/about', '/changelog': '/whats-new', '/docs/': '/docs/en/' };
-  const h = a.getAttribute('href');
-  if (GEMEA[h]) a.setAttribute('href', GEMEA[h]);
-}
 // seletor de idioma em CONFIGURAÇÕES: grava e recarrega (o dicionário aplica no boot)
 { const sel = document.getElementById('set-lang');
   if (sel) {
@@ -1991,7 +1998,8 @@ async function _iniciaPresencaOnline() {
   await _pingPresenca(true);
   await _refreshOnline();
 }
-void _iniciaPresencaOnline();
+if (window.__CS_LANG_READY__) void window.__CS_LANG_READY__.then(_iniciaPresencaOnline);
+else void _iniciaPresencaOnline();
 setInterval(_pingPresenca, 45_000);
 setInterval(_refreshOnline, 60_000);
 
@@ -2021,10 +2029,14 @@ function _loginPromptTrack(step, data) {
   if (testMode) return;
   sendJsonKeepalive('/api/funnel', { step, ..._clientSessionContext(), ...data });
 }
-_funnelLand();
-_funilPronto = true;
-_flushMarcos();       // marcos atingidos durante o boot, se a medição já estava liberada
-_sendPerf();          // perf de cliente 1x por sessão (018)
+const _iniciaAnaliticas = () => {
+  _funnelLand();
+  _funilPronto = true;
+  _flushMarcos();
+  _sendPerf();
+};
+if (window.__CS_LANG_READY__) void window.__CS_LANG_READY__.then(_iniciaAnaliticas);
+else _iniciaAnaliticas();
 // funil 'menu': 1ª interação real com medição liberada — o clique que religa a medição não conta como uso.
 let _menuFuneled = false;
 const _menuOnce = () => { if (_menuFuneled || !_landFuneled || !analyticsAllowed()) return; _menuFuneled = true; _funnel('menu'); removeEventListener('pointerdown', _menuOnce); removeEventListener('keydown', _menuOnce); };
@@ -2251,7 +2263,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         ...Object.values(playerWeaponSkins).map(preloadWeaponSkinCandidate),
         playerKnifeSkinId ? preloadWeaponSkinCandidate(playerKnifeSkinId) : null,
         sfx.preloadWeaponSamples(_armasDaPartida),
-        ehMapaJavaporcos(currentMap) ? sfx.preloadJavaporcos().catch(e => console.error('JAV-AUDIO: preload falhou', e)) : null,
+        ehMapaJavaporcos(currentMap) ? sfx.preloadJavaporcos().catch(e => console.warn('JAV-AUDIO: preload falhou', e)) : null,
         preloadMapProps(mapPropIds(mapaPartida)),
         preloadMapAmbientLife(mapaPartida, { mobileAuto: MOBILE_AUTO }),
         mapaPartida.preload ? mapaPartida.preload() : null,
@@ -3242,14 +3254,14 @@ function autoresDeComunidade() {
    e quando chega redesenha. Nada aqui pode depender do número existir. */
 let mapPlays = {};
 const playsDe = (id) => mapPlays[id] || 0;
-fetchComRetry(apiUrl('/api/map-plays'))
+void window.__CS_LANG_READY__.then(() => fetchComRetry(apiUrl('/api/map-plays'))
   .then((r) => (r.ok ? r.json() : null))
   .then((j) => {
     if (!j || !j.plays || typeof j.plays !== 'object') return;
     mapPlays = j.plays;
     if (!$('map-screen')?.classList.contains('hidden')) renderMapScreen();
   })
-  .catch(() => { /* sem banco/rede: a tela fica sem a estatística, e é só isso */ });
+  .catch(() => { /* sem banco/rede: a tela fica sem a estatística, e é só isso */ }));
 function visibleMapIds() {
   /* TODOS = o acervo inteiro, ordenado do mais jogado pro menos (empate: ordem do catálogo,
      que é estável — `sort` sem desempate deixava a lista dançar entre renders).
@@ -5439,7 +5451,7 @@ function mpPreCarregarProximo(m) {
   Promise.all([
     plano.chars.length ? preloadCharacterAssets(plano.chars, { weapons: armas }) : null,
     sfx.preloadWeaponSamples(armas),
-    ehMapaJavaporcos(plano.mapId) ? sfx.preloadJavaporcos().catch(e => console.error('JAV-AUDIO: preload falhou', e)) : null,
+    ehMapaJavaporcos(plano.mapId) ? sfx.preloadJavaporcos().catch(e => console.warn('JAV-AUDIO: preload falhou', e)) : null,
     mapaReady.then((mapa) => preloadMapProps(mapPropIds(mapa))),
     mapaReady.then((mapa) => preloadMapAmbientLife(mapa, { mobileAuto: MOBILE_AUTO })),
     mapaReady.then((mapa) => mapa.preload ? mapa.preload() : null),
@@ -5592,50 +5604,51 @@ function mpSair() {
    do documento (index.astro, dentro do #pause-menu), o TypeError acontece ANTES
    de qualquer tela aparecer — o sintoma seria "o menu não abre", que não parece
    com "alguém renomeou uma classe no pause". */
-{
+function finishBoot() {
   const fn = document.querySelector('.footnote');
   if (fn) fn.textContent =
     `v${VERSION} · Sátira política fictícia. Nenhum político real foi consultado (ou poupado).`;
-}
-{ const sv = document.getElementById('splash-ver'); if (sv) sv.textContent = `v${VERSION}`; }
-// Boot no fim do módulo: `restoreHubRoute()` pode abrir o multiplayer, que lê `mpEl`/`mpNos` (#707).
+  const sv = document.getElementById('splash-ver'); if (sv) sv.textContent = `v${VERSION}`;
+  // Boot no fim do módulo: `restoreHubRoute()` pode abrir o multiplayer, que lê `mpEl`/`mpNos` (#707).
 show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de toque)
-if (HUB_ENABLED) {
-  if (!location.pathname.startsWith('/u/')) hubNavigate({ map: currentMap, personagem: currentChar }, true); // /u/<perfil> fica limpo para compartilhar
-  restoreHubRoute();
-}
+  if (HUB_ENABLED) {
+    if (!location.pathname.startsWith('/u/')) hubNavigate({ map: currentMap, personagem: currentChar }, true); // /u/<perfil> fica limpo para compartilhar
+    restoreHubRoute();
+  }
 window.__CS_MAIN_READY__ = true;
 window.__gameLaunch?.ready('boot');
 contagem.evento('game_loaded');
-// Convite de sala e perfil compartilhado (/u/<perfil>) chegam com destino: nem o convite de conta nem o da loja cobrem esse destino.
-// /u/<perfil> é o hub (SSR); ?perfil= é o link antigo.
+  // Convite de sala e perfil compartilhado (/u/<perfil>) chegam com destino: nem o convite de conta nem o da loja cobrem esse destino.
+  // /u/<perfil> é o hub (SSR); ?perfil= é o link antigo.
 const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location.href)?.perfil);
-void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onSession:auth=>{contaNick=auth?.profile?.nick || '';if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();},onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),track:_loginPromptTrack})});
-// Logar com a aba RANKING aberta tira o convite de nick na hora, sem refazer a lista.
-document.addEventListener('cs-account-change',(e)=>{contaNick=e.detail?.profile?.nick || '';const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);});
-tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
-document.addEventListener('cs-treta-inventory-change',refreshMenuEquipment);
-// Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
-if (directRoute) document.getElementById('boot-splash')?.remove();
-const abrirVitrine=()=>{if(!tretaVitrine()?.length)return;document.removeEventListener('cs-treta-state',abrirVitrine);void import('./treta-vitrine.js').then(m=>m.iniciarVitrine()).catch(()=>{});};
-document.addEventListener('cs-treta-state',abrirVitrine);
-if (inspectionScreen) {
-  openInspectionScreen(inspectionScreen).catch((error) => window.__gameLaunch?.fail(error, 'screen-query'));
-} else if (testMode && params.get('auto')) {
-  const [team, char] = params.get('auto').split(',');
-  startGame(team || 'E', char || CHARACTERS[0].id);
-} else if (params.get('sala')) {
-  /* Chegou por LINK de convite (/sala/BR-7K3M redireciona pra cá). Espera a splash sair antes
-     de abrir a rede: sem gesto do usuário o áudio nem inicia e o jogo abre mudo. */
-  const entrarQuandoPuder = () => window.__mpConvite?.(params.get('sala'));
-  if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
-  else entrarQuandoPuder();
+  void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onSession:auth=>{contaNick=auth?.profile?.nick || '';if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();},onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),track:_loginPromptTrack})});
+  // Logar com a aba RANKING aberta tira o convite de nick na hora, sem refazer a lista.
+  document.addEventListener('cs-account-change',(e)=>{contaNick=e.detail?.profile?.nick || '';const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);});
+  tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
+  document.addEventListener('cs-treta-inventory-change',refreshMenuEquipment);
+  // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
+  if (directRoute) document.getElementById('boot-splash')?.remove();
+  const abrirVitrine=()=>{if(!tretaVitrine()?.length)return;document.removeEventListener('cs-treta-state',abrirVitrine);void import('./treta-vitrine.js').then(m=>m.iniciarVitrine()).catch(()=>{});};
+  document.addEventListener('cs-treta-state',abrirVitrine);
+  if (inspectionScreen) {
+    void openInspectionScreen(inspectionScreen).catch((error) => window.__gameLaunch?.fail(error, 'screen-query'));
+  } else if (testMode && params.get('auto')) {
+    const [team, char] = params.get('auto').split(',');
+    startGame(team || 'E', char || CHARACTERS[0].id);
+  } else if (params.get('sala')) {
+    /* Chegou por LINK de convite (/sala/BR-7K3M redireciona pra cá). Espera a splash sair antes
+       de abrir a rede: sem gesto do usuário o áudio nem inicia e o jogo abre mudo. */
+    const entrarQuandoPuder = () => window.__mpConvite?.(params.get('sala'));
+    if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
+    else entrarQuandoPuder();
+  }
+  /* QA MOBILE (qa-mobile.js, contrato em tools/eval/qa-mobile-check.mjs): import DINÂMICO atrás
+     do portão — sessão normal não baixa o arquivo. `__CS_QA__` é a injeção do app de loja. */
+  if (params.get('qa') === 'mobile' || window.__CS_QA__) {
+    void import('./qa-mobile.js').then((m) => m.ligarQaMobile()).catch(() => { /* QA não derruba partida */ });
+  }
 }
-/* QA MOBILE (qa-mobile.js, contrato em tools/eval/qa-mobile-check.mjs): import DINÂMICO atrás
-   do portão — sessão normal não baixa o arquivo. `__CS_QA__` é a injeção do app de loja. */
-if (params.get('qa') === 'mobile' || window.__CS_QA__) {
-  void import('./qa-mobile.js').then((m) => m.ligarQaMobile()).catch(() => { /* QA não derruba partida */ });
-}
+void window.__CS_LANG_READY__.then(finishBoot).catch((error) => window.__gameLaunch?.fail(error, 'boot'));
 import {rankingTable,playerProfilePath} from './ranking-player.js';
 import {accountVerifiedBadge} from './account-verified.js';
 import {careerRankBadge} from './career-rank.js';
