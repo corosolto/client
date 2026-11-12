@@ -150,6 +150,17 @@ function mutations() {
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
     console.log('AI2g: a function parameter cannot masquerade as the imported template.');
 
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\n");
+    put(fixture, 'public/js/consumer.js', "import { clipUrl } from './refs.js';\nexport let url;\nif (clipUrl) { url = clipUrl('adjim', 'idle'); }\n");
+    put(fixture, 'public/models/anims/adjim/idle.glb', 'guarded-real-call');
+    expectStatus(runInventory(fixture), 0, 'control-flow guard preserves imported template call');
+    expectStatus(runInventory(fixture, ['--check']), 0, 'control-flow guard reference check');
+    rmSync(join(fixture, 'public/models/anims/adjim/idle.glb'));
+    rmSync(join(fixture, 'public/js/consumer.js'));
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    expectStatus(runInventory(fixture), 0, 'control-flow guard cleanup');
+    console.log('AI2h: an if guard does not shadow the imported template callee.');
+
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
     reviewed.files['models/props/legacy.glb'] = createHash('sha256')

@@ -129,7 +129,7 @@ function literalBindings(text) {
 
 function hasShadowedBinding(text, name) {
   const declaration = new RegExp(`\\b(?:const|let|var|function|class)\\s+(?:[[{]\\s*)?${name}\\b`).test(text);
-  const parameter = new RegExp(`\\bfunction\\s*(?:[A-Za-z_$][\\w$]*\\s*)?\\([^)]*\\b${name}\\b|\\([^)]*\\b${name}\\b[^)]*\\)\\s*=>|\\b${name}\\s*=>|\\bcatch\\s*\\([^)]*\\b${name}\\b|\\b[A-Za-z_$][\\w$]*\\s*\\([^)]*\\b${name}\\b[^)]*\\)\\s*\\{`).test(text);
+  const parameter = new RegExp(`\\bfunction\\s*(?:[A-Za-z_$][\\w$]*\\s*)?\\([^)]*\\b${name}\\b|\\([^)]*\\b${name}\\b[^)]*\\)\\s*=>|\\b${name}\\s*=>|\\bcatch\\s*\\([^)]*\\b${name}\\b|\\b(?!if\\b|for\\b|while\\b|switch\\b|with\\b|catch\\b|function\\b)[A-Za-z_$][\\w$]*\\s*\\([^)]*\\b${name}\\b[^)]*\\)\\s*\\{`).test(text);
   return declaration || parameter;
 }
 
