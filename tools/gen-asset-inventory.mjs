@@ -113,8 +113,10 @@ function analyzeModule(text) {
   try { program = parse(text, { ecmaVersion: 'latest', sourceType: 'module' }); }
   catch { return null; }
   const analysis = { imports: [], reexports: [], templates: [], literals: {}, shadowed: new Set(), calls: [] };
+  const topLevelDeclarations = new Set();
   const readDeclaration = (declaration) => {
     if (declaration?.type !== 'VariableDeclaration' || declaration.kind !== 'const') return;
+    topLevelDeclarations.add(declaration);
     for (const declarator of declaration.declarations) {
       if (declarator.id.type !== 'Identifier') continue;
       if (declarator.init?.type === 'Literal' && typeof declarator.init.value === 'string') {
@@ -138,7 +140,7 @@ function analyzeModule(text) {
       analysis.reexports.push({ local: specifier.local.name, exported: specifier.exported.name, specifier: statement.source?.value || '' });
     }
   }
-  const visit = (node, depth) => {
+  const visit = (node) => {
     if (!node || typeof node.type !== 'string') return;
     if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(node.type)) {
       for (const param of node.params) identifiers(param).forEach((name) => analysis.shadowed.add(name));
@@ -146,7 +148,7 @@ function analyzeModule(text) {
     if ((node.type === 'FunctionDeclaration' || node.type === 'ClassDeclaration') && node.id) analysis.shadowed.add(node.id.name);
     if (node.type === 'VariableDeclaration') {
       for (const declarator of node.declarations) {
-        if (node.kind !== 'const' || depth > 2) identifiers(declarator.id).forEach((name) => analysis.shadowed.add(name));
+        if (node.kind !== 'const' || !topLevelDeclarations.has(node)) identifiers(declarator.id).forEach((name) => analysis.shadowed.add(name));
       }
     }
     if (node.type === 'CatchClause' && node.param) identifiers(node.param).forEach((name) => analysis.shadowed.add(name));
@@ -155,11 +157,11 @@ function analyzeModule(text) {
     if (node.type === 'CallExpression' && node.callee.type === 'Identifier') analysis.calls.push(node);
     for (const [key, value] of Object.entries(node)) {
       if (key === 'type') continue;
-      if (Array.isArray(value)) value.forEach((child) => visit(child, depth + 1));
-      else if (value && typeof value.type === 'string') visit(value, depth + 1);
+      if (Array.isArray(value)) value.forEach((child) => visit(child));
+      else if (value && typeof value.type === 'string') visit(value);
     }
   };
-  visit(program, 0);
+  visit(program);
   for (const name of analysis.shadowed) delete analysis.literals[name];
   return analysis;
 }
