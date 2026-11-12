@@ -177,6 +177,30 @@ test('AF4 rejects a Python API merge with an f-string endpoint', (t) => {
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
 });
 
+test('AF4 rejects a GraphQL mergePullRequest mutation', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    workflow.jobs.automerge.steps.push({
+      name: 'Unsafe GraphQL merge',
+      if: "env.pular != '1'",
+      run: "gh api graphql -f query='mutation { mergePullRequest(input: {pullRequestId: \"PR_1\"}) { pullRequest { id } } }'",
+    });
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
+test('AF4 rejects a variable-backed GraphQL merge mutation', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    workflow.jobs.automerge.steps.push({
+      name: 'Unsafe variable GraphQL merge',
+      if: "env.pular != '1'",
+      run: "python3 - <<'PY'\nimport subprocess\nquery = 'mutation { mergePullRequest(input: {pullRequestId: \"PR_1\"}) { pullRequest { id } } }'\nsubprocess.run(['gh', 'api', 'graphql', '-f', f'query={query}'])\nPY",
+    });
+  });
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
 test('AF4 rejects squash hidden on a shell continuation line', (t) => {
   const dir = fixture(t);
   mutateAutomerge(dir, (workflow) => {

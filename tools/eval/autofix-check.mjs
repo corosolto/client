@@ -274,15 +274,16 @@ if (MUT === 'push-sem-trava') wf = wf.replace("(steps.trava.outputs.commitar == 
 }
 
 /* ---- AF4: merge só no automerge, depois da guarda e por merge commit ---- */
-const MERGE = /\bgh\s+pr\s+merge\b|['"]gh['"]\s*,\s*['"]pr['"]\s*,\s*['"]merge['"]|\bgh\s+api\b(?=[\s\S]*\/pulls\/[\s\S]*\/merge\b)|['"]gh['"]\s*,\s*['"]api['"](?=[\s\S]*\/pulls\/[\s\S]*\/merge\b)|\bautomerge_merge\.py(?!\s+--selftest)\b|\bscripts\.ci\.automerge_merge\b/gi;
+const MERGE = /\bgh\s+pr\s+merge\b|['"]gh['"]\s*,\s*['"]pr['"]\s*,\s*['"]merge['"]|\bgh\s+api\b(?=[\s\S]*(?:\/pulls\/[\s\S]*\/merge\b|\bmergePullRequest\b))|['"]gh['"]\s*,\s*['"]api['"](?=[\s\S]*(?:\/pulls\/[\s\S]*\/merge\b|\bmergePullRequest\b))|\bautomerge_merge\.py(?!\s+--selftest)\b|\bscripts\.ci\.automerge_merge\b/gi;
 const chamadasMerge = (texto) => {
   /* Comentários não executam; todo o resto continua suspeito até ser classificado.
      Em particular, não descartamos `gh pr merge` direto no shell: o YAML estrutura
      ONDE ele roda, mas só o recorte conservador do comando prova seus argumentos. */
   const executavel = texto.split('\n').filter((linha) => !/^\s*#/.test(linha)).join('\n').replace(/\\\n\s*/g, ' ');
   let resolvido = executavel;
-  for (const assignment of executavel.matchAll(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*[A-Za-z]*(['"])([^'"\r\n]*\/pulls\/[^'"\r\n]*\/merge)\2/gm)) {
-    const [, nome, , endpoint] = assignment;
+  for (const assignment of executavel.matchAll(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*[A-Za-z]*(?:'([^'\r\n]*(?:\/pulls\/[^'\r\n]*\/merge|\bmergePullRequest\b)[^'\r\n]*)'|"([^"\r\n]*(?:\/pulls\/[^"\r\n]*\/merge|\bmergePullRequest\b)[^"\r\n]*)")/gm)) {
+    const nome = assignment[1];
+    const endpoint = assignment[2] ?? assignment[3];
     resolvido = resolvido.replace(new RegExp(`\\$\\{${nome}\\}|\\$${nome}\\b|\\b${nome}\\b`, 'g'), endpoint);
   }
   return [...resolvido.matchAll(MERGE)].map((match) => {

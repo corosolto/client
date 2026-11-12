@@ -80,9 +80,9 @@ WRITE_ONLY_PERMISSION_SCOPES = frozenset({'id-token'})
 
 
 def read_only_permissions(value: Any) -> bool:
-    """Accept GitHub's explicit read-all/none shorthand or a flat read/none scope map."""
+    """Accept GitHub's explicit read-all shorthand or a flat read/none scope map."""
     if isinstance(value, str):
-        return value in {'read-all', 'none'}
+        return value == 'read-all'
     if not isinstance(value, Mapping) or not value:
         return False
     return all(

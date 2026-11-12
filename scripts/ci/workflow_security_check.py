@@ -298,6 +298,7 @@ def selftest(source: str) -> list[str]:
         + '\n        env:\n          X: ${{ secrets.VERCEL_TOKEN }}\n',
         'fila-escreve-inline': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: write-all', 1),
         'fila-permissao-null': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: null', 1),
+        'fila-permissao-none-root': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: none', 1),
         'fila-permissao-vazia': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: ""', 1),
         'fila-permissao-lista': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: []', 1),
         'fila-permissao-mapa-vazio': ci.read_text(encoding='utf-8').replace('permissions:\n  contents: read', 'permissions: {}', 1),
