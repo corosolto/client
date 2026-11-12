@@ -17,8 +17,8 @@ let audio = readFileSync('public/js/audio.js', 'utf8');
 let vercel = readFileSync('vercel.json', 'utf8');
 if (mutante === 'sem-clique') {
   main = main.replace(
-    'row.onclick = () => selectCharacterFromAvatar(c, row, chars);',
-    'row.onclick = () => selectChar(c, row);',
+    'selectCharacterFromAvatar(c, row, chars);',
+    'selectChar(c, row);',
   );
 }
 if (mutante === 'auto-fala') {
@@ -42,7 +42,8 @@ for (let i = main.indexOf('{', selectStart); i >= 0 && i < main.length; i += 1) 
 }
 const selectBody = selectStart >= 0 && selectEnd > selectStart ? main.slice(selectStart, selectEnd) : '';
 
-expect(/row\.onclick\s*=\s*\(\)\s*=>\s*selectCharacterFromAvatar\(c, row, chars\)/.test(main),
+const avatarClick = main.match(/row\.onclick\s*=\s*\(\)\s*=>\s*\{([\s\S]*?)\n\s*\};\n\s*list\.appendChild\(row\)/);
+expect(avatarClick && /selectCharacterFromAvatar\(c, row, chars\)/.test(avatarClick[1]),
   'VOICE1 o clique do avatar não chama o fluxo de fala');
 expect(/function selectCharacterFromAvatar\(c, row, roster\)[\s\S]*selectChar\(c, row\)[\s\S]*characterSelectVoice\(c\.id, c\.team, roster\.map/.test(main),
   'VOICE2 o fluxo clicado não seleciona e fala pelo id/facção/elenco reais');
