@@ -16,11 +16,19 @@
  * no crouch eram exatamente isso, com os pés plantados).
  *
  * A CORREÇÃO
- * offset = -desvio. Para um ciclo de locomoção isso é exatamente o certo: sobe o corpo até
- * o pé mais baixo do ciclo encostar no chão. Não é "empurrar pra dentro do tapete" — o pé
- * que planta passa a plantar, e a fase aérea sobe junto, como tem que ser. Desvio GRANDE
- * só entra com constância comprovada (amplitude ≤ 2 cm no clipe inteiro) — ver o bloco
- * "O QUE SEPARA COMPENSÁVEL DE NÃO-COMPENSÁVEL" abaixo.
+ * offset = -(pé MAIS BAIXO do ciclo) = -faixa[0]. Para um ciclo de locomoção isso é exatamente
+ * o certo: sobe (ou desce) o corpo até o pé mais baixo do ciclo encostar no chão. Não é
+ * "empurrar pra dentro do tapete" — o pé que planta passa a plantar, e a fase aérea sobe
+ * junto, como tem que ser. Desvio GRANDE só entra com constância comprovada (amplitude ≤ 2 cm
+ * no clipe inteiro) — ver o bloco "O QUE SEPARA COMPENSÁVEL DE NÃO-COMPENSÁVEL" abaixo.
+ *
+ * POR QUE O MAIS BAIXO E NÃO O DE MAIOR |valor| (11/11, PR #1302)
+ * Até aqui a régua compensava `porPose` (a amostra de maior |desvio|). Num clipe que FLUTUA
+ * com amplitude — corrida com fase de voo, passada que levanta o pé — essa amostra é o PICO,
+ * e o offset descia o corpo pelo pico: o pé plantado ia para DENTRO do chão. Medido na
+ * tabela antiga: mandrake/run -0,074 com faixa [0,003; 0,074] (pé plantado a -7,1 cm),
+ * adjim/walk -0,0525 com faixa [-0,036; 0,053] (afundava 8,9 cm). O pé mais baixo do ciclo
+ * é o único número que diz onde o pé PLANTA; o pico é o voo, que é do clipe e fica.
  *
  * POR QUE TABELA GERADA E NÃO NÚMERO NO CÓDIGO
  * Mesmo motivo do manifest de áudio e do ARCH.md: clipe novo ou personagem novo muda os
@@ -69,11 +77,35 @@ const R = (v) => Math.round(v * 1e4) / 1e4;
        pelo pior ponto ergueria a fase de apoio ~9 cm no ar — troca afundar por flutuar.
        NÃO compensável por tabela; é defeito do clipe. Fica em `suspeitos`, com a
        amplitude medida, como lista de trabalho (exige clipe novo, não número).
+   (d) PÉ NO AR COM DESVIO CONSTANTE, packs do Studio (11/11) — satanista-talkshow/crouch
+       (+0,333), dracula/crouch (+0,311), vlad/crouch (+0,135), amplitude ≤ 4 mm. O bake do
+       Studio (`clampToFloor`, região `body` com lift) ergue o quadril quando a barra do
+       sobretudo/capa, skinada em Hips, cruza o chão no agachado: a barra fica em 0,000 e a
+       sola no ar. É a classe (a) ao contrário, assada no clipe; a constante devolve a sola ao
+       chão em todo quadro e a barra passa para baixo do piso, como o rabo do proerd.
 
    Regra: desvio ≤ CAP compensa (massa do elenco, amplitude pequena); desvio > CAP só
    compensa com constância comprovada (amplitude ≤ AMP_TOL na faixa medida pela sonda). */
 const CAP = 0.08;
 const AMP_TOL = 0.02;   // ≤ 2 cm de variação no clipe = desvio constante (os da classe (b) medem ≤ 5 mm)
+
+/* EXCEÇÕES MEDIDAS — classe (c) que a tabela da staging compensava (11/11, PR #1302).
+   Com a amostragem rala (5 quadros em 0…0,8 s) estas linhas passavam pelo teto e ganhavam
+   offset; com o clipe inteiro elas são raiz oscilando (suspeitos). Sem offset o pé AFUNDA no
+   apoio mais do que o offset antigo o fazia flutuar no balanço — medido no jogo (Chrome +
+   /packs/, faixa da sola em 4 s de ciclo, staging → sem offset):
+     caminhoneiro/walk  -0,047..0,080 → -0,096..0,031     caminhoneiro/run -0,007..0,087 → -0,081..0,013
+     barbudo/walk       -0,016..0,126 → -0,084..0,058     esbirro/walk     -0,152..0,052 → -0,214..-0,010
+     palhacomal/walk    -0,043..0,061 → -0,090..0,014     padati/run       -0,015..0,087 → -0,086..0,015
+     padati/walk        (o jogo toca walk1h nele; mantida pelo mesmo motivo)
+   Por decisão do dono, estas linhas ficam com o valor que a staging tem até o clipe novo
+   (#1279, estados assados) — só valem enquanto a linha for suspeito; fora disso o gerador
+   para com erro, para a exceção não envelhecer calada. */
+const EXCECOES = {
+  'caminhoneiro/walk': 0.0495, 'caminhoneiro/run': 0.0738, 'barbudo/walk': 0.068,
+  'esbirro/walk': 0.0614, 'palhacomal/walk': 0.0469, 'padati/walk': 0.0436, 'padati/run': 0.0717,
+};
+const excecoesUsadas = new Set();
 
 const tabela = {};
 const suspeitos = [];
@@ -82,14 +114,18 @@ for (const p of probe.personagens || []) {
   const porPose = p.C3?.porPose;
   if (!porPose) continue;
   const linha = {};
-  for (const [pose, desvio] of Object.entries(porPose)) {
+  for (const [pose, medido] of Object.entries(porPose)) {
     total++;
-    if (Math.abs(desvio) <= TOL) continue;   // já está no chão: não inventa correção
     const fx = p.C3?.faixaPorPose?.[pose];
+    // o pé mais baixo do ciclo (ver "POR QUE O MAIS BAIXO"); sem faixa (bind) é a própria amostra
+    const desvio = fx ? fx[0] : medido;
+    if (Math.abs(desvio) <= TOL) continue;   // já está no chão: não inventa correção
     const amp = fx ? fx[1] - fx[0] : null;
     const constante = amp != null && amp <= AMP_TOL;
     if (Math.abs(desvio) > CAP && !constante) {
       suspeitos.push({ id: p.id, pose, desvio: R(desvio), amplitude: amp != null ? R(amp) : null });
+      const exc = EXCECOES[`${p.id}/${pose}`];
+      if (exc !== undefined) { linha[pose] = exc; excecoesUsadas.add(`${p.id}/${pose}`); suspeitos.at(-1).excecao = exc; }
       continue;
     }
     linha[pose] = R(-desvio);
@@ -99,11 +135,16 @@ for (const p of probe.personagens || []) {
   if (Object.keys(linha).length) tabela[p.id] = linha;
 }
 suspeitos.sort((a, b) => Math.abs(b.desvio) - Math.abs(a.desvio));
+const obsoletas = Object.keys(EXCECOES).filter((k) => !excecoesUsadas.has(k));
+if (obsoletas.length) {
+  console.error(`✗ exceção que não é mais suspeito (o clipe mudou?): ${obsoletas.join(', ')} — remova de EXCECOES`);
+  process.exit(1);
+}
 
 const saida = {
   gerado: probe.gerado || null,
-  fonte: 'tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs',
-  nota: 'offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.',
+  fonte: 'tools/eval/char_probe.json (C3.faixaPorPose[0], o pé mais baixo do ciclo; bind = C3.porPose) — via tools/gen-foot-offsets.mjs',
+  nota: 'offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -(pé mais baixo do ciclo).',
   tolerancia: TOL,
   teto: CAP,
   offsets: tabela,
@@ -111,6 +152,8 @@ const saida = {
      com desvio > 8 cm). Defeito DO CLIPE: exige clipe novo, não offset. Lista de
      trabalho documentada, com a amplitude medida. */
   suspeitos,
+  /* suspeitos que mantêm o offset da staging (ver EXCECOES no gerador, com a medida) */
+  excecoes: [...excecoesUsadas].sort(),
 };
 
 const texto = JSON.stringify(saida, null, 1) + '\n';

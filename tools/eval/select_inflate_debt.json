@@ -32,6 +32,11 @@
     "dama": { "p99": 0.852, "ruins1e4": 73.7, "origem": "PR #773" },
     "senador": { "p99": 0.834, "ruins1e4": 64.8, "origem": "PR #773" },
     "professor": { "p99": 0.696, "ruins1e4": 56.3, "origem": "PR #773" },
-    "capitao": { "p99": 0.758, "ruins1e4": 55.7, "origem": "PR #773" }
+    "capitao": { "p99": 0.758, "ruins1e4": 55.7, "origem": "PR #773" },
+    "bicho-do-bueiro": { "p99": 0.659, "ruins1e4": 41.2, "origem": "pack Studio 0.2.2: repintura de pesos (jointSmooth) baixou a dívida do PR #1302" },
+    "coelho-pascoa-shopping": { "p99": 0.721, "ruins1e4": 35.3, "origem": "pack Studio 0.2.2: repintura de pesos (jointSmooth) baixou a dívida do PR #1302" },
+    "bebezao-de-feira": { "p99": 0.779, "ruins1e4": 39.6, "origem": "PR #1302: pack Studio 0.2.2; a repintura (39,6 -> 23,3) reprovou o QA do walk1h assado e ficou de fora" },
+    "dracula": { "p99": 0.501, "ruins1e4": 33.3, "origem": "PR #1302: pack Studio 0.2.x; a repintura baixava ruins (33,3 -> 24,1) mas subia o p99 (0,501 -> 0,576) e ficou de fora" },
+    "chupa-cabra": { "p99": 0.612, "ruins1e4": 27.9, "origem": "pack Studio 0.2.2: repintura de pesos (jointSmooth) baixou a dívida do PR #1302" }
   }
 }

@@ -128,6 +128,7 @@ Cobertura: **4143 de 10189 linhas (41%)** do `game.js` têm dono declarado. O re
 | 726 | `botTier` | 4 |
 | 730 | `_cyclePool` | 5 |
 | 735 | `_rosterPool` | 22 |
+| 757 | `_doLado` | 5 |
 | 759 | `_pinnedDefs` | 5 |
 | 764 | `pickMatchRoster` | 21 |
 | 785 | `BOT_WEAPON_POOL` | 5 |
