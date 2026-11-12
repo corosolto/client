@@ -20,8 +20,8 @@ const MUTANTES = new Map([
   }],
   ['sem-limpeza', {
     arquivo: '/public/js/game.js',
-    de: '      fx.points?.material?.dispose();\n      fx.uniforms?.uTex?.value?.dispose?.();',
-    para: '      void fx; // mutante sem-limpeza: dispose removido, array de cleanup intacto',
+    de: '      fx.points?.material?.dispose();\n    }',
+    para: '      void fx; // mutante sem-limpeza: dispose removido, array de cleanup intacto\n    }',
   }],
 ]);
 

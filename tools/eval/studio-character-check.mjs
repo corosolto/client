@@ -17,6 +17,9 @@
      R6c arquivo sem papel → studio_file_unowned;  R6d papel fora de files → studio_role_unknown_file
      R7  caminho inseguro (.., absoluto, \, %2e, //, ./) → studio_unsafe_path
      R8  minRuntime acima da VERSION (pin ou manifesto) → studio_runtime_too_old
+     R8c pin sem minRuntime → studio_pin_invalid antes de qualquer fetch (o piso obrigatório é o do pin,
+         que o release autentica junto do manifestSha256; o minRuntime do manifesto é piso extra
+         opcional: o manifesto base da R1 não o declara, como os packs reais do Studio)
      R9  esqueleto ≠ meshy-28 → studio_skeleton_mismatch
      R10 sem crypto.subtle → studio_webcrypto_unavailable, sem nenhum fetch
      R11 falha parcial não vaza: toda Blob URL criada na tentativa é revogada, inclusive a que chega DEPOIS da falha
@@ -65,6 +68,7 @@ const mutacoes = {
   'arquivo-sem-dono': [RES, "for (const path of files.keys()) if (!owners.has(path)) fail('studio_file_unowned', path);", '', ['R6c:']],
   'caminho-inseguro': [RES, "path.split('/').every((segment) => SEGMENT.test(segment))", 'true', ['R7:', 'S4:']],
   'runtime-ignorado': [RES, 'if (compareRuntimeVersions(minimo, VERSION) > 0) fail(', 'if (false) fail(', ['R8:']],
+  'runtime-pin-opcional': [RES, ' && parseVersion(pin.minRuntime)', '', ['R8c:']],
   'esqueleto-ignorado': [RES, 'if (manifest.skeleton !== pin.skeleton) fail(', 'if (false) fail(', ['R9:']],
   'sem-webcrypto': [RES, "if (!subtle || typeof subtle.digest !== 'function') fail('studio_webcrypto_unavailable', 'crypto.subtle ausente: sem verificação não há carga');", "if (false) fail('studio_webcrypto_unavailable', 'crypto.subtle ausente: sem verificação não há carga');", ['R10:']],
   'vaza-parcial': [RES, 'for (const url of created) URL.revokeObjectURL(url);', '', ['R11:']],
@@ -333,6 +337,11 @@ try {
 
   await exigeFalha('R8:', pacote('r8', (c, fase) => { if (fase === 'antes') c.pin.minRuntime = '99.0.0'; }), 'studio_runtime_too_old');
   await exigeFalha('R8:', pacote('r8b', (c, fase) => { if (fase === 'antes') c.manifest.minRuntime = '99.0.0-alpha.1'; }), 'studio_runtime_too_old');
+  {
+    const ctx = pacote('r8c', (c, fase) => { if (fase === 'antes') delete c.pin.minRuntime; });
+    await exigeFalha('R8c:', ctx, 'studio_pin_invalid');
+    if (ctx.pedidos.length) falha(`R8c: ${ctx.pedidos.length} pedido(s) com pin sem minRuntime; o pin é recusado antes da rede`);
+  }
   await exigeFalha('R9:', pacote('r9', (c, fase) => { if (fase === 'antes') c.manifest.skeleton = 'mixamo-65'; }), 'studio_skeleton_mismatch');
   {
     const ctx = pacote('r10');
