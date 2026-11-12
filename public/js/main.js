@@ -1998,7 +1998,8 @@ async function _iniciaPresencaOnline() {
   await _pingPresenca(true);
   await _refreshOnline();
 }
-void window.__CS_LANG_READY__.then(_iniciaPresencaOnline);
+if (window.__CS_LANG_READY__) void window.__CS_LANG_READY__.then(_iniciaPresencaOnline);
+else void _iniciaPresencaOnline();
 setInterval(_pingPresenca, 45_000);
 setInterval(_refreshOnline, 60_000);
 
@@ -2028,12 +2029,14 @@ function _loginPromptTrack(step, data) {
   if (testMode) return;
   sendJsonKeepalive('/api/funnel', { step, ..._clientSessionContext(), ...data });
 }
-void window.__CS_LANG_READY__.then(() => {
+const _iniciaAnaliticas = () => {
   _funnelLand();
   _funilPronto = true;
   _flushMarcos();
   _sendPerf();
-});
+};
+if (window.__CS_LANG_READY__) void window.__CS_LANG_READY__.then(_iniciaAnaliticas);
+else _iniciaAnaliticas();
 // funil 'menu': 1ª interação real com medição liberada — o clique que religa a medição não conta como uso.
 let _menuFuneled = false;
 const _menuOnce = () => { if (_menuFuneled || !_landFuneled || !analyticsAllowed()) return; _menuFuneled = true; _funnel('menu'); removeEventListener('pointerdown', _menuOnce); removeEventListener('keydown', _menuOnce); };
@@ -5601,6 +5604,11 @@ function mpSair() {
    do documento (index.astro, dentro do #pause-menu), o TypeError acontece ANTES
    de qualquer tela aparecer — o sintoma seria "o menu não abre", que não parece
    com "alguém renomeou uma classe no pause". */
+function signalBootReady() {
+window.__CS_MAIN_READY__ = true;
+window.__gameLaunch?.ready('boot');
+contagem.evento('game_loaded');
+}
 function finishBoot() {
   const fn = document.querySelector('.footnote');
   if (fn) fn.textContent =
@@ -5612,9 +5620,7 @@ function finishBoot() {
     if (!location.pathname.startsWith('/u/')) hubNavigate({ map: currentMap, personagem: currentChar }, true); // /u/<perfil> fica limpo para compartilhar
     restoreHubRoute();
   }
-  window.__CS_MAIN_READY__ = true;
-  window.__gameLaunch?.ready('boot');
-  contagem.evento('game_loaded');
+  signalBootReady();
   // Convite de sala e perfil compartilhado (/u/<perfil>) chegam com destino: nem o convite de conta nem o da loja cobrem esse destino.
   // /u/<perfil> é o hub (SSR); ?perfil= é o link antigo.
   const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location.href)?.perfil);
