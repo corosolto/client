@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Ambiente do CI antes do veredito: exit 78 (EX_CONFIG) significa "não mediu".
-   Uso: node scripts/ci-local.mjs [--setup|--diagnose|--selftest] [script-npm] */
+   Uso: node scripts/ci-local.mjs [--setup|--setup-system|--diagnose|--selftest] [script-npm] */
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { accessSync, constants, readFileSync } from 'node:fs';
@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const SAIDA_AMBIENTE = 78;
+const USO = 'Uso: node scripts/ci-local.mjs [--setup|--setup-system|--diagnose|--selftest] [script-npm]';
 const NODE_CI = 22;
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 process.chdir(RAIZ);
@@ -188,7 +189,7 @@ async function diagnosticar() {
       const detalhe = String(e.message || e).slice(0, 1600);
       const nativo = erroNativoNavegador(detalhe);
       console.error(`  ✗ Chromium não abriu (${nativo ? 'dependência nativa/sistema' : 'configuração de processo'})\n${detalhe}`);
-      problemas.push(`Chromium não abriu; ${nativo ? 'instale as dependências nativas com `node scripts/ci-local.mjs --setup-system`' : 'corrija a configuração antes de rodar testes'}`);
+      problemas.push(`Chromium não abriu; ${nativo ? (process.platform === 'linux' ? 'instale as dependências nativas com `node scripts/ci-local.mjs --setup-system`' : 'instale as dependências nativas exigidas pelo Chromium para este sistema') : 'corrija a configuração antes de rodar testes'}`);
     }
   }
 
@@ -217,7 +218,11 @@ async function preparar() {
   return (await diagnosticar()).ok ? 0 : SAIDA_AMBIENTE;
 }
 
-async function prepararSistema() {
+async function prepararSistema(plataforma = process.platform) {
+  if (plataforma !== 'linux') {
+    console.error('[ambiente] --setup-system está disponível apenas no Linux; instale as dependências nativas exigidas pelo Chromium para este sistema');
+    return SAIDA_AMBIENTE;
+  }
   const runtime = [];
   validarRuntime(runtime);
   if (runtime.length) {
@@ -228,7 +233,8 @@ async function prepararSistema() {
   return executa(process.execPath, [cli, 'install-deps', 'chromium']);
 }
 
-function selftest() {
+async function selftest() {
+  assert.equal(await prepararSistema('darwin'), SAIDA_AMBIENTE);
   assert.deepEqual(bibliotecasAusentes('\tlibatk-1.0.so.0 => not found\nlibx.so => /lib/libx.so (0x1)\nlibatk-1.0.so.0 => not found'), ['libatk-1.0.so.0']);
   assert.equal(erroNativoNavegador('error while loading shared libraries: libnss3.so'), true);
   assert.equal(erroNativoNavegador('Expected button to be visible'), false);
@@ -268,6 +274,9 @@ function selftest() {
     const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), modo, 'check:fast'], { encoding: 'utf8' });
     assert.equal(r.status, 64, `${modo} com script extra deve ser rejeitado em vez de ignorar o script`);
   }
+  const desconhecido = spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--setup-syste'], { encoding: 'utf8' });
+  assert.equal(desconhecido.status, 64);
+  assert.match(desconhecido.stderr, /--setup-system/);
   return 0;
 }
 
@@ -276,7 +285,7 @@ async function main() {
   const modo = ['--selftest', '--setup', '--setup-system', '--diagnose'].find((flag) => args.includes(flag));
   if (modo) {
     if (args.length !== 1) {
-      console.error('Uso: node scripts/ci-local.mjs [--setup|--setup-system|--diagnose|--selftest] [script-npm]');
+      console.error(USO);
       return 64;
     }
     if (modo === '--selftest') return selftest();
@@ -285,7 +294,7 @@ async function main() {
     return (await diagnosticar()).ok ? 0 : SAIDA_AMBIENTE;
   }
   if (args.some((a) => a.startsWith('-')) || args.length > 1) {
-    console.error('Uso: node scripts/ci-local.mjs [--setup|--diagnose|--selftest] [script-npm]');
+    console.error(USO);
     return 64;
   }
   const script = args[0] || 'check:fast';
