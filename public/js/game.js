@@ -1,4 +1,5 @@
 import { nomeTimeJavaporcos } from './javaporcos_apresentacao.js';
+import { timesComTerritorio } from './objective-result.js';
 // Core game: FPS controller, weapons, bots, rounds, HUD.
 import * as THREE from 'three';
 import {alturaOlhos,alturaCabeca} from './player_height.js';
@@ -3367,6 +3368,7 @@ export class Game {
       : this.playerTeam;
     const mine = winner === playerSide;
     const draw = winner === 'draw';
+    const timesTerritorio = timesComTerritorio(this.objective);
     // Tela de fim estilo CoD/Valorant: VITÓRIA/DERROTA gigante, time vencedor no sub.
     this.el.matchEnd.classList.toggle('win', mine);
     this.el.matchEnd.classList.toggle('lose', !mine && !draw);
@@ -3377,8 +3379,8 @@ export class Game {
       : frase('perdeu', this._teamName(winner));
     this.el.matchStats.innerHTML = escort
       ? frase('statsFim', this.roundsWon.E, this.roundsWon.B, this.player.kills, this.player.name, this.player.deaths)
-      : this.objective
-      ? (this.objective.regras.times === 3 ? ['E', 'B', 'J'] : ['E', 'J']).map(team => `${this._teamName(team)}: <b>${Math.round((this.objective.state.territorio?.[team] || 0) * 100)}%</b>`).join(' · ') + `<br>${this.player.kills} abates · ${this.player.deaths} mortes`
+      : timesTerritorio
+      ? timesTerritorio.map(team => `${this._teamName(team)}: <b>${Math.round((this.objective.state.territorio[team] || 0) * 100)}%</b>`).join(' · ') + `<br>${this.player.kills} abates · ${this.player.deaths} mortes`
       : this.arena
         ? `${tr('CONVERSÕES')}: ${this.arenaSwitched} · ${tr('SEUS ABATES')}: ${this.player.kills}`
       : frase('statsFim', this.roundsWon.E, this.roundsWon.B, this.player.kills, this.player.name, this.player.deaths);
@@ -5939,7 +5941,7 @@ export class Game {
     const num = this.el['score' + slot + 'Num'];
     /* Treta Pop (seção 2d): o número grande é round ganho; quem está vivo fica nos retratos. */
     const horda = this.objective?.state;
-    const n = String(horda?.kills != null ? (this.objective.regras.times === 3 ? horda.teamKills[side] || 0 : horda.kills)
+    const n = String(horda?.kills != null ? (this.objective.regras?.times === 3 ? horda.teamKills[side] || 0 : horda.kills)
       : this.arena ? this._teamPopulation(side)
       : (this._uiV3() ? this.roundsWon[side] : this.roundKills[side]));
     if (num && num.textContent !== n) num.textContent = n;
