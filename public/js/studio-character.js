@@ -253,10 +253,8 @@ async function resolveUncached(pin, fetchImpl, subtle) {
   const urls = new Map(settled.map((r) => r.value));
   const urlOf = (path) => urls.get(representantes.get(plan.files.get(path).sha256));
 
-  /* Famílias para carga preguiçosa do runtime: uma entrada por família cujas chaves vivem num
-     único CONTEÚDO compartilhado (loco|combat|ceremony no layout do conversor; caminhos
-     duplicados com o mesmo SHA contam como um só). Emotes ficam de fora (um arquivo por chave)
-     e seguem acessíveis por extraClipUrls. */
+  /* Packs de família compartilham um único conteúdo; emotes ficam de fora,
+     com uma URL por chave em extraClipUrls. */
   const families = new Map();
   for (const family of STUDIO_CLIP_FAMILIES) {
     if (family === 'emote') continue;
