@@ -177,6 +177,7 @@ jobs:
         run: npm run eval:workflowguards
 
       - name: Passe Sessão da Treta obedece ao servidor (sem XP do client, com mutantes)
+        if: always()
         run: npm run eval:passe
   contratos-visuais-personagens-camera:
     runs-on: ubuntu-latest

@@ -756,7 +756,8 @@ const _rosterPool = (pool, want, quem, fallback, pinned = []) => {
 /* E e B são LADOS (pool único, `podeNoLado`); outra letra é facção de sala multiplayer antiga. */
 const _doLado = (f) => (c) => (f === 'E' || f === 'B' ? podeNoLado(c, f) : c.team === f);
 /* Personagem do passe (`passe` em characters.js) fica fora do SORTEIO de bot; o pin no seletor
-   continua valendo. Motivo (pack Studio travado, ARM2): docs/faccoes/fora-do-ar.md. */
+   só vale destravado pelo servidor (main.js recusa e filtra o travado). Motivo (pack Studio
+   travado, ARM2): docs/faccoes/fora-do-ar.md. */
 const _sorteavel = (c) => !c.passe;
 /* Pin escalado pelo jogador: só vale se pode jogar no lado pedido e não está em uso. */
 const _pinnedDefs = (ids, doLado, usados) => (ids || [])

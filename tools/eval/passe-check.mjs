@@ -27,6 +27,12 @@
    PS6 analytics         · funil do painel: modal_view quando o anúncio abre e open quando a
                            tela abre, só {action:'analytics', event}, e NADA sem consentimento
                            de medição (window.__csPrivacy), como a loja Treta.
+   PS9 anuncio-desiste   · com outro <dialog> aberto (anúncio da Operação Flávio no 1º acesso) o
+                           passe espera ele fechar e abre na MESMA visita; continua uma vez por
+                           versão e desiste sem marcar quando a partida começou na espera.
+   PS10 bot-travado-fixado · o trecho REAL de main.js que monta a escalação da partida deixa de
+                           fora o pin salvo de personagem travado; destravado pelo servidor, entra.
+                           O ＋ recusado no seletor é medido no navegador (passe-browser.mjs, PB9).
 
    Uso: node tools/eval/passe-check.mjs [--mutante=<id> [--espera-reprovar]]
      --espera-reprovar  sai 0 só se o mutante derrubar a cláusula que ele mira
@@ -65,6 +71,8 @@ const MUTANTES = {
   'analytics-sem-consentimento': ['PS6', 'public/js/passe.js', " || !globalThis.__csPrivacy?.allowed()) return;", ') return;'],
   'modal-sem-evento': ['PS6', 'public/js/passe-anuncio.js', "  registrarEventoPasse('modal_view');\n", '\n'],
   'tela-sem-evento': ['PS6', 'public/js/tp/passe.js', "  registrarEventoPasse('open');\n", '\n'],
+  'anuncio-desiste': ['PS9', 'public/js/passe-anuncio.js', '    await semDialogoAberto();\n', '    return null;\n'],
+  'bot-travado-fixado': ['PS10', 'public/js/main.js', " && !personagemTravado(CHARACTERS.find((c) => c.id === id)));", ');'],
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -89,17 +97,21 @@ Date.now = () => AGORA;
 /* ---------- DOM mínimo: o que passe.js e passe-anuncio.js tocam ---------- */
 const storage = new Map();
 let busca = '';
+/* MutationObserver mínimo: qualquer mudança de <dialog> (abrir, fechar, sair do DOM) avisa todos. */
+const observadores = new Set();
+globalThis.MutationObserver = class { constructor(cb) { this.cb = cb; } observe() { observadores.add(this); } disconnect() { observadores.delete(this); } };
+const mudou = () => queueMicrotask(() => { for (const o of [...observadores]) o.cb([]); });
 class No {
   constructor(tag) { this.tagName = tag.toUpperCase(); this.children = []; this.attrs = {}; this.dataset = {}; this.ouvintes = {}; this.textContent = ''; this.open = false; this.parent = null; this.style = { setProperty() {} }; }
   setAttribute(k, v) { this.attrs[k] = String(v); }
   getAttribute(k) { return this.attrs[k] ?? null; }
-  append(...xs) { for (const x of xs) { if (typeof x === 'string') this.textContent += x; else { x.parent = this; this.children.push(x); } } }
+  append(...xs) { for (const x of xs) { if (typeof x === 'string') this.textContent += x; else { x.parent = this; this.children.push(x); } } mudou(); }
   appendChild(x) { this.append(x); return x; }
-  remove() { if (this.parent) this.parent.children = this.parent.children.filter((c) => c !== this); this.parent = null; }
+  remove() { if (this.parent) this.parent.children = this.parent.children.filter((c) => c !== this); this.parent = null; mudou(); }
   addEventListener(t, f) { (this.ouvintes[t] ||= []).push(f); }
   dispara(t) { for (const f of this.ouvintes[t] || []) f({ preventDefault() {} }); }
-  showModal() { this.open = true; }
-  close() { this.open = false; }
+  showModal() { this.open = true; mudou(); }
+  close() { this.open = false; mudou(); }
   focus() { document.activeElement = this; }
   get isConnected() { let n = this; while (n.parent) n = n.parent; return n === document.body; }
   todos() { return this.children.flatMap((c) => [c, ...c.todos()]); }
@@ -366,6 +378,56 @@ await clausula('PS8', 'mock na janela: nada de resgate fora da temporada', async
   assert.equal(depois.handle('POST', JSON.stringify({ action: 'claim', level: 1 })).status, 409, 'resgate aceito depois de claim_until');
   const noAr = criarPasseMock({ autenticado: true, xp: 9000, claimed: [] });
   assert.ok(noAr.status().claimable.length > 0 && noAr.handle('POST', JSON.stringify({ action: 'claim', level: 1 })).status === 200, 'controle: temporada no ar sem resgate');
+});
+
+await clausula('PS9', 'anuncio-desiste: outro <dialog> aberto, o passe espera e abre na mesma visita', async () => {
+  storage.clear();
+  await novaConta({ autenticado: false, claimed: [] });
+  const tick = () => new Promise((r) => setTimeout(r, 0));
+  const abrirOutro = () => { const d = document.createElement('dialog'); document.body.append(d); d.showModal(); return d; };
+  const fecharOutro = (d) => { d.close(); d.remove(); };
+  /* 1º acesso: o anúncio da Operação Flávio está aberto quando o passe chega */
+  const flavio = abrirOutro();
+  let pronto = false;
+  const vez = A.anunciarPasseNaVez({}).then((d) => { pronto = true; return d; });
+  await tick();
+  assert.equal(pronto, false, 'com o Flávio aberto o passe desistiu em vez de esperar');
+  assert.equal(document.body.children.filter((n) => n.tagName === 'DIALOG' && n.open).length, 1, 'passe empilhou sobre o Flávio');
+  assert.equal(storage.get(P.PASSE_ANUNCIO_CHAVE), undefined, 'marcou o anúncio como visto sem abrir');
+  fecharOutro(flavio);
+  const passe = await Promise.race([vez, new Promise((r) => setTimeout(() => r('esperando'), 200))]);
+  assert.ok(passe?.open && passe.id === 'passe-anuncio', `Flávio fechou e o passe não abriu na mesma visita (${passe === 'esperando' ? 'ainda esperando' : 'desistiu'})`);
+  assert.equal(storage.get(P.PASSE_ANUNCIO_CHAVE), P.PASSE_ANUNCIO_VERSAO, 'versão vista não ficou guardada');
+  passe.dispara('cancel');
+  /* uma vez por versão: já visto, não espera outro diálogo para repetir */
+  const outro = abrirOutro();
+  const visto = await Promise.race([A.anunciarPasseNaVez({}), tick().then(() => 'esperando')]);
+  assert.equal(visto, null, `anúncio já visto ficou esperando para repetir (${visto})`);
+  fecharOutro(outro);
+  /* a partida começou durante a espera: desiste sem abrir nem marcar */
+  storage.clear();
+  const antes = abrirOutro();
+  const naPartida = A.anunciarPasseNaVez({}, { seguir: () => false });
+  fecharOutro(antes);
+  assert.equal(await naPartida, null, 'abriu o anúncio por cima da partida');
+  assert.equal(storage.get(P.PASSE_ANUNCIO_CHAVE), undefined, 'marcou visto sem mostrar');
+  storage.clear();
+});
+
+await clausula('PS10', 'bot-travado-fixado: pin salvo de personagem travado fica fora da partida', async () => {
+  const caveira = { id: 'capitao-caveira', team: 'E', name: 'Capitão Caveira', passe: { season: 'sessao-da-treta-s1', level: 1 } };
+  const livre = { id: 'esquerdomacho', team: 'E', name: 'Esquerdomacho' };
+  const linha = corta(mainJs, '  const _escalados = ', '\n');
+  const ctx = vm.createContext({ CHARACTERS: [caveira, livre], personagemTravado: P.personagemTravado, settings: { pinnedChars: ['capitao-caveira', 'esquerdomacho'] } });
+  const escalados = (charId) => Array.from(vm.runInContext(`(() => {\n${linha}\nreturn _escalados; })()`, Object.assign(ctx, { charId, sessao: null })));   // array deste realm: deepEqual compara protótipo
+  await novaConta({ autenticado: false, claimed: [] });
+  assert.deepEqual(escalados('caminhoneiro'), ['esquerdomacho'], `visitante: escalação da partida ${JSON.stringify(escalados('caminhoneiro'))} leva o travado como bot`);
+  await novaConta({ autenticado: true, xp: 400, claimed: [] });
+  assert.deepEqual(escalados('caminhoneiro'), ['esquerdomacho'], 'conta sem o nível resgatado leva o travado como bot');
+  /* controle positivo: destravado pelo servidor, o pin vale */
+  await novaConta({ autenticado: true, xp: 1200, claimed: [] });
+  await P.resgatarNivel(1);
+  assert.deepEqual(escalados('caminhoneiro'), ['capitao-caveira', 'esquerdomacho'], 'destravado pelo servidor e o pin sumiu da partida');
 });
 
 const alvo = MUT ? MUTANTES[MUT][0] : '';
