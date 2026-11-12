@@ -1596,6 +1596,9 @@ function openHubRoster(updateRoute = true) {
         pin.textContent = ehPin ? papel : '＋';
         pin.onclick = (ev) => {
           ev.stopPropagation();
+          /* Escalar personagem travado como bot = jogar com ele de graça: recusa como a escolha,
+             com o mesmo aviso. Tirar um escalado antigo continua valendo. */
+          if (!ehPin && personagemTravado(def)) { ui.click(); $('hub-roster-selected').textContent = frase('passeTravadoAviso', def.name, nivel || '?'); return; }
           settings.pinnedChars = ehPin
             ? settings.pinnedChars.filter((id) => id !== def.id)
             : [...settings.pinnedChars, def.id];
@@ -2203,9 +2206,10 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
      cada jogador da mesma sala ver bonecos diferentes, e o nome do killfeed não bateria com o
      rosto que apareceu na tela. Fora do multiplayer, sorteio normal — com a ESCALAÇÃO do
      jogador (pinnedChars da tela de escalação) entrando primeiro. Papel do escalado: do lado
-     do jogador = aliado; senão inimigo (pickMatchRoster re-filtra por lado). */
+     do jogador = aliado; senão inimigo (pickMatchRoster re-filtra por lado). Escalado travado pelo
+     passe (pin salvo antes da trava ou sem o servidor ter destravado) fica de fora da partida. */
   const _podeNoLadoSp = (id) => { const c = CHARACTERS.find((x) => x.id === id); return !!(c && podeNoLado(c, side)); };
-  const _escalados = sessao ? [] : settings.pinnedChars.filter((id) => id !== charId);
+  const _escalados = sessao ? [] : settings.pinnedChars.filter((id) => id !== charId && !personagemTravado(CHARACTERS.find((c) => c.id === id)));
   const _pinned = sessao ? null : {
     ally: _escalados.filter(_podeNoLadoSp),
     enemy: _escalados.filter((id) => !_podeNoLadoSp(id)),
