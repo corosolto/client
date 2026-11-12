@@ -32,8 +32,9 @@
 # RELEASE EM LOTE (14/10/2026, decisão do dono): horário fixo travava o desenvolvimento —
 # o trabalho esperava a janela das 11:41/19:41 em vez de sair quando o lote fechava. Agora
 # os PRs se empilham num PR de LOTE e o trem sai quando ESSE PR entra na main: label
-# `release`, ou branch de origem `lote-*`, `claude/lote-*` ou `*/lote-*`. Merge de PR
-# comum não dispara nada. Hotfix continua sendo `gh workflow run release.yml`.
+# `release`, ou branch de origem `lote-*`, `claude/lote-*` ou `*/lote-*`. O classificador
+# adiciona `release` a hotfix que mira `main`, portanto hotfix seguro usa o mesmo trem logo
+# após o merge. `gh workflow run release.yml` continua como fallback manual.
 #
 # POR QUE `push` + API e não `pull_request: [closed]`: no `pull_request` o YAML e o
 # checkout vêm do ref refs/pull/N/merge (não da main), PR de fork chega sem os secrets
@@ -108,10 +109,10 @@ jobs:
           echo "push sem PR de lote — trem fica na estação"
           echo "sai=false" >> "$GITHUB_OUTPUT"
 
-  # O trem só sai com a main VERDE. O pr-fast roda em todo push na main — inclusive no
-  # merge do próprio lote, que corre junto com este run; se ainda estiver no ar, espera
-  # até 25 min. Vermelho, ausente ou lento = este trem não sai; o próximo lote (ou um
-  # workflow_dispatch) tenta de novo. Job separado porque o teto de 30 min por job (WT2)
+  # O trem só sai com a main VERDE. Merge de lote com a árvore do pai 2, já verde no ci.yml,
+  # embarca na hora (RLS18); senão espera o pr-fast do push do merge, que corre junto com
+  # este run, até 25 min. Vermelho, ausente ou lento = este trem não sai; o próximo lote (ou
+  # um workflow_dispatch) tenta de novo. Job separado porque o teto de 30 min por job (WT2)
   # vale para os dois.
   embarque:
     needs: lote
@@ -147,6 +148,22 @@ jobs:
           SHA=$(gh api "repos/$REPO/commits/main" --jq .sha)
           MSG=$(gh api "repos/$REPO/commits/$SHA" --jq '.commit.message' | head -1)
           case "$MSG" in "chore(release):"*) echo "head já é release — nada novo"; echo "sai=false" >> "$GITHUB_OUTPUT"; exit 0 ;; esac
+          # Reaproveita o pr-fast do lote (RLS18): merge de 2 pais com a árvore do pai 2 e ci.yml
+          # verde nesse pai. CÓPIA IDÊNTICA no bump-tag-release (a régua compara as duas).
+          verde_por_lote() {
+            local ARV P1 P2 RESTO ARV2 VERDES
+            read -r ARV P1 P2 RESTO <<< "$(gh api "repos/$REPO/git/commits/$1" --jq '"\(.tree.sha) \([.parents[].sha] | join(" "))"' 2>/dev/null || true)"
+            [ -n "$ARV" ] && [ -n "$P1" ] && [ -n "$P2" ] && [ -z "$RESTO" ] || return 1
+            ARV2=$(gh api "repos/$REPO/git/commits/$P2" --jq .tree.sha 2>/dev/null || true)
+            [ "$ARV2" = "$ARV" ] || return 1
+            VERDES=$(gh run list --repo "$REPO" --workflow ci.yml --commit "$P2" --json headSha,status,conclusion \
+                       --jq "[.[] | select(.headSha == \"$P2\" and .status == \"completed\" and .conclusion == \"success\")] | length" 2>/dev/null || true)
+            [ "${VERDES:-0}" -gt 0 ] 2>/dev/null || return 1
+            echo "pr-fast verde no lote $P2 e $1 traz exatamente a árvore dele"
+          }
+          if verde_por_lote "$SHA"; then
+            echo "lote já testado — embarca sem esperar o pr-fast do push"; { echo "sai=true"; echo "sha=$SHA"; } >> "$GITHUB_OUTPUT"; exit 0
+          fi
           for i in $(seq 1 25); do
             LINHA=$(gh run list --repo "$REPO" --workflow ci.yml --branch main --commit "$SHA" --event push \
                       --json status,conclusion --jq '.[0] | "\(.status) \(.conclusion)"' 2>/dev/null || true)
@@ -287,6 +304,19 @@ jobs:
           # (antes da primeira volta ou entre duas), a cabeça nova só serve depois de o
           # pr-fast DELA terminar verde; senão nada é publicado e o erro diz por quê.
           [ -n "$APROVADO" ] || { echo "::error::o embarque não passou o SHA aprovado; nada a publicar"; exit 1; }
+          # Mesmo critério do embarque (RLS18): cabeça nova que é merge de lote já testado vale
+          # sem esperar o push. CÓPIA IDÊNTICA da função do embarque (a régua compara as duas).
+          verde_por_lote() {
+            local ARV P1 P2 RESTO ARV2 VERDES
+            read -r ARV P1 P2 RESTO <<< "$(gh api "repos/$REPO/git/commits/$1" --jq '"\(.tree.sha) \([.parents[].sha] | join(" "))"' 2>/dev/null || true)"
+            [ -n "$ARV" ] && [ -n "$P1" ] && [ -n "$P2" ] && [ -z "$RESTO" ] || return 1
+            ARV2=$(gh api "repos/$REPO/git/commits/$P2" --jq .tree.sha 2>/dev/null || true)
+            [ "$ARV2" = "$ARV" ] || return 1
+            VERDES=$(gh run list --repo "$REPO" --workflow ci.yml --commit "$P2" --json headSha,status,conclusion \
+                       --jq "[.[] | select(.headSha == \"$P2\" and .status == \"completed\" and .conclusion == \"success\")] | length" 2>/dev/null || true)
+            [ "${VERDES:-0}" -gt 0 ] 2>/dev/null || return 1
+            echo "pr-fast verde no lote $P2 e $1 traz exatamente a árvore dele"
+          }
           PRAZO=$(( $(date +%s) + 22 * 60 ))
           pr_fast_verde() {
             while [ "$(date +%s)" -lt "$PRAZO" ]; do
@@ -308,8 +338,8 @@ jobs:
               case "$(git log -1 --format=%s "$CABECA")" in
                 "chore(release):"*) echo "::error::a main andou para $CABECA, que já é um commit de release: outro trem saiu, este não publica nada."; exit 1 ;;
               esac
-              echo "::warning::a main andou de $APROVADO para $CABECA; espero o pr-fast da cabeça nova antes de publicar"
-              if ! pr_fast_verde "$CABECA"; then
+              echo "::warning::a main andou de $APROVADO para $CABECA; confiro o lote dela ou espero o pr-fast da cabeça nova antes de publicar"
+              if ! verde_por_lote "$CABECA" && ! pr_fast_verde "$CABECA"; then
                 echo "::error::a main andou para $CABECA e o pr-fast dela não ficou verde no prazo: nada foi publicado. O próximo lote (ou gh workflow run release.yml) tenta de novo."
                 exit 1
               fi

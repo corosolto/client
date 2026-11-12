@@ -100,10 +100,11 @@ console.log('\n· ack e loadout autoritativos do slot (BUG-126/127)');
   net.snap = snapshot(50, 1, {
     ackSeq: 0, weapon: 'm4', mag: 11, res: 47, reloadIn: 1.2,
     primary: 'm4', secondary: 'pistol', jogadorX: 0, jogadorY: 0, jogadorZ: 0,
-    objective: { wave: 5, phase: 'combat' },
+    objective: { wave: 5, phase: 'combat', checkpoint: 4, contested: true },
   });
   g._mp.applySnapshot();
-  cobra(objetivoRecebido?.wave === 5 && objetivoRecebido?.phase === 'combat',
+  cobra(objetivoRecebido?.wave === 5 && objetivoRecebido?.phase === 'combat'
+    && objetivoRecebido?.checkpoint === 4 && objetivoRecebido?.contested === true,
     'snapshot entrega o objetivo ao modo ativo antes da apresentação local');
   cobra(g.player.weapon === 'm4' && g.player.primary === 'm4' && g.player.secondary === 'pistol',
     'snapshot v4 corrige arma atual e slots locais pela autoridade do servidor');
@@ -425,6 +426,51 @@ console.log('\n· morte→respawn por snapshot RESETA o corpo TP do jogador (BUG
   g2.dispose();
 }
 
+/* Lote de `ev` atrasado (> 1,5 s) é descartado inteiro: se o `boom` ia nele, a granada
+   ficava CONGELADA em cena para sempre (fuse 1e9, só o boom removia); se ia o `gone`,
+   a arma morta virava fantasma até a virada da rodada. Rede de segurança: fuse local
+   de 8 s na granada e o TTL do servidor como prazo do drop. */
+console.log('\n· boom/gone PERDIDOS não deixam fantasma (granada congelada e arma eterna)');
+{
+  const net = fakeNet(1, 5, false, 20, 1);
+  const g = montaJogo(net, { teamSize: 5 });
+  net.snap = snapshot(500, 90); g._mp.applySnapshot();   // primeiro snapshot: lote daqui é estado herdado, descartado
+  net.events.push({ tick: 100, list: [{ k: 'nade', i: 77, kind: 'frag', x: 2, y: 1, z: 2, vx: 1, vy: 1, vz: 0, o: 0 }] });
+  net.snap = snapshot(500.1, 100);
+  g._mp.applySnapshot();
+  const gr = g._grenades.find((x) => x._nid === 77);
+  cobra(!!gr, 'o evento `nade` nasce a granada de rede');
+  cobra(!!gr && gr.fuse > 0 && gr.fuse <= 8, `granada de rede tem fuse de segurança (${gr && +gr.fuse.toFixed(1)} s ≤ 8), não 1e9`);
+  for (let i = 0; i < 60 * 9; i++) g.update(1 / 60);
+  cobra(!g._grenades.some((x) => x._nid === 77), 'boom que nunca chega não vira granada congelada: o fuse local remove');
+  g.dispose();
+
+  // MUTANTE: o fuse eterno (comportamento antigo) deixa a granada fantasma — a régua morde.
+  const net2 = fakeNet(1, 5, false, 20, 1);
+  const g2 = montaJogo(net2, { teamSize: 5 });
+  net2.snap = snapshot(500, 90); g2._mp.applySnapshot();
+  net2.events.push({ tick: 100, list: [{ k: 'nade', i: 78, kind: 'frag', x: 2, y: 1, z: 2, vx: 1, vy: 1, vz: 0, o: 0 }] });
+  net2.snap = snapshot(500.1, 100); g2._mp.applySnapshot();
+  const gr2 = g2._grenades.find((x) => x._nid === 78);
+  if (gr2) gr2.fuse = 1e9;
+  for (let i = 0; i < 60 * 12; i++) g2.update(1 / 60);
+  cobra(g2._grenades.some((x) => x._nid === 78), 'MUTANTE com fuse 1e9 deixa a granada fantasma (a cláusula acima morde)');
+  g2.dispose();
+
+  // Drop: o TTL do servidor vira prazo de validade; `gone` perdido não deixa arma eterna.
+  const net3 = fakeNet(1, 5, false, 20, 1);
+  const g3 = montaJogo(net3, { teamSize: 5 });
+  net3.snap = snapshot(500, 90); g3._mp.applySnapshot();
+  net3.events.push({ tick: 100, list: [{ k: 'drop', i: 0, x: 3, z: 3, w: 'ak', ttl: 3 }] });
+  net3.snap = snapshot(500.1, 100); g3._mp.applySnapshot();
+  const dr = g3.drops.find((x) => x._nid === 0);
+  cobra(!!dr && dr._expiraRedeEm != null, 'drop de rede ganha prazo com o TTL do servidor (ou teto de 25 s)');
+  for (let i = 0; i < 60 * 7; i++) g3.update(1 / 60);
+  net3.snap = snapshot(507, 520); g3._mp.applySnapshot();
+  cobra(!g3.drops.some((x) => x._nid === 0), 'gone perdido não vira arma fantasma: passado o TTL, o drop some sozinho');
+  g3.dispose();
+}
+
 /* BUG-87 — "Lags". A interpolação antiga viajava prev→cur no gap de CHEGADA (~50 ms):
    qualquer snapshot atrasado clampava no último ponto e o boneco CONGELAVA até o próximo
    pacote — a 20 Hz com jitter real isso lê como lag mesmo com rede boa. O buffer de
@@ -483,6 +529,36 @@ console.log('\n· remotos interpolam com BUFFER (~120 ms): pacote atrasado não 
   cobra(!(c.pos.x > c0 + 0.01 && c.pos.x < c1 - 0.01),
     'MUTANTE sem buffer NÃO produz posição intermediária (a cláusula acima morde)');
   g2.dispose();
+}
+
+/* META DO DONO — "sem amostra não existe": a janela parcial de quem OCULTOU a aba
+ * (mobile trocando de app) ou FECHOU a página no meio era descartada em silêncio.
+ * Agora pagehide/visibilitychange→hidden e o close do WS fazem o flush do que
+ * acumulou, e voltar a ficar visível antecipa a próxima janela (2 s, não 10). */
+console.log('\n· janela PARCIAL de client_stats sai ao ocultar/sair (sem amostra não existe)');
+{
+  const net = fakeNet(1);
+  const g = montaJogo(net);
+  const enviadas = [];
+  net.sendClientStats = (p) => enviadas.push(p);
+  net.drainRttSamples = () => [31, 33];
+  net.drainGapSamples = () => [30, 34];
+  g._mp._nsFps = 60;                       // jogou visível e renderizou nesta janela
+  g._mp._reconcileWindow.push(0.02, 0.03);
+  g._mp._flushStatsParcial();
+  cobra(enviadas.length === 1 && enviadas[0].fps === 60 && enviadas[0].rttSamples.length === 2 && enviadas[0].reconcileCount === 2,
+    'ocultar/sair manda a janela PARCIAL (fps, pongs e correções acumulados), não descarta');
+  cobra(g._mp._reconcileWindow.length === 0, 'e a janela recomeça limpa: amostra drenada não se repete');
+  // MUTANTE: sem o flush (comportamento antigo), o close do WS não leva nada
+  enviadas.length = 0;
+  const flush0 = g._mp._flushStatsParcial;
+  g._mp._flushStatsParcial = () => {};
+  net.onClose?.('quit');
+  cobra(enviadas.length === 0, 'MUTANTE sem flush perde a janela do close (a cláusula acima morde)');
+  g._mp._flushStatsParcial = flush0;
+  net.onClose?.('quit');
+  cobra(enviadas.length === 1, 'o hook de close do WS também leva a última janela');
+  g.dispose();
 }
 
 console.log('\n· cadência de 30 Hz reduz a latência visual sem perder o buffer');
@@ -1140,7 +1216,7 @@ console.log('\n· online, ninguém pega drop andando por cima no cliente (o serv
 /* FASE 3 DO CANAL `ev` — granadas. Online o cliente só PEDE (`nade` no input); o servidor lança,
    manda `nade {i,kind,x,y,z,vx,vy,vz,o,f}` e `boom {i,kind,x,y,z}`; o cliente desenha a granada
    pelo evento e estoura na posição do servidor SEM aplicar dano (o hp é do snapshot). */
-console.log('\n· granada online: o 5 pede ao servidor e não spawna local; `nade`/`boom` desenham sem dano (fase 3)');
+console.log('\n· granada online: o clique pede ao servidor e não spawna local; `nade`/`boom` desenham sem dano (fase 3)');
 {
   const net = fakeNet(1, 5, false, 30, 1);
   const g = montaJogo(net);

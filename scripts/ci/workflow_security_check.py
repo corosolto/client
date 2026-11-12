@@ -45,16 +45,19 @@ def preview_failures(source: str) -> list[str]:
 
 
 def separacao_failures(build: str, deploy: str) -> list[str]:
-    """Contrato do preview de fork POR SEPARAÇÃO (desenho de 22/08).
+    """Contrato do preview de fork POR SEPARAÇÃO (desenho de 22/08; aposentado em 10/11).
 
-    A aprovação manual existia porque UM job fazia as duas coisas: rodava o build do
-    fork E tinha o token. Separando, os dois lados ficam seguros sozinhos e ninguém
-    precisa clicar:
+    O preview de PR migrou para o Cloudflare (cf-preview.yml). O par Vercel ficou
+    como caminho de EMERGÊNCIA: `preview-build` só roda por workflow_dispatch de
+    alguém com write, e `preview-deploy` continua em workflow_run (é o que publica
+    o build despachado no contexto base, com o token). As travas seguem valendo:
 
-    PRV1 quem COMPILA roda código do fork e não recebe segredo — `pull_request` (não
-         `pull_request_target`), e nenhuma referência a `secrets.` no arquivo;
+    PRV1 quem COMPILA roda código do PR e não recebe segredo — e NÃO pode voltar a
+         disparar sozinho por pull_request/push/schedule: cada disparo desses era
+         um build de Vercel na fatura. Reativar o automático é decisão registrada,
+         não acidente de merge;
     PRV2 quem PUBLICA roda no contexto base (`workflow_run`), que é o que lhe dá o
-         segredo mesmo vindo de fork;
+         segredo;
     PRV4 quem PUBLICA não interpola `${{ }}` dentro de `run:`. A expressão é substituída
          no TEXTO do script antes do shell existir, então valor com aspas ou `$(...)` vira
          comando — e no caminho de deploy os valores vêm de fora (o número do PR atravessa
@@ -72,14 +75,18 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
     # ("não roda npm ci", "não usa pull_request_target") e ler o comentário como se
     # fosse código acusaria justamente quem documentou a trava.
     def codigo(texto: str) -> str:
-        return '\n'.join(l for l in texto.splitlines() if not l.lstrip().startswith('#'))
+        sem_comentario = '\n'.join(l for l in texto.splitlines() if not l.lstrip().startswith('#'))
+        return re.sub(r"(['\"])(pull_request|push|schedule|workflow_dispatch|workflow_run)\1\s*:", r"\2:", sem_comentario)
 
     build, deploy = codigo(build), codigo(deploy)
 
     if 'pull_request_target' in build:
         errors.append('PRV1 o job que COMPILA usa pull_request_target — passaria a enxergar segredo rodando código do fork')
-    if 'pull_request:' not in build:
-        errors.append('PRV1 o job que COMPILA não roda em pull_request')
+    if 'workflow_dispatch:' not in build:
+        errors.append('PRV1 o job que COMPILA não roda por workflow_dispatch — preview de PR é cf-preview; Vercel é emergência manual')
+    for disparo in ('pull_request:', 'push:', 'schedule:'):
+        if disparo in build:
+            errors.append(f'PRV1 o job que COMPILA volta a disparar sozinho por {disparo.rstrip(":")} — cada push de PR voltaria a buildar na Vercel')
     if 'secrets.' in build:
         errors.append('PRV1 o job que COMPILA referencia `secrets.` — ele roda código do fork e não pode ter o que roubar')
 
@@ -190,6 +197,46 @@ def read_workflows(root: Path = Path('.github/workflows')) -> dict[Path, str]:
 
 BUILD = Path('.github/workflows/preview-build.yml')
 DEPLOY = Path('.github/workflows/preview-deploy.yml')
+CF_BUILD = Path('.github/workflows/cf-preview.yml')
+CF_DEPLOY = Path('.github/workflows/cf-preview-deploy.yml')
+SMOKE_WEB = Path('.github/workflows/smoke-web.yml')
+
+
+def passo(source: str, nome: str) -> str:
+    linhas = source.splitlines()
+    for i, linha in enumerate(linhas):
+        if linha.strip() != f'- name: {nome}':
+            continue
+        indentacao = len(linha) - len(linha.lstrip())
+        bloco = []
+        for seguinte in linhas[i + 1:]:
+            atual = len(seguinte) - len(seguinte.lstrip())
+            if seguinte.strip() and atual <= indentacao and seguinte.lstrip().startswith('- '):
+                break
+            bloco.append(seguinte)
+        return '\n'.join(bloco)
+    return ''
+
+
+def cloudflare_failures(build: str, deploy: str, smoke: str) -> list[str]:
+    errors = []
+    if 'pull_request:' not in build or 'pull_request_target' in build or 'secrets.' in build:
+        errors.append('CF1 build Cloudflare precisa usar pull_request sem segredos')
+    if 'workflow_run:' not in deploy:
+        errors.append('CF2 deploy Cloudflare precisa usar workflow_run')
+    download = passo(deploy, 'Baixa somente os assets compilados')
+    destino = re.search(r'(?m)^\s*path:\s*(\S+)\s*$', download)
+    if not destino or destino.group(1) != 'dist':
+        errors.append('CF3 artefato do PR precisa ficar isolado em dist, fora do checkout confiável')
+    if 'python3 scripts/ci/cf_preview_comment.py' not in deploy:
+        errors.append('CF4 comentário precisa executar o script do checkout confiável')
+    sticky = passo(smoke, 'Aguarda URL sticky do Cloudflare')
+    if "if: github.event_name == 'pull_request'" not in sticky:
+        errors.append('CF5 dispatch manual não pode esperar sticky de PR')
+    guarda = passo(smoke, 'Confirma host do smoke manual')
+    if '${BASE_URL:-}' not in guarda or "if: github.event_name == 'workflow_dispatch'" not in guarda:
+        errors.append('CF6 dispatch manual precisa falhar imediatamente se BASE_URL estiver vazio')
+    return errors
 
 
 def _ler(p: Path) -> str:
@@ -200,7 +247,10 @@ def selftest(source: str) -> list[str]:
     build, deploy = _ler(BUILD), _ler(DEPLOY)
     separacao = {
         'compila-com-segredo': (build + '\n        env:\n          X: ${{ secrets.VERCEL_TOKEN }}\n', deploy),
-        'compila-com-target': (build.replace('  pull_request:', '  pull_request_target:'), deploy),
+        'compila-com-target': (build.replace('  workflow_dispatch:', '  pull_request_target:'), deploy),
+        'compila-volta-pr': (build.replace('  workflow_dispatch:', '  pull_request:\n  workflow_dispatch:'), deploy),
+        'compila-volta-pr-quoted': (build.replace('  workflow_dispatch:', '  "pull_request":\n  workflow_dispatch:'), deploy),
+        'compila-volta-pr-flow': (build.replace('on:\n  workflow_dispatch:', 'on: {"pull_request": {}, "workflow_dispatch": {}}'), deploy),
         'publica-sem-run': (build, deploy.replace('  workflow_run:', '  schedule:')),
         'publica-faz-checkout': (build, deploy + '\n      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683\n'),
         'publica-constroi': (build, deploy.replace('--prebuilt', '')),
@@ -251,6 +301,15 @@ def selftest(source: str) -> list[str]:
         mutant.write_text('steps:\\n  - uses: actions/checkout@v4\\n', encoding='utf-8')
         if not supply_failures(read_workflows(Path(tmp))):
             missed.append('extensao-yaml')
+    cf_build, cf_deploy, smoke = _ler(CF_BUILD), _ler(CF_DEPLOY), _ler(SMOKE_WEB)
+    cf_mutants = {
+        'cf-artefato-na-raiz': (cf_build, cf_deploy.replace('path: dist', 'path: .', 1), smoke),
+        'cf-path-dist-em-outro-passo': (cf_build, cf_deploy.replace('          path: dist\n', '', 1) + '\n      - name: Upload posterior\n        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02\n        with:\n          path: dist\n', smoke),
+        'cf-dispatch-espera-sticky': (cf_build, cf_deploy, smoke.replace("- name: Aguarda URL sticky do Cloudflare\n        if: github.event_name == 'pull_request'", '- name: Aguarda URL sticky do Cloudflare')),
+        'cf-dispatch-sem-host': (cf_build, cf_deploy, smoke.replace('${BASE_URL:-}', '${BASE_URL}')),
+        'cf-guarda-no-evento-errado': (cf_build, cf_deploy, smoke.replace("- name: Confirma host do smoke manual\n        if: github.event_name == 'workflow_dispatch'", "- name: Confirma host do smoke manual\n        if: github.event_name == 'pull_request'")),
+    }
+    missed += [name for name, (b, d, s) in cf_mutants.items() if not cloudflare_failures(b, d, s)]
     return missed
 
 
@@ -262,6 +321,7 @@ def main() -> int:
     workflows = read_workflows()
     errors = (preview_failures(source)
               + separacao_failures(_ler(BUILD), _ler(DEPLOY))
+              + cloudflare_failures(_ler(CF_BUILD), _ler(CF_DEPLOY), _ler(SMOKE_WEB))
               + supply_failures(workflows)
               + merge_group_failures(workflows))
     if errors:

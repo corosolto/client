@@ -1,5 +1,6 @@
 /* Treta Pop · 03 modo e mapa, 19 mobile. Carregado por tp/ligar.js só com ?ui=v3. */
 import { tr } from '../i18n.js';
+import { retratoFontes } from '../data/retratos.js';
 
 const CHAVE_FAV = 'tp-modos-favoritos';
 /* Selo NOVO: mapa que entrou no jogo (mapcat.js MAP_DATA) há no máximo 30 dias. */
@@ -70,7 +71,7 @@ function montar(card) {
   modos.setAttribute('role', 'group'); modos.setAttribute('aria-label', tr('Modo de jogo'));
   for (const m of MODOS) {
     const b = el('button', 'tp-modos__modo'); b.type = 'button'; b.dataset.modo = m.id;
-    const img = el('img'); img.src = `/img/chars-hero/${m.arte}.webp`; img.alt = ''; img.decoding = 'async';
+    const img = el('img'); img.src = retratoFontes(m.arte)[0]; img.alt = ''; img.decoding = 'async';
     const txt = el('span', 'tp-modos__modo-txt');
     const nome = el('span', 'tp-disp'); nome.appendChild(el('span', 'tp-ital', tr(m.nome)));
     txt.append(nome, el('span', 'tp-modos__sub', tr(m.sub)));
@@ -224,7 +225,10 @@ function pintar() {
   api().opcoesJavaporcos?.(tela.regras, pintar);
   tela.regras.hidden = !horda;
   for (const b of tela.modos.querySelectorAll('.tp-modos__modo')) {
-    if (b.dataset.modo === 'rounds' || b.dataset.modo === 'ctf' || b.dataset.modo === 'arena') b.setAttribute('aria-pressed', String(b.dataset.modo === est.modo));
+    if (b.dataset.modo === 'rounds' || b.dataset.modo === 'ctf' || b.dataset.modo === 'arena') {
+      b.disabled = !!est.objetivo;
+      b.setAttribute('aria-pressed', String(!est.objetivo && b.dataset.modo === est.modo));
+    }
     if (b.dataset.modo === 'mp') {
       const count = $('hub-online-n'), box = count?.closest('.hub-online');
       const n = box && !box.hidden ? Number(count.dataset.online) || 0 : 0;
@@ -232,7 +236,7 @@ function pintar() {
     }
   }
   for (const c of tela.lista.querySelectorAll('.tp-modos__mapa')) c.querySelector('.tp-modos__mapa-btn').setAttribute('aria-pressed', String(c.dataset.id === est.mapa));
-  const modo = tr(horda ? 'INVASÃO · DISPUTA TERRITORIAL' : est.modo === 'arena' ? 'VIRA-CASACA' : (est.modo === 'ctf' ? 'CAPTURA' : 'MATA-MATA'));
+  const modo = tr(horda ? 'INVASÃO · DISPUTA TERRITORIAL' : est.objetivo === 'escort' ? 'ESCOLTA' : est.modo === 'arena' ? 'VIRA-CASACA' : (est.modo === 'ctf' ? 'CAPTURA' : 'MATA-MATA'));
   tela.ficha.querySelector('.tp-modos__olho').textContent = mapa ? `${modo} · ${mapa.cats.map(tr).join(' · ')}` : modo;
   tela.ficha.querySelector('.tp-modos__nome').textContent = mapa?.nome || '';
   tela.ficha.querySelector('.tp-modos__desc').textContent = mapa?.desc || '';

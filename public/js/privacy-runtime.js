@@ -1,3 +1,5 @@
+/* Medição LIGADA por padrão (dono, 09/11/2026): só recusa gravada em `cs_privacy` desliga;
+   storage corrompido/antigo vale como padrão. Réguas: privacy-choice-check, privacy-ops-check. */
 (function () {
   if (window.__csPrivacy) return;
   const VERSION='corosolto-analytics-v1',KEY='cs_privacy';
@@ -7,7 +9,7 @@
       return value?.version===VERSION && typeof value.analytics==='boolean'?value:null;
     } catch { return null; }
   }
-  function allowed() { return choice()?.analytics===true; }
+  function allowed() { return choice()?.analytics!==false; }
   let vercelLoaded=false;
   function enableVercelAnalytics() {
     if(vercelLoaded || !allowed() || /^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname))return;
@@ -43,7 +45,7 @@
   window.addEventListener('storage',event=>{
     if(event.key!==KEY && event.key!==null)return;
     if(!allowed())clearOptionalStorage();
-    notify(choice() || {version:VERSION,analytics:false});
+    notify(choice() || {version:VERSION,analytics:true});
   });
   window.__csPrivacy={allowed,choice,set};
 })();

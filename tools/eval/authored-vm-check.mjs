@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { WEAPONS } from '../../public/js/data/weapons.js';
 import { VM_FABRICA, VM_FAMILY, VM_WEAPON } from '../../public/js/data/vmconfig.js';
 import { AUTHORED_VM_MODELS, AUTHORED_VM_URLS, vmFonteDe } from '../../public/js/authoredvm.js';
+import { viewmodelVisibility } from '../../public/js/vmvisibility.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const mutant = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
@@ -64,7 +65,7 @@ const readyFamilies = Object.entries(VM_FAMILY)
 check(readyFamilies.length === Object.keys(VM_FAMILY).length,
   'todas as famílias abrem o lançamento padrão', readyFamilies.join(', '));
 // O dono pediu as 26 mãos novas sem query em 27/09; a fábrica cobre 24 armas,
-// a AK mantém a golden aprovada, e a faca tem rig próprio.
+// a AK e a PT-38 mantêm a golden (pública) aprovada, e a faca tem rig próprio.
 const armasServidas = Object.entries(VM_WEAPON)
   .filter(([, c]) => VM_FAMILY[c.family]?.ready === true && c.ready !== false)
   .map(([w]) => w).sort();
@@ -73,15 +74,16 @@ check(armasServidas.length === Object.keys(VM_WEAPON).length,
 const rotas = Object.fromEntries(armasServidas.map((w) => [w, vmFonteDe(w).chave]));
 check(Object.keys(VM_FABRICA).length === 24 && Object.entries(rotas).every(([w, key]) =>
   key === (w === 'ak' ? 'gold#ak' : `fab#${w}`)),
-  'fábrica por padrão nas 24 armas; AK conserva a golden', JSON.stringify(rotas));
+  'fábrica por padrão nas 24 armas (PT-38 = X18); só a AK conserva a golden', JSON.stringify(rotas));
 check(/VM_WEAPON\[weapon\]\?\.ready !== false/.test(runtime),
   'runtime honra o portão por arma (ready:false em VM_WEAPON)');
-// Decisão do dono (24/09): a AK é a GOLDEN aprovada (rig A); nenhuma outra arma volta ao golden
-// sem decisão. Mutante ak-k: a AK servida pelo catálogo K tem de reprovar.
+// Decisões do dono: AK golden desde 24/09; PT-38 sem pintura volta ao X18 da fábrica (06/11:
+// a golden pública mostrava a traseira). K segue em `runtime:'family'` para o A/B.
+// Mutante ak-k: a AK servida pelo catálogo K tem de reprovar.
 const goldenFogo = Object.entries(VM_WEAPON).filter(([, c]) => c.golden === true).map(([w]) => w);
 check(mutant !== 'ak-k' && goldenFogo.join(',') === 'ak'
     && VM_WEAPON.pistol?.runtime === 'family',
-  'AK conserva a única golden; pistola K mantém a rota de família para A/B',
+  'só a AK conserva a golden; pistola K mantém a rota de família para A/B',
   goldenFogo.join(', '));
 check(/vmauthored/.test(runtime), 'kill-switch ?vmauthored=0 derruba o caminho autorado inteiro');
 check(/setAim\(id[^)]*amount/.test(runtime) && /this\.adsAmount/.test(runtime),
@@ -96,6 +98,15 @@ check(/muzzleWorld\(id = this\.weapon/.test(runtime) && /authored\?\.muzzleWorld
   'flash/tracer nascem no cano da arma visível, não na legada oculta');
 check(/preloadAuthoredFamilies/.test(runtime) && /GLTF_CACHE/.test(runtime),
   'boot pode aquecer famílias do loadout num cache de módulo');
+const assetPendente = viewmodelVisibility({
+  alive: true,
+  firstPerson: true,
+  authoredMode: true,
+  authoredReady: false,
+});
+check(assetPendente.root && assetPendente.fallback && !assetPendente.authored,
+  'arma legada permanece visível enquanto o GLB autorado não carregou',
+  JSON.stringify(assetPendente));
 
 console.log(JSON.stringify({ mutant, weapons: gameplay.length, families: families.size, failures }, null, 2));
 process.exit(failures ? 1 : 0);

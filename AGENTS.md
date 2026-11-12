@@ -11,7 +11,7 @@ desatualizados. Duplicar é criar o quinto.
 ---
 
 
-## Antes de escrever régua ou mexer em asset: `docs/LICOES.md`
+## Antes de escrever régua ou mexer em asset: `docs/LICOES.md` (em `../progress`)
 
 14 lições, cada uma com o caso real e o número que a comprou. Elas existem porque
 sem esse arquivo todo agente novo redescobre os mesmos buracos — e paga de novo.
@@ -41,9 +41,9 @@ algo está errado e o quality gate está verde, o defeito é do quality gate.
 
 | Zona | O que é | Tamanho medido | Regra |
 |---|---|---|---|
-| `public/` | o **jogo** | 200 arquivos `.js`, 78.353 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
-| `src/` | o **site** | 28 páginas `.astro`, 5 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
-| `tools/` | o **arnês** | 1089 scripts em `tools/eval/`, 126 em `tools/` | node puro: sobe o jogo real sem browser |
+| `public/` | o **jogo** | 207 arquivos `.js`, 82.277 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
+| `src/` | o **site** | 30 páginas `.astro`, 5 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
+| `tools/` | o **arnês** | 1029 scripts em `tools/eval/`, 91 em `tools/` | node puro: sobe o jogo real sem browser |
 
 **Não existe `public/index.html`.** O HTML do jogo é `src/pages/index.astro`, servido na rota `/`. Servir `public/` estaticamente entrega os arnêses visuais, **não o jogo** — é a pegadinha que custa a primeira hora de todo mundo.
 
@@ -115,6 +115,10 @@ onde registrar, em que ordem rodar o quality gate, e como reportar o que **não*
 Ela vale para agente e para gente. Como a `gauntlet-fps`, ela nasceu aqui e vive em
 `.claude/skills/` porque `.agents/skills/` é gitignored (skill de terceiro, fixada por hash).
 
+**PR title and description MUST be written in English.** A regra vale para humanos e bots;
+o workflow `pr-language.yml` executa `scripts/ci/pr_language.py` em abertura, edição e push.
+Detalhes do processo e o template ficam em [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 **Todo commit leva o trailer `Agent:`** (ex.: `Agent: Kimi Code`; humano leva
 `Agent: humano`) — é o que sustenta o "cada commit diz qual" do README. Você não
 digita: o `.githooks/prepare-commit-msg` preenche pela assinatura do ambiente, e
@@ -159,10 +163,10 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 <!-- BEGIN:GERADO:scripts — não edite à mão, rode `npm run docs` -->
 
 ```bash
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:vm-presence eval:tpjumpownership eval:tplocalshot eval:tpbackpedal eval:tphandownership eval:characterkit eval:meshoptvm eval:perfilmobile eval:qamobile eval:toquecontroles eval:tpanim3p eval:emotes eval:emotepartida eval:postura eval:mapasobdemanda eval:glbpeso eval:assetrev eval:roundmunicao eval:cameraoclusao eval:pistolacadencia eval:fragrestock eval:formatomelhorde eval:penetration-geometry eval:bot-shot-direction eval:shared-shot eval:bot-pellets eval:duel-metrics eval:bot-crouch-geometry eval:weapon-profiles eval:weapon-matrix eval:recoil-contract eval:firing-cadence eval:ballistics-falloff eval:ranking-home-status eval:ranking-presentation eval:modgraph eval:convidaamigos eval:placaramigo eval:analytics eval:online eval:release eval:error-console eval:edgecache eval:webgl eval:webglguard eval:maprotate eval:mapasparados eval:shaderlog eval:shaderbudget eval:prune eval:vminspect eval:asset-pago-resil eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:piscina-trim eval:piscina-graffiti-batch eval:ferro-graffiti-quality eval:passosim eval:perfcampo eval:dificuldade eval:qualmapas eval:pickuparma eval:scrollarma eval:parquewheel eval:campo-contract eval:campomorro-molde eval:parquevida eval:parquecanopy eval:penitenciariavida eval:penitenciariafacade eval:penitenciariapickup eval:redesign eval:ui-v3 eval:resultado-arte eval:matchoptions eval:awpscope eval:tracer3p eval:charvoice eval:screenquery eval:lajes-cache docs:check arch:check audio:check eval:grafite-atual:prova eval:grafite-editorial eval:versaoorigem eval:autoReload eval:smoke eval:vm-teto eval:vm-placar eval:audioalcance eval:audioespacial eval:audioenvelope eval:audioproc eval:audiocapacidade eval:audiofablocal eval:audioeventos eval:audioannouncer eval:audiovoicemix eval:audioprivate eval:audioruntimeassets eval:menumusicreview audio:inventario:autoteste audio:shortlist:autoteste feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:switchteam eval:mp-rotulo-lado eval:mp-cor-lado eval:pool-lado eval:troca-personagem eval:launchwatchdog eval:launchrace eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:grafite-support eval:grafite-area-audit eval:upa-mint eval:grafite-art-inventory eval:grafite-mural-alpha eval:decal-ink eval:map-texture-upgrade eval:texture-quality-sampler eval:map-sampler eval:map-surface-upgrade eval:external-surface-binding eval:map-local-floor-finish eval:map-local-fabrication eval:map-surface-allocation eval:green-cover-pattern eval:prop-graffiti-wall eval:corrego-graffiti-mount eval:upa-structure eval:upa-return eval:shot-occlusion eval:shot-map-contract eval:shot-brasilia-quality eval:shot-visible-surface eval:shot-quality-inventory eval:simclock eval:backendhints eval:geoproxy changelog:check eval:velhooeste eval:penitenciaria eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:mutantes-anunciados eval:wfsecret eval:wflocal eval:wftimeout eval:comentario eval:fixture eval:preload eval:docsautoria eval:netcode eval:hurtfx eval:sonda eval:noescolha eval:maqfraca eval:qualadapt eval:netcodecbin eval:movimento eval:botsim-golden eval:replaycam eval:abateshud eval:botfaca eval:escadao-home eval:escadao-spawn-egress eval:escadao-conflict-home eval:escadao-casa-central eval:escadao-casas-conflito eval:escadao-mirante-abrigo eval:escadao-structure eval:escadao-descent eval:escadao-details eval:corrego-contract eval:corrego-water eval:corrego-superficie eval:skylife ops:test eval:privacy ops:selftest eval:lajes-layout eval:lajes-rooftop eval:lajes-visual eval:lajes-ruas eval:lajes-identidade eval:lajes-roof-overlap eval:lajes-nav eval:lajes-ctf-surface eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:lajes-antitrap eval:lajes-vertical eval:lajes-bots eval:lajes-ambiencia eval:lajes-santos eval:lajes-game eval:mappreview eval:lajes-airspace eval:lajes-soundscape eval:lajes-spawn-space eval:sertao eval:sertao-spatial eval:sertao-interiors eval:sertao-wagon eval:sertao-fauna eval:sertao-occlusion eval:calango-quadruped eval:sertao-horizon eval:sertao-distant-birds eval:sertao-integration eval:sertao-livestock eval:sertao-sky-lifecycle eval:amazonia eval:chao eval:ombro eval:miticos-lobisomem eval:mansao eval:dautelemetria eval:mpRoomOptions eval:fxFlash eval:campinho-integration eval:parque eval:audiofurollback eval:atacadao eval:killstreak eval:mp-paridade eval:obras eval:vm-launch eval:chat eval:ui-chat eval:pos-cena eval:capturecodex eval:legal eval:brasao-versao eval:tprajada eval:mprecuo eval:check-sem-escrita eval:modoarmamp eval:trocaarmamp eval:pos-alvo eval:ibl-vm eval:botsentidos eval:ociosoteto eval:wfconcurrency eval:mapa-sp-pos-mp eval:personagem-escolhido eval:gauntlet-rodizio eval:telemetria-coorte eval:clans-sessao eval:mp-proximo eval:hub-identity eval:community-inbox eval:login-prompt eval:roster-skins eval:nick eval:nick32-cards eval:portaogatilho eval:mergequeue eval:wfcheckout eval:rotas eval:compartilhar eval:contagens-pr eval:economia eval:economia-jogo eval:headshot-hitbox eval:boca-cano eval:pichacao-parede eval:armadura eval:character-normal-quality eval:grafite-curation eval:map-material-finish eval:ferro-balcao eval:match-pickups eval:net-flash-disable eval:transport-stream eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:tp-identity eval:tp-cosmetic-source eval:tp-drip-source eval:tp-glove-origin eval:death-camera-consistency eval:visual-map-contracts eval:authored-locomotion eval:posto-board-support eval:flashbang mut:flashbang eval:movimento-fluidez eval:ads1p-public eval:preview-grip-phase eval:knife-skin-markings eval:campo-uv eval:sondafilho eval:shot-final-pose eval:javaporcos-client-room eval:grafite eval:grafite:ar eval:audiomarcas eval:arena-mode eval:bootmutantverdict
+npm run check:fast   # node tools/eval/runner.mjs --suite=fast
 ```
 
-`package.json` tem **748 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
+`package.json` tem **805 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 
@@ -173,8 +177,8 @@ npm run check:fast   # node tools/eval/runner.mjs syntax eval:vm-presence eval:t
 > As invariantes de viewmodel **leem** o `tools/eval/vm_mint_audit.json` que o `eval:vm`
 > **escreve**. Rodar as invariantes com esse JSON velho mede o viewmodel de ontem e
 > **inventa vermelha**: com o JSON em `V0=80°` contra o `game.js` em `V0=42°`, a VM5 acusava
-> **26/26 armas fora**; depois de regenerar, **3/26**. A ordem do `npm run check` já está
-> corrigida — o cuidado é para quando você chamar `node tools/eval/invariants.mjs` na mão.
+> **26/26 armas fora**; depois de regenerar, **3/26**. `eval:invariants` não entra em
+> nenhum `check:*`: o cuidado é para quando você chamar `node tools/eval/invariants.mjs` na mão.
 > É o **BUG-02** do `KNOWN-BUGS.md` (em `../progress`).
 
 O `check:fast` usa `tools/eval/runner.mjs`: **todos os passos rodam mesmo quando um deles

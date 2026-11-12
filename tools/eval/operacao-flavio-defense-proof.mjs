@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const script = fileURLToPath(new URL('./operacao-flavio-defense-check.mjs', import.meta.url));
+const run = (args, legacy = false) => spawnSync(process.execPath, [script, ...args], {
+  encoding: 'utf8', timeout: 60000, maxBuffer: 2000000,
+  env: { ...process.env, SIM_QS: legacy ? '?botmove=0' : '' },
+});
+const proof = (result, name, clauses) => {
+  const output = `${result.stdout}${result.stderr}`;
+  return result.status === 1 && !result.signal && !result.error
+    && output.includes(`Mutação aplicada: ${name}`)
+    && clauses.some((clause) => output.includes(`✗ ${clause}`))
+    && !/TypeError:|ReferenceError:|SyntaxError:/.test(output);
+};
+if (process.argv.includes('--autoteste')) {
+  const name = 'controle', clause = 'falha semântica esperada';
+  const good = { status: 1, stdout: `Mutação aplicada: ${name}\n✗ ${clause}`, stderr: '' };
+  assert(proof(good, name, [clause]));
+  for (const bad of [{ ...good, status: 0 }, { ...good, status: 2 }, { ...good, signal: 'SIGTERM' },
+    { ...good, error: new Error('setup') }, { ...good, stdout: `✗ ${clause}` },
+    { ...good, stderr: 'TypeError: setup' }, { ...good, stdout: `Mutação aplicada: ${name}\n✗ outra falha` }]) {
+    assert(!proof(bad, name, [clause]));
+  }
+  console.log('defense-proof: sete falsos positivos rejeitados');
+  process.exit(0);
+}
+for (const legacy of [false, true]) {
+  const result = run([], legacy);
+  assert(result.status === 0 && !result.error && !result.signal, `baseline inválido, legado=${legacy} ` + JSON.stringify({
+    status: result.status, signal: result.signal, error: result.error && result.error.message,
+    stdoutTail: `${result.stdout}`.slice(-4096), stderrTail: `${result.stderr}`.slice(-2048) }));
+  console.log(`defense-proof: frente/lateral/retaguarda e controles normais, legado=${legacy}`);
+}
+const fire = 'frente: guarda no slot adquire e dispara contra ameaça visível distante';
+const formation = (name) => `${name}: disparar não persegue alvo nem abandona formação`;
+for (const [name, legacy, clauses] of [
+  ['retencao', false, ['frente: reagrupar sob ameaça imediata mantém o alvo engajado']],
+  ['hold', false, [fire, formation('frente')]],
+  ['giro', false, [formation('lateral'), formation('retaguarda')]],
+  ['legado', true, [fire, formation('frente')]],
+  ['reagrupar', false, ['frente: reagrupamento se aproxima pelo caminho físico']],
+  ['los', false, ['frente: perder LOS bloqueia novos tiros']],
+]) {
+  // Diagnóstico limitado só na falha do child; nenhuma retentativa.
+  const mutant = run([`--mutante=${name}`], legacy);
+  assert(proof(mutant, name, clauses), `mutante sem prova semântica: ${name} ` + JSON.stringify({
+    status: mutant.status, signal: mutant.signal, error: mutant.error && mutant.error.message,
+    stdoutTail: `${mutant.stdout}`.slice(-4096), stderrTail: `${mutant.stderr}`.slice(-2048) }));
+  console.log(`defense-proof: aplicado e detectado ${name}`);
+}

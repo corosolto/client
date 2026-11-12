@@ -3,13 +3,12 @@
    ----------------------------------------------------------------------------
    POR QUE EXISTE
 
-   Quem clona hoje pega o jogo **sem som e sem grafite**, e não por bug: três
+   Quem clona hoje pega o jogo **sem som e sem grafite**, e não por bug: dois
    diretórios ficam fora do git por decisão de procedência —
 
      public/audio/        pacote de áudio, licenciamento incerto
      public/img/decals/   acervo de decalques, curadoria (só os `or-*` são obra
                           própria e vêm no clone)
-     references/          material de referência
 
    Está documentado no README. Mas o especialista que a gente quer atrair **não
    debuga setup**: ele abre o jogo, vê parede pelada e silêncio, e fecha a aba.

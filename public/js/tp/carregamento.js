@@ -4,6 +4,7 @@ import { wallpaperJavaporcos, nomeTimeJavaporcos, JAVAPORCO_RETRATO } from '../j
 import { tr, frase, LANG } from '../i18n.js';
 import { urlDoBrasao } from '../brasoes_versao.js';
 import { VERSION } from '../version.js';
+import { heroUrl, recorteUrl, bustoUrl } from '../data/retratos.js';
 
 const ATE_BANNER = 5;
 const PASSO_MS = { banners: 60, grade: 30 };
@@ -19,8 +20,8 @@ const el = (tag, cls, txt) => {
 function retrato(id) {
   const img = el('img');
   img.alt = ''; img.decoding = 'async';
-  /* nem todo personagem tem retrato hero: cai no busto da arte aprovada, depois no recorte do modelo */
-  const fontes = ['chars-hero', 'chars/avatars', 'chars'].map((d) => `/img/${d}/${id}.webp?v=${VERSION}`);
+  /* só fontes que existem (data/retratos.js): hero, busto da arte aprovada, recorte do modelo */
+  const fontes = [heroUrl(id), bustoUrl(id), recorteUrl(id)].filter(Boolean).map((u) => `${u}?v=${VERSION}`);
   img.src = fontes.shift();
   img.addEventListener('error', () => { if (fontes.length) img.src = fontes.shift(); });
   return img;

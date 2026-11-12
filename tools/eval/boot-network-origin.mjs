@@ -1,7 +1,7 @@
 import http from 'node:http';
 import https from 'node:https';
 import path from 'node:path';
-import {readFileSync,readdirSync,realpathSync,statSync} from 'node:fs';
+import {existsSync,readFileSync,readdirSync,realpathSync,statSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {gzipSync,gunzipSync,brotliDecompressSync,inflateSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
@@ -41,6 +41,12 @@ export function publicApiOrigin(value) {
  const parsed=new URL(value);
  if(!['http:','https:'].includes(parsed.protocol)||parsed.username||parsed.password||parsed.search||parsed.hash||parsed.pathname!=='/')throw Error('API_BASE exige origem HTTP(S) sem credenciais, query ou caminho');
  return parsed.origin;
+}
+const THIRD_PARTY_BOOT_NOISE=/<script\b[^>]*>(?:[\s\S]*?(?:static\.ads-twitter\.com\/uwt\.js|X_PIXEL_ID)[\s\S]*?)<\/script>\s*/gi;
+export function stripThirdPartyBootNoise(body) {
+ let stripped=0;
+ const output=String(body).replace(THIRD_PARTY_BOOT_NOISE,()=>{stripped++;return '';});
+ return Object.freeze({body:output,stripped});
 }
 export async function startBootOrigin({BASE,API_BASE,publicRoot,snapshot=snapshotPublicJs(publicRoot),transformJs=(rel,body)=>body,onError=()=>{},authorizeProfile=null,profileAuthorizationTimeoutMs=5000}) {
  if(!Number.isFinite(profileAuthorizationTimeoutMs)||profileAuthorizationTimeoutMs<=0||profileAuthorizationTimeoutMs>5000)throw Error('timeout de autorização inválido');
@@ -120,13 +126,25 @@ export async function startBootOrigin({BASE,API_BASE,publicRoot,snapshot=snapsho
    const destinationOrigin=pathname.startsWith('/api/')?apiOrigin:upstream.origin;
    const dest=new URL(req.url,destinationOrigin);if(dest.origin!==destinationOrigin)throw Error('origin escapou');
    const upstreamResponse=await getWire(dest,{method:req.method,body:requestBody}),{status,body:wire}=upstreamResponse,headers=upstreamResponse.headers;
+   // Mídia nova do candidato (ex.: arte do card) ainda não publicada: o 404 de produção não é
+   // o boot medido; serve o arquivo de public/ e registra a origem como candidato local.
+   const candidato=status===404&&req.method==='GET'&&/^\/img\/[\w./-]+\.(?:webp|png|jpe?g|svg)$/i.test(pathname)?path.join(snapshot.root,rel):null;
+   if(candidato&&candidato.startsWith(snapshot.root+path.sep)&&existsSync(candidato)&&statSync(candidato).isFile()) {
+    const body=readFileSync(candidato),ext=path.extname(candidato).slice(1).toLowerCase(),type=ext==='svg'?'image/svg+xml':ext==='jpg'?'image/jpeg':'image/'+ext;
+    record(res,{path:req.url,method:req.method,kind:'local-candidate-asset',rel,status:200,payloadBytes:body.length,decodedBytes:body.length,sha256:sha(body),encoding:''});
+    res.writeHead(200,{'content-type':type,'cache-control':'no-store','content-length':String(body.length),'x-boot-origin':'local-candidate-asset'});res.end(body);return;
+   }
    if(status>=300&&status<400)throw Error('redirect upstream não aceito: '+status+' '+dest.pathname);
-   const originalEncoding=String(headers['content-encoding']||''),decoded=decodeWire(wire,originalEncoding),type=String(headers['content-type']||'application/octet-stream');
+   const originalEncoding=String(headers['content-encoding']||'');let decoded=decodeWire(wire,originalEncoding);const type=String(headers['content-type']||'application/octet-stream');
+   let thirdPartyScriptsStripped=0;
+   if(pathname==='/'&&isText(type)) {
+    const stripped=stripThirdPartyBootNoise(decoded);decoded=Buffer.from(stripped.body,'utf8');thirdPartyScriptsStripped=stripped.stripped;
+   }
    let payload=wire,encoding=originalEncoding;
    if(isText(type)&&decoded.length){payload=gzipSync(decoded,{level:9});encoding='gzip';}
    const outputHeaders={'content-type':type,'cache-control':'no-store','content-length':String(payload.length),'x-boot-origin':'upstream-public'};
    if(encoding)outputHeaders['content-encoding']=encoding;
-   record(res,{path:req.url,method:req.method,requestBodyBytes:requestBody?.length||0,requestBodySha256:requestBody?sha(requestBody):null,kind:'upstream-public',upstreamOrigin:destinationOrigin,status,payloadBytes:payload.length,decodedBytes:decoded.length,sha256:sha(decoded),encoding,upstreamEncoding:originalEncoding,upstreamWireBytes:wire.length});
+   record(res,{path:req.url,method:req.method,requestBodyBytes:requestBody?.length||0,requestBodySha256:requestBody?sha(requestBody):null,kind:'upstream-public',upstreamOrigin:destinationOrigin,status,payloadBytes:payload.length,decodedBytes:decoded.length,sha256:sha(decoded),encoding,upstreamEncoding:originalEncoding,upstreamWireBytes:wire.length,thirdPartyScriptsStripped});
    res.writeHead(status,outputHeaders);res.end(payload);
   }catch(e){if(!closing)onError(e);if(!res.headersSent)res.writeHead(502,{'cache-control':'no-store'});res.end('boot proxy failed');}
  });

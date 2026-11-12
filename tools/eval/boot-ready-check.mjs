@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const mutations = {
   'causa-sobrescrita': ['window.__csSplashCause ||=', 'window.__csSplashCause =', 'primeira liberação por assets permanece assets'],
-  'ready-sempre': ["READY:cand.causa==='assets',", 'READY:true,', 'READY recusa failsafe'],
+  'ready-sempre': ["READY:cand.causa==='assets'&&ref.causa==='assets',", 'READY:true,', 'READY recusa failsafe'],
 };
 if (process.argv.includes('--mutantes')) {
   const run = args => spawnSync(process.execPath, [fileURLToPath(import.meta.url), ...args], {
@@ -61,7 +61,7 @@ for (const [label, task] of [
   ]),
   ...[['assets', true], ['failsafe', false], [null, false]].map(([cause, expected]) => [
     'READY ' + (expected ? 'aceita ' : 'recusa ') + cause,
-    () => assert.equal(ready.runInNewContext({ cand: { causa: cause } }), expected),
+    () => assert.equal(ready.runInNewContext({ cand: { causa: cause }, ref: { causa: 'assets' } }), expected),
   ]),
   ['instrumentação recusa âncora ausente', () => assert.throws(() => helper.instrumentaCausaSplash(''))],
 ]) {

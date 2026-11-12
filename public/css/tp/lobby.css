@@ -240,6 +240,24 @@
 :root[data-ui="v3"] #hub-footer-social .mf-social a:hover,:root[data-ui="v3"] #hub-footer-social .mf-social a:focus-visible{border-color:rgba(255,255,255,.28);color:var(--tp-tinta-1)}
 :root[data-ui="v3"] #hub-footer-social .mf-social svg{display:block;width:15px;height:15px}
 
+/* Painel da Operação Flávio: mesmo desenho da invasão (tp-lobby-invasao), primeiro da esquerda. */
+.tp-lobby-flavio>img{object-position:center 45%}
+/* Coluna da direita: o painel que não cabe acima da partida sai (encaixarDireita em tp/lobby.js). */
+.tp-lobby-dir>[data-sem-espaco]{display:none}
+/* A coluna da esquerda para antes do rodapé: a capa das novidades encolhe e, sem altura, o painel sai. */
+@media (min-width:1440px) and (min-height:800px){
+  .tp-lobby-esq{max-height:calc(100dvh - var(--tp-lobby-topo) - 100px)}
+  .tp-lobby-novidades{min-height:0}
+  .tp-lobby-novidades__capa{flex:1 1 150px;height:auto;max-height:150px;min-height:0;container-type:size}
+}
+/* capa baixa não comporta chip e título juntos: fica o título */
+@container (max-height:89px){
+  .tp-lobby-novidades__capa>.tp-chip{display:none}
+  .tp-lobby-novidades__titulo{bottom:8px}
+  .tp-lobby-novidades__capa>img{object-position:70% 62%}
+}
+@media (min-width:1440px) and (min-height:800px) and (max-height:929px){.tp-lobby-novidades{display:none}}
+
 /* Abaixo de 1440 px o cabeçalho não cabe inteiro: o nome do perfil sai, o botão de entrar fica */
 @media (max-width:1439px){
   .tp-lobby-abas{gap:20px}
@@ -268,10 +286,16 @@
   .tp-lobby-mais__item.tp-lobby-so-compacto{display:flex}
   .tp-lobby-mais__menu{max-height:calc(100dvh - 64px);overflow-y:auto}
   .tp-lobby-mais__item,.tp-lobby-mais__item--fino{min-height:var(--tp-lobby-toque)}
-  .tp-lobby-esq{width:230px;max-height:calc(100dvh - var(--tp-lobby-topo) - 172px);overflow:hidden}
+  .tp-lobby-esq{width:300px;max-height:calc(100dvh - var(--tp-lobby-topo) - 172px);overflow:hidden;gap:8px}
   .tp-lobby-dir{display:none}
-  .tp-lobby-esq{display:none}
+  /* celular deitado: a esquerda fica só com Flávio e invasão compactos (tp/lobby.js adaptarInvasao) */
+  .tp-lobby-esq>:not(.tp-lobby-invasao){display:none}
   .tp-lobby-painel{gap:8px;padding:10px;border-radius:10px}
+  /* depois do .tp-lobby-painel acima: sem isto o flex do painel ganha do grid compacto e cada promo
+     ocupa 124 px, cortando a invasão na base da coluna. O painel inteiro é o botão: no celular a linha
+     do link sai e os dois promos cabem acima das opções da partida até 390 px de altura. */
+  .tp-lobby-invasao--compacto{display:grid;min-height:0}
+  .tp-lobby-esq>.tp-lobby-invasao--compacto>.tp-lobby-link{display:none}
   .tp-lobby-painel__titulo{font-size:15px}
   .tp-lobby-quests__lista{gap:8px}
   .tp-lobby-quest:nth-child(n+3),.tp-lobby-quest__progresso,.tp-lobby-quests__todas{display:none}

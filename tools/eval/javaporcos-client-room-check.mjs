@@ -43,7 +43,7 @@ function mutate(source,kind,parse){
   const before=out.main;out.main=replaceNodes(m,objects,n=>'{'+n.properties.filter(p=>p.key?.name!=='mode').map(p=>cut(m,p)).join(',')+'}');
   return {source:out,application:{kind,file:FILES.main,count:4,before:sha(before),after:sha(out.main)}};
  }else if(kind==='stale-selection'){
-  nodes=matches(form,n=>n.type==='IfStatement'&&/escolhidos/.test(cut(m,n.test))&&/some|every|MAPS|mpMapasDoNo/.test(cut(m,n.test)));replace=n=>'if(aDedo&&!escolhidos.length)'+cut(m,n.consequent);
+  nodes=matches(form,n=>n.type==='IfStatement'&&/escolhidos/.test(cut(m,n.test))&&cut(m,n.test).includes('mpMapasDoNo')&&/some|every|MAPS/.test(cut(m,n.test)));replace=n=>'if(aDedo&&!escolhidos.length)'+cut(m,n.consequent);
  }else if(kind==='node-guard'||kind==='mixed-overfilter'){
   nodes=matches(a,n=>n.type==='BinaryExpression'&&/^(===|!==|==|!=)$/.test(n.operator)&&((n.left.type==='MemberExpression'&&['nodeMode','roomCreation'].includes(n.left.property?.name))||(n.right.type==='MemberExpression'&&['nodeMode','roomCreation'].includes(n.right.property?.name))));
   if(kind==='mixed-overfilter')nodes=nodes.filter(n=>cut(m,n).includes('nodeMode'));
@@ -64,7 +64,7 @@ function mutate(source,kind,parse){
 const element=()=>({dataset:{},value:'',checked:false,disabled:false,children:[],innerHTML:'',textContent:'',appendChild(x){this.children.push(x);},append(...x){this.children.push(...x);},querySelectorAll:()=>[],querySelector(){return this.actions??=element();}});
 async function evaluate(source,parse){
  const ast=Object.fromEntries(Object.entries(source).map(([k,s])=>[k,tree(s,parse)])),ex=(k,n)=>cut(source[k],variable(ast[k],n).init),fn=(k,n)=>cut(source[k],functionNode(ast[k],n));
- const metadata=vm.runInNewContext('const JAVAPORCOS_META='+ex('maps','JAVAPORCOS_META')+';const MAPS='+ex('maps','MAPS')+';const MAP_IDS=Object.keys(MAPS);const MAPAS_PARADOS='+ex('maps','MAPAS_PARADOS')+';const MAP_IDS_JOGAVEIS=MAP_IDS.filter(id=>!MAPAS_PARADOS.has(id));({MAPS,MAP_IDS,MAPAS_PARADOS,MAP_IDS_JOGAVEIS});');
+ const metadata=vm.runInNewContext('const JAVAPORCOS_LOADING_WALL="/fixture/java-wall.jpg";const JAVAPORCOS_META='+ex('maps','JAVAPORCOS_META')+';const MAPS='+ex('maps','MAPS')+';const MAP_IDS=Object.keys(MAPS);const MAPAS_PARADOS='+ex('maps','MAPAS_PARADOS')+';const MAP_IDS_JOGAVEIS=MAP_IDS.filter(id=>!MAPAS_PARADOS.has(id));({MAPS,MAP_IDS,MAPAS_PARADOS,MAP_IDS_JOGAVEIS});');
  const units={solo:cut(source.main,soloNode(ast.main)),form:cut(source.main,callback(ast.main,'criar')),friends:cut(source.main,callback(ast.main,'amigos')),quick:cut(source.main,callback(ast.main,'quick'))};
  const java={id:'javaporcos',codigo:'JAVA',name:'JAVA',mode:'horde',cooperative:true,map:'invasao_javaporcos',oficial:true,players:4,max:8,livre:{E:4,B:0}},pvp={id:'pvp',mode:'rounds',cooperative:false,map:'praca_poderes',oficial:true,players:1,max:10,livre:{E:4,B:5}};
  const normal={id:'normal',ping:20,health:{salaConvite:true,soloVerified:true}},mixed={id:'mixed',ping:20,health:{nodeMode:'mixed',roomCreation:true,horde:{protocol:8},salaConvite:true,soloVerified:true}};

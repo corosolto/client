@@ -4,7 +4,7 @@ import vm from 'node:vm';
 
 const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');
 const mutant=process.argv.find(s=>s.startsWith('--mutant='))?.slice(9);
-assert(!mutant || ['ops-default-allow','ops-continue-after-withdraw','perf-continue-after-withdraw'].includes(mutant),'Unknown mutation');
+assert(!mutant || ['ops-ignore-refusal','ops-continue-after-withdraw','perf-continue-after-withdraw'].includes(mutant),'Unknown mutation');
 const store=new Map(),winEvents=new Map(),docEvents=new Map();
 const intervals=[],timers=[],rafs=[],observers=[];
 let now=0;
@@ -27,11 +27,13 @@ const context={
 };
 context.analyticsAllowed=()=>context.window.__csPrivacy.allowed();
 vm.createContext(context);
+// Medição é ligada por padrão: só a recusa gravada antes do boot segura o ops.js.
+store.set('cs_privacy',JSON.stringify({version:'corosolto-analytics-v1',analytics:false}));
 vm.runInContext(read('public/js/privacy-runtime.js'),context,{timeout:1000});
 let ops=read('public/js/ops.js').replace(/^import .*;$/gm,'').replace(/^export .*;$/gm,'');
-if(mutant==='ops-default-allow'){
+if(mutant==='ops-ignore-refusal'){
   const changed=ops.replace('if(!analyticsAllowed())return;','');
-  assert.notEqual(changed,ops,'ops-default-allow mutation did not apply');ops=changed;
+  assert.notEqual(changed,ops,'ops-ignore-refusal mutation did not apply');ops=changed;
 }
 if(mutant==='ops-continue-after-withdraw'){
   const changed=ops.replaceAll('if (!analyticsAllowed()) return;','').replace('if (!analyticsAllowed() || !rafAtivo) return;','if (!rafAtivo) return;');
@@ -40,11 +42,22 @@ if(mutant==='ops-continue-after-withdraw'){
 vm.runInContext(ops,context,{timeout:1000});
 const privacy=context.window.__csPrivacy;
 const state=context.window.__csbOps._estado;
-assert.equal(intervals.length,0,'Default deny must not install game collection');
-assert.equal(observers.length,0,'Default deny must not observe resources');
-assert.equal(context.window.__csbOps.resumoBeacon(),null,'Default deny must not expose a beacon');
-assert(!store.has('cs_ops_last'),'Default deny must not persist diagnostics');
-console.log('PASS initial deny starts no collection or persistence');
+assert.equal(intervals.length,0,'Stored refusal must not install game collection');
+assert.equal(observers.length,0,'Stored refusal must not observe resources');
+assert.equal(context.window.__csbOps.resumoBeacon(),null,'Stored refusal must not expose a beacon');
+assert(!store.has('cs_ops_last'),'Stored refusal must not persist diagnostics');
+console.log('PASS stored refusal starts no collection or persistence');
+
+{ // Navegador sem escolha: o mesmo ops.js começa a medir no boot.
+  const fresh=[];
+  const ctx={...context,setInterval:fn=>fresh.push(fn),setTimeout(){},requestAnimationFrame(){},PerformanceObserver:class{constructor(fn){this.fn=fn;}observe(){}},localStorage:{getItem:()=>null,setItem(){},removeItem(){}},window:{dispatchEvent(){},addEventListener(){}},document:{...context.document,addEventListener(){}}};
+  ctx.analyticsAllowed=()=>ctx.window.__csPrivacy.allowed();
+  vm.createContext(ctx);
+  vm.runInContext(read('public/js/privacy-runtime.js'),ctx,{timeout:1000});
+  vm.runInContext(ops,ctx,{timeout:1000});
+  assert.equal(fresh.length,1,'No stored choice must start game collection by default');
+  console.log('PASS default allow starts collection without a stored choice');
+}
 
 privacy.set(true);
 assert.equal(intervals.length,1,'Explicit opt-in must start monitoring');

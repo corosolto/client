@@ -82,7 +82,7 @@ const tests=[
     assert.doesNotMatch(index,/COMPLETE SEU PERFIL|id="account-completion"/,'lembrete COMPLETE SEU PERFIL voltou');
     assert.doesNotMatch(header,/EDITAR ▸/,'chip EDITAR voltou');
     assert.equal((header.match(/id="hub-account-login"/g)||[]).length,1);
-    const visible=[...header.matchAll(/<button\b([^>]*)>/g)].map(m=>m[1]).filter(a=>!/\shidden(\s|$)/.test(a)&&!/hub-music|hub-settings|hub-social-resume|hub-treta-wallet|role="tab"/.test(a));
+    const visible=[...header.matchAll(/<button\b([^>]*)>/g)].map(m=>m[1]).filter(a=>!/\shidden(\s|$)/.test(a)&&!/hub-music|hub-settings|hub-social-resume|hub-treta-wallet|hub-record|role="tab"/.test(a));
     assert.equal(visible.length,1,'mais de um botão de conta visível no topo: '+visible.join(' | '));
   }],
   ['a 390 px o chip cabe o @handle e o convite (cascata social.css + treta.css)',()=>{

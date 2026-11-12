@@ -6,6 +6,7 @@ import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Script as VMScript, createContext } from 'node:vm';
 import sharp from 'sharp';
+import { langFromCountry } from '../../src/lib/geo.ts';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const cli = process.argv.slice(2);
@@ -162,8 +163,6 @@ let staticAudit = existsSync(join(ROOT, 'tools/eval/redesign-static-audit.json')
   ? readFileSync(join(ROOT, 'tools/eval/redesign-static-audit.json'), 'utf8') : '';
 let loading3d = existsSync(join(ROOT, 'public/js/loading3d.js'))
   ? readFileSync(join(ROOT, 'public/js/loading3d.js'), 'utf8') : '';
-const geoLib = existsSync(join(ROOT, 'src/lib/geo.ts'))
-  ? readFileSync(join(ROOT, 'src/lib/geo.ts'), 'utf8') : '';
 const apiGeoLang = existsSync(join(ROOT, 'src/pages/api/geo-lang.ts'))
   ? readFileSync(join(ROOT, 'src/pages/api/geo-lang.ts'), 'utf8') : '';
 let mutacaoAplicou = !MUTANTE;
@@ -555,8 +554,10 @@ if (MUTANTE === 'asset-ausente' && avatares.length) { avatares = avatares.slice(
 const selecao = nomes('public/video/chars', (f) => f.endsWith('.webm'));
 const resultadoImg = nomes('public/img/resultado', (f) => /-(?:derrota|vitoria)\.webp$/.test(f));
 const resultadoVideo = nomes('public/video/resultado', (f) => /-(?:derrota|vitoria)\.webm$/.test(f));
-const esperadoAvatar = ids.map((id) => `${id}.webp`);
-const esperadoSelecao = ids.map((id) => `${id}.webm`);
+/* Ordena depois do sufixo, como `nomes()`: 'capitao-caveira.webp' vem antes de 'capitao.webp'
+   ('-' < '.'), embora 'capitao' venha antes de 'capitao-caveira' como id. */
+const esperadoAvatar = ids.map((id) => `${id}.webp`).sort();
+const esperadoSelecao = ids.map((id) => `${id}.webm`).sort();
 const hashResultado = createHash('sha256');
 for (const arquivo of resultadoImg) {
   const rel = `public/img/resultado/${arquivo}`;
@@ -677,7 +678,6 @@ const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main
   && /ms-desc'\)\.textContent = tr\(MAP_DESC\[currentMap\] \|\| ''\)/.test(main)
   && /frase\('escolhaAdversario', tr\(FACTION_NAME\[myFaction\]/.test(main)
   && /continuar\.textContent = frase\('continuarSetup'\)/.test(main)
-  && /const FACTION_NAME = \{ E: 'TIME E', B: 'TIME B'/.test(main)
   && /rEl\.textContent = tr\(RARITIES\[tier\]\[0\]\)/.test(main)
   && /char-spec-name'\)\.textContent = tr\(specName\)/.test(main);
 const previewUso = /if \(pv && pv\.model && previewModelActive\(csOpen,hubPreviewOpen\)\)/.test(funcLoop)
@@ -1088,7 +1088,7 @@ const opcoesPartidaNoMapa = /id="ms-wpn-mode"/.test(astro)
   && /settings\.wpnMode = msWpnMode\.value/.test(main)
   && /settings\.allyBots = Math\.max\(0, Math\.min\(7, msAlly\.value \| 0\)\)/.test(main)
   && /settings\.enemyBots = Math\.max\(1, Math\.min\(8, msEnemy\.value \| 0\)\)/.test(main)
-  && /settings\[matchMode === 'ctf' \? 'ctfRounds' : 'rounds'\] = sanitizeRounds\(msRounds\.value\)(?: \|\| \(matchMode === 'ctf' \? 3 : 5\))?;/.test(main)
+  && /settings\[modoEfetivoAtual\(\) === 'ctf' \? 'ctfRounds' : 'rounds'\] = sanitizeRounds\(msRounds\.value\) \|\| \(modoEfetivoAtual\(\) === 'ctf' \? 3 : 5\);/.test(main)
   && /function matchRounds\(\)[\s\S]{0,400}settings\.ctfRounds[\s\S]{0,400}settings\.rounds/.test(main)
   && /roundsMax:[^\n]*sanitizeRounds\(sessao\.net\.meta\.roundsMax\)[^\n]*matchRounds\(\)/.test(main)
   && /roundsMax:[^\n]*ehMapaJavaporcos\(currentMap\) \? 1/.test(main)
@@ -1181,9 +1181,11 @@ const versaoMenuNoCanto = /<\/div>\s*<span class="menu-version" id="mf-ver"><\/s
    ANTES do boot (translateDom) e cai no navegador quando a API não existe. */
 const idiomaGeo = !/export const prerender = false/.test(astro)
   && /window\.__GEO_LANG__/.test(astro)
-  && /const EN_GEO_COUNTRIES = new Set\(\[[\s\S]*?'US'[\s\S]*?'GB'/.test(geoLib)
-  && !/EN_GEO_COUNTRIES[\s\S]{0,400}'PT'|'ES'/.test(geoLib)
-  && /export function langFromCountry/.test(geoLib)
+  && langFromCountry('US') === 'en'
+  && langFromCountry('GB') === 'en'
+  && langFromCountry('PT') === 'pt'
+  && langFromCountry('BR') === 'pt'
+  && langFromCountry(null) === 'pt'
   && /export const prerender = false/.test(apiGeoLang)
   && /langFromCountry/.test(apiGeoLang)
   && /export async function resolveGeoLang/.test(i18n)

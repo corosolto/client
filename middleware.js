@@ -1,12 +1,23 @@
 import { ipAddress, next } from '@vercel/functions';
 import { isIP } from 'node:net';
 import { saltoDaCloudflare } from './src/lib/api-proxy.mjs';
-import { trafficEntry, uniqueRegister } from './src/lib/server-traffic.mjs';
+import { desvioParaApp, trafficEntry, uniqueRegister } from './src/lib/server-traffic.mjs';
 
 const BACKEND = process.env.PUBLIC_API_BASE || 'https://csbrasil-backend-hupd3weo5q-rj.a.run.app';
 export const config = { runtime: 'nodejs' };
 
+// Cada linha de log é evento pago na Vercel: falha de ingestão sai UMA vez por instância e causa.
+const avisados = new Set();
+const avisaUmaVez = (causa) => {
+  if (avisados.has(causa)) return;
+  avisados.add(causa);
+  console.error('[server-traffic] ingest', causa);
+};
+
 export default function middleware(request, context) {
+  // WebView de app na home: 302 para /app antes de qualquer byte do jogo; a landing é que conta.
+  const desvio = desvioParaApp(request);
+  if (desvio) return Response.redirect(desvio, 302);
   const entry = trafficEntry(request);
   const secret = process.env.API_PROXY_SECRET;
   if (entry && secret && secret.length >= 32) {
@@ -25,8 +36,8 @@ export default function middleware(request, context) {
       body: JSON.stringify({ ...entry, unique }),
       signal: AbortSignal.timeout(5000),
     }).then((response) => {
-      if (!response.ok) console.error('[server-traffic] ingest status', response.status);
-    }).catch((error) => console.error('[server-traffic] ingest unavailable', error?.name || 'error')));
+      if (!response.ok) avisaUmaVez(`status ${response.status}`);
+    }).catch((error) => avisaUmaVez(`unavailable ${error?.name || 'error'}`)));
   }
   return next();
 }
