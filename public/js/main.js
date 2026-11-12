@@ -1713,20 +1713,18 @@ let heartbeatOff = false;
 /* CONTADOR "N ONLINE" no topo do menu. GET /api/online lê a view online_now
    (heartbeat < 2 min). Fica `hidden` até ter resposta autoritativa e volta a sumir
    em qualquer falha, sem manter número velho. Atualiza a cada 60 s só no menu. */
-// o idioma por país atualiza o menu assim que a consulta iniciada no <head> termina.
-// Sem top-level await: Safari 14 entende módulos, mas rejeitava o arquivo inteiro nessa sintaxe.
-void resolveGeoLang().then(() => {
+// O idioma por país atualiza todo consumidor quando a consulta iniciada no <head> termina.
+// Sem top-level await: Safari 14 entende módulos, mas rejeita essa sintaxe.
+window.__CS_LANG_READY__ = resolveGeoLang().then(() => {
   document.documentElement.lang = LANG === 'en' ? 'en' : 'pt-BR';
   translateDom(document.body);
+  if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) {
+    const GEMEA = { '/personagens': '/characters', '/como-jogar': '/how-to-play', '/armas': '/weapons', '/mapas': '/maps', '/sobre': '/about', '/changelog': '/whats-new', '/docs/': '/docs/en/' };
+    const h = a.getAttribute('href');
+    if (GEMEA[h]) a.setAttribute('href', GEMEA[h]);
+  }
 });
 syncMenuMusicToggle();
-// links do rodapé por idioma: EN vai pras gêmeas que EXISTEM (characters, how-to-play,
-// weapons, maps, about, whats-new, docs/en); /mapa continua só PT (issue #54)
-if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) {
-  const GEMEA = { '/personagens': '/characters', '/como-jogar': '/how-to-play', '/armas': '/weapons', '/mapas': '/maps', '/sobre': '/about', '/changelog': '/whats-new', '/docs/': '/docs/en/' };
-  const h = a.getAttribute('href');
-  if (GEMEA[h]) a.setAttribute('href', GEMEA[h]);
-}
 // seletor de idioma em CONFIGURAÇÕES: grava e recarrega (o dicionário aplica no boot)
 { const sel = document.getElementById('set-lang');
   if (sel) {
