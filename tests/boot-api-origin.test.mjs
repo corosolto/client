@@ -41,6 +41,13 @@ test('boot preserves candidate assets, explicit public API and security boundari
     assert.equal((await response.json()).name, 'candidate');
   }
   assert.equal((await (await fetch(split.url + '/api/online')).json()).name, 'public-api');
+  const passeResponse = await fetch(split.url + '/api/passe');
+  assert.equal(passeResponse.status, 200);
+  const passe = await passeResponse.json();
+  assert.equal(passe.authenticated, false);
+  assert.equal(passe.season, 'sessao-da-treta-s1');
+  assert.equal(split.byId.get(passeResponse.headers.get('x-boot-response-id')).kind, 'local-passe-mock');
+  assert.equal(api.requests.some(request => request.path === '/api/passe'), false);
   const body = '{"action":"invite-health","version":"fixture"}';
   await fetch(plain.url + '/api/treta', { method: 'POST', headers: { 'content-type': 'application/json' }, body });
   assert.equal(candidate.requests.find(r => r.method === 'POST').headers.origin, candidate.url);
