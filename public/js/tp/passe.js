@@ -3,7 +3,7 @@
    pedido que sai daqui é o resgate de um nível. Régua: tools/eval/passe-browser.mjs. */
 import { tr, frase, LANG } from '../i18n.js';
 import { CHARACTERS } from '../characters.js';
-import { TRETA_COIN_ART } from '../treta-catalog.js';
+import { TRETA_COIN_ART, TRETA_PASSE_WEAPON_SKINS } from '../treta-catalog.js';
 import { abrirLoginPrompt } from '../login-prompt.js';
 import { passeEstado, passeFalhou, carregarPasse, resgatarNivel, progressoNivel, registrarEventoPasse, PASSE_EVENTO } from '../passe.js';
 
@@ -45,9 +45,35 @@ function premioPersonagem(r) {
   return item;
 }
 
+/* Skin de arma: o pôster da definição (storePoster, 960×540 com a arma no centro), recortado no
+   cartão pelo passe.css, com o nome da skin. Sem definição, ou se o pôster falhar, volta ao ícone. */
+function premioArma(r) {
+  const skin = TRETA_PASSE_WEAPON_SKINS.find((s) => s.id === r.id);
+  const n = r.id.match(/(\d+)$/)?.[1];
+  const tipo = n ? frase('passeSkinArma', n) : tr('SKIN DE ARMA');
+  const item = no('li', 'tp-passe-premio tp-passe-premio--arma');
+  item.dataset.premio = r.kind; item.dataset.id = r.id;
+  const icone = () => { const i = no('span', 'tp-passe-premio__icone'); i.innerHTML = ICONE_ARMA; return i; };
+  if (!skin?.poster) {
+    item.append(icone(), no('span', 'tp-passe-premio__valor tp-num', tipo));
+    return item;
+  }
+  item.classList.add('tp-passe-premio--poster');
+  const arte = no('span', 'tp-passe-premio__poster');
+  const img = no('img');
+  img.src = skin.poster; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+  img.addEventListener('error', () => { item.classList.remove('tp-passe-premio--poster'); arte.replaceWith(icone()); }, { once: true });
+  arte.appendChild(img);
+  const legenda = no('span', 'tp-passe-premio__legenda');
+  legenda.append(no('span', 'tp-passe-premio__nome', skin.name), no('span', 'tp-passe-premio__tipo', tipo));
+  item.append(arte, legenda);
+  return item;
+}
+
 function premio(r) {
   if (r.kind === 'character') return premioPersonagem(r);
-  const item = no('li', `tp-passe-premio tp-passe-premio--${r.kind === 'weapon_skin' ? 'arma' : r.kind === 'coins' ? 'moeda' : 'boost'}`);
+  if (r.kind === 'weapon_skin') return premioArma(r);
+  const item = no('li', `tp-passe-premio tp-passe-premio--${r.kind === 'coins' ? 'moeda' : 'boost'}`);
   item.dataset.premio = r.kind; item.dataset.id = r.id;
   const icone = no('span', 'tp-passe-premio__icone');
   let valor = '';
@@ -55,10 +81,6 @@ function premio(r) {
     const img = no('img'); img.src = TRETA_COIN_ART.poster; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
     icone.appendChild(img);
     valor = `T$ ${numero(r.amount)}`;
-  } else if (r.kind === 'weapon_skin') {
-    icone.innerHTML = ICONE_ARMA;
-    const n = r.id.match(/(\d+)$/)?.[1];
-    valor = n ? frase('passeSkinArma', n) : tr('SKIN DE ARMA');
   } else {
     icone.innerHTML = ICONE_BOOST;
     valor = frase('passeBoostPremio', r.amount);
