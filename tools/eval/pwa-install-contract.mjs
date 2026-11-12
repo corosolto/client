@@ -28,6 +28,7 @@ function start({
   lang = 'pt-BR',
   offline = false,
   resources = [],
+  hostname = 'jogo.test',
 } = {}) {
   const nodes = new Map(['pwa-install', 'pwa-install-action', 'pwa-install-help'].map((id) => [id, new Element()]));
   const windowListeners = new Map();
@@ -43,7 +44,7 @@ function start({
     },
   } : undefined;
   const window = {
-    location: { origin: 'https://jogo.test' },
+    location: { origin: `https://${hostname}`, hostname },
     performance: { getEntriesByType: () => resources.map((name) => ({ name })) },
     navigator: { userAgent, platform, maxTouchPoints: touch ? 5 : 0, standalone, serviceWorker },
     matchMedia: (query) => ({ matches: query.includes('pointer: coarse') ? touch : standalone }),
@@ -134,5 +135,9 @@ assert.deepEqual([...offline.posted.at(-1).urls], [
   'https://jogo.test/js/main.js?v=release',
   'https://jogo.test/models/characters/test.glb?v=asset',
 ], 'page warms only the visited same-origin game resources');
+
+const local = start({ offline: true, hostname: 'localhost' });
+await Promise.resolve();
+assert.equal(local.registrations.length, 0, 'local eval and dev pages do not retain a service worker');
 
 console.log('PWA install contract: PASS (Android, iPhone, EN, standalone and desktop)');

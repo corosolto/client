@@ -24,6 +24,7 @@ async function guardaRecursosOffline() {
 }
 
 function inicializaOffline() {
+  if (['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)) return;
   const serviceWorker = window.navigator.serviceWorker;
   if (!serviceWorker) return;
   serviceWorker.addEventListener('controllerchange', () => void guardaRecursosOffline());
