@@ -171,7 +171,7 @@ test('AF4 rejects a Python API merge with an f-string endpoint', (t) => {
     workflow.jobs.automerge.steps.push({
       name: 'Unsafe f-string API merge',
       if: "env.pular != '1'",
-      run: "python3 - <<'PY'\nimport subprocess\nendpoint: str = f'repos/{repo}/pulls/{pr}/merge'\nsubprocess.run(['gh', 'api', '--method', 'PUT', endpoint])\nPY",
+      run: "python3 - <<'PY'\nimport subprocess\nendpoint: str = f'repos/{repo}/pulls/{pr}/merge'\npayload = endpoint\nsubprocess.run(['gh', 'api', '--method', 'PUT', payload])\nPY",
     });
   });
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
@@ -195,7 +195,7 @@ test('AF4 rejects a variable-backed GraphQL merge mutation', (t) => {
     workflow.jobs.automerge.steps.push({
       name: 'Unsafe variable GraphQL merge',
       if: "env.pular != '1'",
-      run: "python3 - <<'PY'\nimport subprocess\nquery: str = 'mutation { mergePullRequest(input: {pullRequestId: \"PR_1\"}) { pullRequest { id } } }'\nsubprocess.run(['gh', 'api', 'graphql', '-f', f'query={query}'])\nPY",
+      run: "python3 - <<'PY'\nimport subprocess\nquery: str = 'mutation { mergePullRequest(input: {pullRequestId: \"PR_1\"}) { pullRequest { id } } }'\npayload = query\nsubprocess.run(['gh', 'api', 'graphql', '-f', f'query={payload}'])\nPY",
     });
   });
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
