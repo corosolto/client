@@ -5,10 +5,15 @@ export const STUDIO_SKELETON_COUNTS = new Map(
 );
 export const STUDIO_SKELETON_TOTAL = [...STUDIO_SKELETON_COUNTS.values()].reduce((sum, count) => sum + count, 0);
 
+/* O GLTFLoader torna únicos os nomes de nó repetidos (o 2º Curl_R vira Curl_R_1) e guarda o
+   nome original do glTF em userData.name; a contagem usa esse nome. Sem userData (fixture
+   sintética, nó criado à mão) vale bone.name. */
+const nomeGltf = (bone) => (typeof bone.userData?.name === 'string' ? bone.userData.name : bone.name);
+
 export function studioSkeletonMismatch(bones) {
   const unique = new Set(bones);
   const joints = new Map();
-  for (const bone of unique) joints.set(bone.name, (joints.get(bone.name) || 0) + 1);
+  for (const bone of unique) joints.set(nomeGltf(bone), (joints.get(nomeGltf(bone)) || 0) + 1);
   const missing = [...STUDIO_SKELETON_COUNTS.keys()].filter((name) => !joints.has(name));
   const unexpected = [...joints.keys()].filter((name) => !STUDIO_SKELETON_COUNTS.has(name));
   const wrongCount = [...joints].filter(([name, count]) => STUDIO_SKELETON_COUNTS.get(name) !== count);

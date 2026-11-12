@@ -26,6 +26,8 @@
      R12 cache por URL+SHA: mesma promessa no sucesso; falha sai do cache e a nova tentativa busca de novo
      R13 identidade divergente → studio_identity_mismatch;  R14 orçamento → studio_budget_exceeded antes de baixar
      R15 validador do esqueleto do adaptador rejeita juntas ausentes, extras e multiplicidade errada
+     R15g nomes como o GLTFLoader entrega (2º Curl_R vira Curl_R_1, original em userData.name) são aceitos;
+          Curl_R_1 sem userData (nome de fato no glTF) segue recusado
      S1  /packs/ serve com MIME certo e Cache-Control: no-store (pelo plugin Vite real)
      S4  travessia/forma não canônica → 404;  S5 symlink para fora da raiz → 404
      S6  diretório e extensão de código → 404;  S7 sem STUDIO_PACK_ROOT → 404;  S8 método ≠ GET/HEAD → 405
@@ -70,7 +72,8 @@ const mutacoes = {
   'servidor-segue-symlink': [SRV, 'if (!contained(rootReal, real)) return deny(404);', '', ['S5:']],
   'servidor-serve-codigo': [SRV, "  '.webp': 'image/webp',\n", "  '.webp': 'image/webp',\n  '.js': 'text/javascript',\n", ['S6:']],
   'servidor-sem-raiz': [SRV, 'if (!root) return deny(404);', "if (!root) root = '.';", ['S7:']],
-  'esqueleto-validacao-ignorada': [SKELETON, 'return invalid ? detail : null;', 'return null;', ['R15:']],
+  'esqueleto-validacao-ignorada': [SKELETON, 'return invalid ? detail : null;', 'return null;', ['R15:', 'R15g:']],
+  'esqueleto-nome-do-loader': [SKELETON, "(typeof bone.userData?.name === 'string' ? bone.userData.name : bone.name)", 'bone.name', ['R15g:']],
 };
 if (mutante && !mutacoes[mutante]) throw new Error(`mutante desconhecido: ${mutante}`);
 if (process.argv.includes('--mutantes')) {
@@ -199,6 +202,19 @@ try {
     if (!K.studioSkeletonMismatch(comExtra)?.includes('inesperadas UnexpectedBone')) falha('R15: junta extra aceita');
     const curl = bones.findIndex((bone) => bone.name === 'Curl_L');
     if (!K.studioSkeletonMismatch(bones.slice(0, curl).concat(bones.slice(curl + 1)))?.includes('Curl_L=1')) falha('R15: multiplicidade Curl aceita');
+    /* GLTFLoader (vendor r160, loadNode): node.name = createUniqueName(nodeDef.name) e
+       userData.name = nodeDef.name — o pack real chega com Curl_R e Curl_R_1. */
+    const vistos = new Map();
+    const doLoader = bones.map(({ name }) => {
+      const n = vistos.get(name) || 0;
+      vistos.set(name, n + 1);
+      return { name: n ? `${name}_${n}` : name, userData: { name } };
+    });
+    const r15g = K.studioSkeletonMismatch(doLoader);
+    if (r15g) falha(`R15g: esqueleto com nomes do GLTFLoader rejeitado (${r15g})`);
+    const curlR = bones.findIndex((bone) => bone.name === 'Curl_R');
+    const renomeado = bones.map((bone, i) => (i === curlR ? { name: 'Curl_R_1' } : bone));
+    if (!K.studioSkeletonMismatch(renomeado)?.includes('inesperadas Curl_R_1')) falha('R15g: Curl_R_1 sem userData aceito');
   }
 
   // ── R1 ──────────────────────────────────────────────────────────────────────
