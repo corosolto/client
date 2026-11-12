@@ -24,6 +24,7 @@
      P6  segredo nunca aparece em log nem em erro; credencial faltando nomeia só as chaves
      P7  assinatura SigV4 confere na implementação independente (o R2 de mentira responde 403 se não)
      P8  credenciais do arquivo r2.env quando o ambiente não traz; ambiente tem precedência
+     P9  endpoint travado: todo fetch (S3 e origem pública) tem prazo; a rodada falha em vez de pendurar
 
    Mutantes (cópia mutada em diretório temporário):
      node tools/eval/publish-packs-check.mjs --mutantes */
@@ -53,6 +54,7 @@ const mutacoes = {
   'segredo-no-log': [PUB, 'log(`bucket ${creds.R2_BUCKET}: ', 'log(`bucket ${creds.R2_BUCKET} ${creds.R2_SECRET_ACCESS_KEY}: ', ['P6:']],
   'assinatura-errada': [PUB, "const assinados = nomes.join(';');", "const assinados = nomes.join(',');", ['P1:', 'P2:', 'P3', 'P4:', 'P5:', 'P7:', 'P8:']],
   'env-file-ignorado': [PUB, '[k, env[k] || arquivo[k] || \'\']', "[k, env[k] || '']", ['P8:']],
+  'sem-prazo': [PUB, 'signal: opts.signal ?? AbortSignal.timeout(prazoMs)', 'signal: opts.signal', ['P9:']],
 };
 if (mutante && !mutacoes[mutante]) throw new Error(`mutante desconhecido: ${mutante}`);
 if (process.argv.includes('--mutantes')) {
@@ -313,6 +315,18 @@ try {
     const bucket = r2();
     await P.publicar(opcoes(bucket, { pins: { beta: B.pin }, env: { R2_BUCKET: CREDS.R2_BUCKET }, envFile: arquivo }))
       .catch((e) => falha(`P8: publicação com r2.env falhou: ${e?.code} ${e?.message}`));
+  }
+
+  // ── P9 ── endpoint que nunca responde: o prazo aborta e a rodada falha, sem esperar para sempre.
+  {
+    const travado = (url, opts = {}) => new Promise((_, rej) => {
+      opts.signal?.addEventListener('abort', () => rej(opts.signal.reason ?? new Error('abortado')));
+    });
+    const vigia = new Promise((res) => setTimeout(() => res('pendurado'), 3000));
+    const rodada = P.publicar(opcoes({ fetchImpl: travado }, { pins: { beta: B.pin }, prazoMs: 50 }))
+      .then(() => 'aceita', () => 'erro');
+    const fim = await Promise.race([rodada, vigia]);
+    if (fim !== 'erro') falha(`P9: endpoint travado deixou a rodada ${fim === 'pendurado' ? 'pendurada' : 'aceita'}; todo fetch precisa de prazo`);
   }
 } finally {
   rmSync(temporario, { recursive: true, force: true });

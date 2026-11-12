@@ -124,8 +124,10 @@ jobs:
         if: always()
         run: npm run eval:studiochar
       - name: Publicador R2 dos pacotes do Studio — imutável, MIME, Cache-Control, CORS, SHA (com mutantes)
+        if: always()
         run: npm run eval:packpublish
       - name: Fora do Ar — registro, packs, arte, passe e catálogo (com mutantes)
+        if: always()
         run: npm run eval:fora-do-ar
       - name: Pixel do X insere o script do uwt.js (#1231, com mutante)
         run: npm run eval:xpixel
