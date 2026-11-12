@@ -10191,10 +10191,11 @@ export class Game {
     this._texLocais = null;
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     // Partículas de pouso são donas do material; a textura já pertence a _texLocais.
-    this.puffFx?.points?.material?.dispose();
+    const puffFx = this.puffFx;
+    puffFx?.points?.material?.dispose();
     this.puffFx = null;
     for (const fx of this._landingFxSystems || []) {
-      if (fx === this.puffFx) continue;
+      if (fx === puffFx) continue;
       fx.points?.material?.dispose();
     }
     this._landingFxSystems = [];
