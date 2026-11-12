@@ -47,6 +47,7 @@ test('staging adiciona portalembed, lixo, envruntime, servertraffic, shareorigin
   assert.ok(SUITES.fast.includes('eval:vm-enquadramento-placar'));
   assert.ok(SUITES.fast.includes('eval:pintura-fabrica'));
   assert.ok(SUITES.fast.includes('eval:passe'));
+  assert.ok(SUITES.deploy.includes('eval:dispose'));
 });
 
 test('suites temáticas só reutilizam passos existentes, sem duplicar execução', () => {
@@ -209,7 +210,9 @@ const CASOS = [
   ['public/audio/manifest.json', 'audio', 'audio:check'],
   ['playwright.config.mjs', 'browser', 'eval:vm-troca-sem-legado'],
   ['public/js/transporte.js', 'network', 'eval:netcode'],
-  ['tools/viewmodels/validate_paid_catalog.mjs', 'vm', 'eval:vm-presence'],
+  ['tools/eval/lib/vm-enquadramento.mjs', 'vm', 'eval:vm-enquadramento-placar'],
+  ['tools/fabrica/fabrica-candidates.json', 'vm', 'eval:vm-enquadramento-placar'],
+  ['public/models/viewmodels/coro/p90-hires.glb', 'vm', 'eval:vm-enquadramento-placar'],
 ];
 for (const [arquivo, suite, passo] of CASOS) {
   test(`diff de ${suite} seleciona core + ${suite}`, () => {
