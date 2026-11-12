@@ -3,6 +3,7 @@
  * References use the same trusted source classes as tools/eval/lixo-check.mjs.
  * The checker never deletes an asset; new orphans require explicit review in the manifest. */
 import { createHash } from 'node:crypto';
+import { parse } from 'acorn';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -84,99 +85,130 @@ function dynamicPatterns(corpus) {
   return patterns;
 }
 
-function templateDefinitions(text) {
-  return [...text.matchAll(/\bexport\s+const\s+([A-Za-z_$][\w$]*)\s*=\s*\(([^)]*)\)\s*=>\s*`([^`\r\n]*\$\{[^`\r\n]*)`/g)]
-    .map((match) => ({ name: match[1], params: match[2].split(',').map((value) => value.trim()), template: match[3] }))
-    .filter((definition) => definition.params.every((param) => /^[A-Za-z_$][\w$]*$/.test(param)));
+function identifiers(pattern, found = []) {
+  if (!pattern || typeof pattern !== 'object') return found;
+  if (pattern.type === 'Identifier') { found.push(pattern.name); return found; }
+  for (const value of Object.values(pattern)) {
+    if (Array.isArray(value)) value.forEach((child) => identifiers(child, found));
+    else if (value && typeof value.type === 'string') identifiers(value, found);
+  }
+  return found;
 }
 
-function importedBindings(text) {
-  const bindings = [];
-  for (const match of text.matchAll(/\b(?:import|export)\s*\{([^}]+)\}\s*from\s*['"]([^'"]+)['"]/g)) {
-    for (const item of match[1].split(',')) {
-      const binding = item.trim().match(/^([A-Za-z_$][\w$]*)(?:\s+as\s+([A-Za-z_$][\w$]*))?$/);
-      if (binding) bindings.push({ imported: binding[1], local: binding[2] || binding[1], specifier: match[2] });
+function templateText(node) {
+  if (node?.type !== 'TemplateLiteral') return null;
+  let text = '';
+  for (let index = 0; index < node.quasis.length; index += 1) {
+    text += node.quasis[index].value.raw;
+    const expression = node.expressions[index];
+    if (!expression) continue;
+    if (expression.type !== 'Identifier') return null;
+    text += `\${${expression.name}}`;
+  }
+  return text;
+}
+
+function analyzeModule(text) {
+  let program;
+  try { program = parse(text, { ecmaVersion: 'latest', sourceType: 'module' }); }
+  catch { return null; }
+  const analysis = { imports: [], reexports: [], templates: [], literals: {}, shadowed: new Set(), calls: [] };
+  const readDeclaration = (declaration) => {
+    if (declaration?.type !== 'VariableDeclaration' || declaration.kind !== 'const') return;
+    for (const declarator of declaration.declarations) {
+      if (declarator.id.type !== 'Identifier') continue;
+      if (declarator.init?.type === 'Literal' && typeof declarator.init.value === 'string') {
+        analysis.literals[declarator.id.name] = declarator.init.value;
+      }
+      if (declarator.init?.type !== 'ArrowFunctionExpression' || !declarator.init.params.every((param) => param.type === 'Identifier')) continue;
+      const template = templateText(declarator.init.body);
+      if (template?.includes('${')) analysis.templates.push({ name: declarator.id.name, params: declarator.init.params.map((param) => param.name), template });
+    }
+  };
+  for (const statement of program.body) {
+    if (statement.type === 'ImportDeclaration') {
+      for (const specifier of statement.specifiers) {
+        if (specifier.type === 'ImportSpecifier') analysis.imports.push({ imported: specifier.imported.name, local: specifier.local.name, specifier: statement.source.value });
+      }
+    }
+    if (statement.type === 'VariableDeclaration') readDeclaration(statement);
+    if (statement.type !== 'ExportNamedDeclaration') continue;
+    readDeclaration(statement.declaration);
+    for (const specifier of statement.specifiers || []) {
+      analysis.reexports.push({ local: specifier.local.name, exported: specifier.exported.name, specifier: statement.source?.value || '' });
     }
   }
-  return bindings;
-}
-
-function reexportedBindings(text) {
-  const bindings = [];
-  for (const match of text.matchAll(/\bexport\s*\{([^}]+)\}(?:\s*from\s*['"]([^'"]+)['"])?/g)) {
-    for (const item of match[1].split(',')) {
-      const binding = item.trim().match(/^([A-Za-z_$][\w$]*)(?:\s+as\s+([A-Za-z_$][\w$]*))?$/);
-      if (binding) bindings.push({ local: binding[1], exported: binding[2] || binding[1], specifier: match[2] || '' });
+  const visit = (node, depth) => {
+    if (!node || typeof node.type !== 'string') return;
+    if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(node.type)) {
+      for (const param of node.params) identifiers(param).forEach((name) => analysis.shadowed.add(name));
     }
-  }
-  return bindings;
+    if ((node.type === 'FunctionDeclaration' || node.type === 'ClassDeclaration') && node.id) analysis.shadowed.add(node.id.name);
+    if (node.type === 'VariableDeclaration') {
+      for (const declarator of node.declarations) {
+        if (node.kind !== 'const' || depth > 2) identifiers(declarator.id).forEach((name) => analysis.shadowed.add(name));
+      }
+    }
+    if (node.type === 'CatchClause' && node.param) identifiers(node.param).forEach((name) => analysis.shadowed.add(name));
+    if (node.type === 'AssignmentExpression') identifiers(node.left).forEach((name) => analysis.shadowed.add(name));
+    if (node.type === 'UpdateExpression') identifiers(node.argument).forEach((name) => analysis.shadowed.add(name));
+    if (node.type === 'CallExpression' && node.callee.type === 'Identifier') analysis.calls.push(node);
+    for (const [key, value] of Object.entries(node)) {
+      if (key === 'type') continue;
+      if (Array.isArray(value)) value.forEach((child) => visit(child, depth + 1));
+      else if (value && typeof value.type === 'string') visit(value, depth + 1);
+    }
+  };
+  visit(program, 0);
+  for (const name of analysis.shadowed) delete analysis.literals[name];
+  return analysis;
 }
 
-function literalBindings(text) {
-  const declarations = [...text.matchAll(/\b(const|let|var)\s+(?:[[{]\s*)?([A-Za-z_$][\w$]*)/g)];
-  const counts = declarations.reduce((map, match) => map.set(match[2], (map.get(match[2]) || 0) + 1), new Map());
-  const values = Object.fromEntries([...text.matchAll(/\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*(['"])([^'"\r\n]*)\2/g)]
-    .filter((match) => counts.get(match[1]) === 1)
-    .map((match) => [match[1], match[3]]));
-  for (const name of Object.keys(values)) {
-    const reassigned = new RegExp(`(?:^|[;\\n}])\\s*${name}\\s*(?:=|\\+=|-=|\\*=|\\/=|\\+\\+|--)`, 'm').test(text);
-    const shadowedParameter = new RegExp(`\\bfunction\\s+[A-Za-z_$][\\w$]*\\s*\\([^)]*\\b${name}\\b|\\([^)]*\\b${name}\\b[^)]*\\)\\s*=>|\\b${name}\\s*=>`).test(text);
-    const imported = new RegExp(`\\bimport\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from`).test(text);
-    if (reassigned || shadowedParameter || imported) delete values[name];
-  }
-  return values;
-}
-
-function hasShadowedBinding(text, name) {
-  const declaration = new RegExp(`\\b(?:const|let|var|function|class)\\s+(?:[[{]\\s*)?${name}\\b`).test(text);
-  const parameter = new RegExp(`\\bfunction\\s*(?:[A-Za-z_$][\\w$]*\\s*)?\\([^)]*\\b${name}\\b|\\([^)]*\\b${name}\\b[^)]*\\)\\s*=>|\\b${name}\\s*=>|\\bcatch\\s*\\([^)]*\\b${name}\\b|\\b(?!if\\b|for\\b|while\\b|switch\\b|with\\b|catch\\b|function\\b)[A-Za-z_$][\\w$]*\\s*\\([^)]*\\b${name}\\b[^)]*\\)\\s*\\{`).test(text);
-  return declaration || parameter;
-}
-
-function resolveExportedTemplate(modulePath, exportedName, textByPath, seen) {
+function resolveExportedTemplate(modulePath, exportedName, analyses, seen) {
   const key = `${modulePath}#${exportedName}`;
-  if (seen.has(key) || !textByPath.has(modulePath)) return null;
+  if (seen.has(key)) return null;
   seen.add(key);
-  const definition = templateDefinitions(textByPath.get(modulePath) || '')
-    .find((candidate) => candidate.name === exportedName);
+  const analysis = analyses.get(modulePath);
+  if (!analysis) return null;
+  const definition = analysis.templates.find((candidate) => candidate.name === exportedName);
   if (definition) return { definition, modulePath };
-  const reexport = reexportedBindings(textByPath.get(modulePath) || '')
-    .find((candidate) => candidate.exported === exportedName);
+  const reexport = analysis.reexports.find((candidate) => candidate.exported === exportedName);
   if (!reexport) return null;
   if (reexport.specifier.startsWith('.')) {
-    return resolveExportedTemplate(resolve(dirname(modulePath), reexport.specifier), reexport.local, textByPath, seen);
+    return resolveExportedTemplate(resolve(dirname(modulePath), reexport.specifier), reexport.local, analyses, seen);
   }
-  return resolveTemplateBinding(modulePath, reexport.local, textByPath, seen);
+  return resolveTemplateBinding(modulePath, reexport.local, analyses, seen);
 }
 
-function resolveTemplateBinding(callerPath, localName, textByPath, seen = new Set()) {
-  const callerText = textByPath.get(callerPath) || '';
-  for (const binding of importedBindings(callerText)) {
+function resolveTemplateBinding(callerPath, localName, analyses, seen = new Set()) {
+  const analysis = analyses.get(callerPath);
+  if (!analysis) return null;
+  for (const binding of analysis.imports) {
     if (binding.local !== localName || !binding.specifier.startsWith('.')) continue;
     const modulePath = resolve(dirname(callerPath), binding.specifier);
-    const resolved = resolveExportedTemplate(modulePath, binding.imported, textByPath, seen);
+    const resolved = resolveExportedTemplate(modulePath, binding.imported, analyses, seen);
     if (resolved) return resolved;
   }
   return null;
 }
 
 export function dynamicCallReferences(textByPath) {
+  const analyses = new Map([...textByPath].map(([path, text]) => [path, analyzeModule(text)]));
   const references = new Set();
-  for (const [callerPath, callerText] of textByPath) {
-    const literals = literalBindings(callerText);
-    for (const binding of importedBindings(callerText)) {
-      if (hasShadowedBinding(callerText, binding.local)) continue;
-      const resolved = resolveTemplateBinding(callerPath, binding.local, textByPath);
+  for (const [callerPath, analysis] of analyses) {
+    if (!analysis) continue;
+    for (const binding of analysis.imports) {
+      if (analysis.shadowed.has(binding.local)) continue;
+      const resolved = resolveTemplateBinding(callerPath, binding.local, analyses);
       if (!resolved) continue;
       const { definition, modulePath } = resolved;
-      const constants = literalBindings(textByPath.get(modulePath) || '');
-      const callPattern = new RegExp(`(?<![\\w$.?])${escaped(binding.local)}\\s*\\(([^)]*)\\)(?!\\s*\\{)`, 'g');
-      for (const call of callerText.matchAll(callPattern)) {
-        const args = call[1].split(',').map((value) => value.trim());
-        if (args.length !== definition.params.length) continue;
-        const values = args.map((arg) => {
-          const literal = arg.match(/^(['"])([^'"\r\n]*)\1$/);
-          return literal ? literal[2] : literals[arg];
+      const constants = analyses.get(modulePath)?.literals || {};
+      for (const call of analysis.calls) {
+        if (call.callee.name !== binding.local || call.arguments.length !== definition.params.length) continue;
+        const values = call.arguments.map((argument) => {
+          if (argument.type === 'Literal' && typeof argument.value === 'string') return argument.value;
+          if (argument.type === 'Identifier' && !analysis.shadowed.has(argument.name)) return analysis.literals[argument.name];
+          return undefined;
         });
         if (values.some((value) => typeof value !== 'string')) continue;
         let path = definition.template;
