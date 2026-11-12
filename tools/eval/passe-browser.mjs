@@ -96,7 +96,9 @@ async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mu
   });
   if (mutante) {
     const [, teste, troca] = MUTANTES[mutante];
-    await page.route(teste, async (r) => {
+    /* O predicado recebe a URL completa; comparar o pathname evita depender de o
+       matcher regex casar incidentalmente no origin e deixa a cobertura dos assets explícita. */
+    await page.route((u) => teste.test(u.pathname), async (r) => {
       const res = await r.fetch().catch(() => r.fetch());
       const antes = await res.text(), depois = troca(antes);
       if (depois === antes) throw new Error(`mutante ${mutante} não aplicou em ${r.request().url()}`);
