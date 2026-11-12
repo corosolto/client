@@ -10198,7 +10198,7 @@ export class Game {
        (uTex) nasce via _texLocal e já caiu no laço de _texLocais acima: descartá-la aqui
        de novo dava dispose duplo (eval:landing-impact exige exatamente 1). */
     for (const fx of this._landingFxSystems || []) {
-      if (fx === puffFx) continue;
+      if (fx === this.puffFx) continue;
       fx.points?.material?.dispose();
     }
     this._landingFxSystems = [];
