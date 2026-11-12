@@ -5604,23 +5604,20 @@ function mpSair() {
    do documento (index.astro, dentro do #pause-menu), o TypeError acontece ANTES
    de qualquer tela aparecer — o sintoma seria "o menu não abre", que não parece
    com "alguém renomeou uma classe no pause". */
-function signalBootReady() {
-window.__CS_MAIN_READY__ = true;
-window.__gameLaunch?.ready('boot');
-contagem.evento('game_loaded');
-}
 function finishBoot() {
   const fn = document.querySelector('.footnote');
   if (fn) fn.textContent =
     `v${VERSION} · Sátira política fictícia. Nenhum político real foi consultado (ou poupado).`;
   const sv = document.getElementById('splash-ver'); if (sv) sv.textContent = `v${VERSION}`;
   // Boot no fim do módulo: `restoreHubRoute()` pode abrir o multiplayer, que lê `mpEl`/`mpNos` (#707).
-  show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de toque)
+show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de toque)
   if (HUB_ENABLED) {
     if (!location.pathname.startsWith('/u/')) hubNavigate({ map: currentMap, personagem: currentChar }, true); // /u/<perfil> fica limpo para compartilhar
     restoreHubRoute();
   }
-  signalBootReady();
+window.__CS_MAIN_READY__ = true;
+window.__gameLaunch?.ready('boot');
+contagem.evento('game_loaded');
   // Convite de sala e perfil compartilhado (/u/<perfil>) chegam com destino: nem o convite de conta nem o da loja cobrem esse destino.
   // /u/<perfil> é o hub (SSR); ?perfil= é o link antigo.
   const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location.href)?.perfil);
