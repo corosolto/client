@@ -1880,10 +1880,10 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
 <script is:inline>
   window.__CS_LANG_READY__ = new Promise((resolve) => window.addEventListener('cs-lang-ready', resolve, { once: true }));
 </script>
+<script type="module" src={`/js/pwa-install.js?v=${V}-${JS_REV}`} is:inline></script>
 <script type="module" src={`/js/ops.js?v=${V}-${JS_REV}`} is:inline></script>
 <script type="module" src={`/js/site-links.js?v=${V}-${JS_REV}`} is:inline></script>
 <script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1;window.__CS_BOOT_SRC=this.src"></script>
 <script type="module" src={`/js/gameplay-recorder.js?v=${V}-${JS_REV}`} is:inline></script>
-<script type="module" src={`/js/pwa-install.js?v=${V}-${JS_REV}`} is:inline></script>
 </body>
 </html>
