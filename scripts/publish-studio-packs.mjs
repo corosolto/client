@@ -211,8 +211,11 @@ export async function verificarPublico(pacotes, { publicOrigin, corsOrigin, fetc
 export async function publicar({
   root, pins = CHARACTER_RELEASES, filtros = [], dryRun = false, verifyOnly = false,
   env = process.env, envFile = ENV_FILE_PADRAO, endpoint, publicOrigin = STUDIO_PACK_CDN_ORIGIN,
-  corsOrigin = 'https://www.corosolto.com.br', fetchImpl = globalThis.fetch, log = console.log, concorrencia = 6,
+  corsOrigin = 'https://www.corosolto.com.br', fetchImpl: fetchCru = globalThis.fetch, log = console.log, concorrencia = 6,
+  prazoMs = 120_000,
 } = {}) {
+  // Todo pedido ao R2 e à origem pública tem prazo: endpoint travado vira erro, não espera eterna.
+  const fetchImpl = (url, opts = {}) => fetchCru(url, { ...opts, signal: opts.signal ?? AbortSignal.timeout(prazoMs) });
   const pacotes = await planoLocal(root, selecionarPins(pins, filtros));
   const objetos = pacotes.flatMap((p) => p.objetos);
   const totalBytes = objetos.reduce((s, o) => s + o.bytes, 0);
