@@ -139,6 +139,17 @@ function mutations() {
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
     console.log('AI2f: a bare-arrow parameter cannot self-approve the shadowed module literal.');
 
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\n");
+    put(fixture, 'public/js/consumer.js', "import { clipUrl } from './refs.js';\nexport function load(clipUrl) { return clipUrl('dead', 'idle'); }\n");
+    put(fixture, 'public/models/anims/dead/idle.glb', 'shadowed-callee');
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'shadowed imported callee cannot prove a dynamic reference');
+    assert.match(result.stderr, /orphan-new: models\/anims\/dead\/idle\.glb/);
+    rmSync(join(fixture, 'public/models/anims/dead/idle.glb'));
+    rmSync(join(fixture, 'public/js/consumer.js'));
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    console.log('AI2g: a function parameter cannot masquerade as the imported template.');
+
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
     reviewed.files['models/props/legacy.glb'] = createHash('sha256')

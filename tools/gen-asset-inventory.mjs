@@ -127,6 +127,12 @@ function literalBindings(text) {
   return values;
 }
 
+function hasShadowedBinding(text, name) {
+  const declaration = new RegExp(`\\b(?:const|let|var|function|class)\\s+(?:[[{]\\s*)?${name}\\b`).test(text);
+  const parameter = new RegExp(`\\bfunction\\s+[A-Za-z_$][\\w$]*\\s*\\([^)]*\\b${name}\\b|\\([^)]*\\b${name}\\b[^)]*\\)\\s*=>|\\b${name}\\s*=>|\\bcatch\\s*\\([^)]*\\b${name}\\b`).test(text);
+  return declaration || parameter;
+}
+
 function resolveExportedTemplate(modulePath, exportedName, textByPath, seen) {
   const key = `${modulePath}#${exportedName}`;
   if (seen.has(key) || !textByPath.has(modulePath)) return null;
@@ -159,6 +165,7 @@ export function dynamicCallReferences(textByPath) {
   for (const [callerPath, callerText] of textByPath) {
     const literals = literalBindings(callerText);
     for (const binding of importedBindings(callerText)) {
+      if (hasShadowedBinding(callerText, binding.local)) continue;
       const resolved = resolveTemplateBinding(callerPath, binding.local, textByPath);
       if (!resolved) continue;
       const { definition, modulePath } = resolved;
