@@ -150,7 +150,7 @@ function analyzeModule(text) {
     if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(node.type)) {
       for (const param of node.params) identifiers(param).forEach((name) => analysis.shadowed.add(name));
     }
-    if ((node.type === 'FunctionDeclaration' || node.type === 'ClassDeclaration') && node.id) analysis.shadowed.add(node.id.name);
+    if (['FunctionDeclaration', 'FunctionExpression', 'ClassDeclaration', 'ClassExpression'].includes(node.type) && node.id) analysis.shadowed.add(node.id.name);
     if (node.type === 'VariableDeclaration') {
       for (const declarator of node.declarations) {
         if (node.kind !== 'const' || !topLevelDeclarations.has(node)) identifiers(declarator.id).forEach((name) => analysis.shadowed.add(name));
