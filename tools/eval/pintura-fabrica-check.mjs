@@ -122,13 +122,13 @@ for (const skinId of PISTOLAS) {
   chk('PF2', [r.corpo, r.ferrolho].every((m) => materiais(m).every((x) => x.userData?.weaponSkin === skinId)), `${skinId}: corpo e ferrolho com a pintura`);
   // PF3
   const caixa = new THREE.Box3();
-  let espacos = 0, boca = null, det = 0;
+  let espacos = 0, boca = null, det = Infinity;
   for (const m of [r.corpo, r.ferrolho]) {
     const e = materiais(m)[0].userData?.weaponSkinSpace;
     if (!e) continue;
     espacos += 1;
     const S = new THREE.Matrix4().fromArray(e);
-    det = S.determinant();
+    det = Math.min(det, S.determinant());
     const p = m.geometry.attributes.position;
     for (let i = 0; i < p.count; i++) caixa.expandByPoint(new THREE.Vector3().fromBufferAttribute(p, i).applyMatrix4(S));
     boca ??= new THREE.Vector3(0, 30.607, 3.0813).applyMatrix4(r.arma.matrixWorld).applyMatrix4(S);

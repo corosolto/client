@@ -41,12 +41,22 @@ def decide(payload: dict) -> dict:
         for review in reviews
         if ((review.get("author") or {}).get("login") or "").lower() == "estraga-codigo"
         and ((review.get("commit") or {}).get("oid") or "") == head_oid
+        and (review.get("state") or "").upper() != "DISMISSED"
     ]
     latest_current_review_at = max(current_review_times, default="")
+    dismissed_review_times = [
+        review.get("submittedAt") or ""
+        for review in reviews
+        if ((review.get("author") or {}).get("login") or "").lower() == "estraga-codigo"
+        and ((review.get("commit") or {}).get("oid") or "") == head_oid
+        and (review.get("state") or "").upper() == "DISMISSED"
+    ]
+    latest_dismissed_review_at = max(dismissed_review_times, default="")
+    latest_review_at = max(latest_current_review_at, latest_dismissed_review_at)
     resolved_at = str(payload.get("estragacodigo_resolved_at") or "")
     current_resolution = bool(
-        latest_current_review_at and resolved_at
-        and resolved_at > latest_current_review_at
+        latest_review_at and resolved_at
+        and resolved_at > latest_review_at
     )
     request_review = bool(head_oid) and not reviewer_requested and not reviewed_head and not current_resolution
 
