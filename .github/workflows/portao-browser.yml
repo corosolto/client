@@ -297,7 +297,10 @@ jobs:
         uses: ./.github/actions/setup-browser
 
       - name: Sobe o eval:serve em background
-        run: npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+        run: |
+          test -n "${CHROME_BIN:-}" || { echo '::error::CHROME_BIN ausente depois do setup-browser'; exit 1; }
+          printf 'CHROME_BIN=%s\n' "$CHROME_BIN"
+          npm run eval:serve >/tmp/eval-serve.log 2>&1 &
 
       - name: Espera o servidor responder
         run: |
