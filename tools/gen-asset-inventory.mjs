@@ -87,19 +87,31 @@ function dynamicPatterns(corpus) {
 function importedSources(sourcePath, textByPath, seen = new Set()) {
   if (!sourcePath || seen.has(sourcePath)) return [];
   seen.add(sourcePath);
-  const text = textByPath.get(sourcePath) || '';
-  const sources = [text];
-  for (const match of text.matchAll(/\b(?:import|export)\s+(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]/g)) {
-    const specifier = match[1];
-    if (!specifier.startsWith('.')) continue;
-    const imported = resolve(dirname(sourcePath), specifier);
-    if (!textByPath.has(imported)) continue;
-    sources.push(...importedSources(imported, textByPath, seen));
+  const sources = [textByPath.get(sourcePath) || ''];
+  const importsOf = (path) => [...(textByPath.get(path) || '').matchAll(/\b(?:import|export)\s+(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]/g)]
+    .map((match) => match[1]).filter((specifier) => specifier.startsWith('.'));
+  const visit = (path) => {
+    for (const specifier of importsOf(path)) {
+      const imported = resolve(dirname(path), specifier);
+      if (!textByPath.has(imported) || seen.has(imported)) continue;
+      seen.add(imported);
+      sources.push(textByPath.get(imported) || '');
+      visit(imported);
+    }
+  };
+  visit(sourcePath);
+  for (const [otherPath, otherText] of textByPath) {
+    if (seen.has(otherPath)) continue;
+    for (const specifier of importsOf(otherPath)) {
+      if (resolve(dirname(otherPath), specifier) !== sourcePath) continue;
+      seen.add(otherPath);
+      sources.push(...importedSources(otherPath, textByPath, seen));
+    }
   }
   return sources;
 }
 
-export function isReferenced(path, corpus, publicDir = PUBLIC, sources = [corpus], sourcePaths = []) {
+export function isReferenced(path, corpus, publicDir = PUBLIC, sources = [corpus], sourcePaths = [], linkedSources = null) {
   const qualified = new RegExp(`(?<![\\w./-])\\/?(?:public/)?${escaped(path)}(?![\\w./-])`);
   if (qualified.test(corpus)) return true;
   if (path.startsWith('models/anims/')) {
@@ -115,7 +127,7 @@ export function isReferenced(path, corpus, publicDir = PUBLIC, sources = [corpus
   }
   const textByPath = new Map(sourcePaths.map((sourcePath, index) => [sourcePath, sources[index] || '']));
   for (let index = 0; index < sources.length; index++) {
-    const allowedTexts = sourcePaths.length ? importedSources(sourcePaths[index], textByPath) : [sources[index]];
+    const allowedTexts = linkedSources?.[index] || (sourcePaths.length ? importedSources(sourcePaths[index], textByPath) : [sources[index]]);
     for (const pattern of dynamicPatterns(sources[index])) {
       const match = pattern.exec(path);
       if (match && match.slice(1).every((value) => allowedTexts.some((text) => new RegExp(`['"\`]${escaped(value)}['"\`]`).test(text)))) return true;
@@ -180,11 +192,14 @@ export function measureInventory({ root = ROOT, previous = null } = {}) {
   const sourcePaths = referenceSources(root);
   const sources = sourcePaths.map((path) => readFileSync(path, 'utf8'));
   const corpus = sources.join('\n');
+  const textByPath = new Map(sourcePaths.map((sourcePath, index) => [sourcePath, sources[index] || '']));
+  const linkedSources = sourcePaths.map((sourcePath) => importedSources(sourcePath, textByPath));
+  const referencedRuntime = (path) => isReferenced(path, corpus, publicDir, sources, sourcePaths, linkedSources);
   const literal = literalReferences(sources);
   const disk = diskAssets(publicDir);
   const onDisk = new Set(disk);
   const files = Object.fromEntries(disk.map((path) => [path, sha256(join(publicDir, ...path.split('/')))]));
-  const unreferenced = disk.filter((path) => !isReferenced(path, corpus, publicDir, sources, sourcePaths));
+  const unreferenced = disk.filter((path) => !referencedRuntime(path));
   const next = { schema: 'asset-inventory-v1', roots: [...ROOTS], files, unreferenced };
   const findings = [];
   const add = (code, path) => findings.push({ code, path });
@@ -194,10 +209,10 @@ export function measureInventory({ root = ROOT, previous = null } = {}) {
   }
   if (previous) {
     for (const path of Object.keys(previous.files)) {
-      if (!onDisk.has(path) && isReferenced(path, corpus, publicDir, sources, sourcePaths)) add('referenced-file-lost', path);
+      if (!onDisk.has(path) && referencedRuntime(path)) add('referenced-file-lost', path);
     }
     for (const [path, hash] of Object.entries(files)) {
-      if (!Object.hasOwn(previous.files, path)) add(isReferenced(path, corpus) ? 'inventory-new' : 'orphan-new', path);
+      if (!Object.hasOwn(previous.files, path)) add(referencedRuntime(path) ? 'inventory-new' : 'orphan-new', path);
       else if (previous.files[path] !== hash) add('hash-changed', path);
     }
   }

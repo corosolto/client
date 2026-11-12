@@ -184,4 +184,5 @@ function mutations() {
 
 if (process.argv.includes('--mutations')) process.exit(mutations());
 const result = spawnSync(process.execPath, [GENERATOR, '--check'], { cwd: ROOT, stdio: 'inherit' });
-process.exit(result.status ?? 1);
+const audioResult = spawnSync(process.execPath, [AUDIO_GENERATOR, '--check'], { cwd: ROOT, stdio: 'inherit' });
+process.exit((result.status || audioResult.status) ? 1 : 0);
