@@ -756,6 +756,10 @@ const _rosterPool = (pool, want, quem, fallback, pinned = []) => {
    faz uma sala 5v5 ter DEZ vagas de gente, e não nove com um manequim do lado. */
 /* E e B são LADOS (pool único, `podeNoLado`); outra letra é facção de sala multiplayer antiga. */
 const _doLado = (f) => (c) => (f === 'E' || f === 'B' ? podeNoLado(c, f) : c.team === f);
+/* Personagem do passe (`passe` em characters.js) fica fora do SORTEIO de bot; o pin no seletor
+   só vale destravado pelo servidor (main.js recusa e filtra o travado). Motivo (pack Studio
+   travado, ARM2): docs/faccoes/fora-do-ar.md. */
+const _sorteavel = (c) => !c.passe;
 /* Pin escalado pelo jogador: só vale se pode jogar no lado pedido e não está em uso. */
 const _pinnedDefs = (ids, doLado, usados) => (ids || [])
   .map((id) => CHARACTERS.find((c) => c.id === id))
@@ -766,18 +770,18 @@ export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCha
   const want = typeof teamSize === 'number'
     ? { ally: Math.max(0, teamSize - (dedicado ? 0 : 1)), enemy: teamSize }
     : { ally: Math.max(0, teamSize.allies | 0), enemy: Math.max(0, teamSize.enemies | 0) };
-  const allies = CHARACTERS.filter(_doLado(playerFaction));
+  const allies = CHARACTERS.filter((c) => _doLado(playerFaction)(c) && _sorteavel(c));
   const others = allies.filter(c => c.id !== playerCharId);
   const pinAlly = _pinnedDefs(pinned && pinned.ally, _doLado(playerFaction), new Set([playerCharId]));
   const allyDefs = _rosterPool(others.length ? others : allies,
-    want.ally, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId), pinAlly);
+    want.ally, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId && _sorteavel(c)), pinAlly);
   const usados = new Set([playerCharId, ...allyDefs.map(d => d.id)]);
-  const enemies = CHARACTERS.filter(_doLado(enemyFaction));
+  const enemies = CHARACTERS.filter((c) => _doLado(enemyFaction)(c) && _sorteavel(c));
   const pinEnemy = _pinnedDefs(pinned && pinned.enemy, _doLado(enemyFaction), usados);
   const enemiesLivres = enemies.filter(c => !usados.has(c.id));
   return {
     allyDefs,
-    enemyDefs: _rosterPool(enemiesLivres.length >= want.enemy ? enemiesLivres : enemies, want.enemy, `inimigos (${enemyFaction})`, CHARACTERS, pinEnemy),
+    enemyDefs: _rosterPool(enemiesLivres.length >= want.enemy ? enemiesLivres : enemies, want.enemy, `inimigos (${enemyFaction})`, CHARACTERS.filter(_sorteavel), pinEnemy),
   };
 }
 
@@ -812,6 +816,10 @@ export class Game {
   constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerKnifeSkinId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, arena = false, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null, economia = false }) {
     this._ctfOpt = ctf;
     this._arenaOpt = arena;
+    /* Texturas criadas POR ESTA PARTIDA (sangue, fumaça, bandeira, zona, decalques).
+       Registradas aqui para o dispose devolver a VRAM no remount; o bundle compartilhado
+       (initTextures) e as estáticas dos módulos de mapa NÃO entram — o próximo Game usa. */
+    this._texLocais = new Set();
     this._armaN = 0;
     this._matchWeapons = matchWeapons;
     this.renderer = renderer;
@@ -1265,7 +1273,7 @@ export class Game {
         x.beginPath(); x.moveTo(32 + Math.cos(a) * 10, 32 + Math.sin(a) * 10);
         x.lineTo(32 + Math.cos(a) * (20 + Math.random() * 9), 32 + Math.sin(a) * (20 + Math.random() * 9)); x.stroke();
       }
-      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+      const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
       this._holeGeo = new THREE.PlaneGeometry(0.22, 0.22);
       this._holeMat = new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
     }
@@ -1539,7 +1547,7 @@ export class Game {
           data[o] = r * skyE; data[o + 1] = g2 * skyE; data[o + 2] = b * skyE; data[o + 3] = 1;
         }
       }
-      const tex = new THREE.DataTexture(data, W, H, THREE.RGBAFormat, THREE.FloatType);
+      const tex = this._texLocal(new THREE.DataTexture(data, W, H, THREE.RGBAFormat, THREE.FloatType));
       tex.mapping = THREE.EquirectangularReflectionMapping;
       tex.colorSpace = THREE.LinearSRGBColorSpace;   // já está em linear, sem decode
       tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter;
@@ -1999,13 +2007,16 @@ export class Game {
     return vmObj;
   }
 
+  // Textura de posse DESTE Game: registrada para o dispose devolver a VRAM no remount.
+  _texLocal(t) { this._texLocais?.add(t); return t; }
+
   _makePuffTexture() {
     const c = document.createElement('canvas'); c.width = c.height = 64;
     const x = c.getContext('2d');
     const g = x.createRadialGradient(32, 32, 2, 32, 32, 30);
     g.addColorStop(0, 'rgba(230,210,180,0.9)'); g.addColorStop(1, 'rgba(230,210,180,0)');
     x.fillStyle = g; x.fillRect(0, 0, 64, 64);
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
   // Respingo de sangue: `seed` gera 5 variantes estáveis pras manchas não repetirem.
   // Vermelho escuro coagulado (#5a0608–#6e0a0c) de propósito — não vivo.
@@ -2025,7 +2036,7 @@ export class Game {
     for (let i = 0; i < 6; i++) blob(cx + (rnd() - .5) * 26, cy + (rnd() - .5) * 26, 20 + rnd() * 16, 0.95);
     for (let i = 0; i < 22; i++) { const a = rnd() * 7, d = 24 + rnd() * 26; blob(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 3 + rnd() * 7, 0.9); }
     for (let i = 0; i < 30; i++) { const a = rnd() * 7, d = 40 + rnd() * 22; blob(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 1 + rnd() * 3, 0.85); }
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
   // Poça sob o cadáver: mais redonda e densa que o respingo, com gotas em volta. Cresce em cena.
   _makeBloodPoolTex() {
@@ -2045,7 +2056,7 @@ export class Game {
       g.addColorStop(0, 'rgba(68,6,8,0.9)'); g.addColorStop(1, 'rgba(55,4,6,0)');
       x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill();
     }
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
   // Cola uma mancha de sangue numa superfície (normal do hit). `pool` usa a textura de poça.
   // Ring buffer próprio (teto 64) — não briga com os furos de bala.
@@ -2077,7 +2088,7 @@ export class Game {
       rad.addColorStop(0, 'rgba(200,22,26,1)'); rad.addColorStop(0.62, 'rgba(150,12,16,0.95)'); rad.addColorStop(1, 'rgba(110,6,8,0)');
     }
     g.fillStyle = rad; g.fillRect(0, 0, 32, 32);
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this._texLocal(new THREE.CanvasTexture(c));
     const fx = new GPUParticles(this.scene, this.camera, { tex, additive, max: 384 });
     if (this.puffFx) { fx.uniforms.uTime = this.puffFx.uniforms.uTime; fx.uniforms.uScale = this.puffFx.uniforms.uScale; }
     fx.points.renderOrder = additive ? 7 : 6;   // por cima da fumaça de impacto
@@ -2143,14 +2154,14 @@ export class Game {
       x.beginPath(); x.moveTo(0, -w / 2); x.lineTo(len, 0); x.lineTo(0, w / 2); x.closePath(); x.fill();
       x.restore();
     }
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
   _makeFlashSoftTex() {
     const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
     const g = x.createRadialGradient(32, 32, 1, 32, 32, 32);
     g.addColorStop(0, 'rgba(255,236,190,0.9)'); g.addColorStop(0.35, 'rgba(255,196,96,0.5)'); g.addColorStop(1, 'rgba(255,150,50,0)');
     x.fillStyle = g; x.fillRect(0, 0, 64, 64);
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
   // Núcleo branco-quente do flash (centro quase branco, borda quente suave).
   _makeFlashCoreTex() {
@@ -2159,7 +2170,7 @@ export class Game {
     const g = x.createRadialGradient(32, 32, 1, 32, 32, 30);
     g.addColorStop(0, 'rgba(255,255,245,1)'); g.addColorStop(0.35, 'rgba(255,240,200,0.8)'); g.addColorStop(1, 'rgba(255,220,160,0)');
     x.fillStyle = g; x.fillRect(0, 0, 64, 64);
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
 
   /* ================= input ================= */
@@ -3593,7 +3604,7 @@ export class Game {
     if (swapBot) {
       swapBot.team = oldTeam;
       const emCampo = new Set(this.bots.map(b => b.def?.id));
-      const doLadoVelho = CHARACTERS.filter(c => _doLado(oldFaction)(c) && c.id !== p.def.id);
+      const doLadoVelho = CHARACTERS.filter(c => _doLado(oldFaction)(c) && _sorteavel(c) && c.id !== p.def.id);
       const livres = doLadoVelho.filter(c => !emCampo.has(c.id));
       const defs = livres.length ? livres : doLadoVelho;
       // prefere GLB já carregado no preload da partida; fora dele o bot cairia no procedural
@@ -4632,7 +4643,7 @@ export class Game {
     const rad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
     rad.addColorStop(0, `rgba(${rgb},1)`); rad.addColorStop(0.45, `rgba(${rgb},0.55)`); rad.addColorStop(1, `rgba(${rgb},0)`);
     g.fillStyle = rad; g.fillRect(0, 0, 32, 32);
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this._texLocal(new THREE.CanvasTexture(c));
     const fx = new GPUParticles(this.scene, this.camera, { tex, additive, max });
     const src = this.puffFx && this.puffFx.uniforms;
     if (src) { fx.uniforms.uTime = src.uTime; fx.uniforms.uScale = src.uScale; }
@@ -5448,7 +5459,7 @@ export class Game {
     // borda gasta: desfiado na ponta (fly end) e vincos no mastro
     for (let i = 0; i < 26; i++) { x.clearRect(250 + rnd() * 6, rnd() * 160, 2 + rnd() * 6, 1 + rnd() * 4); }
     x.strokeStyle = 'rgba(90,86,80,0.5)'; x.lineWidth = 3; x.beginPath(); x.moveTo(4, 0); x.lineTo(4, 160); x.stroke();
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
     t._fac = fac; t._canvas = c; this._paintFlagSymbol(t);   // emblema da facção dona (se já carregou)
     return t;
   }
@@ -5545,7 +5556,7 @@ export class Game {
       x.strokeStyle = `rgba(226,204,140,${0.35 + rnd() * 0.35})`;
       x.beginPath(); x.arc(cx, cy, 112, a0, a1); x.stroke();
     }
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
     t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t;
   }
 
@@ -5556,7 +5567,7 @@ export class Game {
     const g = x.createRadialGradient(64, 64, 4, 64, 64, 64);
     g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.8, 'rgba(232,234,238,0.85)'); g.addColorStop(1, 'rgba(210,212,216,0)');
     x.fillStyle = g; x.beginPath(); x.arc(64, 64, 64, 0, 6.29); x.fill();
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
 
   _updateSmokeHud() {
@@ -8264,7 +8275,7 @@ export class Game {
       if (kind === 'chevAlly') { g.fillStyle = '#fff'; tri(1); g.fill(); }
       else { g.strokeStyle = '#fff'; g.lineWidth = 11; tri(1); g.stroke(); }   // inimigo = vazado
     }
-    const t = new THREE.CanvasTexture(c);
+    const t = this._texLocal(new THREE.CanvasTexture(c));
     t.colorSpace = THREE.SRGBColorSpace;
     return (this._tmTex[kind] = t);
   }
@@ -10176,12 +10187,21 @@ export class Game {
     this.vm?.melee?.dispose();
     this._pickupFallbackTpl?.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
     this.renderer.liberaPosDaCena?.(this.scene);
+    /* VRAM: a geometria já era descartada, as texturas DESTE Game (sangue, fumaça,
+       bandeira, zona, decalques, clarões — criadas por partida via _texLocal) não: cada
+       remount (virada de mapa, revanche) deixava os handles WebGL vivos e a memória de
+       vídeo crescia partida após partida, até webglcontextlost. Texturas COMPARTILHADAS
+       (bundle do initTextures e estáticas dos módulos de mapa) ficam de fora: o próximo
+       Game as usa. */
+    for (const t of this._texLocais || []) t.dispose();
+    this._texLocais = null;
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
-    // Partículas de pouso são donas do material e da textura; o puff permanece compartilhado.
+    /* Partículas de pouso são donas do material; o puff permanece compartilhado. A textura
+       (uTex) nasce via _texLocal e já caiu no laço de _texLocais acima: descartá-la aqui
+       de novo dava dispose duplo (eval:landing-impact exige exatamente 1). */
     for (const fx of this._landingFxSystems || []) {
       if (fx === this.puffFx) continue;
       fx.points?.material?.dispose();
-      fx.uniforms?.uTex?.value?.dispose?.();
     }
     this._landingFxSystems = [];
     for (const k of Object.keys(this)) if (k.startsWith('_fx_land_')) delete this[k];

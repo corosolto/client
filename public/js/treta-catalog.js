@@ -41,9 +41,7 @@ export const TRETA_SKINS = [
   {id:'emo-cyborg',name:'Emo Cyborg',character:'emo',color:'#8c63ba',series:'BRASIL 2500',description:'Franja preta, núcleo violeta e próteses de grafite fosco.',price:800,ready:false,metalFinish:'matte'},
   {id:'curupira-cyborg',name:'Curupira Cyborg',character:'curupira',color:'#d46b3f',series:'MITOS 2500',description:'Cabelo em chamas, couraça da mata e pés invertidos mecânicos.',price:800,ready:false,metalFinish:'matte',reverseFeet:true},
 ].map(item=>({...item,slot:'character'}));
-export const TRETA_WEAPON_SKINS = Object.freeze(Object.values(WEAPON_SKINS)
-  .filter((skin)=>skin.storeEnabled && skin.runtimeEnabled && skin.approved && skin.certified)
-  .map((skin)=>Object.freeze({
+const weaponProduct=(skin)=>Object.freeze({
     id:skin.id,
     name:skin.name,
     weapon:skin.storeWeapon,
@@ -56,7 +54,14 @@ export const TRETA_WEAPON_SKINS = Object.freeze(Object.values(WEAPON_SKINS)
     model:`/models/weapons/${skin.storeWeapon}.glb`,
     previewVideo:`/video/weapon-skins/${skin.id}.webm`,
     ready:true,
-  })));
+  });
+export const TRETA_WEAPON_SKINS = Object.freeze(Object.values(WEAPON_SKINS)
+  .filter((skin)=>skin.storeEnabled && skin.runtimeEnabled && skin.approved && skin.certified)
+  .map(weaponProduct));
+// Recompensas não são ofertas: só entram no equipamento após validação do servidor.
+export const TRETA_PASSE_WEAPON_SKINS = Object.freeze(Object.values(WEAPON_SKINS)
+  .filter((skin)=>skin.passe && !skin.storeEnabled && skin.runtimeEnabled && skin.approved && skin.certified)
+  .map(weaponProduct));
 export const TRETA_GLOVES = STORE_GLOVES;
 export const TRETA_PACKS = PACKS;
 export const TRETA_DEFAULT_REWARDS = {email_reward:200,referral_reward:100,sp_reward:10,mp_reward:25,daily_match_cap:250,referral_cap:10,starts_at:null,ends_at:null};
