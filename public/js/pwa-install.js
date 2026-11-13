@@ -79,80 +79,97 @@ function inicializaOffline() {
 }
 
 inicializaOffline();
+let installPrompt = null;
+let installUi = null;
+let installedThisSession = false;
+const customInstallUiEligible = window.matchMedia('(pointer: coarse)').matches
+  && !window.matchMedia('(display-mode: standalone)').matches
+  && window.navigator.standalone !== true;
 
-const panel = document.getElementById('pwa-install');
-const action = document.getElementById('pwa-install-action');
-const help = document.getElementById('pwa-install-help');
-const english = document.documentElement.lang === 'en';
-const copy = english ? {
-  label: 'Install the web beta',
-  add: 'HOW TO INSTALL',
-  install: 'INSTALL GAME',
-  ios: 'In Safari, tap Share and choose “Add to Home Screen”. If offered, turn on “Open as Web App”.',
-  generic: 'Open your browser menu and choose “Install app” or “Add to Home Screen”.',
-  failed: 'Installation did not finish. To try again, open your browser menu and choose “Install app”.',
-} : {
-  label: 'Instalação do beta web',
-  add: 'COMO ADICIONAR',
-  install: 'INSTALAR JOGO',
-  ios: 'No Safari, toque em Compartilhar e escolha “Adicionar à Tela de Início”. Se aparecer, ative “Abrir como App”.',
-  generic: 'Use o menu do navegador e escolha “Instalar app” ou “Adicionar à tela inicial”.',
-  failed: 'A instalação não foi concluída. Para tentar de novo, use o menu do navegador e escolha “Instalar app”.',
-};
+window.addEventListener('beforeinstallprompt', (event) => {
+  if (!customInstallUiEligible || installedThisSession) return;
+  event.preventDefault();
+  installPrompt = event;
+  if (installUi) {
+    installUi.action.textContent = installUi.copy.install;
+    installUi.help.hidden = true;
+  }
+});
 
-if (panel && action && help) {
-  const touch = window.matchMedia('(pointer: coarse)').matches;
-  const installed = window.matchMedia('(display-mode: standalone)').matches
-    || window.navigator.standalone === true;
-  const appleMobile = /iPhone|iPad|iPod/i.test(window.navigator.userAgent)
-    || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
-  let installPrompt = null;
+window.addEventListener('appinstalled', () => {
+  installedThisSession = true;
+  installPrompt = null;
+  const panel = document.getElementById('pwa-install');
+  if (panel) panel.hidden = true;
+  void guardaRecursosOffline();
+});
 
-  if (touch && !installed) {
-    panel.hidden = false;
-    panel.setAttribute('aria-label', copy.label);
-    if (appleMobile) {
-      action.textContent = copy.add;
-      help.textContent = copy.ios;
-    } else {
-      action.textContent = copy.add;
-      help.textContent = copy.generic;
-    }
+function inicializaInstalacao() {
+  const panel = document.getElementById('pwa-install');
+  const action = document.getElementById('pwa-install-action');
+  const help = document.getElementById('pwa-install-help');
+  const english = document.documentElement.lang === 'en';
+  const copy = english ? {
+    label: 'Install the web beta',
+    add: 'HOW TO INSTALL',
+    install: 'INSTALL GAME',
+    ios: 'In Safari, tap Share and choose “Add to Home Screen”. If offered, turn on “Open as Web App”.',
+    generic: 'Open your browser menu and choose “Install app” or “Add to Home Screen”.',
+    failed: 'Installation did not finish. To try again, open your browser menu and choose “Install app”.',
+  } : {
+    label: 'Instalação do beta web',
+    add: 'COMO ADICIONAR',
+    install: 'INSTALAR JOGO',
+    ios: 'No Safari, toque em Compartilhar e escolha “Adicionar à Tela de Início”. Se aparecer, ative “Abrir como App”.',
+    generic: 'Use o menu do navegador e escolha “Instalar app” ou “Adicionar à tela inicial”.',
+    failed: 'A instalação não foi concluída. Para tentar de novo, use o menu do navegador e escolha “Instalar app”.',
+  };
 
-    window.addEventListener('beforeinstallprompt', (event) => {
-      event.preventDefault();
-      installPrompt = event;
-      action.textContent = copy.install;
-      help.hidden = true;
-    });
+  if (panel && action && help) {
+    const appleMobile = /iPhone|iPad|iPod/i.test(window.navigator.userAgent)
+      || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+    installUi = { action, help, copy };
 
-    window.addEventListener('appinstalled', () => {
-      installPrompt = null;
-      panel.hidden = true;
-      void guardaRecursosOffline();
-    });
-
-    action.addEventListener('click', async () => {
-      if (!installPrompt) {
-        help.hidden = !help.hidden;
-        return;
+    if (customInstallUiEligible && !installedThisSession) {
+      panel.hidden = false;
+      panel.setAttribute('aria-label', copy.label);
+      if (appleMobile) {
+        action.textContent = copy.add;
+        help.textContent = copy.ios;
+      } else {
+        action.textContent = copy.add;
+        help.textContent = copy.generic;
+      }
+      if (installPrompt) {
+        action.textContent = copy.install;
+        help.hidden = true;
       }
 
-      const prompt = installPrompt;
-      installPrompt = null;
-      try {
-        await prompt.prompt();
-        const choice = await prompt.userChoice;
-        if (choice?.outcome === 'accepted') {
-          panel.hidden = true;
+      action.addEventListener('click', async () => {
+        if (!installPrompt) {
+          help.hidden = !help.hidden;
           return;
         }
-      } catch {
-        // A instalação ainda pode ser iniciada pelo menu do navegador.
-      }
-      help.textContent = appleMobile ? copy.ios : copy.failed;
-      help.hidden = false;
-      action.textContent = copy.add;
-    });
+
+        const prompt = installPrompt;
+        installPrompt = null;
+        try {
+          await prompt.prompt();
+          const choice = await prompt.userChoice;
+          if (choice?.outcome === 'accepted') {
+            panel.hidden = true;
+            return;
+          }
+        } catch {
+          // A instalação ainda pode ser iniciada pelo menu do navegador.
+        }
+        help.textContent = appleMobile ? copy.ios : copy.failed;
+        help.hidden = false;
+        action.textContent = copy.add;
+      });
+    }
   }
 }
+
+if (window.__CS_LANG_READY__) void window.__CS_LANG_READY__.then(inicializaInstalacao);
+else inicializaInstalacao();

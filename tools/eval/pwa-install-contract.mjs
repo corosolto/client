@@ -32,6 +32,7 @@ function start({
   hostname = 'jogo.test',
   controlled = true,
   controlledRevision = pwaRevision,
+  langReady = null,
 } = {}) {
   const nodes = new Map(['pwa-install', 'pwa-install-action', 'pwa-install-help'].map((id) => [id, new Element()]));
   const windowListeners = new Map();
@@ -63,6 +64,7 @@ function start({
     },
   } : undefined;
   const window = {
+    __CS_LANG_READY__: langReady,
     location: { origin: `https://${hostname}`, hostname },
     performance: { getEntriesByType: () => resources.map((name) => ({ name })) },
     PerformanceObserver,
@@ -86,6 +88,7 @@ function start({
     help: nodes.get('pwa-install-help'),
     posted,
     registrations,
+    setLang: (value) => { document.documentElement.lang = value; },
     dispatchWindow: async (type, event = {}) => {
       for (const listener of windowListeners.get(type) || []) await listener(event);
     },
@@ -141,6 +144,42 @@ const installed = start({ standalone: true });
 assert.equal(installed.panel.hidden, true, 'installed app does not see install promotion');
 const desktop = start({ touch: false });
 assert.equal(desktop.panel.hidden, true, 'desktop does not see mobile install promotion');
+let desktopPrevented = false;
+await desktop.dispatchWindow('beforeinstallprompt', {
+  preventDefault() { desktopPrevented = true; },
+});
+assert.equal(desktopPrevented, false, 'desktop keeps the browser-managed install path');
+
+let resolveLang;
+const langReady = new Promise((resolve) => { resolveLang = resolve; });
+const delayedEnglish = start({ langReady });
+assert.equal(delayedEnglish.panel.hidden, true, 'install promotion waits for authoritative language');
+let delayedPrevented = false;
+let delayedPrompted = false;
+await delayedEnglish.dispatchWindow('beforeinstallprompt', {
+  preventDefault() { delayedPrevented = true; },
+  async prompt() { delayedPrompted = true; },
+  userChoice: Promise.resolve({ outcome: 'accepted' }),
+});
+assert.equal(delayedPrevented, true, 'native install prompt is captured while language is pending');
+delayedEnglish.setLang('en');
+resolveLang();
+await langReady;
+assert.equal(delayedEnglish.action.textContent, 'INSTALL GAME', 'captured prompt adopts authoritative English copy');
+await delayedEnglish.action.dispatch('click');
+assert.equal(delayedPrompted, true, 'captured prompt remains actionable after language resolution');
+
+let resolveInstalledLang;
+const installedLangReady = new Promise((resolve) => { resolveInstalledLang = resolve; });
+const delayedInstalled = start({ langReady: installedLangReady, offline: true });
+await Promise.resolve();
+await Promise.resolve();
+const warmupsBeforeInstall = delayedInstalled.posted.length;
+await delayedInstalled.dispatchWindow('appinstalled');
+assert.equal(delayedInstalled.posted.length, warmupsBeforeInstall + 1, 'appinstalled warms resources while language is pending');
+resolveInstalledLang();
+await installedLangReady;
+assert.equal(delayedInstalled.panel.hidden, true, 'late language resolution does not reopen an installed promotion');
 
 const english = start({ lang: 'en' });
 assert.equal(english.action.textContent, 'HOW TO INSTALL', 'English install CTA is localized');

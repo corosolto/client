@@ -1,6 +1,6 @@
 {
   "name": "coro-solto",
-  "version": "2.1.0-alpha.144",
+  "version": "2.1.0-alpha.145",
   "license": "AGPL-3.0-only",
   "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS satírico de navegador em dois times (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
@@ -77,7 +77,7 @@
     "eval:operacao-flavio:browser-gate": "node tools/eval/operacao-flavio-browser-gate.mjs",
     "//eval:vm-troca-sem-legado": "Playtest 06/11: a 1ª troca para a secundária ia ao legado antes do autorado. O jogo monta oculto o pacote da primária e da secundária (prime); navegador real com catálogo local. Mutante sem-prime (?vmprime=0) mostra o legado.",
     "eval:vm-troca-sem-legado": "node tools/eval/vm-troca-sem-legado-browser.mjs && node tools/eval/vm-troca-sem-legado-browser.mjs --mutante=sem-prime",
-    "eval:meshoptvm": "node tools/eval/meshopt-vm-check.mjs && node tools/eval/meshopt-vm-check.mjs --mutante=troca-byte",
+    "eval:meshoptvm": "node --test tests/meshopt-wasm-denied.test.mjs && node tools/eval/meshopt-vm-check.mjs && node tools/eval/meshopt-vm-check.mjs --mutante=troca-byte",
     "eval:convidaamigos": "node tools/eval/convida-amigos-check.mjs && node tools/eval/convida-amigos-check.mjs --mutante=sem-whatsapp && node tools/eval/convida-amigos-check.mjs --mutante=share-mudo && node tools/eval/convida-amigos-check.mjs --mutante=vaza-legado && node tools/eval/convida-amigos-check.mjs --mutante=email-estoura",
     "eval:placaramigo": "node tools/eval/placar-amigo-check.mjs && node tools/eval/placar-amigo-check.mjs --mutante=sem-botao && node tools/eval/placar-amigo-check.mjs --mutante=sem-pid && node tools/eval/placar-amigo-check.mjs --mutante=clique-mudo && node tools/eval/placar-amigo-check.mjs --mutante=vaza-legado && node tools/eval/placar-amigo-check.mjs --mutante=pid-sem-validacao",
     "ops:diag": "node tools/ops/diagnose.mjs",
@@ -325,8 +325,9 @@
     "eval:tracer3p": "node tools/eval/tracer-3p-check.mjs",
     "eval:mp-tracer-origin": "node tools/eval/mp-tracer-origin-check.mjs && node tools/eval/mp-tracer-origin-check.mjs --mutante=sem-origem",
     "eval:troca-personagem": "node tools/eval/troca-personagem-check.mjs",
-    "eval:launchwatchdog": "node tools/eval/launch-watchdog-check.mjs",
+    "eval:launchwatchdog": "node --test tests/boot-main-readiness.test.mjs && node tools/eval/launch-watchdog-check.mjs && node tools/eval/launch-watchdog-check.mjs --mutante=sementrada --espera-reprovar",
     "eval:launchrace": "node tools/eval/launch-race-check.mjs && node --test tests/menu-backdrop.test.mjs",
+    "eval:prodcrash": "node --test tests/module-compat.test.mjs tests/module-retry.test.mjs tests/objective-result.test.mjs",
     "eval:spawn": "node tools/eval/spawn-settle-check.mjs",
     "check:deploy": "node tools/eval/runner.mjs --suite=deploy",
     "check:prepush": "node tools/eval/selecao-pre-push.mjs",
