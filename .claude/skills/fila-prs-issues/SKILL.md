@@ -115,10 +115,15 @@ Antes de criar a lane:
 ```bash
 git status --short --branch
 git worktree list
-git fetch "$BASE_REMOTE"
-git fetch "$HEAD_REMOTE" BRANCH
-if git log --format='%H %s%n%b' "$BASE_REMOTE/$BASE_BRANCH..$REVIEWED_HEAD" \
-  | grep -Eiq '(^|[^[:alnum:]_])(close[sd]?|fix(e[sd])?|resolve[sd]?):?[[:space:]]+(([^[:space:]]+/[^[:space:]]*)?#[0-9]+|https://github\.com/[^/]+/[^/]+/issues/[0-9]+)'; then
+git fetch "$BASE_REMOTE" \
+  || { echo "não foi possível atualizar a base" >&2; exit 1; }
+git fetch "$HEAD_REMOTE" BRANCH \
+  || { echo "não foi possível atualizar o head" >&2; exit 1; }
+if ! PR_MESSAGES=$(git log --format='%H %s%n%b' "$BASE_REMOTE/$BASE_BRANCH..$REVIEWED_HEAD"); then
+  echo "não foi possível ler o histórico do PR" >&2
+  exit 1
+fi
+if grep -Eiq '(^|[^[:alnum:]_])(close[sd]?|fix(e[sd])?|resolve[sd]?):?[[:space:]]+(([^[:space:]]+/[^[:space:]]*)?#[0-9]+|https://github\.com/[^/]+/[^/]+/issues/[0-9]+)' <<<"$PR_MESSAGES"; then
   echo "commit fecha issue automaticamente; neutralize o histórico antes do merge" >&2
   exit 1
 fi
