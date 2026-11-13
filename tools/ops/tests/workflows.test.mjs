@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -134,4 +134,32 @@ test('smoke-web.yml: chat desktop em job próprio, partição exata, nenhum spec
   const comInvert = execs.find((e) => e.includes('--grep-invert'));
   for (const spec of SPECS) assert.ok(comInvert.includes(spec), `o job do --grep-invert perdeu ${spec}`);
   for (const e of execs) assert.match(e, /--config=playwright\.smoke\.config\.mjs/);
+});
+
+test('ci.yml: mutante robots exige a cláusula e recusa crash com o mesmo exit 1', () => {
+  const s = wf('ci.yml');
+  const inicio = s.indexOf('          status=0\n          output="$(node tools/eval/rotas-check.mjs --dist --mutante=robots');
+  assert.ok(inicio >= 0, 'wrapper do mutante robots não encontrado');
+  const marcador = s.indexOf('falhou sem a cláusula documentada', inicio);
+  const fim = s.indexOf('          fi\n', marcador);
+  assert.ok(marcador > inicio && fim > marcador, 'wrapper sem prova da cláusula');
+  const script = s.slice(inicio, fim + '          fi\n'.length).replace(/^ {10}/gm, '');
+  const temp = mkdtempSync(join(tmpdir(), 'robots-mutant-workflow-'));
+  try {
+    writeFileSync(join(temp, 'node'), `#!/bin/bash
+case "$ROBOTS_FAKE" in
+  esperado) printf '%s\\n' '/jogar/multiplayer: robots "index, follow" com indexavel=false'; exit 1;;
+  crash) printf '%s\\n' 'SyntaxError: Cannot use import statement outside a module'; exit 1;;
+  sobreviveu) exit 0;;
+  infra) exit 2;;
+esac
+`, { mode: 0o755 });
+    for (const [modo, esperado] of [['esperado', 0], ['crash', 1], ['sobreviveu', 1], ['infra', 2]]) {
+      const r = spawnSync('bash', ['-euo', 'pipefail', '-c', script], {
+        encoding: 'utf8', env: { ...process.env, PATH: `${temp}:${process.env.PATH}`, ROBOTS_FAKE: modo },
+      });
+      assert.equal(r.status, esperado, `${modo}: ${r.stdout}${r.stderr}`);
+      if (modo === 'crash') assert.match(r.stdout, /falhou sem a cláusula documentada/);
+    }
+  } finally { rmSync(temp, { recursive: true, force: true }); }
 });
