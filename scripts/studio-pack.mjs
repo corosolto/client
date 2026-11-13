@@ -2,8 +2,6 @@
 import Ajv from 'ajv/dist/2020.js';
 import { constants } from 'node:fs';
 import {
-  chmod,
-  copyFile,
   lstat,
   mkdir,
   open,
@@ -137,14 +135,34 @@ function validateInventory(manifest) {
   return [...files.values()].sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0);
 }
 
-async function readManifest(manifestPath) {
+async function readManifest(manifestPath, root) {
   await regularFile(manifestPath, 'Manifest');
-  const bytes = await readFile(manifestPath);
-  let manifest;
-  try { manifest = JSON.parse(bytes.toString('utf8')); } catch (error) {
-    fail('E_MANIFEST_JSON', `Manifest is not valid JSON: ${error.message}`);
+  const beforeIdentity = await lstat(manifestPath, { bigint: true });
+  let handle;
+  try {
+    handle = await open(manifestPath, constants.O_RDONLY | (constants.O_NOFOLLOW || 0));
+    const opened = await handle.stat({ bigint: true });
+    const canonical = await realpath(manifestPath);
+    const canonicalIdentity = await lstat(canonical, { bigint: true });
+    if (root && !isContained(root, canonical)) fail('E_PATH', `Manifest escapes the package root: ${manifestPath}`);
+    if (!opened.isFile() || opened.dev !== beforeIdentity.dev || opened.ino !== beforeIdentity.ino
+      || opened.dev !== canonicalIdentity.dev || opened.ino !== canonicalIdentity.ino) {
+      fail('E_RACE', `Manifest changed while being opened: ${manifestPath}`);
+    }
+    const bytes = await handle.readFile();
+    const after = await handle.stat({ bigint: true });
+    if (after.dev !== opened.dev || after.ino !== opened.ino || after.size !== opened.size
+      || after.mtimeNs !== opened.mtimeNs || after.ctimeNs !== opened.ctimeNs) {
+      fail('E_RACE', `Manifest changed while being read: ${manifestPath}`);
+    }
+    let manifest;
+    try { manifest = JSON.parse(bytes.toString('utf8')); } catch (error) {
+      fail('E_MANIFEST_JSON', `Manifest is not valid JSON: ${error.message}`);
+    }
+    return { bytes, manifest };
+  } finally {
+    if (handle) await handle.close().catch(() => {});
   }
-  return { bytes, manifest };
 }
 
 function executableMagic(bytes) {
@@ -183,7 +201,13 @@ async function verifyFile(root, entry) {
   try {
     handle = await open(absolute, constants.O_RDONLY | (constants.O_NOFOLLOW || 0));
     const opened = await handle.stat({ bigint: true });
-    if (!opened.isFile() || opened.dev !== beforeIdentity.dev || opened.ino !== beforeIdentity.ino) fail('E_RACE', `Pack file changed while being verified: ${entry.path}`);
+    const canonical = await realpath(absolute);
+    const canonicalIdentity = await lstat(canonical, { bigint: true });
+    if (!isContained(root, canonical)) fail('E_PATH', `Pack file resolves outside the package root: ${entry.path}`);
+    if (!opened.isFile() || opened.dev !== beforeIdentity.dev || opened.ino !== beforeIdentity.ino
+      || opened.dev !== canonicalIdentity.dev || opened.ino !== canonicalIdentity.ino) {
+      fail('E_RACE', `Pack file changed while being verified: ${entry.path}`);
+    }
     if (opened.mode & 0o111n) fail('E_EXECUTABLE', `Executable file mode is forbidden: ${entry.path}`);
     if (opened.size !== BigInt(entry.bytes)) fail('E_SIZE', `Opened byte size mismatch for ${entry.path}: expected ${entry.bytes}, received ${opened.size}`);
     const prefix = Buffer.alloc(Math.min(16, entry.bytes));
@@ -206,6 +230,56 @@ async function verifyFile(root, entry) {
     if (handle) await handle.close().catch(() => {});
   }
 }
+
+async function copyVerifiedFile(root, entry, destination) {
+  const source = path.resolve(root, ...entry.path.split('/'));
+  let sourceHandle;
+  let destinationHandle;
+  try {
+    sourceHandle = await open(source, constants.O_RDONLY | (constants.O_NOFOLLOW || 0));
+    const opened = await sourceHandle.stat({ bigint: true });
+    const canonical = await realpath(source);
+    const canonicalIdentity = await lstat(canonical, { bigint: true });
+    if (!isContained(root, canonical)) fail('E_PATH', `Pack file resolves outside the package root: ${entry.path}`);
+    if (!opened.isFile() || opened.dev !== canonicalIdentity.dev || opened.ino !== canonicalIdentity.ino) {
+      fail('E_RACE', `Pack file changed before copying: ${entry.path}`);
+    }
+    if (opened.size !== BigInt(entry.bytes)) fail('E_SIZE', `Pack file size changed before copying: ${entry.path}`);
+    destinationHandle = await open(
+      destination,
+      constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW || 0),
+      0o644,
+    );
+    const hash = createHash('sha256');
+    const buffer = Buffer.allocUnsafe(64 * 1024);
+    let position = 0;
+    while (true) {
+      const { bytesRead } = await sourceHandle.read(buffer, 0, buffer.length, position);
+      if (bytesRead === 0) break;
+      hash.update(buffer.subarray(0, bytesRead));
+      let offset = 0;
+      while (offset < bytesRead) {
+        const { bytesWritten } = await destinationHandle.write(buffer, offset, bytesRead - offset, position + offset);
+        if (bytesWritten === 0) fail('E_IO', `Zero-byte write while copying: ${entry.path}`);
+        offset += bytesWritten;
+      }
+      position += bytesRead;
+    }
+    const after = await sourceHandle.stat({ bigint: true });
+    if (after.dev !== opened.dev || after.ino !== opened.ino || after.size !== opened.size
+      || after.mtimeNs !== opened.mtimeNs || after.ctimeNs !== opened.ctimeNs) {
+      fail('E_RACE', `Pack file changed while being copied: ${entry.path}`);
+    }
+    if (position !== entry.bytes) fail('E_SIZE', `Copied byte size mismatch for ${entry.path}: expected ${entry.bytes}, received ${position}`);
+    const sha256 = hash.digest('hex');
+    if (sha256 !== entry.sha256) fail('E_HASH', `Pack file changed after verification: ${entry.path}`);
+    await destinationHandle.sync();
+  } finally {
+    if (destinationHandle) await destinationHandle.close().catch(() => {});
+    if (sourceHandle) await sourceHandle.close().catch(() => {});
+  }
+}
+
 
 async function verifyDeclaredTree(root, entries, manifestPath) {
   const expected = new Set(entries.map(entry => entry.path));
@@ -232,7 +306,7 @@ async function verifyDeclaredTree(root, entries, manifestPath) {
 export async function verifyPack({ manifestPath, packageRoot, schemaPath = DEFAULT_SCHEMA }) {
   const absoluteManifest = path.resolve(manifestPath);
   const root = await canonicalDirectory(path.resolve(packageRoot || path.dirname(absoluteManifest)), 'Package root');
-  const { bytes, manifest } = await readManifest(absoluteManifest);
+  const { bytes, manifest } = await readManifest(absoluteManifest, root);
   let schema;
   try { schema = JSON.parse(await readFile(schemaPath, 'utf8')); } catch (error) {
     fail('E_SCHEMA_IO', `Cannot read JSON Schema ${schemaPath}: ${error.message}`);
@@ -261,6 +335,7 @@ export async function verifyPack({ manifestPath, packageRoot, schemaPath = DEFAU
     manifest,
     entries,
     root,
+    manifestBytes: bytes,
   };
 }
 
@@ -288,48 +363,103 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
   const idDirectory = await ensureDirectory(kindDirectory, source.id);
   const target = path.join(idDirectory, source.version);
   const staging = path.join(idDirectory, `.${source.version}.staging`);
-  if (!isContained(idDirectory, target) || !isContained(idDirectory, staging)) fail('E_DESTINATION', 'Install target escapes its parent');
+  const lockPath = path.join(idDirectory, `.${source.version}.install.lock`);
+  if (!isContained(idDirectory, target) || !isContained(idDirectory, staging) || !isContained(idDirectory, lockPath)) {
+    fail('E_DESTINATION', 'Install target escapes its parent');
+  }
   const relativeTarget = path.posix.join(source.kind, source.id, source.version);
-  const targetExists = await lstat(target).catch(error => {
-    if (error.code !== 'ENOENT') throw error;
-    return null;
-  });
-  if (targetExists) {
-    if (targetExists.isSymbolicLink() || !targetExists.isDirectory()) {
-      fail('E_IMMUTABLE', `Existing install target is not a real directory: ${relativeTarget}`);
-    }
-    let installed;
-    try {
-      installed = await verifyPack({ manifestPath: path.join(target, 'manifest.json'), packageRoot: target, schemaPath });
-    } catch (error) {
-      fail('E_IMMUTABLE', `Existing install is not a valid immutable pack: ${relativeTarget}`, { cause: error });
-    }
-    if (installed.manifestSha256 !== source.manifestSha256) fail('E_IMMUTABLE', `A different release is already installed: ${relativeTarget}`);
-    return { ...source, operation: 'install', status: 'unchanged', installPath: relativeTarget };
-  }
-  if (await lstat(staging).catch(error => error.code === 'ENOENT' ? null : (() => { throw error; })())) {
-    fail('E_STAGING_EXISTS', `Stale staging directory requires manual inspection: ${staging}`);
-  }
-  let created = false;
-  let promoted = false;
+  let lockHandle;
+  let lockIdentity;
   try {
-    await mkdir(staging, { mode: 0o755 });
-    created = true;
-    for (const entry of source.entries) {
-      const destination = path.join(staging, ...entry.path.split('/'));
-      await mkdir(path.dirname(destination), { recursive: true, mode: 0o755 });
-      await copyFile(path.join(source.root, ...entry.path.split('/')), destination, constants.COPYFILE_EXCL);
-      await chmod(destination, 0o644);
+    try {
+      lockHandle = await open(
+        lockPath,
+        constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW || 0),
+        0o600,
+      );
+    } catch (error) {
+      if (error.code === 'EEXIST') fail('E_INSTALL_BUSY', `Another install or stale lock requires inspection: ${lockPath}`);
+      throw error;
     }
-    await copyFile(path.resolve(manifestPath), path.join(staging, 'manifest.json'), constants.COPYFILE_EXCL);
-    await chmod(path.join(staging, 'manifest.json'), 0o644);
-    const staged = await verifyPack({ manifestPath: path.join(staging, 'manifest.json'), packageRoot: staging, schemaPath });
-    if (staged.manifestSha256 !== source.manifestSha256) fail('E_RACE', 'Manifest changed during installation');
-    await rename(staging, target);
-    promoted = true;
-    return { ...source, operation: 'install', status: 'installed', installPath: relativeTarget };
+    lockIdentity = await lockHandle.stat({ bigint: true });
+    await lockHandle.writeFile(`${process.pid}\n${new Date().toISOString()}\n`);
+    await lockHandle.sync();
+
+    const targetExists = await lstat(target).catch(error => {
+      if (error.code !== 'ENOENT') throw error;
+      return null;
+    });
+    if (targetExists) {
+      if (targetExists.isSymbolicLink() || !targetExists.isDirectory()) {
+        fail('E_IMMUTABLE', `Existing install target is not a real directory: ${relativeTarget}`);
+      }
+      let installed;
+      try {
+        installed = await verifyPack({ manifestPath: path.join(target, 'manifest.json'), packageRoot: target, schemaPath });
+      } catch (error) {
+        fail('E_IMMUTABLE', `Existing install is not a valid immutable pack: ${relativeTarget}`, { cause: error });
+      }
+      if (installed.manifestSha256 !== source.manifestSha256) fail('E_IMMUTABLE', `A different release is already installed: ${relativeTarget}`);
+      return { ...source, operation: 'install', status: 'unchanged', installPath: relativeTarget };
+    }
+    if (await lstat(staging).catch(error => error.code === 'ENOENT' ? null : (() => { throw error; })())) {
+      fail('E_STAGING_EXISTS', `Stale staging directory requires manual inspection: ${staging}`);
+    }
+
+    let created = false;
+    try {
+      await mkdir(staging, { mode: 0o755 });
+      created = true;
+      for (const entry of source.entries) {
+        const destination = path.join(staging, ...entry.path.split('/'));
+        await mkdir(path.dirname(destination), { recursive: true, mode: 0o755 });
+        await copyVerifiedFile(source.root, entry, destination);
+      }
+      const stagedManifest = path.join(staging, 'manifest.json');
+      const manifestHandle = await open(
+        stagedManifest,
+        constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW || 0),
+        0o644,
+      );
+      try {
+        await manifestHandle.writeFile(source.manifestBytes);
+        await manifestHandle.sync();
+      } finally {
+        await manifestHandle.close();
+      }
+      const staged = await verifyPack({ manifestPath: stagedManifest, packageRoot: staging, schemaPath });
+      if (staged.manifestSha256 !== source.manifestSha256) fail('E_RACE', 'Manifest changed during installation');
+
+      try {
+        await mkdir(target, { mode: 0o755 });
+      } catch (error) {
+        if (error.code === 'EEXIST') fail('E_IMMUTABLE', `Install target appeared during promotion: ${relativeTarget}`);
+        throw error;
+      }
+      const topLevel = (await readdir(staging, { withFileTypes: true }))
+        .filter(entry => entry.name !== 'manifest.json')
+        .sort((left, right) => left.name < right.name ? -1 : left.name > right.name ? 1 : 0);
+      for (const entry of topLevel) await rename(path.join(staging, entry.name), path.join(target, entry.name));
+      for (const entry of source.entries) await verifyFile(target, entry);
+
+      const { bytes: manifestBytes } = await readManifest(stagedManifest, staging);
+      const manifestSha256 = createHash('sha256').update(manifestBytes).digest('hex');
+      if (manifestSha256 !== source.manifestSha256) fail('E_RACE', 'Staged manifest changed before publication');
+      await rename(stagedManifest, path.join(target, 'manifest.json'));
+      const installed = await verifyPack({ manifestPath: path.join(target, 'manifest.json'), packageRoot: target, schemaPath });
+      if (installed.manifestSha256 !== source.manifestSha256) fail('E_RACE', 'Installed manifest changed during publication');
+      return { ...source, operation: 'install', status: 'installed', installPath: relativeTarget };
+    } finally {
+      if (created) await rm(staging, { recursive: true, force: true });
+    }
   } finally {
-    if (created && !promoted) await rm(staging, { recursive: true, force: true });
+    if (lockHandle) {
+      await lockHandle.close().catch(() => {});
+      const current = await lstat(lockPath, { bigint: true }).catch(() => null);
+      if (current && current.dev === lockIdentity.dev && current.ino === lockIdentity.ino) {
+        await rm(lockPath, { force: true });
+      }
+    }
   }
 }
 
