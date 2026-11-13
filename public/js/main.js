@@ -2514,16 +2514,12 @@ function quitToMenu() {
 }
 
 /* ---------------- presença da CONTA (sessão social) ---------------- */
-/* A posse navegador→conta (migration 081) só nasce na chamada `presence` de /api/social:
-   lá o cookie prova a sessão e o corpo leva o cs_anon (community.js). O problema (dono,
-   11/11: "amigo logado joga e o perfil diz 3 dias"): quem loga e vai DIRETO jogar nunca
-   abre o painel de comunidade — o elo não nasce e o last_active congela. Aqui o jogo
-   também pulsa a presença da conta: no login, no início da partida e a cada 30 s em jogo. */
+/* O jogo envia no login e no início da partida. O pulso único de 30 s continua em
+   community.js, carregado também quando o painel está oculto. */
 function pingPresencaConta() {
   if (!contaNick || testMode) return;
   void api('/api/social', { action: 'presence', uid: getAnonId() });
 }
-setInterval(() => { if (game) pingPresencaConta(); }, 30_000);
 
 /* ---------------- heartbeat (presença/mapa) ---------------- */
 
@@ -5768,9 +5764,9 @@ contagem.evento('game_loaded');
   // Convite de sala e perfil compartilhado (/u/<perfil>) chegam com destino: nem o convite de conta nem o da loja cobrem esse destino.
   // /u/<perfil> é o hub (SSR); ?perfil= é o link antigo.
 const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location.href)?.perfil);
-  void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onSession:auth=>{contaNick=auth?.profile?.nick || '';if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;pingPresencaConta();}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();},onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),track:_loginPromptTrack})});
+  void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onSession:auth=>{contaNick=auth?.profile?.nick || '';if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();},onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),track:_loginPromptTrack})});
   // Logar com a aba RANKING aberta tira o convite de nick na hora, sem refazer a lista.
-  document.addEventListener('cs-account-change',(e)=>{contaNick=e.detail?.profile?.nick || '';const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);pingPresencaConta();});
+  document.addEventListener('cs-account-change',(e)=>{const nick=e.detail?.profile?.nick || '';const mudou=Boolean(nick && nick!==contaNick);contaNick=nick;const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);if(mudou)pingPresencaConta();});
   tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
   document.addEventListener('cs-treta-inventory-change',refreshMenuEquipment);
   /* Passe Sessão da Treta: o GET com conta também registra o login do dia no servidor. Conta trocada
