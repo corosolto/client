@@ -211,6 +211,9 @@ jobs:
       - name: Suites preservam cobertura e seleção do pre-push
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node --test tests/eval-suites.test.mjs
+      - name: Asset manifests and orphan ratchets stay exact
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:assetinventory
 
       - name: Passe Sessão da Treta obedece ao servidor (sem XP do client, com mutantes)
         if: always()

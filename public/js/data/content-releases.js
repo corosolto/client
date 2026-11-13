@@ -6,10 +6,8 @@ export const STUDIO_CHARACTER_STATES = Object.freeze([
   'idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'crouchwalk', 'jump', 'idle1h', 'walk1h', 'walkfire',
 ]);
 
-// Clipes extras opcionais do pacote (animations.extra do Studio): nomes fixos do vocabulário
-// ou prefixo emote_ com pelo menos um sufixo. Autoritativo: corosolto/studio tools/lib/character-pack.mjs
-// (68 nomes: coreExtraClipNames + converterExtraClipNames — os 45 últimos espelham a biblioteca de
-// conversão de animações, feat/animation-conversion-20261109, na mesma ordem ordenada do Studio).
+// Clipes extras opcionais: nomes fixos do Studio ou prefixo emote_ com sufixo.
+// Autoridade: corosolto/studio tools/lib/character-pack.mjs, na mesma ordem.
 export const STUDIO_EXTRA_CLIPS = Object.freeze([
   // Núcleo do contrato (locomoção cardinal, armas, dano, melee, resultado de rodada).
   'strafe_left', 'strafe_right', 'walk_back', 'run_back',
@@ -36,10 +34,8 @@ export const isStudioExtraClipName = (name) =>
   STUDIO_EXTRA_CLIPS.includes(name)
   || STUDIO_EXTRA_CLIP_PREFIXES.some((prefixo) => name.length > prefixo.length && name.startsWith(prefixo));
 
-// Família do clipe (contrato v3): espelho de clipFamily do Studio (tools/lib/character-pack.mjs),
-// que por sua vez espelha packFamily do conversor. 'states' para os 11 estados; emote_ → 'emote'
-// (o conversor chama o pack de 'emotes'); victory|defeat|death_* → 'ceremony';
-// reload_|draw_|holster_|hit_|grenade_|knife_|shoot_ → 'combat'; o resto é 'loco'.
+// Famílias do Studio: states, emote_, ceremony (victory/defeat/death_*),
+// combat (reload_|draw_|holster_|hit_|grenade_|knife_|shoot_) e loco.
 export const STUDIO_CLIP_FAMILIES = Object.freeze(['loco', 'combat', 'ceremony', 'emote']);
 export const studioClipFamily = (name) => {
   if (STUDIO_CHARACTER_STATES.includes(name)) return 'states';

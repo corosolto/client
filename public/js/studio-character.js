@@ -1,7 +1,5 @@
-/* Resolvedor só de navegador: pin → Blob URLs de bytes já verificados (modelo, 11 clipes,
-   clipes extras opcionais — inclusive packs de família com várias chaves por arquivo e um
-   states.glb compartilhado —, prévias), fail-closed com StudioCharacterError.code.
-   Ordem e limites: docs/studio-character-release.md. */
+/* Resolve pins no browser: valida bytes, cria Blob URLs e falha com StudioCharacterError.code.
+   Contrato e limites: docs/studio-character-release.md. */
 import { VERSION } from './version.js';
 import { STUDIO_CHARACTER_STATES, STUDIO_CHARACTER_SKELETON, STUDIO_CLIP_FAMILIES, isStudioExtraClipName, studioClipFamily } from './data/content-releases.js';
 import { studioPackUrl } from './data/pack-origin.js';
@@ -119,12 +117,8 @@ function verifyManifest(manifest, pin) {
     if (!STUDIO_CHARACTER_STATES.includes(state)) fail('studio_state_unknown', state);
     own(`animations.${state}`, manifest.animations[state], /\.glb$/);
   }
-  /* Clipes extras (opcionais): só nomes do vocabulário são baixados, verificados e expostos.
-     Chave desconhecida é ignorada — não baixa, não expõe e não derruba o pacote (o Studio
-     validou o nome com um vocabulário que pode ser mais novo que este runtime); o arquivo
-     dela segue contando no inventário/orçamento, mas fica sem fetch para sempre.
-     Várias chaves podem compartilhar um pack de família; emote_ nunca compartilha arquivo
-     (regra do conversor, fail-closed aqui também). */
+  /* Clipes extras conhecidos são baixados; chaves desconhecidas ficam sem fetch.
+     Packs de família são compartilhados, exceto emote_, que exige arquivo próprio. */
   const extraClips = [];
   const extraMap = manifest.animations.extra;
   if (extraMap !== undefined) {
@@ -226,9 +220,8 @@ async function resolveUncached(pin, fetchImpl, subtle) {
   catch (e) { fail('studio_manifest_invalid', 'JSON ilegível', e); }
   const plan = verifyManifest(manifest, pin);
 
-  /* Estados podem compartilhar um states.glb, extras podem compartilhar packs de família e
-     caminhos distintos podem ter bytes idênticos: cada CONTEÚDO (SHA-256) é buscado uma vez e
-     ganha uma única Blob URL, reaproveitada por todos os papéis que apontam para ele. */
+  /* Cada conteúdo SHA-256 é buscado uma única vez, mesmo quando estados/extras
+     compartilham states.glb ou packs de família. */
   const wanted = [...new Set([
     plan.model,
     ...STUDIO_CHARACTER_STATES.map((s) => plan.animations[s]),
@@ -260,10 +253,8 @@ async function resolveUncached(pin, fetchImpl, subtle) {
   const urls = new Map(settled.map((r) => r.value));
   const urlOf = (path) => urls.get(representantes.get(plan.files.get(path).sha256));
 
-  /* Famílias para carga preguiçosa do runtime: uma entrada por família cujas chaves vivem num
-     único CONTEÚDO compartilhado (loco|combat|ceremony no layout do conversor; caminhos
-     duplicados com o mesmo SHA contam como um só). Emotes ficam de fora (um arquivo por chave)
-     e seguem acessíveis por extraClipUrls. */
+  /* Packs de família compartilham um único conteúdo; emotes ficam de fora,
+     com uma URL por chave em extraClipUrls. */
   const families = new Map();
   for (const family of STUDIO_CLIP_FAMILIES) {
     if (family === 'emote') continue;
