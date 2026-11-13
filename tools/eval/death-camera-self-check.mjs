@@ -64,29 +64,29 @@ const MUTANTES = {
 };
 if (MUT && !Object.hasOwn(MUTANTES, MUT)) { console.error(`mutante desconhecido: ${MUT}\n${USAGE}`); process.exit(2); }
 const gameFile = path.resolve(opt.get('--game-module') || path.join(ROOT, 'public/js/game.js'));
-if (!existsSync(gameFile)) { console.error(`INFRA DC2 MODULO-AUSENTE ${gameFile}`); process.exit(3); }
+if (!existsSync(gameFile)) { console.error(`INFRA DC2 MODULO-AUSENTE ${gameFile}`); process.exit(78); }
 
 const parseFalhas = (txt) => [...new Set([...txt.matchAll(/^FALHA DC2 (\S+)/gm)].map((m) => m[1]))];
 
 if (MUT) {
   const nom = spawnSync(process.execPath, [SELF, `--game-module=${gameFile}`], { encoding: 'utf8' });
-  if (nom.error || nom.signal || nom.status === null) { console.error(`INFRA DC2 NOMINAL-ERRO ${nom.error || nom.signal}`); process.exit(3); }
+  if (nom.error || nom.signal || nom.status === null) { console.error(`INFRA DC2 NOMINAL-ERRO ${nom.error || nom.signal}`); process.exit(78); }
   if (nom.status !== 0) {
     console.error(`INFRA DC2 NOMINAL-NAO-VERDE exit=${nom.status} (o mutante só roda com o produto nominal GREEN)\n${nom.stdout}`);
-    process.exit(3);
+    process.exit(78);
   }
   const mutSrc = MUTANTES[MUT].aplicar(readFileSync(gameFile, 'utf8'));
-  if (mutSrc === null) { console.error('INFRA DC2 MUTANTE-NAO-CONSTRUIDO marcadores de _tpDeath ausentes'); process.exit(3); }
+  if (mutSrc === null) { console.error('INFRA DC2 MUTANTE-NAO-CONSTRUIDO marcadores de _tpDeath ausentes'); process.exit(78); }
   const tmp = path.join(path.dirname(gameFile), `.dc2-mutante-${process.pid}.js`);
   let varRun;
   try {
     writeFileSync(tmp, mutSrc);
     varRun = spawnSync(process.execPath, [SELF, `--game-module=${tmp}`], { encoding: 'utf8' });
   } finally { rmSync(tmp, { force: true }); }
-  if (varRun.status === 2 || varRun.status === 3) { console.error(`INFRA DC2 VARIANTE exit=${varRun.status}`); process.exit(3); }
+  if (varRun.status === 2 || varRun.status === 78) { console.error(`INFRA DC2 VARIANTE exit=${varRun.status}`); process.exit(78); }
   if (varRun.status === 0) { console.error(`MUTANTE ${MUT} SOBREVIVEU: nenhuma cláusula vermelha`); process.exit(1); }
   // RED semântico só existe com exit 1; qualquer outro status é infra, nunca detecção.
-  if (varRun.status !== 1) { console.error(`INFRA DC2 VARIANTE-STATUS exit=${varRun.status}`); process.exit(3); }
+  if (varRun.status !== 1) { console.error(`INFRA DC2 VARIANTE-STATUS exit=${varRun.status}`); process.exit(78); }
   const obtidas = parseFalhas(varRun.stdout || '');
   const esperadas = MUTANTES[MUT].falhas;
   const mesmas = obtidas.length === esperadas.length && obtidas.every((id) => esperadas.includes(id));
@@ -335,7 +335,7 @@ let infra = null;
 try { await main(); }
 catch (e) { infra = e; }
 finally { for (const g of games) { try { g.dispose && g.dispose(); } catch { /* descarte best-effort */ } } }
-if (infra) { console.error(`INFRA DC2 ${infra && infra.stack || infra}`); process.exit(3); }
+if (infra) { console.error(`INFRA DC2 ${infra && infra.stack || infra}`); process.exit(78); }
 
 for (const r of rows) console.log(`${r.pass ? 'PASSA' : 'FALHA'} DC2 ${r.id}${Object.keys(r.observed).length ? ' · ' + JSON.stringify(r.observed) : ''}`);
 const falhas = rows.filter((r) => !r.pass);

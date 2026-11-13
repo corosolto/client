@@ -54,7 +54,7 @@ os seis mutantes falham: `yaw80` (delta removido antes do mixer),
 produz witness com erro e rotação do Neck/Head no mesmo frame. Cada mutante morto
 imprime RED com exit0; sobrevivente sai1. CLI inválida, inclusive mutante vazio ou
 desconhecido, sai2. Falta de fonte/clipe, erro de import ou adaptação temporária
-ambígua sai3; infra não conta como mutante detectado. O autoteste também exercita
+ambígua sai78; infra não conta como mutante detectado. O autoteste também exercita
 argumento desconhecido e execução sem produto num diretório temporário vazio.
 
 ## Checkpoint histórico preparado antes da retirada do yaw

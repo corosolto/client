@@ -116,7 +116,7 @@ Nominal VERDE é pré-requisito: com `--mutar`, a régua se recusa a mutar se o 
 não estiver verde. Os nove controles antigos preservam seus corpos e conjuntos
 vermelhos. Os novos também perturbam posições internas, índices, visibilidade,
 drawRange e grupos da cena real, mantendo o envelope global e as matrizes das
-guardas. O snapshot de aplicação aborta (exit3) se esses AABBs, matrizes ou
+guardas. O snapshot de aplicação aborta (exit78) se esses AABBs, matrizes ou
 contagens estruturais mudarem; não é uma prova geral de equivalência física.
 O digest completo deve mudar antes de publicar o marcador de mutação aplicada.
 

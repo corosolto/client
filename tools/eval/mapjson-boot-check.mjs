@@ -71,7 +71,7 @@ try {
   g = bootGame('arena_json', { textures, ctf: true, bots: 4, seed: 12345 });
 } catch (e) {
   console.log(`BOOT VERMELHA · B1 bootGame lançou: ${e.message}`);
-  process.exit(3);
+  process.exit(1);
 }
 
 // B1 contrato de world
@@ -125,5 +125,5 @@ for (const f of falhas) console.log(`  BOOT VERMELHA · ${f}`);
 
 const sourceUnchanged=JSON.stringify(sourcePins())===JSON.stringify(sources);
 console.log('MAPJSON_BOOT_RESULT:'+JSON.stringify({schema:'mapjson-boot/1',mutant:MUT,sources,sourceUnchanged,mutation,rows}));
-if(!sourceUnchanged||updateError){console.error('infra: fonte alterada ou update interrompido');process.exit(3);}
+if(!sourceUnchanged||updateError){console.error('infra: fonte alterada ou update interrompido');process.exit(78);}
 process.exitCode=falhas.length?1:0;

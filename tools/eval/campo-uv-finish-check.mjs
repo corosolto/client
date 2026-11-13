@@ -106,7 +106,7 @@ const PERFIL_NUM = NUM_PERFIL[PERFIL_NOME];
 if (SELF_RASTER) {
   let Color;
   try { ({ Color } = await import(new URL('../../public/vendor/three.module.js', import.meta.url).href)); }
-  catch (e) { console.error('infraestrutura: import do vendor — ' + String(e?.message || e)); process.exit(3); }
+  catch (e) { console.error('infraestrutura: import do vendor — ' + String(e?.message || e)); process.exit(78); }
   const base = () => {
     const o = { blendColor: new Color(0, 0, 0) };
     for (const [k, tipo, alvo] of RASTER) if (tipo !== 'color') o[k] = tipo === 'null' ? null : alvo;
@@ -164,7 +164,7 @@ try {
   esperado = withBatentes(expectedForProfile(loadFixture(), PERFIL_NUM), PERFIL_NOME);
 } catch (e) {
   console.error(`infraestrutura: fixture/esperado — ${String(e?.message || e)}`);
-  process.exit(3);
+  process.exit(78);
 }
 const FIM_TRIS = esperado.counts.finish * 12;
 
@@ -173,9 +173,9 @@ const GUARD_TILE = 4, FIM_TILE = 2, TOL = 1e-5;
 
 let THREE, initTextures, seedRandom;
 try { ({ THREE, initTextures, seedRandom } = await import('./harness.mjs')); }
-catch (e) { console.error('infraestrutura: import do harness — ' + String(e?.message || e)); process.exit(3); }
+catch (e) { console.error('infraestrutura: import do harness — ' + String(e?.message || e)); process.exit(78); }
 if (typeof initTextures !== 'function' || typeof seedRandom !== 'function')
-  process.exit(console.error('infraestrutura: harness não expõe initTextures/seedRandom') || 3);
+  process.exit(console.error('infraestrutura: harness não expõe initTextures/seedRandom') || 78);
 
 async function sobe() {
   seedRandom(7717);   // mesma semente da fase 1: hash estrutural comparável entre processos
@@ -662,7 +662,7 @@ try {
   W2 = await sobe();
 } catch (e) {
   console.error(`infraestrutura: build não subiu — ${String(e?.message || e)}`);
-  process.exit(3);
+  process.exit(78);
 }
 
 const antes = { guards: guardsDe(W1).map((g) => g.matrixWorld.clone()), snap: snapEstrutural(W1) };
@@ -692,7 +692,7 @@ const nominalVerde = clausulas.every((c) => c.ok);
 // hash estrutural ANTES de qualquer mutação; default e --query=2 têm de dar o mesmo SHA
 let SHA_ESTRUTURAL;
 try { SHA_ESTRUTURAL = hashCena(W1); }
-catch (e) { console.error('infraestrutura: hash estrutural — ' + String(e?.message || e)); process.exit(3); }
+catch (e) { console.error('infraestrutura: hash estrutural — ' + String(e?.message || e)); process.exit(78); }
 console.log(`\nCAMPO-PERFIL ${JSON.stringify({ perfil: PERFIL_NOME, query: QUERY_LABEL, sha: SHA_ESTRUTURAL })}`);
 
 if (MUTANTE) {
@@ -702,7 +702,7 @@ if (MUTANTE) {
   }
   const gs = guardsDe(W1), fim = fimDe(W1)[0];
   const inv = cu8nom.inv;
-  const infra = (msg) => { console.error(`infraestrutura: ${msg}`); process.exit(3); };
+  const infra = (msg) => { console.error(`infraestrutura: ${msg}`); process.exit(78); };
   const raster = ['fim-raster-blend-zero', 'fim-raster-depth-never'].includes(MUTANTE);
   if (raster && (inv.fims.length !== 1 || inv.fims[0] !== fim || Array.isArray(fim.material)))
     infra('raster: alvo finish/material real não é único');
@@ -938,7 +938,7 @@ if (MUTANTE) {
   if (!antigo) for (const m of [...inv.fims, ...inv.stds]) m.geometry.computeBoundingBox();
   const intactas = gs.every((g, i) => g.matrixWorld.equals(antes.guards[i])) && JSON.stringify(snapEstrutural(W1)) === JSON.stringify(antes.snap);
   console.log(`  [mutante:${MUTANTE}] matrizes/AABBs/extremos intactos pós-mutação: ${intactas}`);
-  if (!intactas) { console.error('infraestrutura: mutante vazou para posição/escala — aborta'); process.exit(3); }
+  if (!intactas) { console.error('infraestrutura: mutante vazou para posição/escala — aborta'); process.exit(78); }
   if (hashCena(W1) === SHA_ESTRUTURAL) infra('mutante não alterou atributos/índices/material/lock/desenho reais');
   console.log(`CAMPO-MUTANTE ${JSON.stringify({ name: MUTANTE, aplicado: true, ...(alvoInfo ? { target: alvoInfo } : {}) })}`);
   const pos = avaliar(W1, `mut:${MUTANTE}`);

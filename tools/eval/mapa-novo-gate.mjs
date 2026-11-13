@@ -577,7 +577,7 @@ for (const id of ALVOS) {
 /* MUTANTE que mexe no mundo tem que ter APLICADO em algum mapa. */
 if (['grade-perfeita', 'teto-baixo', 'tudo-chapado'].includes(MUT)) {
   const tot = linhas.reduce((a, l) => a + (l.tocadosMut || 0), 0);
-  if (!tot) { console.error(`✗ MUTANTE NAO APLICOU: ${MUT} não tocou em nada.`); process.exit(3); }
+  if (!tot) { console.error(`✗ MUTANTE NAO APLICOU: ${MUT} não tocou em nada.`); process.exit(78); }
 }
 
 /* --------------------------- as cláusulas --------------------------- */

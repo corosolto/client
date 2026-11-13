@@ -188,8 +188,8 @@ const applyMutant = () => {
 };
 applyMutant();
 group = W.root.children.find((o) => o.userData?.propId === 'ferro_balcao');   // switch-ignorado cria o grupo DEPOIS
-if (fantasma) { console.error(`mutação ${mutante} NÃO APLICOU (fantasma) — aceitação não pode ser medida`); process.exit(3); }
-if (mutante && !applied) { console.error(`mutação ${mutante} não alterou o mundo — mutante não aplicou`); process.exit(3); }
+if (fantasma) { console.error(`mutação ${mutante} NÃO APLICOU (fantasma) — aceitação não pode ser medida`); process.exit(78); }
+if (mutante && !applied) { console.error(`mutação ${mutante} não alterou o mundo — mutante não aplicou`); process.exit(78); }
 if (mutante === 'prop-ausente') applied = !group;
 
 // -------- acceptance: o MESMO contrato mede baseline e mutantes --------

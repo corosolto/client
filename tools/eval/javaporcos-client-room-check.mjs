@@ -137,4 +137,4 @@ async function main(){
  rebind();
  console.log(JSON.stringify({schema:SCHEMA,role:'parent',status:'PASS',inputs,denominator:IDS.length,nominal,controls},null,2));
 }
-try{await main();}catch(error){console.error('INFRA room-check: '+String(error?.message||error).slice(0,250));process.exitCode=3;}
+try{await main();}catch(error){console.error('INFRA room-check: '+String(error?.message||error).slice(0,250));process.exitCode=78;}

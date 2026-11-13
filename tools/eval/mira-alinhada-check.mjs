@@ -70,18 +70,18 @@ if (!process.env.BASE) await new Promise((ok, falha) => { const s = net.createSe
 const servidor = process.env.BASE ? null : spawn(process.execPath, ['tools/eval/serve.mjs', String(PORTA)], { cwd: root, stdio: 'ignore' });
 process.on('exit', () => servidor?.kill());
 let pronto = false;
-servidor?.once('exit', (c) => { if (!pronto) { console.error(`serve.mjs saiu (${c}) antes de responder`); process.exit(3); } });
+servidor?.once('exit', (c) => { if (!pronto) { console.error(`serve.mjs saiu (${c}) antes de responder`); process.exit(78); } });
 for (let i = 0; i < 120 && !pronto; i++) {
   try { pronto = (await fetch(BASE)).ok; } catch { /* subindo */ }
   if (!pronto) await new Promise((r) => setTimeout(r, 500));
 }
-if (!pronto) { console.error(`infra: servidor não respondeu em ${BASE}`); process.exit(3); }
+if (!pronto) { console.error(`infra: servidor não respondeu em ${BASE}`); process.exit(78); }
 let browser;
 try {
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 } catch (e) {
   console.error(`infra: browser não subiu (${e.message})`);
-  process.exit(3);
+  process.exit(78);
 }
 
 const linhas = [];

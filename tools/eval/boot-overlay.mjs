@@ -1,4 +1,4 @@
-/* boot-overlay.mjs — helpers puros do overlay coerente do grafo local `public/js`. O gate (boot-orcamento-check.mjs) importa daqui; nada aqui toca browser nem disco além da leitura do grafo local. Contrato financeiro e taxonomia INFRA3 estão em docs/visual-consistency/BOOT-COHERENT-OVERLAY.md. */
+/* boot-overlay.mjs — helpers puros do overlay coerente do grafo local `public/js`. O gate (boot-orcamento-check.mjs) importa daqui; nada aqui toca browser nem disco além da leitura do grafo local. Contrato financeiro e taxonomia INFRA78 estão em docs/visual-consistency/BOOT-COHERENT-OVERLAY.md. */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 export const JS_EXCLUSOS = ['js/main.js', 'js/client-id.js', 'js/textures.js'];
 
 export class InfraError extends Error {
-  constructor(msg) { super(msg); this.code = 3; }
+  constructor(msg) { super(msg); this.code = 78; }
 }
 
 export function carregaModulosLocais(publicRoot) {
@@ -67,7 +67,7 @@ export function cargaOverlay(enc, payloadBytes) {
   return Math.max(validaEnc(enc), payloadBytes);
 }
 
-/* Trilha do request: erro de rede é INFRA3; pendência sem fim nem erro é legal
+/* Trilha do request: erro de rede é INFRA78; pendência sem fim nem erro é legal
    (termina depois do portão) e só fica registrada fora do ORC1. */
 export function confereTrilha(r) {
   if (r.erro) throw new InfraError(`request com erro: ${r.url} (${r.erro})`);
@@ -129,7 +129,7 @@ export function selfTest() {
     catch (e) { falhas.push(`${nome}: ${e.message}`); console.error(`FALHA  ${nome}: ${e.message}`); }
   };
   const eq = (a, b, msg = '') => { if (a !== b) throw new Error(`${msg} esperado ${b}, veio ${a}`); };
-  const lancaInfra = (fn) => { try { fn(); } catch (e) { if (e.code !== 3) throw new Error(`não foi INFRA3: ${e}`); return; } throw new Error('não lançou'); };
+  const lancaInfra = (fn) => { try { fn(); } catch (e) { if (e.code !== 78) throw new Error(`não foi INFRA78: ${e}`); return; } throw new Error('não lançou'); };
 
   t('cancelamento UI é estrito e prefixo não vira isenção',()=>{
     const r={url:'https://h/favicon.ico',recebidoResposta:123,recebidoChunks:456},e={canceled:true,errorText:'net::ERR_ABORTED',type:'Other'};
@@ -170,13 +170,13 @@ export function selfTest() {
     });
     eq(total, 200);
   });
-  t('encoded negativo/NaN/ausente e payload inválido são INFRA3', () => { for(const x of [-1,NaN,undefined]) lancaInfra(()=>cargaOverlay(x,10)); for(const x of [-1,NaN,undefined]) lancaInfra(()=>cargaOverlay(0,x)); });
+  t('encoded negativo/NaN/ausente e payload inválido são INFRA78', () => { for(const x of [-1,NaN,undefined]) lancaInfra(()=>cargaOverlay(x,10)); for(const x of [-1,NaN,undefined]) lancaInfra(()=>cargaOverlay(0,x)); });
   t('mutante exige cláusula causal e nenhuma falha alheia',()=>{
     eq(aceitaMutante('fauna-cedo',['ORC3']),true);eq(aceitaMutante('fauna-cedo',['ORC1','ORC3']),true);eq(aceitaMutante('cartaz-ansioso',['ORC2']),true);
     eq(aceitaMutante('cartaz-ansioso',['ORC1','ORC2']),true);
     for(const nome of ['fauna-cedo','cartaz-ansioso'])for(const falhas of [[],['pageerror'],['ORC1'],['READY'],['READY','ORC3'],['ORC2','ORC3'],['ORC1','ORC3','unknown'],['ORC3','ORC3']])eq(aceitaMutante(nome,falhas),false);
   });
-  t('trilha com erro de rede é INFRA3', () => lancaInfra(() => confereTrilha({ url: 'u', bytes: 1, fim: 5, erro: 'net::ERR_FAILED' })));
+  t('trilha com erro de rede é INFRA78', () => lancaInfra(() => confereTrilha({ url: 'u', bytes: 1, fim: 5, erro: 'net::ERR_FAILED' })));
   t('request pendente fora do portão fica registrada e fora do ORC1', () => {
     const reqs = [
       { url: 'https://h/js/a.js', bytes: 50, fim: 10, erro: null },

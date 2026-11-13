@@ -62,13 +62,13 @@ function main() {
   const nominal = run();
   if (!avaliarResultado(nominal, suite)) {
     console.error(`INFRA ${name}: nominal não mediu GREEN completo\n${(nominal.stdout || '').slice(-3000)}\n${(nominal.stderr || '').slice(-1000)}`);
-    process.exitCode = 3; return;
+    process.exitCode = 78; return;
   }
   for (const mutation of Object.keys(suite.mutations)) {
     const variant = run(mutation);
     if (!avaliarResultado(variant, suite, mutation)) {
       console.error(`REPROVA ${name}/${mutation}: status=${variant.status}; exige RED1 com cláusulas exatas\n${(variant.stdout || '').slice(-3000)}\n${(variant.stderr || '').slice(-1000)}`);
-      process.exitCode = variant.error || variant.signal ? 3 : variant.status === 0 || variant.status === 1 ? 1 : 3; return;
+      process.exitCode = variant.error || variant.signal ? 78 : variant.status === 0 || variant.status === 1 ? 1 : 78; return;
     }
     console.log(`PASSA ${name}/${mutation}: RED1 exato`);
   }
