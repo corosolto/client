@@ -13,6 +13,7 @@ export const LOADING_CHARACTER_IDS = Object.freeze({
   C: 'bonzo',
   F: 'mandrake',
   M: 'lobisomem',
+  'fora-do-ar': 'capitao-caveira',
 });
 
 export const LOADING_ACTIONS = Object.freeze([
