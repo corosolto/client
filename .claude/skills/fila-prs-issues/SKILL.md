@@ -104,7 +104,8 @@ git worktree add /tmp/corosolto-REPO-pr-NUMERO BRANCH
 # Branch que existe apenas no remoto:
 git worktree add --track -b BRANCH /tmp/corosolto-REPO-pr-NUMERO origin/BRANCH
 
-test "$(git -C /tmp/corosolto-REPO-pr-NUMERO rev-parse HEAD)" = "$REVIEWED_HEAD"
+test "$(git -C /tmp/corosolto-REPO-pr-NUMERO rev-parse HEAD)" = "$REVIEWED_HEAD" \
+  || { echo "worktree não aponta para o head revisado" >&2; exit 1; }
 ```
 
 Para PR de fork, use um remote próprio e preserve owner/branch ao empurrar. Se o remote já existir,
@@ -113,7 +114,8 @@ confirme primeiro que sua URL é exatamente a do fork:
 ```bash
 EXPECTED_URL=https://github.com/OWNER/REPO.git
 if git remote get-url OWNER >/dev/null 2>&1; then
-  test "$(git remote get-url OWNER)" = "$EXPECTED_URL"
+  test "$(git remote get-url OWNER)" = "$EXPECTED_URL" \
+    || { echo "remote OWNER aponta para outro repositório" >&2; exit 1; }
 else
   git remote add OWNER "$EXPECTED_URL"
 fi
@@ -133,7 +135,8 @@ Confirme os metadados sem substituir o SHA preservado:
 ```bash
 gh pr view NUMERO -R corosolto/REPO \
   --json headRefOid,headRefName,baseRefName,isDraft,labels,reviews
-test "$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)" = "$REVIEWED_HEAD"
+test "$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)" = "$REVIEWED_HEAD" \
+  || { echo "head mudou depois da captura" >&2; exit 1; }
 ```
 
 Siga `estragacodigo-loop` para ler separadamente reviews, review comments e threads GraphQL com
@@ -223,7 +226,8 @@ dispensa nenhum portão.
 
 ```bash
 CURRENT_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)
-test "$CURRENT_HEAD" = "$REVIEWED_HEAD"
+test "$CURRENT_HEAD" = "$REVIEWED_HEAD" \
+  || { echo "head atual difere do SHA revisado" >&2; exit 1; }
 gh pr merge NUMERO -R corosolto/REPO --merge --match-head-commit "$REVIEWED_HEAD"
 ```
 
