@@ -1,0 +1,116 @@
+/* Passe "Sessão da Treta": tela (tp/passe.js), aba do lobby e anúncio (passe-anuncio.js).
+   Só tokens da Treta Pop; desktop mostra a trilha inteira na largura, celular deitado rola. */
+.tp-lobby-aba[hidden]{display:none}
+
+.tp-passe{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;box-sizing:border-box;
+  background:radial-gradient(900px 480px at 85% 0%,var(--tp-palco-musgo) 0%,transparent 70%),linear-gradient(180deg,var(--tp-fundo-2),var(--tp-asfalto));
+  color:var(--tp-tinta-1);font:500 var(--tp-fs-ui)/1.3 var(--tp-ui);overflow:auto;overscroll-behavior:contain}
+.tp-passe[open]{display:flex;flex-direction:column}
+.tp-passe::backdrop{background:var(--tp-asfalto)}
+.tp-passe__cab{display:flex;align-items:center;gap:16px;padding:20px 32px 10px}
+.tp-passe__titulos{display:flex;flex-direction:column;gap:6px;margin-right:auto;min-width:0}
+.tp-passe__titulo{margin:0;font-size:var(--tp-fs-tela);color:var(--tp-tinta-1)}
+.tp-passe__fim:empty{display:none}
+.tp-passe__fechar{flex:none;width:44px;height:44px;border-radius:8px;border:1px solid var(--tp-borda-forte);background:rgba(255,255,255,.06);
+  color:var(--tp-tinta-1);font:700 18px/1 var(--tp-ui);cursor:pointer}
+.tp-passe__fechar:focus-visible{outline:2px solid var(--tp-tinta-1);outline-offset:2px}
+.tp-passe__aviso{margin:0 32px;color:var(--tp-ambar);font-weight:700}
+.tp-passe__aviso:empty{display:none}
+.tp-passe__corpo{display:flex;flex-direction:column;gap:16px;padding:8px 32px 28px}
+.tp-passe__vazio{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:40px 0;color:var(--tp-tinta-2)}
+
+.tp-passe__progresso{display:flex;align-items:center;flex-wrap:wrap;gap:16px 24px;padding:14px 20px;border-radius:10px;background:var(--tp-painel);border:1px solid var(--tp-borda)}
+.tp-passe__nivel{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:84px}
+.tp-passe__nivel-n{font-size:clamp(40px,4.4vw,60px);color:var(--tp-lima)}
+.tp-passe__xp{flex:1 1 280px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.tp-passe__barra{height:14px;border-radius:7px}
+.tp-passe__xp-legenda{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;color:var(--tp-tinta-2);font-size:14px}
+.tp-passe__boost{background:var(--tp-elevado);color:var(--tp-ambar);letter-spacing:.04em}
+.tp-passe__boost svg{width:16px;height:16px;fill:currentColor}
+.tp-passe__resgatar,.tp-passe__entrar{font-size:24px;padding:12px 28px}
+.tp-passe__conta{margin:0;color:var(--tp-tinta-2)}
+
+.tp-passe__niveis{display:flex;gap:12px;margin:0;padding:2px 2px 12px;list-style:none;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:thin}
+.tp-passe-nivel{flex:none;display:flex;flex-direction:column;gap:10px;width:216px;padding:12px;box-sizing:border-box;border-radius:10px;
+  background:var(--tp-painel);border:1px solid var(--tp-borda);scroll-snap-align:start}
+.tp-passe-nivel[data-estado="resgatavel"]{border-color:var(--tp-lima);box-shadow:inset 0 0 0 1px var(--tp-lima)}
+.tp-passe-nivel[data-estado="resgatado"]{opacity:.7}
+.tp-passe-nivel__cab{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.tp-passe-nivel__n{font-size:var(--tp-fs-painel)}
+.tp-passe-nivel__xp{color:var(--tp-tinta-3);font-size:12px}
+.tp-passe-nivel__premios{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0;padding:0;list-style:none}
+.tp-passe-premio{grid-column:1/-1;display:flex;align-items:center;gap:8px;min-width:0;padding:5px 8px;border-radius:6px;background:rgba(255,255,255,.04);font-size:13px}
+.tp-passe-premio--personagem{grid-column:auto;flex-direction:column;align-items:stretch;gap:0;padding:0;overflow:hidden}
+.tp-passe-premio__retrato{display:grid;place-items:center;aspect-ratio:1;overflow:hidden;background:linear-gradient(160deg,var(--tp-elevado),var(--tp-asfalto))}
+.tp-passe-premio__retrato img{display:block;width:100%;height:100%;object-fit:cover}
+.tp-passe-premio__iniciais{font-size:30px;color:var(--tp-tinta-3)}
+.tp-passe-premio__nome{padding:6px 6px 0;font-weight:700;line-height:1.1;overflow-wrap:anywhere}
+.tp-passe-premio__tipo{padding:2px 6px 6px;color:var(--tp-tinta-3);font-size:11px;letter-spacing:.08em}
+.tp-passe-premio__icone{flex:none;display:grid;place-items:center;width:28px;height:22px}
+.tp-passe-premio__icone img{width:24px;height:24px;object-fit:contain}
+.tp-passe-premio__icone svg{width:28px;height:auto;fill:var(--tp-tinta-2)}
+.tp-passe-premio--boost .tp-passe-premio__icone svg{width:18px;fill:var(--tp-ganho)}
+.tp-passe-premio__valor{font-size:13px}
+.tp-passe-premio--moeda .tp-passe-premio__valor{color:var(--tp-ambar)}
+/* Skin de arma: pôster 960×540 com a arma no centro (420 px de largura em todas as 15). Cover num
+   quadro 2:1 e escala 1,6 mostram o miolo 600×300: a arma inteira, sem o título e o rodapé de revisão. */
+.tp-passe-premio--poster{flex-direction:column;align-items:stretch;gap:0;padding:0;overflow:hidden}
+.tp-passe-premio__poster{display:block;aspect-ratio:2/1;overflow:hidden;background:var(--tp-asfalto)}
+.tp-passe-premio__poster img{display:block;width:100%;height:100%;object-fit:cover;transform:scale(1.6)}
+.tp-passe-premio__legenda{display:flex;flex-direction:column;min-width:0}
+.tp-passe-premio--arma:not(.tp-passe-premio--poster) .tp-passe-premio__legenda>span{padding:0}
+.tp-passe-nivel__pe{display:flex;align-items:center;min-height:40px;margin-top:auto}
+.tp-passe-nivel__resgatar{width:100%;min-height:40px;border-radius:6px;background:var(--tp-lima);color:var(--tp-lima-tinta);font:800 15px/1 var(--tp-ui);letter-spacing:.06em}
+.tp-passe-nivel__selo{color:var(--tp-ganho);font:800 13px/1 var(--tp-ui);letter-spacing:.1em}
+.tp-passe-nivel__trava{display:flex;align-items:center;gap:6px;color:var(--tp-tinta-3);font-size:13px}
+.tp-passe-nivel__trava svg{flex:none;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}
+
+.tp-passe__missoes{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.tp-passe-missoes__grupo{padding:14px 16px;border-radius:10px;background:var(--tp-painel);border:1px solid var(--tp-borda)}
+.tp-passe-missoes__titulo{margin:0 0 10px}
+.tp-passe-missoes__titulo small{font-weight:500;letter-spacing:0;text-transform:none}
+.tp-passe-missoes__lista{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.tp-passe-missao{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px}
+.tp-passe-missao__topo{grid-column:1/-1;display:flex;justify-content:space-between;gap:8px}
+.tp-passe-missao__nome{font-weight:700}
+.tp-passe-missao__premio{color:var(--tp-ambar);font-size:13px;white-space:nowrap}
+.tp-passe-missao__progresso{color:var(--tp-tinta-3);font-size:12px}
+.tp-passe-missao[data-feita] .tp-passe-missao__progresso{color:var(--tp-ganho)}
+.tp-passe__convites{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0;padding:12px 16px;border-radius:10px;
+  background:var(--tp-painel);border:1px solid var(--tp-borda);color:var(--tp-tinta-2)}
+
+/* Celular deitado e telas estreitas: tudo compacto, a trilha rola na horizontal e a tela na vertical. */
+@media (max-height:560px),(max-width:760px){
+  .tp-passe__cab{gap:10px;padding:8px 16px 4px}
+  .tp-passe__titulo{font-size:24px}
+  .tp-passe__aviso{margin:0 16px}
+  .tp-passe__corpo{gap:10px;padding:4px 16px 16px}
+  .tp-passe__progresso{gap:8px 14px;padding:8px 12px}
+  .tp-passe__nivel{min-width:56px}
+  .tp-passe__nivel-n{font-size:34px}
+  .tp-passe__resgatar,.tp-passe__entrar{font-size:18px;padding:10px 18px}
+  .tp-passe-nivel{width:176px;gap:8px;padding:8px}
+  .tp-passe-premio__iniciais{font-size:24px}
+  .tp-passe__missoes{grid-template-columns:1fr;gap:10px}
+}
+
+.tp-passe-anuncio{position:fixed;inset:0;width:min(880px,92vw);max-height:92dvh;margin:auto;padding:0;overflow:auto;box-sizing:border-box;
+  border:1px solid var(--tp-borda-forte);border-radius:12px;background:var(--tp-painel);color:var(--tp-tinta-1);font:500 15px/1.4 var(--tp-ui);
+  box-shadow:0 24px 120px rgba(0,0,0,.8)}
+.tp-passe-anuncio::backdrop{background:rgba(9,7,4,.86)}
+.tp-passe-anuncio__arte{display:block;width:100%;aspect-ratio:16/7;object-fit:cover}
+.tp-passe-anuncio__corpo{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:clamp(18px,3vw,32px)}
+.tp-passe-anuncio__titulo{margin:0;font-size:clamp(34px,5vw,56px)}
+.tp-passe-anuncio__texto{margin:0;max-width:640px;font-size:16px;color:var(--tp-tinta-2)}
+.tp-passe-anuncio__nota{margin:0;color:var(--tp-ambar);font-weight:700}
+.tp-passe-anuncio__acoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
+.tp-passe-anuncio__cta{font-size:26px;padding:14px 32px}
+@media (max-height:560px){
+  .tp-passe-anuncio{max-height:96dvh}
+  .tp-passe-anuncio__arte{aspect-ratio:16/4}
+  .tp-passe-anuncio__corpo{gap:8px;padding:12px 18px}
+  .tp-passe-anuncio__titulo{font-size:30px}
+  .tp-passe-anuncio__texto{font-size:14px}
+  .tp-passe-anuncio__cta{font-size:18px;padding:10px 20px}
+  .tp-passe-anuncio__acoes .tp-btn--fantasma{padding:8px 16px}
+}

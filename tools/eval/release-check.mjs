@@ -15,8 +15,10 @@
  * RLS8: o push do bot não cancela o run que ainda publica o Release e avisa o backend.
  * RLS9: TREM DE RELEASE (13/10/2026). Produção só builda em commit `chore(release):`
  *       (vercel.json → ignoreCommand → scripts/ci/vercel-ignore.sh, executado aqui de
- *       verdade com as três mensagens que importam). 126 releases em 130 merges era o motor
- *       do churn de bot; desde 14/10 o push na main só vira release se for de lote (RLS13/14).
+ *       verdade com as mensagens que importam). Desde 10/11 preview de PR NÃO builda
+ *       (Cloudflare assumiu); staging/main/lote-* seguem buildando. 126 releases em 130
+ *       merges era o motor do churn de bot; desde 14/10 o push na main só vira release se
+ *       for de lote (RLS13/14).
  *
  * RLS10: GERADO VELHO NÃO TRAVA O TREM (13/10/2026, c2ca685). Dois PRs testados sobre bases
  *       diferentes mesclam limpo e deixam contagem velha na main; com o DOCS1 reprovando o push,
@@ -140,15 +142,16 @@ let concorrenciaRelease = validaConcorrenciaRelease();
 
 /* RLS9 — o filtro roda de verdade: o que importa é o código de saída que a Vercel vê. */
 let scriptIgnora = (() => { try { return readFileSync('scripts/ci/vercel-ignore.sh', 'utf8'); } catch { return ''; } })();
-const saidaIgnora = (env, msg) => spawnSync('bash', ['-c', scriptIgnora], {
-  env: { PATH: process.env.PATH, VERCEL_ENV: env, VERCEL_GIT_COMMIT_MESSAGE: msg }, encoding: 'utf8',
+const saidaIgnora = (env, msg, ref = '') => spawnSync('bash', ['-c', scriptIgnora], {
+  env: { PATH: process.env.PATH, VERCEL_ENV: env, VERCEL_GIT_COMMIT_MESSAGE: msg, VERCEL_GIT_COMMIT_REF: ref }, encoding: 'utf8',
 }).status;
 const validaTrem = () => {
   const comandoOk = vercel.ignoreCommand === 'bash scripts/ci/vercel-ignore.sh';
   const filtroOk = scriptIgnora !== ''
     && saidaIgnora('production', 'chore(release): v9.9.9-alpha.1') === 1   // release builda
     && saidaIgnora('production', 'feat: qualquer merge') === 0             // merge espera o trem
-    && saidaIgnora('preview', 'feat: qualquer PR') === 1;                  // preview não muda
+    && saidaIgnora('preview', 'feat: qualquer PR') === 0                   // preview de PR é Cloudflare (fase 2)
+    && saidaIgnora('preview', 'feat: qualquer PR', 'staging') === 1;       // staging/main/lote seguem buildando
   const esperaVerde = /gh run list[^\n]*--workflow ci\.yml/.test(workflowRelease) && /needs: embarque/.test(workflowRelease);
   return comandoOk && filtroOk && esperaVerde;
 };
@@ -160,14 +163,28 @@ const SO_PR = "if: github.event_name != 'push'";
 /* Igualdade EXATA, não "contém": `if: false && startsWith(...)` contém o startsWith e
    desliga a conferência de vez; sem o `event_name == 'push'` o job roda onde não deve. */
 const AUTORIA_SO_RELEASE = "if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(release):')";
+const AUTORIA_JOB_SO_RELEASE = "if: always() && github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(release):')";
 const validaGerados = () => {
-  const passo = (script) => new RegExp(`- name: [^\\n]+\\n\\s+(if: [^\\n]+)\\n\\s+run: npm run ${script}\\n`).exec(workflowCi)?.[1];
-  const autoria = /^  autoria-na-main:\n    (if: [^\n]+)$/m.exec(workflowCi)?.[1] || '';
+  const linhas = workflowCi.split('\n');
+  const passo = (script) => {
+    for (let i = 0; i < linhas.length - 1; i++) {
+      if (!linhas[i].trimStart().startsWith('- name:')) continue;
+      const condicao = linhas[i + 1]?.trim();
+      if (!condicao?.startsWith('if:')) continue;
+      for (let j = i + 2; j < linhas.length; j++) {
+        const atual = linhas[j].trim();
+        if (atual === `run: npm run ${script}`) return condicao;
+        if (atual.startsWith('run:') || atual.startsWith('- name:')) break;
+      }
+    }
+    return undefined;
+  };
+  const autoria = /^  autoria-na-main:\n(?:    [^\n]+\n)*?    (if: [^\n]+)$/m.exec(workflowCi)?.[1] || '';
   return passo('docs:check') === SO_PR
     && passo('arch:check') === SO_PR
     && passo('docs:check:release') === AUTORIA_SO_RELEASE
     && passo('arch:check:release') === AUTORIA_SO_RELEASE
-    && autoria === AUTORIA_SO_RELEASE
+    && autoria === AUTORIA_JOB_SO_RELEASE
     && /node tools\/gen-docs\.mjs --release\b/.test(workflowRelease)
     && /node tools\/gen-arch\.mjs --release\b/.test(workflowRelease);
 };

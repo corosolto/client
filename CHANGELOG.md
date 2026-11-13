@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.141`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.145`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -26,6 +26,9 @@
 ## Unreleased — 2026-11-04
 
 ### Added
+- Installed PWA now opens and starts single-player without a connection. A root service worker keeps the game shell, the default Praça dos Três Poderes match and the same-origin resources loaded by the current installation; successful later visits refresh the cache and add maps/assets the player uses. Multiplayer, account, ranking and other server-backed features remain online-only.
+- Pacotes do Studio em produção pelo R2: em produção e preview o resolvedor busca os pacotes fixados em `https://assets.corosolto.com.br/packs/<kind>/<id>/<versão>/` (`public/js/data/pack-origin.js`; host local segue em `/packs/` com `STUDIO_PACK_ROOT`, `?packorigin=cdn|local` força), com a mesma verificação de SHA-256; a CSP lista a origem no `connect-src`. `npm run publish:packs` (`scripts/publish-studio-packs.mjs`) sobe só pacote fixado e íntegro, com `Content-Type` pela extensão, `Cache-Control` imutável, `If-None-Match: *`, pula o que já está igual, recusa sobrescrever conteúdo diferente, tem `--dry-run` e confere cada objeto pela origem pública (SHA-256, bytes, MIME, cache, CORS). Réguas: `eval:studiochar` R19 (4 mutantes novos: origem errada, origem ignorada, sempre CDN, CSP sem origem) e `eval:packpublish` (13 mutantes), as duas no pr-fast.
+- Passe grátis "Sessão da Treta" (temporada 1, facção Fora do Ar): aba PASSE no lobby (só aparece com `GET /api/passe` respondendo), tela com os 15 níveis e as 5 recompensas de cada um, barra de XP, missões diárias e semanais, convites, bônus de XP ativo e RESGATAR; anúncio uma vez por versão do passe (visitante vai para o convite de login, que ganhou `abrirLoginPrompt`). Personagem com `passe:{season, level}` em `characters.js` aparece com cadeado e "Nível N" e só é escolhido quando `unlocked.characters` do servidor o lista; a partida offline e o pedido de personagem no multiplayer passam pela mesma trava. O client só manda `{action:'claim', level}` e, com consentimento de medição (`window.__csPrivacy`), o funil do painel `{action:'analytics', event:'modal_view'|'open'}`. `/api/passe` entra no proxy em rollout (404 do backend vira 503). Réguas: `eval:passe` (pr-fast + `check:fast`, 20 mutantes; os caminhos de main.js rodam num vm) e `tools/eval/passe-browser.mjs` (lobby real com o mock `tools/eval/passe-mock.mjs`; `PASSE_MOCK=conta|visitante` no `serve.mjs` para dev local).
 - `/app`: a light landing for visitors who open the game inside an app's browser (TikTok, Instagram, Facebook, LinkedIn, X). On 08/11 the TikTok paid campaign sent 517 visits in one hour; 72% loaded the 8 MB game inside the WebView and 85% left in under a minute without entering. Both edges (`middleware.js` on Vercel, `src/middleware.ts` on Workers) now answer the home with a 302 to `/app` when `server-traffic.mjs` classifies the user agent as `app/*` (`desvioParaApp`): only the home, query kept intact, `?jogo=1` and `?sala=` pass through, the redirected request is not counted (the landing is). The page weighs about 1.4 MB (6 s vertical gameplay clip + poster from `launch-media/2026-10-18-tricolor-morumbi`), is static and `noindex`, puts both calls above the fold and rewrites every link to the home with the visitor's `utm_*` plus `jogo=1`; ABRIR NO NAVEGADOR tries `intent://` on Android and `x-safari-https://` on iOS, with the in-app menu tip after 1.8 s if nothing opened. Origem shows it as landing `/app` under the app agents; Campanhas keeps attribution by source. `server-traffic-check` gains the redirect matrix (home, query, `jogo=1`, `sala`, deep route, open Chrome, preview bot, HEAD, foreign host) and the Vercel middleware 302 case; mutants "sem UA" and "loop jogo=1" die.
 - itch.io listing package: `tools/portal/itch/index.html` is a one-file HTML upload that embeds `https://www.corosolto.com.br/?lang=en&utm_source=itch&utm_medium=portal` in a full-viewport iframe (`allow="pointer-lock; fullscreen; autoplay; gamepad"`). itch serves uploads from `html-classic.itch.zone` inside `*.itch.io`, and `frame-ancestors` checks every ancestor, so `https://*.itch.zone` joins the CSP in `vercel.json` (only `*.itch.io` was listed; the wrapper rendered a black frame). `eval:portalembed` (pr-fast + `check:fast`) ties each `tools/portal/*` wrapper to the CSP list, the site origin, the UTM and the pointer-lock permission, with 4 mutants. Publishing on itch stays with the owner (`tools/portal/README.md`).
 - `/en` is the English home the crawler can read: the real home (`/`) is the game and its published HTML is PT-only (the EN layer only exists after boot). `/en` carries title, description, FAQ (`HOME_FAQ_EN`), the links to every EN twin plus `/docs/en/`, a `WebPage` node pointing at the home's `VideoGame`, and the PLAY CTA at `/?lang=en`. Paired with `/` in `src/lib/i18n-pairs.ts`, so hreflang `en` + `og:locale:alternate` now appear on the home (index.astro, own `<head>`), `/en` is in the sitemap with home weight, in the AEO index and in `llms.txt`. Pinned by `eval:game-pages` (home → `/en`, `/en` → home, `inLanguage`, EN links, FAQ visible == JSON-LD; 4 new mutants), `eval:seo` and `canonical-host-check` now also read `/en`.
@@ -40,10 +43,11 @@
 - Escort recovery includes physical path replanning, stable formation slots and online-authoritative respawn waves.
 
 ### Changed
+- Preview de PR não gasta mais Vercel: `scripts/ci/vercel-ignore.sh` sai 0 para toda branch de PR (o preview é o `*.workers.dev` do `cf-preview.yml`); `staging`, `main`, `lote-*` e `*/lote-*` continuam buildando sempre e produção segue só no `chore(release):`. A régua `eval:vercelignore` foi reescrita para o contrato novo (mutantes `preview-pr-builda`, `staging-pulado`, `release-pulado`). `preview-build.yml` passou a `workflow_dispatch` (input `pr_number`, emergência); `preview-deploy.yml` segue em `workflow_run` publicando `--prebuilt` só quando alguém despacha o build — nenhum PR dispara mais esse par. A PRV1 do `workflow_security_check.py` proíbe o build de voltar a disparar sozinho por `pull_request`/`push`/`schedule` (mutante novo `compila-volta-pr`) e mantém a proibição de `secrets.`; DG3/DG6 e o concurrency-check prendem o par como estava; o bot do `preview-bot.yml` e o label `preview-autorizado` não prometem mais URL da Vercel. Fatura esperada: Build CPU Minutes ≈ builds de release + staging/main/lote (~3/semana); Fast Origin Transfer só muda na virada (fase 4).
 - Bloqueios do release #1251: respostas do smoke passam a ser classificadas pelo hostname antes da lista de terceiros, impedindo que `/img/facebook-*` ou `?origem=twitter.com` esconda 404/500 do próprio host; `eval:cfparidade` só aceita mutante com exit 1; `eval:bots-perf` entra em `operacao-flavio-comportamento` e a prova browser fica no Chrome com GPU real, pois o runner `portao-controles` usa SwiftShader (`degraded=true`, 3,5 s/quadro), sem novos jobs nem falsa cobertura de GPU. `cf-preview.yml` compila o PR via `pull_request` sem segredos e entrega somente o artefato; `cf-preview-deploy.yml` reage ao `workflow_run`, carrega a configuração do branch base e publica com Wrangler pinado, sem executar código do PR com tokens Cloudflare/GitHub. Sticky e smoke exigem `github-actions[bot]` e SHA+URL no mesmo comentário; `tools/cf/` passa a disparar preview e o job `skip` declara `runs-on: ubuntu-latest` para o workflow voltar a iniciar.
 - Compartilhamento: links de convite, perfil, clã e botões sociais usam `https://corosol.to` com seus UTMs; canonical, `og:url`, hreflang, sitemap e JSON-LD continuam em `https://www.corosolto.com.br`. A régua `eval:shareorigin` mede o build e morde duas mutações.
 - Pre-push and CI gates stop burning an hour per push on staging branches. `selecao-pre-push.mjs` now diffs a new branch against the nearest of `origin/main` and `origin/staging` (a branch cut from staging was compared with main and dragged 691 files into the diff, forcing the full `check:deploy`); `.agents/`, `.claude/`, `plans/`, `launch-media/` and any `.md` select only `core`; `src/lib/server-traffic.mjs` and its check select `network`; `tests/eval-suites.test.mjs` is transversal like the selector. `smoke-cf` (Cloudflare preview, #1271) failed on language because the GitHub runner sits in the US and `cf-ipcountry=US` turns the home into EN while the specs assert PT copy: `playwright.smoke.config.mjs` seeds `cs_lang=pt` through `storageState` (and `chat-sala.spec.js` on its own page), proven against a forged US geo. `scripts/ci/cf_preview_comment.py` gains `--selftest` (FX2) with the comment choice extracted into a pure `escolher`. `privacy-runtime.js` header comment back within the 2-line cap.
-- CI dos contratos visuais: os 17 comandos passam a seis jobs paralelos (`contratos-visuais-personagens-camera`, `contratos-visuais-ferro-balcao`, `contratos-visuais-mapas-materiais`, `contratos-visuais-visual-map`, `contratos-visuais-campo-uv`, `contratos-visuais-gameplay-grafite`), cada um com JSON e timeout próprios. `eval:portaointeiro` cobre os aliases na ordem dos shards, rejeita perda/duplicata e preserva a duplicação já contratual de `eval:movimento-fluidez` entre AK/mantle.
+- CI dos contratos visuais: os 17 comandos passam a seis jobs paralelos (`contratos-visuais-personagens-camera`, `contratos-visuais-ferro-balcao`, `contratos-visuais-mapas-materiais`, `contratos-visuais-visual-map`, `contratos-visuais-campo-uv`, `contratos-visuais-gameplay-grafite`), cada um com JSON e timeout próprios. `eval:portaointeiro` cobre os aliases na ordem dos shards, rejeita perda/duplicata e preserva a duplicação já contratual de `eval:movimento-fluidez` entre AK/mantle. Personagens/câmera usa três shards balanceados pelo manifesto diário: produtor e consumidor compartilham a chave `eval-durations-v1-<hash do conteúdo>` e o prefixo estável `eval-durations-v1-`; manifesto ausente, vencido ou inválido reprova o runner, sem retorno silencioso à execução completa.
 - Equipamento TP: `eval:tp-cosmetic-source` sai de `equipamento-tp-corpo` para `equipamento-tp-origem`, sem criar jobs ou alterar aliases. Na run 42665557931, corpo tinha 422,4 s (identity 321,5 + cosmetic 100,9) e origem 294,8 s; a distribuição projeta ~321,5 s e ~395,7 s, reduzindo o maior job sem perder cobertura. PI4 agora prende os quatro aliases a esses dois jobs e rejeita perda/duplicação; `npm ci` ganha `id: deps` e guarda nos dois jobs, impedindo execução após setup falho.
 - Operação Flávio: o alias público `eval:operacao-flavio` continua sequencial, agora composto por `core`, `collider` completo, `menu`, `online`, `integracao`, `comportamento` e `escolta`; no CI os 50 mutantes de collider são divididos em quatro shards disjuntos (13/13/13/12), com todos esses cenários em jobs próprios e o `build` agregando todos. O seletor real falha fechado, expõe o plano JSON e tem união, ordem e interseção vazia verificadas; a cobertura de reset/duração/relógio/permissões/NPC/anúncios permanece no CI. Integração reúne formulário, prova de integração, recuperação e pressão; comportamento reúne roles e cobertura; escolta reúne flicker, VIP e pickups.
 - Pre-push: `package.json` alterado é comparado semanticamente entre os blobs do range; mudanças em scripts de `check:fast`/`check:deploy` executam só o núcleo e os passos afetados. Workflows com mapa estático validado seguem a mesma seleção; locks, dependências, metadados, agregadores, remoções, scripts desconhecidos e diffs indisponíveis continuam forçando `check:deploy`.
@@ -61,7 +65,16 @@
 - `tools/rig-from-donor.mjs` now fits the elbow and wrist joints to the mesh instead of copying the `mst` skeleton verbatim. On the Creepypasta Season Mint meshes the arm ran ~10 cm above the donor joint line and the forearm bent forward, leaving the hand flesh far from `LeftHand`/`RightHand` (capitao-caveira: 23 cm); proximity weights then split the hand across Arm/ForeArm/Hand and the clips rotated it around a pivot outside the flesh, so both hands rendered as flat stretched shards (capitao-caveira: hand edges stretching 86× in walkfire, 36× in death). The fit moves only translations (donor rest rotations stay, so `retarget-glb` and the shared clips still apply) and recomputes the IBM of the moved subtree only; `AJUSTE_JUNTAS=0` reproduces the old output byte for byte. 12/37 of the batch failed before; after, the 34 meshes with hand flesh are ≤ 1.6×, and the 3 short-armed mascots (no flesh at the wrist) are reported as not measurable and still tear with the human skeleton. Roster GLBs in `public/` were not re-rigged. Guarded by `eval:rigmaos` (CPU skinning with the 11 shared clips over a synthetic mesh with the pilot's offsets; mutants `transplante-cru`, `ibm-velha`), in CI and `check:fast`.
 - A régua RM4 deixa de manter exceções privadas: os sete GLBs legados acima de 2,5× ficam vinculados ao advisory `RIG-RM4-LEGACY-20261108`, registrado no ratchet comum `tools/eval/KNOWN-RED.json` com plano #1124 e tetos congelados. Modelos sem aresta pesada são reportados como não mensuráveis, sem mascarar falhas mensuráveis; os binários públicos e seus manifestos de identidade permanecem intactos.
 - O parser de justificativas do ratchet aceita `because` além de `porque`, mantendo o corpo dos PRs compatível com o gate English sem perder a exigência de motivo explícito.
+- Deep-link into a match (`?sala=`, `?auto=`) no longer opens mute: `Sfx.ensure()` called `resume()` outside a user gesture, the promise rejected silently and the context stayed `suspended` until some later sound happened inside a gesture. `_resume()` handles the rejection and `unlockOnGesture()` (capturing `pointerdown`/`keydown`) resumes on the first gesture and unbinds itself; `main.js` arms it right after creating the Sfx. Pinned by `eval:audiounlock` (UNL1–4; mutants `sem-destrave`, `gesto-vazio`).
+- The Werewolf's growls stay with the Werewolf: `_voicePool` drops the in-game takes of speechless characters (`SFX_ONLY_VOICE_IDS`) from the generic faction pool, so Caipora (no voice yet) and `sfx.voice('M')` stop inheriting howls once the private manifest structures `characterVoice.lobisomem.kill`. VOZ10 + mutant `lobo-no-pool` in `eval:mp-voz-personagem`.
+- Gates that had fallen behind the game: `audio-voice-mix-check` MIX11 re-anchored on the MP per-character routing (the old chain only exists in single-player), MIX15 on the 5-track menu selection of 04/10, three surviving mutants re-anchored and MIX9d added (own take beats the pool in a faction without rollback); `netcode-check` fixture gained `protocolVersion: 8` (the whole gate died with `protocolo_incompativel`); `character-voice-contract-check` reports local-only `specs/`/`plans/` as NOTA instead of failing outside the owner's machine and VOICE5 reads the real installer (`fab-game-local.mjs`).
+- `.githooks/pre-push` now serializes itself per machine (atomic `mkdir` lock with owner pid, stale lock reclaimed, 40 min max wait): three concurrent `check:deploy` runs pushed the load to 76 and none finished within 30 min.
+- Production crash recovery: the match result no longer treats every objective as Javaporcos territory (Operação Flávio has no `regras.times`); map downloads retry once after transient module-network failures and failed map promises can be attempted again; optional Javaporcos audio retries its fetch without escalating the fallback to `console.error`; menu scenery failures release the splash instead of aborting boot; and `main.js`/`site-links.js` no longer require top-level `await`, restoring module parsing on Safari 14-era WebViews.
+- Browsers and embedded WebViews that disallow WebAssembly now keep the Meshopt decoder rejection inside the existing compressed-model fallback instead of emitting an actionable global `WebAssembly.instantiate()` rejection.
+- Slow menu scenery no longer turns the 20-second splash failsafe into `boot-watchdog`: the accepted entry gesture releases module sequencing while the optional 3D arena continues loading, and the watchdog recognizes that handoff without masking a genuinely unresponsive boot.
 - Revisão atual do release #1251: o artefato do PR é extraído em `dist`, isolado do checkout confiável usado por Wrangler e pelo comentário sticky; o smoke Cloudflare por `workflow_dispatch` não consulta mais sticky de PR e falha imediatamente se `BASE_URL` estiver vazio. WFS cobre os três caminhos com mutantes; E05 ganhou DOM completo e timeout, confirmando que o retry de `guest_invalid` termina sem alterar o login.
+- Pre-push no longer falls back to the full `check:deploy` when a change touches the two edge entry points: `middleware.js` (Vercel proxy root) and `src/middleware.ts` (Workers) now select `core + network` in `selecao-pre-push.mjs` (the landing PR #1291 burned a full local run because of this). Covered by a new case in `eval-suites.test.mjs`.
+- Online drops with network ID 0 work end to end (finding by estraga-codigo on #1291, minor). Server event IDs are uint32 and 0 is valid, but three checks used truthiness: `pedirPick` on a network drop with `_nid === 0` fell through to the spawn-rack path (`pickupWeapon`) and the server got the wrong request; `limparDropsDeRede` never removed it on round reset; and `_pickPendente = 0` doubled as the "nothing pending" sentinel, so an input carrying `pick: 0` was omitted from `sendInput`. The sentinel is now `null` (set in the constructor), every check is `!= null`, and `net-event-id-check` grows the drop lifecycle clause (drop 0/1/0xffffffff spawns, `gone` removes it, round reset removes it, `pick: 0` reaches `sendInput` and is consumed) plus the rack counter-case; the truthiness mutant dies. `eval:netcode` fails on virgin staging with `protocolo_incompativel` (protocol v8 bump in flight by another lane) and is not affected by this change.
 - Revisão do release #1251: `origemCompartilhamento` só usa `corosol.to` no apex ou em subdomínios com fronteira (`*.corosolto.com.br`), sem desviar hosts como `evilcorosolto.com.br`; o middleware Astro devolve `next()` na Vercel, cujo proxy já conta a requisição, e só agenda `/api/server-traffic` no Workers. Regressões comportamentais cobrem apex/subdomínio/host estranho e os dois adaptadores; `eval:shareorigin` ganha o mutante sem fronteira e os builds Vercel/Cloudflare passam. UIR20 deixa de prender a forma `new Set` de `geo.ts` e chama `langFromCountry` para verificar `US/GB → en` e `PT/BR/ausente → pt`.
 - Social login no longer gets stuck on `guest_invalid` when the browser holds a stale guest proof. Google, other OAuth providers and email now retry automatically without the invalid proof, preserving local history and never accepting it as valid; subsequent clicks do not resend it, and each provider gets one retry and navigation. Covered by LP15/E05 and both recovery mutants.
 - Social login no longer gets stuck on `guest_invalid` when the browser holds a stale guest proof. Google, other OAuth providers and email now retry automatically without the invalid proof, preserving local history and never accepting it as valid; subsequent clicks do not resend it, and each provider gets one retry and navigation. Covered by LP15/E05 and both recovery mutants.
@@ -246,6 +259,69 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.145] — 2026-11-12
+
+### Mudado
+- hotfix: recover production boot and objective crashes (#1336)
+- fix: retain shared profile source contract
+- fix: retain boot readiness source contract
+- fix: keep delayed boot initializers standalone-safe
+- fix: preserve boot sequencing without top-level await
+- fix: share resolved language with dependent UI
+- fix: handle matches without objectives
+- test: target the objective crash regression
+- test: decouple language gate from top-level await
+- fix: recover production boot and objective crashes
+
+## [2.1.0-alpha.144] — 2026-11-10
+
+### Mudado
+- Anima reações e saque dos personagens remotos (#1273)
+- fix(ci): pass Cloudflare preview SHA through the environment (#1310)
+- Merge CI fix for the Cloudflare sticky preview comment. Owner explicitly authorized this merge; required checks are green and the only failing check is the smoke-cf failure fixed by this PR. (#1309)
+- Pre-push: edge entry points select network, not full deploy (#1303)
+- release: daily batch 2026-11-10 (#1316)
+- test: cover invalid CF comment arity
+- fix: accept positional SHA in CF preview comment
+- fix(ci): corrigir argumentos do comentário Cloudflare
+- ci(pre-push): bordas de contagem (middleware.js e src/middleware.ts) são network
+- Preserva ordem da régua de animação
+- Restaura mutação do hit local
+- Corrige câmera do arnês de mantle remoto
+- Documenta arnês remoto fora do código
+- Aplica direção à morte remota atrasada
+- Enquadra arma durante saque remoto
+- Evita morte atrasada após respawn remoto
+- Documenta limite de dano em bots remotos
+- Mantém apoio da arma durante saque remoto
+- Preserva dano local e morte sem evento
+- Aplica LOD de animação aos remotos
+- Mede animações de remotos com mutantes
+- Anima saque na troca de arma remota
+- Direciona morte remota pelo autor
+- Anima reação de remotos ao dano
+- Anima inclinação lateral de remotos
+
+## [2.1.0-alpha.143] — 2026-11-10
+
+### Mudado
+- Merge main-only CI hotfix. Owner explicitly authorized CI correction and release. All checks are green. (#1314)
+- chore(bots): standardize csbrasil-bot public output in English (#1311)
+- Merge account modal polish 2.1.0-alpha.142. Owner explicitly authorized CI correction and release. All checks, including smoke-cf, are green; all review threads are resolved with evidence. (#1307)
+- test: cover invalid CF comment arity
+- fix: accept positional SHA in CF preview comment
+- chore(bots): standardize csbrasil-bot public output in English
+- test: reject transient stale guest error
+
+## [2.1.0-alpha.142] — 2026-11-10
+
+### Mudado
+- fix(ci): protege preview Cloudflare e smoke manual (#1300)
+- chore: versiona módulos do modal atualizado
+- test(ci): limita regras CF ao passo exato
+- test(ci): prende guarda do smoke ao dispatch
+- fix(ci): isola artefato e corrige smoke manual
 
 ## [2.1.0-alpha.141] — 2026-11-10
 

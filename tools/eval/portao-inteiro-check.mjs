@@ -24,8 +24,9 @@
          verde. Somam menos de 2 s em node puro, sem `npm ci`.
 
    PI4 · independentes rodam após falha; erro fica vermelho, cancelamento e setup
-         incompleto impedem execução (#1188). Mutantes: sucesso-implicito, always,
-         erro-ignorado e setup.
+         incompleto impedem execução (#1188). O produtor instala com npm ci e cada
+         consumidor restaura o ambiente pela action composta exata. Mutantes:
+         sucesso-implicito, always, erro-ignorado, setup e sem-setup-compartilhado.
 
    Uso: node tools/eval/portao-inteiro-check.mjs [--mutante=<nome>]
    ============================================================================ */
@@ -34,13 +35,14 @@ import { SUITES } from './suites.mjs';
 import { COLLIDER_SHARDS } from './operacao-flavio-proof-check.mjs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = { 'passo-orfao': 'PI1', 'regua-fantasma': 'PI2', 'regua-fora-do-pr-fast': 'PI3', 'sucesso-implicito': 'PI4', 'always': 'PI4', 'erro-ignorado': 'PI4', 'setup': 'PI4', 'sem-armadura-ci': 'PI4', 'sem-ads1p-runtime-ci': 'PI4', 'sem-piscina-batch-ci': 'PI4', 'contrato-visual-duplicado': 'PI4' };
+const MUTANTES = { 'passo-orfao': 'PI1', 'suite-concatenada': 'PI1', 'regua-fantasma': 'PI2', 'regua-fora-do-pr-fast': 'PI3', 'sucesso-implicito': 'PI4', 'always': 'PI4', 'erro-ignorado': 'PI4', 'setup': 'PI4', 'sem-setup-compartilhado': 'PI4', 'sem-armadura-ci': 'PI4', 'sem-ads1p-runtime-ci': 'PI4', 'sem-piscina-batch-ci': 'PI4', 'contrato-visual-duplicado': 'PI4' };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 const scripts = { ...pkg.scripts };
 const passosPorPortao = { 'check:fast': [...SUITES.fast], 'check:deploy': [...SUITES.deploy] };
 if (MUT === 'passo-orfao') passosPorPortao['check:fast'].push('eval:nao-existe');
+if (MUT === 'suite-concatenada') scripts['check:deploy'] = scripts['check:deploy'].replace('--suite=deploy ', '--suite=deployeval:dispose ');
 if (MUT === 'regua-fantasma') scripts['eval:fantasma'] = 'node tools/eval/nao-existe-check.mjs';
 
 const falhas = [];
@@ -51,8 +53,18 @@ for (const portao of PORTOES) {
   const linha = scripts[portao];
   const suite = portao.slice('check:'.length);
   if (!linha) { falhas.push(`PI1 o portão \`${portao}\` não existe em scripts`); continue; }
-  if (linha !== `node tools/eval/runner.mjs --suite=${suite}`) {
+  const prefixo = `node tools/eval/runner.mjs --suite=${suite}`;
+  const partes = linha.trim().split(/\s+/);
+  const comando = partes.slice(0, 3).join(' ');
+  if (comando !== prefixo) {
     falhas.push(`PI1 ${portao} precisa expandir --suite=${suite} pelo runner`);
+  } else {
+    const extras = partes.slice(3);
+    for (const extra of extras) {
+      if (!/^eval:[\w:-]+$/.test(extra) || !scripts[extra]) {
+        falhas.push(`PI1 ${portao} cita passo extra \`${extra}\`, que não é eval:* definido em scripts`);
+      }
+    }
   }
   for (const passo of passosPorPortao[portao]) {
     if (!scripts[passo]) {
@@ -91,6 +103,7 @@ let ci = existsSync('.github/workflows/ci.yml') ? readFileSync('.github/workflow
 if (MUT === 'sucesso-implicito') ci = ci.replace(/(- name: Contratos visuais[^\n]*\n)        if:[^\n]*\n/, '$1');
 if (MUT === 'always') ci = ci.replace(/(- name: Contratos visuais[^\n]*\n        if: )[^\n]*/, '$1${{ always() }}');
 if (MUT === 'setup') ci = ci.replace(/(- name: Contratos visuais[^\n]*\n        if: )[^\n]*/, "$1${{ !cancelled() }}");
+if (MUT === 'sem-setup-compartilhado') ci = ci.replace(/(  economia-ak-hud:\n[\s\S]*?      - name: Dependências e dist compartilhados\n        id: deps\n)        uses: \.\/\.github\/actions\/setup-ci-environment\n/, '$1');
 if (MUT === 'contrato-visual-duplicado') ci = ci.replace(' eval:grafite-curation', ' eval:grafite-curation eval:knife-skin-markings');
 if (MUT === 'erro-ignorado') ci = ci.replace(/(- name: TRETA\$ da partida segue o CS[^\n]*\n)/, '$1        continue-on-error: true\n');
 const CI_CRU = existsSync('.github/workflows/ci.yml') ? readFileSync('.github/workflows/ci.yml', 'utf8') : '';
@@ -168,10 +181,16 @@ const COMANDOS_VISUAIS_BASE = Object.freeze([
   'eval:visual-map-contracts', 'eval:knife-skin-markings', 'eval:campo-uv', 'eval:grafite-atual:prova',
   'eval:piscina-graffiti-batch',
 ]);
-function passosDoJob(texto, job) {
+const SETUP_COMPARTILHADO = './.github/actions/setup-ci-environment';
+const ehNpmCi = (p) => p.run?.trim() === 'npm ci';
+const ehSetupCompartilhado = (p) => p.uses === SETUP_COMPARTILHADO;
+function blocoDoJob(texto, job) {
   const bloco = texto.match(new RegExp(`^  ${job}:\\n([\\s\\S]*?)(?=^  [\\w-]+:|$(?![\\s\\S]))`, 'm'))?.[1];
   if (!bloco) throw new Error(`PI4 job ${job} ausente`);
-  return bloco.split(/^      - /m).slice(1).map((b) => {
+  return bloco;
+}
+function passosDoJob(texto, job) {
+  return blocoDoJob(texto, job).split(/^      - /m).slice(1).map((b) => {
     const p = {};
     for (const l of b.split('\n')) {
       const m = /^(?:        )?([\w-]+):\s*(.*)$/.exec(l);
@@ -189,6 +208,8 @@ function avaliaIf(cond, c) {
   const x = e
     .replace(/steps\.([\w-]+)\.outcome\s*(==|!=)\s*'(success|failure|cancelled|skipped)'/g,
       (_m, id, op, v) => String(op === '==' ? c.steps[id]?.outcome === v : c.steps[id]?.outcome !== v))
+    .replace(/steps\.([\w-]+)\.outputs\.([\w-]+)\s*(==|!=)\s*'([^']*)'/g,
+      (_m, id, key, op, v) => String(op === '==' ? (c.steps[id]?.outputs?.[key] ?? '') === v : (c.steps[id]?.outputs?.[key] ?? '') !== v))
     .replace(/github\.event_name\s*(==|!=)\s*'(push|pull_request|merge_group)'/g,
       (_m, op, v) => String(op === '==' ? c.event === v : c.event !== v))
     .replace(/startsWith\(github\.event\.head_commit\.message,\s*'([^']*)'\)/g,
@@ -224,6 +245,14 @@ try {
   const TODOS_JOBS = [...secaoJobs.matchAll(/^  ([\w-]+):(?=\s*$)/gm)].map((m) => m[1]);
   if (!TODOS_JOBS.length) throw new Error('PI4 seção jobs: ausente ou sem jobs reais no ci.yml');
   const passosGlobais = Object.fromEntries(TODOS_JOBS.map((j) => [j, passosDoJob(ci, j)]));
+  const npmCiProdutor = (passosGlobais.setup || []).filter(ehNpmCi);
+  if (npmCiProdutor.length !== 1) falhas.push(`PI4 setup: produtor precisa executar npm ci exatamente uma vez; encontrados ${npmCiProdutor.length}`);
+  const consumidoresSetup = TODOS_JOBS.filter((job) => /^    needs:\s*setup\s*$/m.test(blocoDoJob(ci, job)));
+  if (!consumidoresSetup.length) falhas.push('PI4 setup: nenhum consumidor direto do ambiente compartilhado encontrado');
+  for (const job of consumidoresSetup) {
+    const restauradores = passosGlobais[job].filter(ehSetupCompartilhado);
+    if (restauradores.length !== 1) falhas.push(`PI4 ${job}: consumidor precisa usar exatamente ${SETUP_COMPARTILHADO}; encontrados ${restauradores.length}`);
+  }
   const tokensPorPasso = TODOS_JOBS.flatMap((job) => passosGlobais[job].map((p) => ({ job, nome: p.name, tokens: (p.run || '').split(/\s+/) })));
   const comandosMonitorados = [...new Set(GRUPOS_PI4.flatMap(([, , comandos]) => comandos).filter((cmd) => /^(?:eval|mut):/.test(cmd)))];
   const DUPLICACAO_PERMITIDA = new Set(['eval:movimento-fluidez']);
@@ -276,8 +305,8 @@ try {
       }
       return i;
     });
-    const deps = unico((p) => p.run?.trim() === 'npm ci', 'npm ci');
-    if (!passos[deps].id) falhas.push(`PI4 ${jobDoGrupo}: npm ci precisa de id para guardar setup concluído`);
+    const deps = unico((p) => ehNpmCi(p) || ehSetupCompartilhado(p), 'npm ci ou setup compartilhado');
+    if (!passos[deps].id) falhas.push(`PI4 ${jobDoGrupo}: setup de dependências precisa de id para guardar setup concluído`);
     const ids = passos.map((p) => p.id).filter(Boolean);
     if (new Set(ids).size !== ids.length) throw new Error(`PI4 ${jobDoGrupo}: ids de steps duplicados`);
     const checkout = unico((p) => p.uses?.startsWith('actions/checkout@'), 'checkout');
@@ -285,7 +314,7 @@ try {
     const antes = grupos[0] - 1;
     const cenarios = [
       { nome: `sucesso (${jobDoGrupo})`, conclusao: 'success', roda: () => true },
-      { nome: `npm ci pulado (${jobDoGrupo})`, pularEm: deps, conclusao: 'success', roda: () => false },
+      { nome: `setup de dependências pulado (${jobDoGrupo})`, pularEm: deps, conclusao: 'success', roda: () => false },
       // Falha independente exige passo REAL não-setup entre setup e o primeiro grupo.
       ...[antes, ...grupos].filter((i) => ![checkout, node, deps].includes(i)).map((i) => ({ nome: `falha: ${passos[i].name}`, falhaEm: i, conclusao: 'failure', roda: () => true })),
       ...[checkout, node, deps].map((i) => ({ nome: `setup falhou (${jobDoGrupo}): ${passos[i].name}`, falhaEm: i, conclusao: 'failure', roda: () => false })),

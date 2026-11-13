@@ -1,0 +1,70 @@
+name: eval-duration-calibration
+
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: Recent successful main CI runs to aggregate
+        required: false
+        default: '10'
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: eval-duration-calibration
+  cancel-in-progress: false
+
+jobs:
+  calibrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          filter: blob:none
+          sparse-checkout: tools/eval
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Download recent main timing artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUNS: ${{ inputs.runs || '10' }}
+        run: |
+          set -euo pipefail
+          case "$RUNS" in ''|*[!0-9]*|0) echo "runs deve ser inteiro positivo" >&2; exit 2;; esac
+          mapfile -t ids < <(gh run list --repo "$REPO" --workflow ci.yml --branch main \
+            --event push --status success --limit "$RUNS" --json databaseId --jq '.[].databaseId')
+          if [ "${#ids[@]}" -eq 0 ]; then
+            echo "Nenhuma execução verde da main encontrada" >&2
+            exit 1
+          fi
+          for id in "${ids[@]}"; do
+            destino="tools/eval/out/timing-artifacts/$id"
+            mkdir -p "$destino"
+            if ! gh run download "$id" --repo "$REPO" --dir "$destino" --pattern '*-tempos-*'; then
+              echo "::warning::Run $id não tem artefatos de tempo; os demais ainda serão agregados"
+            fi
+          done
+      - name: Aggregate deterministic duration manifest
+        run: node tools/eval/calibrate-durations.mjs
+      - name: Publish duration manifest artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: eval-duration-manifest
+          path: tools/eval/out/durations.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Cache duration manifest for sharded jobs
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
+        # Contrato v1 compartilhado com ci.yml: a chave é endereçada pelo
+        # conteúdo e o prefixo estável restaura a calibração mais recente.
+        # run_id/run_attempt não podem entrar aqui: são runs independentes.
+        with:
+          path: tools/eval/out/durations.json
+          key: eval-durations-v1-${{ hashFiles('tools/eval/out/durations.json') }}

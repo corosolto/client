@@ -6,34 +6,13 @@ import { WEAPONS, supDeCod, anguloDeDisparo } from './game.js';
 import { frase } from './i18n.js';
 import { preloadEyewearAssets } from './eyewear.js';
 import { preloadCosmeticAssets } from './glbchars.js';
+import { InterpolationClock, ensureEntityBuffer, pushEntitySample, sampleEntityBuffer } from './net-interpolation.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
 
-/* Insere a amostra NA ORDEM do tempo do servidor. Com WebSocket o snapshot nunca chega fora
-   de ordem; com datagrama, chega — e empurrar no fim faria o boneco andar para trás. */
-const RELOGIO_NOVO_MS = 1000;
 const PLAYER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function rosterPlayerId(entity, row) {
   return !entity?.bot && PLAYER_ID.test(row?.pid || '') ? row.pid : '';
-}
-function inserirAmostra(ent, t, e, semOrdem = false) {
-  const at = ent._bufAt, n = at.length;
-  ent._bufMantle ||= [];
-  let i = n;
-  if (!semOrdem) while (i > 0 && at[i - 1] > t) i--;
-  if (i > 0 && at[i - 1] === t) return;   // duplicado: datagrama repetido não vira amostra nova
-  if (i === n) {
-    at.push(t); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z);
-    ent._bufYaw.push(e.yaw); ent._bufPitch.push(e.pitch || 0);
-    ent._bufMantle.push(Number.isFinite(e.mantleF) ? e.mantleF : -1);
-  } else {
-    at.splice(i, 0, t); ent._bufX.splice(i, 0, e.x); ent._bufY.splice(i, 0, e.y); ent._bufZ.splice(i, 0, e.z);
-    ent._bufYaw.splice(i, 0, e.yaw); ent._bufPitch.splice(i, 0, e.pitch || 0);
-    ent._bufMantle.splice(i, 0, Number.isFinite(e.mantleF) ? e.mantleF : -1);
-  }
-  if (at.length > 10) {
-    at.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); ent._bufPitch.shift(); ent._bufMantle.shift();
-  }
 }
 
 class Netcode {
@@ -45,6 +24,7 @@ class Netcode {
     this._alvoSpec = null;      // quem o espectador está seguindo
     this.specDist = 1.7;        // câmera do espectador: metros atrás do ombro do alvo (BUG-117)
     this._evOn = !!(net.meta && net.meta.events);   // servidor manda `ev`; sem a flag, heurística velha (BUG-90)
+    this._pickPendente = null;   // null = nada pendente; ID 0 é um pedido válido (bug do truthiness, 10/11)
     /* FLASH online: o servidor de hoje só aceita `nade` 'smoke'|'frag' e não emite `boom` da
        flash. Até ele anunciar `meta.flash` (com `ev`), o jogo recusa equipar a flash online
        (game._flashLiberada) em vez de gastar o estoque num pedido que o servidor descarta. */
@@ -52,11 +32,11 @@ class Netcode {
     /* Buffer base ~2,4 snapshots; gaps repetidos ampliam até 140 ms para o remoto
        não congelar, e a rede estável volta ao atraso mínimo (BUG-87). */
     this.snapshotHz = Math.max(1, Number(net.meta?.snapshotHz) || 20);
-    this._baseInterpAtrasoMs = Math.max(75, Math.min(140, 2400 / this.snapshotHz));
-    this.interpAtrasoMs = this._baseInterpAtrasoMs;
+    this._interpolation = null;
     this._arrivalGaps = [];
     this._tAt = []; this._tT = [];   // chegada ↔ tempo-de-servidor dos últimos snapshots
-    this._offMs = null;               // chegada − t·1000 (mínimo da janela, deslizado) — BUG-118
+    this._remoteSample = { vx: 0, vz: 0, segYaw: null };
+    this._atualizarAtrasoCallback = (gapMs) => this._atualizarAtrasoInterpolacao(gapMs);
     // Predições indexadas pelo seq que o snapshot v4 reconhece. Arrays planos evitam objeto
     // por quadro no hot path; 180 entradas cobrem 3 s a 60 fps antes do fallback de desync.
     this._predSeq = []; this._predX = []; this._predY = []; this._predZ = [];
@@ -68,6 +48,23 @@ class Netcode {
     // economia de partida (docs/ECONOMIA-PARTIDA.md): resposta do nó vai para o menu de compra
     net.onCompra = (m) => { try { this.game._compra?.respostaRemota(m); } catch { /* HUD */ } };
     net.startPing();
+    /* Ocultar/sair/fechar o WS envia a janela parcial de stats; voltar à aba
+     * antecipa a próxima janela para preservar amostras curtas. */
+    this._flushStatsParcial = () => {
+      const game = this.game;
+      if (game._disposed || !game.online || !this.net) return;
+      if (!(this._nsFps > 0)) return;                 // nunca renderizou visível: sem janela útil
+      try { this.enviarJanelaStats(); } catch { /* flush nunca derruba o jogo */ }
+    };
+    this._onPageHide = () => this._flushStatsParcial();
+    this._onVisChange = () => { if (typeof document !== 'undefined' && document.hidden) this._flushStatsParcial(); };
+    globalThis.addEventListener?.('pagehide', this._onPageHide);
+    // harness sem DOM: `document` pode nem existir como global — o encadeamento
+    // opcional não protege global indefinido, só propriedade. O guard é o typeof.
+    if (typeof document !== 'undefined') document.addEventListener?.('visibilitychange', this._onVisChange);
+    this._prevOnClose = net.onClose;
+    this._onCloseNetGame = (motivo) => { this._flushStatsParcial(); this._prevOnClose?.(motivo); };
+    net.onClose = this._onCloseNetGame;
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
     this._nsTimer = setInterval(() => { this.updateStats(); this._pulsoDePausa(); }, 250);
     this._statsInactive = false;
@@ -105,12 +102,38 @@ class Netcode {
 
   dispose() {
     if (this._nsTimer) { clearInterval(this._nsTimer); this._nsTimer = null; }
+    globalThis.removeEventListener?.('pagehide', this._onPageHide);
+    if (typeof document !== 'undefined') document.removeEventListener?.('visibilitychange', this._onVisChange);
+    if (this.net?.onClose === this._onCloseNetGame) this.net.onClose = this._prevOnClose;
     try { this.net.stopPing(); } catch { /* já fechada */ }
     if (this.net.onSlot === this._onSlot) this.net.onSlot = this._prevOnSlot;
     if (this.net.onPersonagem === this._onPersonagem) this.net.onPersonagem = this._prevOnPersonagem;
   }
 
   get espectador() { return this.net.espectador || this.net.yourEnt == null; }
+
+  // Campos históricos continuam mutáveis para as réguas e para os consumidores de apresentação.
+  _clock() {
+    if (!this._interpolation) {
+      this._interpolation = new InterpolationClock({
+        snapshotHz: this.snapshotHz,
+        now: () => this._now(),
+        ping: () => this.net.stats?.ping,
+      });
+      this._arrivalGaps = this._interpolation.arrivalGaps;
+      this._tAt = this._interpolation.arrivalTimes;
+      this._tT = this._interpolation.serverTimes;
+    }
+    return this._interpolation;
+  }
+  get interpAtrasoMs() { return this._clock().delayMs; }
+  set interpAtrasoMs(v) { this._clock().delayMs = v; }
+  get _baseInterpAtrasoMs() { return this._clock().baseDelayMs; }
+  get _offMs() { return this._clock().offsetMs; }
+  get _snapPrevT() { return this._interpolation?.previousServerTime; }
+  get _snapCurT() { return this._interpolation?.currentServerTime; }
+  get _snapArrPrev() { return this._interpolation?.previousArrivalTime; }
+  get _snapArrCur() { return this._interpolation?.currentArrivalTime; }
 
   // Relógio de parede do netcode — indireção para a régua fabricar jitter determinístico.
   _now() { return performance.now(); }
@@ -120,38 +143,16 @@ class Netcode {
      compensation) — é o que faz o tiro cair onde você VIU o alvo, e não onde ele já está. */
   renderTime() {
     // Mesmo relógio da interpolação (BUG-118): o rewind cai exatamente no que a tela mostrou.
-    const t = this._tT;
-    if (t.length) {
-      const rt = (this._relogioAgora() - this.interpAtrasoMs) / 1000;
-      return Math.min(t[t.length - 1], Math.max(t[0], rt));   // nunca à frente do último snapshot
-    }
+    if (this._tT.length) return this._clock().renderTime(this._snapCurT || 0, this._relogioAgora());
     return this._snapCurT || 0;
   }
 
   // Relógio do buffer dos remotos = tempo do SERVIDOR, não a chegada (BUG-118, KNOWN-BUGS.md).
   // Costura da régua: o mutante troca os dois pelo relógio de chegada.
-  _relogioSnap(snap, nowMs) { return Number.isFinite(snap.t) ? snap.t * 1000 : nowMs; }
-  _relogioAgora() { return this._offMs == null ? this._now() : this._now() - this._offMs; }
+  _relogioSnap(snap, nowMs) { return this._clock().snapshotTime(snap, nowMs); }
+  _relogioAgora() { return this._clock().serverNow(); }
 
-  _atualizarAtrasoInterpolacao(gapMs) {
-    if (!(gapMs > 0)) return;
-    if (gapMs >= 1000) {
-      this._arrivalGaps.length = 0;
-      this.interpAtrasoMs = this._baseInterpAtrasoMs;
-      return;
-    }
-    this._arrivalGaps.push(gapMs);
-    if (this._arrivalGaps.length > 30) this._arrivalGaps.shift();
-    if (this._arrivalGaps.length < 12) return;
-    const gaps = [...this._arrivalGaps].sort((a, b) => a - b);
-    const p90 = gaps[Math.floor((gaps.length - 1) * 0.9)];
-    // O servidor só rebobina 250 ms; 20 ms de margem cobrem fila e assimetria do RTT.
-    const rtt = Number(this.net.stats?.ping);
-    const teto = Number.isFinite(rtt) && rtt > 0 ? Math.max(this._baseInterpAtrasoMs, Math.min(140, 230 - rtt / 2)) : 140;
-    const alvo = Math.max(this._baseInterpAtrasoMs, Math.min(teto, p90 + 20));
-    const mudanca = alvo - this.interpAtrasoMs;
-    this.interpAtrasoMs += Math.max(-2, Math.min(5, mudanca));
-  }
+  _atualizarAtrasoInterpolacao(gapMs) { this._clock().updateDelay(gapMs); }
 
   /* Chamado pelo game._updatePlayer logo DEPOIS do _moveEntity (a predição já aconteceu na
      tela). Reconcilia com a pose autoritativa e manda o input pro servidor. */
@@ -182,7 +183,7 @@ class Netcode {
     }
     // px/py/pz = a posição PREDITA de onde você mira. O servidor atira DESTA origem (validada
     // dentro de 3 m); sem isso o raio sai da posição dele — atrasada pelo RTT — e passa ao lado.
-    const tinhaIntent = p.weapon !== this._authWeapon || this._pickPendente
+    const tinhaIntent = p.weapon !== this._authWeapon || this._pickPendente != null
       || this._pickupWeaponPendente || this._reloadPendente;
     const shotAim = anguloDeDisparo(p, this.game.camView);
     const seq = this.net.sendInput({
@@ -195,7 +196,7 @@ class Netcode {
       // duração DESTE passo (teto do laço do navegador): o servidor integra o comando por ela,
       // e não pelo tick dele — senão o ack compara poses de instantes diferentes (BUG-152).
       dtms: Math.min(50, Math.max(1, Math.round((Number(dt) || 0) * 100000) / 100)),
-      ...(this._pickPendente ? { pick: this._pickPendente } : {}),
+      ...(this._pickPendente != null ? { pick: this._pickPendente } : {}),
       ...(this._pickupWeaponPendente ? { pickupWeapon: this._pickupWeaponPendente } : {}),
       ...(this._reloadPendente ? { reload: this._reloadPendente } : {}),
       ...(this._nadePendente ? { nade: this._nadePendente } : {}),
@@ -205,7 +206,7 @@ class Netcode {
       if (this._predSeq.length > 180) { this._predSeq.shift(); this._predX.shift(); this._predY.shift(); this._predZ.shift(); }
       if (tinhaIntent) this._loadoutSeq = seq;
       this._armaEnviada = p.weapon;
-      this._pickPendente = 0;   // um pedido por E; o servidor responde com `gone` + `drop` da antiga
+      this._pickPendente = null;   // um pedido por E; o servidor responde com `gone` + `drop` da antiga; null = nada (ID 0 é válido)
       this._pickupWeaponPendente = '';
       this._reloadPendente = '';
       this._nadePendente = '';  // um pedido por tecla; o servidor responde com `nade` (fase 3)
@@ -215,7 +216,7 @@ class Netcode {
   // E num drop/rack: pede ao servidor; a troca local é só predição até o ack do v4.
   pedirPick(pk) {
     if (!pk) return;
-    if (pk._nid) this._pickPendente = pk._nid;
+    if (pk._nid != null) this._pickPendente = pk._nid;
     else if (WEAPONS[pk.weapon]) this._pickupWeaponPendente = pk.weapon;
   }
   pedirReload(w) { if (!this.espectador && WEAPONS[w]) this._reloadPendente = w; }
@@ -229,15 +230,17 @@ class Netcode {
   // Drops de rede (com `_nid`) somem; o rack do spawn fica. Chamado no countdown e no `partida`.
   limparDropsDeRede() {
     const game = this.game;
-    for (let i = game.drops.length - 1; i >= 0; i--) if (game.drops[i]._nid) game._sumirDrop(i);
+    for (let i = game.drops.length - 1; i >= 0; i--) if (game.drops[i]._nid != null) game._sumirDrop(i);
   }
   _dropDeRede(e) {
     const game = this.game;
     if (!e || !Number.isInteger(e.i) || game.drops.some((d) => d._nid === e.i)) return;
     if (!WEAPONS[e.w]) return;
-    game._dropWeapon(+e.x || 0, +e.z || 0, e.w, false, 0.01, 0);   // sem prazo local: quem some é o `gone`
+    game._dropWeapon(+e.x || 0, +e.z || 0, e.w, false, 0.01, 0);   // quem some é o `gone` — ou o prazo abaixo
     const d = game.drops[game.drops.length - 1];
-    if (d) d._nid = e.i;
+    // TTL do servidor quando vem (> 0, no evento e no welcome); sem ele, teto local de 25 s
+    const ttl = Number.isFinite(e.ttl) && e.ttl > 0 ? e.ttl : 25;
+    if (d) { d._nid = e.i; d._expiraRedeEm = game.time + ttl + 2; }
   }
 
   _clearPrediction() {
@@ -449,17 +452,7 @@ class Netcode {
     const nowMs = this._now();
     /* Tempos do LAG COMP: chegada ↔ tempo-de-servidor dos últimos snapshots. É desta tabela
        que o renderTime() deriva o instante do servidor que a tela está mostrando. */
-    this._snapPrevT = this._snapCurT; this._snapArrPrev = this._snapArrCur;
-    this._snapCurT = snap.t; this._snapArrCur = nowMs;
-    if (this._snapArrPrev != null) this._atualizarAtrasoInterpolacao(nowMs - this._snapArrPrev);
-    this._tAt.push(nowMs); this._tT.push(snap.t);
-    if (this._tAt.length > 10) { this._tAt.shift(); this._tT.shift(); }
-    // Offset local↔servidor = MÍNIMO da janela (atraso só aumenta chegada−t); desliza ≤ 4 ms
-    // por snapshot, e salto > 1 s é relógio novo (partida nova) — BUG-118.
-    let off = Infinity;
-    for (let i = 0; i < this._tAt.length; i++) { const o = this._tAt[i] - this._tT[i] * 1000; if (o < off) off = o; }
-    if (this._offMs == null || Math.abs(off - this._offMs) > 1000) this._offMs = off;
-    else this._offMs += Math.max(-4, Math.min(4, off - this._offMs));
+    this._clock().observe(snap, nowMs, this._atualizarAtrasoCallback);
 
     const primeiroSnap = this._tAt.length <= 1;   // no casamento inicial, alive true->false é estado herdado, não morte
     if (game.ctf && snap.ctf) this.applyCtfState(snap.ctf);
@@ -531,21 +524,11 @@ class Netcode {
       ent._ipSrvT = snap.t;
       const moveDt = Number.isFinite(srvDt) && srvDt > 0 ? srvDt : Math.max(0.001, (ent._ipT1 - ent._ipT0) / 1000);
       ent._netSpd = salto > 3 ? 0 : salto / Math.max(0.001, moveDt);   // alimenta a animação de andar
-      if (!ent._bufAt) {
-        ent._bufAt = []; ent._bufX = []; ent._bufY = []; ent._bufZ = [];
-        ent._bufYaw = []; ent._bufPitch = []; ent._bufMantle = [];
-      }
       /* BUFFER de amostras (BUG-87, KNOWN-BUGS.md): arrays planos, cap 10 (zero objeto no
          hot path). Teleporte esvazia — interpolar através de respawn varreria o mapa. */
-      const tBuf = this._relogioSnap(snap, nowMs), nb = ent._bufAt.length;
-      // recuo grande = partida nova; recuo curto é pacote fora de ordem (BUG-164). O
-      // `__mutOrdemAntiga` é gancho da régua game/netloop-check.mjs; zero em produção.
-      const recuo = this.__mutOrdemAntiga ? 0 : RELOGIO_NOVO_MS;
-      if (salto > 3 || (nb && tBuf < ent._bufAt[nb - 1] - recuo)) {
-        ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0;
-        ent._bufYaw.length = 0; ent._bufPitch.length = 0; ent._bufMantle.length = 0;
-      }
-      inserirAmostra(ent, tBuf, e, this.__mutOrdemAntiga);
+      ensureEntityBuffer(ent);
+      const tBuf = this._relogioSnap(snap, nowMs);
+      pushEntitySample(ent, tBuf, e, salto > 3, this.__mutOrdemAntiga);
       ent._netPitch = e.pitch || 0;
       // v5 manda CONTADOR (bandeira de um snapshot some com o pacote); v4 manda bandeira
       const atirou = e.fireN == null ? !!e.fire : (ent._fireNvisto != null && e.fireN !== ent._fireNvisto);
@@ -581,11 +564,20 @@ class Netcode {
      tick de entrada é estado herdado (como `primeiroSnap`), e lote com 3 s de atraso (pausa) some. */
   _drenar(snap, primeiroSnap) {
     const fila = this.net.events;
-    if (!fila || !fila.length) return;
-    while (fila.length && fila[0].tick <= snap.tick) {
-      const lote = fila.shift();
-      if (primeiroSnap || snap.tick - lote.tick > 90) continue;
-      for (const e of lote.list) { try { this._evento(e); } catch { /* HUD ainda não montado */ } }
+    if (fila && fila.length) {
+      while (fila.length && fila[0].tick <= snap.tick) {
+        const lote = fila.shift();
+        if (primeiroSnap || snap.tick - lote.tick > 90) continue;
+        for (const e of lote.list) { try { this._evento(e); } catch { /* HUD ainda não montado */ } }
+      }
+    }
+    /* `gone` perdido (lote atrasado) deixava ARMA FANTASMA no chão até a virada da rodada.
+       O servidor manda o TTL do drop no próprio evento e no welcome: ele é a rede de
+       segurança — quem passar do prazo some sozinho, como o `gone` faria. */
+    const game = this.game;
+    for (let i = game.drops.length - 1; i >= 0; i--) {
+      const d = game.drops[i];
+      if (d._nid != null && d._expiraRedeEm != null && game.time >= d._expiraRedeEm) game._sumirDrop(i);
     }
   }
   // IDs uint32 de eventos não podem truncar para signed nem coagir inválidos em zero.
@@ -635,7 +627,9 @@ class Netcode {
       const origem = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0), dir = new THREE.Vector3(+e.vx || 0, +e.vy || 0, +e.vz || 0);
       game._spawnGrenade(origem, dir.lengthSq() ? dir.clone().normalize() : new THREE.Vector3(0, 0, -1), kind, dono);
       const gr = game._grenades[game._grenades.length - 1];
-      if (gr) { gr._nid = e.i; gr.v.copy(dir); gr.mesh.position.copy(origem); gr.fuse = 1e9; }   // quem estoura é o `boom`
+      /* Se o boom autoritativo atrasar, o fuse visual local de 8 s impede que
+       * a granada fique congelada para sempre. */
+      if (gr) { gr._nid = e.i; gr.v.copy(dir); gr.mesh.position.copy(origem); gr.fuse = 8; }
     } else if (e.k === 'boom') {
       const i = game._grenades.findIndex((x) => x._nid === e.i);
       if (i >= 0) { game.scene.remove(game._grenades[i].mesh); game._grenades.splice(i, 1); }
@@ -990,35 +984,8 @@ class Netcode {
     if (b._bufAt && b._bufAt.length) {
       /* Renderiza o remoto `interpAtrasoMs` no PASSADO, interpolando no buffer: absorve o
          jitter que congelava o boneco a cada pacote atrasado (BUG-87). NUNCA extrapola. */
-      const at = b._bufAt, n = at.length;
-      const rAt = this._relogioAgora() - this.interpAtrasoMs;
-      let j, a = 0;
-      if (rAt <= at[0]) j = 0;
-      else if (rAt >= at[n - 1]) j = n - 1;
-      else {
-        j = n - 2;
-        while (j > 0 && at[j] > rAt) j--;
-        a = (rAt - at[j]) / Math.max(1, at[j + 1] - at[j]);
-      }
-      const k = a > 0 ? j + 1 : j;
-      b.pos.x = b._bufX[j] + (b._bufX[k] - b._bufX[j]) * a;
-      b.pos.y = b._bufY[j] + (b._bufY[k] - b._bufY[j]) * a;
-      b.pos.z = b._bufZ[j] + (b._bufZ[k] - b._bufZ[j]) * a;
-      let dy = b._bufYaw[k] - b._bufYaw[j]; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
-      b.yaw = b._bufYaw[j] + dy * a;
-      if (b._bufPitch) b._netPitch = b._bufPitch[j] + (b._bufPitch[k] - b._bufPitch[j]) * a;   // cabeça também sem degrau de 30 Hz
-      if (b._bufMantle) {
-        const m0 = b._bufMantle[j], m1 = b._bufMantle[k];
-        b.mantleF = m0 >= 0 && m1 >= 0 ? m0 + (m1 - m0) * a : (a < 0.5 ? m0 : m1);
-      }
-      const s = Math.min(j, n - 2);
-      if (s >= 0) {
-        const segS = Math.max(1, at[s + 1] - at[s]) / 1000;
-        vx = (b._bufX[s + 1] - b._bufX[s]) / segS; vz = (b._bufZ[s + 1] - b._bufZ[s]) / segS;
-        let ds = b._bufYaw[s + 1] - b._bufYaw[s]; while (ds > Math.PI) ds -= Math.PI * 2; while (ds < -Math.PI) ds += Math.PI * 2;
-        // yaw do meio do segmento, não o do instante: girando, o erro inverte o sinal do strafe. `__mutYawInstante` é gancho de mp-recuo-check.mjs
-        segYaw = this.__mutYawInstante ? null : b._bufYaw[s] + ds / 2;
-      }
+      const sample = sampleEntityBuffer(b, this._relogioAgora() - this.interpAtrasoMs, this._remoteSample);
+      vx = sample.vx; vz = sample.vz; segYaw = this.__mutYawInstante ? null : sample.segYaw;
     }
     if (positionOnly) { g.visible = false; return; }
     if (b.alive) {
@@ -1069,7 +1036,9 @@ class Netcode {
       this._reconcileWindow.length = 0;
       this.net.drainRttSamples?.();
       this.net.drainGapSamples?.();
-      this._nextClientStats = now + 10000;
+      // Voltou a ficar VISÍVEL: a próxima janela sai em 2 s (não 10) — quem abre e
+      // fecha a aba rápido (mobile) ainda produz amostra na sessão.
+      this._nextClientStats = now + (inactive ? 10000 : 2000);
     }
     if (this._nsT0 == null) { this._nsT0 = now; this._nsF0 = game._rafFrames || 0; }
     const dframes = (game._rafFrames || 0) - this._nsF0, dtime = now - this._nsT0;
@@ -1077,28 +1046,34 @@ class Netcode {
       if (dframes > 0) this._nsFps = Math.round((dframes * 1000) / dtime);   // pausado (0 frames) mantém o último fps de jogo
       this._nsT0 = now; this._nsF0 = game._rafFrames || 0;
     }
+    if (!inactive && now >= this._nextClientStats && this._nsFps > 0) this.enviarJanelaStats();
+  }
+
+  /* Envia janelas fechadas e flushes parciais uma única vez; depois reinicia
+   * a contagem para não repetir amostras. */
+  enviarJanelaStats() {
+    const game = this.game;
+    if (game._disposed || !game.online || !this.net) return;
     const s = this.net.computeStats();
-    if (!inactive && now >= this._nextClientStats && this._nsFps > 0) {
-      this._nextClientStats = now + 10000;
-      const correcoes = this._reconcileWindow;
-      // O HUD conserva o pior gap recente; a telemetria usa p95 dos intervalos
-      // desta janela para que um pico isolado não defina a qualidade inteira.
-      const gaps = this.net.drainGapSamples?.();
-      this.net.sendClientStats?.({
-        fps: this._nsFps, rtt: s.ping, rttSamples: this.net.drainRttSamples?.(), snap: s.hz, gap: this._percentil(gaps, 0.95),
-        reconcileP95: this._percentil(correcoes, 0.95),
-        // O p95 da sessão precisa dos eventos, não do p95 de cada janela. Em uma
-        // janela anormalmente cheia, distribuir as 512 amostras por toda ela.
-        reconcileSamples: correcoes.length <= 512 ? correcoes.slice() : Array.from({ length: 512 }, (_, i) =>
-          correcoes[Math.floor((i + 0.5) * correcoes.length / 512)]),
-        reconcileMax: correcoes.length ? +Math.max(...correcoes).toFixed(3) : null,
-        reconcileCount: correcoes.length,
-        quality: game.settings?.quality || null,
-      });
-      // A próxima janela não repete os mesmos eventos. Os totais acima continuam vivos
-      // para o registro da sessão; o servidor soma somente os eventos novos de cada 10 s.
-      correcoes.length = 0;
-    }
+    this._nextClientStats = this._now() + 10000;
+    const correcoes = this._reconcileWindow;
+    // O HUD conserva o pior gap recente; a telemetria usa p95 dos intervalos
+    // desta janela para que um pico isolado não defina a qualidade inteira.
+    const gaps = this.net.drainGapSamples?.();
+    this.net.sendClientStats?.({
+      fps: this._nsFps, rtt: s.ping, rttSamples: this.net.drainRttSamples?.(), snap: s.hz, gap: this._percentil(gaps, 0.95),
+      reconcileP95: this._percentil(correcoes, 0.95),
+      // O p95 da sessão precisa dos eventos, não do p95 de cada janela. Em uma
+      // janela anormalmente cheia, distribuir as 512 amostras por toda ela.
+      reconcileSamples: correcoes.length <= 512 ? correcoes.slice() : Array.from({ length: 512 }, (_, i) =>
+        correcoes[Math.floor((i + 0.5) * correcoes.length / 512)]),
+      reconcileMax: correcoes.length ? +Math.max(...correcoes).toFixed(3) : null,
+      reconcileCount: correcoes.length,
+      quality: game.settings?.quality || null,
+    });
+    // A próxima janela não repete os mesmos eventos. Os totais acima continuam vivos
+    // para o registro da sessão; o servidor soma somente os eventos novos de cada 10 s.
+    correcoes.length = 0;
   }
 
   _percentil(values, q) {

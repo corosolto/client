@@ -165,17 +165,26 @@ for (const [mapId, wet] of [
       res.addEventListener('dispose', () => disposed.set(res, disposed.get(res) + 1));
     }
   }
-  const shared = [];
-  for (const res of [life.puffFx?.points?.material, life.puffFx?.uniforms?.uTex?.value]) {
-    res?.addEventListener?.('dispose', () => shared.push(res));
+  /* A textura do puff nasce via _texLocal e o registro de VRAM do Game a descarta
+     exatamente 1 vez. O material pertence a este Game e também é descartado 1 vez;
+     a captura de puffFx impede que uma troca de identidade vaze o material original. */
+  const puffMat = life.puffFx?.points?.material, puffTex = life.puffFx?.uniforms?.uTex?.value;
+  assert(puffMat && puffTex?.isTexture, 'puff sem material/textura reais');
+  const puffDescartes = new Map([[puffMat, 0], [puffTex, 0]]);
+  for (const res of puffDescartes.keys()) {
+    res.addEventListener('dispose', () => puffDescartes.set(res, puffDescartes.get(res) + 1));
   }
   life.dispose();
   for (const count of disposed.values()) assert.equal(count, 1,
     'dispose real: cada material próprio descartado exatamente 1 vez');
-  assert(shared.length === 0, 'dispose descartou material/textura compartilhados do puff');
+  assert(puffDescartes.get(puffMat) === 1, 'dispose real: material do puff deste Game descartado exatamente 1 vez');
+  assert(puffDescartes.get(puffTex) === 1,
+    `textura do puff descartada ${puffDescartes.get(puffTex)} vez(es); o registro da partida deve descartá-la 1 vez`);
   life.dispose();
   for (const count of disposed.values()) assert.equal(count, 1,
     'dispose repetido descartou recurso duas vezes');
+  assert(puffDescartes.get(puffMat) === 1 && puffDescartes.get(puffTex) === 1,
+    'dispose repetido descartou recurso do puff de novo');
   assert((life._landingFxSystems || []).length === 0
     && !Object.keys(life).some((k) => k.startsWith('_fx_land_')),
     'dispose não esvaziou as refs e o cache próprios de pouso');
