@@ -79,6 +79,16 @@ não fabrique um asset sem uso só para cumprir a sequência.
 Gera os assets a partir dos prompts, usando o que o projeto já tem:
 skill `threejs-3d-generator` (Tripo) ou o Mint MCP. **Não reinvente geração.**
 
+**Personagem 3P (terceira pessoa) tem rota própria: o processo padrão do Studio.** O
+Mint gera o modelo final **sem rig**; a partir daí o personagem só chega ao jogo como
+pack `kind: character` do `corosolto/studio` (`docs/character-pipeline.md`, com
+`docs/character-rig.md`, `docs/animation-conversion.md` e `docs/character-pack.md`):
+rig Blender no esqueleto `meshy-28` com pose gate, clipes convertidos com QA, pack
+construído pelo `build-character-pack.mjs` e verificado/instalado pelo client
+(`scripts/studio-pack.mjs`, `docs/studio-character-release.md`). Regras: **nenhum GLB
+novo de personagem em `public/` do client**, sem rig de proximidade ou auto-rig do Mint,
+sem clipe sem QA. Entrar no elenco e virar release pin é PR próprio do client.
+
 ## Os 6 portões (nenhum é opcional)
 
 | # | Portão | Como prova |

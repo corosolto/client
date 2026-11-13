@@ -46,11 +46,13 @@
 import * as THREE from 'three';
 import { comMapaCarregado, resolveMapId } from './js/maps.js';
 import { initTextures } from './js/textures.js';
-import { CHARACTERS } from './js/characters.js';
-import { preloadCharacterAssets, preloadCosmeticAssets, buildCharacterModel } from './js/glbchars.js';
+import { CHARACTERS, charWeapon } from './js/characters.js';
+import { characterRelease } from './js/data/content-releases.js';
+import { preloadCharacterAssets, preloadCosmeticAssets, buildCharacterModel, studioCharacterProvenance } from './js/glbchars.js';
 import { assetUrl } from './js/data/asseturl.js';
 import { enableLightBloom } from './js/bloom.js';
 
+import { sampleAnimatedEnvelope, fitPerspectiveFrame } from './js/charvideo-frame.js';
 const qp = new URLSearchParams(location.search);
 /* ?skin=<id da loja> veste o personagem base com o GLB aprovado no manifesto
    versionado por conteúdo, pelo mesmo preloadCosmeticAssets() do jogo. O id do
@@ -58,8 +60,10 @@ const qp = new URLSearchParams(location.search);
 const SKIN = qp.get('skin') || '';
 const SKIN_ENTRY = SKIN ? (await (await fetch(assetUrl('models/skins/manifest.json'))).json()).skins?.[SKIN] : null;
 if (SKIN && !SKIN_ENTRY?.approved) throw new Error('skin fora do manifesto aprovado: ' + SKIN);
+// Padrão legado: sem ?id= o harness abre sem depender de pack Studio baixado; pack é opt-in.
 const ID = SKIN_ENTRY?.character || qp.get('id') || 'mandrake';
-const WPN = qp.get('wpn') || '';
+const REMOTE = qp.get('remote') === '1';
+const WPN = qp.get('wpn') || (REMOTE ? 'awp' : charWeapon(ID));
 const MAPID = resolveMapId(qp.get('map') || 'loja_h');
 const BG = (qp.get('bg') || 'cena').toLowerCase();       // 'cena' | 'alpha'
 const ALPHA = BG === 'alpha';
@@ -144,9 +148,14 @@ scene.traverse((o) => { if (o.isMesh || o.isPoints || o.isSprite) doCenario.push
 await preloadCharacterAssets([ID]);
 if (SKIN) await preloadCosmeticAssets([SKIN]);
 
+const studio = studioCharacterProvenance(ID);
+if (studio && (!studio.modelSha256 || studio.id !== ID)) throw new Error('pack Studio inválido: ' + ID);
+if (characterRelease(ID) && !studio?.modelSha256) throw new Error('pack Studio não verificado: ' + ID);
+
 const def = { ...(CHARACTERS.find((c) => c.id === ID) || { id: ID, team: 'P' }), ...(SKIN ? { skinId: SKIN } : {}) };
-const built = buildCharacterModel(def, WPN ? { weaponId: WPN } : { weapon: false });
-if (!built || !built.group) throw new Error('sem modelo para ' + ID);
+const built = buildCharacterModel(def, { weaponId: WPN, preview: true });
+if (!built?.group || !built?.ctrl) throw new Error('modelo não carregado para ' + ID);
+if (studio && built.ctrl.charId !== ID && !SKIN) throw new Error('rig/controlador Studio divergente para ' + ID);
 
 /* Mesmo ponto do charlineup: o spawn do time P do mapa é chão jogável por
    definição — o personagem não fica flutuando nem enterrado. */
@@ -161,29 +170,51 @@ if (ALPHA) {
   scene.background = null;
   scene.fog = null;
 }
+const ctrl = built.ctrl;
+let t = 0;
+let activePose = POSE0;
 
-/* ENQUADRAMENTO POR CAIXA DO PERSONAGEM, e não por distância fixa.
-   O elenco NÃO tem a mesma altura: com a câmera parada numa distância fixa, o
-   Mandrake preenchia o quadro e a doutora aparecia pequena e distante. Isso não é
-   só feio — quando o quadro vira referência para o modelo de imagem, referência
-   pequena é pouca informação, e o que falta de pixel o modelo preenche inventando
-   (foi assim que o palhaço perdeu as ombreiras de espinho).
-   Aqui a caixa manda: mede-se o personagem e a câmera recua o quanto for preciso
-   para a fatia pedida ocupar a altura do quadro. `--dist`/`--alvoy` continuam
-   vencendo, para quando alguém quiser enquadrar na mão. */
-const caixa = new THREE.Box3().setFromObject(built.group);
-const alturaPers = Math.max(0.1, caixa.max.y - caixa.min.y);
-/* Fatia da altura total que cada plano mostra, e onde ela é centrada. Os números
-   vieram de olhar o resultado nos 44, não de teoria. */
-const PLANO = SHOT === 'busto'
-  ? { fatia: 0.42, centro: 0.84 }   // cabeça + ombros
-  : { fatia: parseFloat(qp.get('fatia')) || 1.16, centro: 0.52 };  // corpo inteiro com folga
-const alvoAuto = caixa.min.y + alturaPers * PLANO.centro;
-const distAuto = (alturaPers * PLANO.fatia / 2) / Math.tan((FOV * Math.PI / 180) / 2);
+function aplicaPose(s) {
+  activePose = s || 'idle';
+  if (ctrl._to) ctrl._to(activePose);
+}
+function avanca(dt) {
+  const moving = activePose === 'walk' || activePose === 'run' ? 1 : 0;
+  if (ctrl) {
+    ctrl.update(dt, moving, false, activePose === 'run' ? 2 : (moving ? 1 : 0));
+    if (activePose !== 'idle' && ctrl.curName !== activePose && ctrl._to) ctrl._to(activePose);
+  }
+  if (SPIN) built.group.rotation.y = Math.PI + THREE.MathUtils.degToRad(YAW0 + SPIN * t);
+  built.group.updateMatrixWorld(true);
+}
 
-const ALVO = parseFloat(qp.get('alvoy')) || (alvoAuto - gy);
-const D = parseFloat(qp.get('dist')) || distAuto;
+function reinicia() {
+  t = 0;
+  if (ctrl.mixer) {
+    ctrl.mixer.stopAllAction();
+    ctrl.mixer.time = 0;
+    ctrl.cur = null;
+  }
+  aplicaPose(POSE0);
+  for (let k = 0; k < 30; k++) avanca(1 / FPS);
+}
 
+reinicia();
+/* Box3 padrão reaproveita a caixa da bind pose calculada na normalização.
+   A régua charvideo-frame-check cobre skin, tempo, profundidade e aspect. */
+const captureSeconds = Math.max(2, ctrl.cur?.getClip?.().duration || 0);
+const envelope = sampleAnimatedEnvelope(built.group, (dt) => {
+  t += dt;
+  avanca(dt);
+}, { seconds: captureSeconds, fps: FPS });
+const fit = fitPerspectiveFrame(envelope, {
+  fov: FOV, aspect: W / H, originX: sp.x, originZ: sp.z, shot: SHOT,
+  fatia: parseFloat(qp.get('fatia')) || 1.16,
+  targetY: parseFloat(qp.get('alvoy')) ? gy + parseFloat(qp.get('alvoy')) : undefined,
+});
+const ALVO = fit.targetY - gy;
+const D = parseFloat(qp.get('dist')) || fit.distance;
+reinicia();
 camera.position.set(sp.x, gy + ALVO, sp.z - D);
 camera.lookAt(sp.x, gy + ALVO, sp.z);
 
@@ -228,15 +259,27 @@ aplicaPose(POSE0);
 for (let k = 0; k < 30; k++) avanca(1 / FPS);
 renderer.render(scene, camera);
 
+/* Personagem de release do Studio (data/content-releases.js): `studio` diz de onde
+   vieram corpo e clipes (Blob URLs verificadas + SHA-256). `ctrl` e `render()` deixam
+   a régua tocar cada clipe direto no mixer sem o update() trocar o estado.
+   Régua: tools/eval/studio-character-browser.mjs (eval:studiochar:browser). */
 window.CHARVID = {
-  ready: true, id: ID, skin: SKIN || null, weapon: WPN || null, skinned: !!SKIN && built.ctrl?.charId === SKIN,
+  ready: true, verified: true, id: ID, skin: SKIN || null, weapon: WPN, skinned: !!SKIN && built.ctrl?.charId === SKIN,
   idleSecs: ctrl?.actions?.idle?.getClip?.().duration || 0, w: W, h: H, fps: FPS, bg: BG, shot: SHOT,
-  poses: ['idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'jump'],
+  studio, ctrl,
+  framing: { min: fit.bounds.min.toArray(), max: fit.bounds.max.toArray(), distance: D, targetY: fit.targetY, samples: envelope.length, seconds: captureSeconds },
   pose(s) { aplicaPose(s); },
-  reset() { t = 0; for (let k = 0; k < 30; k++) avanca(1 / FPS); renderer.render(scene, camera); },
+  reset() { reinicia(); renderer.render(scene, camera); },
   step(dt) { const d = dt || 1 / FPS; t += d; avanca(d); renderer.render(scene, camera); return t; },
+  render() { built.group.updateMatrixWorld(true); renderer.render(scene, camera); },
   grab() { return renderer.domElement.toDataURL('image/png'); },
 };
+
+/* O arnês remoto é opcional e não altera a API normal de vídeo. */
+if (REMOTE) {
+  const { createRemoteHarness } = await import('./js/remote-video.js');
+  window.REMOTEVID = await createRemoteHarness({ scene, camera, renderer, built, def, sp, gy, weapon: WPN, fps: FPS });
+}
 </script>
 </body>
 </html>

@@ -4,6 +4,7 @@ import cloudflare from '@astrojs/cloudflare';
 import { adaptadorAlvo } from './scripts/adaptador.mjs';
 import { aeoCurado } from './scripts/aeo.mjs';
 import { moduleCacheManifest } from './scripts/module-cache.mjs';
+import { studioPackVitePlugin } from './scripts/studio-pack-serving.mjs';
 import {readFileSync,existsSync,readdirSync,mkdirSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
@@ -57,6 +58,15 @@ const SOCIAL_LOGO='data:image/png;base64,'+(await sharp(readFileSync('public/log
    Régua: `tools/eval/ssr-render-check.mjs` (`--mutante=sem-publicjs` reproduz o pacote
    sem `public/js` e volta a ficar vermelha). */
 const MANIFESTO_JS = moduleCacheManifest();
+const MANIFESTO_VENDOR = moduleCacheManifest('public/vendor');
+MANIFESTO_JS.vendorModules = MANIFESTO_VENDOR.modules;
+MANIFESTO_JS.vendorRevision = MANIFESTO_VENDOR.revision;
+const PWA_REV = createHash('sha256')
+  .update(MANIFESTO_JS.revision)
+  .update(MANIFESTO_JS.vendorRevision)
+  .update(readFileSync('public/sw.js'))
+  .digest('hex')
+  .slice(0, 12);
 /* Revisão dos CSS do hub pelo CONTEÚDO, calculada aqui pelo mesmo motivo do manifesto:
    o hub também é renderizado no SSR de /u/<perfil>, e lá não existe `public/`. */
 const revisaoCss = (arquivo) => createHash('sha1').update(readFileSync(arquivo)).digest('hex').slice(0, 8);
@@ -88,6 +98,7 @@ export default defineConfig({
     },
     define: {
       __MANIFESTO_JS__: JSON.stringify(MANIFESTO_JS),
+      __PWA_REV__: JSON.stringify(PWA_REV),
       __CSS_REV__: JSON.stringify(CSS_REV),
       __TP_CSS__: JSON.stringify(TP_CSS),
       __SOCIAL_PORTRAITS__: JSON.stringify(SOCIAL_PORTRAITS),
@@ -104,6 +115,9 @@ export default defineConfig({
         allow: ['.', '/Users/ruben/csbrasil-private-assets'],
       },
     },
+    // Pacotes do Studio instalados fora de public/: /packs/ lê STUDIO_PACK_ROOT (sem a
+    // variável, 404). Mesmo handler do tools/eval/serve.mjs; docs/studio-character-release.md.
+    plugins: [studioPackVitePlugin()],
   },
 
   // AEO: llms-full.txt, ai-index.json, docs.json e espelhos .md das páginas de

@@ -28,7 +28,8 @@ campanhas e funil; "olhar rápido" vai ser Umami (self-host no Workers + D1) ou 
   salgado (`src/lib/server-traffic.mjs`) e manda para `/api/server-traffic` do backend.
 - `vercel.json` (528 linhas): `buildCommand`, `ignoreCommand`, `proxy.entrypoint`, 38 regras de
   `headers`/`redirects` (CSP com `frame-ancestors`, cache, HSTS, atalhos `/discord`, `/telegram`).
-- Preview por PR: `preview-build.yml`, `smoke-web.yml`, `staging.yml`, comentário do bot com a URL.
+- Preview por PR: `cf-preview.yml` (Cloudflare, sticky comment) + `smoke-web.yml`; o par Vercel
+  `preview-build/preview-deploy` ficou só para emergência por dispatch.
 - Env (Vercel): `API_PROXY_SECRET`, `PUBLIC_API_BASE`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
   `BLOB_READ_WRITE_TOKEN`, `VM_BLOB_TOKEN`, `VM_BLOB_BASE_URL`, `X_PIXEL_TOKEN`,
   `GOOGLE_SITE_VERIFICATION`, `SOCIAL_LOCAL_GAME_URL` (dev), `VERCEL_GIT_COMMIT_SHA` (build).
@@ -51,15 +52,11 @@ campanhas e funil; "olhar rápido" vai ser Umami (self-host no Workers + D1) ou 
 
 ## Fase 0: o que ficou (e como conferir)
 
-- `scripts/ci/vercel-ignore.sh`, ramo preview: builda só se `git diff --name-only $VERCEL_GIT_PREVIOUS_SHA..HEAD`
-  toca `src/`, `public/`, `vercel.json`, `package*.json`, `astro.config.mjs`, `middleware.js`, `scripts/fetch-*`,
-  `scripts/copy-wasm.mjs`, `scripts/prune-dist.mjs`, `scripts/aeo.mjs`, `tools/gen-asset-rev.mjs`,
-  `tools/viewmodels/prepare_precision_preview.mjs`, `tools/audio/`, `tools/strip-decal-bg.mjs` ou `CHANGELOG.md`.
-  `staging`, `main` e `lote-*` buildam sempre. Sem `VERCEL_GIT_PREVIOUS_SHA` (primeiro push da branch) ou com o
-  SHA fora do clone raso da Vercel (`--depth=10`): builda. O script só sai 0 ou 1; qualquer outro código a Vercel
-  trata como deploy falho. Produção não mudou (só `chore(release):`). O preview de PR que o bot comenta vem do
-  `preview-deploy.yml` (`vercel deploy --prebuilt`), não da integração Git, então pular o build da integração não
-  tira o preview de ninguém. Régua: `npm run eval:vercelignore` (3 mutantes), no pr-fast.
+- `scripts/ci/vercel-ignore.sh`, ramo preview (10/11, "preview 100% Cloudflare"): branch de PR NUNCA
+  mais builda na Vercel (sai 0 com o motivo); `staging`, `main`, `lote-*` e `*/lote-*` buildam sempre
+  (STAGING_URL e o trem dependem delas). Produção não mudou (só `chore(release):`). O script só sai
+  0 ou 1; qualquer outro código a Vercel trata como deploy falho. Régua: `npm run eval:vercelignore`
+  (3 mutantes), no pr-fast.
 - Cache dos packs: `fetch-audio.sh` e `fetch-decals.sh` guardam o zip em `node_modules/.cache/csb-packs/` (chave
   = sha + URL do pack; a Vercel preserva `node_modules` entre builds) e `fetch-viewmodels.mjs` guarda cada asset
   por sha256 em `.../csb-packs/viewmodels/`. A pasta só nasce com `VERCEL=1`; sem ela (máquina local) nada muda.
@@ -71,6 +68,25 @@ campanhas e funil; "olhar rápido" vai ser Umami (self-host no Workers + D1) ou 
 - O que a fatura seguinte deve mostrar: Build CPU Minutes bem abaixo de 60 h (preview só em PR que toca o site),
   Blob Data Transfer perto de zero (packs servidos do cache), Observability Events abaixo de 1 M. Se Build
   continuar alto, conferir no painel quais deploys de preview buildaram e o log `vercel-ignore:` de cada um.
+
+### Fase 0: Preview 100% Cloudflare (10/11/2026)
+
+A fase 0 original filtrava preview por diff e ainda buildava todo PR que tocava `src/` — e o pipeline
+de fork (`preview-build.yml` → `preview-deploy.yml`) buildava a Vercel em TODO push de PR, sem filtro
+nenhum. Os dois caminhos fecharam de vez:
+
+- `vercel-ignore.sh`: branch de PR sai 0 sempre; o comentário sticky do PR aponta o preview
+  `*.workers.dev` do `cf-preview.yml`. staging/main/lote-* continuam buildando na Vercel.
+- `preview-build.yml` virou `workflow_dispatch` (input `pr_number`): não roda mais por push de PR.
+  `preview-deploy.yml` segue em `workflow_run`, que é o que publica o build de EMERGÊNCIA no contexto
+  base (dispatch → build concluído → deploy com `VERCEL_TOKEN` e `--prebuilt`). Nenhum outro workflow
+  escuta esse par; PR de fork não recebe preview Vercel (o bot do `preview-bot.yml` agora diz isso).
+- A régua PRV1 do `workflow_security_check.py` proíbe o build de voltar a disparar sozinho por
+  `pull_request`/`push`/`schedule` (mutante `compila-volta-pr`) e segue proibindo `secrets.` nele;
+  DG3/DG6 e o concurrency-check continuam prendendo o par como estava.
+- Superfície Vercel que resta: builds de produção (trem de release) + builds de staging/main/lote-*.
+- Fatura esperada: Build CPU Minutes cai para ~3 builds de release/semana (trem 14/10); Fast Origin
+  Transfer segue igual até a virada da fase 4, porque produção ainda serve da Vercel.
 
 ## Fase 1: resultado do spike (09/11/2026)
 
@@ -137,11 +153,14 @@ O que as fases 2–4 têm que tratar (lista fechada, achada no spike):
 
 ## Fase 2: preview por PR
 
-O workflow `.github/workflows/cf-preview.yml` roda em `pull_request`, mas preserva o check visível
-mesmo quando o diff não toca o site: o job `decide` aplica o mesmo conjunto de caminhos de
+O workflow `.github/workflows/cf-preview.yml` roda em `pull_request_target`, portanto a definição usada é sempre a do branch base, não a do PR. O job `decide` aplica o mesmo conjunto de caminhos de
 `scripts/ci/vercel-ignore.sh` e o job de publicação fica pulado. Para PRs do próprio repositório,
-ele faz `npm ci`, `npm run build:cf` e `npx wrangler versions upload --config wrangler.preview.toml
---name csb-preview`. O Wrangler devolve uma URL de versão, por exemplo
+o job `compile` faz `npm ci` e `npm run build:cf` num runner descartável sem segredos e exporta só
+`dist`. O job `preview` não faz checkout do head: baixa `dist` como dados, instala Wrangler 4.158.0
+sem credenciais fora do workspace e publica pelo binário absoluto. `wrangler.preview.toml` e
+`scripts/ci/cf_preview_comment.py` vêm de um checkout sparse do `base.sha`; o token Cloudflare fica
+restrito ao upload e o token de escrita no PR ao comentário. Assim, executáveis, configuração e
+scripts controlados pelo PR nunca entram no job tokenizado. O comentário e o smoke aceitam a URL somente de `github-actions[bot]`, com SHA e URL no mesmo corpo, ignorando marcadores forjados; `tools/cf/` entra no gatilho. O Wrangler devolve uma URL de versão, por exemplo
 `https://<version>-csb-preview.<subdominio>.workers.dev`.
 
 `scripts/ci/cf_preview_comment.py` mantém um único comentário com o marcador
@@ -212,3 +231,5 @@ npm run cf:paridade -- --alvo https://<worker>.workers.dev
 | 2026-11-09 | spike | fase 1: `csb-spike` no ar em workers.dev com 18/19 rotas idênticas à produção; adaptador por `ADAPTER`; `_headers`/`_redirects` gerados; middleware portado; OG/badge/profile-card em resvg-wasm nas duas bordas; `eval:cfparidade` e `cf-paridade-check` | dono mergeia; fase 2 começa pelo item 1 da lista (segredos em runtime) e pelo preview por PR |
 | 2026-11-09 | fase 2 | feito: preview por PR no Workers via `cf-preview.yml`, `wrangler.preview.toml`, comentário sticky `cf-preview` e `smoke-cf` opcional; Vercel continua sendo o smoke principal; run 42606435715 publicou a versão e retornou `HTTP 200` | fase 2b: `CF_WORKERS_TOKEN` dedicado configurado; seguir com smoke/paridade e merge |
 | 2026-11-09 | limpeza-lote2 | lote 2 removeu 9 `tools/eval` órfãos e 59 geradores raiz sem chamadores; arquivou históricos e pastas privadas fora do repo; ajustou os consumidores de `plans/` e `references/` | L2 aguarda PR e merge; arquivos `tools/blender/**` e `tools/fabrica/**` seguem intactos por decisão do dono |
+| 2026-11-09 | — | links compartilháveis do jogo e do site passam a usar `https://corosol.to`; canonical, `og:url`, hreflang, sitemap e JSON-LD permanecem em `www`; régua `eval:shareorigin` com mutantes entra na suite fast | abrir PR para `staging`, acompanhar pr-fast e confirmar a prova de convite no navegador |
+| 2026-11-10 | vercel-sem-preview | preview 100% Cloudflare: branch de PR nunca mais builda na Vercel (`vercel-ignore.sh` sai 0; régua com mutantes `preview-pr-builda`/`staging-pulado`/`release-pulado`); `preview-build.yml` só por `workflow_dispatch` (input `pr_number`), `preview-deploy.yml` segue em `workflow_run` como emergência; PRV1 proíbe reativar o disparo automático; bot não promete URL Vercel | merge e observar fatura: Build CPU Minutes ≈ builds de release (~3/semana) + staging/main/lote; conferir no painel que PR novo gera "Ignored Build Step" e staging segue buildando |

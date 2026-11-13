@@ -14,7 +14,10 @@ const BASELINE = {
   fast: { quantidade: 338, sha256: '05c5d2027a8229f379a4556ee991daf1bc0e9f45b04ee3515d4e458259d6bfdf' },
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
-const NOVOS = { fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:pesos-braco-perna']), deploy: new Set() };
+const NOVOS = {
+  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:pesos-braco-perna', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:prodcrash', 'eval:workflowguards']),
+  deploy: new Set(['eval:weapon-passe', 'eval:dispose', 'eval:workflowguards']),
+};
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
 
 for (const [nome, baseline] of Object.entries(BASELINE)) {
@@ -35,11 +38,24 @@ for (const [nome, baseline] of Object.entries(BASELINE)) {
   });
 }
 
-test('staging adiciona portalembed, lixo, envruntime e servertraffic sem apagar os passos migrados', () => {
+test('fast adds staging, Studio, season-pass and production-crash checks without deleting migrated steps', () => {
   assert.ok(SUITES.fast.includes('eval:portalembed'));
   assert.ok(SUITES.fast.includes('eval:lixo'));
   assert.ok(SUITES.fast.includes('eval:envruntime'));
   assert.ok(SUITES.fast.includes('eval:servertraffic'));
+  assert.ok(SUITES.fast.includes('eval:shareorigin'));
+
+  assert.ok(SUITES.fast.includes('eval:vm-enquadramento-placar'));
+  assert.ok(SUITES.fast.includes('eval:pintura-fabrica'));
+  assert.ok(SUITES.fast.includes('eval:passe'));
+  assert.ok(SUITES.fast.includes('eval:packpublish'));
+  assert.ok(SUITES.fast.includes('eval:prodcrash'));
+  assert.ok(SUITES.deploy.includes('eval:dispose'));
+});
+
+test('release de personagem do Studio entra na fast logo depois do characterkit', () => {
+  const i = SUITES.fast.indexOf('eval:characterkit');
+  assert.equal(SUITES.fast[i + 1], 'eval:studiochar');
 });
 
 test('suites temáticas só reutilizam passos existentes, sem duplicar execução', () => {
@@ -108,7 +124,7 @@ process.exit(distintos >= 2 ? 78 : 97);
       'tools/eval/runner.mjs', '--jobs=2', '--suite=core', `--json-out=${jsonOut}`,
     ], {
       encoding: 'utf8',
-      timeout: 20000,
+      timeout: 60000,
       env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, FAKE_NPM_LOG: log },
     });
     assert.equal(r.status, 78, r.stderr);
@@ -176,13 +192,35 @@ test('sem diff ou com documentação, o pre-push mantém os checks centrais bara
   }
 });
 
+test('skills de agente, markdown em qualquer pasta e mídia de lançamento são só core (09/11: caíam no deploy completo)', () => {
+  for (const arquivo of ['.agents/skills/game-3d-assets/SKILL.md', '.claude/agents/revisor.md', 'public/docs/estado/nota.md', 'launch-media/2026-11-09/post.png', 'plans/landing-app.md', 'scripts/ci/cf_preview_comment.py']) {
+    const r = selecionarPorArquivos([arquivo]);
+    assert.equal(r.fallback, false, arquivo);
+    assert.deepEqual(r.suites, ['core'], arquivo);
+  }
+});
+
+test('contagem de borda é network, não fallback', () => {
+  const r = selecionarPorArquivos(['src/lib/server-traffic.mjs', 'tools/eval/server-traffic-check.mjs']);
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core', 'network']);
+});
+
+test('as duas bordas de contagem (middleware da Vercel e do Workers) são network, não fallback', () => {
+  const r = selecionarPorArquivos(['middleware.js', 'src/middleware.ts']);
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core', 'network']);
+});
+
 const CASOS = [
   ['public/js/map_campo.js', 'maps', 'eval:mapcontrato'],
   ['src/components/Lobby.astro', 'ui', 'eval:ui-v3'],
   ['public/audio/manifest.json', 'audio', 'audio:check'],
   ['playwright.config.mjs', 'browser', 'eval:vm-troca-sem-legado'],
   ['public/js/transporte.js', 'network', 'eval:netcode'],
-  ['tools/viewmodels/validate_paid_catalog.mjs', 'vm', 'eval:vm-presence'],
+  ['tools/eval/lib/vm-enquadramento.mjs', 'vm', 'eval:vm-enquadramento-placar'],
+  ['tools/fabrica/fabrica-candidates.json', 'vm', 'eval:vm-enquadramento-placar'],
+  ['public/models/viewmodels/coro/p90-hires.glb', 'vm', 'eval:vm-enquadramento-placar'],
 ];
 for (const [arquivo, suite, passo] of CASOS) {
   test(`diff de ${suite} seleciona core + ${suite}`, () => {

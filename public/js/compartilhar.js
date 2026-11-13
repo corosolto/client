@@ -1,15 +1,19 @@
 // Botão único de compartilhar (docs/adr/0008-rotas-fixas.md): Web Share no celular, cópia do link
 // no resto. Devolve o que aconteceu para o botão dizer em português.
 
-/** Origem pública dos links: a do canonical da página (www), não a do preview ou do localhost. */
-export function origemPublica(doc = globalThis.document, loc = globalThis.location) {
-  const canonical = doc?.querySelector?.('link[rel="canonical"]')?.href;
-  try { if (canonical) return new URL(canonical).origin; } catch { /* cai na origem da página */ }
-  return loc?.origin || 'https://www.corosolto.com.br';
+/** Origem dos links compartilhados: corosol.to em produção; same-origin em dev e previews. */
+export function origemCompartilhamento(loc = globalThis.location) {
+  const origem = typeof loc?.origin === 'string' ? loc.origin : '';
+  const host = typeof loc?.hostname === 'string' ? loc.hostname.toLowerCase() : (() => {
+    try { return new URL(origem).hostname.toLowerCase(); } catch { return ''; }
+  })();
+  if (host === 'corosolto.com.br' || host.endsWith('.corosolto.com.br')) return globalThis.window?.__SHARE_ORIGIN || 'https://corosol.to';
+  return origem || 'https://www.corosolto.com.br';
 }
 
+
 /** Link com a origem do compartilhamento, para o funil saber de onde veio a visita. */
-export function linkCompartilhavel(caminho, ponto, origem = origemPublica()) {
+export function linkCompartilhavel(caminho, ponto, origem = origemCompartilhamento()) {
   const url = new URL(caminho, origem);
   url.searchParams.set('utm_source', 'compartilhar');
   url.searchParams.set('utm_medium', ponto);
