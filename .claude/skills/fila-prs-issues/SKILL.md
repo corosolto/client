@@ -71,8 +71,10 @@ Ordene assim:
 3. independentes em paralelo apenas nas lanes locais — nunca nos merges;
 4. issues junto do PR que contém a correção, não numa lane órfã de fechamento.
 
-Registre também dependências cruzadas com owner/repo completo. `Fixes #123` é vínculo, não prova
-de correção nem autorização para fechar a issue antes do merge e da verificação.
+Registre cada issue como `OWNER/REPO#NUMERO`, inclusive vínculos cruzados. `Fixes #123` é vínculo,
+não prova de correção nem autorização para fechar a issue antes do merge e da verificação. Se o PR
+aponta para a branch padrão, troque `Fixes`/`Closes` por `Refs` antes do merge ou retargete para a
+branch de integração; o fechamento automático não pode anteceder a verificação.
 
 ## 3. Isole cada lane sem tocar o checkout de ninguém
 
@@ -84,23 +86,31 @@ git worktree list
 git fetch origin
 ```
 
-Se já existir worktree limpa para a branch, reutilize-a. Caso contrário, crie uma por PR:
+Se já existir worktree limpa para a branch, reutilize-a somente quando seu `HEAD` for o
+`REVIEWED_HEAD` capturado. Caso contrário, crie uma por PR, com o repositório no namespace:
 
 ```bash
 # Branch local já existente:
-git worktree add /tmp/corosolto-pr-NUMERO BRANCH
+git worktree add /tmp/corosolto-REPO-pr-NUMERO BRANCH
 
 # Branch que existe apenas no remoto:
-git worktree add --track -b BRANCH /tmp/corosolto-pr-NUMERO origin/BRANCH
+git worktree add --track -b BRANCH /tmp/corosolto-REPO-pr-NUMERO origin/BRANCH
+
+test "$(git -C /tmp/corosolto-REPO-pr-NUMERO rev-parse HEAD)" = "$REVIEWED_HEAD"
 ```
 
-Para PR de fork, use um remote próprio e preserve owner/branch ao empurrar (crie o remote só se
-ele ainda não existir):
+Para PR de fork, use um remote próprio e preserve owner/branch ao empurrar. Se o remote já existir,
+confirme primeiro que sua URL é exatamente a do fork:
 
 ```bash
-git remote add OWNER https://github.com/OWNER/REPO.git
+EXPECTED_URL=https://github.com/OWNER/REPO.git
+if git remote get-url OWNER >/dev/null 2>&1; then
+  test "$(git remote get-url OWNER)" = "$EXPECTED_URL"
+else
+  git remote add OWNER "$EXPECTED_URL"
+fi
 git fetch OWNER BRANCH
-git worktree add --track -b BRANCH /tmp/corosolto-pr-NUMERO OWNER/BRANCH
+git worktree add --track -b BRANCH /tmp/corosolto-REPO-pr-NUMERO OWNER/BRANCH
 git push OWNER BRANCH
 ```
 
@@ -109,9 +119,10 @@ sujo, deixe-o como está; a worktree nova é a resposta, não `clean`, `reset` o
 
 ## 4. Prenda review e threads ao head atual
 
-Capture o SHA antes de ler ou pedir review:
+Capture e preserve o SHA antes de ler ou pedir review:
 
 ```bash
+REVIEWED_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)
 gh pr view NUMERO -R corosolto/REPO \
   --json headRefOid,headRefName,baseRefName,isDraft,labels,reviews
 ```
@@ -162,7 +173,8 @@ Local verde não substitui CI, e CI verde não substitui review:
 
 ```bash
 gh pr checks NUMERO -R corosolto/REPO
-gh run view --log-failed  # somente quando houver run/check vermelho para investigar
+# Somente para investigar check vermelho; obtenha RUN_ID do link desse check:
+gh run view RUN_ID -R corosolto/REPO --log-failed
 ```
 
 Reproduza localmente a régua que falhou, corrija na origem e repita o ciclo. A revisão adversarial é
@@ -201,8 +213,9 @@ PR pequeno, reversível e fora das superfícies proibidas pode receber `safe-aut
 dispensa nenhum portão.
 
 ```bash
-HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)
-gh pr merge NUMERO -R corosolto/REPO --merge --match-head-commit "$HEAD"
+CURRENT_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)
+test "$CURRENT_HEAD" = "$REVIEWED_HEAD"
+gh pr merge NUMERO -R corosolto/REPO --merge --match-head-commit "$REVIEWED_HEAD"
 ```
 
 Depois de **cada** merge:
@@ -218,11 +231,12 @@ Não mergeie lote em paralelo nem reutilize o placar obtido antes do merge anter
 
 Uma issue só pode ser fechada quando o PR que a corrige já foi integrado e a verificação focada
 passou na base resultante, com evidência reproduzível. Review verde, PR aberto ou texto `Closes`
-não bastam.
+não bastam. Use o owner e o repositório registrados para a issue, nunca o repositório do PR por
+inferência:
 
 ```bash
-gh issue close NUMERO -R corosolto/REPO \
-  --comment "Corrigido por #PR (SHA DO MERGE). Verificação na base resultante: COMANDO — RESULTADO."
+gh issue close NUMERO_ISSUE -R OWNER_ISSUE/REPO_ISSUE \
+  --comment "Corrigido por OWNER_PR/REPO_PR#PR (SHA DO MERGE). Verificação na base resultante: COMANDO — RESULTADO."
 ```
 
 Se a verificação falhar, reabra a lane de correção e deixe a issue aberta. Se depender de decisão
