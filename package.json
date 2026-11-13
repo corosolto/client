@@ -340,6 +340,7 @@
     "eval:simclock": "node tools/eval/sim-clock-check.mjs",
     "eval:mutcega": "node tools/eval/mutacao-cega-check.mjs",
     "eval:wfsecret": "node tools/eval/workflow-secret-check.mjs",
+    "eval:workflowguards": "node --test tests/workflow-guards.test.mjs",
     "eval:wflocal": "node tools/eval/workflow-local-action-check.mjs",
     "eval:wftimeout": "node tools/eval/workflow-timeout-check.mjs",
     "eval:deploygate": "node tools/eval/deploy-gate-check.mjs",
@@ -1003,7 +1004,8 @@
     "meshoptimizer": "^1.2.0",
     "ndarray-pixels": "^5.2.0",
     "playwright": "^1.62.1",
-    "wrangler": "^4.158.0"
+    "wrangler": "^4.158.0",
+    "yaml": "^2.9.1"
   },
   "packageManager": "npm@10.9.9"
 }

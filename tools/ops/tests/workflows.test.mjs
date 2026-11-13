@@ -135,3 +135,23 @@ test('smoke-web.yml: chat desktop em job próprio, partição exata, nenhum spec
   for (const spec of SPECS) assert.ok(comInvert.includes(spec), `o job do --grep-invert perdeu ${spec}`);
   for (const e of execs) assert.match(e, /--config=playwright\.smoke\.config\.mjs/);
 });
+
+test('ci.yml: robots aceita só status 1 com a cláusula documentada', () => {
+  const ci = wf('ci.yml');
+  const inicio = ci.indexOf('          output=$(mktemp)');
+  const fim = ci.indexOf('          node tools/eval/perfil-abas-check.mjs', inicio);
+  const bloco = ci.slice(inicio, fim).replace(
+    'node tools/eval/rotas-check.mjs --dist --mutante=robots',
+    'bash -c \'printf "%s\\n" "$ROBOTS_OUT"; exit "$ROBOTS_STATUS"\'',
+  );
+  assert.ok(inicio >= 0 && fim > inicio, 'wrapper de status do robots ausente');
+  const clausula = '/jogar/multiplayer: robots "index, follow" com indexavel=false';
+  const executar = (status, out) => spawnSync('bash', ['-c', bloco], {
+    encoding: 'utf8',
+    env: { ...process.env, ROBOTS_STATUS: String(status), ROBOTS_OUT: out },
+  });
+  assert.equal(executar(1, clausula).status, 0, 'status 1 com a cláusula deve passar');
+  assert.equal(executar(0, clausula).status, 1, 'status 0 significa mutante sobrevivente');
+  assert.equal(executar(1, 'crash sem cláusula').status, 1, 'status 1 sem cláusula deve falhar');
+  assert.equal(executar(2, clausula).status, 2, 'erro de infraestrutura preserva seu status');
+});
