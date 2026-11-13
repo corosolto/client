@@ -144,8 +144,7 @@ for (const [mapId, wet] of [
 }
 
 /* CLEANUP REAL do 139: Game novo, SEM _tintFx fake — material e CanvasTexture de verdade,
-   contados por addEventListener('dispose'). O puff é compartilhado entre sistemas DESTE Game,
-   mas continua sendo um recurso dessa instância e deve ser descartado uma vez no teardown. */
+   contados por addEventListener('dispose'). O puff é compartilhado e não pode cair. */
 {
   const life = bootGame('corrego', { textures: initTextures(), seed: 12345, settings: { quality: 'high' } });
   const spawn = (surface) => {

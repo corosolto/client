@@ -16,10 +16,14 @@ let fetchAudio = readFileSync('scripts/fetch-audio.sh', 'utf8');
 let audio = readFileSync('public/js/audio.js', 'utf8');
 let vercel = readFileSync('vercel.json', 'utf8');
 if (mutante === 'sem-clique') {
+  const antes = main;
   main = main.replace(
-    'selectCharacterFromAvatar(c, row, chars);',
-    'selectChar(c, row);',
+    /row\.onclick\s*=\s*\(\)\s*=>\s*\{[\s\S]*?\n\s*\};\n(\s*)list\.appendChild\(row\)/,
+    'void row;\n$1list.appendChild(row)',
   );
+  if (main === antes || /row\.onclick\s*=/.test(main)) {
+    throw new Error('mutante sem-clique não removeu o handler do avatar');
+  }
 }
 if (mutante === 'auto-fala') {
   main = main.replace('if (row) selectChar(character, row);', 'row?.click();');
