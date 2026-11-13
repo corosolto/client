@@ -123,6 +123,8 @@ git status --short --branch
 git worktree list
 git fetch "$BASE_REMOTE" \
   || { echo "não foi possível atualizar a base" >&2; exit 1; }
+REVIEWED_BASE=$(git rev-parse "$BASE_REMOTE/$BASE_BRANCH") \
+  || { echo "não foi possível capturar o SHA da base revisada" >&2; exit 1; }
 git fetch "$HEAD_REMOTE" BRANCH \
   || { echo "não foi possível atualizar o head" >&2; exit 1; }
 if ! PR_MESSAGES=$(git log --format='%H %s%n%b' "$BASE_REMOTE/$BASE_BRANCH..$REVIEWED_HEAD"); then
@@ -271,6 +273,14 @@ CURRENT_DEFAULT=$(gh repo view corosolto/REPO --json defaultBranchRef --jq .defa
   || { echo "não foi possível reler a branch padrão antes do merge" >&2; exit 1; }
 test "$CURRENT_HEAD" = "$REVIEWED_HEAD" \
   || { echo "head atual difere do SHA revisado" >&2; exit 1; }
+test "$CURRENT_BASE" = "$BASE_BRANCH" \
+  || { echo "branch base mudou depois da revisão" >&2; exit 1; }
+git fetch "$BASE_REMOTE" "$CURRENT_BASE" \
+  || { echo "não foi possível atualizar a base antes do merge" >&2; exit 1; }
+CURRENT_BASE_HEAD=$(git rev-parse "$BASE_REMOTE/$CURRENT_BASE") \
+  || { echo "não foi possível reler o SHA da base antes do merge" >&2; exit 1; }
+test "$CURRENT_BASE_HEAD" = "$REVIEWED_BASE" \
+  || { echo "base avançou depois da revisão; revalide a lane" >&2; exit 1; }
 CLOSING_RE='(^|[^[:alnum:]_])(close[sd]?|fix(e[sd])?|resolve[sd]?):?[[:space:]]+(([^[:space:]]+/[^[:space:]]*)?#[0-9]+|https://github\.com/[^/]+/[^/]+/issues/[0-9]+)'
 if [ "$CURRENT_BASE" = "$CURRENT_DEFAULT" ] && grep -Eiq "$CLOSING_RE" <<<"$CURRENT_BODY"; then
   echo "corpo atual do PR fecha issue automaticamente; merge recusado" >&2
