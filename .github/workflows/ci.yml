@@ -544,20 +544,14 @@ jobs:
           node tools/eval/cla-ssr-check.mjs
           node tools/eval/cla-ssr-check.mjs --mutate
           node tools/eval/rotas-check.mjs --dist
+          output=$(mktemp)
           status=0
-          output="$(node tools/eval/rotas-check.mjs --dist --mutante=robots 2>&1)" && status=0 || status=$?
-          printf '%s\n' "$output"
-          if [ "$status" -eq 0 ]; then
-            echo "::error::o mutante robots passou"
-            exit 1
-          fi
-          if [ "$status" -ne 1 ]; then
-            echo "::error::o mutante robots terminou com status inesperado $status"
-            exit "$status"
-          fi
-          if ! printf '%s\n' "$output" | grep -Fq '/jogar/multiplayer: robots "index, follow" com indexavel=false'; then
-            echo "::error::o mutante robots falhou sem a cláusula documentada"
-            exit 1
+          node tools/eval/rotas-check.mjs --dist --mutante=robots >"$output" 2>&1 || status=$?
+          cat "$output"
+          if [ "$status" -eq 0 ]; then echo 'robots mutant was not detected'; exit 1; fi
+          if [ "$status" -ne 1 ]; then exit "$status"; fi
+          if ! grep -Fq '/jogar/multiplayer: robots "index, follow" com indexavel=false' "$output"; then
+            echo 'robots mutant exited 1 without the documented clause'; exit 1
           fi
           node tools/eval/perfil-abas-check.mjs
           node tools/eval/perfil-abas-check.mjs --mutate

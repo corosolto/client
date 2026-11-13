@@ -136,30 +136,22 @@ test('smoke-web.yml: chat desktop em job próprio, partição exata, nenhum spec
   for (const e of execs) assert.match(e, /--config=playwright\.smoke\.config\.mjs/);
 });
 
-test('ci.yml: mutante robots exige a cláusula e recusa crash com o mesmo exit 1', () => {
-  const s = wf('ci.yml');
-  const inicio = s.indexOf('          status=0\n          output="$(node tools/eval/rotas-check.mjs --dist --mutante=robots');
-  assert.ok(inicio >= 0, 'wrapper do mutante robots não encontrado');
-  const marcador = s.indexOf('falhou sem a cláusula documentada', inicio);
-  const fim = s.indexOf('          fi\n', marcador);
-  assert.ok(marcador > inicio && fim > marcador, 'wrapper sem prova da cláusula');
-  const script = s.slice(inicio, fim + '          fi\n'.length).replace(/^ {10}/gm, '');
-  const temp = mkdtempSync(join(tmpdir(), 'robots-mutant-workflow-'));
-  try {
-    writeFileSync(join(temp, 'node'), `#!/bin/bash
-case "$ROBOTS_FAKE" in
-  esperado) printf '%s\\n' '/jogar/multiplayer: robots "index, follow" com indexavel=false'; exit 1;;
-  crash) printf '%s\\n' 'SyntaxError: Cannot use import statement outside a module'; exit 1;;
-  sobreviveu) exit 0;;
-  infra) exit 2;;
-esac
-`, { mode: 0o755 });
-    for (const [modo, esperado] of [['esperado', 0], ['crash', 1], ['sobreviveu', 1], ['infra', 2]]) {
-      const r = spawnSync('bash', ['-euo', 'pipefail', '-c', script], {
-        encoding: 'utf8', env: { ...process.env, PATH: `${temp}:${process.env.PATH}`, ROBOTS_FAKE: modo },
-      });
-      assert.equal(r.status, esperado, `${modo}: ${r.stdout}${r.stderr}`);
-      if (modo === 'crash') assert.match(r.stdout, /falhou sem a cláusula documentada/);
-    }
-  } finally { rmSync(temp, { recursive: true, force: true }); }
+test('ci.yml: robots aceita só status 1 com a cláusula documentada', () => {
+  const ci = wf('ci.yml');
+  const inicio = ci.indexOf('          output=$(mktemp)');
+  const fim = ci.indexOf('          node tools/eval/perfil-abas-check.mjs', inicio);
+  const bloco = ci.slice(inicio, fim).replace(
+    'node tools/eval/rotas-check.mjs --dist --mutante=robots',
+    'bash -c \'printf "%s\\n" "$ROBOTS_OUT"; exit "$ROBOTS_STATUS"\'',
+  );
+  assert.ok(inicio >= 0 && fim > inicio, 'wrapper de status do robots ausente');
+  const clausula = '/jogar/multiplayer: robots "index, follow" com indexavel=false';
+  const executar = (status, out) => spawnSync('bash', ['-c', bloco], {
+    encoding: 'utf8',
+    env: { ...process.env, ROBOTS_STATUS: String(status), ROBOTS_OUT: out },
+  });
+  assert.equal(executar(1, clausula).status, 0, 'status 1 com a cláusula deve passar');
+  assert.equal(executar(0, clausula).status, 1, 'status 0 significa mutante sobrevivente');
+  assert.equal(executar(1, 'crash sem cláusula').status, 1, 'status 1 sem cláusula deve falhar');
+  assert.equal(executar(2, clausula).status, 2, 'erro de infraestrutura preserva seu status');
 });
