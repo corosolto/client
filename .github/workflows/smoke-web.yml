@@ -92,7 +92,7 @@ jobs:
           npm run dev -- --host 127.0.0.1 --port 4321 >/tmp/csbrasil-dev.log 2>&1 &
       - name: Wait for app
         run: |
-          for i in $(seq 1 60); do
+          for _ in $(seq 1 60); do
             if curl -fsS http://127.0.0.1:4321/ >/dev/null; then
               exit 0
             fi
@@ -133,7 +133,7 @@ jobs:
           npm run dev -- --host 127.0.0.1 --port 4321 >/tmp/csbrasil-dev.log 2>&1 &
       - name: Wait for app
         run: |
-          for i in $(seq 1 60); do
+          for _ in $(seq 1 60); do
             if curl -fsS http://127.0.0.1:4321/ >/dev/null; then
               exit 0
             fi
@@ -183,9 +183,9 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          for i in $(seq 1 90); do
+          for _ in $(seq 1 90); do
             BODY="$(gh api "repos/$REPO/issues/$PR_NUM/comments" --paginate \
-              --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("<!-- cf-preview -->")) and (.body | contains("<!-- sha: " + env.HEAD_SHA + " -->"))) | .body' 2>/dev/null || true)"
+              --jq '.[] | select((.user.login == "github-actions[bot]" or .user.login == "github-actions") and (.body | contains("<!-- cf-preview -->")) and (.body | contains("<!-- sha: " + env.HEAD_SHA + " -->"))) | .body' 2>/dev/null || true)"
             if [ -z "$BODY" ]; then
               sleep 10
               continue

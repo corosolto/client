@@ -67,7 +67,7 @@ export const ALLOW_RAIZ = new Set([
   'skills-lock.json', 'tsconfig.json', 'vercel.json', 'wrangler.toml', 'wrangler.preview.toml', 'wrangler.staging.toml',
 ]);
 export const ALLOW_DIRS = new Set([
-  '.agents', '.claude', '.codex', '.githooks', '.github',
+  '.agents', '.claude', '.codex', '.devcontainer', '.githooks', '.github',
   'content', 'docs', 'plans', 'progress', 'prompts', 'public', 'references', 'scripts', 'src', 'tests', 'tools',
 ]);
 
@@ -250,6 +250,10 @@ const MUTANTES = [
 ];
 /* Controles positivos: o mesmo arquivo novo, mas com quem o pede no mesmo commit. */
 const CONTROLES = [
+  {
+    nome: 'devcontainer-versionado',
+    arquivos: () => ({ '.devcontainer/devcontainer.json': '{}\n' }),
+  },
   {
     nome: 'regua-ligada',
     arquivos: (g) => {
