@@ -13,6 +13,7 @@ import {
   rm,
 } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -25,6 +26,21 @@ const INERT_ASSET_EXTENSIONS = new Set([
   '.pdf', '.png', '.region', '.spawn', '.toml', '.ttf', '.txt', '.wav',
   '.webm', '.webp', '.woff', '.woff2', '.xml', '.yaml', '.yml',
 ]);
+const PROCESS_STARTED_AT = new Date(Date.now() - process.uptime() * 1000).toISOString();
+
+function processStartedAt(pid) {
+  try {
+    const value = execFileSync('ps', ['-o', 'lstart=', '-p', String(pid)], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    const started = Date.parse(value);
+    return Number.isFinite(started) ? started : null;
+  } catch {
+    return null;
+  }
+}
+
 
 class PackError extends Error {
   constructor(code, message, options) {
@@ -405,7 +421,10 @@ async function reclaimStaleLock(lockPath, idDirectory, idIdentity) {
     if (!Number.isSafeInteger(pid) || pid <= 0 || !Number.isFinite(created)) return false;
     let alive = true;
     try { process.kill(pid, 0); } catch (error) { alive = error.code !== 'ESRCH'; }
-    if (alive) return false;
+    if (alive) {
+      const currentStart = processStartedAt(pid);
+      if (currentStart === null || Math.abs(currentStart - created) < 5000) return false;
+    }
   } finally {
     if (handle) await handle.close().catch(() => {});
   }
@@ -466,7 +485,7 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
     if (!sameIdentity(candidateAtPath, lockIdentity)) {
       fail('E_INSTALL_RACE', 'Install lock candidate changed during creation');
     }
-    await lockHandle.writeFile(`${process.pid}\n${new Date().toISOString()}\n${source.manifestSha256}\n`);
+    await lockHandle.writeFile(`${process.pid}\n${PROCESS_STARTED_AT}\n${source.manifestSha256}\n`);
     await lockHandle.sync();
     for (let attempt = 0; attempt < 2; attempt++) {
       await assertParents();
