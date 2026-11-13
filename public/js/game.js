@@ -7400,7 +7400,8 @@ export class Game {
     if (!p.alive) {
       const left = p.respawnAt - this.time;
       // VIP jogador da Operação Flávio não renasce (respawnAt = Infinity): sem "Infinity" na tela.
-      this.el.respawnCount.textContent = Number.isFinite(left) ? Math.max(0, left).toFixed(1) : '—';
+      const respawnCount = this.el.respawnCount || (this.el.respawnCount = document.getElementById('respawn-count'));
+      if (respawnCount) respawnCount.textContent = Number.isFinite(left) ? Math.max(0, left).toFixed(1) : '—';
       this._deathFeedback(dt);
       this._tpDeath(dt);   // corpo TP cai (item: "boneco não caía morto")
       /* Online o _respawnPlayer é no-op (revive vem do snapshot): seguir morto mantém a
