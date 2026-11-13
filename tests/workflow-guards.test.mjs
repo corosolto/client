@@ -49,12 +49,16 @@ test('Dev Container Dockerfile resolves from its configuration directory', () =>
   assert.ok(existsSync(dockerfile));
 });
 
-test('AF4 accepts the canonical selftest plus one executable merge', (t) => {
+test('AF4 accepts live revalidation, one executable merge, and sweep state recording', (t) => {
   const dir = fixture(t);
   const workflow = parse(readFileSync(join(dir, '.github/workflows/csbrasil-bot-automerge.yml'), 'utf8'));
-  const merge = workflow.jobs.automerge.steps.find((step) => step.name === 'Merge when eligible');
-  assert.ok(merge);
+  const steps = workflow.jobs.automerge.steps;
+  const mergeIndex = steps.findIndex((step) => step.name === 'Merge when eligible');
+  const merge = steps[mergeIndex];
+  const recordIndex = steps.findIndex((step) => step.name === 'Record evaluated state for sweep debounce');
+  assert.ok(mergeIndex >= 0 && recordIndex > mergeIndex);
   assert.equal(merge.run.trim(), 'python3 scripts/ci/automerge_merge.py --selftest\npython3 scripts/ci/automerge_merge.py');
+  assert.match(steps[recordIndex].run, /encode_state\('automerge', json\.load\(open\('\/tmp\/automerge\.json'\)\)\)/);
   assert.equal(run(AUTOFIX_CHECK, dir).status, 0);
   assert.equal(run(SECRET_CHECK, dir).status, 0);
 });

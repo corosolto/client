@@ -154,3 +154,8 @@ test('ci.yml: robots aceita só status 1 com a cláusula documentada', () => {
   assert.equal(executar(1, 'crash sem cláusula').status, 1, 'status 1 sem cláusula deve falhar');
   assert.equal(executar(2, clausula).status, 2, 'erro de infraestrutura preserva seu status');
 });
+
+test('.devcontainer/Dockerfile: o ambiente anunciado instala ffprobe para eval:redesign', () => {
+  const s = readFileSync(fileURLToPath(new URL('../../../.devcontainer/Dockerfile', import.meta.url)), 'utf8');
+  assert.match(s, /apt-get install -y --no-install-recommends ffmpeg/);
+});
