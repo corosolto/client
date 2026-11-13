@@ -172,11 +172,14 @@ jobs:
       - name: Suites preservam cobertura e seleção do pre-push
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node --test tests/eval-suites.test.mjs
+      - name: Structured workflow guards reject unsafe merges
+        if: ${{ always() && !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:workflowguards
       - name: Duration-based sharding preserves full coverage
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node --test tests/eval-duration-shards.test.mjs
       - name: Asset manifests and orphan ratchets stay exact
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        if: ${{ always() && !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:assetinventory
 
       - name: Passe Sessão da Treta obedece ao servidor (sem XP do client, com mutantes)
@@ -548,10 +551,17 @@ jobs:
           status=0
           node tools/eval/rotas-check.mjs --dist --mutante=robots >"$output" 2>&1 || status=$?
           cat "$output"
-          if [ "$status" -eq 0 ]; then echo 'robots mutant was not detected'; exit 1; fi
-          if [ "$status" -ne 1 ]; then exit "$status"; fi
+          if [ "$status" -eq 0 ]; then
+            echo "::error::o mutante robots passou"
+            exit 1
+          fi
+          if [ "$status" -ne 1 ]; then
+            echo "::error::o mutante robots terminou com status inesperado $status"
+            exit "$status"
+          fi
           if ! grep -Fq '/jogar/multiplayer: robots "index, follow" com indexavel=false' "$output"; then
-            echo 'robots mutant exited 1 without the documented clause'; exit 1
+            echo "::error::o mutante robots terminou sem a cláusula documentada"
+            exit 1
           fi
           node tools/eval/perfil-abas-check.mjs
           node tools/eval/perfil-abas-check.mjs --mutate
