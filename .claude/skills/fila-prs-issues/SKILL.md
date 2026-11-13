@@ -72,15 +72,17 @@ Ordene assim:
 4. issues junto do PR que contém a correção, não numa lane órfã de fechamento.
 
 Registre cada issue como `OWNER/REPO#NUMERO`, inclusive vínculos cruzados. `Fixes #123` é vínculo,
-não prova de correção nem autorização para fechar a issue antes do merge e da verificação. Se o PR
-aponta para a branch padrão, troque `Fixes`/`Closes` por `Refs` antes do merge ou retargete para a
-branch de integração; o fechamento automático não pode anteceder a verificação.
+não prova de correção nem autorização para fechar a issue antes do merge e da verificação. Trocar
+apenas o corpo do PR por `Refs` não basta: mensagens dos commits também fecham issues quando
+chegam à branch padrão, inclusive por uma branch de integração. A lane precisa recusar esse
+histórico antes do primeiro merge.
 
 Antes de montar a lane, capture o head que será conferido e configure remotes separados para a base
 e para o head. O remote da base precisa apontar explicitamente para o repositório do PR:
 
 ```bash
 REVIEWED_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)
+BASE_BRANCH=$(gh pr view NUMERO -R corosolto/REPO --json baseRefName --jq .baseRefName)
 EXPECTED_BASE_URL=https://github.com/corosolto/REPO.git
 BASE_REMOTE=corosolto-base
 if git remote get-url "$BASE_REMOTE" >/dev/null 2>&1; then
@@ -92,6 +94,20 @@ fi
 HEAD_REMOTE="$BASE_REMOTE"
 ```
 
+Para PR de fork, selecione o remote do head **antes** de criar a worktree. Preserve owner/branch e,
+se o remote já existir, confirme primeiro que sua URL é exatamente a do fork:
+
+```bash
+EXPECTED_HEAD_URL=https://github.com/OWNER/REPO.git
+if git remote get-url OWNER >/dev/null 2>&1; then
+  test "$(git remote get-url OWNER)" = "$EXPECTED_HEAD_URL" \
+    || { echo "remote OWNER aponta para outro repositório" >&2; exit 1; }
+else
+  git remote add OWNER "$EXPECTED_HEAD_URL"
+fi
+HEAD_REMOTE=OWNER
+```
+
 ## 3. Isole cada lane sem tocar o checkout de ninguém
 
 Antes de criar a lane:
@@ -100,7 +116,12 @@ Antes de criar a lane:
 git status --short --branch
 git worktree list
 git fetch "$BASE_REMOTE"
-```
+git fetch "$HEAD_REMOTE" BRANCH
+if git log --format='%H %s%n%b' "$BASE_REMOTE/$BASE_BRANCH..$REVIEWED_HEAD" \
+  | grep -Eiq '(^|[^[:alnum:]_])(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]+(([^[:space:]]+/[^[:space:]]*)?#[0-9]+|https://github\.com/[^/]+/[^/]+/issues/[0-9]+)'; then
+  echo "commit fecha issue automaticamente; neutralize o histórico antes do merge" >&2
+  exit 1
+fi
 
 Se já existir worktree limpa para a branch, reutilize-a somente quando seu `HEAD` for o
 `REVIEWED_HEAD` capturado. Caso contrário, crie uma por PR, com o repositório no namespace:
@@ -116,20 +137,10 @@ test "$(git -C /tmp/corosolto-REPO-pr-NUMERO rev-parse HEAD)" = "$REVIEWED_HEAD"
   || { echo "worktree não aponta para o head revisado" >&2; exit 1; }
 ```
 
-Para PR de fork, use um remote próprio e preserve owner/branch ao empurrar. Se o remote já existir,
-confirme primeiro que sua URL é exatamente a do fork:
+Para PR de fork, o `HEAD_REMOTE` já foi selecionado antes da worktree. Depois da correção,
+empurre para o mesmo owner/branch:
 
 ```bash
-EXPECTED_URL=https://github.com/OWNER/REPO.git
-if git remote get-url OWNER >/dev/null 2>&1; then
-  test "$(git remote get-url OWNER)" = "$EXPECTED_URL" \
-    || { echo "remote OWNER aponta para outro repositório" >&2; exit 1; }
-else
-  git remote add OWNER "$EXPECTED_URL"
-fi
-HEAD_REMOTE=OWNER
-git fetch "$HEAD_REMOTE" BRANCH
-git worktree add --track -b BRANCH /tmp/corosolto-REPO-pr-NUMERO "$HEAD_REMOTE"/BRANCH
 git push "$HEAD_REMOTE" BRANCH
 ```
 
@@ -257,8 +268,11 @@ inferência. Antes do comando, leia os labels e `docs/quality-gates.md`: `crash-
 outra classe reservada ao humano viram decisão **humano**, mesmo depois da verificação.
 
 ```bash
-ISSUE_LABELS=$(gh issue view NUMERO_ISSUE -R OWNER_ISSUE/REPO_ISSUE \
-  --json labels --jq '.labels[].name')
+if ! ISSUE_LABELS=$(gh issue view NUMERO_ISSUE -R OWNER_ISSUE/REPO_ISSUE \
+  --json labels --jq '.labels[].name'); then
+  echo "não foi possível confirmar os labels da issue" >&2
+  exit 1
+fi
 if printf '%s\n' "$ISSUE_LABELS" | grep -Fxq crash-auto; then
   echo "decisão humano: crash-auto não pode ser fechado pela fila" >&2
   exit 2
