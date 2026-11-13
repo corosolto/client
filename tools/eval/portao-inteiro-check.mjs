@@ -34,13 +34,14 @@ import { SUITES } from './suites.mjs';
 import { COLLIDER_SHARDS } from './operacao-flavio-proof-check.mjs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = { 'passo-orfao': 'PI1', 'regua-fantasma': 'PI2', 'regua-fora-do-pr-fast': 'PI3', 'sucesso-implicito': 'PI4', 'always': 'PI4', 'erro-ignorado': 'PI4', 'setup': 'PI4', 'sem-armadura-ci': 'PI4', 'sem-ads1p-runtime-ci': 'PI4', 'sem-piscina-batch-ci': 'PI4', 'contrato-visual-duplicado': 'PI4' };
+const MUTANTES = { 'passo-orfao': 'PI1', 'suite-concatenada': 'PI1', 'regua-fantasma': 'PI2', 'regua-fora-do-pr-fast': 'PI3', 'sucesso-implicito': 'PI4', 'always': 'PI4', 'erro-ignorado': 'PI4', 'setup': 'PI4', 'sem-armadura-ci': 'PI4', 'sem-ads1p-runtime-ci': 'PI4', 'sem-piscina-batch-ci': 'PI4', 'contrato-visual-duplicado': 'PI4' };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 const scripts = { ...pkg.scripts };
 const passosPorPortao = { 'check:fast': [...SUITES.fast], 'check:deploy': [...SUITES.deploy] };
 if (MUT === 'passo-orfao') passosPorPortao['check:fast'].push('eval:nao-existe');
+if (MUT === 'suite-concatenada') scripts['check:deploy'] = scripts['check:deploy'].replace('--suite=deploy ', '--suite=deployeval:dispose ');
 if (MUT === 'regua-fantasma') scripts['eval:fantasma'] = 'node tools/eval/nao-existe-check.mjs';
 
 const falhas = [];
@@ -51,8 +52,18 @@ for (const portao of PORTOES) {
   const linha = scripts[portao];
   const suite = portao.slice('check:'.length);
   if (!linha) { falhas.push(`PI1 o portão \`${portao}\` não existe em scripts`); continue; }
-  if (linha !== `node tools/eval/runner.mjs --suite=${suite}`) {
+  const prefixo = `node tools/eval/runner.mjs --suite=${suite}`;
+  const partes = linha.trim().split(/\s+/);
+  const comando = partes.slice(0, 3).join(' ');
+  if (comando !== prefixo) {
     falhas.push(`PI1 ${portao} precisa expandir --suite=${suite} pelo runner`);
+  } else {
+    const extras = partes.slice(3);
+    for (const extra of extras) {
+      if (!/^eval:[\w:-]+$/.test(extra) || !scripts[extra]) {
+        falhas.push(`PI1 ${portao} cita passo extra \`${extra}\`, que não é eval:* definido em scripts`);
+      }
+    }
   }
   for (const passo of passosPorPortao[portao]) {
     if (!scripts[passo]) {

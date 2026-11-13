@@ -10187,12 +10187,8 @@ export class Game {
     this.vm?.melee?.dispose();
     this._pickupFallbackTpl?.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
     this.renderer.liberaPosDaCena?.(this.scene);
-    /* VRAM: a geometria já era descartada, as texturas DESTE Game (sangue, fumaça,
-       bandeira, zona, decalques, clarões — criadas por partida via _texLocal) não: cada
-       remount (virada de mapa, revanche) deixava os handles WebGL vivos e a memória de
-       vídeo crescia partida após partida, até webglcontextlost. Texturas COMPARTILHADAS
-       (bundle do initTextures e estáticas dos módulos de mapa) ficam de fora: o próximo
-       Game as usa. */
+    /* VRAM: descarta só texturas locais desta partida; texturas compartilhadas do
+       bundle e dos mapas permanecem vivas para o próximo Game. */
     for (const t of this._texLocais || []) t.dispose();
     this._texLocais = null;
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });

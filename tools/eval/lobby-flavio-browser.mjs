@@ -11,7 +11,7 @@
      LFB5 ?lang=en: painel e história em inglês
      LFB6 6 telas: com a coluna da direita à vista, Quests e skins moram nela, depois de Amigos online, sem
           entrar no painel da partida; sem a coluna, Quests continua à vista na esquerda
-   Os anúncios de abertura (Javaporco e Operação Flávio) entram como já vistos: são outra régua.
+   Os anúncios de abertura (Javaporco, Operação Flávio e o passe) entram como já vistos: são outra régua.
    Capturas em OUT (padrão tools/eval/out/lobby-flavio). Um navegador por vez (with-browser-lock.sh). */
 import { execSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
@@ -48,6 +48,7 @@ async function lobby({ w = 1536, h = 960, toque = false, lang = 'pt', mutante = 
   await page.addInitScript(() => {
     localStorage.setItem('csbr-mode-ann-seen', JSON.stringify(['operacao_flavio']));
     localStorage.setItem('cs-javaporcos-cidade-anuncio-v1', '1');
+    localStorage.setItem('cs-passe-anuncio', 'sessao-da-treta-s1/1');
   });
   if (mutante) {
     const [teste, troca] = MUT[mutante];
