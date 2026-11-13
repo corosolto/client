@@ -546,8 +546,14 @@ jobs:
           node tools/eval/rotas-check.mjs --dist
           status=0
           node tools/eval/rotas-check.mjs --dist --mutante=robots || status=$?
-          if [ "$status" -eq 0 ]; then echo 'robots mutant was not detected'; exit 1; fi
-          if [ "$status" -ne 1 ]; then exit "$status"; fi
+          if [ "$status" -eq 0 ]; then
+            echo "::error::o mutante robots passou"
+            exit 1
+          fi
+          if [ "$status" -ne 1 ]; then
+            echo "::error::o mutante robots terminou com status inesperado $status"
+            exit "$status"
+          fi
           node tools/eval/perfil-abas-check.mjs
           node tools/eval/perfil-abas-check.mjs --mutate
           node tools/eval/profile-character-empty-check.mjs
