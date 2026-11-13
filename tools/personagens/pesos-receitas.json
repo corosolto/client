@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "nota": "Parâmetros de tools/personagens/pesos-skin.mjs por GLB reparado. Escolhidos na grade de 16 configurações medida com o pose test do Studio (sintético + 11 clipes embutidos × 8 instantes): menor excesso sobre os limites (aresta 3,5×, costas 3,5×, mão 2,5×) com vazamento braço→perna = 0. Receita + arquivo de origem = mesmos bytes (determinístico).",
+  "receitas": {
+    "lula-mandrake": {
+      "origemSha256": "d7014fbc5694121b7e9c659e9dc00f11c816897353f2b9cd2db77eb91bbe7862",
+      "parametros": {
+        "anel": 2,
+        "ombroR0": 1.5,
+        "ombroR1": 2.5,
+        "colar": 0.01
+      }
+    },
+    "lula-cyborg": {
+      "origemSha256": "dee1c4685b95d8c742c55b58d4ec0bdc8239e4fe5e89b45d89619510f454e16e",
+      "parametros": {
+        "anel": 4,
+        "ombroR0": 1,
+        "ombroR1": 1.5,
+        "colar": 0.01
+      }
+    },
+    "lula-drip": {
+      "origemSha256": "b7c49abc6b7612c6341bf16642d4c691c4c89f39d16e6136bf6f58ea2dabc3c9",
+      "parametros": {
+        "anel": 3,
+        "ombroR0": 1.5,
+        "ombroR1": 2.5
+      }
+    }
+  }
+}

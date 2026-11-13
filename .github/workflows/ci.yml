@@ -511,6 +511,8 @@ jobs:
         run: npm run eval:treta-video
       - name: Censo de rig, deformação de skin nunca piora (tetos congelados por sha + mutantes)
         run: npm run eval:rig-census
+      - name: Pesos de skin, manga não segue a perna (tetos congelados + mutantes)
+        run: npm run eval:pesos-braco-perna
       - name: Orçamento de shader WebGL1
         run: npm run eval:shaderbudget
       - name: Sitemap pagina além do max-rows do PostgREST
