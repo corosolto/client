@@ -27,6 +27,8 @@ const INERT_ASSET_EXTENSIONS = new Set([
   '.webm', '.webp', '.woff', '.woff2', '.xml', '.yaml', '.yml',
 ]);
 const PROCESS_STARTED_AT = new Date(Date.now() - process.uptime() * 1000).toISOString();
+const LOCK_HEARTBEAT_MS = 10_000;
+const LOCK_LEASE_MS = 120_000;
 
 function processStartedAt(pid) {
   try {
@@ -423,7 +425,8 @@ async function reclaimStaleLock(lockPath, idDirectory, idIdentity) {
     try { process.kill(pid, 0); } catch (error) { alive = error.code !== 'ESRCH'; }
     if (alive) {
       const currentStart = processStartedAt(pid);
-      if (currentStart === null || Math.abs(currentStart - created) < 5000) return false;
+      if (currentStart !== null && Math.abs(currentStart - created) < 5000) return false;
+      if (currentStart === null && Date.now() - Number(before.mtimeMs) < LOCK_LEASE_MS) return false;
     }
   } finally {
     if (handle) await handle.close().catch(() => {});
@@ -464,6 +467,7 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
   let lockCandidate;
   let lockPublished = false;
   let reclaimedStaleLock = false;
+  let lockHeartbeat;
   const removeLockCandidate = async () => {
     if (!lockCandidate || !lockIdentity) return;
     await assertParents();
@@ -500,6 +504,10 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
           fail('E_INSTALL_RACE', 'Published install lock does not match its owner record');
         }
         lockPublished = true;
+        lockHeartbeat = setInterval(() => {
+          lockHandle?.utimes(new Date(), new Date()).catch(() => {});
+        }, LOCK_HEARTBEAT_MS);
+        lockHeartbeat.unref?.();
         break;
       } catch (error) {
         if (error.code !== 'EEXIST') throw error;
@@ -681,6 +689,7 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
       }
     }
   } finally {
+    clearInterval(lockHeartbeat);
     if (lockHandle) await lockHandle.close().catch(() => {});
     if (lockCandidate) await removeLockCandidate().catch(() => {});
     if (lockPublished) {

@@ -14,6 +14,7 @@ import {
   rmSync,
   statSync,
   symlinkSync,
+  utimesSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -24,11 +25,12 @@ import test from 'node:test';
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const CLI = path.join(ROOT, 'scripts/studio-pack.mjs');
 const FIXTURE = path.join(ROOT, 'tests/fixtures/studio-pack/valid');
-const run = args => spawnSync(process.execPath, [CLI, ...args], {
+const run = (args, options = {}) => spawnSync(process.execPath, [CLI, ...args], {
   cwd: ROOT,
   encoding: 'utf8',
   timeout: 15000,
   maxBuffer: 1024 * 1024,
+  env: options.env ?? process.env,
 });
 const readManifest = directory => JSON.parse(readFileSync(path.join(directory, 'manifest.json'), 'utf8'));
 const writeManifest = (directory, manifest) => writeFileSync(path.join(directory, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
@@ -161,14 +163,17 @@ test('an old lock with its original live owner is never reclaimed', t => {
   assert.equal(existsSync(lock), true);
 });
 
-test('a dead owner lock is reclaimed after its PID is reused', t => {
+test('a dead owner lock is reclaimed after its PID is reused without process inspection', t => {
   const fixture = makePack(t);
   const manifestSha256 = createHash('sha256').update(readFileSync(fixture.manifest)).digest('hex');
   const idDirectory = path.join(fixture.installRoot, 'map/contract-fixture');
   const lock = path.join(idDirectory, '.0.1.0.install.lock');
   mkdirSync(idDirectory, { recursive: true });
   writeFileSync(lock, `${process.pid}\n2000-01-01T00:00:00.000Z\n${manifestSha256}\n`);
-  const result = run(['install', fixture.manifest, '--install-root', fixture.installRoot, '--json']);
+  utimesSync(lock, new Date('2000-01-01T00:00:00.000Z'), new Date('2000-01-01T00:00:00.000Z'));
+  const result = run(['install', fixture.manifest, '--install-root', fixture.installRoot, '--json'], {
+    env: { ...process.env, PATH: '' },
+  });
   assert.equal(result.status, 0, result.stderr);
   assert.equal(JSON.parse(result.stdout).status, 'installed');
 });
