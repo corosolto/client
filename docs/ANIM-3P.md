@@ -45,6 +45,24 @@ suavizado a 8/s, proporcional a `lateral/4,5`. Medido: 3,5 m/s lateral desloca a
 ~5 cm no eixo da direita; sem lateral volta a <0,5 cm; corpo morto não inclina.
 Jogador 3P e bots clássicos alimentam; caminho NN segue sem (flag de laboratório).
 
+### Dados já disponíveis para remotos
+
+O segmento interpolado fornece velocidade lateral no referencial do corpo. Eventos `hit`
+e `kill` usam a diferença entre posições de vítima e autor; sem autor, a morte preserva
+o fallback sem direção. Se o evento chegar depois do snapshot de morte, acrescenta a
+direção sem reiniciar o clipe; um `kill` atrasado não anima corpo já vivo após respawn.
+Trocas de arma entre snapshots disparam saque procedural breve,
+sem tocar no protocolo; o overlay é omitido no LOD distante e cancelado na morte.
+O suporte da arma é reorientado após o saque, antes do IK da mão de apoio.
+O backend só emite `hit` não fatal para vítima humana; bots remotos não recebem flinch.
+Mesmo para humanos, `hit` pode ser descartado sob carga. `npm run eval:remotos3p`
+mede as entradas e seus mutantes; não substitui a inspeção visual do corpo.
+
+O arnês `charvideo.html?remote=1&wpn=ak` expõe `REMOTEVID.init`, `snapshot`, `event`,
+`step`, `view`, `state` e `grab`. `snapshot` recebe entidades e lotes de eventos;
+para morte, envie `alive: false` no mesmo snapshot do `kill`. `step` avança o relógio
+sintético. O arnês usa GLBs reais e não simula socket, HUD, áudio nem sangue.
+
 ## As duas armadilhas que a régua existe para impedir de voltar
 
 - **Undo ANTES do mixer.** O overlay usa deltas aditivos em ossos que os clipes podem ou
@@ -142,6 +160,36 @@ Gate: `select-mount.mjs` ganhou `ESTICADO` (`frenteZ1hMax` 0,28) e `MÃO-L-NA-AR
 **Limite declarado:** 45 dos 63 rigs não têm osso de dedo, então a mão continua ABERTA
 sobre o punho da arma. Isso é geometria do rig, não pose — fechar a pegada exige malha
 nova, não parâmetro. Armas de 2 mãos não foram tocadas.
+
+### Braço no ombro (10/11): rigs Studio com o joint do braço no punho
+
+Com pistola, Clóvis, Bebezão, Coronel e Boneca da Cristaleira abriam os braços em T nos packs
+0.2.0/0.2.1, e o overlay acima não mudava nada (`?porte1h=0` dava a mesma imagem). Nos nós do
+GLB (bind) o joint `*Arm` tinha nascido quase no punho: clavícula 0,28–0,45 m contra braço de
+0,06–0,09 m (razão clavícula/braço 3,9–7,5; legado ≤ 0,87, outros Studio ≤ 2,16). A malha do
+braço pesava no `*Shoulder`, o clipe girava um toco de 6 cm e o +50° do overlay girava o braço-T
+em torno do próprio eixo.
+
+O client chegou a compensar com uma mira da clavícula no porte de 1 mão (89 dos 93 corpos com
+braços bit a bit iguais; elevação ombro→mão 85–92° → 47–49°), com `IK_L_SKIP` e arma inicial
+de uma mão. O conserto de verdade veio no rig: os packs 0.2.2 desses quatro têm o ombro na axila
+e o cotovelo no meio (razão 0,7–2,1), e a compensação saiu do `glbchars.js`. Com o rig novo, a
+palma L no guarda-mão (idle de jogo) mede 5,3 cm no Clóvis (shotgun) e 3,1 cm no Bebezão (lmg),
+que voltaram às armas originais e ao IK. O Coronel mede 10,3 cm com a md97 e segue com pistola e
+em `IK_L_SKIP`.
+
+Bebê Reborn: a palma do `idle1h` dela nasce na altura do pescoço, e a faixa vizinha do perfil
+do tronco pegava a cabeça de boneca (raio 0,37 m contra 0,09–0,13 do tronco). O empurrão
+`TP_CLEAR` era de 0,152 e tirava a pistola da palma. Com `TORSO_SEM_CABECA` (pescoço/cabeça fora
+do perfil, só nela) o empurrão vai a 0. O Saci também mudaria (0,094 → 0 com a mp5), mas legado
+não muda; os outros 92 corpos ficam com empurrão idêntico.
+
+Gate: `npm run eval:porte-braco:browser` (`tools/eval/porte-braco-browser.mjs`, precisa de
+`STUDIO_PACK_ROOT`; sem ele sai 78, NÃO MEDIDO). PB1 `BRAÇO-T` exige que a mão da pistola saia
+do ombro para baixo ou para a frente (piso 0,075 da cadeia; os T mediam −0,02…0,05, o pior corpo
+são, esbirro, 0,10). PB2 `FOLGA` limita o empurrão a 0,12. PB3 `JUNTA` reprova rig com
+clavícula/braço > 3 (maior hoje: 2,16). Mutantes `junta-no-punho` (PB3) e `torsocabeca` (PB2).
+Imagens antes/depois: `private-assets/porte-1h-fora-do-ar-20261110/`.
 
 ## Fora de escopo, declarado
 

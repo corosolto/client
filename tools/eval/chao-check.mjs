@@ -55,8 +55,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+const nodeFetch = globalThis.fetch;
 const localFetch = async (url) => {
-  const file = path.resolve('public', String(url).split('?')[0]);
+  if (String(url).startsWith('blob:')) return nodeFetch(url);
+  const pathname = new URL(String(url), 'http://localhost').pathname;
+  const root = process.env.STUDIO_PACK_ROOT || '../../local/studio-packs';
+  const file = pathname.startsWith('/packs/')
+    ? path.resolve(root, pathname.slice('/packs/'.length))
+    : path.resolve('public', `.${pathname}`);
   if (!fs.existsSync(file)) return new Response('', { status: 404 });
   return new Response(fs.readFileSync(file));
 };
@@ -80,8 +86,11 @@ GLTFLoader.prototype.load = function (url, done, progress, fail) {
     },
   }));
   Promise.resolve().then(async () => {
-    const bytes = fs.readFileSync(file);
-    done(await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), ''));
+    const bytes = String(url).startsWith('blob:')
+      ? await (await nodeFetch(url)).arrayBuffer()
+      : fs.readFileSync(file);
+    const data = bytes instanceof ArrayBuffer ? bytes : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+    done(await loader.parseAsync(data, ''));
   }).catch((e) => fail?.(e));
 };
 

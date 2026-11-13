@@ -8,6 +8,15 @@ await test('erro HTTP do próprio host reprova', () => {
   assert.equal(nosso({ kind: 'response', status: 404, url: `https://${host}/img/missing.webp` }, { host }), true);
 });
 
+await test('caminho ou query com nome de terceiro não esconde erro do próprio host', () => {
+  for (const [status, url] of [
+    [404, `https://${host}/img/facebook-missing.webp`],
+    [500, `https://${host}/img/missing.webp?origem=twitter.com`],
+  ]) {
+    assert.equal(nosso({ kind: 'response', status, url }, { host }), true, `${status}: ${url}`);
+  }
+});
+
 await test('erro HTTP cross-origin é ruído do backend, não do deploy do site', () => {
   assert.equal(nosso({ kind: 'response', status: 503, url: 'https://backend.example.run.app/api/online' }, { host }), false);
 });
@@ -28,6 +37,7 @@ await test('ERR_ABORTED depois de resposta bem-sucedida não duplica falha', () 
 
 await test('erro de terceiro não reprova o deploy', () => {
   assert.equal(nosso({ kind: 'console', text: `Refused to load https://static.ads-twitter.com/uwt.js` }, { host }), false);
+  assert.equal(nosso({ kind: 'response', status: 500, url: 'https://www.facebook.com/tr' }, { host }), false);
 });
 
 await test('ruído do servidor local só é filtrado no ensaio local', () => {

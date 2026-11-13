@@ -34,13 +34,14 @@ import { SUITES } from './suites.mjs';
 import { COLLIDER_SHARDS } from './operacao-flavio-proof-check.mjs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = { 'passo-orfao': 'PI1', 'regua-fantasma': 'PI2', 'regua-fora-do-pr-fast': 'PI3', 'sucesso-implicito': 'PI4', 'always': 'PI4', 'erro-ignorado': 'PI4', 'setup': 'PI4', 'sem-armadura-ci': 'PI4', 'sem-ads1p-runtime-ci': 'PI4', 'sem-piscina-batch-ci': 'PI4', 'contrato-visual-duplicado': 'PI4' };
+const MUTANTES = { 'passo-orfao': 'PI1', 'suite-concatenada': 'PI1', 'regua-fantasma': 'PI2', 'regua-fora-do-pr-fast': 'PI3', 'sucesso-implicito': 'PI4', 'always': 'PI4', 'erro-ignorado': 'PI4', 'setup': 'PI4', 'sem-armadura-ci': 'PI4', 'sem-ads1p-runtime-ci': 'PI4', 'sem-piscina-batch-ci': 'PI4', 'contrato-visual-duplicado': 'PI4' };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 const scripts = { ...pkg.scripts };
 const passosPorPortao = { 'check:fast': [...SUITES.fast], 'check:deploy': [...SUITES.deploy] };
 if (MUT === 'passo-orfao') passosPorPortao['check:fast'].push('eval:nao-existe');
+if (MUT === 'suite-concatenada') scripts['check:deploy'] = scripts['check:deploy'].replace('--suite=deploy ', '--suite=deployeval:dispose ');
 if (MUT === 'regua-fantasma') scripts['eval:fantasma'] = 'node tools/eval/nao-existe-check.mjs';
 
 const falhas = [];
@@ -51,8 +52,18 @@ for (const portao of PORTOES) {
   const linha = scripts[portao];
   const suite = portao.slice('check:'.length);
   if (!linha) { falhas.push(`PI1 o portão \`${portao}\` não existe em scripts`); continue; }
-  if (linha !== `node tools/eval/runner.mjs --suite=${suite}`) {
+  const prefixo = `node tools/eval/runner.mjs --suite=${suite}`;
+  const partes = linha.trim().split(/\s+/);
+  const comando = partes.slice(0, 3).join(' ');
+  if (comando !== prefixo) {
     falhas.push(`PI1 ${portao} precisa expandir --suite=${suite} pelo runner`);
+  } else {
+    const extras = partes.slice(3);
+    for (const extra of extras) {
+      if (!/^eval:[\w:-]+$/.test(extra) || !scripts[extra]) {
+        falhas.push(`PI1 ${portao} cita passo extra \`${extra}\`, que não é eval:* definido em scripts`);
+      }
+    }
   }
   for (const passo of passosPorPortao[portao]) {
     if (!scripts[passo]) {
@@ -149,8 +160,10 @@ const GRUPOS_PI4 = [
   ['operacao-flavio-menu', 'Operação Flávio, menu', ['eval:operacao-flavio-menu', 'eval:mode-announcements', 'eval:ctflabels', 'eval:tpreloadpaired']],
   ['operacao-flavio-online', 'Operação Flávio, online', ['eval:operacao-online']],
   ['operacao-flavio-integracao', 'Operação Flávio, integração', ['eval:operacao-flavio-integracao']],
-  ['operacao-flavio-comportamento', 'Operação Flávio, comportamento', ['eval:operacao-flavio-comportamento']],
+  ['operacao-flavio-comportamento', 'Operação Flávio, comportamento', ['eval:operacao-flavio-comportamento', 'eval:bots-perf']],
   ['operacao-flavio-escolta', 'Operação Flávio, escolta', ['eval:operacao-flavio-escolta']],
+  ['equipamento-tp-corpo', 'Corpo em processos CPU reais', ['eval:tp-identity']],
+  ['equipamento-tp-origem', 'Drip, luvas e cosméticos', ['eval:tp-drip-source', 'eval:tp-glove-origin', 'eval:tp-cosmetic-source']],
   ['reguas-e-site', 'Suites preservam cobertura', ['tests/eval-suites.test.mjs']],
   ['reguas-e-site', 'Todo mapa devolve o que o game.js consome', ['eval:mapcontrato']],
   ['mapas-e-site', 'Pichação colada na parede', ['eval:pichacao-parede']],
@@ -187,6 +200,8 @@ function avaliaIf(cond, c) {
   const x = e
     .replace(/steps\.([\w-]+)\.outcome\s*(==|!=)\s*'(success|failure|cancelled|skipped)'/g,
       (_m, id, op, v) => String(op === '==' ? c.steps[id]?.outcome === v : c.steps[id]?.outcome !== v))
+    .replace(/steps\.([\w-]+)\.outputs\.([\w-]+)\s*(==|!=)\s*'([^']*)'/g,
+      (_m, id, key, op, v) => String(op === '==' ? (c.steps[id]?.outputs?.[key] ?? '') === v : (c.steps[id]?.outputs?.[key] ?? '') !== v))
     .replace(/github\.event_name\s*(==|!=)\s*'(push|pull_request|merge_group)'/g,
       (_m, op, v) => String(op === '==' ? c.event === v : c.event !== v))
     .replace(/startsWith\(github\.event\.head_commit\.message,\s*'([^']*)'\)/g,

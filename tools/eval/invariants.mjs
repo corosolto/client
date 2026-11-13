@@ -1812,7 +1812,11 @@ bloco('chars-mat', ['CHR1','CHR2','CHR3','CHR5','CHR5B','CHR6','CHR7'], async ()
     const P = j.personagens || [];
     const ref = j.refHumano || {};
     const fonteGLB = P.filter((c) => c.fonte === 'glb').length;
-    const nota = fonteGLB ? `${fonteGLB}/${P.length} medidos no GLB` : `0/${P.length} no GLB — TODOS no fallback procedural (nenhum .glb de personagem nesta árvore)`;
+    /* Pack Studio sem STUDIO_PACK_ROOT (CI): fora das coortes e DITO aqui, nunca medido no
+       procedural que o jogo não desenha (char-probe.mjs, bloco PERSONAGEM DO STUDIO). */
+    const studioNaoMedido = j.studioNaoMedido || [];
+    const nota = (fonteGLB ? `${fonteGLB}/${P.length} medidos no GLB` : `0/${P.length} no GLB — TODOS no fallback procedural (nenhum .glb de personagem nesta árvore)`)
+      + (studioNaoMedido.length ? ` · ${studioNaoMedido.length} pack(s) Studio NÃO MEDIDOS (sem STUDIO_PACK_ROOT)` : '');
 
     // ── CHR1 PROPORÇÃO ────────────────────────────────────────────────────────
     // Duas condições, porque "balão" tem duas leituras e as duas importam:
@@ -1908,9 +1912,12 @@ bloco('chars-mat', ['CHR1','CHR2','CHR3','CHR5','CHR5B','CHR6','CHR7'], async ()
     const mundo = j.escalaDoMundoC5 || {};
     const melhorMapa = (mundo.porMapa || []).reduce((a, m) => (((m.normalMap || 0) > (a.normalMap || 0)) ? m : a), { normalMap: 0 });
     const semSuperficie = P.filter((c) => (c.C5.mapasDeSuperficie || 0) === 0).length;
+    const mundoComErro = mundo.erro ? ['(sonda)'] : (mundo.porMapa || []).filter((m) => m.erro).map((m) => m.mapa);
+    const mundoMedido = mundoComErro.length === 0 && (mundo.porMapa || []).length > 0;
     put('CHR5', 'todo personagem tem geometria e material (e o acabamento é medido contra o mundo)',
-      vazios.length === 0,
+      vazios.length === 0 && mundoMedido,
       `${vazios.length ? 'SEM GEOMETRIA: ' + vazios.join(', ') + ' | ' : ''}`
+      + `${mundoMedido ? '' : `MUNDO NÃO MEDIDO (${mundoComErro.join(', ') || 'sem mapas'}) | `}`
       + `personagens: mediana ${P.map((c) => c.C5.triangulos).sort((a, b) => a - b)[P.length >> 1]} triângulos, `
       + `${semSuperficie}/${P.length} com ZERO mapa de superfície (normal+rough+ao). `
       + `Mundo MEDIDO em runtime: ${(mundo.porMapa || []).length} mapas, ${(mundo.total || {}).materiais || 0} materiais, `
@@ -1938,9 +1945,16 @@ bloco('chars-mat', ['CHR1','CHR2','CHR3','CHR5','CHR5B','CHR6','CHR7'], async ()
     const pares = j.C6topo || [];
     const iguais = pares.filter((x) => x.pior > 0.98);
     const inter = (j.C6interTimePior || [])[0];
+    /* Pack NÃO MEDIDO não é uma medição: sem o pacote, o portão não pode sair verde em
+       nenhuma máquina. O char-probe mantém a lista para a evidência; CHR6 reprova até fora
+       de CI, evitando que uma régua local passe depois de excluir o elenco Studio. */
+    const semStudio = studioNaoMedido.length > 0;
+    const comErro = P.filter((c) => c.fonte === 'ERRO').map((c) => c.id);
     put('CHR6', 'nenhum par de personagens com a MESMA silhueta (IoU par a par ≤ 0,98)',
-      iguais.length === 0,
+      iguais.length === 0 && !semStudio && comErro.length === 0,
       `${j.C6silhuetasDistintas ?? '?'} silhuetas distintas para ${P.length} personagens; `
+      + (comErro.length ? `${comErro.length} personagem(ns) com ERRO na sonda, fora da coorte: ${comErro.join(', ')}; ` : '')
+      + (studioNaoMedido.length ? `${studioNaoMedido.length} pack(s) Studio NÃO MEDIDOS (sem STUDIO_PACK_ROOT — isto REPROVA); ` : '')
       + `${iguais.length} pares acima de 0,98`
       + (iguais.length ? ` [${iguais.slice(0, 4).map((x) => `${x.a}×${x.b} ${x.pior.toFixed(3)}`).join(', ')}]` : '')
       + (j.C6grupos && j.C6grupos.length ? ` | maior grupo de clones: ${j.C6grupos[0].length} (${j.C6grupos[0].slice(0, 5).join(', ')}${j.C6grupos[0].length > 5 ? '…' : ''})` : '')
