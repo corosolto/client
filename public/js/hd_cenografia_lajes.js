@@ -96,7 +96,7 @@ function nevoa(s, U) {
   Object.assign(s.uniforms, U);
   s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nvarying float vHdD;').replace('#include <project_vertex>', '#include <project_vertex>\nvHdD = length(mvPosition.xyz);');
   s.fragmentShader = s.fragmentShader.replace('#include <common>', `#include <common>\nvarying float vHdD; uniform vec3 hdNevoa;\n${RUIDO_PARS}`)
-    .replace('#include <fog_fragment>', 'gl_FragColor.rgb = mix(gl_FragColor.rgb, hdNevoa, 1.0 - exp(-vHdD * vHdD * 0.0000050));');
+    .replace('#include <fog_fragment>', 'gl_FragColor.rgb = mix(gl_FragColor.rgb, hdNevoa, 1.0 - exp(-vHdD * vHdD * 0.000030));');
 }
 
 function morro(grupo, rng, U) {
@@ -121,13 +121,13 @@ function morro(grupo, rng, U) {
           diffuseColor.rgb = mix(hdC, vec3(0.27, 0.21, 0.16) * (0.6 + 0.8 * hdB.r), 0.55 * vHdV * smoothstep(0.48, 0.56, hdA.r));
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11))) * vec3(0.96, 1.0, 0.9), 0.3); }`);
   };
-  mT.customProgramCacheKey = () => 'hd-morro5';
+  mT.customProgramCacheKey = () => 'hd-morro6';
   const terreno = new THREE.Mesh(gT, mT); terreno.name = 'hd-morro'; grupo.add(terreno);
 
   // Casinhas: grade de 6,4 m com sorteio dentro das manchas adensadas; cada célula só recebe uma.
   const casas = [], arvores = [], ocupado = new Set(), CEL = 6.4;
   const TIJOLO = [0x8a4528, 0x7a3c22, 0x96502e, 0x6a3420], CRU = [0x6f685e, 0x7b7469, 0x5c5850], TINTA = [0x77807a, 0x8f8a7c, 0x7a8288];
-  for (let t = 0; t < 14000 && casas.length < 640; t++) {
+  for (let t = 0; t < 14000 && casas.length < 440; t++) {
     const a = rng() * Math.PI * 2, r = 60 + Math.pow(rng(), 1.2) * (R_FIM - 68), x0 = Math.cos(a) * r, z0 = Math.sin(a) * r;
     if (adensado(x0, z0) < .5) continue;
     const ch = `${Math.round(x0 / CEL)}_${Math.round(z0 / CEL)}`; if (ocupado.has(ch)) continue; ocupado.add(ch);
@@ -137,9 +137,9 @@ function morro(grupo, rng, U) {
   }
   // Puxadinho no topo: segunda caixa menor e de outra cor quebra a silhueta de cubo.
   const base = casas.length;
-  for (let i = 0; i < base && casas.length < 800; i++) { const k = casas[i]; if (hash2(k.x, k.z + 4) > .3) continue;
+  for (let i = 0; i < base && casas.length < 540; i++) { const k = casas[i]; if (hash2(k.x, k.z + 4) > .3) continue;
     casas.push({ ...k, y: k.y + k.h, w: k.w * (.5 + rng() * .3), d: k.d * (.55 + rng() * .3), h: 2.7, cor: (rng() < .6 ? TIJOLO : CRU)[Math.floor(rng() * 3)], caixa: rng() < .75, x: k.x + (rng() - .5) * 1.2, z: k.z + (rng() - .5) * 1.2, topo: true }); k.caixa = false; }
-  for (let t = 0; t < 9000 && arvores.length < 420; t++) {
+  for (let t = 0; t < 9000 && arvores.length < 260; t++) {
     const a = rng() * Math.PI * 2, r = 60 + rng() * (R_FIM - 66), x = Math.cos(a) * r, z = Math.sin(a) * r, d = adensado(x, z);
     if (d > .5 ? rng() > .16 : rng() > suave(.5, .3, d) + .25) continue;
     arvores.push({ x, z, y: alturaMorro(x, z), s: 2.6 + rng() * 3.0, a: rng() * 6.28 });
@@ -171,14 +171,14 @@ function morro(grupo, rng, U) {
             hdC = mix(hdC, hdC * 1.5 + 0.03, hdJan * smoothstep(0.69, 0.72, hdF.y));
             diffuseColor.rgb = mix(mix(hdC, vec3(0.05, 0.06, 0.07), hdPorta * 0.85), vec3(0.012, 0.016, 0.020), hdJan * 0.96 * smoothstep(0.72, 0.69, hdF.y)); } }`);
   };
-  mC.customProgramCacheKey = () => 'hd-morro-casa6';
+  mC.customProgramCacheKey = () => 'hd-morro-casa7';
   const iC = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mC, casas.length); iC.name = 'hd-morro-casas';
-  const comCaixa = casas.filter((k) => k.caixa);
+  const comCaixa = casas.filter((k) => k.caixa && hash2(k.x + 7, k.z) < .45);
   const liso = (g) => { g.setAttribute('hdLiso', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count).fill(1), 1)); return g; };
   const iX = new THREE.InstancedMesh(liso(new THREE.BoxGeometry(1, 1, 1)), mC, comCaixa.length); iX.name = 'hd-morro-caixas';
   casas.forEach((k, i) => { const af = k.topo ? 0 : 3.2; o.position.set(k.x, k.y + k.h / 2 - af / 2, k.z); o.rotation.set(0, k.ry, 0); o.scale.set(k.w, k.h + af, k.d); o.updateMatrix(); iC.setMatrixAt(i, o.matrix); iC.setColorAt(i, cc.setHex(k.cor).multiplyScalar(.8 + hash2(k.x, k.z) * .4)); });
   comCaixa.forEach((k, i) => { o.position.set(k.x + Math.sin(k.ry) * k.d * .2, k.y + k.h + .45, k.z + Math.cos(k.ry) * k.d * .2); o.rotation.set(0, k.ry, 0); o.scale.set(1.5, 1.1, 1.5); o.updateMatrix(); iX.setMatrixAt(i, o.matrix);
-    iX.setColorAt(i, cc.setHex(hash2(k.z, k.x + 2) < .85 ? 0x1a5cb4 : 0x1c1d20)); });
+    iX.setColorAt(i, cc.setHex(hash2(k.z, k.x + 2) < .85 ? 0x2c5a94 : 0x1c1d20)); });
   const iA = new THREE.InstancedMesh(liso(new THREE.IcosahedronGeometry(1, 0)), mC, arvores.length); iA.name = 'hd-morro-mato';
   arvores.forEach((k, i) => { o.position.set(k.x, k.y + k.s * .3, k.z); o.rotation.set(0, k.a, 0); o.scale.set(k.s * (1 + hash2(k.x, 1) * .6), k.s * (.5 + hash2(k.z, 2) * .3), k.s * (1 + hash2(k.x, k.z) * .6)); o.updateMatrix(); iA.setMatrixAt(i, o.matrix);
     iA.setColorAt(i, cc.setHex(hash2(k.z, k.x) < .3 ? 0x2a4c1e : 0x183414).multiplyScalar(.75 + hash2(k.x, 5) * .5)); });
@@ -292,11 +292,11 @@ function beco(F, rng, s) {
 }
 function fios(grupo, rng, topo, mundo, mat) {
   const F = fundidor(); let feixes = 0;
-  const poste = (x, y, z, h, ry) => { F.cor(0x2e2925).caixa(x, y - .3, z, .09, h + .3, .09, ry).caixa(x, y + h - .22, z, .62, .06, .06, ry).cor(FERRO).caixa(x, y + h - .42, z, .16, .22, .12, ry); };
+  const poste = (x, y, z, h, ry) => { F.cor(0x3a3531).caixa(x, y - .3, z, .05, h + .3, .05, ry).cor(FERRO).caixa(x, y + h - .3, z, .12, .12, .08, ry); };
   for (const [ax, az, bx, bz, n, gato] of FEIXES) {
     if (pertoDeBandeira(ax, az, bx, bz, mundo?.ctfPoints)) continue;
     const ya = topo(ax, az), yb = topo(bx, bz); if (ya === null || yb === null) continue;
-    const ha = .9 + rng() * .7, hb = .9 + rng() * .7, vao = Math.hypot(bx - ax, bz - az), ry = Math.atan2(bx - ax, bz - az) + Math.PI / 2;
+    const ha = 3.0 + rng() * .6, hb = 3.0 + rng() * .6, vao = Math.hypot(bx - ax, bz - az), ry = Math.atan2(bx - ax, bz - az) + Math.PI / 2;
     poste(ax, ya, az, ha, ry); poste(bx, yb, bz, hb, ry); feixes++;
     const px = (bz - az) / vao, pz = -(bx - ax) / vao;
     for (let k = 0; k < n; k++) {
@@ -362,25 +362,25 @@ function lavar(F, x, y, z, rng, ry) {
   F.cor(cor).tubo(pts(.16, .04, .44), .16, 8).tubo(pts(.11, .44, .52), .11, 8).cor(0x2c2e30).tubo(pts(.14, 0, .05), .14, 6).tubo(pts(.1, .52, .62), .1, 6);
 }
 // Caixa d'água de polietileno azul (500 ou 1000 L) com tampa, sobre torre de tijolo ou direto na laje.
-function caixaAzul(F, x, y, z, rng) {
-  const g = rng() < .5 ? 1 : .8, torre = rng() < .55 ? .5 + rng() * .7 : 0, r = .62 * g, h = .86 * g, tom = .85 + rng() * .3;
+function caixaAzul(F, x, y, z, rng, cor = 0x1a5cb4, comTorre = 1) {
+  const g = rng() < .5 ? 1 : .8, torre = comTorre && rng() < .55 ? .5 + rng() * .7 : 0, r = .62 * g, h = .86 * g, tom = .85 + rng() * .3;
   if (torre) F.cor(0x8a4c30, .9 + rng() * .2).caixa(x, y - .05, z, 1.2 * g, torre + .05, 1.2 * g, rng()).cor(0x6b675f).caixa(x, y + torre, z, 1.36 * g, .08, 1.36 * g, 0);
   const b = y + torre + (torre ? .08 : 0);
-  F.cor(0x1a5cb4, tom).torno(x, b, z, [[r * .84, 0], [r * .9, h * .3], [r * .93, h * .32], [r * .93, h * .62], [r * .97, h * .64], [r, h], [r * 1.04, h], [r * 1.04, h * 1.04]], 10)
-    .cor(0x2168c4, tom).torno(x, b + h * 1.04, z, [[r * 1.04, 0], [r * .7, h * .13], [r * .22, h * .19], [r * .2, h * .24]], 10);
+  F.cor(cor, tom).torno(x, b, z, [[r * .84, 0], [r * .9, h * .3], [r * .93, h * .32], [r * .93, h * .62], [r * .97, h * .64], [r, h], [r * 1.04, h], [r * 1.04, h * 1.04]], 10)
+    .cor(cor, tom * 1.15).torno(x, b + h * 1.04, z, [[r * 1.04, 0], [r * .7, h * .13], [r * .22, h * .19], [r * .2, h * .24]], 10);
   F.cor(0x8d9290).tubo([V(x + r * .9, b + h * .8, z), V(x + r * 1.5, b + h * .8, z), V(x + r * 1.5, y, z)], .022, 4);
 }
-// Lata de tinta de 18 L com espada-de-são-jorge: folha em lâmina, verde-escura com a borda amarela.
+// Lata de tinta de 18 L com muda de espada-de-são-jorge: tudo abaixo de 60 cm, sem cor de time.
 function lataComEspada(F, x, y, z, rng, r = .15) {
-  const h = r * 2.3, cor = [0xb9b6ac, 0x9aa3a8, 0xc9c3b0][Math.floor(rng() * 3)];
-  F.cor(cor, .8 + rng() * .25).torno(x, y, z, [[r, 0], [r, h * .3]], 10).cor([0x2c5f8f, 0x8a8f8c, 0xb48a2a][Math.floor(rng() * 3)], .9).torno(x, y + h * .3, z, [[r, 0], [r, h * .4]], 10)
-    .cor(cor, .8 + rng() * .2).torno(x, y + h * .7, z, [[r, 0], [r, h * .3], [r * 1.05, h * .3], [r * 1.05, h * .33], [r * .92, h * .33]], 10).cor(0x2a2018).torno(x, y + h * .9, z, [[r * .92, 0], [r * .5, .02]], 10);
-  const n = 6 + Math.floor(rng() * 4);
-  for (let i = 0; i < n; i++) { const a = rng() * 6.283, d = rng() * r * .55, bx = x + Math.cos(a) * d, bz = z + Math.sin(a) * d, alt = r * (2.6 + rng() * 2.6), w = r * (.2 + rng() * .1), gi = rng() * 3.14, tx = Math.cos(gi), tz = Math.sin(gi);
-    const cai = r * (.2 + rng() * .5), P = (u, v, k) => V(bx + tx * u * w * k + Math.cos(a) * cai * v * v, y + h * .9 + alt * v, bz + tz * u * w * k + Math.sin(a) * cai * v * v);
+  const h = r * 1.9, cor = [0xb9b6ac, 0x9aa3a8, 0xc9c3b0][Math.floor(rng() * 3)], L = 32;
+  F.cor(cor, .8 + rng() * .25).torno(x, y, z, [[r, 0], [r, h], [r * 1.05, h], [r * 1.05, h * 1.04], [r * .92, h * 1.04]], L)
+    .cor([0x8a8f8c, 0xb48a2a, 0x7a6a4a][Math.floor(rng() * 3)], .9).torno(x, y + h * .3, z, [[r * 1.012, 0], [r * 1.012, h * .4], [r * .98, h * .4]], L).cor(0x2a2018).torno(x, y + h * .9, z, [[r * .92, 0], [r * .5, .02]], L);
+  const n = 5 + Math.floor(rng() * 3);
+  for (let i = 0; i < n; i++) { const a = rng() * 6.283, d = rng() * r * .55, bx = x + Math.cos(a) * d, bz = z + Math.sin(a) * d, alt = r * (.9 + rng() * .7), w = r * (.2 + rng() * .1), gi = rng() * 3.14, tx = Math.cos(gi), tz = Math.sin(gi);
+    const cai = r * (.2 + rng() * .4), P = (u, v, k) => V(bx + tx * u * w * k + Math.cos(a) * cai * v * v, y + h * .9 + alt * v, bz + tz * u * w * k + Math.sin(a) * cai * v * v);
     const esc = .8 + rng() * .3;
-    F.cor(0x2f5a2a, esc).quad(P(-.7, 0, .6), P(.7, 0, .6), P(.7, .3, 1), P(-.7, .3, 1)).cor(0x244a22, esc).quad(P(-.7, .3, 1), P(.7, .3, 1), P(.7, .7, .9), P(-.7, .7, .9)).cor(0x35622c, esc).tri(P(-.7, .7, .9), P(.7, .7, .9), P(0, 1, 0));
-    for (const sn of [-1, 1]) F.cor(0xb9a83c, esc).quad(P(sn * .7, 0, .6), P(sn, 0, .6), P(sn, .3, 1), P(sn * .7, .3, 1)).quad(P(sn * .7, .3, 1), P(sn, .3, 1), P(sn, .7, .9), P(sn * .7, .7, .9)).tri(P(sn * .7, .7, .9), P(sn, .7, .9), P(0, 1, 0)); }
+    F.cor(0x2f5a2a, esc).quad(P(-.7, 0, .6), P(.7, 0, .6), P(.7, .5, 1), P(-.7, .5, 1)).cor(0x35622c, esc).tri(P(-.7, .5, 1), P(.7, .5, 1), P(0, 1, 0));
+    for (const sn of [-1, 1]) F.cor(0xb9a83c, esc).quad(P(sn * .7, 0, .6), P(sn, 0, .6), P(sn, .5, 1), P(sn * .7, .5, 1)).tri(P(sn * .7, .5, 1), P(sn, .5, 1), P(0, 1, 0)); }
 }
 // Os vasos de barro do mapa (folha de agave) saem de cena e dão lugar à lata; voltam em desliga().
 function vasos(scene, grupo, rng, mat) {
@@ -392,7 +392,7 @@ function vasos(scene, grupo, rng, mat) {
   if (F.tris()) { const malha = new THREE.Mesh(F.geo(), mat); malha.name = 'hd-vasos'; malha.userData.hdSombra = true; grupo.add(malha); }
   return () => { for (const o of ocultos) o.visible = true; };
 }
-const TANQUES = ['caixa_dagua_azul', 'caixa_dagua_preta', 'caixa_dagua_azul', 'caixa_dagua_azul', 'caixa_dagua_preta', 'caixa_dagua_azul', 'caixa_dagua_azul', 'caixa_dagua_preta', 'caixa_dagua_azul', 'caixa_dagua_azul'];
+const TANQUES = ['caixa_dagua_azul', 'caixa_dagua_preta', 'caixa_dagua_azul', 'caixa_dagua_preta'];
 const NOVOS = new Set(['caixa_dagua_azul', 'caixa_dagua_preta']);
 // Caixas na beira do telhado que fecha cada beco central: são as que aparecem no fundo de quem olha do beco oposto.
 const TANQUES_BECO = [[1.75, 9.25, 'caixa_dagua_azul', .75], [3.45, 9.4, 'caixa_dagua_preta', .35], [-1.7, 9.3, 'caixa_dagua_azul', .55], [-3.6, 9.5, 'caixa_dagua_azul', .3]];
@@ -400,7 +400,7 @@ function telhados(grupo, rng, topo, mundo, vivo, mat) {
   const tetos = (mundo?.colliders || []).filter((c) => c.minY < .5 && c.maxY >= 5.9 && c.maxX - c.minX >= 3.5 && c.maxZ - c.minZ >= 3.5)
     .map((c) => ({ c, a: Math.atan2((c.minZ + c.maxZ) / 2, (c.minX + c.maxX) / 2) })).sort((p, q) => p.a - q.a).map((p) => p.c);
   if (!tetos.length) return 0;
-  const lista = [...TANQUES.map((id) => ['tanque', id]), ...Array(12).fill(['caixa']), ...Array(11).fill(['antena']), ...Array(6).fill(['parabolica']), ...Array(8).fill(['esperas']), ...Array(4).fill(['pilha']), ...Array(5).fill(['puxadinho']), ...Array(5).fill(['lavar']), ...Array(4).fill(['esperas'])];
+  const lista = [...TANQUES.map((id) => ['tanque', id]), ...Array(18).fill(['caixa']), ...Array(11).fill(['antena']), ...Array(6).fill(['parabolica']), ...Array(8).fill(['esperas']), ...Array(4).fill(['pilha']), ...Array(5).fill(['puxadinho']), ...Array(5).fill(['lavar']), ...Array(4).fill(['esperas'])];
   for (let i = lista.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [lista[i], lista[j]] = [lista[j], lista[i]]; }
   const F = fundidor(), tanques = [], usos = new Map();
   lista.forEach(([tipo, id], i) => {
@@ -423,7 +423,7 @@ function telhados(grupo, rng, topo, mundo, vivo, mat) {
   });
   for (const s of [1, -1]) for (const [x, z, id, pe] of TANQUES_BECO) { const y = topo(x, s * z); if (y === null) continue;
     F.cor(0x7a4a33, .9 + rng() * .2).caixa(x, y - .05, s * z, 1.3, pe + .05, 1.3, 0).cor(0x6b675f).caixa(x, y + pe, s * z, 1.45, .09, 1.45, 0);
-    tanques.push({ id, x, y: y + pe + .08, z: s * z, targetH: 1.35 + rng() * .35, ry: rng() * 6.28 });
+    if (id === 'caixa_dagua_azul' && s > 0) tanques.push({ id, x, y: y + pe + .08, z: s * z, targetH: 1.35 + rng() * .35, ry: rng() * 6.28 }); else caixaAzul(F, x, y + pe + .08, s * z, rng, id === 'caixa_dagua_preta' ? 0x1c1d20 : 0x1a5cb4, 0);
     antena(F, x + (x > 0 ? .95 : -.95), y - .05, s * (z + .5), rng); }
   const malha = new THREE.Mesh(F.geo(), mat); malha.name = 'hd-telhados'; grupo.add(malha);
   const sub = new THREE.Group(); sub.name = 'hd-tanques'; grupo.add(sub);

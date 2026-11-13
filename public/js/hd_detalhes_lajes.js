@@ -40,7 +40,7 @@ function vidroLiso(P, r, x, y, w, h, pano) {
     if (pano) for (let i = 0; i < 9; i++) { C.fillStyle = `rgba(${pano},${.22 + .2 * r()})`; C.fillRect(x + w * i / 9, y, w / 9 * (.5 + r() * .5), h * (.82 + r() * .14)); } });
 }
 function suja(P, r, n) {
-  P.so((C) => { for (let i = 0; i < n; i++) { C.fillStyle = `rgba(${r() < .65 ? '38,32,26' : '104,58,30'},${.04 + r() * .09})`; C.fillRect(r(), r() * .6, .006 + r() * .03, .12 + r() * .5); }
+  P.so((C) => { for (let i = 0; i < n; i++) { C.fillStyle = `rgba(${r() < .65 ? '38,34,30' : '58,54,48'},${.04 + r() * .09})`; C.fillRect(r(), r() * .6, .006 + r() * .03, .12 + r() * .5); }
     const g = C.createLinearGradient(0, .8, 0, 1); g.addColorStop(0, 'rgba(30,26,22,0)'); g.addColorStop(1, 'rgba(30,26,22,.35)'); C.fillStyle = g; C.fillRect(0, .8, 1, .2); });
 }
 
@@ -69,10 +69,10 @@ function basculante(P) {
   P.ret(.488, .05, .024, .9, cor, 1); P.ret(.494, .30, .012, .34, '#23292d', 1);
 }
 function veneziana(P, r) {
-  P.ret(0, 0, 1, 1, '#55685a', .95);
-  for (let f = 0; f < 2; f++) { const x = .05 + f * .455, w = .445; P.ret(x, .05, w, .9, '#39463c', .6);
+  P.ret(0, 0, 1, 1, '#6a7a6e', .95);
+  for (let f = 0; f < 2; f++) { const x = .05 + f * .455, w = .445; P.ret(x, .05, w, .9, '#566258', .6);
     for (let y = .075; y < .9; y += .034) { if (r() < .05) { P.ret(x + .03, y, w - .06, .03, '#0c0e0d', .1); continue; }
-      P.ret(x + .03, y, w - .06, .02, tom([104, 124, 108], .85 + r() * .3), .95); P.ret(x + .03, y + .02, w - .06, .014, '#2f3a31', .25); } }
+      P.ret(x + .03, y, w - .06, .02, tom([132, 146, 134], .85 + r() * .3), .95); P.ret(x + .03, y + .02, w - .06, .014, '#465149', .25); } }
   P.ret(.47, .45, .06, .035, FER, 1);
 }
 function vitro(P, r) {
@@ -146,7 +146,7 @@ function madeiraVelha(P, r) {
   P.ret(0, 0, 1, 1, '#2a2622', .1);
   for (let i = 0; i < 6; i++) { const x = .008 + i * .166, w = .158, g = .82 + r() * .32; P.ret(x, .006 + r() * .01, w, .988, tom([134, 122, 106], g), .6);
     P.so((C) => { for (let k = 0; k < 70; k++) { C.fillStyle = `rgba(${r() < .7 ? '44,36,28' : '188,176,156'},${.10 + r() * .2})`; C.fillRect(x + r() * w, r(), .0025 + r() * .004, .05 + r() * .35); }
-      for (let k = 0; k < 60; k++) { const y = Math.pow(r(), 1.7) * .9; C.fillStyle = `rgba(${96 + r() * 20 | 0},${122 + r() * 16 | 0},${128 + r() * 16 | 0},${.45 + r() * .4})`; C.fillRect(x + r() * (w - .03), y, .008 + r() * .03, .006 + r() * .045); }
+      for (let k = 0; k < 60; k++) { const y = Math.pow(r(), 1.7) * .9; C.fillStyle = `rgba(${112 + r() * 20 | 0},${124 + r() * 16 | 0},${118 + r() * 16 | 0},${.35 + r() * .35})`; C.fillRect(x + r() * (w - .012), y, .003 + r() * .007, .03 + r() * .11); }
       if (r() < .5) { C.fillStyle = 'rgba(30,24,18,.75)'; C.beginPath(); C.ellipse(x + w * (.3 + r() * .4), .15 + r() * .7, .012, .009, 0, 0, 6.3); C.fill(); } }); }
   for (const y of [.1, .5, .87]) { P.ret(0, y, 1, .045, '#746a5a', .95); P.ret(0, y + .045, 1, .006, '#1c1611', .3);
     for (let i = 0; i < 6; i++) P.ret(.008 + i * .166 + .07, y + .017, .012, .008, '#2a2420', 1); }
@@ -157,12 +157,12 @@ function ondulada(P, r) {
   P.ret(0, 0, 1, 1, '#45484a', .9);
   for (let i = 0; i < 9; i++) [[0, '#7c8083', .35], [.025, '#a4a8aa', .9], [.05, '#8e9294', .7], [.075, '#5c6063', .15]].forEach(([dx, c, a]) => P.ret(.05 + i * .1 + dx, .025, .0255, .95, c, a));
   P.ret(0, .49, 1, .022, '#45484a', 1);
-  P.so((C) => { for (let i = 0; i < 70; i++) { const y = Math.pow(r(), .45); C.fillStyle = `rgba(${92 + r() * 22 | 0},${50 + r() * 14 | 0},${26 + r() * 10 | 0},${.18 + r() * .4})`; C.fillRect(.05 + r() * .9, y * .97, .01 + r() * .05, (.01 + r() * .06) * (1 + y)); } });
+  P.so((C) => { for (let i = 0; i < 70; i++) { const y = Math.pow(r(), .45); C.fillStyle = `rgba(${92 + r() * 18 | 0},${64 + r() * 14 | 0},${40 + r() * 10 | 0},${.18 + r() * .4})`; C.fillRect(.05 + r() * .9, y * .97, .01 + r() * .05, (.01 + r() * .06) * (1 + y)); } });
   P.ret(.06, .5, .07, .035, '#a89a52', 1);
 }
 function enrolar(P, r) {
   P.ret(0, 0, 1, 1, '#50565a', .95);
-  for (let y = .012; y < .955; y += .0215) { P.ret(.07, y, .86, .012, tom([134, 142, 146], .9 + r() * .16), .85); P.ret(.07, y + .012, .86, .0095, '#565c60', .3); }
+  for (let y = .012; y < .93; y += .043) { P.ret(.07, y, .86, .028, tom([134, 142, 146], .9 + r() * .16), .85); P.ret(.07, y + .028, .86, .015, '#666c70', .4); }
   P.ret(.07, .955, .86, .03, '#3f4447', 1); for (const x of [.22, .72]) P.ret(x, .96, .07, .018, '#1d1f20', 1);
 }
 export const PORTA_TIPOS = ['chapa de ferro com frisos e postigo de vidro canelado com grade', 'esquadria de alumínio', 'madeira velha com tramela', 'chapa ondulada com ferrugem', 'aço de enrolar'];
@@ -199,6 +199,7 @@ function montaAtlas(imgs) {
   FRASES.forEach(([a, b, cor], i) => itens.push({ id: `frase${i}`, cat: 'frase', w: 520, h: 132, pinta(x, y) {
     if (b) { letreiro(g, r, a, x + 8, y + 36, 504, 58, cor); letreiro(g, r, b, x + 8, y + 96, 504, 62, cor); } else letreiro(g, r, a, x + 8, y + 68, 504, 84, cor);
     gasta(g, r, x, y, 520, 132, 60); } }));
+  itens.push({ id: 'fogao', cat: 'fixa', w: 800, h: 112, pinta(x, y) { letreiro(g, r, 'CONSERTA-SE FOGÃO', x + 10, y + 64, 780, 76, '#1c1c1c'); gasta(g, r, x, y, 800, 112, 40); } });
   itens.push({ id: 'reclame', cat: 'reclame', w: 684, h: 252, pinta(x, y) { g.fillStyle = 'rgba(206,190,104,.94)'; g.fillRect(x + 4, y + 4, 676, 244); g.strokeStyle = 'rgba(29,63,138,.95)'; g.lineWidth = 7; g.strokeRect(x + 14, y + 14, 656, 224);
     letreiro(g, r, 'MATERIAL DE CONSTRUÇÃO', x + 28, y + 68, 628, 60, '#1d3f8a'); letreiro(g, r, 'AREIA · PEDRA · CIMENTO', x + 28, y + 140, 628, 50, '#1c1c1c'); letreiro(g, r, 'ENTREGA NA LAJE', x + 28, y + 202, 628, 46, '#1d3f8a');
     gasta(g, r, x, y, 684, 252, 500); } });
@@ -251,17 +252,19 @@ export function pichacoes(scene, mundo, U, evita = [], janelas = []) {
           if (!livre(x + nx * .7, b + 1.3, z + nz * .7) || c.maxY < b + 2.3) continue;
           faces.push({ x, z, nx, nz, b, s, id: nf, centro, teto: c.maxY, ordem: centro + r() }); } } }
     faces.sort((p, q) => p.ordem - q.ordem);
-    const fila = []; for (const it of itens) { if (it.cat === 'esc' || it.cat === 'graf') continue; fila.push(it); if (it.cat !== 'estencil') fila.push(it); }
+    const fila = []; for (const it of itens) { if (it.cat === 'esc' || it.cat === 'graf' || it.cat === 'fixa') continue; fila.push(it); if (it.cat !== 'estencil') fila.push(it); }
     for (let i = fila.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [fila[i], fila[j]] = [fila[j], fila[i]]; }
     const postas = [], perto = (f, d) => postas.some((p) => Math.hypot(p.x - f.x, p.z - f.z) < d && Math.abs(p.b - f.b) < 1);
+    const fogao = itens.find((q) => q.id === 'fogao');
+    if (fogao) for (const z of [-12.9, -12.3, -13.5, -11.7, -14.1]) if (cola(fogao, -5.2, 5.19, z, -1, 0, 2.5, 2.5 * fogao.h / fogao.w, 2)) { postas.push({ x: -5.2, z, b: 3.1 }); break; }
     // Grafite grande primeiro, em parede alta (acima de 2,1 m), antes que o resto ocupe o lugar.
     for (const it of itens.filter((q) => q.cat === 'graf')) achou: for (const f of faces) { if (f.teto < f.b + 4 || perto(f, 4)) continue;
       for (const esc of [1, .8, .62]) { const w = (3.0 + r() * .5) * esc, h = w * it.h / it.w;
         for (const y0 of [f.b + 2.15, f.b + 3.35, f.teto - .2 - h]) if (y0 >= f.b + 2.1 && y0 + h < f.teto - .1 && cola(it, f.x, y0 + h / 2, f.z, f.nx, f.nz, w, h, 2)) { postas.push(f); break achou; } } }
     for (const f of faces) { if (!fila.length || info.n >= 84) break;
       if (perto(f, 1.9)) continue;
-      feito: for (let k = 0; k < Math.min(4, fila.length); k++) for (const esc of f.centro < 2 ? [1, .78, .6] : [1, .7]) { const it = fila[k], m = MEDIDAS[it.cat], asp = it.w / it.h; let w, h; const ys = [];
-        if (it.cat === 'reto') { h = (1.0 + r() * .4) * esc; w = h * asp; ys.push(f.teto - .22 - h / 2, f.teto - .75 - h / 2); if (f.b < 1) ys.push(2.92 - h / 2); }
+      feito: for (let k = 0; k < Math.min(4, fila.length); k++) for (const esc of fila[k].cat === 'reto' ? [1] : f.centro < 2 ? [1, .78, .6] : [1, .7]) { const it = fila[k], m = MEDIDAS[it.cat], asp = it.w / it.h; let w, h; const ys = [];
+        if (it.cat === 'reto') { h = (1.0 + r() * .4) * esc; w = h * asp; ys.push(f.teto - .5 - h / 2, f.teto - .95 - h / 2); if (f.b < 1) ys.push(2.92 - h / 2); }
         else { w = (m[0] + r() * (m[1] - m[0])) * esc; h = w / asp; ys.push(m[2] ? f.b + m[2] + r() * (m[3] - m[2]) : f.b + 2.15 + r() * .3 + h / 2); }
         for (const yc of ys) { if (yc + h / 2 > f.teto - .1 || yc - h / 2 < f.b + (it.cat === 'xarpi' ? .9 : 1.95)) continue;
           if (!cola(it, f.x, yc, f.z, f.nx, f.nz, w, h, CHEIA.has(it.cat) ? 2 : .92 + r() * .08)) continue;
@@ -273,7 +276,7 @@ export function pichacoes(scene, mundo, U, evita = [], janelas = []) {
     // Escorrido sob o peitoril: tenta os dois lados do vão, o raio só acha parede pelo lado de fora.
     const esc = itens.find((it) => it.cat === 'esc'); info.escorridos = 0;
     if (esc) for (const j of janelas) for (const sn of [1, -1]) { const nx = j.eixo === 0 ? sn : 0, nz = j.eixo === 0 ? 0 : sn;
-      if (cola(esc, j.x, j.y - j.h / 2 - .36, j.z, nx, nz, j.w * .9, .4, .6)) { info.escorridos++; info.n--; info.usados.pop(); break; } }
+      if (cola(esc, j.x, j.y - j.h / 2 - .43, j.z, nx, nz, j.w * .9, .55, .85)) { info.escorridos++; info.n--; info.usados.pop(); break; } }
     if (!pos.length) { t.dispose(); tex = null; return; }
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
     geo.setAttribute('hdW', new THREE.Float32BufferAttribute(hw, 3)); geo.computeVertexNormals(); geo.computeBoundingSphere(); for (const a of Object.values(geo.attributes)) a.onUpload(function () { this.array = null; });
