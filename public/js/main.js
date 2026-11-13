@@ -270,6 +270,7 @@ const textures = initTextures();
 const sfx = new Sfx(); sfx.vol = settings.vol;
 sfx.speechEnabled = settings.speech !== false;
 sfx.reverbOn = new URLSearchParams(location.search).get('reverb') === '1';   // reverb leve opt-in (default off)
+sfx.unlockOnGesture(document);   // deep-link (`?sala=`) entra sem clique: o 1º gesto destrava o ctx
 // sidechain da música do menu: cliques/SFX abaixam a trilha por ~150-250ms e ela volta suave
 sfx.onDuck = (amt, hold) => {
   const m = menuMusic;
