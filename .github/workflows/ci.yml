@@ -544,7 +544,10 @@ jobs:
           node tools/eval/cla-ssr-check.mjs
           node tools/eval/cla-ssr-check.mjs --mutate
           node tools/eval/rotas-check.mjs --dist
-          if node tools/eval/rotas-check.mjs --dist --mutante=robots; then exit 1; fi
+          status=0
+          node tools/eval/rotas-check.mjs --dist --mutante=robots || status=$?
+          if [ "$status" -eq 0 ]; then echo 'robots mutant was not detected'; exit 1; fi
+          if [ "$status" -ne 1 ]; then exit "$status"; fi
           node tools/eval/perfil-abas-check.mjs
           node tools/eval/perfil-abas-check.mjs --mutate
           node tools/eval/profile-character-empty-check.mjs
