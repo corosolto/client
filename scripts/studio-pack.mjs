@@ -3,6 +3,7 @@ import Ajv from 'ajv/dist/2020.js';
 import { constants } from 'node:fs';
 import {
   lstat,
+  link,
   mkdir,
   open,
   readFile,
@@ -11,7 +12,7 @@ import {
   rename,
   rm,
 } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -441,16 +442,24 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
 
   let lockHandle;
   let lockIdentity;
+  let lockCandidate;
+  let lockPublished = false;
   let reclaimedStaleLock = false;
   try {
+    lockCandidate = path.join(idDirectory, `.version.install-lock-${process.pid}-${randomUUID()}.tmp`);
+    lockHandle = await open(
+      lockCandidate,
+      constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW || 0),
+      0o600,
+    );
+    await lockHandle.writeFile(`${process.pid}\n${new Date().toISOString()}\n${source.manifestSha256}\n`);
+    await lockHandle.sync();
+    lockIdentity = await lockHandle.stat({ bigint: true });
     for (let attempt = 0; attempt < 2; attempt++) {
       await assertParents();
       try {
-        lockHandle = await open(
-          lockPath,
-          constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW || 0),
-          0o600,
-        );
+        await link(lockCandidate, lockPath);
+        lockPublished = true;
         break;
       } catch (error) {
         if (error.code !== 'EEXIST') throw error;
@@ -461,10 +470,9 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
         fail('E_INSTALL_BUSY', `Another install or non-reclaimable lock requires inspection: ${lockPath}`);
       }
     }
-    if (!lockHandle) fail('E_INSTALL_BUSY', `Could not acquire install lock: ${lockPath}`);
-    lockIdentity = await lockHandle.stat({ bigint: true });
-    await lockHandle.writeFile(`${process.pid}\n${new Date().toISOString()}\n${source.manifestSha256}\n`);
-    await lockHandle.sync();
+    if (!lockPublished) fail('E_INSTALL_BUSY', `Could not acquire install lock: ${lockPath}`);
+    await rm(lockCandidate, { force: true });
+    lockCandidate = null;
     await assertParents();
 
     let targetExists = await lstat(target).catch(error => {
@@ -634,8 +642,9 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
       }
     }
   } finally {
-    if (lockHandle) {
-      await lockHandle.close().catch(() => {});
+    if (lockHandle) await lockHandle.close().catch(() => {});
+    if (lockCandidate) await rm(lockCandidate, { force: true }).catch(() => {});
+    if (lockPublished) {
       await assertParents();
       const current = await lstat(lockPath, { bigint: true }).catch(() => null);
       if (current && sameIdentity(current, lockIdentity)) await rm(lockPath, { force: true });
