@@ -1,11 +1,12 @@
-// Contrato e antes/depois: docs/visual-consistency/CLIENT-SNAPSHOT-NEGOTIATION.md.
-// Módulos reais; só transporte, relógio e location são fronteiras simuladas.
+// Negociação real do NetClient: v9 preferida, v8 continua utilizável e ack precisa casar;
+// N11–N13 cobrem o contrato transporte → codec (ArrayBuffer, decoder real, teto, canal inseguro).
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { SNAPSHOT_PROTOCOLS } from '../../public/js/netcodec.js';
+import { CLIENT_SNAPSHOT_PROTOCOL, SNAPSHOT_PROTOCOLS } from '../../public/js/netcodec.js';
+const V9 = CLIENT_SNAPSHOT_PROTOCOL;
 const V8 = 'coro-snapshot-v8';
 const IDS = ['N1','N2','N3','N4','N5','N6','N7','N8','N9','N10','N11','N12','N13','N14','N15','N16','N17','N18','N19','N20','N21','N22'];
 const sha = b => createHash('sha256').update(b).digest('hex');
@@ -17,9 +18,9 @@ const specs = {
   'ws-selection': { failed:['N3','N4'], file:'transporte.js', edits:[
     ['if (!SNAPSHOT_PROTOCOLS.includes(this.ws.protocol))', 'if (false && !SNAPSHOT_PROTOCOLS.includes(this.ws.protocol))']] },
   'welcome-version': { failed:['N6','N7','N12','N15','N16'], file:'net.js', edits:[
-    ["if (m.type === 'welcome') {\n          if (m.protocolVersion !== 8)", "if (m.type === 'welcome') {\n          if (false && m.protocolVersion !== 8)"]] },
+    ["if (m.type === 'welcome') {\n          if (m.protocolVersion < 8 || m.protocolVersion !== snapshotVersionForProtocol(tp.protocolo))", "if (m.type === 'welcome') {\n          if (false && (m.protocolVersion < 8 || m.protocolVersion !== snapshotVersionForProtocol(tp.protocolo)))"]] },
   'partida-version': { failed:['N9','N10','N17','N18','N21'], file:'net.js', edits:[
-    ["} else if (m.type === 'partida') {\n          if (m.protocolVersion !== 8)", "} else if (m.type === 'partida') {\n          if (false && m.protocolVersion !== 8)"]] },
+    ["} else if (m.type === 'partida') {\n          if (m.protocolVersion < 8 || m.protocolVersion !== snapshotVersionForProtocol(tp.protocolo))", "} else if (m.type === 'partida') {\n          if (false && (m.protocolVersion < 8 || m.protocolVersion !== snapshotVersionForProtocol(tp.protocolo)))"]] },
   'legacy-wt-request': { failed:['N5','N11'], file:'net.js', edits:[
     ['encodeURIComponent(CLIENT_SNAPSHOT_PROTOCOL)', "encodeURIComponent('coro-snapshot-v7')"]] },
   'attempt-guard': { failed:['N9','N10','N12','N17','N18','N21'], file:'net.js', edits:[
@@ -57,11 +58,11 @@ async function measure(NetClient, TransporteWT, id, conf, test) {
   const saved = Object.fromEntries(names.map(k => [k,Object.getOwnPropertyDescriptor(globalThis,k)]));
   const savedInfo=console.info, savedWarn=console.warn;
   const timers=new Map(), sockets=[], quics=[], clients=[]; let timerId=0, closes=0;
-  const wsVersion = conf.wsVersion === 'missing' ? undefined : conf.wsVersion ?? 8;
-  const wtVersion = conf.wtVersion === 'missing' ? undefined : conf.wtVersion ?? 8;
+  const wsVersion = conf.wsVersion === 'missing' ? undefined : conf.wsVersion ?? 9;
+  const wtVersion = conf.wtVersion === 'missing' ? undefined : conf.wtVersion ?? 9;
   class FakeWS {
     constructor(url,protocols) {
-      this.url=url; this.protocols=protocols; this.protocol=conf.wsProtocol ?? V8; this.readyState=0; this.closeCalls=[]; sockets.push(this);
+      this.url=url; this.protocols=protocols; this.protocol=conf.wsProtocol ?? V9; this.readyState=0; this.closeCalls=[]; sockets.push(this);
       queueMicrotask(() => { this.readyState=1; this.onopen?.(); if (this.readyState===1 && !conf.noWelcome) this.emit(metadata('welcome',wsVersion)); });
     }
     emit(m) { this.onmessage?.({data:JSON.stringify(m)}); }
@@ -95,7 +96,7 @@ async function measure(NetClient, TransporteWT, id, conf, test) {
     console.info=()=>{}; console.warn=()=>{};
     const make = (wt=false) => {const n=new NetClient('ws://boundary/ws',wt ? {wt:'https://boundary/wt'} : {}); n.onClose=()=>closes++; clients.push(n);return n;};
     const outcome = p => p.then(value=>({ok:true,value}),error=>({ok:false,error:String(error?.message||error)}));
-    const directWT = n => outcome(n._conectar(8000,()=>new TransporteWT('https://boundary/wt?sp='+V8)));
+    const directWT = n => outcome(n._conectar(8000,()=>new TransporteWT('https://boundary/wt?sp='+V9)));
     const evidence={};
     const ok=await test({make,outcome,directWT,sockets,quics,timers,evidence,getCloses:()=>closes,resetCloses:()=>{closes=0;}});
     if(typeof ok!=='boolean')throw new Infra(id+': nonboolean oracle');
@@ -124,37 +125,37 @@ async function run(mutant) {
     const connect=async x=>{const n=x.make();const r=await x.outcome(n.connect());return {n,r};};
     const rejected=async x=>{const {n,r}=await connect(x);await flush();x.evidence.result=r;return !r.ok && n.meta===null && x.sockets[0].closeCalls.length>0 && x.timers.size===0;};
     await add('N1',{},async x=>{const {r}=await connect(x);return r.ok&&equal(x.sockets[0].protocols,SNAPSHOT_PROTOCOLS);});
-    await add('N2',{},async x=>{const {n,r}=await connect(x);return r.ok&&n.meta.protocolVersion===8&&n.connected&&x.timers.size===0;});
+    await add('N2',{wsProtocol:V8,wsVersion:8},async x=>{const {n,r}=await connect(x);return r.ok&&n.meta.protocolVersion===8&&n.connected&&x.timers.size===0;});
     await add('N3',{wsProtocol:'coro-snapshot-v999'},rejected);
     await add('N4',{wsProtocol:''},rejected);
-    await add('N5',{},async x=>new URL(x.make(true).wtUrl).searchParams.get('sp')===V8);
-    for(const [id,wtVersion] of [['N6',7],['N7','missing']])await add(id,{wtVersion},async x=>{const n=x.make();const r=await x.directWT(n);x.evidence.result=r;return !r.ok&&n.meta===null&&x.quics[0].closeCalls.length>0&&x.timers.size===0;});
-    await add('N8',{},async x=>{const n=x.make();const r=await x.directWT(n);if(!r.ok)return false;let delivered=0;n.onPartida=()=>delivered++;x.quics[0].emit(metadata('partida',8,2));await flush();return n.meta.partida===2&&delivered===1&&x.timers.size===0;});
+    await add('N5',{},async x=>new URL(x.make(true).wtUrl).searchParams.get('sp')===V9);
+    for(const [id,wtVersion] of [['N6',8],['N7','missing']])await add(id,{wtVersion},async x=>{const n=x.make();const r=await x.directWT(n);x.evidence.result=r;return !r.ok&&n.meta===null&&x.quics[0].closeCalls.length>0&&x.timers.size===0;});
+    await add('N8',{},async x=>{const n=x.make();const r=await x.directWT(n);if(!r.ok)return false;let delivered=0;n.onPartida=()=>delivered++;x.quics[0].emit(metadata('partida',9,2));await flush();return n.meta.partida===2&&delivered===1&&x.timers.size===0;});
     async function regression(x,wt,version){
       const n=x.make();const r=wt?await x.directWT(n):await x.outcome(n.connect());if(!r.ok)return false;
       const old=n.meta;let delivered=0;n.onPartida=()=>delivered++;x.resetCloses();
       const emit=m=>wt?x.quics[0].emit(m):x.sockets[0].emit(m);
-      emit(metadata('partida',version,2));emit(metadata('partida',8,3));await flush();
+      emit(metadata('partida',version,2));emit(metadata('partida',9,3));await flush();
       return n.meta===old&&delivered===0&&!n.connected&&x.getCloses()===1&&x.timers.size===0;
     }
-    await add('N9',{},x=>regression(x,false,7));
+    await add('N9',{},x=>regression(x,false,8));
     await add('N10',{},x=>regression(x,false,undefined));
-    await add('N11',{wtFailure:true},async x=>{const n=x.make(true);const r=await x.outcome(n.connect());return r.ok&&n.tp.ws===x.sockets[0]&&equal(x.sockets[0].protocols,SNAPSHOT_PROTOCOLS)&&x.sockets[0].protocol===V8&&new URL(x.quics[0].url).searchParams.get('sp')===V8&&x.quics[0].closeCalls.length>0&&x.getCloses()===0&&x.timers.size===0;});
-    await add('N12',{wtVersion:7},async x=>{const n=x.make(true);const r=await x.outcome(n.connect());if(!r.ok||x.sockets.length!==1)return false;const old=n.meta;x.resetCloses();x.quics[0].emit(metadata('welcome',8,99));x.quics[0].emit(metadata('partida',8,99));x.quics[0].resolveClosed();await flush();return n.meta===old&&n.connected&&n.tp.ws===x.sockets[0]&&x.sockets[0].closeCalls.length===0&&x.getCloses()===0;});
-    await add('N13',{},async x=>{const n=x.make();let closes=0;const tp={abrir(h){h.aberto();h.mensagem(JSON.stringify(metadata('welcome',8)),false,0);},fechar(){closes++;}};const r=await x.outcome(n._conectar(8000,()=>tp));x.evidence.result=r;return r.ok&&n.meta.protocolVersion===8&&closes===0&&x.timers.size===0;});
+    await add('N11',{wtFailure:true},async x=>{const n=x.make(true);const r=await x.outcome(n.connect());return r.ok&&n.tp.ws===x.sockets[0]&&equal(x.sockets[0].protocols,SNAPSHOT_PROTOCOLS)&&x.sockets[0].protocol===V9&&new URL(x.quics[0].url).searchParams.get('sp')===V9&&x.quics[0].closeCalls.length>0&&x.getCloses()===0&&x.timers.size===0;});
+    await add('N12',{wtVersion:8},async x=>{const n=x.make(true);const r=await x.outcome(n.connect());if(!r.ok||x.sockets.length!==1)return false;const old=n.meta;x.resetCloses();x.quics[0].emit(metadata('welcome',9,99));x.quics[0].emit(metadata('partida',9,99));x.quics[0].resolveClosed();await flush();return n.meta===old&&n.connected&&n.tp.ws===x.sockets[0]&&x.sockets[0].closeCalls.length===0&&x.getCloses()===0;});
+    await add('N13',{},async x=>{const n=x.make();let closes=0;const tp={protocolo:V8,abrir(h){h.aberto();h.mensagem(JSON.stringify(metadata('welcome',8)),false,0);},fechar(){closes++;}};const r=await x.outcome(n._conectar(8000,()=>tp));x.evidence.result=r;return r.ok&&n.meta.protocolVersion===8&&closes===0&&x.timers.size===0;});
     await add('N14',{},async x=>{const n=x.make();const r=await x.outcome(n._conectar(8000,()=>{throw new Error('factory_boundary');}));return !r.ok&&r.error==='factory_boundary'&&x.timers.size===0;});
-    await add('N15',{wsVersion:7},rejected);
+    await add('N15',{wsVersion:8},rejected);
     await add('N16',{wsVersion:'missing'},rejected);
-    await add('N17',{},x=>regression(x,true,7));
+    await add('N17',{},x=>regression(x,true,8));
     await add('N18',{},x=>regression(x,true,undefined));
-    await add('N19',{noWelcome:true},async x=>{const n=x.make();let settled=false;const p=x.outcome(n._conectar(8000,()=>new TransporteWT('https://boundary/wt?sp='+V8))).then(r=>{settled=true;return r;});await flush();const pending=!settled&&x.timers.size===1;for(const [timer,fn] of [...x.timers]){x.timers.delete(timer);fn();}const r=await p;return pending&&!r.ok&&r.error==='timeout'&&x.timers.size===0&&x.quics[0].closeCalls.length===1;});
+    await add('N19',{noWelcome:true},async x=>{const n=x.make();let settled=false;const p=x.outcome(n._conectar(8000,()=>new TransporteWT('https://boundary/wt?sp='+V9))).then(r=>{settled=true;return r;});await flush();const pending=!settled&&x.timers.size===1;for(const [timer,fn] of [...x.timers]){x.timers.delete(timer);fn();}const r=await p;return pending&&!r.ok&&r.error==='timeout'&&x.timers.size===0&&x.quics[0].closeCalls.length===1;});
     await add('N20',{},async x=>{const n=x.make();const tp={abrir(h){h.aberto();h.fechado();},fechar(){}};const r=await x.outcome(n._conectar(8000,()=>tp));return !r.ok&&r.error==='closed'&&x.getCloses()===0&&x.timers.size===0;});
     await add('N21',{},async x=>{
       const {n,r}=await connect(x);if(!r.ok)return false;
       const old=n.meta, previous=n.onClose;let caught='',calls=0;
       n.onClose=()=>{if(++calls===1)throw new Error('controlled_onclose');};
       try {
-        try{x.sockets[0].emit(metadata('partida',7,2));}catch(e){caught=e.message;}
+        try{x.sockets[0].emit(metadata('partida',8,2));}catch(e){caught=e.message;}
         await flush();x.evidence.caught=caught;x.evidence.calls=calls;
         return caught==='controlled_onclose'&&calls===1&&x.sockets[0].closeCalls.length===1&&!n.connected&&n.meta===old&&x.timers.size===0;
       } finally {n.onClose=previous;}

@@ -1289,9 +1289,10 @@ class CharController {
   setCrouch(v) { this.crouch = !!v; }
   /* EMOTE: dança por overlay de mundo (ver public/js/emotes.js). Entra e sai em rampa
      de 0,18 s — cortar no quadro dá solavanco e o boneco "pula" de pose. */
-  emote(id) {
+  emote(id, elapsed = 0) {
     if (this.dead || !id) return false;
-    this._emoteId = id; this._emoteT = 0; this.emotando = true;
+    // Ressincronizar a fase remota não reinicia a rampa já em andamento.
+    this._emoteId = id; this._emoteT = Math.max(0, Number(elapsed) || 0); this.emotando = true;
     return true;
   }
   pararEmote() { this._emoteId = null; }
