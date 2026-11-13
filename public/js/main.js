@@ -366,6 +366,7 @@ let _splashReady = false;
 const ENTRADA_MS = 350;
 let _entradaEm = 0;
 let _splashPorFailsafe = false;
+let _menuBackdropBypass = null;
 function _splashSetReady() {
   // Marco do funil: `assets_ready` é o caminho dos assets (menuBackdropReady), nunca o
   // failsafe. splash_ready SEM assets_ready = o botão saiu por tempo, com a carga em pé.
@@ -492,6 +493,7 @@ async function loadMenuBackdrop() {
 }
 // Rotas compartilhadas, inclusive na query antiga, carregam o cenário em fundo.
 // No perfil móvel, o wallpaper 2D evita baixar e compilar uma arena coberta pelo menu.
+// Em máquinas lentas, o gesto após o failsafe libera o módulo sem cancelar o cenário.
 const directRoute = document.documentElement.hasAttribute('data-direct-route')
   || Object.keys(estadoDaUrl(location.href) || {}).length > 0;
 const menuBackdropReady = MOBILE_AUTO ? Promise.resolve() : loadMenuBackdrop();
@@ -500,7 +502,12 @@ const menuBackdropSettled = menuBackdropReady.catch((error) => {
 });
 if (MOBILE_AUTO) _splashSetReady();
 else void menuBackdropSettled.then(_splashSetReady);
-const moduleSequencingReady = MOBILE_AUTO || directRoute ? Promise.resolve() : menuBackdropSettled;
+/* RÉGUA:boot-module-sequencing início */
+const moduleSequencingReady = MOBILE_AUTO || directRoute ? Promise.resolve() : Promise.race([
+  menuBackdropSettled,
+  new Promise((resolve) => { _menuBackdropBypass = resolve; }),
+]);
+/* RÉGUA:boot-module-sequencing fim */
 
 /* ---------------- screens ---------------- */
 const screens = ['main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
@@ -794,11 +801,13 @@ const _armMusic = () => {
 // SPLASH DE BOOT ("pressione para entrar"): o gesto que sai da splash é GARANTIDO, então
 // destrava o áudio COM SOM na hora — sem fallback mudo e sem fade atrapalhado. Registrado
 // em capture ANTES do _armMusic, que vira no-op (musicArmed já true).
+/* RÉGUA:boot-splash-dismiss início */
 function dismissSplash(e) {
   if (document.querySelector('#javaporcos-intro:modal')) return;
   const sp = document.getElementById('boot-splash');
   if (!sp || !_splashReady || sp.classList.contains('gone')) return;
   if (e?.target?.closest?.('[data-splash-fica]')) return;
+  if (sp.dataset.csEntradaPendente) return;   // o gesto será consumido depois de finishBoot
   e?.preventDefault?.(); e?.stopPropagation?.();   // bloqueia ANTES da anti-reentrada: 2º gesto preso na splash não vaza atalho para o lobby
   if (sp.dataset.csEntrada) return;   // splash presa aguardando anúncio/import: 2º gesto não reprocessa
   sp.dataset.csEntrada = '1';
@@ -837,6 +846,7 @@ function dismissSplash(e) {
   if (musicFade) { clearInterval(musicFade); musicFade = null; }
   startMenuMusic();
 }
+/* RÉGUA:boot-splash-dismiss fim */
 /* Foco no 1º item visível do menu CS: o handler de setas vive no #cs-menu e só dispara com
    o foco lá dentro. Guardas: não rouba foco de campo de texto nem do painel de setup. */
 function focusMenu() {
@@ -850,8 +860,31 @@ function focusMenu() {
   const first = [...document.querySelectorAll('.cs-item')].find((b) => b.offsetParent !== null);
   if (first) first.focus();
 }
+/* RÉGUA:boot-main-ready início */
+if (!MOBILE_AUTO && !directRoute) {
+  const aceitaEntradaDuranteBackdrop = (e) => {
+    const sp = document.getElementById('boot-splash');
+    if (!sp || !_splashReady || sp.dataset.csEntradaPendente) return;
+    if (e?.target?.closest?.('[data-splash-fica]')) return;
+    e?.preventDefault?.(); e?.stopPropagation?.();
+    sp.dataset.csEntradaPendente = '1';
+    _armMusic();
+    _menuBackdropBypass?.();
+  };
+  const encerraFallbackDoBackdrop = () => {
+    _menuBackdropBypass = null;
+    window.removeEventListener('pointerdown', aceitaEntradaDuranteBackdrop, true);
+    window.removeEventListener('keydown', aceitaEntradaDuranteBackdrop, true);
+    window.__CS_BOOT_FALLBACK_ARMED__ = false;
+  };
+  window.__CS_BOOT_FALLBACK_ARMED__ = true;
+  window.addEventListener('pointerdown', aceitaEntradaDuranteBackdrop, true);
+  window.addEventListener('keydown', aceitaEntradaDuranteBackdrop, true);
+  void moduleSequencingReady.then(encerraFallbackDoBackdrop, encerraFallbackDoBackdrop);
+}
 window.addEventListener('pointerdown', dismissSplash, true);
 window.addEventListener('keydown', dismissSplash, true);
+/* RÉGUA:boot-main-ready fim */
 window.addEventListener('pointerdown', _armMusic);
 window.addEventListener('keydown', _armMusic);
 const menuMusicToggle = $('hub-music-toggle');
@@ -5708,46 +5741,53 @@ show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de 
     if (!location.pathname.startsWith('/u/')) hubNavigate({ map: currentMap, personagem: currentChar }, true); // /u/<perfil> fica limpo para compartilhar
     restoreHubRoute();
   }
+  /* RÉGUA:boot-pending-entry início */
 window.__CS_MAIN_READY__ = true;
 window.__gameLaunch?.ready('boot');
 contagem.evento('game_loaded');
+  const entradaPendente = document.getElementById('boot-splash');
+  if (entradaPendente?.dataset.csEntradaPendente) {
+    delete entradaPendente.dataset.csEntradaPendente;
+    dismissSplash();
+  }
+  /* RÉGUA:boot-pending-entry fim */
   // Convite de sala e perfil compartilhado (/u/<perfil>) chegam com destino: nem o convite de conta nem o da loja cobrem esse destino.
   // /u/<perfil> é o hub (SSR); ?perfil= é o link antigo.
 const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location.href)?.perfil);
-void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onSession:auth=>{contaNick=auth?.profile?.nick || '';if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();},onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),track:_loginPromptTrack})});
-// Logar com a aba RANKING aberta tira o convite de nick na hora, sem refazer a lista.
-document.addEventListener('cs-account-change',(e)=>{contaNick=e.detail?.profile?.nick || '';const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);});
-tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
-document.addEventListener('cs-treta-inventory-change',refreshMenuEquipment);
-/* Passe Sessão da Treta: o GET com conta também registra o login do dia no servidor. Conta trocada
-   esquece o status anterior; fim de partida pergunta de novo depois que o resultado foi enviado. */
-if(!testMode){
-  void carregarPasse();
-  document.addEventListener('cs-account-change',()=>{void trocarContaPasse();});
-  document.addEventListener('cs-match-end',()=>{setTimeout(()=>{void carregarPasse();},4000);});
-}
-document.addEventListener(PASSE_EVENTO,refreshMenuEquipment);
-// Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
-if (directRoute) document.getElementById('boot-splash')?.remove();
-const abrirVitrine=()=>{if(!tretaVitrine()?.length)return;document.removeEventListener('cs-treta-state',abrirVitrine);void import('./treta-vitrine.js').then(m=>m.iniciarVitrine()).catch(()=>{});};
-document.addEventListener('cs-treta-state',abrirVitrine);
-if (inspectionScreen) {
-  void openInspectionScreen(inspectionScreen).catch((error) => window.__gameLaunch?.fail(error, 'screen-query'));
-} else if (testMode && params.get('auto')) {
-  const [team, char] = params.get('auto').split(',');
-  startGame(team || 'E', char || CHARACTERS[0].id);
-} else if (params.get('sala')) {
-  /* Chegou por LINK de convite (/sala/BR-7K3M redireciona pra cá). Espera a splash sair antes
-     de abrir a rede: sem gesto do usuário o áudio nem inicia e o jogo abre mudo. */
-  const entrarQuandoPuder = () => window.__mpConvite?.(params.get('sala'));
-  if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
-  else entrarQuandoPuder();
-}
-/* QA MOBILE (qa-mobile.js, contrato em tools/eval/qa-mobile-check.mjs): import DINÂMICO atrás
-   do portão — sessão normal não baixa o arquivo. `__CS_QA__` é a injeção do app de loja. */
-if (params.get('qa') === 'mobile' || window.__CS_QA__) {
-  void import('./qa-mobile.js').then((m) => m.ligarQaMobile()).catch(() => { /* QA não derruba partida */ });
-}
+  void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onSession:auth=>{contaNick=auth?.profile?.nick || '';if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();},onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),track:_loginPromptTrack})});
+  // Logar com a aba RANKING aberta tira o convite de nick na hora, sem refazer a lista.
+  document.addEventListener('cs-account-change',(e)=>{contaNick=e.detail?.profile?.nick || '';const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);});
+  tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
+  document.addEventListener('cs-treta-inventory-change',refreshMenuEquipment);
+  /* Passe Sessão da Treta: o GET com conta também registra o login do dia no servidor. Conta trocada
+     esquece o status anterior; fim de partida pergunta de novo depois que o resultado foi enviado. */
+  if(!testMode){
+    void carregarPasse();
+    document.addEventListener('cs-account-change',()=>{void trocarContaPasse();});
+    document.addEventListener('cs-match-end',()=>{setTimeout(()=>{void carregarPasse();},4000);});
+  }
+  document.addEventListener(PASSE_EVENTO,refreshMenuEquipment);
+  // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
+  if (directRoute) document.getElementById('boot-splash')?.remove();
+  const abrirVitrine=()=>{if(!tretaVitrine()?.length)return;document.removeEventListener('cs-treta-state',abrirVitrine);void import('./treta-vitrine.js').then(m=>m.iniciarVitrine()).catch(()=>{});};
+  document.addEventListener('cs-treta-state',abrirVitrine);
+  if (inspectionScreen) {
+    void openInspectionScreen(inspectionScreen).catch((error) => window.__gameLaunch?.fail(error, 'screen-query'));
+  } else if (testMode && params.get('auto')) {
+    const [team, char] = params.get('auto').split(',');
+    startGame(team || 'E', char || CHARACTERS[0].id);
+  } else if (params.get('sala')) {
+    /* Chegou por LINK de convite (/sala/BR-7K3M redireciona pra cá). Espera a splash sair antes
+       de abrir a rede: sem gesto do usuário o áudio nem inicia e o jogo abre mudo. */
+    const entrarQuandoPuder = () => window.__mpConvite?.(params.get('sala'));
+    if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
+    else entrarQuandoPuder();
+  }
+  /* QA MOBILE (qa-mobile.js, contrato em tools/eval/qa-mobile-check.mjs): import DINÂMICO atrás
+     do portão — sessão normal não baixa o arquivo. `__CS_QA__` é a injeção do app de loja. */
+  if (params.get('qa') === 'mobile' || window.__CS_QA__) {
+    void import('./qa-mobile.js').then((m) => m.ligarQaMobile()).catch(() => { /* QA não derruba partida */ });
+  }
 }
 void window.__CS_LANG_READY__.then(finishBoot).catch((error) => window.__gameLaunch?.fail(error, 'boot'));
 import {rankingTable,playerProfilePath} from './ranking-player.js';

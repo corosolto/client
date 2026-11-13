@@ -1165,7 +1165,10 @@ const idiomaGeo = !/export const prerender = false/.test(astro)
   && /export const prerender = false/.test(apiGeoLang)
   && /langFromCountry/.test(apiGeoLang)
   && /export async function resolveGeoLang/.test(i18n)
-  && /navigator\.language/.test(i18n);
+  && /navigator\.language/.test(i18n)
+  // Sem top-level await: o contrato autoritativo é a cadeia que traduz antes de finishBoot.
+  && /window\.__CS_LANG_READY__\s*=\s*moduleSequencingReady\.then\(\(\)\s*=>\s*resolveGeoLang\(\)\)\.then/.test(main)
+  && /void window\.__CS_LANG_READY__\.then\(finishBoot\)\.catch/.test(main);
 
 const resultados = [
   ['UIA1', 'elenco inteiro tem avatar, seleção e dois resultados estáticos', assetOk, assetEvid],
