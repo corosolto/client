@@ -21,10 +21,12 @@
         node tools/eval/match-options-check.mjs --mutante=mp-local
         node tools/eval/match-options-check.mjs --mutante=mp-ignora-servidor
         node tools/eval/match-options-check.mjs --mutante=mp-sem-sanitizar
+        node tools/eval/match-options-check.mjs --mutante=modo-preferido
 */
 import { readFileSync } from 'node:fs';
 import { bootGame, initTextures } from './harness.mjs';
 import { sanitizeRounds } from '../../public/js/game.js';
+import { ehMapaJavaporcos } from '../../public/js/maps.js';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const textures = initTextures();
@@ -77,18 +79,21 @@ for (const [ctf, expected] of [[false, 5], [true, 3]]) {
    avaliada com sessões fabricadas, em vez de comparada como texto. */
 {
   let main = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
-  const atual = /roundsMax:\s*sessao\s*\?\s*\(sanitizeRounds\(sessao\.net\.meta\.roundsMax\)\s*\|\|\s*undefined\)\s*:\s*matchRounds\(\)/;
-  if (MUT === 'mp-local') main = main.replace(atual, 'roundsMax: matchRounds()');
-  if (MUT === 'mp-ignora-servidor') main = main.replace(atual, 'roundsMax: sessao ? undefined : matchRounds()');
-  if (MUT === 'mp-sem-sanitizar') main = main.replace(atual, 'roundsMax: sessao ? sessao.net.meta.roundsMax : matchRounds()');
+  /* v7 da união: a expressão real ganhou o guard `ehMapaJavaporcos(currentMap) ? 1 : ...`
+     na frente; os mutantes mordem o trecho de rede que continua lá dentro. */
+  const atual = /\bsessao\s*\?\s*\(sanitizeRounds\(sessao\.net\.meta\.roundsMax\)\s*\|\|\s*undefined\)\s*:\s*matchRounds\(\)/;
+  if (MUT === 'mp-local') main = main.replace(atual, 'matchRounds()');
+  if (MUT === 'mp-ignora-servidor') main = main.replace(atual, 'sessao ? undefined : matchRounds()');
+  if (MUT === 'mp-sem-sanitizar') main = main.replace(atual, 'sessao ? sessao.net.meta.roundsMax : matchRounds()');
   const linhas = main.match(/^\s*roundsMax:.*$/gm) || [];
   expect(linhas.length === 1, `main.js: esperado 1 roundsMax no new Game, achei ${linhas.length}`);
   const expr = (linhas[0] || '').trim().replace(/^roundsMax:\s*/, '').replace(/,\s*$/, '');
   let avaliar = () => NaN;
-  try { avaliar = new Function('sessao', 'matchRounds', 'sanitizeRounds', `return (${expr});`); }
+  try { avaliar = new Function('sessao', 'matchRounds', 'sanitizeRounds', 'ehMapaJavaporcos', 'currentMap', `return (${expr});`); }
   catch (e) { expect(false, `main.js: expressão do roundsMax não avalia (${expr})`); }
   const local = () => 13;
   const sessao = (meta) => ({ net: { meta } });
+  const fora = () => false;
   const casos = [
     [sessao({ roundsMax: 9 }), 9, 'sala oficial de 9 rodadas'],
     [sessao({ roundsMax: 3 }), 3, 'captura de 3 rodadas'],
@@ -96,17 +101,77 @@ for (const [ctf, expected] of [[false, 5], [true, 3]]) {
     [sessao({ roundsMax: 99 }), undefined, 'teto fora de 1–15 vindo da rede'],
     [null, 13, 'offline usa o ajuste local'],
   ];
+  const casosJav = [[sessao({ roundsMax: 9 }), 1, 'mapa javaporcos força a partida única, mesmo com meta do servidor']];
   for (const [s, esperado, nome] of casos) {
     let veio;
-    try { veio = avaliar(s, local, sanitizeRounds); } catch (e) { veio = `erro: ${e.message}`; }
+    try { veio = avaliar(s, local, sanitizeRounds, fora, 'praca_poderes'); } catch (e) { veio = `erro: ${e.message}`; }
+    expect(veio === esperado, `main.js: ${nome} → roundsMax ${veio}, esperado ${esperado} (${expr})`);
+  }
+  for (const [s, esperado, nome] of casosJav) {
+    let veio;
+    try { veio = avaliar(s, local, sanitizeRounds, () => true, 'invasao_javaporcos'); } catch (e) { veio = `erro: ${e.message}`; }
     expect(veio === esperado, `main.js: ${nome} → roundsMax ${veio}, esperado ${esperado} (${expr})`);
   }
   rows.push(`multiplayer       roundsMax = ${expr}`);
 }
 
+/* CALLBACK REAL: init ('let matchMode ='→'const menuSetup ='), matchRounds e msRounds.onchange
+   extraídos do main e executados em VM — nunca comparados como texto. Mutante modo-preferido. */
+{
+  let main = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
+  const recorte = (re, nome) => {
+    const m = main.match(re);
+    expect(!!m, `main.js: trecho real ${nome} não encontrado`);
+    return m ? m[0] : '';
+  };
+  const init = recorte(/let matchMode = [\s\S]*?\n(?=const menuSetup =)/, 'init do matchMode');
+  const fn = recorte(/^function matchRounds\(\) \{[\s\S]*?\n\}/m, 'function matchRounds');
+  let cb = recorte(/if \(msRounds\) msRounds\.onchange = \(\) => \{[\s\S]*?\n\};/, 'callback msRounds.onchange');
+  /* modo-preferido: reverte SÓ o callback para a preferência (matchMode), ignorando o mapa objetivo. */
+  if (MUT === 'modo-preferido') {
+    const before = "modoEfetivoAtual() === 'ctf'";
+    if (cb.split(before).length !== 3) throw new Error('MUTANTE NÃO APLICOU: callback de rounds');
+    cb = cb.replaceAll(before, "matchMode === 'ctf'");
+    console.log('Mutação aplicada: modo-preferido');
+  }
+  const cenarios = [
+    ['normal, pref ctf', { ctfMode: true }, 'ctfRounds', 'rounds', 3],
+    ['normal, pref rounds', {}, 'rounds', 'ctfRounds', 5],
+    ['objetivo, pref ctf', { objectiveMode: 'escolta', ctfMode: true }, 'rounds', 'ctfRounds', 5],
+    ['objetivo, pref rounds', { objectiveMode: 'escolta' }, 'rounds', 'ctfRounds', 5],
+  ];
+  for (const [nome, mapa, campo, outro, invalido] of cenarios) {
+    const settings = { rounds: 5, ctfRounds: 3 };
+    const msRounds = { value: '9' };
+    const noop = () => {};
+    let liberado = null;
+    try {
+      liberado = new Function('settings', 'msRounds', 'MAPS', 'currentMap', 'sanitizeRounds', 'ehMapaJavaporcos',
+        'saveSettings', 'setMapMeta', 'setMapMode', 'renderMapScreen', 'sfx',
+        `${init}\n${fn}\n${cb}\nreturn { modoEfetivoAtual, matchRounds, onchange: () => msRounds.onchange() };`
+      )(settings, msRounds, { mapa }, 'mapa', sanitizeRounds, ehMapaJavaporcos, noop, noop, noop, noop, { uiClick: noop });
+    } catch (e) { expect(false, `${nome}: VM não executou o código real (${e.message})`); continue; }
+    liberado.onchange();
+    const intactos = settings[campo] === 9 && settings[outro] === (outro === 'rounds' ? 5 : 3);
+    expect(intactos, `${nome}: valor 9 gravou ${campo}=${settings[campo]}, ${outro}=${settings[outro]} (esperado 9 e outro intacto)`);
+    expect(liberado.matchRounds() === 9, `${nome}: matchRounds()=${liberado.matchRounds()}, esperado 9`);
+    msRounds.value = '';
+    liberado.onchange();
+    expect(settings[campo] === invalido, `${nome}: inválido → ${campo}=${settings[campo]}, padrão esperado ${invalido}`);
+    rows.push(`callback ${nome.padEnd(22)} ${campo}=9, ${outro} intacto, matchRounds=9, inválido→${invalido}`);
+  }
+}
+
 console.log('┌─ MATCH-OPTIONS-CHECK');
 for (const row of rows) console.log(`│ ${row}`);
 console.log('└─');
+
+if (MUT === 'modo-preferido') {
+  const expected = ['objetivo, pref ctf: valor 9 gravou ', 'objetivo, pref ctf: matchRounds()='];
+  const semantic = failures.length === expected.length && expected.every(prefix => failures.some(f => f.startsWith(prefix)));
+  console.log(JSON.stringify({ mutant: MUT, failed: failures, semantic }));
+  process.exit(semantic ? 0 : 1);
+}
 
 if (MUT) {
   if (failures.length) {

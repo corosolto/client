@@ -1,7 +1,24 @@
 {
  "meta": {
-  "fonte": "/Volumes/Zenith/Projects/game/corosolto/csbrasil/audits/2026-10-31-visual-consistency/campo-r5-fonte/js",
-  "sha256": "94df187a185ce4be850f71b13bbbc670e0870015569a7972aa2837f3089a3283"
+  "fonte": "public/js/map_campomorro.js",
+  "sha256": "5b3c57704e1b6908b79cc2c10fbebf7d74244b159a1eff20cddc20087295879d",
+  "migration": {
+   "reason": "Carga clara com cavidades rasas e superfícies visíveis de tiro, pedido de acabamento de 2026-10-31",
+   "previousMeta": {
+    "fonte": "/Volumes/Zenith/Projects/game/corosolto/csbrasil/audits/2026-10-31-visual-consistency/campo-r5-fonte/js",
+    "sha256": "94df187a185ce4be850f71b13bbbc670e0870015569a7972aa2837f3089a3283"
+   },
+   "previousGitBlob": "9198661a0d1181a344467a45aa71dd42bc6f1f51",
+   "changedKeys": [
+    "oclusores"
+   ],
+   "changedOriginalOccluderIndices": [
+    104
+   ],
+   "addedVisibleConcreteBatches": 4,
+   "physicalSnapshotUnchanged": true,
+   "evidence": "CAMPO-BOUNDARY-MIGRATION-DELTA-R1784.json; CAMPO-CVC1-VERDICTS-R1781.json; CAMPO-CONCRETE-PIXEL-CRITIQUE-R1780.json"
+  }
  },
  "snap": {
   "colliders": [
@@ -3786,20 +3803,20 @@
    [
     "m",
     [
-     1,
+     0.984,
      0,
      0,
      0,
      0,
-     1,
+     0.8071,
      0,
      0,
      0,
      0,
-     1,
+     0.9815,
      0,
      -12,
-     1.0212,
+     1.0774,
      -18,
      1
     ],
@@ -4268,6 +4285,122 @@
      1
     ],
     "016b3154d0c044834d66abe889e0f921c36c48f514962db14376b00b5bd3d124",
+    {
+     "layers": 1,
+     "lados": [
+      0
+     ],
+     "morph": null
+    }
+   ],
+   [
+    "m",
+    [
+     1,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     1
+    ],
+    "dd64752aee157b3eecbfe7f29d55681f802e1ae6a84eb071080eefb38550dd6f",
+    {
+     "layers": 1,
+     "lados": [
+      0
+     ],
+     "morph": null
+    }
+   ],
+   [
+    "m",
+    [
+     1,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     1
+    ],
+    "4611df441c2b2b2c32ad7badb96c0353aeca6ff990e27238edacaa13ceac4ca4",
+    {
+     "layers": 1,
+     "lados": [
+      0
+     ],
+     "morph": null
+    }
+   ],
+   [
+    "m",
+    [
+     1,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     1
+    ],
+    "af121fb95a4d1c31eac74e32f5146497c696de7c883aacb2508064103f465664",
+    {
+     "layers": 1,
+     "lados": [
+      0
+     ],
+     "morph": null
+    }
+   ],
+   [
+    "m",
+    [
+     1,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     1
+    ],
+    "db0ab44fe3efb6e9c9f751e92fe07f8ecffc922728110ef1580d0878048d100c",
     {
      "layers": 1,
      "lados": [

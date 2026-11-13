@@ -3,7 +3,7 @@
    ----------------------------------------------------------------------------
    O defeito que ela PREMIA não existir: vegetação/placa estática — o "mato
    chegou estático" que o plano marca como um dos ingredientes do salto visual
-   (RC4). O piloto é a grama do fy_campomorro (GLBs da frente E, integrados aqui
+   (RC4). O piloto é a grama do campomorro (GLBs da frente E, integrados aqui
    pela primeira vez): sem o sway de vertex shader o tufo novo é só mais um prop
    parado.
 
@@ -11,7 +11,7 @@
    VIVO — o onBeforeCompile é chamado de verdade num stub, então o que se mede é
    o shader que o browser compila, não a intenção):
 
-     V1   existe vegetação com vento na cena do fy_campomorro: meshes (GLB em
+     V1   existe vegetação com vento na cena do campomorro: meshes (GLB em
           InstancedMesh, ou o fallback procedural do harness) cujo material tem
           userData.vento — e o lote tem tamanho de lote (≥ 30 tufos; menos que
           isso é enfeite de vitrine, não é o "mato no campo pelado");
@@ -35,7 +35,7 @@ const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('
 const falhas = [];
 const ok = [];
 
-const g = bootGame('fy_campomorro', { textures: initTextures() });
+const g = bootGame('campomorro', { textures: initTextures() });
 
 /* V1 — vegetação com vento na cena */
 const ventoMeshes = [];
@@ -46,7 +46,7 @@ g.world.root.traverse((o) => {
 });
 let instancias = 0;
 for (const m of ventoMeshes) instancias += m.isInstancedMesh ? m.count : 1;
-if (!ventoMeshes.length) falhas.push('V1: nenhuma malha com userData.vento no fy_campomorro — o mato segue estático');
+if (!ventoMeshes.length) falhas.push('V1: nenhuma malha com userData.vento no campomorro — o mato segue estático');
 else if (instancias < 30) falhas.push(`V1: só ${instancias} tufos com vento (< 30) — enfeite de vitrine, não o "mato no campo pelado"`);
 else ok.push(`V1 ${ventoMeshes.length} malha(s), ${instancias} tufos com vento`);
 

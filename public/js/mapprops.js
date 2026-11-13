@@ -268,6 +268,7 @@ function templateParts(id, tpl, opts) {
   return parts;
 }
 
+const _um = [1, 1, 1];
 export class PropBatch {
   /* opts.bucket  — lado do bloco espacial em metros (0 = tudo num grupo so)
      opts.paintTest(material) -> bool  — quais materiais recebem cor por instancia
@@ -279,11 +280,12 @@ export class PropBatch {
      porque grama a 45 m não se vê e carro a 45 m sim: corte global faria o mapa piscar. */
   /* Mesma assinatura de placeProp + `color` (hex) para pintura por instancia.
      Retorna false se o GLB nao carregou — o chamador cai no fallback dele, igual antes. */
-  add(id, { x = 0, y = 0, z = 0, targetH = 2.4, targetLen = 0, ry = 0, color = null } = {}) {
+  // `esc` [sx, sy, sz] multiplica a escala por eixo e `rx`/`rz` inclinam (saco amassado, tombado)
+  add(id, { x = 0, y = 0, z = 0, targetH = 2.4, targetLen = 0, ry = 0, rx = 0, rz = 0, esc = null, color = null } = {}) {
     if (!_base.has(id)) return false;
     let l = this.by.get(id);
     if (!l) { l = []; this.by.set(id, l); }
-    l.push({ x, y, z, targetH, targetLen, ry, color });
+    l.push({ x, y, z, targetH, targetLen, ry, rx, rz, esc, color });
     return true;
   }
   build(root) {
@@ -315,9 +317,10 @@ export class PropBatch {
           classificarParedeProp(im, id);
           items.forEach((p, i) => {
             const s = p.targetLen ? Math.sqrt((p.targetLen / tlen) * (p.targetH / th)) : p.targetH / th;
-            dummy.position.set(p.x, p.y - minY * s, p.z);
-            dummy.rotation.set(0, p.ry, 0);
-            dummy.scale.setScalar(s);
+            const e = p.esc || _um;
+            dummy.position.set(p.x, p.y - minY * s * e[1], p.z);
+            dummy.rotation.set(p.rx, p.ry, p.rz, 'YXZ');
+            dummy.scale.set(s * e[0], s * e[1], s * e[2]);
             dummy.updateMatrix();
             im.setMatrixAt(i, dummy.matrix);
             if (part.paint && p.color != null) im.setColorAt(i, new THREE.Color(p.color));

@@ -1,6 +1,7 @@
-/* Snapshot binário v7: round-trip do codec real, progresso de mantle remoto, totais
-   autoritativos de abates por rodada, reboque privado, CTF, compatibilidade v6..v2,
-   limites hostis e integração do NetClient.
+/* Snapshot binário v8: round-trip do codec real, estado autoritativo de objetivo,
+   progresso de mantle remoto, totais autoritativos de abates por rodada, reboque privado,
+   CTF, compatibilidade v7/v6/v5/v4/v3/v2, limites hostis e integração do NetClient.
+   O formato roda como ES module puro em public/, sem bundler nem dependência de runtime.
 
    O QUE MUDOU NA v5: o bloco privado de ack, munição, recarga e slots saiu de cada
    entidade e virou reboque de 30 bytes para o dono. Posição de vizinho virou u16,
@@ -18,7 +19,7 @@ const cobra = (cond, msg) => {
 };
 
 const ALVO_DO_MUTANTE = {
-  'sem-negociacao': 'cliente negocia v7/v6/v5/v4/v3/v2 binário com fallback v1 JSON',
+  'sem-negociacao': 'cliente oferece exclusivamente v8; capacidade legada permanece no codec',
   'sem-decoder': 'o caminho de produção chama o decoder real',
 };
 /* Aplicação de mutante é estado SEPARADO da detecção: âncora ausente ou duplicada é erro
@@ -38,11 +39,11 @@ const aplicaMutacao = (nome, src, ancora, troca) => {
    net.js, que é quem decide o que fazer com os bytes. */
 let netSrc = fs.readFileSync('public/js/net.js', 'utf8');
 let tpSrc = fs.readFileSync('public/js/transporte.js', 'utf8');
-if (MUT === 'sem-negociacao') tpSrc = aplicaMutacao(MUT, tpSrc, 'new WebSocket(this.url, SNAPSHOT_PROTOCOLS)', 'new WebSocket(this.url)');
+if (MUT === 'sem-negociacao') tpSrc = aplicaMutacao(MUT, tpSrc, 'new WebSocket(this.url, [CLIENT_SNAPSHOT_PROTOCOL])', 'new WebSocket(this.url)');
 else if (MUT === 'sem-decoder') netSrc = aplicaMutacao(MUT, netSrc, 'decodeSnapshot(dados)', 'JSON.parse(dados)');
 else if (MUT && !ALVO_DO_MUTANTE[MUT]) { console.log(`mutante desconhecido: ${MUT}`); process.exit(1); }
 
-cobra(/new WebSocket\(this\.url, SNAPSHOT_PROTOCOLS\)/.test(tpSrc), 'cliente negocia v7/v6/v5/v4/v3/v2 binário com fallback v1 JSON');
+cobra(/new WebSocket\(this\.url, \[CLIENT_SNAPSHOT_PROTOCOL\]\)/.test(tpSrc), 'cliente oferece exclusivamente v8; capacidade legada permanece no codec');
 cobra(/binaryType\s*=\s*['"]arraybuffer['"]/.test(tpSrc), 'frames binários chegam como ArrayBuffer, não Blob');
 cobra(/decodeSnapshot\(dados\)/.test(netSrc), 'o caminho de produção chama o decoder real');
 cobra(/MAX_SNAPSHOT_BYTES/.test(tpSrc), 'o transporte limita frame antes de alocar/decodificar');
@@ -78,6 +79,7 @@ if (codec) {
         { owner: null, prog: 0.625, capTeam: 'E', contested: true },
       ],
     },
+    objective: { position: { x: 1.5, z: 6.25 }, checkpoint: 4, escortCount: 3, contested: true },
     ents,
   };
   const comum = codec.encodeSnapshot(sample);
@@ -92,7 +94,10 @@ if (codec) {
   cobra(out.type === 'snapshot' && out.room === sample.room && out.tick === sample.tick,
     'envelope sobrevive ao round-trip');
   cobra(out.roundKillsE === 7 && out.roundKillsB === 4,
-    'v7 preserva os totais autoritativos de abates introduzidos na v6');
+    'v6 preserva os totais autoritativos de abates da rodada');
+  cobra(out.objective?.checkpoint === 4 && out.objective?.position?.z === 6.25
+      && out.objective?.contested === true,
+    'v8 preserva o estado autoritativo do objetivo');
   cobra(perto(out.ents[2].mantleF, 0.62, 1 / 254) && !('mantleF' in out.ents[1]),
     'v7 preserva progresso do mantle remoto em um byte e distingue ausência');
   cobra(out.ents.length === 10 && out.ents.every((e, i) => e.id === ents[i].id && e.name === ents[i].name),
@@ -127,9 +132,11 @@ if (codec) {
   cobra(!('roundKillsE' in outV5) && !('roundKillsB' in outV5)
       && outV5.ents[3].fireN === 7,
     'snapshot v5 continua decodificável sem inventar campos exclusivos de v6/v7');
+  const binV6 = codec.encodeSnapshot(sample, 6);
+  cobra(!('objective' in outV6), 'snapshot v6 continua decodificável sem inventar o objetivo exclusivo da v8');
   const v4bin = codec.encodeSnapshot(sample, 4);
-  cobra(bin.byteLength < v4bin.byteLength * 0.75,
-    `v6 preserva o corte de banda da v5: ${bin.byteLength} contra ${v4bin.byteLength} bytes da v4 (${Math.round((1 - bin.byteLength / v4bin.byteLength) * 100)}% menos)`);
+  cobra(binV6.byteLength < v4bin.byteLength * 0.75,
+    `v6 preserva o corte de banda da v5: ${binV6.byteLength} contra ${v4bin.byteLength} bytes da v4 (${Math.round((1 - binV6.byteLength / v4bin.byteLength) * 100)}% menos)`);
   const outV4 = codec.decodeSnapshot(v4bin);
   cobra(outV4.ents[0].ackSeq === 812 && near(outV4.ents[0].x, ents[0].x) && outV4.ents[3].fire === 1,
     'v4 continua byte-a-byte como era: bloco por entidade, posição em f32 e `fire` como bandeira');
@@ -149,14 +156,10 @@ if (codec) {
   const jsonBytes = Buffer.byteLength(JSON.stringify(sample));
   cobra(bin.byteLength < jsonBytes * 0.45,
     `payload binário fica abaixo de 45% do JSON (${bin.byteLength}/${jsonBytes} bytes)`);
-  cobra(codec.SNAPSHOT_PROTOCOLS[0] === 'coro-snapshot-v7'
-      && codec.SNAPSHOT_PROTOCOLS[1] === 'coro-snapshot-v6'
-      && codec.SNAPSHOT_PROTOCOLS[2] === 'coro-snapshot-v5'
-      && codec.SNAPSHOT_PROTOCOLS[3] === 'coro-snapshot-v4'
-      && codec.SNAPSHOT_PROTOCOLS[4] === 'coro-snapshot-v3'
-      && codec.SNAPSHOT_PROTOCOLS[5] === 'coro-snapshot-v2'
-      && codec.SNAPSHOT_PROTOCOLS.includes('coro-json-v1'),
-    'ordem de negociação prefere v7 e preserva fallbacks v6/v5/v4/v3/v2/JSON');
+  cobra(JSON.stringify(codec.SNAPSHOT_PROTOCOLS) === JSON.stringify([
+      'coro-snapshot-v8', 'coro-snapshot-v7', 'coro-snapshot-v6', 'coro-snapshot-v5',
+      'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']),
+    'capacidade do codec inclui v8 e preserva os nomes canônicos v7..v2/JSON');
 
   for (const ruim of [bin.slice(0, 12), new Uint8Array([0, 1, 2, 3]), new Uint8Array(codec.MAX_SNAPSHOT_BYTES + 1)]) {
     let recusou = false; try { codec.decodeSnapshot(ruim); } catch { recusou = true; }

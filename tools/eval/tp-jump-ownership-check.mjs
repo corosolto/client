@@ -28,7 +28,7 @@ const localFetch = async url => {
 };
 Object.defineProperty(globalThis, 'fetch', {configurable: true, get: () => localFetch, set() {}});
 const {THREE, Game: ActualGame, CHARACTERS} = await import(pathToFileURL(path.join(root, 'tools/eval/harness.mjs')));
-const {GLTFLoader} = await import(pathToFileURL(path.join(root, 'public/vendor/addons/loaders/GLTFLoader.js')));
+const {GLTFLoader} = await import('three/addons/loaders/GLTFLoader.js');
 Object.defineProperty(globalThis, 'fetch', {configurable: true, writable: true, value: localFetch});
 GLTFLoader.prototype.load = function(url, done, progress, fail) {
   const loader = new GLTFLoader();

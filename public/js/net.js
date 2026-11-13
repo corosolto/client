@@ -6,8 +6,9 @@
 // Registro de nós em nos.js: a página de convite do site lê a MESMA lista.
 export { NOS, parseConvite, linkDeConvite, httpDoNo, NO_RE, ordenarNos, FAIXA_PING_MS, melhorNoParaJogar, TETO_COMPANHIA_MS } from './nos.js';
 import { NOS } from './nos.js';
-import { decodeSnapshot, MAX_SNAPSHOT_BYTES, SNAPSHOT_PROTOCOLS } from './netcodec.js';
+import { decodeSnapshot, MAX_SNAPSHOT_BYTES, CLIENT_SNAPSHOT_PROTOCOL } from './netcodec.js';
 import { TransporteWS, TransporteWT } from './transporte.js';
+import { MedidorDeTaxa } from './netrate.js';
 import * as versao from './version.js';
 const { VERSION } = versao;
 // ausente em árvore anterior ao fingerprint: degrada para comparar VERSION
@@ -80,8 +81,11 @@ const j = async (url, opt) => {
 };
 export const listRooms = (httpBase) => j(`${httpBase}/rooms`).then((x) => x.rooms || []);
 // Uma sala pelo código do convite. 404 vira null: sala que acabou não é erro, é sala que acabou.
+// O RESTO sobe: 429 do freio de convite e 5xx não são "sala inexistente", e a mensagem antiga
+// mentia a causa pro jogador ("não existe mais" quando ele é que estava freado).
 export const salaPorConvite = (httpBase, codigo) =>
-  j(`${httpBase}/sala/${encodeURIComponent(codigo)}`).then((x) => x.sala).catch(() => null);
+  j(`${httpBase}/sala/${encodeURIComponent(codigo)}`).then((x) => x.sala)
+    .catch((e) => { if (String(e && e.message || '') !== 'http_404') throw e; return null; });
 export const listMaps = (httpBase) => j(`${httpBase}/maps`).then((x) => x.maps || []);
 export const health = (httpBase) => j(`${httpBase}/health`);
 export const createRoom = (httpBase, cfg, ticket = '') => j(`${httpBase}/rooms`, {
@@ -145,7 +149,7 @@ export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 2) {
     if (!h) return { ...no, http, ping: null, online: false, jogadores: 0, salas: 0 };
     /* `salaConvite`: o nó guarda sala privada SEM senha só para quem tem o código (backend#62).
        Nó sem o campo listaria essa sala aberta, então o JOGAR COM AMIGOS não a cria nele. */
-    return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0, salaConvite: h.salaConvite === true, soloVerified: h.soloVerified === true };
+    return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0, salaConvite: h.salaConvite === true, soloVerified: h.soloVerified === true, horde: h.horde || null, nodeMode: h.nodeMode, roomCreation: h.roomCreation };
   }));
 }
 
@@ -156,7 +160,7 @@ export class NetClient {
     // `pronto=1`: este cliente avisa quando montou o mapa novo (o nó segura o round 1, com teto)
     const qs = new URLSearchParams({ team, ...(codigo ? { codigo } : room ? { room } : {}), ...(pw ? { pw } : {}), ...(nome ? { nome } : {}), ...(ticket ? { ticket } : {}), ...(/^[a-f0-9]{7,40}$/.test(csha) ? { csha } : {}), pronto: '1' });
     this.url = `${url}${url.includes('?') ? '&' : '?'}${qs}`;
-    this.wtUrl = wt ? `${wt}${wt.includes('?') ? '&' : '?'}${qs}&sp=${encodeURIComponent(SNAPSHOT_PROTOCOLS[0])}` : '';
+    this.wtUrl = wt ? `${wt}${wt.includes('?') ? '&' : '?'}${qs}&sp=${encodeURIComponent(CLIENT_SNAPSHOT_PROTOCOL)}` : '';
     this.wtHashes = wtHashes;
     this.tp = null;
     this.connected = false;
@@ -172,23 +176,29 @@ export class NetClient {
     this.events = [];   // lotes `ev` (tick, t, list) — ver netgame._drenar
     this.prev = null;
     this.seq = 0;
+    this.seqCompra = 0;   // seq próprio dos pedidos de compra (`compra-ok`/`compra-nack`)
     this.onWelcome = null; this.onSnapshot = null; this.onSlot = null; this.onPartida = null; this.onClose = null;
+    this.onCompra = null;
     this.proximo = null; this.onProximo = null;   // próximo mapa anunciado no placar (nó antigo nunca manda)
     this.onPersonagem = null;
     this.onChat = null; this._chatFila = [];
-    // ── diagnóstico de rede (overlay do jogo) ──
+    // Taxa estimada pelo tempo de simulação; relógio parado publica indisponibilidade.
+    // Chegada local mede silêncio; quadros de render não definem emissão.
     this.stats = { hz: 0, kbps: 0, gapMax: 0, sinceLast: 0, ents: 0, tick: 0, ping: 0, snaps: 0, bytes: 0 };
-    this._snapT = []; this._byteT = []; this._lastSnapT = 0;
+    this._taxa = new MedidorDeTaxa();
+    this._lastSnapT = 0;
     this._rttSamples = []; this._gapSamples = [];
     this._pingTimer = null;
   }
 
   computeStats() {
-    const now = performance.now(), cut = now - 1000;
-    while (this._snapT.length && this._snapT[0] < cut) this._snapT.shift();
-    while (this._byteT.length && this._byteT[0].t < cut) this._byteT.shift();
-    this.stats.hz = this._snapT.length;
-    this.stats.kbps = this._byteT.reduce((s, x) => s + x.b, 0) / 1024;
+    const now = performance.now();
+    const taxa = this._taxa.atualizar(now);
+    // relógio do servidor parado publica null: indisponível, telemetria filtra antes de Number
+    this.stats.hz = taxa.hz;
+    this.stats.kbps = taxa.kbps;
+    // `sinceLast` é "há quanto tempo NÓS não vemos um pacote": é propriedade do
+    // cliente e continua no relógio local, de propósito.
     this.stats.sinceLast = this._lastSnapT ? now - this._lastSnapT : 0;
     return this.stats;
   }
@@ -223,28 +233,24 @@ export class NetClient {
 
   _conectar(timeoutMs, fabrica) {
     return new Promise((resolve, reject) => {
-      let done = false;
-      /* Welcome tem PRAZO: um nó que aceita o TCP e nunca responde deixava o connect()
-         pendente pra sempre — sem erro, sem mensagem, o clique em ENTRAR "não fazia nada"
-         (BUG-88). Régua: tools/eval/netcode-check.mjs. */
-      const prazo = Number.isFinite(timeoutMs)
-        ? setTimeout(() => { if (!done) { done = true; this.tp?.fechar(); reject(new Error('timeout')); } }, timeoutMs)
-        : null;
+      let done = false, ended = false, tp = null, prazo = null;
+      const ativo = () => !ended && this.tp === tp;
       const assenta = (fn, v) => { if (done) return; done = true; if (prazo) clearTimeout(prazo); fn(v); };
-      try {
-        this.tp = fabrica();
-        this.tp.abrir({
-          aberto: () => { this.connected = true; },
-          erro: (e) => assenta(reject, e),
-          fechado: () => { this.connected = false; this.onClose?.(); assenta(reject, new Error('closed')); },
-          mensagem: (dados, binario, bytes) => trata(dados, binario, bytes),
-        });
-      } catch (e) { assenta(reject, e); return; }
+      const falha = (e, codigo = 1002, motivo = 'protocolo_incompativel') => {
+        if (!ativo()) return;
+        ended = true; this.connected = false;
+        const accepted = done;
+        assenta(reject, e);
+        tp.fechar(codigo, motivo);
+        if (accepted) this.onClose?.();
+      };
       const trata = (dados, binary, bytes) => {
+        if (!ativo()) return;
         let m;
         try { m = binary ? decodeSnapshot(dados) : JSON.parse(dados); }
-        catch { if (binary) this.tp.fechar(1002, 'snapshot_invalid'); return; }
+        catch { if (binary) falha(new Error('snapshot_invalid'), 1002, 'snapshot_invalid'); return; }
         if (m.type === 'welcome') {
+          if (m.protocolVersion !== 8) { falha(new Error('protocolo_incompativel')); return; }
           // Versão diferente do nó não tira ninguém da partida (decisão do dono, 13/10);
           // ?mpversao=1 volta a recusar, para diagnóstico.
           this.versaoDiferente = versaoCompativel(m.clientVersion, VERSION, m.simHash)
@@ -252,8 +258,7 @@ export class NetClient {
           if (this.versaoDiferente && new URLSearchParams(globalThis.location?.search || '').get('mpversao') === '1') {
             const e = new Error('versao_incompativel');
             e.detalhe = this.versaoDiferente;
-            this.tp?.fechar(1002, 'versao_incompativel');
-            assenta(reject, e);
+            falha(e, 1002, 'versao_incompativel');
             return;
           }
           if (this.versaoDiferente) console.warn('[mp] nó em outra versão, entrando mesmo assim', this.versaoDiferente);
@@ -266,15 +271,22 @@ export class NetClient {
           const rtt = performance.now() - m.t;
           if (Number.isFinite(rtt) && rtt >= 0 && rtt <= 60000) {
             this.stats.ping = rtt;
-            this._rttSamples.push(+rtt.toFixed(1));
-            if (this._rttSamples.length > 32) this._rttSamples.shift();
+            // Mesma regra do gap: aba oculta = ping inflado pelo throttle do navegador,
+            // não pela rede. stats.ping atualiza (informativo), a AMOSTRA não entra.
+            if (!(typeof document !== 'undefined' && document.hidden)) {
+              this._rttSamples.push(+rtt.toFixed(1));
+              if (this._rttSamples.length > 32) this._rttSamples.shift();
+            }
           }
         } else if (m.type === 'partida') {
+          if (m.protocolVersion !== 8) { falha(new Error('protocolo_incompativel')); return; }
           // o servidor girou o mapa: meta NOVA (roster, ids, mapa, facções) + o seu slot (BUG-112)
           this.meta = m; this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
           this.snap = null; this.prev = null;   // snapshots do jogo velho não servem para o novo
           this.events.length = 0;               // eventos do jogo velho idem
           this.proximo = null;
+          // a janela de taxa pertence ao jogo que acabou de morrer: recomeça do zero
+          this._taxa.reiniciar();
           this.onPartida?.(m);
         } else if (m.type === 'proximo') {
           if (typeof m.map === 'string' && m.map) {
@@ -308,13 +320,23 @@ export class NetClient {
           if (this._lastSnapT) {
             const gap = now - this._lastSnapT;
             this.stats.gapMax = Math.max(gap, this.stats.gapMax * 0.92);
-            this._gapSamples.push(+gap.toFixed(1));
-            if (this._gapSamples.length > 512) this._gapSamples.shift();
+            // Aba oculta não é experiência de jogo: o navegador suspende o event loop e
+            // os gaps viram segundos (falso "atenção" mobile que polui o p95). Congela.
+            if (!(typeof document !== 'undefined' && document.hidden)) {
+              this._gapSamples.push(+gap.toFixed(1));
+              if (this._gapSamples.length > 512) this._gapSamples.shift();
+            }
           }
           this._lastSnapT = now;
-          this._snapT.push(now); this._byteT.push({ t: now, b: bytes });
+          // `m.t` é o relógio DO SERVIDOR (netcodec, f64 s): `now` é quando o render
+          // liberou a thread, não quando o pacote chegou — ver netrate.js.
+          this._taxa.amostra(bytes, m.t, now);
           this.stats.snaps++; this.stats.bytes += bytes;
           this.onSnapshot?.(m);
+        } else if (m.type === 'compra-ok' || m.type === 'compra-nack') {
+          // economia de partida no MP (docs/ECONOMIA-PARTIDA.md): resposta do nó ao pedido;
+          // sem _compra (nó antigo / espectador) o frame morre aqui.
+          if (Number.isInteger(m.seq)) this.onCompra?.(m);
         } else if (m.type === 'chat') {
           // chat de sala: sem meta.chat o cliente é inerte, e frame malformado é descartado
           if (this.chatLigado() && formaChat(m)) this._entregaChat(m);
@@ -326,6 +348,23 @@ export class NetClient {
           if (this.chatLigado() && Number.isInteger(m.id) && typeof m.estado === 'string') this._entregaChat(m);
         }
       };
+      try {
+        tp = fabrica(); this.tp = tp;
+        prazo = Number.isFinite(timeoutMs)
+          ? setTimeout(() => falha(new Error('timeout'), 1000, 'timeout'), timeoutMs) : null;
+        tp.abrir({
+          aberto: () => { if (ativo()) this.connected = true; },
+          erro: (e) => falha(e),
+          fechado: () => {
+            if (!ativo()) return;
+            ended = true; this.connected = false;
+            const accepted = done;
+            assenta(reject, new Error('closed'));
+            if (accepted) this.onClose?.();
+          },
+          mensagem: trata,
+        });
+      } catch (e) { if (tp) falha(e); else assenta(reject, e); }
     });
   }
 
@@ -351,6 +390,13 @@ export class NetClient {
   avisarPronto(partida) {
     if (!Number.isInteger(partida)) return false;
     return !!this.tp?.enviar(JSON.stringify({ type: 'pronto', partida }));
+  }
+  // O cliente só pede; preço/saldo/tempo/zona o nó lê do próprio estado (doc ECONOMIA).
+  pedirCompra(id) {
+    if (typeof id !== 'string' || !id || !this.tp?.pronto) return 0;
+    const seq = ++this.seqCompra;
+    this.tp.enviar(JSON.stringify({ type: 'compra', id, seq }));
+    return seq;
   }
   // sair de campo e assistir: o corpo volta a ser bot e a partida segue cheia.
   espectar() { this.tp?.enviar(JSON.stringify({ type: 'espectar' })); }

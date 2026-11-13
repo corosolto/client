@@ -1,0 +1,177 @@
+{
+  "generatedAt": "2026-10-30",
+  "assets": [
+    {
+      "id": "invasao-javaporcos-map-card",
+      "provider": "OpenRouter · google/gemini-3-pro-image",
+      "source": null,
+      "runtime": "public/img/map-cards/invasao-javaporcos-map-card.webp",
+      "bytes": 167170,
+      "sha256": "b12b16d00e859e27606f9a1994e5b62afc893f9dc2c9372fe6125685b6e9db59"
+    },
+    {
+      "id": "javali-jovem",
+      "provider": "Mint asset pack",
+      "source": "references/glb/javali_jovem.glb",
+      "runtime": "public/models/enemies/javaporcos/javali_jovem.glb",
+      "bytes": 258980,
+      "sha256": "64691ebc8b5ba09888601d2c566c9eabc9bfd19b7a46a236205f1151f725db13"
+    },
+    {
+      "id": "javaporco-adulto",
+      "provider": "Mint asset pack",
+      "source": "references/glb/javaporco_adulto.glb",
+      "runtime": "public/models/enemies/javaporcos/javaporco_adulto.glb",
+      "bytes": 231748,
+      "sha256": "b9721cacefe6c442c9a2d0eb2e3b1ed40be13bc511143e7fd855b702f97e8fbb"
+    },
+    {
+      "id": "matriarca-javali",
+      "provider": "Mint asset pack",
+      "source": "references/glb/matriarca_javali.glb",
+      "runtime": "public/models/enemies/javaporcos/matriarca_javali.glb",
+      "bytes": 290216,
+      "sha256": "080c489ede3316d8298cd964d315948a1f45ea058d2385ada6971c87373aca97"
+    },
+    {
+      "id": "ariete-javali",
+      "provider": "Mint asset pack",
+      "source": "references/glb/ariete_javali.glb",
+      "runtime": "public/models/enemies/javaporcos/ariete_javali.glb",
+      "bytes": 321232,
+      "sha256": "792c3dedb2ca337ab0d5425f2e8a74971a7fb3e141987d183211147589535ad9"
+    },
+    {
+      "id": "javali-jovem-lod",
+      "provider": "Derivado local de Mint",
+      "source": "public/models/enemies/javaporcos/javali_jovem.glb",
+      "sourceSha256": "64691ebc8b5ba09888601d2c566c9eabc9bfd19b7a46a236205f1151f725db13",
+      "runtime": "public/models/enemies/javaporcos/javali_jovem_lod.glb",
+      "bytes": 172336,
+      "sha256": "b71a6896152d667772937f7d5e29037b69022c4f4edb346dd90910b4434b5ccd",
+      "recipe": "tools/javaporcos-lod.mjs; weld + simplify ratio0.30 error0.01; texturas intactas"
+    },
+    {
+      "id": "javaporco-adulto-lod",
+      "provider": "Derivado local de Mint",
+      "source": "public/models/enemies/javaporcos/javaporco_adulto.glb",
+      "sourceSha256": "b9721cacefe6c442c9a2d0eb2e3b1ed40be13bc511143e7fd855b702f97e8fbb",
+      "runtime": "public/models/enemies/javaporcos/javaporco_adulto_lod.glb",
+      "bytes": 144408,
+      "sha256": "8b0fcc5807e95d150d507a6d4b42d6bc55e8fa5515501f8f0da6e861311f9b20",
+      "recipe": "tools/javaporcos-lod.mjs; weld + simplify ratio0.30 error0.01; texturas intactas"
+    },
+    {
+      "id": "matriarca-javali-lod",
+      "provider": "Derivado local de Mint",
+      "source": "public/models/enemies/javaporcos/matriarca_javali.glb",
+      "sourceSha256": "080c489ede3316d8298cd964d315948a1f45ea058d2385ada6971c87373aca97",
+      "runtime": "public/models/enemies/javaporcos/matriarca_javali_lod.glb",
+      "bytes": 194964,
+      "sha256": "2d0827b882f967fe946697076438620f1979a5bf18f19980b81dc521ddd04fb5",
+      "recipe": "tools/javaporcos-lod.mjs; weld + simplify ratio0.30 error0.01; texturas intactas"
+    },
+    {
+      "id": "ariete-javali-lod",
+      "provider": "Derivado local de Mint",
+      "source": "public/models/enemies/javaporcos/ariete_javali.glb",
+      "sourceSha256": "792c3dedb2ca337ab0d5425f2e8a74971a7fb3e141987d183211147589535ad9",
+      "runtime": "public/models/enemies/javaporcos/ariete_javali_lod.glb",
+      "bytes": 239980,
+      "sha256": "fce6dc951c6646fab9c8b7ad9b77f841e0f2fa2cd6e65c985f364febffe0f23c",
+      "recipe": "tools/javaporcos-lod.mjs; weld + simplify ratio0.30 error0.01; texturas intactas"
+    },
+    {
+      "id": "leitao-listrado-lod",
+      "provider": "Derivado local de Mint",
+      "source": "public/models/enemies/javaporcos/leitao_listrado.glb",
+      "sourceSha256": "92a4c72916d40becb6a5e195b829c4e79c70032017fb9cadf6869579d6d7170c",
+      "runtime": "public/models/enemies/javaporcos/leitao_listrado_lod.glb",
+      "bytes": 403664,
+      "sha256": "00f9a4aa49d023df315992f20fe99ba5cdb8eb44a6c6a4c7f1a41996dc7b9929",
+      "recipe": "tools/javaporcos-lod.mjs; weld + simplify ratio0.30 error0.01; texturas intactas"
+    },
+    {
+      "id": "javaporco-malhado-lod",
+      "provider": "Derivado local de Mint",
+      "source": "public/models/enemies/javaporcos/javaporco_malhado.glb",
+      "sourceSha256": "4d20fcc22c6dc7542d3276e30ba1679d17b0ae7ea7e734e440da143e5c3a9e3c",
+      "runtime": "public/models/enemies/javaporcos/javaporco_malhado_lod.glb",
+      "bytes": 188540,
+      "sha256": "c63546887b00fdeef61e7734ad449a18dfb3e2d301a65fbe24c40330f3bdf5a1",
+      "recipe": "tools/javaporcos-lod.mjs; weld + simplify ratio0.30 error0.01; texturas intactas"
+    },
+    {
+      "id": "javaporco-ruivo-lod",
+      "provider": "Derivado local de Mint",
+      "source": "public/models/enemies/javaporcos/javaporco_ruivo.glb",
+      "sourceSha256": "5927ff415158a0921daccf6198d69b7c94151e6faa326a6308af12c3c8dfa85f",
+      "runtime": "public/models/enemies/javaporcos/javaporco_ruivo_lod.glb",
+      "bytes": 283808,
+      "sha256": "92f478d96d6a81bc5e75a05dcd7f41279711bb51d9fad1385cb628b11871d8ec",
+      "recipe": "tools/javaporcos-lod.mjs; weld + simplify ratio0.30 error0.01; texturas intactas"
+    },
+    {
+      "id": "javaporco-velho-cicatrizado-lod",
+      "provider": "Derivado local de Mint",
+      "source": "public/models/enemies/javaporcos/javaporco_velho_cicatrizado.glb",
+      "sourceSha256": "e435fc12f991b84c9f0caf87c063c4a64c6a043605b519ddc6c8ef45d855e2a6",
+      "runtime": "public/models/enemies/javaporcos/javaporco_velho_cicatrizado_lod.glb",
+      "bytes": 376120,
+      "sha256": "87876b362bfb20ce09655d11e050b2b13cce1356c77b5311d292857358e5166b",
+      "recipe": "tools/javaporcos-lod.mjs; weld + simplify ratio0.30 error0.01; texturas intactas"
+    },
+    {
+      "id": "leitao-listrado",
+      "provider": "Mint asset pack",
+      "pack": "th7f82d138zgbc9bzs2c3032f58h9f8g",
+      "asset": "ks72s7n7xpvss3hp3vncm5xd2h8h8w2w",
+      "url": "https://mint.gg/assets?asset=ks72s7n7xpvss3hp3vncm5xd2h8h8w2w",
+      "source": "references/glb/leitao_listrado.glb",
+      "sourceSha256": "00d228df46e598c5ed45dd02bb50a44469bb5199eeaa965b246ef2f6b95eb24b",
+      "runtime": "public/models/enemies/javaporcos/leitao_listrado.glb",
+      "bytes": 464392,
+      "sha256": "92a4c72916d40becb6a5e195b829c4e79c70032017fb9cadf6869579d6d7170c",
+      "recipe": "tools/javaporcos-variantes.mjs; texturas WebP 512 quality90; geometria original"
+    },
+    {
+      "id": "javaporco-velho-cicatrizado",
+      "provider": "Mint asset pack",
+      "pack": "th7f82d138zgbc9bzs2c3032f58h9f8g",
+      "asset": "ks70t3c3mkxgtszkhd7wb1q54n8h88xn",
+      "url": "https://mint.gg/assets?asset=ks70t3c3mkxgtszkhd7wb1q54n8h88xn",
+      "source": "references/glb/javaporco_velho_cicatrizado.glb",
+      "sourceSha256": "420552fd12e80d6f8320f6884bc61bb3bb66f19dbed5e983b3203277aa2c4b42",
+      "runtime": "public/models/enemies/javaporcos/javaporco_velho_cicatrizado.glb",
+      "bytes": 434384,
+      "sha256": "e435fc12f991b84c9f0caf87c063c4a64c6a043605b519ddc6c8ef45d855e2a6",
+      "recipe": "tools/javaporcos-variantes.mjs; texturas WebP 512 quality90; geometria original"
+    },
+    {
+      "id": "javaporco-ruivo",
+      "provider": "Mint asset pack",
+      "pack": "th7f82d138zgbc9bzs2c3032f58h9f8g",
+      "asset": "ks7c1r9d83q0d6ekjd3m6747vx8h8qgm",
+      "url": "https://mint.gg/assets?asset=ks7c1r9d83q0d6ekjd3m6747vx8h8qgm",
+      "source": "references/glb/javaporco_ruivo.glb",
+      "sourceSha256": "f4fd043d7a7a2cc09a075e95920dcd01e21d58b36bf6870d1cf8699bc3f49914",
+      "runtime": "public/models/enemies/javaporcos/javaporco_ruivo.glb",
+      "bytes": 349280,
+      "sha256": "5927ff415158a0921daccf6198d69b7c94151e6faa326a6308af12c3c8dfa85f",
+      "recipe": "tools/javaporcos-variantes.mjs; texturas WebP 512 quality90; geometria original"
+    },
+    {
+      "id": "javaporco-malhado",
+      "provider": "Mint asset pack",
+      "pack": "th7f82d138zgbc9bzs2c3032f58h9f8g",
+      "asset": "ks77ht2fkgabbttc2mqq96p0x98h962g",
+      "url": "https://mint.gg/assets?asset=ks77ht2fkgabbttc2mqq96p0x98h962g",
+      "source": "references/glb/javaporco_malhado.glb",
+      "sourceSha256": "e5e789e9bf36d349ab7b4d0d7b4e56c8980ccaa21fe5642129ba41d5e98dc65b",
+      "runtime": "public/models/enemies/javaporcos/javaporco_malhado.glb",
+      "bytes": 279840,
+      "sha256": "4d20fcc22c6dc7542d3276e30ba1679d17b0ae7ea7e734e440da143e5c3a9e3c",
+      "recipe": "tools/javaporcos-variantes.mjs; texturas WebP 512 quality90; geometria original"
+    }
+  ]
+}

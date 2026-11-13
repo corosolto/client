@@ -53,7 +53,7 @@ import { lerPackage, backendPadrao, RAIZ_PADRAO } from './lib/repo.mjs';
 
 export function parseArgs(argv) {
   const flags = {}; const val = (k, d) => { const v = (argv.find((a) => a.startsWith(`--${k}=`)) || '').split('=').slice(1).join('='); return v === '' ? d : v; };
-  flags.base = (val('base', 'https://www.csbrasil.online')).replace(/\/$/, '');
+  flags.base = (val('base', 'https://www.corosolto.com.br')).replace(/\/$/, '');
   flags.backend = val('backend', null);
   flags.local = argv.includes('--local');
   flags.remoto = argv.includes('--remoto');

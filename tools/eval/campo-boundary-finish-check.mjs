@@ -1,5 +1,5 @@
 /* campo-boundary-finish-check.mjs — régua R8 da guarda de borda do campomorro: degraus
-   sem fresta, desenho efetivo, bijeção collider↔malha, snapshot completo pré-R5. FAVELAS-M3.md §R5. */
+   sem fresta, desenho efetivo, bijeção collider↔malha, snapshot completo versionado. FAVELAS-M3.md §R5. */
 import { readFileSync, writeFileSync, existsSync, cpSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
@@ -254,8 +254,8 @@ const chave6 = (m) => { const b = new THREE.Box3().setFromObject(m); return [b.m
   put('CB-M3', !escapes, `raios de olho a 1,6 m: ${escapes ? escapes + ' escapam (' + detalhe + ')' : 'nenhum escapa do perímetro'}`);
 }
 
-/* CB-M4 — interior intocado: física completa e geometria/matrizes dos oclusores.
-   A banda excluída é somente o conjunto casado em CB-M2; a fonte é pré-R5. */
+/* CB-M4 — interior contra snapshot versionado: física e geometria/matrizes dos oclusores.
+   A banda excluída é somente o conjunto casado em CB-M2; a meta registra fonte e migrações. */
 const serCollider = (c) => {
   const o = {};
   for (const k of Object.keys(c).sort()) {
@@ -330,7 +330,7 @@ if (existsSync(BASELINE)) {
       const base = JSON.stringify(doc.snap);
       const agora = JSON.stringify(snapshot(W));
       okM4 = base === agora;
-      msgM4 = okM4 ? `interior idêntico ao baseline pré-R5 (sha256 ${doc.meta.sha256.slice(0, 12)}… · colliders completos/oclusores-geometria-matriz/camBlockers/chão/spawns/ctf/pickups-kind/waypoints/tactical)` : 'interior divergiu do baseline';
+      msgM4 = okM4 ? `interior idêntico ao baseline versionado (sha256 ${doc.meta.sha256.slice(0, 12)}… · colliders completos/oclusores-geometria-matriz/camBlockers/chão/spawns/ctf/pickups-kind/waypoints/tactical)` : 'interior divergiu do baseline';
       if (!okM4) {
         const a = doc.snap, b = JSON.parse(agora);  // já compactos: só chaves divergentes
         for (const k of Object.keys(a)) if (JSON.stringify(a[k]) !== JSON.stringify(b[k])) msgM4 += ` · ${k}`;

@@ -36,6 +36,39 @@ export async function resolveGeoLang() {
 /* PT -> EN. Ordena por tela pra manutenção; a chave é o texto EXATO (trim) do DOM. */
 const DICT = {
   'T$ · ERRO': 'T$ · ERROR',
+  'Fora do Ar': 'Off the Air',
+  'FORA DO AR': 'OFF THE AIR',
+  'A treta continua depois do sinal!': 'The fight continues after the signal!',
+  'Boina, uniforme preto e um sinal que não aceita rendição. A ronda da madrugada chegou.': 'Beret, black uniform and a signal that refuses to surrender. The midnight patrol is here.',
+  'Antena de papel-alumínio e chiado na orelha. Só pega sinal quando a treta começa.': 'A foil antenna and static in its ears. The signal only comes through when the fight begins.',
+  'Saiu da vitrine depois do fechamento. O chorinho agora vem com eco de fita velha.': 'It left the display after closing time. Its tiny cries now echo through an old tape.',
+  'Lenda do interior com fome de mistério. Ninguém acredita até ouvir o mato mexer.': 'A country legend hungry for mystery. Nobody believes it until the bushes start moving.',
+  'Antena alta, ouvido atento e sintonia duvidosa. Capta a treta antes do comercial.': 'Tall antenna, sharp ears and questionable tuning. It picks up trouble before the commercial.',
+  'Travou na última partida da lan house. Voltou do monitor cobrando a hora extra.': 'Stuck in the last match at the internet café. It came back through the monitor to collect overtime.',
+  'Saiu do romance de 1897 direto para a sessão da madrugada. Prefere sombra, capa e mira fria.': 'Straight from the 1897 novel to the late-night show. He prefers shadows, a cloak and a steady aim.',
+  'Vestido de domingo e olhos de porcelana. Muda de prateleira quando a câmera pisca.': 'A Sunday dress and porcelain eyes. She changes shelves whenever the camera blinks.',
+  'Convidado da madrugada, figurino escuro e conversa atravessada. Nunca espera o intervalo.': 'A late-night guest in dark clothes with a strange story. He never waits for the commercial break.',
+  'O bate-bola saiu do carnaval e entrou na fita errada. A máscara sorri, mas a sintonia não volta.': 'The carnival masked reveler wandered onto the wrong tape. The mask smiles, but the signal never returns.',
+  'Pequeno, elétrico e cheio de interferência. Onde ele passa, a programação vira chuvisco.': 'Small, wired and full of interference. Wherever it goes, the broadcast turns to static.',
+  'Subiu da galeria quando a rua ficou quieta. Carrega a lenda que o bairro evita contar.': 'It climbed out of the drain when the street went quiet. It carries the legend the neighborhood avoids telling.',
+  'Quepe, pose de autoridade e recibo que ninguém encontra. A transmissão caiu bem na auditoria.': 'A peaked cap, an air of authority and a receipt nobody can find. The broadcast failed right at audit time.',
+  'Embarcou no último ônibus e não pediu parada. O sorriso continua no reflexo do vidro.': 'He boarded the last bus and never asked to stop. His smile still lingers in the window reflection.',
+  'Bonecão de feira, passo pesado e risada de gravação gasta. O expediente só começa à noite.': 'A giant fairground doll with heavy steps and a worn-out recorded laugh. The shift only starts after dark.',
+  'Ficou guardado desde 87 e decorou todas as fitas. Agora responde antes da pergunta.': 'Stored away since 87, it memorized every tape. Now it answers before the question.',
+  'Batina, gravador e uma explicação para tudo. Só não explica quem ligou a TV sozinha.': 'A cassock, a recorder and an explanation for everything. Except who turned the TV on by itself.',
+  'Carrega a cara das histórias de quintal. O bairro inteiro conhece, mas ninguém viu de perto.': 'A face straight out of backyard ghost stories. The whole neighborhood knows it, but nobody has seen it up close.',
+  'A última antena da madrugada. Quando ele aparece, não sobra nem aviso de manutenção.': 'The last antenna of the night. When it appears, even the maintenance notice disappears.',
+  'O shopping fechou e esqueceram o mascote. Ele ainda espera a próxima foto de família.': 'The mall closed and somebody forgot the mascot. It is still waiting for the next family photo.',
+  'Farda sem corporação, rádio sem frequência e um plantão muito mal explicado.': 'A fictional uniform, a radio with no frequency and a very suspicious night shift.',
+  'Silhueta pequena, presença enorme. Cabe em qualquer canto que a câmera deixou de vigiar.': 'A small silhouette with an enormous presence. She fits into every corner the camera stopped watching.',
+  'Cabelo comprido, roupa de época e uma fita que toca ao contrário. O solo virou assombração.': 'Long hair, period clothes and a tape that plays backwards. The solo turned into a haunting.',
+  'Promete resposta depois dos comerciais. O auditório foi embora, mas ele continua ao vivo.': 'He promises an answer after the commercials. The audience left, but he is still live.',
+  'Aposta no silêncio do barracão e conhece cada corredor. A banca não fecha nem fora do ar.': 'He bets on the silence of the carnival workshop and knows every corridor. The house stays open even off the air.',
+  'Brilho frio de madrugada e um olhar que a fita não consegue apagar.': 'A cold midnight shimmer and a stare the tape cannot erase.',
+  'Traje de época e pose de quadro histórico. Saiu da moldura para disputar a própria transmissão.': 'Period clothes and the pose of a historical painting. He stepped out of the frame to claim his own broadcast.',
+  'Figura histórica em uma sessão que atravessa séculos. A memória entrou na arena sem pedir licença.': 'A historical figure in a show that spans centuries. Memory stepped into the arena without asking.',
+  'Chapéu de couro e silhueta do cangaço histórico. A madrugada não consegue tirar o sertão do ar.': 'A leather hat and the silhouette of the historical cangaço. The night cannot take the backlands off the air.',
+  'Traje histórico, bigode longo e olhar de retrato antigo. Sem cenas de violência: só a tensão da madrugada.': 'Historical clothes, a long mustache and the stare of an old portrait. No violent imagery, just late-night tension.',
   // splash / boot
   'CLIQUE OU PRESSIONE QUALQUER TECLA': 'CLICK OR PRESS ANY KEY',
   'CARREGANDO ARENA…': 'LOADING ARENA…',
@@ -56,6 +89,15 @@ const DICT = {
   'JOGAR': 'PLAY',
   'ABATE': 'DEATHMATCH',
   'CAPTURE A BANDEIRA': 'CAPTURE THE FLAG',
+  'VIRA-CASACA': 'TURNCOAT',
+  'Quem cai muda de lado': 'Downed players switch sides',
+  'QUEM CAI MUDA DE LADO': 'DOWNED PLAYERS SWITCH SIDES',
+  'QUEM CAIR MUDA DE LADO': 'IF YOU GO DOWN, YOU SWITCH SIDES',
+  'PARTIDA ÚNICA': 'SINGLE MATCH',
+  'ÚNICA': 'SINGLE',
+  'CONVERSÕES': 'CONVERSIONS',
+  'SEUS ABATES': 'YOUR KILLS',
+  'PASSO 1 · VIRA-CASACA': 'STEP 1 · TURNCOAT',
   'SUPORTE AO JOGO': 'SUPPORT THE GAME',
   'COMO JOGAR': 'HOW TO PLAY',
   'SINGLE PLAYER': 'SINGLE PLAYER',
@@ -582,6 +624,7 @@ const DICT = {
   'Compartilhado': 'Shared', 'Link copiado': 'Link copied', 'Copie o link': 'Copy the link',
   'Ganhei uma treta no CORO SOLTO. Bora jogar?': 'I won a fight in CORO SOLTO. Wanna play?',
   'Perdi uma treta no CORO SOLTO. Bora jogar?': 'I lost a fight in CORO SOLTO. Wanna play?',
+  'Empate no CORO SOLTO. Bora jogar?': 'A draw in CORO SOLTO. Wanna play?',
   // tp:fim-resultado
 
   // tp:loja
@@ -677,9 +720,23 @@ const DICT = {
   'Página do clã': 'Clan page', 'Ranking de clãs e desafios: próxima etapa': 'Clan ranking and challenges: next step',
   // tp:fim-perfil
 
+  // tp:flavio (painel do lobby e história do Flávio; ficção do jogo)
+  'A HISTÓRIA DO FLÁVIO': 'FLÁVIO\'S STORY', 'OPERAÇÃO FLÁVIO': 'OPERATION FLÁVIO', 'A HISTÓRIA ▸': 'THE STORY ▸', 'ESCOLTA': 'ESCORT',
+  'Operação Flávio: a história do Flávio': 'Operation Flávio: Flávio\'s story',
+  'Zero Um, o senador Flávio, cansou de dar entrevista e resolveu que o mandato rende mais visto lá de fora. O jatinho já está ligado no pátio; só falta atravessar o aeroporto inteiro sem levar bala.':
+    'Zero Um, Senator Flávio, got tired of interviews and decided his term looks better from abroad. The jet is already running on the apron; he just has to cross the whole airport without catching a bullet.',
+  'A comitiva faz de tudo: cerca o VIP, apressa o passo, abre cobertura e manda isca pelo outro lado. A equipe adversária fecha o terminal, o raio-X, o hangar e o pátio para interceptar o Flávio antes da escada.':
+    'His crew does it all: boxes the VIP in, rushes the pace, lays cover and sends decoys down the other side. The enemy team locks down the terminal, the X-ray, the hangar and the apron to intercept Flávio before the stairs.',
+  'Escolta 6×6, do terminal ao jato': '6v6 escort, from the terminal to the jet',
+  'Três rotas: a comitiva escolhe, o outro time adivinha': 'Three routes: the crew picks, the other team guesses',
+  'Escolha o Zero Um e seja você o VIP': 'Pick Zero Um and be the VIP yourself',
+  'Se ele subir a escada, a manchete sai sozinha: FLÁVIO FUGIU PROS EUA.': 'If he makes it up the stairs, the headline writes itself: FLÁVIO FUGIU PROS EUA.',
+  'Paródia: personagens e fatos são ficção do jogo.': 'Parody: characters and events are game fiction.',
+  'Flávio na escada do jato, com a placa EMBARQUE DO FLÁVIO no pátio do aeroporto': 'Flávio on the jet stairs, with the FLÁVIO BOARDING sign on the airport apron',
+
   // tp:social
   'Resenha': 'Chat', 'Canais': 'Channels',   'SALAS': 'ROOMS',
-  'Abrir a resenha': 'Open chat', 'Abrir a resenha, {n} novidades': 'Open chat, {n} new', 'Fechar a resenha': 'Close chat',
+  'Fechar a resenha': 'Close chat',
   'Buscar na turma': 'Search your crew', 'Turma vazia': 'No crew yet', 'Adicione amigos pela Comunidade.': 'Add friends from Community.',
   'O clã ainda não tem sala de conversa.': 'Clans have no chat yet.', 'Convites para a sala de alguém da turma.': 'Invites to a friend\'s match.',
   'Chame quem não joga ainda': 'Bring someone new', 'COPIAR LINK DO JOGO': 'COPY GAME LINK', 'LINK COPIADO': 'LINK COPIED',
@@ -754,6 +811,30 @@ const DICT = {
   'Falta confirmar seu e-mail para receber novidades.': 'Confirm your email to get news.',
   'Cancelar inscrição pendente': 'Cancel pending signup',
   // tp:fim-ajustes
+
+  // tp:passe (tp/passe.js, passe-anuncio.js e a trava do seletor em main.js)
+  'PASSE': 'PASS', 'SESSÃO DA TRETA': 'SESSÃO DA TRETA', 'PASSE GRÁTIS · TEMPORADA 1 · FORA DO AR': 'FREE PASS · SEASON 1 · FORA DO AR',
+  'TEMPORADA 1 · PASSE GRÁTIS': 'SEASON 1 · FREE PASS', 'Fechar o passe': 'Close the pass',
+  'Sessão da Treta, temporada 1: o passe grátis da facção Fora do Ar': 'Sessão da Treta, season 1: the free pass of the Fora do Ar faction',
+  'Passe grátis com 15 níveis: 30 personagens da facção Fora do Ar, skins de arma, T$ e bônus de XP. Jogue partidas e cumpra missões para subir de nível.':
+    'Free pass with 15 levels: 30 characters from the Fora do Ar faction, weapon skins, T$ and XP boosts. Play matches and complete missions to level up.',
+  'Seu progresso já está contando.': 'Your progress is already counting.',
+  'Para ganhar XP e resgatar as recompensas, entre na sua conta.': 'Sign in to earn XP and claim the rewards.',
+  'VER O PASSE': 'SEE THE PASS', 'ENTRAR E JOGAR O PASSE': 'SIGN IN AND PLAY THE PASS', 'ENTRAR PARA JOGAR': 'SIGN IN TO PLAY',
+  'SEU NÍVEL': 'YOUR LEVEL', 'XP do nível': 'Level XP', 'NÍVEL MÁXIMO': 'MAX LEVEL', 'Níveis do passe': 'Pass levels',
+  'Entre na sua conta para ganhar XP nas partidas e nas missões e resgatar as recompensas. O passe é grátis.':
+    'Sign in to earn XP from matches and missions and claim the rewards. The pass is free.',
+  'RESGATAR': 'CLAIM', 'RESGATANDO…': 'CLAIMING…', 'RESGATADO': 'CLAIMED', 'ENTRE PARA LIBERAR': 'SIGN IN TO UNLOCK',
+  'SKIN DE ARMA': 'WEAPON SKIN', 'CONVITES': 'INVITES', 'Consultando o passe…': 'Checking the pass…',
+  'MISSÕES DIÁRIAS': 'DAILY MISSIONS', 'MISSÕES SEMANAIS': 'WEEKLY MISSIONS', '· renovam 00:00': '· reset at 00:00 (BRT)',
+  'Entrar no jogo hoje': 'Log in today', 'Jogar 3 partidas': 'Play 3 matches', 'Vencer 1 partida': 'Win 1 match',
+  'Jogar 1 partida multiplayer': 'Play 1 multiplayer match', 'Jogar em 5 dias diferentes': 'Play on 5 different days',
+  'Vencer 10 partidas': 'Win 10 matches', 'Jogar 10 partidas multiplayer': 'Play 10 multiplayer matches',
+  'Esse nível ainda não chegou. Jogue mais um pouco.': 'You have not reached this level yet. Play a bit more.',
+  'A temporada fechou para resgates.': 'The season is closed for claims.',
+  'Espere um momento antes de tentar novamente.': 'Wait a moment before trying again.',
+  'O passe não respondeu agora. Tente de novo em instantes.': 'The pass did not answer. Try again in a moment.',
+  // tp:fim-passe
 };
 
 /* Índice por espaço NORMALIZADO: o mesmo parágrafo quebrado em duas linhas no
@@ -892,6 +973,22 @@ const FRASES = {
   carteiraEntrarAria: { pt: () => 'Entre para ver seu saldo TRETA$', en: () => 'Sign in to see your TRETA$ balance' },
   carteiraErroAria: { pt: () => 'Carteira TRETA$ indisponível. Abra a loja para tentar novamente.', en: () => 'TRETA$ wallet unavailable. Open the store to try again.' },
   carteiraConsultandoAria: { pt: () => 'Consultando carteira TRETA$', en: () => 'Checking TRETA$ wallet' },
+  // passe Sessão da Treta (tp/passe.js e a trava do seletor em main.js)
+  passeNivel: { pt: (n) => `NÍVEL ${n}`, en: (n) => `LEVEL ${n}` },
+  passeTravado: { pt: (n) => `Nível ${n}`, en: (n) => `Level ${n}` },
+  passeTravadoAviso: {
+    pt: (nome, n) => `${nome} destrava no nível ${n} do passe Sessão da Treta.`,
+    en: (nome, n) => `${nome} unlocks at level ${n} of the Sessão da Treta pass.`,
+  },
+  passeSkinArma: { pt: (n) => `SKIN DE ARMA ${n}`, en: (n) => `WEAPON SKIN ${n}` },
+  passeBoostPremio: { pt: (p) => `+${p}% XP · 24 h`, en: (p) => `+${p}% XP · 24 h` },
+  passeBoostAtivo: { pt: (p, ate) => `+${p}% XP ATÉ ${ate}`, en: (p, ate) => `+${p}% XP UNTIL ${ate}` },
+  passeResgatado: { pt: (n) => `Nível ${n} resgatado. As recompensas já estão na sua conta.`, en: (n) => `Level ${n} claimed. The rewards are in your account.` },
+  passeResgatarNivel: { pt: (n) => `RESGATAR NÍVEL ${n}`, en: (n) => `CLAIM LEVEL ${n}` },
+  passeFaltaXp: { pt: (x) => `FALTAM ${x} XP`, en: (x) => `${x} XP TO GO` },
+  passeFaltaProximo: { pt: (x, n) => `faltam ${x} XP para o nível ${n}`, en: (x, n) => `${x} XP to level ${n}` },
+  passeTermina: { pt: (d) => `TERMINA EM ${d}`, en: (d) => `ENDS ${d}` },
+  passeConvite: { pt: (xp) => `+${xp} XP por amigo que confirma o e-mail e joga uma partida`, en: (xp) => `+${xp} XP per friend who confirms their email and plays a match` },
 };
 export const frase = (id, ...args) => {
   const f = FRASES[id];

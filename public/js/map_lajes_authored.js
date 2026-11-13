@@ -360,15 +360,8 @@ export function buildLajes(scene, T) {
   }
   flush(); root.updateMatrixWorld(true);
   const nav = buildLajesNavigation({ colliders, groundHeightAt, bounds, platforms: PLATFORMS, bridges: BRIDGES, stairs: STAIRS, spawns, groundRoutes: [...routes, { points: [[-18, 0], [18, 0]] }] });
-  /* ===================== GRAFFITI =====================
-     #722: o `grafitar` de Lajes morreu com o rewrite authored — o #701 removeu o
-     `map_lajes.js` que o carregava, e o `map_lajes_authored.js` nasceu sem ele. O mapa
-     continuou no pool (`maps.js`), o layout assado `fy_lajes` continued órfão
-     (`GRAFITE_FP.fy_lajes`), e `MAP_SOURCES.fy_lajes` continuou apontando para um arquivo
-     inexistente: `eval:grafitelayout` reprovava com ENOENT e o jogo ficou com Lajes
-     SEM NENHUM GRAFITE — a regalia que a regiao mede era verde porque media um arquivo morto.
-     Parâmetros portados do arquivo morto; o `limpo` das escadas é derivado do STAIRS do
-     authored (as stairZones do antigo não sobreviveram ao rewrite). */
+  /* A passada usa o id registrado e a zona limpa deriva das escadas authored.
+     Histórico do layout órfão: docs/maps/GRAFITE-CENSO-11.md, achado 2 (#722). */
   const D_LAJES = decalIds(T, ['pixo-lajes-01.png']);
   const D_TAG = decalIds(T, ['tag-fina.png', 'tag-flop.png', 'tag-larga.png', 'tag-money.png']);
   grafitar({

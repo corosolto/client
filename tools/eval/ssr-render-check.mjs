@@ -146,7 +146,7 @@ const linhas = [];
 for (const rota of rotas) {
   let status = null, bytes = 0, erro = null;
   try {
-    let resp = await handler.fetch(new Request(`https://www.csbrasil.online${rota}`));
+    let resp = await handler.fetch(new Request(`https://www.corosolto.com.br${rota}`));
     /* As duas mutações que provam as cláusulas. Elas trocam a RESPOSTA, não o cwd:
        reproduzem o que o jogador recebeu (200 com casca vazia) e o que a pilha fez
        (erro depois do streaming), que são as duas formas do mesmo dia 11/08. */

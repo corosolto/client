@@ -57,6 +57,8 @@ const POS0 = {
   praca_poderes: [-8.999258, 0, 61.568891],
   piscinao_ramos: [-9.123785, 0, 62.462876],
 };
+/* piscinao_ramos é chave legada: resolve para a Praça; os casos usam seeds/POS0 distintos.
+   Este golden cobre um mapa efetivo, sem alegar cobertura do Piscinão fora do registro. */
 
 function rodar(mapId, seed) {
   seedRandom(seed);
@@ -99,7 +101,7 @@ function rodar(mapId, seed) {
 }
 
 const TEX = initTextures();
-const CASOS = [['praca_poderes', 12345], ['piscinao_ramos', 777]];
+const CASOS = [['praca_poderes', 12345], ['piscinao_ramos', 777]];   // caso 2: legado, efetivo Praça (fallback DEFAULT_MAP)
 const atual = {};
 for (const [mapId, seed] of CASOS) atual[`${mapId}#${seed}`] = rodar(mapId, seed);
 // Mutantes causais da COMPARAÇÃO: mutam `atual` em memória — o baseline em disco nunca é regravado.

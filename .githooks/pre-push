@@ -12,7 +12,8 @@
 # mentira que a régua que não morde. O que fecha esse lado é bloquear merge com fio
 # aberto (ver docs/quality-gates.md), não um hook.
 #
-# Pular: `git push --no-verify` (ou PREPUSH=0). O check:deploy domina o custo (~1 min).
+# Pular: `git push --no-verify` (ou PREPUSH=0). A seleção local roda o núcleo e as
+# suites do diff; caminho desconhecido ou transversal cai no check:deploy completo.
 set -uo pipefail
 [ "${PREPUSH:-1}" = "0" ] && exit 0
 
@@ -21,7 +22,24 @@ RAIZ=$(git rev-parse --show-toplevel)
 falhas=()
 t0=$(date +%s)
 
-echo "pre-push: portões locais (syntax/docs/arch/travessão/mapcontrato via check:deploy; PREPUSH=0 pula)"
+# TODO PUSH VIRA PR (dono, 02/11): main e staging só recebem merge de PR revisado —
+# push direto local é recusado aqui, barato, antes de qualquer gate. O merge do PR
+# (botão do GitHub) não passa por este hook, então quem mergeia segue com o
+# estraga-codigo e o CI na frente. Skill do agente: ~/.agents/skills/pr-ate-o-merge/.
+entrada=$(cat)
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main|refs/heads/staging)
+      echo "" >&2
+      echo "  PUSH BLOQUEADO — ${remote_ref#refs/heads/} só recebe merge de PR revisado." >&2
+      echo "    git switch -c feat/minha-mudanca && git push -u origin feat/minha-mudanca" >&2
+      echo "    gh pr create   # e siga ~/.agents/skills/pr-ate-o-merge/ até o merge" >&2
+      exit 1
+      ;;
+  esac
+done <<< "$entrada"
+
+echo "pre-push: núcleo + suites do diff via check:prepush (fallback: check:deploy; PREPUSH=0 pula)"
 
 # Trailer `Agent:` em TODO commit que sobe: o commit-msg não roda em rebase nem em
 # clone sem `npm run setup`. Merge que traz a main injeta história alheia no
@@ -47,7 +65,7 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
       falhas+=("commit ${sha:0:8} com co-autoria de IA — ${linha%%$'\n'*}")
     fi
   done
-done
+done <<< "$entrada"
 
 # package.json e version.js têm que concordar (o portão versao-bumpada cobra isso).
 if [ -f package.json ] && [ -f public/js/version.js ]; then
@@ -56,8 +74,8 @@ if [ -f package.json ] && [ -f public/js/version.js ]; then
   [ -n "$pj" ] && [ "$pj" != "$vj" ] && falhas+=("package.json ($pj) != version.js ($vj)")
 fi
 
-for portao in eval:mapcontrato check:deploy; do
-  if ! npm run "$portao" --silent >/tmp/prepush-$$.log 2>&1; then
+for portao in eval:mapcontrato check:prepush; do
+  if ! PREPUSH_REMOTE="$remoto" PREPUSH_REFS="$entrada" npm run "$portao" --silent >/tmp/prepush-$$.log 2>&1; then
     # O motivo tem de ser a linha que REPROVOU. O padrão anterior incluía `error`
     # solto e casava com `eval:error-console verde: ...` — uma régua que PASSOU —
     # então o hook acusava o portão errado e mandava o dono caçar no lugar errado.
@@ -66,6 +84,8 @@ for portao in eval:mapcontrato check:deploy; do
     motivo=$(grep -m1 -E '✗|REPROV|FALHA|VERMELHO|ERRO:|Error:' /tmp/prepush-$$.log | cut -c1-90)
     [ -z "$motivo" ] && motivo=$(tail -n1 /tmp/prepush-$$.log | cut -c1-90)
     falhas+=("$portao — $motivo")
+  elif [ "$portao" = "check:prepush" ]; then
+    grep '^pre-push: ' /tmp/prepush-$$.log || true
   fi
 done
 rm -f /tmp/prepush-$$.log

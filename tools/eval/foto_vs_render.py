@@ -206,7 +206,7 @@ def _preparar(im: Image.Image, area: int):
 #  DESCRITOR 1 — ORIENTACAO DE ARESTA
 #  O que o dono apontou primeiro: "favela real tem aresta em muitos angulos; o
 #  nosso tem quase so' 0 e 90". No grafo 3D isso ja' estava medido —
-#  `fy_campomorro` e `piscina_treta` com 1 angulo distinto e 0% de massa girada
+#  `campomorro` e `piscina_treta` com 1 angulo distinto e 0% de massa girada
 #  contra 46 angulos e 34% da `quebrada`. Esta funcao tem de reproduzir a mesma
 #  ORDEM a partir do pixel; se nao reproduzir, a regua nao presta e o relatorio
 #  diz isso.

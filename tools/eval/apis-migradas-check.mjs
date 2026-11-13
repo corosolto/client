@@ -35,6 +35,7 @@ if (mut && ![
 
 let jogo = readFileSync('public/js/apibase.js', 'utf8');
 let redirect = readFileSync('src/pages/api/[rota].ts', 'utf8');
+let envRuntimeTs = readFileSync('src/lib/env-runtime.ts', 'utf8');
 let proxy = existsSync('src/lib/api-proxy.mjs') ? readFileSync('src/lib/api-proxy.mjs', 'utf8') : '';
 if (mut === 'lista-divergente') jogo = jogo.replace("'telemetry',", '');
 if (mut === 'destinos-divergentes') jogo = jogo.replace(/return 'https:\/\/[^']+';/, "return 'https://backend-errado.invalid';");
@@ -64,7 +65,7 @@ const doRedirect = lista(redirect, 'const MIGRADAS = new Set([');
 
 const falhas = [];
 const destinoJogo = jogo.match(/return '(https:\/\/[^']+)'/)?.[1];
-const destinoRedirect = redirect.match(/PUBLIC_API_BASE \|\| '(https:\/\/[^']+)'/)?.[1];
+const destinoRedirect = envRuntimeTs.match(/envRuntime\('PUBLIC_API_BASE'\) \|\| '(https:\/\/[^']+)'/)?.[1];
 if (!destinoJogo || destinoJogo !== destinoRedirect)
   falhas.push(`destinos divergem — jogo: ${destinoJogo || 'ausente'} · redirect: ${destinoRedirect || 'ausente'}`);
 if (doJogo.length === 0) falhas.push('a lista do jogo (apibase.js) veio vazia — o parser ou o arquivo mudou');
@@ -78,9 +79,13 @@ const importaFonte = async (fonte) => import(`data:text/javascript;base64,${Buff
 const fetchOriginal=globalThis.fetch;
 try {
   let route=stripTypeScriptTypes(redirect).replaceAll('import.meta.env','({})')
-    .replace('../../lib/api-proxy.mjs','data:text/javascript;base64,'+Buffer.from(proxy).toString('base64'));
+    .replace('../../lib/api-proxy.mjs','data:text/javascript;base64,'+Buffer.from(proxy).toString('base64'))
+    // env de runtime vira stub: no data: URL não há process.env do Workers a ler.
+    .replace("'../../lib/env-runtime'", "'data:text/javascript,export const backendUrl=()=>\\'https://csbrasil-backend-hupd3weo5q-rj.a.run.app\\';export const envRuntime=()=>\\'\\''")
+    .replace('../../lib/x-conversions', 'data:text/javascript,export const sendXConversion=async()=>({ok:true,status:200})')
+    .replace('../../lib/x-pixel', 'data:text/javascript,export const X_EVENT_IDS={match_start:"tw-rh4bd-rii9f",match_end:"tw-rh4bd-rii9g"}');
   if(mut==='perfil-404')route=route.replace('return resposta;',"return resposta.status===404 ? new Response(null,{status:503}) : resposta;");
-  if(mut==='treta-rollout')route=route.replace("['social-auth','treta','clans']","['social-auth','clans']");
+  if(mut==='treta-rollout')route=route.replace("['social-auth','treta','clans','passe']","['social-auth','clans']");
   const {GET}=await importaFonte(route);
   globalThis.fetch=async()=>new Response('{"error":"not_found"}',{status:404,headers:{'content-type':'application/json'}});
   for(const endpoint of ['social','social-avatar']) {
@@ -88,9 +93,11 @@ try {
     const response=await GET({params:{rota:endpoint},url,request:new Request(url),clientAddress:'203.0.113.8'});
     if(response.status!==404 || (await response.json()).error!=='not_found')falhas.push(`proxy altera 404 legítimo de ${endpoint}`);
   }
-  const url=new URL('https://preview.vercel.app/api/treta');
-  const response=await GET({params:{rota:'treta'},url,request:new Request(url),clientAddress:'203.0.113.8'});
-  if(response.status!==503 || (await response.json()).error!=='upstream_unavailable')falhas.push('proxy apresenta carteira ainda não publicada como rota inexistente');
+  for(const [rota,nome] of [['treta','carteira ainda não publicada'],['passe','passe da temporada ainda não publicado']]) {
+    const url=new URL(`https://preview.vercel.app/api/${rota}`);
+    const response=await GET({params:{rota},url,request:new Request(url),clientAddress:'203.0.113.8'});
+    if(response.status!==503 || (await response.json()).error!=='upstream_unavailable')falhas.push(`proxy apresenta ${nome} como rota inexistente`);
+  }
 } finally {globalThis.fetch=fetchOriginal;}
 const locationOriginal = globalThis.location;
 try {

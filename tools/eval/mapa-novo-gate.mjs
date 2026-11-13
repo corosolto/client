@@ -45,10 +45,10 @@
    dois limiares para o mesmo conceito é o instrumento discordando de si)
      · SUP2 e JOG1/JOG2 são CONSUMIDOS de quem já mede (`texel-check`, `map-check`).
      · SUP1 tem que ser medida aqui porque o `corrego-superficie-check.mjs` só
-       cobre `fy_corrego` e não é importável (o corpo do módulo sobe o jogo e chama
+       cobre `corrego` e não é importável (o corpo do módulo sobe o jogo e chama
        `process.exit`). Então o TETO é LIDO DO CÓDIGO-FONTE daquele arquivo — se
        alguém mudar 0,40 lá, este portão segue junto sem ninguém lembrar — e a
-       CONTA foi calibrada contra a saída real dele: `fy_corrego` dá 23/103 = 22,3%
+       CONTA foi calibrada contra a saída real dele: `corrego` dá 23/103 = 22,3%
        nos dois. Teto que não é achado no fonte = VERMELHO, não um valor de reserva.
 
    COMO ELE FALHA QUANDO NÃO SABE MEDIR (pergunta 4 da skill: não saber custa o
@@ -128,7 +128,7 @@ export const ALT_MASSA_MIN = 0.5;       // abaixo disso não é massa construíd
 
 /* ALT1. Vem da fotografia: casa de favela é 3-4 lajes = 9-12 m.
    ATENÇÃO, e está no relatório: este teto NÃO SEPARA mapa bom de mapa ruim nesta
-   base. Medido: passam só `praca_poderes` (15,4) e `fy_campomorro` (9,6) — e o
+   base. Medido: passam só `praca_poderes` (15,4) e `campomorro` (9,6) — e o
    campomorro é um dos que o dono odeia, com 0,0% de massa girada. Reprovam
    `quebrada` (5,1) e `ferro_velho` (4,2), que estão entre os que ele considera
    menos ruins. Ou seja: ALT1 codifica a AMBIÇÃO de fidelidade, não o julgamento

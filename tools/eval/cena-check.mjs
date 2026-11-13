@@ -42,7 +42,7 @@
      node tools/eval/cena-check.mjs --medir          # só mede e sugere teto (não reprova)
      node tools/eval/cena-check.mjs --mutante=estoura
      node tools/eval/cena-check.mjs --mapa=loja_h  # um mapa só
-     BASE=https://www.csbrasil.online node tools/eval/cena-check.mjs
+     BASE=https://www.corosolto.com.br node tools/eval/cena-check.mjs
 
    EXIGE BROWSER, então fica FORA do `check` e do `check:fast` (que rodam sem browser),
    junto do `eval:boot` — é passo de pré-deploy. Quem cabe no portão rápido é a cláusula

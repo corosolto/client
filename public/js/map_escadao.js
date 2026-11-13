@@ -9,6 +9,7 @@ import { grafitar } from './graffiti_pass.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
+import { planoUV, metrosPorUV } from './map_uv.js';
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
@@ -282,6 +283,7 @@ export function buildEscadao(scene, T) {
         mat.normalMap = det?.normalMap || null;
         mat.roughnessMap = det?.roughnessMap || null;
         if (mat.normalMap) { const scale = mat.roughness >= .8 && mat.metalness < .2 ? .4 : .65; mat.normalScale.set(scale, scale); }
+        mat.userData?.onExternalTex?.(tex);
         mat.needsUpdate = true;
       });
       tex.colorSpace = THREE.SRGBColorSpace;
@@ -339,7 +341,13 @@ export function buildEscadao(scene, T) {
   /* ===================== CHÃO BASE ===================== */
   addFloor(HALF_X * 2, HALF_Z * 2, 0, 0, MAT.dirt, -0.01);
   addFloor(HALF_X * 2, 40 - 14, 0, (14 + 40) / 2, MAT.asphalt, 0.01);
-  addFloor(HALF_X * 2, 40 - Math.abs(TOP_Z), 0, (TOP_Z + (-40)) / 2, MAT.concrete, MIRANTE_SURFACE_Y);
+  const geoMiranteUV = addFloor(HALF_X * 2, 40 - Math.abs(TOP_Z), 0, (TOP_Z + (-40)) / 2, MAT.concrete, MIRANTE_SURFACE_Y).geometry;
+  const uvMiranteBase = geoMiranteUV.attributes.uv.array.slice();
+  MAT.concrete.userData.onExternalTex = () => {
+    geoMiranteUV.attributes.uv.array.set(uvMiranteBase);
+    planoUV(geoMiranteUV, HALF_X * 2, 40 - Math.abs(TOP_Z), metrosPorUV(MAT.concrete));
+  };
+  MAT.concrete.userData.onExternalTex();
   // O mirante é terreno elevado, não uma folha transparente vista do vale. A contenção
   // termina na chegada dos lances; não preenche vãos sob os patamares/conexões.
   const aterro = addBox(HALF_X * 2, H_TOP, HALF_Z + TOP_Z, MAT.concreteDark,
@@ -1390,7 +1398,7 @@ export function buildEscadao(scene, T) {
   };
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, snapDownSteps: true, layeredNavigation: true, spawns, sun, hemi, pickups, ctfPoints, ambience, update, casario, casarioMoldes: CASARIO_MOLDES,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, snapDownSteps: true, layeredNavigation: true, authoredSpawnYaw: true, spawns, sun, hemi, pickups, ctfPoints, ambience, update, casario, casarioMoldes: CASARIO_MOLDES,
     /* Som por cota: duas fontes no centro com raio 70 m tocavam igual no beco e no
        mirante. Agora baile na rua, cidade subindo do vale e passarada no topo. */
     sound: { loops: [

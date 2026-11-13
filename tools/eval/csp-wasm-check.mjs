@@ -31,7 +31,7 @@ const arg = (n) => {
   const i = process.argv.indexOf(`--${n}`);
   return i > -1 ? process.argv[i + 1] : null;
 };
-const ALVO = arg('alvo') || 'https://www.csbrasil.online';
+const ALVO = arg('alvo') || 'https://www.corosolto.com.br';
 
 const cspDoRepo = () => {
   const vercel = JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'));

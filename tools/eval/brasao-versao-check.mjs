@@ -25,8 +25,9 @@ const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').spl
 if (!['', 'defasado', 'sem-v'].includes(MUTANTE)) { console.error(`mutante desconhecido: ${MUTANTE}`); process.exit(1); }
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
-/* Dívida fora desta frente (menu e CSS de outro dono). Só pode descer. */
-const DIVIDA = { 'public/js/main.js': 3, 'public/style.css': 6 };
+/* Dívida fora desta frente (CSS de outro dono). Só pode descer: o main.js pagou as 3
+   (urlDoBrasao, PR #1302). */
+const DIVIDA = { 'public/style.css': 6 };
 
 const disco = versoes();
 let manifesto = readFileSync(OUT, 'utf8');
@@ -47,7 +48,7 @@ if (MUTANTE === 'sem-v') {
   Game.prototype._showScoreboard = new Function('tr', `return ({ ${mut} })._showScoreboard;`)(tr);
 }
 const urlsBoas = (urls) => urls.length > 0 && urls.every((u) => {
-  const m = u.match(/img\/brasoes\/([a-z])\.png\?v=([0-9a-f]{12})$/);
+  const m = u.match(/img\/brasoes\/([a-z][a-z0-9-]*)\.png\?v=([0-9a-f]{12})$/);
   return m && disco[m[1]] === m[2];
 });
 
@@ -76,7 +77,7 @@ const arquivos = [...varrer(join(ROOT, 'public/js'), ['.js']), ...varrer(join(RO
 const achados = {};
 for (const p of arquivos) {
   let s = readFileSync(p, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
-  const n = [...s.matchAll(/img\/brasoes\/(?:[a-z]|\$\{[^}]*\})\.png(?!\?v=)/g)].length;
+  const n = [...s.matchAll(/img\/brasoes\/(?:[a-z][a-z0-9-]*|\$\{[^}]*\})\.png(?!\?v=)/g)].length;
   if (n) achados[relative(ROOT, p)] = n;
 }
 const novos = Object.entries(achados).filter(([f, n]) => n > (DIVIDA[f] || 0));

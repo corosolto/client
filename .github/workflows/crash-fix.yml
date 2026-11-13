@@ -63,21 +63,24 @@ jobs:
         if: steps.cls.outputs.classe == 'externo'
         run: echo "origem externa confirmada; a linha bruta permanece na telemetria."
 
+      # Zona migrou para corosolto.com.br; o CF_API_TOKEN precisa de acesso à
+      # zona nova (Zone: Read + Cache Purge) ou sobrescreva CF_ZONE_NAME.
       - name: purge do edge Cloudflare (classe cache-split)
         if: steps.cls.outputs.classe == 'cache-split' && env.CF_API_TOKEN != ''
         run: |
+          ZONE_NAME="${CF_ZONE_NAME:-corosolto.com.br}"
           ZONE_ID=$(curl -sS -H "Authorization: Bearer $CF_API_TOKEN" \
-            "https://api.cloudflare.com/client/v4/zones?name=csbrasil.online" \
+            "https://api.cloudflare.com/client/v4/zones?name=$ZONE_NAME" \
             | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).result[0].id))")
           curl -sS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" \
-            --data '{"prefixes":["www.csbrasil.online/js/","www.csbrasil.online/style.css"]}' \
+            --data '{"prefixes":["www.corosolto.com.br/js/","www.corosolto.com.br/style.css"]}' \
             "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/purge_cache"
           sleep 5   # o purge é assíncrono no edge
 
       - name: re-probe do edge (classe cache-split)
         id: reprobe
         if: steps.cls.outputs.classe == 'cache-split'
-        run: node tools/eval/prod-coherence.mjs https://www.csbrasil.online
+        run: node tools/eval/prod-coherence.mjs https://www.corosolto.com.br
 
       - name: remediado sozinho — encerra sem issue
         if: steps.cls.outputs.classe == 'cache-split' && steps.reprobe.outcome == 'success'

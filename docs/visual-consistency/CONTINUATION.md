@@ -1,3 +1,5 @@
+> Registro histórico. As pendências do revisor legado abaixo não são exigências atuais; siga [o ciclo vigente de revisão](../../.claude/skills/estragacodigo-loop/SKILL.md).
+
 # Consistência visual e release, 31/10/2026
 
 ## Estado para retomada: 2026-10-31T18:44:37.845308+00:00
@@ -104,8 +106,8 @@ health e caminho real do jogador verificados. Evidência parcial fica declarada.
 - #1179 CI falha na economia: EJ22 ainda espera 30 s, runtime oferece 50 s;
   EJ12 também vermelho, investigar no log. Não está pronto para merge remoto.
 - Protocolo vigente recuperado em `operations/corosolto-hq-20261026/ledger/REVIEW-PROTOCOL-20261031.md`:
-  CodeRabbit não está habilitado; Ruben autorizou GLM via OMP + crítico independente.
-  O pedido anterior ao CodeRabbit foi redundante, não repetir. Estraga-codigo é o
+  revisor legado não está habilitado; Ruben autorizou GLM via OMP + crítico independente.
+  O pedido anterior ao revisor legado foi redundante, não repetir. Estraga-codigo é o
   revisor real em restauração. Dispensa não significa revisão recebida ou limpa.
 - Lease GLM de testes grafite: `tools/eval/graffiti-curation-check.mjs` (novo),
   fixtures afetadas de `graffiti-support-check.mjs` e
@@ -958,3 +960,12 @@ Merge9b03aad7f preserva ledgerQA que jácontém asduasnotasnovasimpl; alteraçã
 
 2026-10-31T18:39:39.132469+00:00 — R21PROMOÇÃO aceita4b747cf4, seisarquivosboot/body/origin/window/contract/doc. Syntax+selftestpúblicos0, Node22selftestrepassado. CheckpointseletivoantesmergeQA/pushnormal; nenhumtetoalterado/novaisenção.
 
+
+
+## R2012 — frescor dos grafites após revisão independente completa
+
+A revisão R1988 cobriu os 292 caminhos do cliente 39ada e encontrou apenas os fingerprints antigos de Campo/Quebrada. A execução nominal R2007 reproduziu exatamente as duas falhas F2. No Ego, com GLBs carregados e viewport 1320×880, os 2 grafites do Campo e os 12 da Quebrada estavam desenhados: 350/350 amostras apoiadas e todos os 14 retângulos completos aceitos. Capturas R2008/R2010 foram inspecionadas; esse recorte não aprova a arte global, mobile ou multiplayer.
+
+O gerador oficial `--so-impressao`, com motivo específico, preservou exatamente todos os bytes da constante GRAFITE e alterou somente os dois fingerprints. A parede x=-24,z=10.5 do Campo permaneceu; as alterações da Quebrada afetaram UV de calçada e colisores sem malha. R2012: nominal determinístico verde e mutantes de geometria/passada detectados isoladamente; manifesto de assets continua atual. O gerador oficial de SIM_HASH publicou 3c9a4b204a4dc55b.
+
+Objetivo completo permanece ativo: integrar PRs autorizados, excluir Flávio, acompanhar release e validar mapas, personagens, skins, motion e ADS. Próximo passo: revisão focada deste delta, build/boot e push normal com hook completo; parear backend com este SHA e acompanhar ambos até merge e release, sem herdar aprovação de heads anteriores. Evidência privada fica em audits/2026-10-31-visual-consistency, arquivos R1988/R2007–R2012.

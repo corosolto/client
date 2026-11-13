@@ -1,21 +1,6 @@
 /* Treta Pop · 12 chat no lobby, 15 convidar, 24 e 25 mobile. Só vale com <html data-ui="v3">: todo seletor começa em :root[data-ui="v3"] ou numa classe .tp-. */
 
-/* Botão Resenha no canto do rodapé, como na tela 12; a dica do rodapé cede o lugar. */
-:root[data-ui="v3"] .hub-footer .hub-tip{visibility:hidden}
-.tp-resenha-botao{--tp-resenha-chao:16px;position:fixed;left:32px;bottom:var(--tp-resenha-chao);z-index:5;
-  display:flex;align-items:center;gap:12px;height:60px;padding:0 16px 0 14px;box-sizing:border-box;border-radius:14px;border:2px solid var(--tp-lima);
-  background:var(--tp-painel);color:var(--tp-tinta-1);cursor:pointer;font-family:var(--tp-ui);
-  box-shadow:0 0 0 8px rgba(180,217,46,.15),0 10px 30px rgba(0,0,0,.5);transition:transform var(--tp-d-rapido) var(--tp-ease-saida)}
-.tp-resenha-botao:hover{transform:translateY(calc(-2px * var(--tp-mov)))}
-.tp-resenha-botao:active{transform:scale(calc(1 - .04 * var(--tp-mov)));transition-duration:var(--tp-d-toque)}
-.tp-resenha-botao:focus-visible{outline:2px solid var(--tp-tinta-1);outline-offset:4px}
-.tp-resenha-botao svg{width:26px;height:26px;fill:none;stroke:var(--tp-lima);stroke-width:2.2;stroke-linejoin:round}
-.tp-resenha-botao .tp-disp{font-size:22px}
-.tp-resenha-botao__novas,.tp-resenha__novas{min-width:12px;padding:2px 8px;border-radius:999px;background:var(--tp-novo);color:#fff;font:800 13px/1.2 var(--tp-num);text-align:center}
-.tp-resenha-botao__novas[data-vazio]{display:none}
-.tp-resenha-botao kbd{padding:1px 6px;border:1px solid rgba(255,255,255,.3);border-radius:4px;color:var(--tp-tinta-3);font:700 12px/1.3 var(--tp-num)}
-.tp-resenha-botao[aria-expanded="true"]{z-index:8}
-:root[data-ui="v3"][data-home-ui="hub"] #hub-ui .hub-footer{left:max(var(--tp-lobby-margem,32px),260px)}
+.tp-resenha__novas{min-width:12px;padding:2px 8px;border-radius:999px;background:var(--tp-novo);color:#fff;font:800 13px/1.2 var(--tp-num);text-align:center}
 
 .tp-resenha-veu{position:fixed;inset:0;z-index:6;background:rgba(9,7,4,.55);opacity:0;visibility:hidden;
   transition:opacity var(--tp-d-painel) var(--tp-ease-saida),visibility 0s linear var(--tp-d-painel)}
@@ -182,11 +167,6 @@
 
 /* Celular deitado (telas 24 e 25). */
 @media (max-height:520px){
-  .tp-resenha-botao{--tp-resenha-chao:12px;left:16px;bottom:calc(var(--tp-resenha-chao) + 154px);height:44px;gap:8px;padding:0 12px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.5)}
-  .tp-resenha-botao svg{width:22px;height:22px}
-  .tp-resenha-botao .tp-disp{font-size:16px}
-  .tp-resenha-botao kbd{display:none}
-  .tp-resenha-botao[aria-expanded="true"]{z-index:5}
   .tp-resenha{width:100vw}
   .tp-resenha__topo{height:52px;gap:8px;padding:0 10px}
   .tp-resenha__sair{order:-1;margin:0;width:44px;padding:0;font-size:18px}
@@ -249,7 +229,7 @@
 
 /* Toque (tela 24/25): todo alvo com 44 px. */
 @media (pointer:coarse){
-  .tp-resenha button,.tp-resenha input,.tp-convidar button,.tp-convidar a,.tp-convidar input,.tp-resenha-botao{min-height:44px}
+  .tp-resenha button,.tp-resenha input,.tp-convidar button,.tp-convidar a,.tp-convidar input{min-height:44px}
   .tp-resenha__canal,.tp-resenha__rapida,.tp-resenha__mais,.tp-resenha__perfil,.tp-convidar__chamar,.tp-convidar__mini,.tp-convidar__share{min-width:44px}
   .tp-resenha__canal,.tp-resenha__rapida,.tp-resenha__acao,.tp-resenha__mais,.tp-convidar__chamar,.tp-convidar__enviado,.tp-convidar__mini,.tp-convidar__recebeu input{height:44px}
   .tp-resenha__mais{width:44px}

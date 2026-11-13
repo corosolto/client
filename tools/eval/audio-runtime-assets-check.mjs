@@ -1,10 +1,12 @@
 /* AUDIO-RUNTIME-ASSETS — o `assert:assets` que roda no build tem TRÊS estados
  * válidos, e esta régua prova os três chamando o script de verdade.
  *
- * Por que três (issue #696): `audio-pack-v8` — a release pública que o
- * `AUDIO_PACK_URL` default aponta — não tem pasta `ambiente/` nem a chave
- * `mapSoundscapes` no manifest (medido em 04/10/2026 sobre o diretório central do
- * zip). O `assert:assets` reprovava com "17 de 17 caminhos que `soundscape.js`
+ * Por que três (issue #696): o pacote público — hoje o `audio-pack-v9` que o
+ * `AUDIO_PACK_URL` default aponta — não traz pasta `ambiente/` com nomes legíveis
+ * nem a chave `mapSoundscapes` no manifest de dentro do zip (medido no v8 em
+ * 04/10/2026 sobre o diretório central do zip; o v9 trouxe as faixas binárias e a
+ * resolução fica no `tools/audio/ambiente-mapas.mjs`, fora do zip). O
+ * `assert:assets` reprovava com "17 de 17 caminhos que `soundscape.js`
  * nomeia não estão no manifest OU no disco", e o conserto era um arquivo que
  * NINGUÉM chamava fora do workflow de preview. Um portão que só é verde depois
  * de um passo que só um workflow conhece é portão quebrado.

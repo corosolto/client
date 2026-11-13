@@ -5,6 +5,8 @@ import { PROFILE_CHARACTERS } from '../profile-character-catalog.js';
 import { profileSocialLinks } from '../ranking-player.js';
 import { WEAPONS } from '../data/weapons.js';
 import { MAPS, resolveMapId } from '../maps.js';
+import { heroUrl, retratoFontes } from '../data/retratos.js';
+import { origemCompartilhamento } from '../compartilhar.js';
 
 const local = () => (LANG === 'en' ? 'en-US' : 'pt-BR');
 const num = (n) => Number(n).toLocaleString(local());
@@ -94,9 +96,9 @@ function inicial(p, cls) {
   i.setAttribute('aria-hidden', 'true');
   return i;
 }
-/* Sem foto enviada, o rosto do último personagem (img/chars-hero); personagem sem rosto cai na inicial. */
+/* Sem foto enviada, o rosto do último personagem (data/retratos.js); personagem sem rosto cai na inicial. */
 function avatar(p, cls) {
-  const src = p.avatar_url || (PROFILE_CHARACTERS[p.last_character] ? `/img/chars-hero/${p.last_character}.webp` : '');
+  const src = p.avatar_url || (PROFILE_CHARACTERS[p.last_character] ? retratoFontes(p.last_character)[0] : '');
   if (!src) return inicial(p, cls);
   const img = imagem(cls, src);
   img.onerror = () => img.replaceWith(inicial(p, cls));
@@ -258,8 +260,8 @@ export function ligar() {
       t.append(el('span', 'tp-perfil__destaque-rotulo tp-disp', rotulo));
       return t;
     };
-    const c = PROFILE_CHARACTERS[p.last_character];
-    g.append(c ? destaque('tp-perfil__destaque--personagem', `${tr('Último personagem')} · ${c.nome}`, `/img/chars-hero/${p.last_character}.webp`, c.portrait)
+    const c = PROFILE_CHARACTERS[p.last_character], hero = c && heroUrl(c.id);
+    g.append(c ? destaque('tp-perfil__destaque--personagem', `${tr('Último personagem')} · ${c.nome}`, hero || c.portrait, hero && c.portrait)
       : destaque('tp-perfil__destaque--vazio', tr(own ? 'Personagem aparece depois da primeira rodada confirmada' : 'Último personagem não compartilhado')));
     const m = medalhas(p), med = el('div', 'tp-perfil__destaque tp-perfil__destaque--medalha');
     med.append(el('span', 'tp-perfil__selo-grande tp-num', String(m.length)),
@@ -571,7 +573,7 @@ export function ligar() {
     const acao = botao(tr(lider ? 'Copiar convite do clã' : 'Copiar link do clã'), 'tp-btn--primario tp-carreira__cla-acao', async () => {
       acao.disabled = true;
       try {
-        let link = `${location.origin}/clans/${encodeURIComponent(c.id)}`;
+        let link = `${origemCompartilhamento()}/clans/${encodeURIComponent(c.id)}`;
         if (lider) { const r = await api('/api/clans', { ...convidado(), action: 'invite' }); link += `#invite=${r.invite}`; }
         await navigator.clipboard.writeText(link);
         saida.textContent = tr(lider ? 'Convite copiado. Gerar outro revoga o anterior.' : 'Link do clã copiado.');

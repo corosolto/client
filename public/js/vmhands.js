@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ownVmResource } from './vmownership.js';
 import {gloveSkinStyle} from './data/glove-skin-definitions.js';
 
 // Três propostas para FUNKEIROS (o dono escolhe; ?vmmaosf=<opção> na revisão). docs/reports/VM-MAOS-POR-TIME.md.
@@ -15,6 +16,8 @@ export const TEAM_HANDS = Object.freeze({
   F: F_OPCOES[F_QS] || F_OPCOES.ouro,
   U: Object.freeze({ id: 'U', glove: '#34363a', sleeve: '#292b30', accent: '#d9d7cf', motif: 'checker', fingerless: true }),
   M: Object.freeze({ id: 'M', glove: '#4a3b28', sleeve: '#3d1f66', accent: '#b8914a', motif: 'trama', fingerless: false }),
+  // Fora do Ar (factions.js, ready): verde-fósforo de TV velha sobre o petróleo do brasão.
+  'fora-do-ar': Object.freeze({ id: 'fora-do-ar', glove: '#24594f', sleeve: '#142e38', accent: '#72d6b1', motif: 'plain', fingerless: false }),
 });
 // Neutro = base da fábrica (braco-coro-ak.json): luva e manga Mandrake da AK aprovada, em sRGB.
 const NEUTRAL_HANDS = Object.freeze({ id: 'neutral', glove: '#242f38', sleeve: '#243c4d', accent: '#797d80', motif: 'plain', fingerless: false });
@@ -53,7 +56,7 @@ export function applyTeamHandMaterial(material, profile, layout) {
   const role = layout === 'knife' ? 'combined' : /Cloth|Sleeves/i.test(material.name) ? 'cloth'
     : /Glove/i.test(material.name) ? 'glove' : 'skin';
   const key = `${layout}/${role}-${style.id}`;
-  const copy = material.clone();
+  const copy = ownVmResource(material.clone());
   copy.color.set(0xffffff);
   copy.metalness = 0;
   copy.roughness = role === 'skin' && style.fingerless ? 0.72 : 0.86;
@@ -65,7 +68,8 @@ export function applyTeamHandMaterial(material, profile, layout) {
   // Os atlas têm UVs distintos; só a identidade é comum. Não colar UV de um rig no outro.
   if (typeof document !== 'undefined' && !(typeof process !== 'undefined' && process.versions?.node)) {
     if (!maps.has(key)) {
-      const map = new THREE.TextureLoader().load(`/models/viewmodels/coro/hands/${key}.webp?v=${HAND_ATLAS_VERSION}`, undefined, undefined,
+      const colorVersion = key === 'pistol/glove-E' ? 'team-hands-11' : HAND_ATLAS_VERSION;
+      const map = new THREE.TextureLoader().load(`/models/viewmodels/coro/hands/${key}.webp?v=${colorVersion}`, undefined, undefined,
         (error) => console.error(`[viewmodel-hands] ${key}`, error));
       map.flipY = false;
       map.colorSpace = THREE.SRGBColorSpace;

@@ -2043,7 +2043,7 @@ export function buildFerroVelho(scene, T) {
      que a main trouxe com ratos, pombos, cachorro e baratas. */
 
   return {
-    root, colliders, occluders, groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience,
+    root, colliders, occluders, groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience, authoredSpawnYaw: true,
     sound: { loops: [
       { src: AMB_LOOPS.cidade, pos: [0, 3, 0], radius: 78, vol: .15, global: true },
       { src: AMB_LOOPS.vento, pos: [26, 3, 8], radius: 44, vol: .22 },

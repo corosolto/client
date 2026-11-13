@@ -24,29 +24,37 @@ critério de aceite; compare com as issues existentes antes de abrir outra.
 
 ## Regras de PR (valem para todo mundo, CI cobra)
 
-1. **`package.json` e `public/js/version.js` têm que concordar** — o `?v=` do import map
+1. **PR title and description MUST be written in English** — vale para todo autor, humano ou bot.
+   O check `pr-language` reprova texto em português no título ou no corpo; código, comandos e links
+   continuam permitidos. O template já nasce em inglês.
+2. **`package.json` e `public/js/version.js` têm que concordar** — o `?v=` do import map
    (`src/pages/index.astro`) sai da versão no build; se os dois arquivos divergem o
    navegador serve módulo velho do cache e "a correção não chega" — já custou dias
    (ver `public/js/version.js`). O workflow `pr-gates.yml` reprova a divergência. O
    BUMP da versão NÃO é mais tarefa do PR: desde 08/08 o `release.yml` bumpa, taga e
    publica o GitHub Release sozinho — em LOTE (desde 14/10; 13/10 era 2×/dia, antes a cada push).
-2. **Produção publica no LOTE, não em todo merge** (14/10): a integração Git da Vercel na `main`
+3. **Produção publica no LOTE, não em todo merge** (14/10): a integração Git da Vercel na `main`
    continua sendo o caminho (decisão do dono em 08/08), mas o `ignoreCommand`
    (`scripts/ci/vercel-ignore.sh`) só deixa buildar produção no commit `chore(release):`.
    Empilhe os PRs e feche num PR de lote: o `release.yml` sai quando entra na `main` um PR
    com a label `release` ou com branch `lote-*`, `claude/lote-*` ou `*/lote-*`, e só com o
    `pr-fast` verde nesse merge. PR comum não dispara release. PR de lote entra por
    **merge commit** (não squash nem rebase): o job `lote` lê o PR associado ao commit que
-   chegou na `main`, e é o merge commit que aponta para o lote. Hotfix:
-   `gh workflow run release.yml`. O caminho manual por tag (`deploy-prod.yml`) continua
-   de pé como fallback.
-3. **Preview de fork exige revisão humana**: o `cs-brasil-ai-bot` (`preview-bot.yml`)
+   chegou na `main`, e é o merge commit que aponta para o lote. O `csbrasil-bot-daily-release`
+   cria ou atualiza uma única PR `staging → main` por dia às 12:17 UTC; PRs seguras entram em
+   `staging` pelo automerge. Hotfix usa título `hotfix:` e PR baseada/apontada para `main`:
+   o bot compara a ancestry com `main` e `staging`; qualquer commit não publicado vindo de
+   `staging` aplica `needs-hotfix-review`, remove `safe-automerge` e bloqueia release. Com
+   ancestry main-only, recebe `release` e dispara o trem após o merge verde. O dispatch manual
+   (`gh workflow run release.yml`) continua como fallback. O caminho manual por tag
+   (`deploy-prod.yml`) continua de pé como fallback.
+4. **Preview de fork exige revisão humana**: o `cs-brasil-ai-bot` (`preview-bot.yml`)
    classifica o diff sem executá-lo. Um mantenedor revisa o SHA atual e aplica
    `preview-autorizado`; qualquer push revoga a aprovação.
-4. **Quality gates locais antes de abrir**: `npm run check:fast` (segundos) e, se mexeu em
+5. **Quality gates locais antes de abrir**: `npm run check:fast` (segundos) e, se mexeu em
    jogo, `npm run check:deploy` (o mesmo portão que o hook `pre-push` roda). Vermelho
    novo no quality gate = PR volta.
-5. **Nada de travessão `—` no texto do site (`src/`)**. Use hífen com espaços (` - `). O
+6. **Nada de travessão `—` no texto do site (`src/`)**. Use hífen com espaços (` - `). O
    em-dash é a marca de texto gerado por IA e, num jogo que se vende como original, entrega
    a origem em título, meta, OG e nas descrições de arma/personagem. O `travessao:check`
    reprova `—` e `–` em `src/`; escreva ` - ` e siga a vida. Vale para texto escrito por
@@ -64,6 +72,27 @@ npm run dev               # http://localhost:4321 · o JOGO está na rota /
 
 Confira o requisito de Node no [quickstart do README](README.md#rodar-localmente)
 e rode `node --version` e `npm --version` no terminal que vai instalar as dependências.
+
+Para repetir o ambiente do CI sem caçar versão ou biblioteca do Chromium, abra o clone num
+**Dev Container**. A imagem usa Node 22, o npm de `packageManager` e o Playwright exato do
+lock; o `postCreateCommand` executa o mesmo `scripts/setup.mjs` acima e termina com o
+diagnóstico do navegador. Num terminal já configurado, o caminho equivalente é:
+
+```bash
+node scripts/ci-local.mjs --setup       # setup + Playwright do lock num prefixo privado + Chromium (sem root)
+node scripts/ci-local.mjs --setup-system  # Linux: Playwright eleva só a instalação das libs nativas
+node scripts/ci-local.mjs --diagnose    # só ambiente; não roda teste
+node scripts/ci-local.mjs               # diagnóstico e check:fast
+node scripts/ci-local.mjs eval:boot     # qualquer script npm, com CHROME_BIN já descoberto
+```
+
+O prefixo privado em `node_modules/.ci-local-prefix` atende às réguas que consultam
+`npm root -g`, sem escrever no npm global do sistema. Uma sobrescrita de `CHROME_BIN`
+só é aceita quando resolve para o mesmo Chromium instalado pelo Playwright do lock.
+
+O runner não define `PREPUSH=0` nem outra forma de pular portão. Falta de Node/npm, pacote,
+Chromium ou biblioteca nativa sai como `⊘ SKIP` com exit **78** (`EX_CONFIG`), antes dos testes;
+depois do diagnóstico verde, o exit e o veredito são do script executado.
 
 **O jogo é a rota `/`, e o HTML dele é `src/pages/index.astro`.** Não existe
 `public/index.html` — servir `public/` com um servidor estático te dá os assets,
@@ -150,6 +179,14 @@ entra no jogo em T-pose.
 `public/js/maps.js` (`MAPS`). Colisores são AABBs declarados junto de cada mesh.
 Espelhe em `src/data/jogo.ts` (`MAPAS`) pro mapa aparecer em `/mapas`.
 
+**Sem escrever código:** o formato "mapa como dado" (`public/js/map_json.js`) carrega
+uma arena a partir de um descritor JSON — caixas, rampas, plataformas, água, props por
+GLB, spawns, bandeiras e pickups. O editor visual é `public/construtor.html` (abra
+`/construtor.html` com `npm run dev`): ele valida na mesma régua do jogo
+(`npm run eval:mapjson` · `npm run eval:mapjsonboot`) e gera o `.json` + o snippet de
+registro. Passo a passo em `docs/docs/construtor-de-mapas.md`. Relevo em camadas
+(mezanino sobre piso) continua exigindo o caminho de código acima.
+
 > **Este espelho já foi esquecido, e nos dois sentidos.** A `quebrada` entrou
 > no registro do jogo e não apareceu em `/mapas`, no `llms.txt` nem no JSON-LD; a
 > `praca_old` saiu do registro e continuou listada nos três. Um a mais e um a
@@ -170,23 +207,26 @@ Espelhe em `src/data/jogo.ts` (`MAPAS`) pro mapa aparecer em `/mapas`.
 
 ## Antes de abrir o PR
 
-**O `git push` já roda o `check:deploy` sozinho** — é o hook `.githooks/pre-push`.
+**O `git push` já roda o `check:prepush` sozinho** — é o hook `.githooks/pre-push`.
 Ele existe porque numa única sessão de 12/08/2026 quatro pushes seguidos abriram CI
 vermelho em portão que roda em **5 segundos** na máquina: `docs:check` duas vezes,
 `arch:check` e `eval:shaderlog`. O portão existia; ninguém rodava.
 
-É o `check:deploy` e não o `check:fast` de propósito: 20 passos determinísticos, sem
-browser e sem rede, contra 35. Portão que demora vira portão que se contorna. Quando
-você precisar mesmo passar por cima, `PULAR_PORTAO=1 git push` — e o CI continua
-sendo a rede de baixo.
+O hook executa o núcleo e as suites afetadas pelo diff. Qualquer caminho desconhecido ou
+transversal (`package.json`, `game.js`, `main.js`, boot/rede, workflows) cai no `check:deploy`
+completo. A seleção é só local e o CI continua completo. Rode `npm run check:fast` ou
+`npm run check:deploy` diretamente quando quiser a suíte inteira antes do primeiro push.
+
+Em uma falha preexistente comprovada, `PREPUSH=0 git push` pula o hook — e o CI continua
+sendo a rede de baixo. Não use esse escape para uma falha do seu próprio diff.
 
 Antes de abrir o PR, o resto continua na sua mão:
 
 ```bash
-npm run check        # quality gate completo
+npm run check:deploy # quality gate completo (check:fast é a versão rápida)
 npm run arch         # se você mexeu em public/js, o ARCH.md precisa ser regerado
 npm run build        # o site tem que buildar
-npm run check:seo    # se você mexeu em src/ ou em public/llms.txt
+npm run check:seo    # se você mexeu em src/ (inclui src/pages/llms.txt.ts)
 ```
 
 `check:seo` roda `npm run build` e depois mede o **HTML publicado**, não o
@@ -223,13 +263,13 @@ E teste à mão: o jogo abre, o console fica limpo, uma partida completa roda
 - Exceção decidida pelo dono em 04/10/2026: **figura política pública** pode entrar
   como caricatura satírica, e só assim. Nome caricato, nunca o nome real. Modelo 3D
   gerado a partir de concept 2D caricato; foto real só serve de referência para o
-  concept e precisa ser conferida a olho (`docs/LICOES.md`, lição 9). O mesmo
+  concept e precisa ser conferida a olho (`docs/LICOES.md` em `../progress`, lição 9). O mesmo
   tratamento vale para todos os campos políticos. Sem gore e sem humilhação física.
   Quando um personagem desses vai ao ar é decisão do dono.
 
 ## Processo
 
-1. Feature grande? Abra uma **issue** antes (veja [`docs/IDEAS.md`](docs/IDEAS.md)).
+1. Feature grande? Abra uma **issue** antes (as ideias vivem em `docs/IDEAS.md` do repo privado `progress`).
 2. Fork, branch, PR com descrição clara e screenshots.
 
    **Nome da branch: `v2/<assunto>`** — `v2/multiplayer`, `v2/audio`, `v2/ui-hud`.

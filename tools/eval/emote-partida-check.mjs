@@ -35,6 +35,7 @@ const ESPERADO = {
   // distancia de camera pra medir.
   'tecla-morta': ['EP1', 'EP2', 'EP3', 'EP5'], 'camera-colada': ['EP2', 'EP5'], 'anda-dancando': ['EP3'],
   'morto-dancando': ['EP4'], 'camera-perto': ['EP5'], 'porta-aberta': ['EP6'],
+  'passo-congelado': ['EP2'], 'corpo-sem-tick': ['EP2'],
 };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 
@@ -82,6 +83,8 @@ if (MUT === 'camera-colada') await reescreve(/\/js\/game\.js/, (t) => t.replace(
 if (MUT === 'anda-dancando') await reescreve(/\/js\/game\.js/, (t) => t.replace('const andou = Math.abs(input?.ax || 0) > 0.01 || Math.abs(input?.az || 0) > 0.01;', 'const andou = false;'));
 if (MUT === 'morto-dancando') await reescreve(/\/js\/game\.js/, (t) => t.replace('if (ent.isPlayer) this._emoteStop();   // ninguém dança morto', '/* cadaver dancando */'));
 if (MUT === 'camera-perto') await reescreve(/\/js\/game\.js/, (t) => t.replace('+ 1.5 * danca;', '+ 0 * danca;'));
+if (MUT === 'passo-congelado') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('this._emoteT += dt;', 'this._emoteT += 0;'));
+if (MUT === 'corpo-sem-tick') await reescreve(/\/js\/game\.js/, (t) => t.replace('tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, back, lateral);', 'void dt;'));
 
 await page.goto(`${BASE}/?${PARTIDA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 240000 });
@@ -114,17 +117,49 @@ const tocando = await page.evaluate(() => ({
   rodaFechou: !window.__game.emoteOpen,
   corpo: !!window.__game.playerTP?.ctrl?.emoteAtual?.(),
 }));
-const corpoCm = await page.evaluate(async () => {
+const corpo = await page.evaluate(async () => {
   const T = await import('/vendor/three.module.js');
-  const g = window.__game, tp = g.playerTP;
-  if (!tp) return 0;
-  let mao = null; tp.group.traverse((o) => { if (!mao && o.isBone && o.name === 'RightHand') mao = o; });
-  if (!mao) return 0;
-  const pos = () => { tp.group.updateMatrixWorld(true); return mao.getWorldPosition(new T.Vector3()); };
-  const p0 = pos(); let pico = 0;
-  for (let i = 0; i < 90; i++) { g.update(1 / 60); pico = Math.max(pico, p0.distanceTo(pos()) * 100); }
-  return +pico.toFixed(1);
+  const g = window.__game, tp = g.playerTP, ctrl = tp?.ctrl;
+  const medido = { valido: false, motivo: '', direitoCm: 0, esquerdoCm: 0,
+    tempoAntes: 0, tempoDepois: 0, continuo: true, corpoCm: 0 };
+  const invalido = (motivo) => ({ ...medido, motivo });
+  if (!tp?.group || typeof ctrl?.update !== 'function'
+      || typeof ctrl.emoteAtual !== 'function') return invalido('corpo/controlador ausente');
+  if (g._emoteAtual !== 'frevo' || ctrl.emoteAtual() !== 'frevo') return invalido('frevo não ativo');
+  const ossos = new Map();
+  tp.group.traverse((o) => {
+    if (o.isBone && ['Hips', 'RightFoot', 'LeftFoot'].includes(o.name) && !ossos.has(o.name)) ossos.set(o.name, o);
+  });
+  if (ossos.size !== 3) return invalido('quadril/pés ausentes');
+  // Frevo segura a sombrinha com a direita. Mede os DOIS pés após o fade,
+  // evitando contar a simples entrada na pose como uma dança contínua.
+  for (let i = 0; i < 60; i++) ctrl.update(1 / 60, 0, false, 0, false, 0);
+  if (!(ctrl._emoteK > 0.99) || !Number.isFinite(ctrl._emoteT)) return invalido('fade/relógio indisponível');
+  medido.tempoAntes = ctrl._emoteT;
+  const local = (nome) => tp.group.worldToLocal(ossos.get(nome).getWorldPosition(new T.Vector3()));
+  const pes = () => {
+    tp.group.updateMatrixWorld(true);
+    const quadril = local('Hips');
+    return { d: local('RightFoot').sub(quadril), e: local('LeftFoot').sub(quadril) };
+  };
+  const p0 = pes();
+  for (let i = 0; i < 90; i++) {
+    // A preparação acima não substitui a fiação: só Game.update dirige a janela.
+    g.update(1 / 60);
+    medido.continuo &&= g.playerTP === tp && tp.ctrl === ctrl && g.player.alive
+      && g._emoteAtual === 'frevo' && ctrl.emoteAtual() === 'frevo';
+    const p = pes();
+    medido.direitoCm = Math.max(medido.direitoCm, p0.d.distanceTo(p.d) * 100);
+    medido.esquerdoCm = Math.max(medido.esquerdoCm, p0.e.distanceTo(p.e) * 100);
+  }
+  medido.tempoDepois = ctrl._emoteT;
+  medido.corpoCm = Math.min(medido.direitoCm, medido.esquerdoCm);
+  medido.valido = medido.continuo && Number.isFinite(medido.corpoCm)
+    && Math.abs(medido.tempoDepois - medido.tempoAntes - 1.5) < 0.02;
+  if (!medido.valido) medido.motivo = medido.continuo ? 'relógio não acompanhou 90 quadros' : 'corpo/emote interrompido';
+  return medido;
 });
+const corpoCm = corpo.corpoCm;
 
 /* ---- EP5: a câmera afasta enquanto dança ---- */
 const distancias = await page.evaluate(async () => {
@@ -215,8 +250,11 @@ cobra('EP1', abriu.aberta && abriu.visivel && abriu.itens.length === 8 && !fecho
   `EP1 · tecla T abre a roda com ${abriu.itens.length} passos (${abriu.itens.slice(0, 3).join(', ')}…) e ESC fecha`);
 
 cobra('EP2', tocando.emote === 'frevo' && tocando.corpo && tocando.rodaFechou
-  && camInicial === 'first' && tocando.cam !== 'first' && corpoCm >= 20,
-  `EP2 · dígito 4 tocou ${tocando.emote}: corpo moveu ${corpoCm} cm e a câmera saiu de ${camInicial} para ${tocando.cam}`);
+  && camInicial === 'first' && tocando.cam !== 'first' && corpo.valido && corpoCm >= 20,
+  `EP2 · dígito 4 tocou ${tocando.emote}: pés D/E ${corpo.direitoCm.toFixed(1)}/${corpo.esquerdoCm.toFixed(1)} cm, mínimo ${corpoCm.toFixed(1)} cm`
+  + `; relógio ${(corpo.tempoDepois - corpo.tempoAntes).toFixed(3)} s, contínuo ${corpo.continuo}`
+  + (corpo.valido ? '' : ` (${corpo.motivo})`)
+  + `; câmera ${camInicial} → ${tocando.cam}`);
 
 cobra('EP3', antesAndar.emote && !aposAndar.emote && aposAndar.cam === 'first',
   `EP3 · andar derrubou ${antesAndar.emote} na hora e devolveu a câmera (${antesAndar.cam} → ${aposAndar.cam})`);

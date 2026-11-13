@@ -1,5 +1,6 @@
 import {accountVerifiedBadge} from './account-verified.js';
 import {careerRankBadge} from './career-rank.js';
+import {heroUrl,retratoFontes} from './data/retratos.js';
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function node(tag,text='',className='') {const n=document.createElement(tag);n.textContent=text;n.className=className;return n;}
 function https(value) {
@@ -43,7 +44,9 @@ export function rankingPlayerCell(player,{careerOnly=false}={}) {
   const cell=node('td'),identity=node('div','','ranking-player'),path=playerProfilePath(player);
   const avatar=node('span','','ranking-avatar');avatar.append(node('span',Array.from(player.nick || '?')[0].toUpperCase()));
   const human=uuid.test(player.id || '');
-  const botArt=!human && typeof player.avatar_url==='string' && /^\/img\/chars-hero\/[a-z0-9_-]+\.webp(?:\?.*)?$/i.test(player.avatar_url)?player.avatar_url:null;
+  /* Bot chega do servidor como /img/chars-hero/<id>.webp; id sem hero cai no retrato que existe. */
+  const botId=!human && typeof player.avatar_url==='string' ? /^\/img\/chars-hero\/([a-z0-9_-]+)\.webp(?:\?.*)?$/i.exec(player.avatar_url)?.[1]?.toLowerCase() : null;
+  const botArt=botId?(heroUrl(botId)?player.avatar_url:retratoFontes(botId)[0]):null;
   const photo=human?`/api/social-avatar?id=${encodeURIComponent(player.id)}`:botArt;
   if(photo){const image=node('img');image.src=photo;image.alt=human?`Avatar de ${player.nick}`:`Personagem de ${player.nick}`;image.width=32;image.height=32;image.loading='lazy';image.referrerPolicy='no-referrer';image.onerror=()=>{image.hidden=true;};avatar.append(image);}
   const details=node('div'),name=node(path?'a':'span',player.nick);if(path)name.href=path;details.append(name);

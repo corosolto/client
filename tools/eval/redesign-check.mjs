@@ -4,7 +4,9 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Script as VMScript, createContext } from 'node:vm';
 import sharp from 'sharp';
+import { langFromCountry } from '../../src/lib/geo.ts';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const cli = process.argv.slice(2);
@@ -16,12 +18,16 @@ const alvoPorMutante = {
   'asset-ausente': 'UIA1',
   'resultado-nao-auditado': 'UIA1',
   'video-dimensao': 'UIA2',
+  'video-container': 'UIA2',
   'splash-sem-wallpaper': 'UIA3',
   'lote-nao-auditado': 'UIA4',
   'loading-sem-canvas': 'UIA5',
   'loading-uma-acao': 'UIA6',
   'loading-clipe-falso': 'UIA6',
   'sem-i18n': 'UIR1',
+  'loading-sem-tr': 'UIR1',
+  'loading-fallback-fora-tr': 'UIR1',
+  'loading-triplo-fora-tr': 'UIR1',
   'preview-render': 'UIR2',
   'preview-decode': 'UIR3',
   'mapa-esconde-um': 'UIR4',
@@ -47,6 +53,7 @@ const alvoPorMutante = {
   'mount-sem-resize': 'UIR8',
   'gerador-engole-erro': 'UIR9',
   'i18n-dinamica-restante': 'UIR10',
+  'setup-sem-i18n': 'UIR10',
   'video-vaza': 'UIR11',
   'preview-sem-interacao': 'UIR12',
   'selecao-tres-colunas': 'UIR13',
@@ -80,6 +87,7 @@ const alvoPorMutante = {
   'killfeed-volta-svg': 'UIR25',
   'modo-volta-setup': 'UIR26',
   'ctf-some-home': 'UIR26',
+  'toggle-sem-arena': 'UIR26',
   'personagem-dificuldade-volta': 'UIR27',
   'punk-avatar-nao-auditado': 'UIR28',
   'perfil-volta-iniciais': 'UIR29',
@@ -97,6 +105,7 @@ const alvoPorMutante = {
   'backend-aviso-volta': 'UIR38',
   'faccao-mostra-antes-da-arte': 'UIR39',
   'troca-m-abre-pausa': 'UIR40',
+  'm-lado-antigo': 'UIR40',
   'resultado-emenda-volta': 'UIR41',
   'versao-menu-volta-rodape': 'UIR42',
   'sem-autoria': 'UIR43',
@@ -155,8 +164,6 @@ let staticAudit = existsSync(join(ROOT, 'tools/eval/redesign-static-audit.json')
   ? readFileSync(join(ROOT, 'tools/eval/redesign-static-audit.json'), 'utf8') : '';
 let loading3d = existsSync(join(ROOT, 'public/js/loading3d.js'))
   ? readFileSync(join(ROOT, 'public/js/loading3d.js'), 'utf8') : '';
-const geoLib = existsSync(join(ROOT, 'src/lib/geo.ts'))
-  ? readFileSync(join(ROOT, 'src/lib/geo.ts'), 'utf8') : '';
 const apiGeoLang = existsSync(join(ROOT, 'src/pages/api/geo-lang.ts'))
   ? readFileSync(join(ROOT, 'src/pages/api/geo-lang.ts'), 'utf8') : '';
 let mutacaoAplicou = !MUTANTE;
@@ -188,9 +195,16 @@ loading3d = muta('loading-uma-faccao', loading3d,
   "U: 'blackmetal'",
   "U: 'canarinho'");
 
+main = muta('loading-sem-tr', main, 'a.textContent = tr(nomeTimeJavaporcos', 'a.textContent = (nomeTimeJavaporcos');
+main = muta('loading-fallback-fora-tr', main,
+  "a.textContent = tr(nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'E') || FACTION_NAME[currentTeam] || '')",
+  "a.textContent = tr('') || (FACTION_NAME[currentTeam] || '')");
+main = muta('loading-triplo-fora-tr', main,
+  "b.textContent = tr(ehMapaJavaporcos(currentMap) && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || '')",
+  "b.textContent = ehMapaJavaporcos(currentMap) && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : tr(nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'B') || FACTION_NAME[ladoDele] || '')");
 main = muta('sem-i18n', main,
-  "`${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`",
-  "`MAPA ${MAP_IDS.indexOf(currentMap) + 1} DE ${MAP_IDS.length}`");
+  "`${tr('MAPA')} ${MAPAS_MENU.indexOf(currentMap) + 1} ${tr('DE')} ${MAPAS_MENU.length}`",
+  "`MAPA ${MAPAS_MENU.indexOf(currentMap) + 1} DE ${MAPAS_MENU.length}`");
 main = muta('preview-render', main,
   "if (pv && pv.model && previewModelActive(csOpen,hubPreviewOpen)) {",
   "if (pv && pv.model && (csOpen || hubPreviewOpen)) {");
@@ -245,6 +259,9 @@ videoGenerator = muta('gerador-engole-erro', videoGenerator,
 main = muta('i18n-dinamica-restante', main,
   "$('char-info-blurb').textContent = tr(c.blurb);",
   "$('char-info-blurb').textContent = c.blurb;");
+main = muta('setup-sem-i18n', main,
+  "if (st) st.textContent = tr(matchMode === 'arena' ? 'PASSO 1 · VIRA-CASACA' : (matchMode === 'ctf' ? 'PASSO 1 · A PARTIDA (CTF)' : 'PASSO 1 · A PARTIDA'));",
+  "if (st) st.textContent = (matchMode === 'arena' ? 'PASSO 1 · VIRA-CASACA' : (matchMode === 'ctf' ? 'PASSO 1 · A PARTIDA (CTF)' : 'PASSO 1 · A PARTIDA'));");
 astro = muta('video-vaza', astro,
   '<div id="load-overlay" class="hidden">',
   '<div id="load-overlay" class="hidden"><video id="load-char" autoplay></video>');
@@ -348,7 +365,7 @@ game = muta('resultado-personagem-antigo', game,
   'if (charId) { this.playerDef = byId(charId); this.playerCharId = charId; p.def = this.playerDef; }',
   'if (charId) { this.playerDef = byId(charId); p.def = this.playerDef; }');
 main = muta('loading-sem-wallpaper', main,
-  "_lo.box.style.setProperty('--loading-wall', loadingWallUrl(_loadWallI++));",
+  "_lo.box.style.setProperty('--loading-wall', _loadWallFixa ? `url('${_loadWallFixa}')` : loadingWallUrl(_loadWallI++));",
   "_lo.box.style.setProperty('--loading-wall', 'none');");
 main = muta('splash-sem-wallpaper', main,
   "splash.style.setProperty('--loading-wall', loadingWallUrl(_wallK));",
@@ -425,6 +442,12 @@ main = muta('faccao-mostra-antes-da-arte', main,
 main = muta('troca-m-abre-pausa', main,
   "game.setPaused(true);\n    switchMode = true;",
   "if (document.pointerLockElement) document.exitPointerLock();\n    switchMode = true;");
+main = muta('toggle-sem-arena', main,
+  "if (modoObjetivoAtual() || !['rounds', 'ctf', 'arena'].includes(mode)) return;",
+  "if (modoObjetivoAtual() || !['rounds', 'ctf'].includes(mode)) return;");
+main = muta('m-lado-antigo', main,
+  "pickTeam(game._factionOf(game.player.team === 'E' ? 'B' : 'E'));",
+  "pickTeam(game.enemyFaction);");
 
 function literalIds() {
   const bloco = characters.match(/export const CHARACTERS = \[([\s\S]*?)\n\];\nexport const byId/);
@@ -448,31 +471,16 @@ function diff(a, b) {
   const B = new Set(b);
   return a.filter((x) => !B.has(x));
 }
-function bytesDepois(buf, id) {
-  for (let pos = 0; pos <= buf.length - id.length - 2; pos++) {
-    if (!id.every((byte, i) => buf[pos + i] === byte)) continue;
-    const primeiro = buf[pos + id.length];
-    let largura = 1;
-    while (largura <= 8 && !(primeiro & (0x80 >> (largura - 1)))) largura++;
-    if (largura > 8 || pos + id.length + largura >= buf.length) continue;
-    let tamanho = primeiro & (0xff >> largura);
-    for (let i = 1; i < largura; i++) tamanho = tamanho * 256 + buf[pos + id.length + i];
-    const inicio = pos + id.length + largura;
-    if (tamanho < 1 || tamanho > 8 || inicio + tamanho > buf.length) continue;
-    let valor = 0;
-    for (let i = 0; i < tamanho; i++) valor = valor * 256 + buf[inicio + i];
-    if (valor > 0 && valor < 8192) return valor;
-  }
-  return null;
-}
 function metaWebm(rel) {
-  const buf = readFileSync(join(ROOT, rel)).subarray(0, 131072);
-  return {
-    webm: buf.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3])),
-    vp9: buf.includes(Buffer.from('V_VP9')),
-    width: bytesDepois(buf, [0xb0]),
-    height: bytesDepois(buf, [0xba]),
-  };
+  const probe = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'format=format_name:stream=codec_name,width,height', '-of', 'json', join(ROOT, rel)], { encoding: 'utf8' });
+  if (probe.status !== 0) return { webm: false, vp9: false, width: null, height: null };
+  const parsed = JSON.parse(probe.stdout);
+  if (MUTANTE === 'video-container') {
+    parsed.format = { format_name: 'mov,mp4,m4a,3gp,3g2,mj2' };
+    mutacaoAplicou = true;
+  }
+  const stream = parsed.streams?.[0] || {};
+  return { webm: parsed.format?.format_name?.split(',').includes('webm') || false, vp9: stream.codec_name === 'vp9', width: stream.width, height: stream.height };
 }
 function metaWebpAlpha(buf) {
   const chunk = buf.indexOf(Buffer.from('VP8X'));
@@ -532,8 +540,10 @@ if (MUTANTE === 'asset-ausente' && avatares.length) { avatares = avatares.slice(
 const selecao = nomes('public/video/chars', (f) => f.endsWith('.webm'));
 const resultadoImg = nomes('public/img/resultado', (f) => /-(?:derrota|vitoria)\.webp$/.test(f));
 const resultadoVideo = nomes('public/video/resultado', (f) => /-(?:derrota|vitoria)\.webm$/.test(f));
-const esperadoAvatar = ids.map((id) => `${id}.webp`);
-const esperadoSelecao = ids.map((id) => `${id}.webm`);
+/* Ordena depois do sufixo, como `nomes()`: 'capitao-caveira.webp' vem antes de 'capitao.webp'
+   ('-' < '.'), embora 'capitao' venha antes de 'capitao-caveira' como id. */
+const esperadoAvatar = ids.map((id) => `${id}.webp`).sort();
+const esperadoSelecao = ids.map((id) => `${id}.webm`).sort();
 const hashResultado = createHash('sha256');
 for (const arquivo of resultadoImg) {
   const rel = `public/img/resultado/${arquivo}`;
@@ -644,15 +654,16 @@ const loadingAcoes3d = new Set(loadingActions).size >= 6
 const funcLoop = blocoFuncao(main, 'loop');
 const funcShow = blocoFuncao(main, 'show');
 const funcMap = blocoFuncao(main, 'renderMapScreen');
+const mainLoadingI18n = main.replace(/nomeTimeJavaporcos\(ehMapaJavaporcos\(currentMap\) \? 'horde' : '', '[EB]'\) \|\| /g, '')
+  .replace("tr(ehMapaJavaporcos(currentMap) && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : ", 'tr(');
 const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main)
   && /tr\(FACTION_NAME\[c\.team\] \|\| ''\)[\s\S]{0,160}tr\('PERSONAGENS'\)/.test(main)
-  && /a\.textContent = tr\(FACTION_NAME\[currentTeam\] \|\| ''\)/.test(main)
-  && /b\.textContent = tr\(FACTION_NAME\[ladoDele\] \|\| ''\)/.test(main)
+  && /a\.textContent = tr\(FACTION_NAME\[currentTeam\] \|\| ''\)/.test(mainLoadingI18n)
+  && /b\.textContent = tr\(FACTION_NAME\[ladoDele\] \|\| ''\)/.test(mainLoadingI18n)
   && /chip\.textContent = `\$\{n\} \$\{tr\('PERSONAGENS'\)\}`/.test(main)
   && /ms-desc'\)\.textContent = tr\(MAP_DESC\[currentMap\] \|\| ''\)/.test(main)
   && /frase\('escolhaAdversario', tr\(FACTION_NAME\[myFaction\]/.test(main)
   && /continuar\.textContent = frase\('continuarSetup'\)/.test(main)
-  && /const FACTION_NAME = \{ E: 'TIME E', B: 'TIME B'/.test(main)
   && /rEl\.textContent = tr\(RARITIES\[tier\]\[0\]\)/.test(main)
   && /char-spec-name'\)\.textContent = tr\(specName\)/.test(main);
 const previewUso = /if \(pv && pv\.model && previewModelActive\(csOpen,hubPreviewOpen\)\)/.test(funcLoop)
@@ -773,8 +784,85 @@ const geradorFalhaFechado = /const pageErrors = \[\]/.test(videoGenerator)
   && /page\.on\('pageerror',[\s\S]{0,120}pageErrors\.push/.test(videoGenerator)
   && /catch \{ throw new Error\(`\$\{id\}: mounttest não ficou pronto`\); \}/.test(videoGenerator)
   && /if \(pageErrors\.length\) throw new Error\(`Falhas no browser:/.test(videoGenerator);
-const i18nRestante = /textContent = tr\('PASSO À PARTE · NOME NA CAMISA'\)/.test(main)
-  && /textContent = tr\(matchMode === 'ctf' \? 'PASSO 1 · A PARTIDA \(CTF\)' : 'PASSO 1 · A PARTIDA'\)/.test(main)
+/* UIR10 — o título da etapa do setup deixou de ser checagem estática: o corpo REAL de
+   setSetupStep, extraído do main pelo helper blocoFuncao (âncora única, sem cópia falsa),
+   é EXECUTADO num node:vm com timeout 1s e contexto mínimo (menuSetup/$/trspy/matchMode/
+   setupTitle), nos dois idiomas, nos passos 'match' e 'profile' dos modos rounds/ctf/arena.
+   O trspy registra cada chave que pediu tradução: sem tr() no st.textContent do bloco REAL
+   o passo EN devolve PT cru e reprova — nada de aprovar por fallback/substring. */
+let setupTraduzOk = false;
+const setupEvidencia = [];
+try {
+  const corpoSetSetupStep = blocoFuncao(main, 'setSetupStep');
+  const corpoDict = (i18n.match(/const DICT = (\{[\s\S]*?\n\});/) || [])[1];
+  if (!corpoSetSetupStep) throw new Error('setSetupStep ausente no main');
+  if (main.split('function setSetupStep(').length !== 2) throw new Error('setSetupStep duplicada no main');
+  if (!corpoDict) throw new Error('DICT ilegível no i18n');
+  const dict = new VMScript(`(${corpoDict})`).runInNewContext({}, { timeout: 1000 });
+  const cenarios = [
+    { passo: 'match', modo: 'rounds', titulo: 'MATA-MATA' },
+    { passo: 'match', modo: 'ctf', titulo: 'CAPTURE THE FLAG' },
+    { passo: 'match', modo: 'arena', titulo: 'VIRA-CASACA' },
+    { passo: 'profile', modo: 'rounds', titulo: 'MATA-MATA' },
+    { passo: 'profile', modo: 'ctf', titulo: 'CAPTURE THE FLAG' },
+    { passo: 'profile', modo: 'arena', titulo: 'VIRA-CASACA' },
+  ];
+  const trspy = new Set();
+  const saidas = {};
+  for (const lang of ['pt', 'en']) {
+    saidas[lang] = {};
+    for (const c of cenarios) {
+      const elementos = {};
+      const ctx = {
+        menuSetup: { dataset: {} },
+        $: (id) => (elementos[id] ??= { textContent: '' }),
+        tr: (s) => { trspy.add(s); return lang === 'pt' ? s : (dict[s] ?? s); },
+        matchMode: c.modo,
+        setupTitle: c.titulo,
+      };
+      ctx.setSetupStep = new VMScript(`(${corpoSetSetupStep})`).runInNewContext(ctx, { timeout: 1000 });
+      new VMScript(`setSetupStep(${JSON.stringify(c.passo)})`).runInNewContext(ctx, { timeout: 1000 });
+      saidas[lang][`${c.modo}:${c.passo}`] = {
+        step: elementos['setup-step'].textContent,
+        title: elementos['setup-title'].textContent,
+        dataStep: ctx.menuSetup.dataset.step,
+      };
+    }
+  }
+  const esperado = {
+    pt: {
+      'rounds:match': ['PASSO 1 · A PARTIDA', 'MATA-MATA'],
+      'ctf:match': ['PASSO 1 · A PARTIDA (CTF)', 'CAPTURE THE FLAG'],
+      'arena:match': ['PASSO 1 · VIRA-CASACA', 'VIRA-CASACA'],
+      'rounds:profile': ['PASSO À PARTE · NOME NA CAMISA', 'SEU PERFIL'],
+      'ctf:profile': ['PASSO À PARTE · NOME NA CAMISA', 'SEU PERFIL'],
+      'arena:profile': ['PASSO À PARTE · NOME NA CAMISA', 'SEU PERFIL'],
+    },
+    en: {
+      'rounds:match': ['STEP 1 · THE MATCH', 'DEATHMATCH'],
+      'ctf:match': ['STEP 1 · THE MATCH (CTF)', 'CAPTURE THE FLAG'],
+      'arena:match': ['STEP 1 · TURNCOAT', 'TURNCOAT'],
+      'rounds:profile': ['SIDE STEP · NAME ON THE JERSEY', 'YOUR PROFILE'],
+      'ctf:profile': ['SIDE STEP · NAME ON THE JERSEY', 'YOUR PROFILE'],
+      'arena:profile': ['SIDE STEP · NAME ON THE JERSEY', 'YOUR PROFILE'],
+    },
+  };
+  for (const cenario of Object.keys(esperado.en)) {
+    for (const lang of ['pt', 'en']) {
+      const [step, title] = esperado[lang][cenario];
+      if (saidas[lang][cenario].step !== step) setupEvidencia.push(`${lang} ${cenario} step=${JSON.stringify(saidas[lang][cenario].step)}≠${JSON.stringify(step)}`);
+      if (saidas[lang][cenario].title !== title) setupEvidencia.push(`${lang} ${cenario} title=${JSON.stringify(saidas[lang][cenario].title)}≠${JSON.stringify(title)}`);
+    }
+    if (saidas.pt[cenario].dataStep !== cenario.split(':')[1]) setupEvidencia.push(`data-step ${cenario}=${JSON.stringify(saidas.pt[cenario].dataStep)}`);
+  }
+  const chavesSpy = ['PASSO 1 · A PARTIDA', 'PASSO 1 · A PARTIDA (CTF)', 'PASSO 1 · VIRA-CASACA',
+    'PASSO À PARTE · NOME NA CAMISA', 'SEU PERFIL', 'MATA-MATA', 'CAPTURE THE FLAG', 'VIRA-CASACA'];
+  for (const chave of chavesSpy) if (!trspy.has(chave)) setupEvidencia.push(`trspy sem ${JSON.stringify(chave)}`);
+  setupTraduzOk = setupEvidencia.length === 0;
+} catch (erro) {
+  setupEvidencia.push(`execução falhou: ${erro && erro.message}`);
+}
+const i18nRestante = setupTraduzOk
   && (main.match(/nick \|\| tr\('SEM NICK'\)/g) || []).length >= 1
   && /char-info-blurb'\)\.textContent = tr\(c\.blurb\)/.test(main)
   && blurbsSemIngles.length === 0;
@@ -823,12 +911,13 @@ const resultadoEstatico = /--me-art/.test(game)
      (`if (charId) { this.playerDef = byId(charId); ... }`) e ficou vermelha sozinha
      quando o guarda ganhou reserva de facção, sem que nada do contrato mudasse. */
   && /_switchTeam\(charId\)[\s\S]{0,900}?this\.playerDef =[\s\S]{0,400}?this\.playerCharId = this\.playerDef\.id;[\s\S]{0,200}?p\.def = this\.playerDef;/.test(game);
+const loadingWallAplicada = main.includes("_lo.box.style.setProperty('--loading-wall', _loadWallFixa ? `url('${_loadWallFixa}')` : loadingWallUrl(_loadWallI++));");
 const loadingWallpaper = /const loadingWallUrl = \(i\) =>/.test(main)
-  && /_lo\.box\.style\.setProperty\('--loading-wall', loadingWallUrl\(_loadWallI\+\+\)\)/.test(main)
+  && loadingWallAplicada
   && /splash\.style\.setProperty\('--loading-wall', loadingWallUrl\(_wallK\)\)/.test(main)
   && loadingCharacterIds.length === 5 && new Set(loadingCharacterIds).size === 5
   && /E: 'gotinha'[\s\S]*?B: 'canarinho'[\s\S]*?U: 'blackmetal'[\s\S]*?C: 'bonzo'[\s\S]*?F: 'mandrake'/.test(loading3d)
-  && /loadingStage\.show\(currentFaction\)/.test(main)
+  && /loadingStage\.show\(ehMapaJavaporcos\(currentMap\) \? 'J' : currentFaction\)/.test(main)
   && /loadingStage\.hide\(\)/.test(main)
   && !/loading-runner/.test(astro)
   && !/loading-runner-frames/.test(css);
@@ -879,6 +968,52 @@ const killfeedArma2D = /_killfeedWeaponIcon\(short\) \{/.test(game)
   && /\.kf-weapon-mask\{[^}]*background:currentColor[^}]*mask:var\(--weapon-mask\) center\/contain no-repeat/.test(css)
   && /\.kf-weapon-2d:has\(\.kf-weapon-mask\) \.kf-fallback\{display:none\}/.test(css);
 const funcAttrs = blocoFuncao(main, 'renderCharAttrs');
+// Executa o select e o listener reais; o DOM abaixo só captura o registro do clique.
+let modoCicloOk = false;
+const modoCicloEvid = [];
+try {
+  const corpoSelect = blocoFuncao(main, 'selectMatchMode');
+  const objetivoHelpers = [...main.matchAll(/^const modoObjetivoAtual = \(\) => MAPS\[currentMap\]\?\.objectiveMode \|\| '';$/gm)];
+  if (objetivoHelpers.length !== 1) throw new Error('helper real de objetivo sem âncora única');
+  const ancora = "\n{\n  const mm = $('map-mode');";
+  const inicio = main.indexOf(ancora);
+  if (!corpoSelect || (main.match(/function selectMatchMode\(/g) || []).length !== 1
+      || inicio < 0 || main.indexOf(ancora, inicio + 1) !== -1) throw new Error('modo sem âncora única');
+  let nivel = 0, fim = -1;
+  for (let i = inicio + 1; i < main.length; i++) {
+    if (main[i] === '{') nivel++;
+    else if (main[i] === '}' && --nivel === 0) { fim = i + 1; break; }
+  }
+  if (fim < 0) throw new Error('listener de modo incompleto');
+  const vistos = [], passos = [], sons = [];
+  let renders = 0;
+  const ctx = {
+    matchMode: 'rounds', modoEscolhido: false, setupTitle: '', handler: null,
+    MAPS: { classico: {}, horde: { objectiveMode: 'horde' }, escort: { objectiveMode: 'escort' } },
+    currentMap: 'classico',
+    $: (id) => id === 'map-mode' ? { addEventListener: (tipo, fn) => {
+      if (tipo !== 'click') throw new Error('evento de modo errado');
+      ctx.handler = fn;
+    } } : null,
+    ui: { click: () => sons.push('click') },
+    setMapMode: () => vistos.push([ctx.matchMode, ctx.modoEscolhido, ctx.setupTitle]),
+    setSetupStep: (passo) => passos.push(passo), renderMapScreen: () => renders++,
+  };
+  const contexto = createContext(ctx);
+  new VMScript(`${objetivoHelpers[0][0]}\n${corpoSelect}\n${main.slice(inicio + 1, fim)}\nfor (let i=0;i<3;i++) handler(); selectMatchMode('abate', false);`)
+    .runInContext(contexto, { timeout: 1000 });
+  const esperado = [['ctf', true, 'CAPTURE THE FLAG'], ['arena', true, 'VIRA-CASACA'], ['rounds', true, 'MATA-MATA']];
+  if (JSON.stringify(vistos) !== JSON.stringify(esperado)) modoCicloEvid.push(`ciclo/estado=${JSON.stringify(vistos)}`);
+  if (ctx.matchMode !== 'rounds' || !ctx.modoEscolhido || ctx.setupTitle !== 'MATA-MATA'
+      || renders !== 3 || sons.length !== 3 || JSON.stringify(passos) !== '["match","match","match"]') modoCicloEvid.push('fluxo de mapa/estado inválido');
+  for (const mapa of ['horde', 'escort']) {
+    ctx.currentMap = mapa;
+    new VMScript("handler(); selectMatchMode('arena');").runInContext(contexto, { timeout: 1000 });
+    if (vistos.length !== 3 || renders !== 3 || sons.length !== 3 || passos.length !== 3
+        || ctx.matchMode !== 'rounds' || ctx.setupTitle !== 'MATA-MATA') modoCicloEvid.push(`objetivo ${mapa} alterou o modo`);
+  }
+  modoCicloOk = modoCicloEvid.length === 0;
+} catch (erro) { modoCicloEvid.push(`execução falhou: ${erro.message}`); }
 /* Multiplayer abre direto. Single Player abre seu submenu, que contém os dois modos locais.
    O relato de 06/09 confirmou que CTF não pode virar uma terceira entrada solta na home.
    O mutante ctf-some-home remove o acesso do submenu. */
@@ -890,8 +1025,10 @@ const modoMapaPadrao = /<button class="cs-item cs-prime" data-act="mp"[^>]*>[\s\
   && /function openModeMap\(mode, title, act\) \{[\s\S]{0,180}openSetup\(mode, title, act\);[\s\S]{0,100}renderMapScreen\(\);[\s\S]{0,80}show\('map-screen'\);/.test(main)
   && /case 'sp':\s+openModeMap\('rounds', 'MATA-MATA', 'sp'\); break;/.test(main)
   && /case 'ctf':\s+openModeMap\('ctf', 'CAPTURE THE FLAG', 'ctf'\); break;/.test(main)
-  // o modo continua alternável pelo jogador, senão o CTF vira inalcançável ao sair do menu
-  && /matchMode = matchMode === 'ctf' \? 'rounds' : 'ctf';/.test(main);
+  && /case 'arena':\s+openModeMap\('arena', 'VIRA-CASACA', 'arena'\); break;/.test(main)
+  // o modo continua alternável pelo jogador nos TRÊS modos (ciclo provado por EXECUÇÃO acima),
+  // senão o CTF vira inalcançável ao sair do menu
+  && modoCicloOk;
 const personagemSemDificuldade = !!funcAttrs && !/attr-dif|DIFICULDADE|undefined/.test(funcAttrs);
 const perfilComAvatar = /const PLAYER_AVATAR_KEY = 'awpbr_player_avatar'/.test(main)
   && /function fallbackPlayerAvatar\(seed\)[\s\S]{0,420}\/img\/chars\/avatars\/\$\{character\.id\}\.webp/.test(main)
@@ -915,7 +1052,7 @@ const menuWall3x2AssetsOk = menuWallSources.length > 0 && (await Promise.all(men
   return meta.width === sourceMeta.width && meta.height === Math.round(sourceMeta.width / 1.5);
 }))).every(Boolean);
 const wallpaperLoadingResponsivo = /setProperty\('--loading-wall', loadingWallUrl\(_wallK\)\)/.test(main)
-  && /setProperty\('--loading-wall', loadingWallUrl\(_loadWallI\+\+\)\)/.test(main)
+  && loadingWallAplicada
   && /setProperty\('--menu-wall', HOME_WALL\)/.test(main)
   && /setProperty\('--menu-wall', SETUP_WALL\)/.test(main)
   && /setProperty\('--menu-wall-3x2', HOME_WALL_3X2\)/.test(main)
@@ -937,9 +1074,10 @@ const opcoesPartidaNoMapa = /id="ms-wpn-mode"/.test(astro)
   && /settings\.wpnMode = msWpnMode\.value/.test(main)
   && /settings\.allyBots = Math\.max\(0, Math\.min\(7, msAlly\.value \| 0\)\)/.test(main)
   && /settings\.enemyBots = Math\.max\(1, Math\.min\(8, msEnemy\.value \| 0\)\)/.test(main)
-  && /settings\[matchMode === 'ctf' \? 'ctfRounds' : 'rounds'\] = sanitizeRounds\(msRounds\.value\)(?: \|\| \(matchMode === 'ctf' \? 3 : 5\))?;/.test(main)
+  && /settings\[modoEfetivoAtual\(\) === 'ctf' \? 'ctfRounds' : 'rounds'\] = sanitizeRounds\(msRounds\.value\) \|\| \(modoEfetivoAtual\(\) === 'ctf' \? 3 : 5\);/.test(main)
   && /function matchRounds\(\)[\s\S]{0,400}settings\.ctfRounds[\s\S]{0,400}settings\.rounds/.test(main)
-  && /roundsMax: sessao \? \(sanitizeRounds\(sessao\.net\.meta\.roundsMax\) \|\| undefined\) : matchRounds\(\),/.test(main)
+  && /roundsMax:[^\n]*sanitizeRounds\(sessao\.net\.meta\.roundsMax\)[^\n]*matchRounds\(\)/.test(main)
+  && /roundsMax:[^\n]*ehMapaJavaporcos\(currentMap\) \? 1/.test(main)
   && /constructor\(\{[^\n]*\broundsMax\b/.test(game)
   && /export const sanitizeRounds[\s\S]{0,200}ROUNDS_CUSTOM_MAX \? n : 0;/.test(game)
   && /const requestedRounds = sanitizeRounds\(roundsMax\);/.test(game)
@@ -972,9 +1110,43 @@ const faccaoPreloadBloqueante = /const TEAM_ART_URLS = \[[^\]]*time-e\.webp[^\]]
   && /const factionArtReady = Promise\.all\(teamArtImages\.map/.test(main)
   && /\$\('btn-jogar'\)\.onclick = async \(\) => \{[\s\S]{0,900}await factionArtReady;[\s\S]{0,120}show\('team-select'\)/.test(main)
   && /target\.screen === 'faction'[\s\S]{0,80}await factionArtReady;[\s\S]{0,120}show\('team-select'\)/.test(main);
-const trocaMConsistente = /game\.onRequestSwitch = \(\) => \{[\s\S]{0,180}game\.setPaused\(true\);[\s\S]{0,120}pickTeam\(game\.enemyFaction\)/.test(main)
-  && /\$\('char-back'\)\.onclick = \(\) => \{[\s\S]{0,400}if \(switchMode && game\)[\s\S]{0,300}game\.resume\(\)/.test(main)
-  && /const oldFaction = this\.playerFaction;[\s\S]{0,160}this\.playerFaction = this\.enemyFaction;[\s\S]{0,80}this\.enemyFaction = oldFaction;/.test(game);
+// O hook real usa o lado atual; o mapeamento real do Game continua fixo ao lado inicial.
+let trocaExecOk = false;
+const trocaExecEvid = [];
+try {
+  const corpoHook = blocoFuncao(main, 'armSwitchHook');
+  const faccoes = [...game.matchAll(/^  _factionOf\(side\) \{[^\n]+\}$/gm)];
+  if (!corpoHook || (main.match(/function armSwitchHook\(/g) || []).length !== 1 || faccoes.length !== 1) throw new Error('hook/facção sem âncora única');
+  for (const mapa of [{ inicial: 'E', propria: 'P', inimiga: 'B' }, { inicial: 'B', propria: 'U', inimiga: 'F' }]) {
+    for (const atual of ['E', 'B']) {
+      const ordem = [];
+      const oposto = atual === 'E' ? 'B' : 'E';
+      const esperado = oposto === mapa.inicial ? mapa.propria : mapa.inimiga;
+      const ctx = {
+        mpSessao: null, switchMode: false, pick: null, pausado: false,
+        pickTeam: (f) => { ctx.pick = f; ordem.push(ctx.pausado ? 'pick-pausado' : 'pick-ativo'); },
+        abrirTrocaOnline: () => ordem.push('online'),
+        document: { pointerLockElement: null, exitPointerLock: () => ordem.push('exitlock') },
+        game: { player: { team: atual }, playerTeam: mapa.inicial, playerFaction: mapa.propria, enemyFaction: mapa.inimiga,
+          setPaused: (valor) => { ctx.pausado = valor; ordem.push('pausa'); } },
+      };
+      new VMScript(`game._factionOf = ({${faccoes[0][0]}})._factionOf; ${corpoHook}\narmSwitchHook(); game.onRequestSwitch();`)
+        .runInNewContext(ctx, { timeout: 1000 });
+      if (JSON.stringify(ordem) !== '["pausa","pick-pausado"]' || ctx.pick !== esperado || ctx.switchMode !== true) {
+        trocaExecEvid.push(`${mapa.inicial}/${atual}: ordem=${ordem.join(',')} pick=${ctx.pick} esperado=${esperado}`);
+      }
+    }
+  }
+  const ordemOnline = [];
+  const ctx = { mpSessao: {}, switchMode: false, game: { setPaused: () => ordemOnline.push('pausa') },
+    pickTeam: () => ordemOnline.push('pick'), abrirTrocaOnline: () => ordemOnline.push('online') };
+  new VMScript(`${corpoHook}\narmSwitchHook(); game.onRequestSwitch();`).runInNewContext(ctx, { timeout: 1000 });
+  if (JSON.stringify(ordemOnline) !== '["online"]' || ctx.switchMode !== false) trocaExecEvid.push('hook online não delegou exclusivamente');
+  trocaExecOk = trocaExecEvid.length === 0;
+} catch (erro) { trocaExecEvid.push(`execução falhou: ${erro.message}`); }
+const trocaMConsistente = trocaExecOk
+  // VOLTAR durante a troca retoma a partida em vez de abandonar o fluxo.
+  && /\$\('char-back'\)\.onclick = \(\) => \{[\s\S]{0,400}if \(switchMode && game\)[\s\S]{0,300}game\.resume\(\)/.test(main);
 const resultadoFundoContinuo = !/\.me-(?:wrap|hero)::after\{/.test(css)
   && !/--me-accent-rgb/.test(`${css}\n${main}\n${game}`);
 /* UIR44 — a escalação embrulha cada card numa célula (card + chip ＋). Sem o card ocupar a
@@ -989,20 +1161,20 @@ const cardEscalacaoInteiro = /\.hub-roster-cell\{position:relative[^}]*\}/.test(
 const versaoMenuNoCanto = /<\/div>\s*<span class="menu-version" id="mf-ver"><\/span>\s*<\/div>\s*<!-- PAINEL DE SETUP/.test(astro)
   && /\.menu-version\{[^}]*position:fixed[^}]*right:min\(4vw,42px\)[^}]*bottom:14px/.test(css)
   && /\.menu-footer\{[^}]*bottom:48px/.test(css);
-/* UIR20 — home ESTÁTICA com idioma por país. O Stateloop só publica build estático
-   e a home SSR não emite dist/client/index.html, então a decisão de idioma migrou
-   do frontmatter para o /api/geo-lang: o fetch começa no <head>, o i18n resolve
-   ANTES do boot (translateDom) e cai no navegador quando a API não existe. */
 const idiomaGeo = !/export const prerender = false/.test(astro)
   && /window\.__GEO_LANG__/.test(astro)
-  && /const EN_GEO_COUNTRIES = new Set\(\[[\s\S]*?'US'[\s\S]*?'GB'/.test(geoLib)
-  && !/EN_GEO_COUNTRIES[\s\S]{0,400}'PT'|'ES'/.test(geoLib)
-  && /export function langFromCountry/.test(geoLib)
+  && langFromCountry('US') === 'en'
+  && langFromCountry('GB') === 'en'
+  && langFromCountry('PT') === 'pt'
+  && langFromCountry('BR') === 'pt'
+  && langFromCountry(null) === 'pt'
   && /export const prerender = false/.test(apiGeoLang)
   && /langFromCountry/.test(apiGeoLang)
   && /export async function resolveGeoLang/.test(i18n)
   && /navigator\.language/.test(i18n)
-  && /await resolveGeoLang\(\)/.test(main);
+  // Sem top-level await: o contrato autoritativo é a cadeia que traduz antes de finishBoot.
+  && /window\.__CS_LANG_READY__\s*=\s*moduleSequencingReady\.then\(\(\)\s*=>\s*resolveGeoLang\(\)\)\.then/.test(main)
+  && /void window\.__CS_LANG_READY__\.then\(finishBoot\)\.catch/.test(main);
 
 const resultados = [
   ['UIA1', 'elenco inteiro tem avatar, seleção e dois resultados estáticos', assetOk, assetEvid],
@@ -1033,7 +1205,11 @@ const resultados = [
   ['UIR9', 'gerador falha fechado em timeout e pageerror', geradorFalhaFechado,
     'falha de captura não pode preservar artefato velho com saída zero'],
   ['UIR10', 'strings dinâmicas restantes passam por i18n', i18nRestante,
-    blurbsSemIngles.length ? `blurbs sem inglês: ${blurbsSemIngles.slice(0, 3).join(' · ')}` : 'setup, nick vazio e todo blurb do elenco'],
+    [setupTraduzOk ? '' : setupEvidencia.slice(0, 3).join(' · '),
+      blurbsSemIngles.length ? `blurbs sem inglês: ${blurbsSemIngles.slice(0, 3).join(' · ')}` : '',
+      (main.match(/nick \|\| tr\('SEM NICK'\)/g) || []).length >= 1 ? '' : 'SEM NICK cru',
+      /char-info-blurb'\)\.textContent = tr\(c\.blurb\)/.test(main) ? '' : 'blurb sem tr',
+    ].filter(Boolean).join(' · ') || 'setSetupStep executada de verdade (pt+en · match/profile · rounds/ctf/arena), nick vazio e todo blurb do elenco'],
   ['UIR11', 'só o fallback da seleção mantém decoder de vídeo', cicloVideos,
     'entrada, loading e resultado não têm vídeo; fallback 3D pausa ao sair'],
   ['UIR12', 'vídeo de seleção é fallback e preserva o preview 3D interativo', previewInterativo,
@@ -1064,8 +1240,9 @@ const resultados = [
     'vida e munição 42px; nome 11px; vinheta e vermelho crítico medidos na tela 05'],
   ['UIR25', 'killfeed usa a mesma silhueta 2D alfa da arma que realizou o abate', killfeedArma2D,
     'short da arma resolve o WebP publicado; máscara monocromática substitui o SVG no evento real'],
-  ['UIR26', 'Single Player abre o submenu de mata-mata e CTF; os dois modos entram pela seleção de mapas', modoMapaPadrao,
-    'os dois modos preservam seu estado no setup e abrem a tela 04 antes de facção/personagem'],
+  ['UIR26', 'Single Player abre o submenu com mata-mata, CTF e vira-casaca; os três modos entram pela seleção de mapas', modoMapaPadrao,
+    [modoCicloOk ? 'ciclo rounds→ctf→arena→rounds EXECUTADO no handler real do #map-mode (node:vm 1s)' : modoCicloEvid.slice(0, 2).join(' · '),
+      'os três modos preservam estado no setup e abrem a tela 04 antes de facção/personagem'].filter(Boolean).join(' · ')],
   ['UIR27', 'ficha do personagem não inventa dificuldade sem contrato', personagemSemDificuldade,
     'renderCharAttrs publica somente VIDA, VELOCIDADE, PRECISÃO e MEME; nenhum undefined'],
   ['UIR28', 'avatares de Punk e Gotinha correspondem às identidades 3D auditadas', avatarIdentidadeOk,
@@ -1093,7 +1270,8 @@ const resultados = [
   ['UIR39', 'as duas artes de time terminam de decodificar antes da tela aparecer', faccaoPreloadBloqueante,
     'o preload começa no boot e o primeiro acesso aguarda o mesmo Promise antes de mostrar team-select'],
   ['UIR40', 'troca com M pausa uma única camada e mantém facção, lado e volta coerentes', trocaMConsistente,
-    'o jogo pausa antes do pointer lock sair; seleção usa enemyFaction e VOLTAR retoma a partida'],
+    [trocaExecOk ? 'hook e mapeamento reais: pausa antes do pick, quatro casos lado inicial/atual; online delega abrirTrocaOnline' : trocaExecEvid.slice(0, 2).join(' · '),
+      'VOLTAR retoma a partida'].filter(Boolean).join(' · ')],
   ['UIR41', 'resultado usa um único fundo preto contínuo atrás da arte alpha', resultadoFundoContinuo,
     'nenhum halo ou degradê limitado à metade direita pode criar emenda no palco do personagem'],
   ['UIR42', 'menu preenche o viewport e fixa a versão no canto inferior direito', versaoMenuNoCanto,

@@ -113,6 +113,15 @@ function medirMapa(id, build) {
     ok: pieces.length > 0 && !duplicadas.length && !fora.length && !semSuporte.length && !unknown.length,
   };
 }
+function medirPiscinaViva(build) {
+  const salvo = globalThis.window.__grafiteLive;
+  globalThis.window.__grafiteLive = true;
+  try { return medirMapa('piscina_treta', build); }
+  finally {
+    if (salvo === undefined) delete globalThis.window.__grafiteLive;
+    else globalThis.window.__grafiteLive = salvo;
+  }
+}
 
 /* ── Fixtures sintéticas: identidade do asset através das APIs reais ───────── */
 function texComSrc(src) { const t = new THREE.Texture(); t.image = { src }; return t; }
@@ -321,6 +330,9 @@ if (modo === '--baseline') {
   if (modo === '--self-test') {
     const passSource = readFileSync(passURL, 'utf8');
     const piscinaSource = readFileSync(piscinaURL, 'utf8');
+    const piscinaViva = medirPiscinaViva((s, T) => MAPS.piscina_treta.build(s, T));
+    assert.ok(piscinaViva.ok, 'controle da passada viva deve manter arte única, permitida e apoiada');
+    console.log(JSON.stringify({ controle: 'piscina viva', ...piscinaViva.relatorio }));
     /* M1 — mutação factual: os guardas usadas.has de produção desligados. */
     const guardas = passSource.split('usadas.has(').length - 1;
     assert.ok(guardas > 0, 'M1 NÃO APLICOU: graffiti_pass sem guardas usadas.has');
@@ -329,7 +341,7 @@ if (modo === '--baseline') {
     const m1Pass = dataURL(absoluteImports(m1Source, passURL));
     const m1API = await import(m1Pass);
     const m1Pool = (await import(dataURL(absoluteImports(piscinaSource, piscinaURL, { './graffiti_pass.js': m1Pass })))).buildPoolDay;
-    const m1Piscina = medirMapa('piscina_treta', m1Pool);
+    const m1Piscina = medirPiscinaViva(m1Pool);
     const m1Fixtures = fixtures(m1API);
     for (const c of m1Fixtures) assert.ok(!c.ok, `M1 tem que quebrar a MESMA expectativa: ${c.name}`);
     let m1Det = true;
@@ -342,7 +354,7 @@ if (modo === '--baseline') {
     const traverse = '  root.traverse(mesh => {\n    if (mesh.isMesh && !mesh.userData.graffitiWhiteWall) mesh.userData.graffitiSupportExcluded = true;\n  });\n';
     assert.ok(piscinaSource.includes(traverse), 'M2 NÃO APLICOU: traverse de allowlist não encontrado');
     const m2Pool = (await import(dataURL(absoluteImports(piscinaSource.replace(traverse, ''), piscinaURL)))).buildPoolDay;
-    const m2 = medirMapa('piscina_treta', m2Pool);
+    const m2 = medirPiscinaViva(m2Pool);
     assert.ok(m2.fora.length > 0, 'M2 tem que deixar arte fora da allowlist');
     assert.ok(m2.pieces.length > 0, 'M2 sem arte não prova nada');
     console.log(JSON.stringify({ mutante: 'M2 allowlist do mapa desligada', pecas: m2.pieces.length, fora: m2.fora.length }));

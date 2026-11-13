@@ -1,5 +1,6 @@
 /* Treta Pop · 05 HUD, 13 HUD com chat, placar (Tab), 21 HUD por toque. Carregado por tp/ligar.js só com ?ui=v3. */
 import { tr, frase } from '../i18n.js';
+import { retratoFontes } from '../data/retratos.js';
 
 const DICAS_S = 15;
 const PING_MS = 4000;
@@ -31,9 +32,7 @@ function arte(img, fontes) {
   };
   proxima();
 }
-const artePersonagem = (img, id) => arte(img, id
-  ? [`/img/chars-hero/${id}.webp`, `/img/chars/${id}.webp`, `/img/chars/avatars/${id}.webp`]
-  : []);
+const artePersonagem = (img, id) => arte(img, id ? retratoFontes(id) : []);
 const avatarCache = new Map();
 const comoDataUrl = (blob) => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -150,6 +149,7 @@ function montarHud(hud) {
   dica('E', 'pegar');
   dica('B', 'comprar');
   dica(',/.', 'munição');
+
   dica('N', 'câmera');
   dica('F', 'ping');
   dica('Z/X/V', 'rádio');

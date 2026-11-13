@@ -1,0 +1,53 @@
+{
+  "schema": "surface-floor-uv-baseline/1",
+  "sourceRef": "416af25b2b491d8ffb9d068659a2c715f57db80f",
+  "sourcePins": [
+    {
+      "path": "public/js/map_escadao.js",
+      "baseRef": "416af25b2b491d8ffb9d068659a2c715f57db80f",
+      "sha256": "73fc25eecd2f4befd18fc0007308b3c11f154b62b573820798b29bd5bcc16e81"
+    },
+    {
+      "path": "public/js/map_quebrada.js",
+      "baseRef": "416af25b2b491d8ffb9d068659a2c715f57db80f",
+      "sha256": "89b30c7dddce0350070fc16e86ffc73179fe374291783c53f80f3e72a902ae46"
+    }
+  ],
+  "method": "Actual MAPS builders/harness, deterministic RNG1153; TextureLoader boundary delayed; no renderer/GLB/pixel approval. Hash excludes only the UV attributes of the three identified private floors.",
+  "expected": {
+    "quebrada": {
+      "fallback": {
+        "nonTargetUVGeometryAndMaterials": "702b542cd253a4a3d333a1db4d6a0b42ebbe24ffe218316c96e83d0371a9b1f7",
+        "contracts": "580faf1784fb521e84bf6239acc4ab60a519416fffffe8b21a8ab9ae35c867fd",
+        "sharedGroundTextures": "018cc4fb3a4aa4c65e413052cb994f576b44a538bfc886fa7a925d1cc6846b6d",
+        "nextRandom": 0.31385004660114646
+      }
+    },
+    "escadao": {
+      "fallback": {
+        "nonTargetUVGeometryAndMaterials": "e9b8e39d3e3b36c3c27dd1c2d2f2bb37ee5d8f686b54ed245d5e1dcdcc66f71e",
+        "contracts": "1abf68cb19f71bda2c4e773b5bf214dbd4e15443f50ff9dee09130f1103fd390",
+        "sharedGroundTextures": "018cc4fb3a4aa4c65e413052cb994f576b44a538bfc886fa7a925d1cc6846b6d",
+        "nextRandom": 0.5276809704955667
+      },
+      "external": {
+        "nonTargetUVGeometryAndMaterials": "eefd125efbbbcfab6d51efa994f481179f07f58f9135476dcf4188a1abb5ff72",
+        "contracts": "1abf68cb19f71bda2c4e773b5bf214dbd4e15443f50ff9dee09130f1103fd390",
+        "sharedGroundTextures": "018cc4fb3a4aa4c65e413052cb994f576b44a538bfc886fa7a925d1cc6846b6d",
+        "nextRandom": 0.5276809704955667
+      },
+      "changedSampler": {
+        "nonTargetUVGeometryAndMaterials": "7bd57573e78269f6890defebcd5edadfbc625fb28439531b880babb543558ecc",
+        "contracts": "1abf68cb19f71bda2c4e773b5bf214dbd4e15443f50ff9dee09130f1103fd390",
+        "sharedGroundTextures": "018cc4fb3a4aa4c65e413052cb994f576b44a538bfc886fa7a925d1cc6846b6d",
+        "nextRandom": 0.5276809704955667
+      }
+    }
+  },
+  "previousSourceRef": "9414b56cedcdc80383becb448b6fc621ab6a3339",
+  "curationBaseline": {
+    "reason": "Global artwork ownership and rebake changed rendered graffiti and its RNG consumption. Actual comparison against db0cdee3ff83edc113aa97b2b02475d000edd4d9 reproduced the prior baseline exactly; all non-art geometry/material bytes, physics contracts and shared ground texture hashes remain identical. The original full-scene signature check is retained.",
+    "sourceRef": "416af25b2b491d8ffb9d068659a2c715f57db80f",
+    "artMerge": "75815ad3cb2bfd392577e72851b970b5bb8d6a5a"
+  }
+}

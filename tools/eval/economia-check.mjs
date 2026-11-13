@@ -133,7 +133,9 @@ async function medir(dir) {
   check('EC8', 'kill-switch, modos especiais e MP desligam',
     lig({}) && !lig({ busca: '?economia=0' }) && lig({ busca: '?economia=1' })
     && !lig({ wpnMode: 'awp' }) && !lig({ wpnMode: 'knife' }) && !lig({ wpnMode: 'pistols' })
-    && !lig({ online: true }) && !lig({ dedicado: true }) && E.modoDeCompra({ semRodada: true }) === 'respawn'
+    && !lig({ online: true }) && !lig({ dedicado: true })
+    && !lig({ online: true, meta: { economia: 1 }, mapa: 'invasao_javaporcos' })
+    && E.modoDeCompra({ semRodada: true }) === 'respawn'
     && E.modoDeCompra({}) === 'rodada');
 
   const cb = (o) => E.compraDoBot(o);

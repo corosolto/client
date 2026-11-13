@@ -10,7 +10,7 @@
    próprias bandeiras, e o fallback ficou com rótulo neutro (BASE A/CENTRO/BASE B) para
    mapa futuro nunca herdar monumento alheio.
 
-   O QUE ELA EXIGE, construindo cada mapa REGISTRADO no harness (código de produção):
+   O QUE ELA EXIGE, construindo cada mapa CTF REGISTRADO no harness (código de produção):
      · CTFL1  world.ctfPoints declarado, com ≥3 pontos e rótulo não-vazio em todos;
      · CTFL2  os nomes de monumento de Brasília só aparecem no praca_poderes;
      · CTFL3  rótulos únicos dentro do mapa (dois "CENTRO" no HUD não orientam ninguém).
@@ -25,12 +25,18 @@ import { THREE, MAPS, initTextures } from './harness.mjs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const BRASILIA = new Set(['CONGRESSO', 'ÔNIBUS', 'CATEDRAL']);
+if (MUT && MUT !== 'vaza') {
+  console.error(`CTFLABELS mutante desconhecido: --mutante=${MUT} (só existe vaza)`);
+  process.exit(1);
+}
 
 const T = initTextures();
 let vermelho = 0;
-for (const [id, def] of Object.entries(MAPS)) {
+let aplicadas = 0;
+// ctfMode é só o modo inicial; apenas objectiveMode retira o mapa do CTF comum.
+for (const [id, def] of Object.entries(MAPS).filter(([, map]) => !map.objectiveMode)) {
   const W = def.build(new THREE.Scene(), T);
-  if (MUT === 'vaza' && id === 'piscina_treta') delete W.ctfPoints;
+  if (MUT === 'vaza' && id === 'piscina_treta') { delete W.ctfPoints; aplicadas++; }
   const pts = W.ctfPoints || [];
   const falhas = [];
   if (pts.length < 3 || pts.some((p) => !p.label || !String(p.label).trim())) {
@@ -43,6 +49,13 @@ for (const [id, def] of Object.entries(MAPS)) {
   if (new Set(rot).size !== rot.length) falhas.push('CTFL3 rótulo repetido no mesmo mapa');
   if (falhas.length) vermelho++;
   console.log(`${falhas.length ? 'CTFL VERMELHA ' : 'CTFL ok       '}${id.padEnd(14)} [${rot.join(' · ') || 'SEM PONTOS'}]${falhas.length ? ' | ' + falhas.join(' | ') : ''}`);
+}
+if (MUT === 'vaza') {
+  if (aplicadas === 1) console.log('Mutação aplicada: vaza');
+  else {
+    vermelho++;
+    console.log(`CTFL VERMELHA mutante vaza aplicada ${aplicadas}x — tinha que ser exatamente 1 em piscina_treta`);
+  }
 }
 console.log(vermelho ? `CTFLABELS ${vermelho} VERMELHA(S)` : 'CTFLABELS verde');
 if (vermelho) process.exitCode = 1;

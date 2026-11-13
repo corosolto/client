@@ -1768,6 +1768,7 @@ export function buildCorrego(scene, T) {
       mesh.updateMatrixWorld(true);
       const drawn = retanguloGrafiteDesenhado(mesh.geometry, mesh.matrixWorld);
       if (!suporte(piece) || !drawn || !suporte(drawn)) { mesh.geometry.dispose(); continue; }
+      mesh.userData.graffitiArquivo = '/img/textures/corrego_streetart_pixo.webp';
       mesh.name = 'decal:corrego_streetart_pixo.webp';
       mesh.receiveShadow = true;
       root.add(mesh);
@@ -1856,9 +1857,13 @@ export function buildCorrego(scene, T) {
   });
 
   const slowAt = (x, z) => Math.abs(z) >= HALF_Z - 6 && Math.abs(x) <= CORREGO_W / 2 + 2;
+  // Mesma altura e projeção da lâmina criada por createWater.
+  const waterSurfaceAt = (x, z, y) =>
+    (Math.abs(x) <= CANAL_ABERTURA / 2 && Math.abs(z) <= HALF_Z
+      && (y === undefined || y <= CANAL_AGUA + 0.05)) ? CANAL_AGUA : null;
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.corrego,pos:[0,.3,-37],radius:15,vol:.45},{src:AMB_LOOPS.corrego,pos:[0,.3,37],radius:15,vol:.45},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:70,vol:.18}],bioma:'favela'}, propEscala,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, waterSurfaceAt, spawns, sun, hemi, pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.corrego,pos:[0,.3,-37],radius:15,vol:.45},{src:AMB_LOOPS.corrego,pos:[0,.3,37],radius:15,vol:.45},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:70,vol:.18}],bioma:'favela'}, propEscala,
     skyLife,
     update(dt, time) { aguaCorrego.update(dt); skyLife.update(dt, time); },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,

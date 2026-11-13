@@ -30,7 +30,7 @@ function run(teamSize) {
   assert(begin >= 0 && end > begin, `${teamSize}x${teamSize}: JSON do botsim ausente`);
   const [result] = JSON.parse(output.slice(begin, end + 1));
   assert(result && !result.err, `${teamSize}x${teamSize}: ${result?.err || 'resultado ausente'}`);
-  assert.match(output, new RegExp(`\\[times\\] TME ${teamSize} × ${teamSize} TMB`), `${teamSize}x${teamSize}: placar de gente incorreto`);
+  assert.match(output, new RegExp(`^\\[times\\] E ${teamSize} × ${teamSize} B \\(pedido ${teamSize} × ${teamSize}\\)$`, 'm'), `${teamSize}x${teamSize}: placar de gente incorreto`);
   assert.equal(result.bots, teamSize * 2 - 1, `${teamSize}x${teamSize}: quantidade de bots incorreta`);
   assert(result.stuckPct < 5, `${teamSize}x${teamSize}: stuck ${result.stuckPct}% >= 5%`);
   assert(result.eff > .25, `${teamSize}x${teamSize}: eficiência ${result.eff} <= 0,25`);

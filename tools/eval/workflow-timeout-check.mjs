@@ -20,7 +20,7 @@
    (passa um job isento do teto medido dele).
 
    Uso: node tools/eval/workflow-timeout-check.mjs
-        [--mutante=sem-timeout|timeout-absurdo|isencao-estourada]
+        [--mutante=sem-timeout|timeout-absurdo|isencao-estourada|soundscape-timeout]
    ============================================================================ */
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -28,19 +28,18 @@ import { fileURLToPath } from 'node:url';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const mutante = arg('mutante');
-if (mutante && !['sem-timeout', 'timeout-absurdo', 'isencao-estourada'].includes(mutante)) {
+if (mutante && !['sem-timeout', 'timeout-absurdo', 'isencao-estourada', 'soundscape-timeout'].includes(mutante)) {
   throw new Error(`mutante desconhecido: ${mutante}`);
 }
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const DIR = path.join(ROOT, '.github/workflows');
 const TETO_MAX = 30;
-/* Isenção NOMINAL, com o pior caso medido (gh api .../actions/runs/<id>/jobs, 15 runs de 09/10/2026):
-   portao 16-34 min (2 de 15 acima de 30), classify 3-28 min. Medir de novo antes de mexer (#497).
-   smoke: 13 runs de 13/10/2026 entre 12,7 e 27,7 min com o chat em passos (#846). Em 14/10 o
-   roteiro desktop do chat (~14,5 min) foi para o job `chat-desktop`, que herda a isenção; o
-   `smoke` que sobra (web + toque) volta ao teto comum. */
-const TETO_ISENTO = { 'portao-browser.yml:portao': 45, 'ui-regression.yml:classify': 35, 'smoke-web.yml:chat-desktop': 40 };
+/* Isenções NOMINAIS, com pior caso medido (histórico no git).
+   reguas-e-site: 30m16s no run 42009772988, cancelado em Fauna com fila anterior verde. */
+const TETO_ISENTO = { 'portao-browser.yml:portao': 45, 'ui-regression.yml:classify': 35, 'smoke-web.yml:chat-desktop': 40, 'ci.yml:reguas-e-site': 35, 'ci.yml:mapas-e-site': 35 };
+/* O soundscape foi isolado justamente para ter fila curta: 10 min é contrato, não teto genérico. */
+const TETO_EXATO = { 'ci.yml:soundscape': 10 };
 
 /* Parser de indentação, não de YAML: a régua roda no `check:deploy`, que é node
    puro e sem dependência. `jobs:` na coluna 0, nome do job com 2 espaços, chaves
@@ -68,11 +67,14 @@ for (const arquivo of readdirSync(DIR).filter((f) => f.endsWith('.yml')).sort())
   if (mutante === 'sem-timeout' && arquivo === 'ci.yml') fonte = fonte.replace(/^ {4}timeout-minutes:.*$/m, '');
   if (mutante === 'timeout-absurdo' && arquivo === 'ci.yml') fonte = fonte.replace(/^ {4}timeout-minutes:.*$/m, '    timeout-minutes: 300');
   if (mutante === 'isencao-estourada' && arquivo === 'portao-browser.yml') fonte = fonte.replace(/^ {4}timeout-minutes:.*$/m, '    timeout-minutes: 60');
+  if (mutante === 'soundscape-timeout' && arquivo === 'ci.yml') fonte = fonte.replace(/( {2}soundscape:\n[\s\S]*? {4}timeout-minutes: )10/, (_m, prefixo) => `${prefixo}11`);
   const lista = jobs(fonte);
   if (!lista.length) falhas.push(`WT0 ${arquivo}: nenhum job encontrado — o parser não entendeu o arquivo`);
   for (const job of lista) {
     if (job.timeout === null) falhas.push(`WT1 ${arquivo} · job \`${job.nome}\` sem timeout-minutes (default do GitHub: 360)`);
     else if (job.timeout > (TETO_ISENTO[`${arquivo}:${job.nome}`] ?? TETO_MAX)) falhas.push(`WT2 ${arquivo} · job \`${job.nome}\` com timeout de ${job.timeout} min (teto ${TETO_ISENTO[`${arquivo}:${job.nome}`] ?? TETO_MAX})`);
+    const exato = TETO_EXATO[`${arquivo}:${job.nome}`];
+    if (exato !== undefined && job.timeout !== exato) falhas.push(`WT3 ${arquivo} · job \`${job.nome}\` precisa manter timeout de ${exato} min (declarado: ${job.timeout ?? 'ausente'})`);
   }
 }
 

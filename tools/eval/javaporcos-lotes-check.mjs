@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import * as THREE from 'three';
+import {agruparConstrucoes} from '../../public/js/map_javaporcos_lotes.js';
+import {withVisibleShotOccluders} from '../../public/js/shot_surfaces.js';
+const mutant=process.argv.includes('--mutante=sem-oclusao');
+const build=()=>{const root=new THREE.Group(),mat=new THREE.MeshBasicMaterial(),occluders=[];for(const [z,solid] of [[0,true],[5,false]]){const m=new THREE.Mesh(new THREE.BoxGeometry(4,3,.3),mat);m.position.set(0,1.5,z);m.userData.construcaoImovel=true;root.add(m);if(solid)occluders.push(m);}agruparConstrucoes(root,occluders);if(mutant)occluders.length=0;root.updateMatrixWorld(true);return{root,occluders};};
+const world=withVisibleShotOccluders(build)(),ray=new THREE.Raycaster(new THREE.Vector3(0,1.5,3),new THREE.Vector3(0,0,-1));
+assert.ok(ray.intersectObjects(world.occluders,false).length,'parede agrupada deixou passar o tiro');
+ray.set(new THREE.Vector3(0,1.5,8),new THREE.Vector3(0,0,-1));ray.far=4;
+assert.equal(ray.intersectObjects(world.occluders,false).length,0,'decoração virou obstáculo de tiro');
+console.log('✓ LOTES: parede visível bloqueia tiro e decoração continua fora da oclusão');

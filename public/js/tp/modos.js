@@ -1,5 +1,6 @@
 /* Treta Pop · 03 modo e mapa, 19 mobile. Carregado por tp/ligar.js só com ?ui=v3. */
 import { tr } from '../i18n.js';
+import { retratoFontes } from '../data/retratos.js';
 
 const CHAVE_FAV = 'tp-modos-favoritos';
 /* Selo NOVO: mapa que entrou no jogo (mapcat.js MAP_DATA) há no máximo 30 dias. */
@@ -12,6 +13,7 @@ const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) 
 const MODOS = [
   { id: 'rounds', nome: 'MATA-MATA', sub: 'Rounds, elimine o time inteiro', arte: 'trapfunk', botao: 'hub-mode-rounds' },
   { id: 'ctf', nome: 'CAPTURA', sub: 'Roube a bandeira e leve pra base', arte: 'reggae', botao: 'hub-mode-ctf' },
+  { id: 'arena', nome: 'VIRA-CASACA', sub: 'Quem cai muda de lado', arte: 'chave', botao: 'hub-mode-arena' },
   { id: 'mp', nome: 'MULTIPLAYER', sub: 'Salas públicas', arte: 'metaleiro', selo: 'BETA' },
   { id: 'privada', nome: 'SALA PRIVADA', sub: 'Chame a turma pelo link', arte: 'pagodeiro' },
 ];
@@ -69,7 +71,7 @@ function montar(card) {
   modos.setAttribute('role', 'group'); modos.setAttribute('aria-label', tr('Modo de jogo'));
   for (const m of MODOS) {
     const b = el('button', 'tp-modos__modo'); b.type = 'button'; b.dataset.modo = m.id;
-    const img = el('img'); img.src = `/img/chars-hero/${m.arte}.webp`; img.alt = ''; img.decoding = 'async';
+    const img = el('img'); img.src = retratoFontes(m.arte)[0]; img.alt = ''; img.decoding = 'async';
     const txt = el('span', 'tp-modos__modo-txt');
     const nome = el('span', 'tp-disp'); nome.appendChild(el('span', 'tp-ital', tr(m.nome)));
     txt.append(nome, el('span', 'tp-modos__sub', tr(m.sub)));
@@ -105,6 +107,8 @@ function montar(card) {
   const ficha = el('div', 'tp-modos__ficha');
   ficha.append(el('span', 'tp-rotulo tp-modos__olho'), el('h3', 'tp-disp tp-modos__nome'), el('p', 'tp-modos__desc'));
   const cfg = el('div', 'tp-modos__cfg');
+  const regras = el('div', 'tp-modos__regras');
+  cfg.appendChild(regras);
   for (const [k, p] of Object.entries(PASSOS)) {
     const linha = el('div', 'tp-modos__passo'); linha.dataset.passo = k;
     const menos = el('button', 'tp-modos__menos', '−'); menos.type = 'button'; menos.setAttribute('aria-label', tr(p.menos));
@@ -164,7 +168,7 @@ function montar(card) {
   guarda.append(...[$('hub-map-filters'), $('hub-map-grid')].filter(Boolean));
   document.body.appendChild(guarda);
   card.prepend(raiz);
-  return { raiz, lista, filtros, ficha, painel, escalacao, giro, modos };
+  return { raiz, lista, filtros, ficha, painel, escalacao, giro, modos, regras };
 }
 
 function cartaoMapa(m, atual) {
@@ -217,8 +221,14 @@ function pintar() {
   if (!tela || !api()) return;
   const est = api().estado();
   const mapa = api().mapas().find((m) => m.id === est.mapa);
+  const horda = mapa?.horda === true || mapa?.objectiveMode === 'horde';
+  api().opcoesJavaporcos?.(tela.regras, pintar);
+  tela.regras.hidden = !horda;
   for (const b of tela.modos.querySelectorAll('.tp-modos__modo')) {
-    if (b.dataset.modo === 'rounds' || b.dataset.modo === 'ctf') b.setAttribute('aria-pressed', String(b.dataset.modo === est.modo));
+    if (b.dataset.modo === 'rounds' || b.dataset.modo === 'ctf' || b.dataset.modo === 'arena') {
+      b.disabled = !!est.objetivo;
+      b.setAttribute('aria-pressed', String(!est.objetivo && b.dataset.modo === est.modo));
+    }
     if (b.dataset.modo === 'mp') {
       const count = $('hub-online-n'), box = count?.closest('.hub-online');
       const n = box && !box.hidden ? Number(count.dataset.online) || 0 : 0;
@@ -226,25 +236,30 @@ function pintar() {
     }
   }
   for (const c of tela.lista.querySelectorAll('.tp-modos__mapa')) c.querySelector('.tp-modos__mapa-btn').setAttribute('aria-pressed', String(c.dataset.id === est.mapa));
-  const modo = tr(est.modo === 'ctf' ? 'CAPTURA' : 'MATA-MATA');
+  const modo = tr(horda ? 'INVASÃO · DISPUTA TERRITORIAL' : est.objetivo === 'escort' ? 'ESCOLTA' : est.modo === 'arena' ? 'VIRA-CASACA' : (est.modo === 'ctf' ? 'CAPTURA' : 'MATA-MATA'));
   tela.ficha.querySelector('.tp-modos__olho').textContent = mapa ? `${modo} · ${mapa.cats.map(tr).join(' · ')}` : modo;
   tela.ficha.querySelector('.tp-modos__nome').textContent = mapa?.nome || '';
   tela.ficha.querySelector('.tp-modos__desc').textContent = mapa?.desc || '';
   const valores = {
     aliados: est.aliados ? `${tr('você')} + ${est.aliados}` : tr('só você'),
     inimigos: `${est.inimigos} ${est.inimigos === 1 ? 'bot' : 'bots'}`,
-    rounds: String(est.rounds),
+    rounds: est.modo === 'arena' ? tr('PARTIDA ÚNICA') : String(est.rounds),
   };
   for (const [k, p] of Object.entries(PASSOS)) {
     const linha = tela.painel.querySelector(`[data-passo="${k}"]`);
+    linha.hidden = horda;
     linha.querySelector('.tp-modos__valor').textContent = valores[k];
-    linha.querySelector('.tp-modos__menos').disabled = est[k] <= p.min;
-    linha.querySelector('.tp-modos__mais').disabled = est[k] >= p.max;
+    const fixo = k === 'rounds' && est.modo === 'arena';
+    linha.querySelector('.tp-modos__menos').disabled = fixo || est[k] <= p.min;
+    linha.querySelector('.tp-modos__mais').disabled = fixo || est[k] >= p.max;
   }
   for (const [k, atual] of [['armas', est.armas], ['bots', est.dificuldade]])
     for (const b of tela.painel.querySelectorAll(`[data-seg="${k}"] button`)) b.setAttribute('aria-pressed', String(b.dataset.v === atual));
   const rotulo = (ops, v) => tr((ops.find(([x]) => x === v) || ops[0])[1]);
-  tela.giro.querySelector('[data-gira="rounds"]').textContent = `${est.rounds} ${tr('ROUNDS')}`;
+  const giroRounds = tela.giro.querySelector('[data-gira="rounds"]');
+  giroRounds.textContent = est.modo === 'arena' ? tr('PARTIDA ÚNICA') : `${est.rounds} ${tr('ROUNDS')}`;
+  giroRounds.hidden = horda;
+  giroRounds.disabled = est.modo === 'arena';
   tela.giro.querySelector('[data-gira="armas"]').textContent = rotulo(ARMAS, est.armas);
   tela.giro.querySelector('[data-gira="bots"]').textContent = rotulo(BOTS, est.dificuldade);
   const n = est.escalados.length;

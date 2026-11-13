@@ -57,6 +57,38 @@ const spawns = JSON.parse(JSON.stringify(game.world.spawns));
 if (MUT) spawns.E[0] = { ...spawns.E[0], x: -31, z: 8 };
 
 const falhas = [];
+// CVC1: o acabamento vazado precisa de fundo e borda reais que também detenham a bala.
+const cargasClaras = [];
+game.world.root.traverse(o => { if (o.userData?.campoCover?.tipo === 'pisos') cargasClaras.push(o); });
+if (cargasClaras.length !== 1) throw new Error('CVC1 fixture: carga clara não é única');
+const carga = cargasClaras[0], c = carga.userData.campoCover;
+const soloCarga = game.world.groundHeightAt(c.x, c.z), topoCarga = soloCarga + c.h;
+if (process.argv.includes('--mutante=carga-tampa-plana')) {
+  carga.scale.set(1, 1, 1); carga.position.y = soloCarga + c.h / 2;
+}
+if (process.argv.includes('--mutante=carga-sem-bala')) {
+  const antes = game.world.occluders.length;
+  game.world.occluders = game.world.occluders.filter(o => !o.material?.userData?.campoBloco);
+  if (antes - game.world.occluders.length !== 4) throw new Error('CVC1 fixture: mutante não retirou quatro batches');
+}
+game.world.root.updateMatrixWorld(true);
+const alvoCarga = (dx, altura, frente = false) => {
+  const origem = new THREE.Vector3(c.x + dx, frente ? altura : topoCarga + .1, frente ? c.z - c.d / 2 - .2 : c.z);
+  const raio = new THREE.Raycaster(origem, new THREE.Vector3(0, frente ? 0 : -1, frente ? 1 : 0));
+  raio.far = frente ? .3 : .2;
+  return raio.intersectObjects(game.world.occluders, true)[0];
+};
+const dxVao = (c.w / 3 - .012 - .045) / 4;
+for (const lado of [-1, 1]) {
+  const hit = alvoCarga(lado * dxVao);
+  const profundidade = hit ? topoCarga - hit.point.y : NaN;
+  if (!(profundidade > .03 && profundidade < .06)) falhas.push(`CVC1 cavidade ${lado}: fundo real ausente (${profundidade})`);
+}
+const bordaCarga = alvoCarga(0), faceCarga = alvoCarga(dxVao, soloCarga + .3, true);
+if (!bordaCarga || Math.abs(bordaCarga.point.y - (topoCarga - .006)) > .002)
+  falhas.push('CVC1 borda superior visível não detém a bala');
+if (!faceCarga || Math.abs(faceCarga.point.z - (c.z - c.d / 2 + .006)) > .002)
+  falhas.push('CVC1 bloco frontal visível não detém a bala');
 if ((game.world.hemi?.intensity || 0) < 1.1)
   falhas.push(`luz hemisférica do galpão em ${(game.world.hemi?.intensity || 0).toFixed(2)} / 1,10`);
 if (luzesGalpao.filter((luz) => luz.intensity >= .8).length < 2)

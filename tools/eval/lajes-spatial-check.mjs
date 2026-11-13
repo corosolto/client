@@ -1,7 +1,10 @@
 /* V4: spawns e percurso principal no chão, três rotas simples e quatro escadas
    retas. Aposentadoria explícita de LS1–5 roof-first: LAJES-V4-CONTRATOS-PLANO.md.
    Mede Game, colisão e apoio; LS6 conserva integralmente o pulo local. */
-import { THREE, bootGame, initTextures } from './harness.mjs';
+const falhaInfra = (erro) => { console.error('LAJES-SPATIAL INFRA:', erro); process.exit(2); };
+process.on('uncaughtException', falhaInfra);
+process.on('unhandledRejection', falhaInfra);
+const { THREE, bootGame, initTextures } = await import('./harness.mjs');
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.split('=')[1] || '';
 const conhecidos = new Set(['', 'spawn-alto', 'rota-unica', 'rota-bloqueada', 'escada-bloqueada', 'pulo-global']);
@@ -130,8 +133,9 @@ const probeWall=(x,z,y,sign)=>{
   return 3;
 };
 if(mutante==='escada-bloqueada'){
-  const s=W.design.stairs[0],z=s.z+s.dirZ*s.run/2;
+  const s=W.design.stairs[0];
   if(!s)throw Error('MUTANTE NÃO APLICOU: escada ausente');
+  const z=s.z+s.dirZ*s.run/2;
   W.colliders.push({minX:s.x-s.width/2,maxX:s.x+s.width/2,minZ:z-.3,maxZ:z+.3,minY:s.height/2,maxY:s.height+1.5});
 }
 const stairEvidence=W.design.stairs.map(s=>{
@@ -146,30 +150,44 @@ const stairEvidence=W.design.stairs.map(s=>{
   return {name:s.name,width,steps:heights.length,supported,bodyFree};
 });
 
+// Impulsos aprovados e intervalo discreto: docs/reports/LAJES-JUMP-CONTINUATION-20261101.md.
+const PASSO_PULO = 1 / 120, AMOSTRAS_PULO = 120, GRAVIDADE_PULO = 20.6;
+const IMPULSO_PADRAO = 5.6, IMPULSO_LAJES = 5.85;
+function faixaApice(impulso) {
+  const maximo = (impulso - GRAVIDADE_PULO * PASSO_PULO / 2) ** 2 / (2 * GRAVIDADE_PULO);
+  return [maximo - GRAVIDADE_PULO * PASSO_PULO ** 2 / 8, maximo];
+}
+
 function jumpApex(g) {
   const p = g.player, spawn = g.world.spawns.E[0];
   p.pos.set(spawn.x, g.world.groundHeightAt(spawn.x, spawn.z, 100), spawn.z);
   const floor = p.pos.y;
   p.vel.set(0, 0, 0); p.grounded = true; p.alive = true; p.mantle = null;
-  p.coyoteUntil = g.time + 0.09; p.jumpBufferedUntil = 0; g._spaceHeld = false;
+  p.coyoteUntil = g.time + 0.09; p.jumpBufferedUntil = 0; p._spaceHeld = false;
   const oldKeys = g.keys; g.keys = { Space: true };
   let apex = floor;
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < AMOSTRAS_PULO; i++) {
     if (i === 1) g.keys.Space = false;
-    g.time += 1 / 120;
-    g._updatePlayer(1 / 120);
+    g.time += PASSO_PULO;
+    g._updatePlayer(PASSO_PULO);
     apex = Math.max(apex, p.pos.y);
   }
   g.keys = oldKeys;
-  return apex - floor;
+  const altura = apex - floor;
+  if (!Number.isFinite(altura)) throw new Error('LS6 sem medida finita do ápice relativo ao chão');
+  return altura;
 }
 
 const control = bootGame('praca_poderes', { textures, bots: 0, seed: 16082026 });
+if (control.world.jumpImpulse != null) throw new Error('LS6 controle deve medir o impulso padrão, sem override do mapa');
 if (mutante === 'pulo-global') {
-  if (!(W.jumpImpulse > 5)) throw new Error('mutante pulo-global sem impulso local para copiar');
+  if (W.jumpImpulse !== IMPULSO_LAJES) throw new Error('MUTANTE NÃO APLICOU: pulo-global sem impulso local aprovado para copiar');
   control.world.jumpImpulse = W.jumpImpulse;
+  if (control.world.jumpImpulse !== IMPULSO_LAJES) throw new Error('MUTANTE NÃO APLICOU: pulo-global não alterou o controle');
+  console.log(`MUTANTE pulo-global aplicado: controle ${control.world.jumpImpulse}m/s`);
 }
 const lajesApex = jumpApex(game), controlApex = jumpApex(control);
+const [minLajes, maxLajes] = faixaApice(IMPULSO_LAJES), [minPadrao, maxPadrao] = faixaApice(IMPULSO_PADRAO);
 
 const groundRoutes = groundNodeDisjointRoutes(groundStart.index, groundEnd.index);
 const stairsOk=stairEvidence.length===4&&stairEvidence.every(s=>s.steps===18&&s.width>=2.2&&s.supported&&s.bodyFree);
@@ -179,7 +197,7 @@ const checks = [
   ['LS3','travessia curta pelo térreo',groundShare>=.70,`${(groundShare*100).toFixed(1)}% de ${total.toFixed(1)}m no chão`],
   ['LS4','três percursos autorados apoiados e livres para o corpo',routeEvidence.length===3&&routeEvidence.every(r=>!r.blocked.length),JSON.stringify(routeEvidence)],
   ['LS5','quatro escadas retas com pisos apoiados e largura útil≥2,2m',stairsOk,JSON.stringify(stairEvidence)],
-  ['LS6','pulo maior existe só em Lajes',lajesApex>=.75&&lajesApex<=.90&&controlApex>=.58&&controlApex<=.64,`Lajes ${lajesApex.toFixed(3)}m · controle ${controlApex.toFixed(3)}m`],
+  ['LS6','pulo maior existe só em Lajes',lajesApex>=minLajes&&lajesApex<=maxLajes&&controlApex>=minPadrao&&controlApex<=maxPadrao&&lajesApex>controlApex,`Lajes ${lajesApex.toFixed(6)}m ∈ [${minLajes.toFixed(6)},${maxLajes.toFixed(6)}] · controle ${controlApex.toFixed(6)}m ∈ [${minPadrao.toFixed(6)},${maxPadrao.toFixed(6)}] · dt ${PASSO_PULO}s`],
 ];
 let falhas = 0;
 for (const [id, desc, ok, evidence] of checks) {
@@ -187,5 +205,5 @@ for (const [id, desc, ok, evidence] of checks) {
   console.log(`${ok ? '✓' : '✗'} ${id} ${desc} — ${evidence}`);
 }
 if (falhas) { console.error(`LAJES-SPATIAL FALHA: ${falhas}/${checks.length}`); process.exitCode = 1; }
-else if (mutante) { console.error(`MUTANTE ${mutante} sobreviveu`); process.exitCode = 1; }
+else if (mutante) { console.error(`MUTANTE ${mutante} sobreviveu`); process.exitCode = 0; }
 else console.log('LAJES-SPATIAL OK');

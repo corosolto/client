@@ -75,30 +75,31 @@ const { __gauntletAtualizarRetratos: updatePortraits } = await import(dataModule
 const queueE = document.querySelector('.tp-hud-retratos[data-lado="E"]');
 const UUID_A = '11111111-1111-4111-8111-111111111111';
 const UUID_B = '22222222-2222-4222-8222-222222222222';
-const character = { id: 'lula' };
+// `lula` não existe mais no characters.js: o retrato de bot precisa de id com hero real (data/retratos.js).
+const character = { id: 'punk' };
 const human = (name, pid, def = character) => ({ name, team: 'E', alive: true, isPlayer: false, def, _playerId: pid, _netBot: false });
 const bot = { name: '[BOT] Zé', team: 'E', alive: true, isPlayer: false, def: character, _playerId: '', _netBot: true };
 updatePortraits({ combatants: [human('ANA', UUID_A), human('BIA', UUID_B), bot] });
 let portraitSources = [...queueE.children].map((image) => image.src);
 if (MUT === 'character-id-avatar') {
-  portraitSources[0] = '/img/chars-hero/lula.webp';
-  portraitSources[1] = '/img/chars-hero/lula.webp';
+  portraitSources[0] = '/img/chars-hero/punk.webp';
+  portraitSources[1] = '/img/chars-hero/punk.webp';
 }
 const avatarA = `/api/social-avatar?id=${UUID_A}`;
 const avatarB = `/api/social-avatar?id=${UUID_B}`;
 const avatarsByPid = portraitSources[0] === avatarA && portraitSources[1] === avatarB && portraitSources[0] !== portraitSources[1];
-const botByCharacter = portraitSources[2] === '/img/chars-hero/lula.webp';
+const botByCharacter = portraitSources[2] === '/img/chars-hero/punk.webp';
 record('UGG01', avatarsByPid && botByCharacter,
   `humanos ${portraitSources.slice(0, 2).join(' | ') || 'sem retrato'} · bot ${portraitSources[2] || 'sem retrato'}`);
 
 queueE.replaceChildren();
-updatePortraits({ combatants: [human('ANA', UUID_A, { id: 'lula' })] });
+updatePortraits({ combatants: [human('ANA', UUID_A, { id: 'punk' })] });
 const reused = queueE.firstElementChild;
 const staleCompletion = reused?.onerror;
 updatePortraits({ combatants: [human('BIA', UUID_B, { id: 'bolsonaro' })] });
 const assignedB = reused?.src || '';
 if (typeof staleCompletion === 'function') staleCompletion.call(reused, { target: reused });
-if (MUT === 'stale-token' && reused) reused.src = '/img/chars/lula.webp';
+if (MUT === 'stale-token' && reused) reused.src = '/img/chars/punk.webp';
 const afterStale = reused?.src || '';
 record('UGG02', Boolean(assignedB) && afterStale === assignedB,
   `célula B ${assignedB || 'vazia'} · após conclusão velha A ${afterStale || 'vazia'}`);

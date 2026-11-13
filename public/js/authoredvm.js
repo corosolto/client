@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ownVmResource, isVmResource } from './vmownership.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 import { adsEfetivo, authoredFrameFor, VM_FAMILY, VM_WEAPON, VM_FABRICA } from './data/vmconfig.js';
@@ -89,6 +90,7 @@ const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
 // Revisão: ?vmgolden=ak serve a golden da arma sem mexer no `golden` do vmconfig.
 const GOLDEN_QS = new Set((_QS?.get('vmgolden') || '').split(',').filter((w) => GOLDEN_VER[w]));
 const GOLDEN_ADS = AUTHORED_VM_ENABLED && _QS?.get('vmgoldenads') !== '0';
+const PRIME_VM = _QS?.get('vmprime') !== '0';
 // ADS 1P pela linha de mira (adsEfetivo em vmconfig.js); ?ads1pfix=0 volta ao foco.
 const ADS1P_FIX = _QS?.get('ads1pfix') !== '0';
 // ?vmlocomotion=0: kill-switch do gait/sway 1P para A/B sem deploy (espírito ?vmkick).
@@ -229,7 +231,8 @@ export function preloadAuthoredFamilies(keys = []) {
 
 // Chaves que o boot deve esperar: as READY do loadout (arma assada tem chave
 // própria — família#arma) + granada, se aberta.
-const skinnedEntryKey = (weapon, weaponSkins) => weaponSkins?.[weapon] && GOLDEN_VER[weapon] ? `gold#${weapon}` : entryKeyFor(weapon);
+// `pinturaNaFabrica` (vmconfig): a pintura fica na rota sem pintura e só troca o material.
+const skinnedEntryKey = (weapon, weaponSkins) => weaponSkins?.[weapon] && GOLDEN_VER[weapon] && !VM_WEAPON[weapon]?.pinturaNaFabrica ? `gold#${weapon}` : entryKeyFor(weapon);
 export function authoredBootFamilies(weaponIds = [], weaponSkins = null) {
   const keys = new Set(weaponIds.map((id) => skinnedEntryKey(id, weaponSkins)).filter(Boolean));
   if (!AUTHORED_KILLED && familyReady('grenade')) keys.add('grenade');
@@ -302,10 +305,11 @@ const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
 export const entryKeyFor = (weapon) => {
   const family = familyFor(weapon);
   if (!family) return '';
-  if (fabricaAtiva(weapon)) return `fab#${weapon}`;
   if (VM_FONTE === 'retarget') return `rt#${weapon}`;
   if (VM_FONTE === 'goldsrc') return `gs#${weapon}`;
+  // Golden marcada no vmconfig (hoje só a AK) vence o chassi da fábrica; `?vmgolden=0` devolve para A/B.
   if (GOLDEN_VM && (VM_WEAPON[weapon]?.golden === true || GOLDEN_QS.has(weapon))) return `gold#${weapon}`;
+  if (fabricaAtiva(weapon)) return `fab#${weapon}`;
   return weaponBaked(weapon) ? `${family}#${weapon}` : family;
 };
 // Fonte que o runtime serve para a arma (revisão/QA/réguas): chave e URL. VL7 do eval:vm-launch.
@@ -348,7 +352,7 @@ const materialsOf = (object) => Array.isArray(object.material) ? object.material
 function tintHandMaterial(material, profile, legacy = false, layout = 'pistol') {
   if (!legacy) return applyTeamHandMaterial(material, profile, layout);
   // Preserva o tratamento antigo dos UVs GoldSrc/retarget até sua rodada própria.
-  const copy = material.clone();
+  const copy = ownVmResource(material.clone());
   if (copy.color) {
     const skin = /CoroSolto_FP_Hand/i.test(copy.name);
     const glove = /CoroSolto_FP_Gloves?/i.test(copy.name);
@@ -452,22 +456,49 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
     const k = weaponLength / alvo;
     if (k > 1.5) mount.scale.multiplyScalar(1 / k);
   }
-  // golden: a câmera do GLB É a composição aprovada (vm-camera-check mede isto no
-  // navegador). O clamp pelo fov da família só vale para o molde goldsrc/retarget.
+  // golden: a câmera do GLB é a composição, salvo goldFrame (PT-38 a 60°, pistola-ref).
+  // O clamp pelo fov da família só vale para o molde goldsrc/retarget.
   return {
-    scene, mount, cameraFov: golden ? cameraFov : molde ? Math.max(cameraFov, frame.fov) : frame.fov, cameraAspect,
+    scene, mount, cameraFov: molde ? Math.max(cameraFov, frame.fov) : frame.fov, cameraAspect,
     frame, handMeshes, weaponMeshes, utilityModels,
   };
 }
 
-/* Peças que a pintura tem de alcançar: na golden `mint.active` é só o corpo e pente/
-   ferrolho são malhas irmãs; a Mint assada ainda tira o pente no `splitParts`. */
+const GOLDEN_PAINT_BODY = Object.freeze({
+  'gold#pistol': 'coro_solto_project_pistol',
+  'gold#ak': 'coro_solto_project_ak_body',
+  'gold#m4': 'coro_solto_project_ak_body',
+  'gold#scar': 'coro_solto_project_ak_body',
+});
+
+/* Pintura usa body golden explícito sem criar wrap de montagem Mint; peças irmãs
+   recebem o acabamento e somente o body recebe marcas. */
 export function pecasDaPintura(entry) {
-  const corpo = entry?.mint?.active;
+  let corpo = entry?.mint?.active;
+  if (!corpo && entry?.golden && GOLDEN_PAINT_BODY[entry.key]) {
+    const bodies = (entry.weaponMeshes || []).filter(mesh => mesh?.name === GOLDEN_PAINT_BODY[entry.key]);
+    if (bodies.length === 1) [corpo] = bodies;
+  }
   if (!corpo) return [];
   const irmas = [...(entry.weaponMeshes || []), ...(corpo.userData?.mintParts || [])];
   const fora = irmas.filter((peca) => peca && peca !== corpo && !corpo.getObjectById?.(peca.id));
   return [corpo, ...new Set(fora)];
+}
+
+/* Fábrica (X18): só o grupo da arma é pintado, nunca a rig das mãos. Boca/alça/cima da ficha
+   (filhos do osso da arma) orientam padrão e marcas no espaço da arma 3P (referenceFrame). */
+export function pinturaDaFabrica(entry) {
+  const meshes = entry?.weaponMeshes || [];
+  const corpo = meshes[0]?.parent;
+  const { muzzle, sight, up } = entry?.sockets || {};
+  const bone = sight?.parent;
+  if (!corpo || meshes.some((mesh) => mesh.parent !== corpo) || !bone || muzzle?.parent !== bone || up?.parent !== bone) return null;
+  let comMao = false;
+  corpo.traverse((object) => { if ((entry.handMeshes || []).includes(object)) comMao = true; });
+  if (comMao) return null;
+  return { corpo, referencia: {
+    bone, barrel: muzzle.position.clone().sub(sight.position), up: up.position.clone().sub(sight.position),
+  } };
 }
 
 export class AuthoredViewModels {
@@ -504,11 +535,17 @@ export class AuthoredViewModels {
   _applyWeaponSkin(entry, weaponId) {
     const skinId = this.profile.weaponSkins?.[weaponId];
     if (!skinId) return;
+    if (entry.mint?.fabrica) {
+      const fabrica = pinturaDaFabrica(entry);
+      if (!fabrica) console.warn(`[viewmodel] ${entry.key}: pintura ${skinId} sem referência da ficha; arma sem pintura`);
+      else if (fabrica.corpo.userData.weaponSkin !== skinId) applyWeaponSkinCandidate(fabrica.corpo, weaponId, skinId, { referencia: fabrica.referencia });
+      return;
+    }
     const pecas = pecasDaPintura(entry);
     for (let i = 0; i < pecas.length; i += 1) {
       const peca = pecas[i];
       if (peca.userData.weaponSkin === skinId) continue;
-      applyWeaponSkinCandidate(peca, weaponId, skinId, { marcas: i === 0 });
+      applyWeaponSkinCandidate(peca, weaponId, skinId, { marcas: i === 0, patternReference: pecas[0] });
     }
   }
 
@@ -527,6 +564,16 @@ export class AuthoredViewModels {
         : setTimeout(prime, 1400);
     }
     return this;
+  }
+
+  // Monta oculto (request -1) o pacote das outras armas do inventário: a 1ª troca não
+  // mostra o legado enquanto clona o GLB (playtest 06/11, PT-38). ?vmprime=0 desliga.
+  prime(ids = []) {
+    if (!PRIME_VM || this._disposed) return;
+    for (const id of ids) {
+      const key = id ? this._keyFor(id) : '';
+      if (key && !this.entries.has(key) && !this.pending.has(key)) this._loadFamily(key, -1);
+    }
   }
 
   async _loadFamily(key, request = this._activeRequest) {
@@ -553,6 +600,7 @@ export class AuthoredViewModels {
       // Clone do cache do módulo: o pacote é mutado (câmera removida, tint) e o
       // mesmo parse pode servir outra instância de Game depois.
       const scene = await skeletonCloneOf(gltf.scene);
+      if (this._disposed) return null;
       const visual = cameraSpacePackage({ scene, animations: gltf.animations }, this.profile, this.parent, family, key);
       if (!golden) bindSharedArmTextures(visual.handMeshes, shared);
       const mixer = new THREE.AnimationMixer(visual.scene);
@@ -786,7 +834,9 @@ export class AuthoredViewModels {
     // ADS (M6): o CANO fica colinear com o eixo óptico (rotação do mount) e só
     // então a alça MEDIDA desliza ao centro — não um ponto cruzando em diagonal.
     const ads = this.adsAmount;
-    const adsConfig = adsEfetivo(cfgArma(this.weapon)?.ads, ADS1P_FIX);
+    // ADS por ROTA: golden usa a tabela do PRÓPRIO piloto (unidades ~97 un/m; off/alívio
+    // em metro da fábrica seria invisível).
+    const adsConfig = adsEfetivo((active.golden ? VM_WEAPON[this.weapon] : cfgArma(this.weapon))?.ads, ADS1P_FIX);
     const wrap = active.mint?.active || active.adsSockets?.sight;
     if (ads > 0.001 && adsConfig && wrap) {
       if (adsConfig.auto) {
@@ -927,6 +977,7 @@ export class AuthoredViewModels {
     const entry = this.entry(id);
     if (!entry) return false;
     const cs16 = VM_FAMILY[entry.family]?.cs16;
+    const useGameplayTiming = cfgArma(id)?.timing === 'gameplay';
     // Fuzis sacam com o clipe autoral do pack; o arco procedural fica para as
     // famílias de pistola (o pack não traz equip de pistola) e como fallback.
     if ((entry.golden || VM_FAMILY[entry.family]?.equip !== 'pistol')
@@ -934,18 +985,18 @@ export class AuthoredViewModels {
       // Arco procedural junto do clipe quando a arma declara drawDrop: o
       // equip_rifle da UZI nasce com a pose já dentro do quadro (P6).
       entry.drawTime = entry.frame?.drawDrop ? 0 : entry.drawDuration;
+      const drawDuration = cs16 && !useGameplayTiming ? cs16.draw : Math.max(0.3, duration);
       const tocou = this._play(entry, 'equip_rifle', {
-        duration: cs16 ? cs16.draw : Math.max(0.3, duration), fade: 0.03,
+        duration: drawDuration, fade: 0.03,
       });
       if (tocou) {
         entry.state = 'draw';
-        if (entry.frame?.drawDrop) entry.drawDuration = cs16 ? cs16.draw : Math.max(0.3, duration);
+        if (entry.frame?.drawDrop) entry.drawDuration = drawDuration;
       }
       return tocou;
     }
     // Pistolas cs16: o arco procedural É o estado draw — cadência do QC e
     // expiração no update (não há clipe para "terminar"). Revisão 29/08.
-    const useGameplayTiming = cfgArma(id)?.timing === 'gameplay';
     entry.drawDuration = cs16 && !useGameplayTiming ? cs16.draw : Math.max(0.12, duration || 0.32);
     entry.drawTime = 0;
     entry.state = 'draw';
@@ -1277,12 +1328,17 @@ export class AuthoredViewModels {
     if (this.utility && !this.utility.released) this.utility.onRelease?.();
     this.utility = null;
     this.held = null;
+    const disposed = new Set();
+    const discard = resource => {
+      if (!isVmResource(resource) || disposed.has(resource)) return;
+      disposed.add(resource); resource.dispose();
+    };
     for (const entry of this.entries.values()) {
       entry.mixer.stopAllAction();
       entry.mount.removeFromParent();
       entry.scene.traverse((object) => {
-        if (object.geometry) object.geometry.dispose();
-        for (const material of materialsOf(object)) material?.dispose?.();
+        discard(object.geometry);
+        for (const material of materialsOf(object)) discard(material);
       });
     }
     this.entries.clear();

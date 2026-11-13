@@ -212,12 +212,12 @@
   "legado-nominal-cs-valve-ut": {
    "titulo": "Sons legados de procedência nominalmente CS/Valve/Unreal Tournament",
    "autor": "desconhecido — os nomes apontam para Valve (Counter-Strike/Half-Life) e Epic (UT)",
-   "url": "public/audio/manifest.example.json",
+   "url": "public/audio/manifest.example.json (historico — os nomes sairam do arquivo versionado em 2026-10-28, BUG-136/#1107)",
    "licenca": "DESCONHECIDA — nenhuma licença foi verificada para estes arquivos",
    "redistribuicao": "proibida",
    "usoComIA": "nao",
    "stagingPrivado": null,
-   "notas": "Herdado, NAO substituido por esta branch. Sao os nomes que o manifest.example.json versionado carrega: `awp-cs-1-6`, `usp_unsil`, `knife_slash`, `ut-double-kill`, `m4a1_unsil`... O proprio public/js/audio.js:2 diz que sample real de CS nao pode ser embutido. Continua excluido do Blob e do build.",
+   "notas": "Herdado. Ate 2026-10-28 o manifest.example.json VERSIONADO carregava estes nomes (`awp-cs-1-6`, `usp_unsil`, `knife_slash`, `ut-double-kill`, `m4a1_unsil`...) e o fetch-audio.sh copiava esse arquivo para manifest.json, que o jogo le em runtime. BUG-136/#1107 trocou os 45 caminhos por nomes neutros e autorais — isso tirou a MARCA do repositorio publico, NAO substituiu nenhum byte de som. A fonte continua `proibida` porque pacotes privados antigos ainda podem conter estes arquivos; so um inventario do pacote real com sha-256 fecha isso. Continua excluida do Blob e do build.",
    "deployPrivado": {
     "armazenamento": false,
     "build": false,
@@ -248,26 +248,10 @@
  "legado": {
   "decisao": "bloqueado-por-procedencia-desconhecida",
   "fonte": "legado-nominal-cs-valve-ut",
-  "ondeEstao": "public/audio/manifest.example.json",
+  "ondeEstao": "nenhum arquivo versionado — os nomes sairam do public/audio/manifest.example.json em 2026-10-28 (BUG-136/#1107). Pacotes de audio privados antigos podem conter os arquivos; nao ha inventario deles.",
   "cobertoPorPRV5": false,
-  "porqueNaoCoberto": "PRV5 casa por sha-256 e estes arquivos nao existem em clone limpo. Sem hash nao ha o que casar. A regua PRV9 cobra a CATALOGACAO por nome; a cobertura por conteudo so existe quando alguem inventariar o pacote real.",
-  "padroes": [
-   {
-    "padrao": "cs-1-6|cs-go|counter-strike|half-life",
-    "porque": "cita Counter-Strike/Half-Life no nome"
-   },
-   {
-    "padrao": "^audio/game/ut-",
-    "porque": "locucoes de Unreal Tournament (double kill, godlike...)"
-   },
-   {
-    "padrao": "knife_(slash|hit|stab|deploy)",
-    "porque": "nomes de arquivo de faca do CS 1.6"
-   },
-   {
-    "padrao": "awp(_clip(in|out)|1)?\\.|usp_|glock18|deagle-|m4a1_unsil|mp5-|p90-|galil-|famas-|aug-|sg55[02]-|xm1014-|m249-|scout_fire|m3-1|mac10-|g3sg1-|sg550-|generic_reload",
-    "porque": "nomes de arma do arsenal do CS 1.6/CS:S"
-   }
-  ]
+  "porqueNaoCoberto": "PRV5 casa por sha-256 e estes arquivos continuam sem existir em clone limpo. Renomear caminho de exemplo NAO e substituir som: nenhum hash passou a existir. A cobertura por conteudo so existe quando alguem inventariar o pacote real.",
+  "padroes": [],
+  "porquePadroesVazios": "Lista vazia porque ZERO folhas do manifest.example.json cheiram a legado — e nao porque alguem parou de olhar. A PRV9 recomputa as suspeitas do manifest a cada execucao: se um nome assim voltar, ele cai em `semPadrao` e a clausula fica vermelha. O `audio-manifest-marcas-check.mjs` cobre o subconjunto de MARCA de terceiro, onde nem catalogar vale."
  }
 }

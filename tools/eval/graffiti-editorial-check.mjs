@@ -34,11 +34,11 @@
 import { readFileSync } from 'node:fs';
 import { GRAFITE } from '../../public/js/graffiti_layout.js';
 
-// `corrego`, nunca `fy_corrego`: o id no estilo CS foi barrado pelo M1 do mapa-id-check e
+// `corrego`, nunca `ALIAS_MAPA.fy_corrego`: o id no estilo CS foi barrado pelo M1 do mapa-id-check e
 // o layout foi regerado com o nome novo — a régua ainda pedia o antigo e quebrava com TypeError.
 // Os ids que o JOGO pede no `grafitar({id})`, não os fossils: `map_escadao.js` e
-// `map_campomorro.js` pedem `escadao`/`campomorro`. `fy_escadao` nem é id de mapa
-// (não está em MAPS nem em ALIAS_MAPA) e `fy_campomorro` é a duplicata do id
+// `map_campomorro.js` pedem `escadao`/`campomorro`. `MAPS.fy_escadao` nem é id de mapa
+// (não está em MAPS nem em ALIAS_MAPA) e `ALIAS_MAPA.fy_campomorro` é a duplicata do id
 // anterior do mesmo mapa — mesma impressão digital (`f58d49c10e717e30`) nos dois.
 // Medir os fossils reprovava por arte que ninguém vê e deixava de ver a que está na
 // Mansão e Lajes também usam ids canônicos; a régua acompanha a arte realmente aplicada.
@@ -102,7 +102,7 @@ for (const id of NOVOS) {
     ? (layout.arquivos || []).filter((nome) => nome === 'folha-pixaca-01.png') : [];
   const personagensProtegidos = id === 'lajes'
     ? (layout.arquivos || []).filter((nome) => ['folha-person-01.png','personagens-graffiti-01.png','folha-person-02.png'].includes(nome)) : [];
-  /* `corrego`, nunca `fy_corrego`: o id no estilo CS foi barrado pelo M1 do
+  /* `corrego`, nunca `ALIAS_MAPA.fy_corrego`: o id no estilo CS foi barrado pelo M1 do
      mapa-id-check, o layout foi regerado com o nome novo e a comparação ficou
      sempre falsa. Três cláusulas e três mutantes (`religioso-vulgar`, `putin`,
      `rostos-carecas`) passavam verdes medindo um id que não existe — a mesma

@@ -10,7 +10,7 @@
 
    **no escopo do módulo**, o que mata a avaliação inteira de `main.js` ali. Tudo depois
    da linha 483 nunca acontece — inclusive o `onclick` do `#btn-jogar` (linha ~779).
-   Medido no navegador contra `www.csbrasil.online`: o botão JOGAR existia e era INERTE.
+   Medido no navegador contra `www.corosolto.com.br`: o botão JOGAR existia e era INERTE.
    O site respondia 200, o build passava, o `check:fast` inteiro passava, o `npm run
    syntax` passava (é erro de RUNTIME, não de sintaxe) — e ninguém conseguia jogar.
 
@@ -51,7 +51,7 @@
    USO
      node tools/eval/boot-check.mjs                 # sobe o astro dev sozinho
      node tools/eval/boot-check.mjs --mutante=tdz   # prova que a régua morde
-     BASE=https://www.csbrasil.online node tools/eval/boot-check.mjs   # alvo externo
+     BASE=https://www.corosolto.com.br node tools/eval/boot-check.mjs   # alvo externo
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import { spawn, spawnSync, execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -117,9 +117,11 @@ try {
     args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio'],
   });
   const context = await browser.newContext({ viewport: { width: 1200, height: 800 } });
-  // navegador de diagnóstico consente com a medição (privacy-runtime.js): desde a
-  // frente social o relatório de erros é opt-in e o portão mede o caminho completo
+  // navegador de diagnóstico grava a permissão explícita (privacy-runtime.js): a medição já
+  // é ligada por padrão, mas o portão fixa o estado para não depender do default do runtime
   await context.addInitScript(() => {
+    // B3 asserts Portuguese copy: select the product's explicit language before boot.
+    try { localStorage.setItem('cs_lang', 'pt'); } catch {}
     try { localStorage.setItem('cs_privacy', JSON.stringify({ version: 'corosolto-analytics-v1', analytics: true, updatedAt: new Date(0).toISOString() })); } catch {}
   });
   const relatorios = [];
@@ -374,13 +376,16 @@ try {
     await page.close();
     const jornada = await context.newPage();
     // Exercise a first guest visit even after the earlier recovery scenarios.
-    await jornada.addInitScript(() => localStorage.removeItem('cs_treta_intro'));
+    await jornada.addInitScript(() => { localStorage.removeItem('cs_treta_intro'); localStorage.removeItem('csbr-mode-ann-seen'); });
     await jornada.goto(`${BASE}/?nav=1&home=legacy&ui=legacy`, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await jornada.locator('#splash-enter:not(.hidden)').waitFor({ timeout: 120000 });
     await jornada.locator('#boot-splash').dispatchEvent('pointerdown');
+    await jornada.waitForFunction(() => { const s = document.getElementById('boot-splash'); return !s || s.classList.contains('gone'); }, null, { timeout: 120000 });
+    const anuncio = jornada.locator('dialog.cs-modes-dialog[open]');
+    if (await anuncio.count()) { await anuncio.locator('.cs-modes-primario').click(); await anuncio.waitFor({ state: 'detached', timeout: 120000 }); }
     await jornada.waitForTimeout(3100);
     const entradaOk = await jornada.locator('#launch-error').evaluate((el) => el.classList.contains('hidden'));
-    // Nenhum modal antes da 1ª partida (dono, 14/10/2026): conta e loja só depois dela.
+    // O anúncio solicitado fecha antes do lobby; conta e loja continuam sem abrir sozinhas.
     const modaisAbertura = await jornada.locator('dialog[open]').count();
     // SINGLE PLAYER abre os modos contra bots; Mata-mata inicia a jornada padrão.
     await jornada.locator('.cs-item[data-act="single-player"]').click();
@@ -394,7 +399,7 @@ try {
     const watchdogsDepois = relatorios.filter((r) => r.source === 'launch-watchdog').length;
     b7 = entradaOk && menuOk && watchdogsDepois === watchdogsAntes && modaisAbertura === 0;
     console.log('B7 · avançar rápido pela entrada e pelo menu não dispara falso timeout nem abre modal');
-    console.log(`   entrada ${entradaOk}   menu ${menuOk}   novos watchdogs ${watchdogsDepois - watchdogsAntes}   modais na abertura ${modaisAbertura}`);
+    console.log(`   entrada ${entradaOk}   menu ${menuOk}   novos watchdogs ${watchdogsDepois - watchdogsAntes}   modais inesperados na abertura ${modaisAbertura}`);
     console.log(`   ${b7 ? 'PASSA' : 'FALHA'}\n`);
     await jornada.close();
   } else {

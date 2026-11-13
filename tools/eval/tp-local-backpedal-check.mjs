@@ -29,7 +29,7 @@ const localFetch = async url => {
 };
 Object.defineProperty(globalThis, 'fetch', {configurable: true, get: () => localFetch, set() {}});
 const {THREE, Game, CHARACTERS} = await import(pathToFileURL(path.join(root, 'tools/eval/harness.mjs')));
-const {GLTFLoader} = await import(pathToFileURL(path.join(root, 'public/vendor/addons/loaders/GLTFLoader.js')));
+const {GLTFLoader} = await import('three/addons/loaders/GLTFLoader.js');
 Object.defineProperty(globalThis, 'fetch', {configurable: true, writable: true, value: localFetch});
 GLTFLoader.prototype.load = function(url, done, progress, fail) {
   const loader = new GLTFLoader();
@@ -64,6 +64,7 @@ if (preview) selected = hasFix ? actual : compile(replaceOnce(originalText, noBa
 if (mutant === 'no-back') selected = compile(replaceOnce(selected.toString(), prodCall, noBackCall));
 if (mutant === 'wrong-sign') selected = compile(replaceOnce(selected.toString(), prodCall, wrongSignCall));
 if (mutant === 'player') selected = compile(replaceOnce(selected.toString(), 'const tp = this.playerTP, p = this.player;', 'const tp = this.playerTP, p = this.player; p.pos.x += 0.001;'));
+if (mutant) console.log(`Mutação aplicada: ${mutant}`);
 const dt = 1 / 60;
 const cases = [
   {name: 'forward', yaw: 0, ax: 0, az: -1, back: false},
@@ -83,7 +84,10 @@ function fixture(id, weapon, c) {
   const built = G.buildCharacterModel(CHARACTERS.find(d => d.id === id), {weaponId: weapon});
   assert.ok(built?.ctrl?.actions.walk && built.ctrl.actions.run, 'GLB/clipes não carregaram');
   const player = {pos: new THREE.Vector3(), vel: new THREE.Vector3(...(c.vel || [0, 0, 0])), yaw: c.yaw, pitch: .1, crouchF: 0, scoped: false, grounded: true, weapon};
-  const game = {_ensurePlayerTP() {}, _updatePlayerTPCamera: Game.prototype._updatePlayerTPCamera, playerTP: built, player, _tpEul: new THREE.Euler(), _tpFwd: new THREE.Vector3(), _tpRight: new THREE.Vector3(), _tpOrbitPitch: .2, _tpOrbitYaw: .4, _eyeWorld: new THREE.Vector3(), camView: 'third', camera: new THREE.PerspectiveCamera(70, 1.5, .08, 400), world: {groundHeightAt: () => 0}, sfx: {jump() {}, land() {}}, _collide() {}, _acceptInput: () => true, time: 0};
+  const game = {_ensurePlayerTP() {}, _updatePlayerTPCamera: Game.prototype._updatePlayerTPCamera, playerTP: built, player, _tpEul: new THREE.Euler(), _tpFwd: new THREE.Vector3(), _tpRight: new THREE.Vector3(), _tpOrbitPitch: .2, _tpOrbitYaw: .4, _eyeWorld: new THREE.Vector3(), camView: 'third', camera: new THREE.PerspectiveCamera(70, 1.5, .08, 400), world: {groundHeightAt: () => 0}, sfx: {jump() {}, land() {}}, _collide() {}, _acceptInput: () => true, time: 0,
+    // A câmera de 3ª pessoa sonda oclusão do boom com o Raycaster do construtor real (game.js);
+    // sem occluders/camBlockers no stub, os probes rodam e não bloqueiam nada.
+    ray: new THREE.Raycaster()};
   const update = built.ctrl.update.bind(built.ctrl);
   const state = {built, game, args: null};
   built.ctrl.update = (...args) => {state.args = args; return update(...args);};
@@ -108,7 +112,7 @@ function step(state, c, method) {
   return {sp, clip, time: action.time, rate: action.getEffectiveTimeScale(), duration: action.getClip().duration, actions, bones,
     authority: {player: JSON.parse(before), camera: {position: g.camera.position.toArray(), quaternion: g.camera.quaternion.toArray()}, eye: g._eyeWorld.toArray(), aim: g._tpAimPoint.toArray(), bodyRoot: built.group.matrixWorld.toArray()}};
 }
-const rows = [], clips = {}, clipDetails = {};
+const rows = [], clips = {}, clipDetails = {}, failureTypes = new Set();
 for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinha', 'pistol']]) {
   await G.preloadCharacterAssets([id], {weapons: [weapon]});
   for (const c of cases) {
@@ -122,7 +126,7 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
     }
     const errors = [], samples = [];
     let authorityFrames = 0, negativeFrames = 0;
-    const check = fn => {try {fn();} catch (e) {if (!errors.includes(e.message)) errors.push(e.message);}};
+    const check = fn => {try {fn();} catch (e) {failureTypes.add(e.name); if (!errors.includes(e.message)) errors.push(e.message);}};
     try {
       for (let frame = 0; frame < 60; frame++) {
         const a = step(tested, c, selected), b = step(reference, c, legacy);
@@ -148,13 +152,13 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
         const a = samples[1], b = samples[2], time = ((a.time + (b.frame - a.frame) * dt * a.rate) % a.duration + a.duration) % a.duration;
         assert.ok(Math.abs(time - b.time) < 1e-9, 'trajetória temporal difere do rate assinado');
       }
-    } catch (e) {errors.push(e.message);}
+    } catch (e) {failureTypes.add(e.name); errors.push(e.message);}
     rows.push({id, weapon, case: c.name, pass: !errors.length, errors, authorityFrames, negativeFrames, samples});
   }
 }
 for (const [file, sha] of Object.entries(loadedInputs)) assert.equal(digest(fs.readFileSync(path.join(root, file))), sha, 'asset mudou durante gate');
-const report = {preview, mutant, scope: 'CPU real GLB/CharController; physics plana sintética; sem render', passed: rows.filter(r => r.pass).length, total: rows.length, rows, clips, loadedInputs};
+const report = {preview, mutant, scope: 'CPU real GLB/CharController; physics plana sintética; sem render', passed: rows.filter(r => r.pass).length, total: rows.length, failureTypes: [...failureTypes], rows, clips, loadedInputs};
 if (option('--out')) fs.writeFileSync(path.resolve(option('--out')), JSON.stringify(report, null, 2) + '\n');
 if (option('--clip-out')) fs.writeFileSync(path.resolve(option('--clip-out')), JSON.stringify(clipDetails) + '\n');
-console.log(JSON.stringify({preview, mutant, passed: report.passed, total: report.total, failed: rows.filter(r => !r.pass).map(r => [r.id, r.case, r.errors[0]]), authorityFrames: rows.reduce((n, r) => n + r.authorityFrames, 0), negativeFrames: rows.reduce((n, r) => n + r.negativeFrames, 0), loadedFiles: Object.keys(loadedInputs).length}));
+console.log(JSON.stringify({preview, mutant, passed: report.passed, total: report.total, failureTypes: report.failureTypes, failed: rows.filter(r => !r.pass).map(r => [r.id, r.case, r.errors[0]]), authorityFrames: rows.reduce((n, r) => n + r.authorityFrames, 0), negativeFrames: rows.reduce((n, r) => n + r.negativeFrames, 0), loadedFiles: Object.keys(loadedInputs).length}));
 process.exitCode = report.passed === report.total ? 0 : 1;

@@ -38,7 +38,7 @@
    USO
      node tools/eval/console-check.mjs
      node tools/eval/console-check.mjs --mutante=erro
-     BASE=https://www.csbrasil.online node tools/eval/console-check.mjs
+     BASE=https://www.corosolto.com.br node tools/eval/console-check.mjs
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import { spawn, spawnSync, execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';

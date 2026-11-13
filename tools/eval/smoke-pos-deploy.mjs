@@ -18,16 +18,17 @@
            analytics, anúncio, fonte externa — é ruído conhecido, não é o deploy);
      SPD3  o jogo desenhou: quadros contados no aparelho e draw calls > 0.
 
-   Uso: node tools/eval/smoke-pos-deploy.mjs [--base=https://www.csbrasil.online]
+   Uso: node tools/eval/smoke-pos-deploy.mjs [--base=https://www.corosolto.com.br]
                                              [--mapa=praca_poderes] [--desktop]
         BASE=… também serve. Por padrão mede em Pixel 5 emulado, que é a cara do
         app de loja; `--desktop` troca para 1280×720.
    ============================================================================ */
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { eventoTexto, nosso } from './smoke-network.mjs';
 
 const arg = (nome) => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=')[1] || '';
-const BASE = (arg('base') || process.env.BASE || 'https://www.csbrasil.online').replace(/\/+$/, '');
+const BASE = (arg('base') || process.env.BASE || 'https://www.corosolto.com.br').replace(/\/+$/, '');
 const MAPA = arg('mapa') || 'praca_poderes';
 const DESKTOP = process.argv.includes('--desktop');
 const PRAZO_LIVE_MS = Number(arg('prazo')) || 90_000;
@@ -42,24 +43,9 @@ const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
 const devices = pw.devices || pw.default?.devices;
 
-/* Ruído conhecido de rede de terceiro. Reprovar o deploy porque o bloqueador de
-   anúncio do runner cortou o script de analytics é alarme falso — e alarme falso
-   repetido vira alarme ignorado. */
-const TERCEIROS = /vercel|vitals|insights|googletagmanager|google-analytics|doubleclick|gstatic|facebook|clarity|sentry|hotjar|adsbygoogle/i;
-const RUIDO_REDE = /Failed to load resource|net::ERR_|ERR_BLOCKED_BY_CLIENT|ERR_INTERNET_DISCONNECTED|favicon/i;
-/* Ruído que SÓ existe no ensaio local: barra do Astro e HMR do Vite (`/.astro/`,
-   `@vite`, WebSocket em ws://) não existem no site publicado, e o CORS do backend
-   recusa `127.0.0.1` de propósito — a allowlist dele é de produção. Contra produção
-   NADA disto é filtrado: CORS quebrado depois de um deploy é exatamente o que este
-   gate existe para pegar. */
-const RUIDO_LOCAL = /\/\.astro\/|@vite|\[vite\]|dev-toolbar|@id\/|vite\/dist|WebSocket connection to 'ws:|blocked by CORS policy/;
-const nosso = (texto) => {
-  if (TERCEIROS.test(texto)) return false;
-  if (ENSAIO_LOCAL && RUIDO_LOCAL.test(texto)) return false;
-  // erro de carga de recurso só conta quando o recurso é do NOSSO host
-  if (RUIDO_REDE.test(texto)) return texto.includes(HOST_DO_JOGO);
-  return true;
-};
+/* A classificação fica em módulo puro e testado. O smoke registra eventos
+   estruturados para distinguir erro real de cancelamento de requisição. */
+
 
 const linhas = [];
 const falhas = [];
@@ -78,10 +64,34 @@ const ctx = await browser.newContext(DESKTOP
 const page = await ctx.newPage();
 
 const barulho = [];
-page.on('pageerror', (erro) => barulho.push(`pageerror: ${String(erro?.message || erro).slice(0, 240)}`));
-page.on('console', (msg) => { if (msg.type() === 'error') barulho.push(`console: ${msg.text().slice(0, 240)}`); });
-page.on('requestfailed', (req) => barulho.push(`requestfailed: ${req.url().slice(0, 200)} ${req.failure()?.errorText || ''}`));
+const respostasOk = new Set();
+page.on('response', (response) => {
+  if (response.status() < 400) {
+    respostasOk.add(response.url());
+    respostasOk.add(response.request());
+    return;
+  }
+  barulho.push({
+    kind: 'response',
+    status: response.status(),
+    url: response.url().slice(0, 200),
+  });
+});
+page.on('pageerror', (erro) => barulho.push({
+  kind: 'pageerror',
+  text: String(erro?.message || erro).slice(0, 240),
+}));
+page.on('console', (msg) => {
+  if (msg.type() === 'error') barulho.push({ kind: 'console', text: msg.text().slice(0, 240) });
+});
+page.on('requestfailed', (req) => barulho.push({
+  kind: 'requestfailed',
+  request: req,
+  url: req.url().slice(0, 200),
+  error: req.failure()?.errorText || '',
+}));
 
+const evento = (item) => eventoTexto(item);
 const url = `${BASE}/?debug=1&auto=E,esquerdomacho&map=${MAPA}`;
 let viva = false;
 try {
@@ -136,9 +146,13 @@ if (viva) {
   }, JANELA_MS);
 }
 
-const meus = barulho.filter(nosso);
+const meus = barulho.filter((item) => nosso(item, {
+  host: HOST_DO_JOGO,
+  ensaioLocal: ENSAIO_LOCAL,
+  respostasOk,
+}));
 cobra('SPD2', viva && meus.length === 0, meus.length
-  ? `${meus.length} erro(s) nosso(s) no console: ${meus.slice(0, 5).join(' | ')}`
+  ? `${meus.length} erro(s) nosso(s) no console: ${meus.slice(0, 5).map(evento).join(' | ')}`
   : `console limpo (${barulho.length - meus.length} ruído(s) ignorado(s) de terceiro${ENSAIO_LOCAL ? ' e do servidor de desenvolvimento' : ''})`);
 
 const fps = medida.segundos ? (medida.desenhados / medida.segundos) : 0;

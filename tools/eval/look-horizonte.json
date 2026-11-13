@@ -1,12 +1,39 @@
 {
- "sky_joa.webp": {
+ "sky_amazonia.webp": {
   "banda": [
    429,
    441
   ],
-  "horizonte": "b1aca5",
+  "horizonte": "c9d0cd",
   "n": 19596,
-  "zenite": "6595bf"
+  "zenite": "7c919f"
+ },
+ "sky_joa.webp": {
+  "banda": [
+   322,
+   334
+  ],
+  "horizonte": "e9c58c",
+  "n": 14844,
+  "zenite": "718ca2"
+ },
+ "sky_parque.webp": {
+  "banda": [
+   498,
+   510
+  ],
+  "horizonte": "7b739a",
+  "n": 22620,
+  "zenite": "193660"
+ },
+ "sky_penitenciaria.webp": {
+  "banda": [
+   498,
+   510
+  ],
+  "horizonte": "567186",
+  "n": 22620,
+  "zenite": "5e85a3"
  },
  "sky_rj.webp": {
   "banda": [
@@ -16,15 +43,6 @@
   "horizonte": "b9daee",
   "n": 19596,
   "zenite": "a5cae9"
- },
- "sky_sertao.webp": {
-  "banda": [
-   429,
-   441
-  ],
-  "horizonte": "a6794d",
-  "n": 19596,
-  "zenite": "676f72"
  },
  "sky_sp.webp": {
   "banda": [

@@ -9,10 +9,10 @@
 
      · `shotWeapon(w, …)` recebe a arma  -> `weapons.ak` é específico da AK;
      · `bolt()`, `reloadStart()`, `reloadEnd()` NÃO recebem arma — leem
-       `cs.bolt` / `cs.reload` / `cs.reloadend`, que valem para o arsenal inteiro;
-     · `step(surface)` agora consulta `cs.footstepsBySurface[surface]`;
-     · `death()` agora consulta `cs.death` como evento próprio;
-     · `impact(surface, ...)` consulta `cs.impactsBySurface[surface]`.
+       `jogo.bolt` / `jogo.reload` / `jogo.reloadend`, que valem para o arsenal inteiro;
+     · `step(surface)` agora consulta `jogo.footstepsBySurface[surface]`;
+     · `death()` agora consulta `jogo.death` como evento próprio;
+     · `impact(surface, ...)` consulta `jogo.impactsBySurface[surface]`.
 
    Aprovar um "passo em concreto" hoje aprovaria um passo que toca em grama,
    metal e água igual. Aprovar um "ferrolho da AK" poria o mesmo ferrolho em 26
@@ -108,36 +108,36 @@ const SONDAS = {
     caminhoEspecifico: 'arma',
   },
   'ak.magOut': {
-    pack: { weaponSamples: true, cs: { reload: [GLB] }, weapons: { ak: [ESP] }, weaponFoley: { ak: { magOut: [ESP] } } },
+    pack: { weaponSamples: true, jogo: { reload: [GLB] }, weapons: { ak: [ESP] }, weaponFoley: { ak: { magOut: [ESP] } } },
     dispara: (s) => s.reloadStart(),
   },
   'ak.magIn': {
-    pack: { weaponSamples: true, cs: { reloadend: [GLB] }, weaponFoley: { ak: { magIn: [ESP] } } },
+    pack: { weaponSamples: true, jogo: { reloadend: [GLB] }, weaponFoley: { ak: { magIn: [ESP] } } },
     dispara: (s) => s.reloadEnd(),
   },
   'ak.bolt': {
-    pack: { weaponSamples: true, cs: { bolt: [GLB] }, weaponFoley: { ak: { bolt: [ESP] } } },
+    pack: { weaponSamples: true, jogo: { bolt: [GLB] }, weaponFoley: { ak: { bolt: [ESP] } } },
     dispara: (s) => s.bolt(),
   },
   'passo.concreto': {
-    pack: { cs: { footsteps: [GLB], footstepsBySurface: { concrete: [ESP], metal: [OUTRA] } } },
+    pack: { jogo: { footsteps: [GLB], footstepsBySurface: { concrete: [ESP], metal: [OUTRA] } } },
     dispara: (s) => s.step('concrete'),
     disparaOutra: (s) => s.step('metal'),
     caminhoEspecifico: 'superficie',
   },
   'morte.corpo': {
-    pack: { cs: { death: [ESP], morte: [ESP] }, general: { death: [ESP] }, death: [ESP] },
+    pack: { jogo: { death: [ESP], morte: [ESP] }, general: { death: [ESP] }, death: [ESP] },
     dispara: (s) => s.death(1, 0, 0),
     caminhoEspecifico: 'evento',
   },
   'impacto.concreto': {
-    pack: { cs: { impactsBySurface: { concrete: [ESP], metal: [OUTRA] } } },
+    pack: { jogo: { impactsBySurface: { concrete: [ESP], metal: [OUTRA] } } },
     dispara: (s) => s.impact('concreto'),
     disparaOutra: (s) => s.impact('metal'),
     caminhoEspecifico: 'superficie',
   },
   'impacto.metal': {
-    pack: { cs: { impactsBySurface: { metal: [ESP], concrete: [OUTRA] } } },
+    pack: { jogo: { impactsBySurface: { metal: [ESP], concrete: [OUTRA] } } },
     dispara: (s) => s.impact('metal'),
     disparaOutra: (s) => s.impact('concreto'),
     caminhoEspecifico: 'superficie',

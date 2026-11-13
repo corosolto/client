@@ -21,16 +21,30 @@
             eval:asset-integrity — não duplicar régua);
      PAC3 · o basename do GLB aparece em public/models/props/FONTE.md.
 
+   A frente `javaporcos-realista` (props de Sketchfab/Poly Haven, 30/10/2026) entra
+   nas mesmas três e em mais duas, porque não vem do Mint:
+     PAC4 · source.license e source.url presentes (CC-BY exige crédito ao autor);
+     PAC5 · o GLB abre no gltf-transform e cabe no teto da classe
+            (TETO em tools/javaporcos-realista-assets.mjs).
+
    ── AS MUTAÇÕES QUE PROVAM ─────────────────────────────────────────────────
      --mutante=sem-fonte ....... esconde um basename do FONTE em memória → vermelho
      --mutante=sem-sha ......... remove um finalSha256 em memória → vermelho
      --mutante=arquivo-sumido .. aponta um files[0] para caminho inexistente → vermelho
+     --mutante=id-quebrado ..... troca o GLB do 1º prop javaporcos por um id inexistente → vermelho
+     --mutante=sem-licenca ..... apaga a licença do 1º prop javaporcos → vermelho
+     --mutante=acima-do-teto ... divide o teto da classe do 1º prop javaporcos por 100 → vermelho
    ============================================================================ */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { basename } from 'node:path';
+import { NodeIO } from '@gltf-transform/core';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { TETO } from '../javaporcos-realista-assets.mjs';
 
 const FONTE = 'public/models/props/FONTE.md';
-const MUTANTES = new Set(['sem-fonte', 'sem-sha', 'arquivo-sumido']);
+const MUTANTES = new Set(['sem-fonte', 'sem-sha', 'arquivo-sumido', 'id-quebrado', 'sem-licenca', 'acima-do-teto', 'nc-publicado']);
+const FRENTES = new Set(['v21-e-models', 'javaporcos-realista', 'javaporcos-mint-packs']);
+const JP = 'javaporcos-realista';
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10);
 if (mutante && !MUTANTES.has(mutante)) {
   console.error(`mutante desconhecido: ${mutante}`);
@@ -39,10 +53,17 @@ if (mutante && !MUTANTES.has(mutante)) {
 
 const registry = JSON.parse(readFileSync('mint-assets.json', 'utf8'));
 const entradas = Object.entries(registry.assets || {})
-  .filter(([, asset]) => asset.source?.frente === 'v21-e-models');
+  .filter(([, asset]) => FRENTES.has(asset.source?.frente));
+const primeiroJp = entradas.findIndex(([, asset]) => asset.source?.frente === JP);
+const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 
 const fonte = existsSync(FONTE) ? readFileSync(FONTE, 'utf8') : '';
 const erros = [];
+for (const id of ['saveiro_robust', 'byd_dolphin']) {
+  if (existsSync(`public/models/props/${id}.glb`) || mutante === 'nc-publicado') {
+    erros.push(`${id}: PAC6 — asset NC sem autorização não pode estar em public/`);
+  }
+}
 
 if (!entradas.length) {
   if (mutante) {
@@ -54,9 +75,16 @@ if (!entradas.length) {
 }
 if (!fonte) erros.push(`${FONTE} não existe e há ${entradas.length} prop(s) v2.1 registrado(s)`);
 
+if (['id-quebrado', 'sem-licenca', 'acima-do-teto'].includes(mutante) && primeiroJp < 0) {
+  console.error(`MUTANTE NÃO APLICOU: nenhum prop ${JP} registrado ainda.`);
+  process.exit(2);
+}
+
 for (const [index, [id, asset]] of entradas.entries()) {
   const alvo = mutante && index === 0;
-  const file = alvo && mutante === 'arquivo-sumido' ? 'public/models/props/NAO_EXISTE.glb' : asset.files?.[0];
+  const alvoJp = mutante && index === primeiroJp;
+  let file = alvo && mutante === 'arquivo-sumido' ? 'public/models/props/NAO_EXISTE.glb' : asset.files?.[0];
+  if (alvoJp && mutante === 'id-quebrado') file = file.replace(/\.glb$/, '_quebrado.glb');
   const sha = alvo && mutante === 'sem-sha' ? undefined : asset.processing?.finalSha256;
   const textoFonte = alvo && mutante === 'sem-fonte' ? fonte.replace(basename(file || ''), '') : fonte;
 
@@ -69,10 +97,28 @@ for (const [index, [id, asset]] of entradas.entries()) {
   if (file && !textoFonte.includes(basename(file))) {
     erros.push(`${id}: PAC3 — ${basename(file)} sem linha no ${FONTE} (procedência, licença, pipeline)`);
   }
+
+  if (![JP,'javaporcos-mint-packs'].includes(asset.source?.frente)) continue;
+  if (asset.source.frente === JP) {
+    const licenca = alvoJp && mutante === 'sem-licenca' ? undefined : asset.source.license;
+    if (!licenca || !asset.source.url) erros.push(`${id}: PAC4 — source.license e source.url obrigatórios (procedência de terceiro)`);
+  }
+  const teto = TETO[asset.source.classe];
+  if (!teto) { erros.push(`${id}: PAC5 — classe "${asset.source.classe}" sem teto`); continue; }
+  if (!file || !existsSync(file)) continue;
+  const div = alvoJp && mutante === 'acima-do-teto' ? 100 : 1;
+  const doc = await io.read(file);
+  const tris = doc.getRoot().listMeshes().reduce((n, m) => n + m.listPrimitives()
+    .reduce((a, p) => a + (p.getIndices()?.getCount() ?? p.getAttribute('POSITION').getCount()) / 3, 0), 0);
+  const bytes = statSync(file).size;
+  if (!tris) erros.push(`${id}: PAC5 — GLB sem triângulo (${file})`);
+  if (tris > teto.tris / div || bytes > teto.bytes / div) {
+    erros.push(`${id}: PAC5 — ${tris} tris / ${bytes} B acima do teto ${asset.source.classe} (${teto.tris / div} tris / ${teto.bytes / div} B)`);
+  }
 }
 
 if (erros.length) {
   erros.forEach((erro) => console.error(`✗ ${erro}`));
   process.exit(1);
 }
-console.log(`PROPS-ACERVO ✓ ${entradas.length} props v2.1 com GLB no disco, finalSha256 e linha no FONTE.md`);
+console.log(`PROPS-ACERVO ✓ ${entradas.length} props (v2.1 + ${JP} + javaporcos-mint-packs) com GLB no disco, finalSha256 e FONTE.md; Javaporcos no teto, terceiros com licença`);

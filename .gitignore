@@ -5,6 +5,11 @@ node_modules
 dist/
 .astro/
 .vercel/
+.wrangler/
+# gerados pelo build com ADAPTER=cloudflare (docs/runbooks/MIGRACAO-CLOUDFLARE.md)
+public/_headers
+public/_redirects
+public/img/social-card/
 /artifacts/
 *.tsbuildinfo
 
@@ -14,16 +19,19 @@ dist/
 .env
 .env.*
 !.env.example
+# segredos locais do wrangler dev (mesmo papel do .env)
+.dev.vars
+.dev.vars.*
 
 # ── Áudio ───────────────────────────────────────────────────────────────────
 # Vozes e memes têm direitos incertos; o repositório público leva só o código.
 # Recupere com `npm run fetch-audio`. O manifest de exemplo é versionado.
 public/audio/
 !public/audio/manifest.example.json
-# vida 1: a procedência do áudio ambiente (CC0 Freesound + 1 loop Mint) é
-# versionada como exceção — `public/audio/ambiente/FONTE.md` entra com
-# `git add -f` (o gitignore não consegue re-incluir arquivo sob dir excluído).
-# Os mp3 shipam pelo audio-pack.zip, nunca pelo git.
+# vida 1: a procedência do áudio ambiente (CC0 Freesound + 1 loop Mint) vive em
+# `tools/audio/FONTE-ambiente.md` — FORA de public/ para não servir nomes de
+# provedor de geração ao navegador. Nada em `public/audio/` é versionado além
+# do manifest de exemplo; os mp3 shipam pelo audio-pack.zip, nunca pelo git.
 
 # ── Staging privado de asset comprado ───────────────────────────────────────
 # Pacote fonte do piloto Fab (Action Game Sounds Pack, PlaceHolder Inc., Fab
@@ -38,6 +46,7 @@ public/audio/
 # Contrato completo: docs/audio/PROVENIENCIA.md. Réguas: `npm run eval:audioproc`
 # (forma do ledger) e `npm run assert:assets` (PRV5, hash contra a build).
 private-assets/
+!src/pages/private-assets/
 audio-src/
 # token de OAuth de loja de asset — segredo, mesma regra do .env
 *.epic-token

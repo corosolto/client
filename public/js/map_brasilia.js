@@ -1196,10 +1196,14 @@ export function buildBrasilia(scene, T) {
         addPlane(w, H, lam({ map: imgs[ti], side: THREE.DoubleSide }), x, y, z, ry).name = nome;
         return;
       }
-      const lane = cx > 0 ? -1 : 1;
-      const fx = (lane > 0 ? bb.max.x : bb.min.x) + lane * 0.3;
-      const fy = Math.min(bb.max.y - H / 2 - 0.4, 3.5);
-      addPlane(H * A, H, lam({ map: imgs[ti], side: THREE.DoubleSide }), fx, fy, cz, lane > 0 ? Math.PI / 2 : -Math.PI / 2).name = nome;
+      const escala = MIN_H / 22, h = H * escala, w = h * A;
+      const ry = cz < 0 ? 0 : Math.PI;
+      let x = cx, z = cz < 0 ? bb.max.z : bb.min.z;
+      const y = (10.7 - 4.8) * escala + h / 2;
+      const recuo = medirParede([root], x, y, z, ry, w, h);
+      if (recuo === null) return;
+      x -= Math.sin(ry) * recuo; z -= Math.cos(ry) * recuo;
+      addPlane(w, h, lam({ map: imgs[ti], side: THREE.DoubleSide }), x, y, z, ry).name = nome;
     };
     const limite = Math.min(ARQUIVOS.length, ministries.length);
     for (let i = 0; i < limite; i++) {

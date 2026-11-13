@@ -17,7 +17,7 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 175 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 209 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -28,7 +28,7 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Esta documentação | **Docusaurus** | `3.10.2` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **314** importam Playwright, **128** importam gltf-transform e **15** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **220** importam Playwright, **113** importam gltf-transform e **16** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
@@ -127,7 +127,7 @@ hipotético:
 | **Meshy** | props 3D por texto (alternativa) e rig | `../studio/tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
 | **OpenRouter** | arte 2D (cartaz de facção, wallpaper, splash) | `../studio/tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
 
-`mint-assets.json` registra **105 assets** gerados via Mint (55 `mint-model` · 13 `mint-asset-pack` · 5 `mint-text-to-3d` · 9 `mint-chat` · 4 `local-derivative` · 1 `openrouter-image-concept` · 4 `replicate-gen` · 3 `mint-asset-pack-item` · 10 `mint-humanoid-model` · 1 `mint-model-batch`), cada um com `assetId`, `chatUrl` e notas do que deu errado na tentativa anterior.
+`mint-assets.json` registra **165 assets** gerados via Mint (59 `mint-model` · 35 `mint-asset-pack` · 5 `mint-text-to-3d` · 9 `mint-chat` · 4 `local-derivative` · 1 `openrouter-image-concept` · 4 `replicate-gen` · 3 `mint-asset-pack-item` · 10 `mint-humanoid-model` · 1 `mint-model-batch` · 4 `sketchfab-model` · 30 `polyhaven-model`), cada um com `assetId`, `chatUrl` e notas do que deu errado na tentativa anterior.
 
 Os scripts de geração `../studio/tools/gen-asset.mjs` e `../studio/tools/gen-image.mjs` ficam no **[Coro Solto Studio](https://github.com/corosolto/studio)**, um repositório público separado; os caminhos são relativos a um checkout do client ao lado dele. Fontes editáveis e packs licenciados permanecem privados em `corosolto/studio-assets`, sem caminhos correspondentes no repositório público.
 
@@ -248,9 +248,9 @@ de trabalhar. Elas vivem em `.agents/skills/`, e `.claude/skills/` são symlinks
 
 | Contagem | Quanto | O que significa |
 |---|---:|---|
-| Declaradas no `skills-lock.json` | 39 | com `source`, `skillPath` e `computedHash` — skill de terceiro que mudar de conteúdo é detectável |
-| Versionadas (chegam em quem clona) | 10 | `git ls-files .agents/skills` |
-| …dessas, com `SKILL.md` no git | 10 | é o que um clone limpo consegue ler |
+| Declaradas no `skills-lock.json` | 40 | com `source`, `skillPath` e `computedHash` — skill de terceiro que mudar de conteúdo é detectável |
+| Versionadas (chegam em quem clona) | 0 | `git ls-files .agents/skills` |
+| …dessas, com `SKILL.md` no git | 0 | é o que um clone limpo consegue ler |
 
 **As contagens divergem de propósito, e a diferença é o fato:** a maioria das skills é de terceiro, fixada por hash no lock e baixada sob demanda. Quem clonar o repositório recebe o lock inteiro e só uma parte do conteúdo. Publicar só uma das contagens esconderia exatamente o que o contribuidor precisa saber.
 

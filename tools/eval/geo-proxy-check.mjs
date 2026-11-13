@@ -42,8 +42,8 @@ let proxy = readFileSync('src/lib/api-proxy.mjs', 'utf8');
 let rota = readFileSync('src/pages/api/[rota].ts', 'utf8');
 let main = readFileSync('public/js/main.js', 'utf8');
 if (mut === 'geo-direto') jogo = muta(jogo, "if (VIA_SITE.has(nome) && !forcado) return caminho;", '');
-if (mut === 'pop-como-cidade') proxy = muta(proxy, 'if (saltoDaCloudflare(clientAddress)) {', 'if (false) {');
-if (mut === 'cf-forjado') proxy = muta(proxy, 'if (saltoDaCloudflare(clientAddress)) {', "if (request.headers.has('cf-connecting-ip')) {");
+if (mut === 'pop-como-cidade') proxy = muta(proxy, 'if (request.cf || saltoDaCloudflare(clientAddress)) {', 'if (false) {');
+if (mut === 'cf-forjado') proxy = muta(proxy, 'if (request.cf || saltoDaCloudflare(clientAddress)) {', "if (request.headers.has('cf-connecting-ip')) {");
 if (mut === 'sem-prazo') proxy = muta(proxy, '    signal: AbortSignal.timeout(TEMPO_MAXIMO_MS),\n', '');
 if (mut === 'sem-segredo') rota = muta(rota, '{ segredo: SEGREDO }', '{}');
 if (mut === 'rota-fora-do-proxy') rota = muta(rota, "'submit-match', ", '');
@@ -62,7 +62,7 @@ async function comLocation(loc, fn) {
 }
 
 const ESPERADAS = ['heartbeat', 'perf', 'presence', 'submit-match', 'telemetry'];
-await comLocation({ search: '', hostname: 'www.csbrasil.online' }, async (api) => {
+await comLocation({ search: '', hostname: 'www.corosolto.com.br' }, async (api) => {
   const via = [...(api.ROTAS_VIA_SITE || [])].sort();
   cobra(via.join(',') === ESPERADAS.join(','), `GP1 ROTAS_VIA_SITE = [${via}] — esperado [${ESPERADAS}]`);
   for (const r of ESPERADAS) {
@@ -85,7 +85,7 @@ let sinal;
 async function sobe(headers, clientAddress, opcoes) {
   let enviados;
   await proxyApiRequest(
-    new Request('https://www.csbrasil.online/api/telemetry', { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: '{}' }),
+    new Request('https://www.corosolto.com.br/api/telemetry', { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: '{}' }),
     'https://backend.invalid/api/telemetry', clientAddress,
     async (_url, init) => { enviados = init.headers; sinal = init.signal; return new Response('{}', { status: 200 }); },
     opcoes,
@@ -122,8 +122,8 @@ const CF = { 'cf-connecting-ip': '201.17.0.9', 'cf-ipcountry': 'BR', 'cf-ipcity'
   cobra(!sem.has('x-csb-proxy-auth'), 'GP6 x-csb-proxy-auth do NAVEGADOR atravessou o proxy');
 }
 cobra(sinal instanceof AbortSignal, 'GP8 fetch do proxy sem prazo — Cloud Run pendurado segura cada chamada de telemetria até o teto da função da Vercel');
-cobra(/const SEGREDO = import\.meta\.env\.API_PROXY_SECRET \|\| '';/.test(rota) && /\{ segredo: SEGREDO(?:, session: [^}]+)? \}/.test(rota),
-  'GP6 [rota].ts não repassa API_PROXY_SECRET ao proxy');
+cobra(/from '\.\.\/\.\.\/lib\/env-runtime'/.test(rota) && /\{ segredo: envRuntime\('API_PROXY_SECRET'\) \|\| ''/.test(rota),
+  'GP6 [rota].ts não repassa API_PROXY_SECRET (leitura de runtime via envRuntime) ao proxy');
 
 cobra(/void fetch\(apiUrl\(path\), \{/.test(main) && /fetch\(apiUrl\('\/api\/presence'\)/.test(main)
   && /const r = await fetch\(apiUrl\(path\), body/.test(main),

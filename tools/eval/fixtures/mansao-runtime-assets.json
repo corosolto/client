@@ -1,0 +1,97 @@
+{
+  "provenance": {
+    "sourceCommit": "1e84c8cc296cb5e80327e35f2245d30e266c6452",
+    "sourcePath": "docs/maps/MANSAO-RECOVERY-ASSETS.json",
+    "sourceSha256": "da599b643ff56bbb4b8e10d6c29ea368a2c67cbac651df9176383c8f8562ce1c"
+  },
+  "assets": [
+    {
+      "path": "public/img/map-previews/mansao.jpg",
+      "sha256": "9176a3b01999d74b0a0cc8ccbef3d047f9f9c341c0c261ab16b4ba05187adbd7"
+    },
+    {
+      "path": "public/img/textures/faixa_aviao.webp",
+      "sha256": "7063c08031efea12eef11bca050aea05d20dc97a11ee3684bbec188f875232f9"
+    },
+    {
+      "path": "public/img/textures/sky_joa.webp",
+      "sha256": "9cc6d444facebdfb3b0de2517b5ee7bd41ad70d7847ac0195f805d756f7d4e74"
+    },
+    {
+      "path": "public/models/ambient/mansao_arara_voo.glb",
+      "sha256": "3e386353f48fdee2b186194dd5839ab7a56ddc8b6932847cb66e155b8d9759ab"
+    },
+    {
+      "path": "public/models/ambient/passaro_voo.glb",
+      "sha256": "323fe81e0bca831611db2e4c5fded13a0211e19d876f37bcb4adf832fe54d197"
+    },
+    {
+      "path": "public/models/props/agave.glb",
+      "sha256": "2f0c046535ee11fda49d4f2d8c40300e7946c4454fa89675196d843cb7ad314d"
+    },
+    {
+      "path": "public/models/props/bananeira.glb",
+      "sha256": "b4b5e40537b248a02a4442803baf34c648bfcd035179f7abac0edfb7bcce4d5d"
+    },
+    {
+      "path": "public/models/props/banco_jardim.glb",
+      "sha256": "134050f56f7b1056d5497f71e3ed12ccaefe32668228087f45dc528b6e469ce7"
+    },
+    {
+      "path": "public/models/props/coqueiro.glb",
+      "sha256": "8a384ba903c55e228cfdeebc6b019a946061b809d6698cf833473664b96c4e2f"
+    },
+    {
+      "path": "public/models/props/costela_adao.glb",
+      "sha256": "82c5f004f3e8497398c0ba7299ed6239ffe514c461b9886ad933e8526246a277"
+    },
+    {
+      "path": "public/models/props/escultura_jardim.glb",
+      "sha256": "230253d3cf297f243b39e4b2831929d46c80360fa693c9f5bba41af9ff23df3f"
+    },
+    {
+      "path": "public/models/props/ixora.glb",
+      "sha256": "b2bcbf7458f5f3052b35805cf57c9955177f2f52adaa23112762e6a973eb0710"
+    },
+    {
+      "path": "public/models/props/lampiao_fachada.glb",
+      "sha256": "b4e4f51fd8c84ebba6b2a33a34f9b89479b9253cb8661115da6fc824223f4524"
+    },
+    {
+      "path": "public/models/props/lounge_externo.glb",
+      "sha256": "9de68149a8aa9eea294c55293f84a533d29b77520f3d28b310299a5f30600656"
+    },
+    {
+      "path": "public/models/props/mansao_lustre.glb",
+      "sha256": "7222d24fc10c2d7a1da69514f4c8aa2d30b4a1f2b44a689a31c884386f18d755"
+    },
+    {
+      "path": "public/models/props/mansao_mesa_centro.glb",
+      "sha256": "2683b62c9a1ceb73642dcd07da1a6e733a3c6ffaf0390f9e6ec34fb00430a7ee"
+    },
+    {
+      "path": "public/models/props/mansao_poltrona.glb",
+      "sha256": "9630e545dd2e7a9765e9ba67472ca51507df8338cb79415e319a797c59ab30ad"
+    },
+    {
+      "path": "public/models/props/mansao_sofa.glb",
+      "sha256": "926dea2a4e0ff695cf5e96ddd0ce79404fd3f9b4cf3854b8c3941b85d9673197"
+    },
+    {
+      "path": "public/models/props/palmeira_imperial.glb",
+      "sha256": "d7d109d83dd0be4ab9e8a4df384cadac9d4e9099405fb8a899251e42ef42e625"
+    },
+    {
+      "path": "public/models/props/palmeira_ravenala.glb",
+      "sha256": "c707dc3fbcec4d63ec2313f93eeecf29dcc1d5aaef5ba1de6fc889f336047d85"
+    },
+    {
+      "path": "public/models/props/poste_jardim.glb",
+      "sha256": "8fd97bc01e8903f71c179941484de8fe7f204f75e06e98af852a9fe57c78a13a"
+    },
+    {
+      "path": "public/models/props/vaso_tropical.glb",
+      "sha256": "4e765f75767adb74586c5bbb48c5b538a53081d4a4d71146eb89fa8792006953"
+    }
+  ]
+}

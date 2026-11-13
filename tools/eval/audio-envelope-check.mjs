@@ -1,3 +1,4 @@
+import { importAudioProbe } from './audio-probe-module.mjs';
 import { readFileSync } from 'node:fs';
 
 const mutante = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
@@ -11,7 +12,7 @@ if (mutante) {
 }
 
 globalThis.location = { search: '' };
-const { Sfx } = await import(`data:text/javascript,${encodeURIComponent(fonte)}`);
+const { Sfx } = await importAudioProbe(fonte, mutante);
 const alvos = [];
 const gain = {
   setValueAtTime() {},

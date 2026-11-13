@@ -23,7 +23,7 @@
 .tp-modos .tp-modos__titulo{margin:0;font-size:48px}
 .tp-modos__titulo em{font-style:normal;color:var(--tp-ambar)}
 
-.tp-modos__modos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;flex:none}
+.tp-modos__modos{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;flex:none}
 .tp-modos__modo{position:relative;height:clamp(96px,19vh,196px);padding:0;border-radius:12px;overflow:hidden;border:2px solid rgba(255,255,255,.1);background:var(--tp-painel);
   color:var(--tp-tinta-1);text-align:left;cursor:pointer;transition:transform var(--tp-d-rapido) var(--tp-ease-saida)}
 .tp-modos__modo:hover{transform:translateY(calc(-3px * var(--tp-mov)))}
@@ -76,6 +76,11 @@
 .tp-modos__nome{margin:0;font-size:36px}
 .tp-modos__desc{margin:4px 0 0;font-size:16px;font-weight:600;line-height:1.35;color:var(--tp-tinta-2)}
 .tp-modos__cfg{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:16px;scrollbar-width:thin;scrollbar-color:var(--tp-elevado) transparent}
+.tp-modos__regras[hidden],.tp-modos__passo[hidden],.tp-modos__gira[hidden]{display:none!important}
+.tp-modos__regras [data-javaporcos-opcoes]{flex-direction:column}
+.tp-modos__regras label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:800}
+.tp-modos__regras label[hidden]{display:none}
+.tp-modos__regras select,.tp-modos__regras input{width:100%;min-height:40px;box-sizing:border-box;border:1px solid var(--tp-tinta-3);border-radius:7px;padding:8px;background:var(--tp-fundo);color:var(--tp-tinta-1);font:600 14px var(--tp-ui)}
 .tp-modos__passo{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .tp-modos__rot{font-weight:800;font-size:16px}
 .tp-modos__ctl{display:flex;align-items:center;gap:10px}

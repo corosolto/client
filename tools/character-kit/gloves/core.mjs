@@ -3,6 +3,7 @@ import { inspectBindBytes } from '../bind-inspector.mjs';
 
 export const MANIFEST_SCHEMA = 'glove-package/v1';
 export const SELECTION_SCHEMA = 'cs-glove-mesh-parts/1';
+export const EXPLICIT_SELECTION_SCHEMA = 'cs-glove-explicit-mesh-parts/1';
 export const MESH_PARTS_SCHEMA = 'cs-mesh-part-selection/1';
 export const FAMILY_SCHEMA = 'cs-skeleton-family/1';
 export const OWNERSHIP_THRESHOLD = 0.5;
@@ -458,22 +459,34 @@ function copyScenes(document) {
 }
 
 export function buildThirdPersonPackage(sourceBytes, selection) {
-  must(selection?.schema === SELECTION_SCHEMA && selection.meshPartsSchema === MESH_PARTS_SCHEMA, 'selection schema mismatch');
+  const explicit = selection?.schema === EXPLICIT_SELECTION_SCHEMA;
+  must((explicit || selection?.schema === SELECTION_SCHEMA) && selection.meshPartsSchema === MESH_PARTS_SCHEMA, 'selection schema mismatch');
   must(selection.sourceSha256 === sha256(sourceBytes), 'selection source digest mismatch');
-  must(selection.ownershipThresholdExclusive === OWNERSHIP_THRESHOLD, 'selection ownership threshold mismatch');
+  if (explicit) {
+    must(Object.keys(selection).sort().join(',') === 'entries,meshPartsSchema,schema,sourceSha256', 'explicit selection fields mismatch');
+  } else must(selection.ownershipThresholdExclusive === OWNERSHIP_THRESHOLD, 'selection ownership threshold mismatch');
   must(Array.isArray(selection.entries) && selection.entries.length === 1, 'one selection entry required');
   const { document, bin } = parseGLB(sourceBytes);
   const entry = selection.entries[0];
+  if (explicit) must(natural(entry?.node) && natural(entry.primitive) && natural(entry.indexAccessor), 'explicit mesh-parts indices invalid');
   const node = document.nodes[entry.node];
   must(node?.skin === 0 && node.mesh === entry.mesh && entry.mesh === 0, 'selection node/mesh/skin mismatch');
   const primitive = document.meshes[entry.mesh]?.primitives?.[entry.primitive];
   must(primitive && (primitive.mode ?? 4) === 4 && primitive.targets === undefined, 'selected primitive unsupported');
+  if (explicit) {
+    must(Object.keys(entry).sort().join(',') === 'indexAccessor,left,mesh,node,primitive,right', 'explicit entry fields mismatch');
+    must(entry.indexAccessor === primitive.indices, 'explicit index accessor mismatch');
+  }
   const sourceIndices = triangleIndices(document, bin, primitive).values;
   const faceCount = sourceIndices.length / 3;
   const faceIds = side => {
     const part = entry[side];
     must(part?.partName === `glove-${side}` && Array.isArray(part.sourceFaceIDs) && part.sourceFaceIDs.length > 0, `${side} mesh-parts selection invalid`);
     must(part.sourceFaceIDs.every((faceId, index) => natural(faceId) && faceId < faceCount && (index === 0 || faceId > part.sourceFaceIDs[index - 1])), `${side} face IDs must be sorted/unique/in-range`);
+    if (explicit) {
+      must(Object.keys(part).sort().join(',') === 'partName,sourceFaceIDs,sourceFaceIDsSha256', `${side} explicit fields mismatch`);
+      must(part.sourceFaceIDsSha256 === canonicalHash(part.sourceFaceIDs), `${side} reviewed face digest mismatch`);
+    }
     return part.sourceFaceIDs;
   };
   const leftFaces = faceIds('left');

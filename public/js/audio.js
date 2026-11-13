@@ -1,6 +1,8 @@
+import { JAVAPORCO_GRAVACOES } from './data/javaporcos_audio.js';
+import { normalizarManifestAudio } from './audio_manifest.js';
+import { fetchComRetry } from './apibase.js';
 // Procedural WebAudio SFX + user sample packs (audio/manifest.json).
-// Real CS 1.6 samples are NOT bundled (Valve copyright) — drop your own legally-owned
-// files in audio/cs/ and register them under "cs" in audio/manifest.json.
+// Registre samples próprios e licenciados na família `jogo` de audio/manifest.json.
 /* Fator global do tiro — ver shotWeapon(). 0,42 = -7,5 dB, revisão pedida pelo dono no
    BUG-140 para a arma não cobrir voz e passo (era 1,0; depois 0,62 e 0,52).
    O duck continua independente. Tunável ao vivo: ?gunvol=N. */
@@ -13,6 +15,14 @@ const GUN_VOL = (() => {
    BufferSources e cobre passos/vozes; vários bots ainda multiplicam o problema. */
 const MAX_SHOT_VOICES_PER_SAMPLE = 4;
 const MAX_SHOT_VOICES = 16;
+/* Teto do bicho: vozes simultâneas, intervalo mínimo por voz e ENERGIA somada —
+   uma horda de dezenas de javaporcos não pode virar um muro de ganho no master. */
+export const JAVAPORCO_LIMITES = Object.freeze({
+  vozes: 8,
+  ganho: 0.95,
+  minPico: 0.035,
+  gap: Object.freeze({ rosnado: 0.05, carga: 0.07, morte: 0, horda: 0.45 }),
+});
 
 export const CHARACTER_SELECT_VOICE = Object.freeze({
   gotinha: 'audio/a/cc77ec4f134a71ba.mp3',
@@ -59,6 +69,8 @@ const LEGACY_VOICE_ALLOWLIST = Object.freeze({
     'audio/a/d983d18b544ff48a.mp3',
   ]),
 });
+// Eventos de fala dentro da partida; `select` fica fora (frase longa da tela de seleção).
+const INGAME_VOICE_EVENTS = Object.freeze(['kill', 'radio', 'round']);
 
 export class Sfx {
   constructor() {
@@ -74,6 +86,16 @@ export class Sfx {
     this.reverbOn = false;       // send de reverb leve (opt-in: ?reverb=1) — OFF por padrão
     this.onDuck = null;          // hook externo (main.js: abaixa a música do menu)
   }
+  setGameMode(mode) {
+    if (this.gameMode === mode) return;
+    this.gameMode = mode;
+    if (mode !== 'horde') return;
+    this.stopRound(0);
+    for (const key of ['_radioAudio','_characterAudio','_characterSelectAudio','_announcerAudio']) {
+      try { this[key]?.pause(); } catch {}
+      this[key] = null;
+    }
+  }
   async loadManifest(revision = '') {
     // Local pack first (audio/manifest.json, gitignored — dev's own CS samples);
     // fall back to the committed CC0 pack (real gun recordings, public domain) so
@@ -84,7 +106,7 @@ export class Sfx {
     for (const url of [`audio/manifest.json${query}`, 'audio/manifest.default.json?v=1']) {
       try {
         const r = await fetch(url, { cache: 'no-cache' });
-        if (r.ok) { this.pack = await r.json(); return; }
+        if (r.ok) { this.pack = normalizarManifestAudio(await r.json()); return; }
       } catch { /* try next */ }
     }
     this.pack = null;
@@ -125,6 +147,7 @@ export class Sfx {
   }
   _pick(arr) { return arr && arr.length ? arr[(Math.random() * arr.length) | 0] : null; }
   _voicePool(team) {
+    if (this.gameMode === 'horde') return [];
     const pool = this.pack?.voice?.[team];
     if (!Array.isArray(pool)) return [];
     const allowlist = LEGACY_VOICE_ALLOWLIST[team];
@@ -155,15 +178,24 @@ export class Sfx {
     this._lastVoice = performance.now();
     return true;
   }
-  // Fala autoral do personagem. Sem take próprio ou pool curado, não há voz substituta.
+  /* Take do evento → outro take ingame do MESMO personagem → pool da facção só para quem não
+     tem voz ingame própria (string legada = só seleção). Pool M mistura todos os Míticos. */
+  _ownIngameVoice(characterId, event) {
+    const own = this.pack?.characterVoice?.[characterId];
+    if (!own || typeof own !== 'object') return null;
+    if (own[event]?.length) return own[event];
+    if (!INGAME_VOICE_EVENTS.includes(event)) return null;   // seleção não pega bordão de kill
+    const outros = INGAME_VOICE_EVENTS.filter((e) => e !== event).flatMap((e) => own[e] || []);
+    return outros.length ? outros : null;
+  }
   characterVoice(characterId, event, { fallbackFaction = null, interrupt = false } = {}) {
+    if (this.gameMode === 'horde') return false;
     if (!this.speechEnabled) return false;
     const now = performance.now();
     if (event === 'kill' && this._lastKillVoice > 0 && now - this._lastKillVoice < 3500) return false;
     const rollback = !!LEGACY_VOICE_ALLOWLIST[fallbackFaction];
-    const own = rollback ? null : this.pack?.characterVoice?.[characterId]?.[event];
-    const genericPool = this._voicePool(fallbackFaction);
-    const file = this._pick(own?.length ? own : genericPool);
+    const own = rollback ? null : this._ownIngameVoice(characterId, event);
+    const file = this._pick(own || this._voicePool(fallbackFaction));
     if (file) {
       if (interrupt && this._characterAudio) this._characterAudio.pause();
       const audio = this._sample(file);
@@ -179,6 +211,7 @@ export class Sfx {
     return false;
   }
   characterSelectVoice(characterId, faction, rosterIds) {
+    if (this.gameMode === 'horde') return false;
     if (!this.speechEnabled) return false;
     const rosterSlot = rosterIds?.indexOf(characterId) ?? -1;
     if (rosterSlot < 0) return false;
@@ -230,6 +263,7 @@ export class Sfx {
          entrar por cima da rodada nova.
      Fade e não corte seco: som que some no talo lê como bug de áudio. */
   roundSound(team) {
+    if (this.gameMode === 'horde') return false;
     const f = this._pick(this.pack?.round?.[team]);
     if (!f) return false;
     this.stopRound(0);                       // vinheta anterior nunca acumula com a nova
@@ -264,6 +298,7 @@ export class Sfx {
   }
   csSound(key) { const f = this._cs(key); if (f) { this._sample(f); return true; } return false; }
   _announcer(pool, vol = 0.78) {
+    if (this.gameMode === 'horde') return false;
     const f = this._pick(pool);
     if (!f) return false;
     if (this._announcerAudio) { try { this._announcerAudio.pause(); } catch {} }
@@ -277,8 +312,8 @@ export class Sfx {
   roundNumber(number) {
     return this._announcer(this.pack?.roundNumbers?.[String(number)], 0.72);
   }
-  captureSound(faction) { const arr = (faction && this.pack?.captureByTeam?.[faction]) || this.pack?.capture; const f = this._pick(arr); if (f) { this._sample(f); return true; } return false; }   // captura de bandeira (CTF): pool por facção (captureByTeam) c/ fallback global
-  _cs(key) { const v = this.pack?.cs?.[key]; return v && v.length ? this._pick(v) : null; }
+  captureSound(faction) { if (this.gameMode === 'horde') return false; const arr = (faction && this.pack?.captureByTeam?.[faction]) || this.pack?.capture; const f = this._pick(arr); if (f) { this._sample(f); return true; } return false; }
+  _cs(key) { const v = this.pack?.jogo?.[key]; return v && v.length ? this._pick(v) : null; }
 
   ensure() {
     if (this.disabled) return;
@@ -332,9 +367,19 @@ export class Sfx {
     node.gain.exponentialRampToValueAtTime(end, t0 + a + d);
   }
   _noise(dur) {
-    const n = this.ctx.sampleRate * dur, buf = this.ctx.createBuffer(1, n, this.ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    // Ruído reaproveitado: 6 buffers por duração em vez de um AudioBuffer novo (e milhares de
+    // Math.random) por camada de cada tiro e passo — com 12 bots isso virava lixo de GC.
+    if (this._ruidoCtx !== this.ctx) { this._ruidoCtx = this.ctx; this._ruido = new Map(); }
+    const sr = this.ctx.sampleRate, n = Math.max(1, Math.floor(sr * dur)), banco = this._ruido;
+    let lista = banco.get(n);
+    if (!lista) banco.set(n, lista = []);
+    let buf;
+    if (lista.length < 6) {
+      buf = this.ctx.createBuffer(1, n, sr);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      lista.push(buf);
+    } else buf = lista[(Math.random() * 6) | 0];
     const src = this.ctx.createBufferSource(); src.buffer = buf; return src;
   }
   _osc(type, freq) { const o = this.ctx.createOscillator(); o.type = type; o.frequency.value = freq; return o; }
@@ -792,26 +837,26 @@ export class Sfx {
      manifest; false deixa o game executar o synth legado sem sobrepor sample. */
   impact(surface, vol = 1, pan = 0, propDelay = 0) {
     const key = ({ concreto: 'concrete', madeira: 'wood', vidro: 'glass', areia: 'dirt', agua: 'water' })[surface] || surface;
-    const sample = this._pick(this.pack?.cs?.impactsBySurface?.[key]);
+    const sample = this._pick(this.pack?.jogo?.impactsBySurface?.[key]);
     return !!(sample && this._eventSample(sample, .34 * vol, pan, propDelay, true));
   }
   bodyImpact(armored = false, vol = 1, pan = 0, propDelay = 0) {
-    const sample = this._pick(this.pack?.cs?.characterImpact?.[armored ? 'armor' : 'body']);
+    const sample = this._pick(this.pack?.jogo?.characterImpact?.[armored ? 'armor' : 'body']);
     return !!(sample && this._eventSample(sample, (armored ? .30 : .26) * vol, pan, propDelay, true));
   }
   pickup(kind = 'weapon') {
-    const sample = this._pick(this.pack?.cs?.pickupByKind?.[kind]);
+    const sample = this._pick(this.pack?.jogo?.pickupByKind?.[kind]);
     if (sample && this._eventSample(sample, .42, 0, 0, true)) return true;
     this.reloadEnd();
     return false;
   }
   weaponSwitch(weapon, cls = 'rifle') {
-    const exact = this.pack?.cs?.weaponSwitchByWeapon?.[weapon];
-    const sample = this._pick(exact?.length ? exact : this.pack?.cs?.weaponSwitchByClass?.[cls]);
+    const exact = this.pack?.jogo?.weaponSwitchByWeapon?.[weapon];
+    const sample = this._pick(exact?.length ? exact : this.pack?.jogo?.weaponSwitchByClass?.[cls]);
     return !!(sample && this._eventSample(sample, .26, 0, 0, true));
   }
   _uiAction(action, vol) {
-    const sample = this._pick(this.pack?.cs?.uiByAction?.[action]);
+    const sample = this._pick(this.pack?.jogo?.uiByAction?.[action]);
     return !!(sample && this._eventSample(sample, vol, 0, 0, true));
   }
   uiClick()   { this.ensure(); this.duck(0.5, 0.12); if (this._uiAction('click', .30)) return true;
@@ -883,12 +928,16 @@ export class Sfx {
     this._burst(0.14, 0.34 * vol, 220, 0.8, 'lowpass', propDelay, out);
   }
   jump()      { this.ensure(); this._beep('sine', 220, 330, .08, .1); }
-  land()      { this.ensure(); this._burst(.08, .18, 400); }
+  land(strength = 0.5) {
+    const k = Math.max(0, Math.min(1, strength));
+    this.ensure();
+    this._burst(0.08 + k * 0.03, 0.11 + k * 0.13, 320 + k * 180);
+  }
   // passos: round-robin nos samples (nunca repete o anterior) + playbackRate ±8% +
   // volume ±15%. Fallback synth: timbre por surface (água do piscinão = splash grave+ruído,
   // metal = brilho agudo, concreto = seco). surface vem do game.js (world.slowAt).
   step(surface = 'concrete') {
-    const arr = this.pack?.cs?.footstepsBySurface?.[surface] || this.pack?.cs?.footsteps;
+    const arr = this.pack?.jogo?.footstepsBySurface?.[surface] || this.pack?.jogo?.footsteps;
     if (arr && arr.length) {
       this._stepI = (this._stepI + 1) % arr.length;
       const a = this._sample(arr[this._stepI], 0.68 * (0.85 + Math.random() * 0.3));
@@ -1023,4 +1072,111 @@ export class Sfx {
     this.ensure(); [392, 330, 262].forEach((f, i) => this._beep('square', f, f * .9, .22, .2, i * .16)); }
   matchWin()  { const s = this._cs('roundwin'); if (s) { this._sample(s, .9); return; }
     this.ensure(); [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => this._beep('square', f, f, .18, .22, i * .14)); this.vuvuzela(1.8); }
+
+  static JAVAPORCO = Object.freeze({
+    rosnado: { sample: 'grunhido', dur: [.27, .40], rate: [.94, 1.06], offsets: [.06, .5, .9], lvl: .54 },
+    carga: { sample: 'guincho', dur: [.13, .25], rate: [1, 1.12], offset: [.05, .20], lvl: .62 },
+    morte: { sample: 'guincho', dur: [.70, .93], rate: [.88, .96], offset: [.35, .50], lvl: .68 },
+    horda: { sample: 'grunhido', dur: [.45, .80], rate: [.94, 1.06], offset: [0, .25], lvl: .46, camadas: [4, 7], defasagem: .75 },
+    fucar: { sample: 'grunhido', dur: [.45, .70], rate: [.9, 1], offset: [.1, .3], lvl: .54 },
+  });
+  async preloadJavaporcos() {
+    this.ensure();
+    if (!this.ctx) return false;
+    this._boarSamples ||= new Map();
+    if (!this._boarLoading) this._boarLoading = Promise.all(Object.entries(JAVAPORCO_GRAVACOES).map(async ([key, sample]) => {
+      if (this._boarSamples.has(key)) return;
+      const response = await fetchComRetry(sample.file, {}, { tentativas: 2, esperaMs: 350 });
+      if (!response.ok) throw new Error(`JAV-AUDIO: HTTP ${response.status} em ${sample.file}`);
+      const decoded = await this.ctx.decodeAudioData(await response.arrayBuffer());
+      if (!(decoded.duration > 0)) throw new Error(`JAV-AUDIO: gravação vazia em ${sample.file}`);
+      let peak = 0;
+      for (let channel = 0; channel < decoded.numberOfChannels; channel++) {
+        for (const value of decoded.getChannelData(channel)) peak = Math.max(peak, Math.abs(value));
+      }
+      if (!(peak > 0)) throw new Error(`JAV-AUDIO: gravação muda em ${sample.file}`);
+      for (let channel = 0; channel < decoded.numberOfChannels; channel++) {
+        const data = decoded.getChannelData(channel);
+        for (let i = 0; i < data.length; i++) data[i] /= peak;
+      }
+      this._boarSamples.set(key, decoded);
+    })).finally(() => { this._boarLoading = null; });
+    await this._boarLoading;
+    return true;
+  }
+  // Bus do bicho: limiter próprio antes do master e FORA do duckBus — o tiro não pode
+  // apagar o aviso de que tem javaporco em cima do jogador.
+  _javaporcoBus() {
+    if (this._boarBus) return this._boarBus;
+    const R = this.ctx, lim = R.createDynamicsCompressor();
+    lim.threshold.value = -8; lim.knee.value = 6; lim.ratio.value = 10;
+    lim.attack.value = 0.003; lim.release.value = 0.2;
+    this._boarBus = R.createGain();
+    this._boarBus.connect(lim); lim.connect(this.master);
+    this._send(this._boarBus, 0.1);
+    return this._boarBus;
+  }
+  _javaporcoVoz(cfg, t, pico, out) {
+    const buffer = this._boarSamples.get(cfg.sample);
+    const random = range => range[0] + (range[1] - range[0]) * Math.random();
+    const rate = random(cfg.rate);
+    const dur = Math.min(random(cfg.dur), buffer.duration / rate);
+    const selected = cfg.offsets ? cfg.offsets[Math.floor(Math.random() * cfg.offsets.length)] + Math.random() * .015 : random(cfg.offset);
+    const offset = Math.min(selected, Math.max(0, buffer.duration - dur * rate));
+    const source = this.ctx.createBufferSource(), gain = this.ctx.createGain();
+    source.buffer = buffer; source.playbackRate.value = rate;
+    gain.gain.setValueAtTime(.0001, t);
+    gain.gain.exponentialRampToValueAtTime(pico, t + Math.min(.008, dur * .1));
+    gain.gain.setValueAtTime(pico, t + dur * .75);
+    gain.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    source.connect(gain); gain.connect(out);
+    source.start(t, offset); source.stop(t + dur);
+    return dur;
+  }
+  /* Teto por TEMPO (gap da voz), por CONTAGEM e por ENERGIA (soma dos picos ao
+     quadrado). O que não cabe no orçamento é descartado, não somado no master. */
+  _javaporcoSlot(kind, t, pico) {
+    this._boarVozes = (this._boarVozes || []).filter((v) => v.fim > t);
+    this._boarUltimo = this._boarUltimo || {};
+    const L = JAVAPORCO_LIMITES;
+    if (t - (this._boarUltimo[kind] ?? -999) < (L.gap[kind] ?? 0.05)) return null;
+    if (this._boarVozes.length >= L.vozes) return null;
+    const carga = this._boarVozes.reduce((s, v) => s + v.pico * v.pico, 0);
+    const concedido = Math.min(pico, Math.sqrt(Math.max(0, L.ganho * L.ganho - carga)));
+    if (concedido < L.minPico) return null;
+    const slot = { kind, pico: concedido, fim: t + 1.6 };
+    this._boarVozes.push(slot);
+    this._boarUltimo[kind] = t;
+    return slot;
+  }
+  /* Voz do bicho: 'rosnado', 'carga', 'morte' ou 'horda'. Quem calcula distância é o
+     modo — aqui chegam só `vol` (0..1), `pan` (-1..1) e `delay` em segundos. */
+  javaporco(kind = 'rosnado', vol = 1, pan = 0, delay = 0) {
+    const cfg = Sfx.JAVAPORCO[kind];
+    if (!cfg) return false;
+    this.ensure();
+    if (!this.ctx || !this._boarSamples?.has(cfg.sample)) return false;
+    const pedido = Math.max(0, Math.min(1, vol)) * cfg.lvl;
+    const t = this.ctx.currentTime + Math.max(0, delay);
+    const slot = this._javaporcoSlot(kind, t, pedido);
+    if (!slot) return false;
+    let saida = this._javaporcoBus();
+    if (pan) {
+      const pz = this.ctx.createStereoPanner();
+      pz.pan.value = Math.max(-1, Math.min(1, pan));
+      pz.connect(saida); saida = pz;
+    }
+    let fim = t;
+    if (cfg.camadas) {
+      const [a, b] = cfg.camadas;
+      const n = a + Math.floor(Math.random() * (b - a + 1));
+      // horda = grunhidos defasados num slot só; a energia do slot é dividida entre eles
+      for (let i = 0; i < n; i++) {
+        const atraso = (i / n) * cfg.defasagem + Math.random() * 0.08;
+        fim = Math.max(fim, t + atraso + this._javaporcoVoz(cfg, t + atraso, slot.pico / Math.sqrt(n), saida));
+      }
+    } else fim = t + this._javaporcoVoz(cfg, t, slot.pico, saida);
+    slot.fim = fim;
+    return true;
+  }
 }

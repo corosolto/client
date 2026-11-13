@@ -368,6 +368,10 @@ export function buildPoolDay(scene, T) {
       const first = list[0].mesh;
       const batch = new THREE.InstancedMesh(first.geometry, first.material, list.length);
       batch.name = `${list[0].child.name}:batch`;
+      // Como no lote estático: o lote nasce na raiz, sem o grupo do prop, então leva
+      // a permissão de pintura medida antes de tirar os membros da árvore.
+      batch.userData.mapPropId = list[0].child.userData.mapPropId;
+      batch.userData.graffitiNomeDoAsset = !!list[0].child.userData.graffitiNomeDoAsset;
       batch.userData.graffitiSupportExcluded = !superficieGrafitavel(first);
       batch.userData.graffitiWhiteWall = !!first.userData.graffitiWhiteWall;
       const matrix = new THREE.Matrix4();
@@ -1204,6 +1208,7 @@ export function buildPoolDay(scene, T) {
 
   // Jogador e bots usam o mesmo chão, A* e penalidade dentro d'água.
   const slowAt = (x, z) => groundHeightAt(x, z) < -0.35;
+  const waterSurfaceAt = (x, z) => slowAt(x, z) ? -0.4 : null;
 
   /* ═══ PASSADA DE GRAFITE (07/08) ══════════════════════════════════════════
      Reprovação do dono: "na piscina ainda tem muito muro e obstáculos e armários
@@ -1273,7 +1278,7 @@ export function buildPoolDay(scene, T) {
 
   return {
     ambience,
-    root, colliders, occluders, camBlockers, decalSolids: [root], groundHeightAt, slowAt,
+    root, colliders, occluders, camBlockers, decalSolids: [root], groundHeightAt, slowAt, waterSurfaceAt,
     update(dt) { for (const w of scene.userData.waters || []) w.update(dt); },
     spawns, sun, hemi, pickups,
     /* BANDEIRAS DO CTF — DECLARADAS (06/08, defeito do dono: "bandeiras com nome do pátio
@@ -1294,8 +1299,8 @@ export function buildPoolDay(scene, T) {
     sound: {
       bioma: 'indoor',
       loops: [
-        { path: AMB_LOOPS.piscina, pos: [0, 0], radius: 30, vol: 0.24 },
-        { path: AMB_LOOPS.hum, pos: [SERVICE.axisX, 0], radius: 18, vol: 0.08 },
+        { src: AMB_LOOPS.piscina, pos: [0, 0, 0], radius: 30, vol: 0.24 },
+        { src: AMB_LOOPS.hum, pos: [SERVICE.axisX, 0, 0], radius: 18, vol: 0.08 },
       ],
     },
     bounds: { minX: SERVICE.minX, maxX: EAST_SERVICE.maxX, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
