@@ -108,10 +108,8 @@ jobs:
         run: |
           python3 scripts/ci/automerge_merge.py --selftest
           python3 scripts/ci/automerge_merge.py
-      - name: Record evaluated head and rollup for sweep debounce
+      - name: Record evaluated state for sweep debounce
         if: env.pular != '1'
-        # Depois do merge não há rollback: falha de comentário do sweep só pode
-        # gerar reavaliação futura (fail open), nunca reprovar um merge concluído.
         continue-on-error: true
         run: |
           python3 scripts/ci/bot_sweep.py --selftest
@@ -172,7 +170,7 @@ jobs:
         run: |
           python3 scripts/ci/bot_sweep.py --selftest
           gh pr list --repo "$REPO" --state open --limit 100 \
-            --json number,title,body,baseRefOid,mergeStateStatus,assignees,labels,headRefOid,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
+            --json number,title,body,isDraft,baseRefName,baseRefOid,mergeStateStatus,assignees,labels,headRefName,headRefOid,headRepository,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
             > /tmp/automerge-sweep.json
           python3 - <<'PY'
           import json, os, subprocess

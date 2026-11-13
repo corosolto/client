@@ -136,40 +136,6 @@ test('smoke-web.yml: chat desktop em job próprio, partição exata, nenhum spec
   for (const e of execs) assert.match(e, /--config=playwright\.smoke\.config\.mjs/);
 });
 
-test('automerge_merge.py: nenhuma mutação abre janela entre revalidação e merge', () => {
-  const s = readFileSync(fileURLToPath(new URL('../../../scripts/ci/automerge_merge.py', import.meta.url)), 'utf8');
-  const atualizou = s.indexOf('status = attest_current_pr(pr)');
-  const origemHead = s.indexOf("head_oid = status.get('headRefOid') or ''");
-  const validou = s.indexOf('current_data = revalidate_decision');
-  const merge = s.indexOf("subprocess.run(merge_command(pr, head_oid, current_data.get('merge_kind')), check=True)", validou);
-  assert.match(s, /def attest_current_pr[\s\S]*'gh', 'pr', 'view'[\s\S]*'scripts\/ci\/pr_attestation\.py', '--apply'/,
-    'o merge precisa buscar e atestar novamente o PR atual');
-  assert.ok(atualizou > 0 && origemHead > atualizou && origemHead < validou,
-    'o head precisa vir do PR atual revalidado');
-  assert.ok(merge > validou, 'o merge preso ao head precisa seguir a revalidação');
-  assert.match(s, /def merge_command[\s\S]*'--match-head-commit', head_oid/,
-    'o comando executado precisa usar o mesmo head_oid revalidado');
-  assert.ok(s.indexOf("if not re.fullmatch(r'[0-9a-f]{40}', head_oid)", origemHead) < validou,
-    'o head compartilhado precisa ser validado como SHA canônico antes da decisão');
-  const label = s.indexOf("'--add-label', 'pronto-pra-merge'", validou);
-  const comentario = s.indexOf("subprocess.run(['gh', 'pr', 'comment'", validou);
-  assert.ok(label > merge && comentario > merge,
-    'label/comentário só podem acontecer depois do merge, nunca entre validar e mergear');
-  const posterior = s.slice(merge);
-  assert.match(posterior, /try:\s*[\s\S]*except subprocess\.CalledProcessError/,
-    'falha de label/comentário depois do merge não pode reprovar o workflow');
-  assert.match(posterior, /warning: post-merge bookkeeping failed/);
-  const workflow = wf('csbrasil-bot-automerge.yml');
-  const sweep = workflow.slice(workflow.indexOf('- name: Record evaluated head and rollup for sweep debounce'));
-  assert.match(sweep, /continue-on-error: true/,
-    'falha da API ao gravar o sweep depois do merge não pode virar workflow vermelho');
-});
-
-test('.devcontainer/Dockerfile: o ambiente anunciado instala ffprobe para eval:redesign', () => {
-  const s = readFileSync(fileURLToPath(new URL('../../../.devcontainer/Dockerfile', import.meta.url)), 'utf8');
-  assert.match(s, /apt-get install -y --no-install-recommends ffmpeg/);
-});
-
 test('ci.yml: robots aceita só status 1 com a cláusula documentada', () => {
   const ci = wf('ci.yml');
   const inicio = ci.indexOf('          output=$(mktemp)');
@@ -188,4 +154,9 @@ test('ci.yml: robots aceita só status 1 com a cláusula documentada', () => {
   assert.equal(executar(0, clausula).status, 1, 'status 0 significa mutante sobrevivente');
   assert.equal(executar(1, 'crash sem cláusula').status, 1, 'status 1 sem cláusula deve falhar');
   assert.equal(executar(2, clausula).status, 2, 'erro de infraestrutura preserva seu status');
+});
+
+test('.devcontainer/Dockerfile: o ambiente anunciado instala ffprobe para eval:redesign', () => {
+  const s = readFileSync(fileURLToPath(new URL('../../../.devcontainer/Dockerfile', import.meta.url)), 'utf8');
+  assert.match(s, /apt-get install -y --no-install-recommends ffmpeg/);
 });

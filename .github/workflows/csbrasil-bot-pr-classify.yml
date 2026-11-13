@@ -322,11 +322,11 @@ jobs:
             exit 1
           fi
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Dispara classify só quando base, head, labels, rollup ou reviews mudaram
+      - name: Dispara classify só quando algum insumo de decisão mudou
         run: |
           python3 scripts/ci/bot_sweep.py --selftest
           gh pr list --repo "$REPO" --state open --limit 100 \
-            --json number,title,body,baseRefOid,mergeStateStatus,assignees,labels,headRefOid,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
+            --json number,title,body,isDraft,baseRefName,baseRefOid,mergeStateStatus,assignees,labels,headRefName,headRefOid,headRepository,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
             > /tmp/classify-sweep.json
           python3 - <<'PY'
           import json, os, subprocess
