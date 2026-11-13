@@ -42,12 +42,13 @@
      LW9  entrada aceita pelo fallback da splash não cai no watchdog do boot;
           clique sem aceite continua chegando ao watchdog
 
-   uso: node tools/eval/launch-watchdog-check.mjs [--mutante=<nome>]
+   uso: node tools/eval/launch-watchdog-check.mjs [--mutante=<nome> [--espera-reprovar]]
      sovivo       predicado de partida volta a `state === 'live'` na ordem original -> LW2/LW4
      semoculto    tique ignora a aba oculta                                   -> LW1
      semconsumo   latch de ocultação nunca é consumido                        -> LW6
-     seminteracao remove a renovação por input do menu                      -> LW7
-     semprevivo   o menu renova SEMPRE (rede-lenta incondicional)            -> LW8
+     seminteracao remove a renovação por input do menu                        -> LW7
+     semprevivo   o menu renova SEMPRE (rede-lenta incondicional)             -> LW8
+     sementrada   entrada aceita continua até o watchdog                      -> LW9
 
    Em TODAS as mutações, a cláusula antivacuidade correspondente tem que continuar
    VERDE: é ela que impede "consertar" o falso positivo desligando a detecção real.
@@ -58,7 +59,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+const ARGS = process.argv.slice(2);
+const MUT = (ARGS.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+const ESPERA = ARGS.includes('--espera-reprovar');
 const ASTRO = path.join(RAIZ, 'src/pages/index.astro');
 const MAIN = path.join(RAIZ, 'public/js/main.js');
 
@@ -99,7 +102,14 @@ ok('LW5', 'as quatro regiões marcadas existem nos arquivos',
    armado não mascara clique antes do failsafe, e a intenção pendente não mascara um
    clique posterior caso finishBoot continue travado. */
 {
-  const roda = (armed, pronto) => vm.runInNewContext(`(() => {\n${SRC_ENTRY}\nreturn 'watchdog';\n})()`, {
+  const guardaEntrada = "if (window.__CS_BOOT_FALLBACK_ARMED__ && pronto) return;";
+  const ocorrencias = SRC_ENTRY.split(guardaEntrada).length - 1;
+  if (MUT === 'sementrada' && ocorrencias !== 1) {
+    console.error(`LW9 mutante não aplicou: guarda encontrada ${ocorrencias}×`);
+    process.exit(2);
+  }
+  const srcEntry = MUT === 'sementrada' ? SRC_ENTRY.replace(guardaEntrada, 'if (false) return;') : SRC_ENTRY;
+  const roda = (armed, pronto) => vm.runInNewContext(`(() => {\n${srcEntry}\nreturn 'watchdog';\n})()`, {
     pronto,
     window: { __CS_BOOT_FALLBACK_ARMED__: armed },
   });
@@ -353,4 +363,10 @@ if (MUT) console.log(`mutante aplicado: --mutante=${MUT}\n`);
 console.log(falhas.length === 0
   ? 'PASSA (launch-watchdog-check) — 9/9 cláusulas'
   : `REPROVA (launch-watchdog-check) — ${falhas.join(', ')}`);
+if (ESPERA) {
+  const alvo = MUT === 'sementrada' ? 'LW9' : '';
+  const mordeu = alvo && falhas.length === 1 && falhas[0] === alvo;
+  console.log(`${mordeu ? 'MORDE' : 'CEGO '} ${alvo || 'mutante sem alvo'} (${MUT || 'ausente'})`);
+  process.exit(mordeu ? 0 : 1);
+}
 process.exit(falhas.length === 0 ? 0 : 1);
