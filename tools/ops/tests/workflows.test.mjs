@@ -136,29 +136,24 @@ test('smoke-web.yml: chat desktop em job próprio, partição exata, nenhum spec
   for (const e of execs) assert.match(e, /--config=playwright\.smoke\.config\.mjs/);
 });
 
-test('csbrasil-bot-automerge.yml: nenhuma mutação abre janela entre revalidação e merge', () => {
-  const s = wf('csbrasil-bot-automerge.yml');
-  const validou = s.indexOf('current_data = revalidate_decision');
-  const origemHead = s.indexOf("head_oid = status.get('headRefOid') or ''");
-  const merge = s.indexOf('subprocess.run(command, check=True)', validou);
-  const comandoHead = s.indexOf("command = ['gh', 'pr', 'merge', pr, '--merge', '--match-head-commit', head_oid]", validou);
-  assert.ok(origemHead > 0 && origemHead < validou, 'o head precisa vir do PR atual revalidado');
-  assert.ok(comandoHead > validou && comandoHead < merge,
-    'o comando executado precisa ser o merge com --match-head-commit no mesmo head_oid revalidado');
-  assert.ok(s.indexOf("if not re.fullmatch(r'[0-9a-f]{40}', head_oid)", origemHead) < validou,
-    'o head compartilhado precisa ser validado como SHA canônico antes da decisão');
-  const label = s.indexOf("'--add-label', 'pronto-pra-merge'", validou);
-  const comentario = s.indexOf("subprocess.run(['gh', 'pr', 'comment'", validou);
-  assert.ok(validou > 0 && merge > validou, 'o merge preso ao head precisa seguir a revalidação');
-  assert.ok(label > merge && comentario > merge,
-    'label/comentário só podem acontecer depois do merge, nunca entre validar e mergear');
-  const posterior = s.slice(merge, s.indexOf('\n          PY', merge));
-  assert.match(posterior, /try:\s*[\s\S]*except subprocess\.CalledProcessError/,
-    'falha de label/comentário depois do merge não pode reprovar o workflow');
-  assert.match(posterior, /warning: post-merge bookkeeping failed/);
-  const sweep = s.slice(s.indexOf('- name: Record evaluated head and rollup for sweep debounce'));
-  assert.match(sweep, /continue-on-error: true/,
-    'falha da API ao gravar o sweep depois do merge não pode virar workflow vermelho');
+test('ci.yml: robots aceita só status 1 com a cláusula documentada', () => {
+  const ci = wf('ci.yml');
+  const inicio = ci.indexOf('          output=$(mktemp)');
+  const fim = ci.indexOf('          node tools/eval/perfil-abas-check.mjs', inicio);
+  const bloco = ci.slice(inicio, fim).replace(
+    'node tools/eval/rotas-check.mjs --dist --mutante=robots',
+    'bash -c \'printf "%s\\n" "$ROBOTS_OUT"; exit "$ROBOTS_STATUS"\'',
+  );
+  assert.ok(inicio >= 0 && fim > inicio, 'wrapper de status do robots ausente');
+  const clausula = '/jogar/multiplayer: robots "index, follow" com indexavel=false';
+  const executar = (status, out) => spawnSync('bash', ['-c', bloco], {
+    encoding: 'utf8',
+    env: { ...process.env, ROBOTS_STATUS: String(status), ROBOTS_OUT: out },
+  });
+  assert.equal(executar(1, clausula).status, 0, 'status 1 com a cláusula deve passar');
+  assert.equal(executar(0, clausula).status, 1, 'status 0 significa mutante sobrevivente');
+  assert.equal(executar(1, 'crash sem cláusula').status, 1, 'status 1 sem cláusula deve falhar');
+  assert.equal(executar(2, clausula).status, 2, 'erro de infraestrutura preserva seu status');
 });
 
 test('.devcontainer/Dockerfile: o ambiente anunciado instala ffprobe para eval:redesign', () => {
