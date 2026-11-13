@@ -20,10 +20,11 @@ class Element {
   }
 }
 
-function start({ userAgent = 'Android', platform = 'Linux', touch = true, standalone = false, lang = 'pt-BR' } = {}) {
+function start({ userAgent = 'Android', platform = 'Linux', touch = true, standalone = false, lang = 'pt-BR', langReady = null } = {}) {
   const nodes = new Map(['pwa-install', 'pwa-install-action', 'pwa-install-help'].map((id) => [id, new Element()]));
   const windowListeners = new Map();
   const window = {
+    __CS_LANG_READY__: langReady,
     navigator: { userAgent, platform, maxTouchPoints: touch ? 5 : 0, standalone },
     matchMedia: (query) => ({ matches: query.includes('pointer: coarse') ? touch : standalone }),
     addEventListener(type, listener) {
@@ -38,6 +39,7 @@ function start({ userAgent = 'Android', platform = 'Linux', touch = true, standa
     panel: nodes.get('pwa-install'),
     action: nodes.get('pwa-install-action'),
     help: nodes.get('pwa-install-help'),
+    setLang: (value) => { document.documentElement.lang = value; },
     dispatchWindow: async (type, event = {}) => {
       for (const listener of windowListeners.get(type) || []) await listener(event);
     },
@@ -82,6 +84,15 @@ const installed = start({ standalone: true });
 assert.equal(installed.panel.hidden, true, 'installed app does not see install promotion');
 const desktop = start({ touch: false });
 assert.equal(desktop.panel.hidden, true, 'desktop does not see mobile install promotion');
+
+let resolveLang;
+const langReady = new Promise((resolve) => { resolveLang = resolve; });
+const delayedEnglish = start({ langReady });
+assert.equal(delayedEnglish.panel.hidden, true, 'install promotion waits for authoritative language');
+delayedEnglish.setLang('en');
+resolveLang();
+await langReady;
+assert.equal(delayedEnglish.action.textContent, 'HOW TO INSTALL', 'resolved geo language controls generated PWA copy');
 
 const english = start({ lang: 'en' });
 assert.equal(english.action.textContent, 'HOW TO INSTALL', 'English install CTA is localized');
