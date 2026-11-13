@@ -223,7 +223,8 @@ const workflowAf6 = estrutura('autofix.yml', wf, 'AF6');
 const push = gatilhoDe(workflowAf6, 'push');
 const temPush = gatilhosDe(workflowAf6).includes('push')
   && Array.isArray(push?.branches) && push.branches.includes('main');
-const temVarredura = /github\.event_name == 'push'/.test(ifDe(jobsDe(workflowAf6).varredura));
+const condicaoVarredura = ifDe(jobsDe(workflowAf6).varredura).trim().replace(/^\$\{\{\s*|\s*\}\}$/g, '');
+const temVarredura = condicaoVarredura === "github.event_name == 'push'";
 const filtraAtrasado = /"CONFLICTING"/.test(wf) && /gh workflow run autofix\.yml/.test(wf);
 if (!temPush) falhas.push('AF6 autofix.yml não acorda quando a main anda — PR parado esperando revisão nunca é consertado');
 else if (!temVarredura) falhas.push('AF6 o gatilho de push existe mas não há job de varredura');

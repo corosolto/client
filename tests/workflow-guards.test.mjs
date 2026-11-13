@@ -41,8 +41,12 @@ function assertGuardFailure(result, clause) {
   assert.match(result.stdout, new RegExp(clause), result.stdout);
 }
 
-test('structured workflow guards accept the current workflows', (t) => {
+test('AF4 accepts the canonical selftest plus one executable merge', (t) => {
   const dir = fixture(t);
+  const workflow = parse(readFileSync(join(dir, '.github/workflows/csbrasil-bot-automerge.yml'), 'utf8'));
+  const merge = workflow.jobs.automerge.steps.find((step) => step.name === 'Merge when eligible');
+  assert.ok(merge);
+  assert.equal(merge.run.trim(), 'python3 scripts/ci/automerge_merge.py --selftest\npython3 scripts/ci/automerge_merge.py');
   assert.equal(run(AUTOFIX_CHECK, dir).status, 0);
   assert.equal(run(SECRET_CHECK, dir).status, 0);
 });
@@ -116,6 +120,16 @@ for (const job of ['automerge', 'sweep']) {
     assertGuardFailure(run(SECRET_CHECK, dir), 'WSEC2');
   });
 }
+
+test('AF6 rejects a negated push condition', (t) => {
+  const dir = fixture(t);
+  const path = join(dir, '.github/workflows/autofix.yml');
+  const workflow = parse(readFileSync(path, 'utf8'));
+  assert.equal(workflow.jobs.varredura.if, "github.event_name == 'push'");
+  workflow.jobs.varredura.if = "github.event_name != 'push'";
+  writeFileSync(path, stringify(workflow, { lineWidth: 0 }));
+  assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF6');
+});
 
 test('AF4 rejects a direct unsafe merge even after a valid decision', (t) => {
   const dir = fixture(t);
