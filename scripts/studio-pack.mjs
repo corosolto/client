@@ -445,16 +445,29 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
   let lockCandidate;
   let lockPublished = false;
   let reclaimedStaleLock = false;
+  const removeLockCandidate = async () => {
+    if (!lockCandidate || !lockIdentity) return;
+    await assertParents();
+    const current = await lstat(lockCandidate, { bigint: true }).catch(() => null);
+    if (current && sameIdentity(current, lockIdentity)) await rm(lockCandidate, { force: true });
+    lockCandidate = null;
+  };
   try {
+    await assertParents();
     lockCandidate = path.join(idDirectory, `.version.install-lock-${process.pid}-${randomUUID()}.tmp`);
     lockHandle = await open(
       lockCandidate,
       constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW || 0),
       0o600,
     );
+    lockIdentity = await lockHandle.stat({ bigint: true });
+    await assertParents();
+    const candidateAtPath = await lstat(lockCandidate, { bigint: true });
+    if (!sameIdentity(candidateAtPath, lockIdentity)) {
+      fail('E_INSTALL_RACE', 'Install lock candidate changed during creation');
+    }
     await lockHandle.writeFile(`${process.pid}\n${new Date().toISOString()}\n${source.manifestSha256}\n`);
     await lockHandle.sync();
-    lockIdentity = await lockHandle.stat({ bigint: true });
     for (let attempt = 0; attempt < 2; attempt++) {
       await assertParents();
       try {
@@ -471,8 +484,7 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
       }
     }
     if (!lockPublished) fail('E_INSTALL_BUSY', `Could not acquire install lock: ${lockPath}`);
-    await rm(lockCandidate, { force: true });
-    lockCandidate = null;
+    await removeLockCandidate();
     await assertParents();
 
     let targetExists = await lstat(target).catch(error => {
@@ -643,7 +655,7 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
     }
   } finally {
     if (lockHandle) await lockHandle.close().catch(() => {});
-    if (lockCandidate) await rm(lockCandidate, { force: true }).catch(() => {});
+    if (lockCandidate) await removeLockCandidate().catch(() => {});
     if (lockPublished) {
       await assertParents();
       const current = await lstat(lockPath, { bigint: true }).catch(() => null);
