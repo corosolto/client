@@ -471,7 +471,15 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
     for (let attempt = 0; attempt < 2; attempt++) {
       await assertParents();
       try {
+        const candidate = await lstat(lockCandidate, { bigint: true });
+        if (!sameIdentity(candidate, lockIdentity)) {
+          fail('E_INSTALL_RACE', 'Install lock candidate changed before publication');
+        }
         await link(lockCandidate, lockPath);
+        const published = await lstat(lockPath, { bigint: true });
+        if (!sameIdentity(published, lockIdentity)) {
+          fail('E_INSTALL_RACE', 'Published install lock does not match its owner record');
+        }
         lockPublished = true;
         break;
       } catch (error) {
