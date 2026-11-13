@@ -43,7 +43,7 @@ const REGRAS = [
   ['audio', /(?:^|\/)(?:audio[^/]*|soundscape[^/]*|menu-music[^/]*|.*ambience[^/]*)(?:\/|\.|$)/],
   ['browser', /(?:browser|playwright|portao-browser)/],
   ['network', /^(?:tools\/eval\/(?:net|transport|online|apis|geo-proxy|edge-cache|telemetry|telemetria|mp-|server-traffic)|tests\/net|src\/lib\/server-traffic\.mjs$|src\/middleware\.ts$|^middleware\.js$|public\/js\/(?:apibase|transporte|nos|contagem|player-unique|privacy|client-id|economia-partida|compra-partida))/],
-  ['vm', /^(?:tools\/viewmodels\/|tools\/eval\/(?:vm|tp-|authored|weapon|recoil|ballistics|firing|character|meshopt|glb-peso|normal-only|skin-profile|death-camera|ads1p|posto|preview-grip|knife-skin)|public\/js\/(?:vm|authoredvm|fparms|fpsrig|meleevm|recoil|weapons|weapon|glove|handik|look))/],
+  ['vm', /^(?:tools\/viewmodels\/|tools\/eval\/(?:lib\/vm-enquadramento|vm|tp-|authored|weapon|recoil|ballistics|firing|character|meshopt|glb-peso|normal-only|skin-profile|death-camera|ads1p|posto|preview-grip|knife-skin)|tools\/fabrica\/fabrica-candidates(?:\.json)?$|public\/models\/viewmodels\/coro(?:\/|$)|public\/js\/(?:vm|authoredvm|fparms|fpsrig|meleevm|recoil|weapons|weapon|glove|handik|look))/],
 ];
 
 const transversal = (arquivo) => /^(?:package-lock\.json|yarn\.lock|\.github\/|\.githooks\/|tools\/eval\/(?:runner|suites|selecao-pre-push)|tests\/eval-suites\.test\.mjs|public\/js\/(?:(?:game|main)\.js|(?:boot|net)(?:[^/]*\.js|\/)))/.test(arquivo);

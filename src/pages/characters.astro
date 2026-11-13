@@ -4,7 +4,7 @@
 // AQUI por overlay - o PT continua a fonte. Redirecionamento por idioma: cada página
 // manda pro par quando o idioma resolvido não bate (mesmas regras do public/js/i18n.js).
 import Layout from '../layouts/Layout.astro';
-import { GRUPOS, PERSONAGENS } from '../data/jogo';
+import { GRUPOS, PERSONAGENS, capaDoGrupo } from '../data/jogo';
 import { BRAND_FULL, GAME_ID } from '../lib/site';
 
 const FAC_EN: Record<string, { nome: string; lema: string; nota: string }> = {
@@ -77,8 +77,7 @@ const grupos = GRUPOS.map(g => ({
   elenco: PERSONAGENS.filter(p => p.grupo === g.id),
 }));
 const total = PERSONAGENS.length;
-const PLACA: Record<string, string> = { E: 'time-e', B: 'time-b', urbanas: 'tribos', palhacos: 'palhacos', funkeiros: 'funkeiros', mitico: 'mitico' };
-const placa = (id: string) => (PLACA[id] ? `/img/faccoes/${PLACA[id]}.webp` : null);
+const placa = capaDoGrupo;
 const slug = (nome: string) => nome.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const jsonld = [{ '@id': GAME_ID }];
 ---

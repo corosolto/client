@@ -15,8 +15,8 @@ export const OUT = join(ROOT, 'public', 'js', 'brasoes_versao.js');
 
 export function versoes() {
   const out = {};
-  for (const f of readdirSync(DIR).filter((n) => /^[a-z]\.png$/.test(n)).sort()) {
-    out[f[0]] = createHash('sha256').update(readFileSync(join(DIR, f))).digest('hex').slice(0, 12);
+  for (const f of readdirSync(DIR).filter((n) => /^[a-z][a-z0-9-]*\.png$/.test(n)).sort()) {
+    out[f.slice(0, -4)] = createHash('sha256').update(readFileSync(join(DIR, f))).digest('hex').slice(0, 12);
   }
   return out;
 }

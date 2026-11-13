@@ -37,7 +37,8 @@ cobra('PC1', /api\('\/api\/social', \{ action: 'presence', uid: getAnonId\(\) \}
 cobra('PC2', /if \(!contaNick \|\| testMode\) return;/.test(fn), 'sem conta logada ou em testMode não manda');
 const startGame = main.match(/async function _startGame\([^)]*\) \{([\s\S]{0,600})/)?.[1] || '';
 cobra('PC3', /pingPresencaConta\(\);/.test(startGame), '_startGame dispara a presença da conta');
-cobra('PC4', /onSession:auth=>\{[^}]*pingPresencaConta\(\);/.test(main) && /cs-account-change[^\n]*pingPresencaConta\(\);/.test(main), 'sessão pronta e troca de conta disparam a presença');
+const onSession = main.match(/onSession:auth=>(\{[\s\S]*?\}),onReady:/)?.[1] || '';
+cobra('PC4', /if\(auth\?\.profile\)\{[^}]*pingPresencaConta\(\);/.test(onSession) && /cs-account-change[^\n]*pingPresencaConta\(\);/.test(main), 'sessão pronta e troca de conta disparam a presença');
 cobra('PC5', /setInterval\(\(\) => \{ if \(game\) pingPresencaConta\(\); \}, 30_000\);/.test(main), 'pulso de 30 s em jogo');
 cobra('PC6', /sendMatchEvent[\s\S]{0,900}weaponMode: settings\.wpnMode \|\| 'all'/.test(main), 'sendMatchEvent leva weaponMode');
 

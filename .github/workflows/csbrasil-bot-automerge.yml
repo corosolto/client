@@ -111,45 +111,14 @@ jobs:
         # caminho, e portão quebrado que passa calado aqui mescla PR vermelho.
         run: |
           python3 scripts/ci/check_automerge.py --selftest
-          python3 - <<'PY'
-          import json, os
-          path = '/tmp/automerge.json'
-          pr = json.load(open(path))
-          pr['expected_repository'] = os.environ['GITHUB_REPOSITORY']
-          open(path, 'w').write(json.dumps(pr))
-          PY
           python3 scripts/ci/check_automerge.py < /tmp/automerge.json > /tmp/automerge-result.json
       # O dono autorizou merge automático em 09/11/2026: PR segura entra na base
       # classificada; o lote oficial staging→main entra por merge commit, sem apagar staging.
       - name: Merge when eligible
         if: env.pular != '1'
         run: |
-          python3 - <<'PY'
-          import json, os, re, subprocess, sys
-          data = json.load(open('/tmp/automerge-result.json'))
-          status = json.load(open('/tmp/automerge.json'))
-          pr = os.environ['PR_NUMBER']
-          head_oid = status.get('headRefOid') or ''
-          if not re.fullmatch(r'[0-9a-f]{40}', head_oid):
-              raise RuntimeError('automerge requires the evaluated canonical head OID')
-          if not data.get('eligible'):
-              print('pronto-pra-merge: not eligible')
-              subprocess.run(['gh', 'pr', 'edit', pr, '--remove-label', 'pronto-pra-merge'], check=False)
-              sys.exit(0)
-          ja = subprocess.run(['gh', 'pr', 'view', pr, '--json', 'labels', '--jq',
-                               '[.labels[].name] | index("pronto-pra-merge") != null'],
-                              capture_output=True, text=True).stdout.strip() == 'true'
-          subprocess.run(['gh', 'pr', 'edit', pr, '--add-label', 'pronto-pra-merge'], check=True)
-          if not ja:
-              kind = 'the daily release batch' if data.get('merge_kind') == 'release-batch' else 'a safe change'
-              subprocess.run(['gh', 'pr', 'comment', pr, '--body',
-                              f'🤖 **csbrasil-bot**: required checks passed and the diff meets the '
-                              f'`check_automerge` criteria. Merging automatically as {kind}.'], check=True)
-          command = ['gh', 'pr', 'merge', pr, '--merge', '--match-head-commit', head_oid]
-          if data.get('merge_kind') != 'release-batch':
-              command.append('--delete-branch')
-          subprocess.run(command, check=True)
-          PY
+          python3 scripts/ci/automerge_merge.py --selftest
+          python3 scripts/ci/automerge_merge.py
 
   sweep:
     if: github.event_name == 'schedule'
