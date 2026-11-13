@@ -149,6 +149,9 @@ test('csbrasil-bot-automerge.yml: nenhuma mutação abre janela entre revalidaç
   assert.match(posterior, /try:\s*[\s\S]*except subprocess\.CalledProcessError/,
     'falha de label/comentário depois do merge não pode reprovar o workflow');
   assert.match(posterior, /warning: post-merge bookkeeping failed/);
+  const sweep = s.slice(s.indexOf('- name: Record evaluated head and rollup for sweep debounce'));
+  assert.match(sweep, /continue-on-error: true/,
+    'falha da API ao gravar o sweep depois do merge não pode virar workflow vermelho');
 });
 
 test('.devcontainer/Dockerfile: o ambiente anunciado instala ffprobe para eval:redesign', () => {

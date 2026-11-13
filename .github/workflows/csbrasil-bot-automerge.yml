@@ -160,6 +160,9 @@ jobs:
           PY
       - name: Record evaluated head and rollup for sweep debounce
         if: env.pular != '1'
+        # Depois do merge não há rollback: falha de comentário do sweep só pode
+        # gerar reavaliação futura (fail open), nunca reprovar um merge concluído.
+        continue-on-error: true
         run: |
           python3 scripts/ci/bot_sweep.py --selftest
           python3 - <<'PY'
