@@ -20,11 +20,33 @@ class Element {
   }
 }
 
-function start({ userAgent = 'Android', platform = 'Linux', touch = true, standalone = false, lang = 'pt-BR' } = {}) {
+function start({
+  userAgent = 'Android',
+  platform = 'Linux',
+  touch = true,
+  standalone = false,
+  lang = 'pt-BR',
+  offline = false,
+  resources = [],
+  hostname = 'jogo.test',
+} = {}) {
   const nodes = new Map(['pwa-install', 'pwa-install-action', 'pwa-install-help'].map((id) => [id, new Element()]));
   const windowListeners = new Map();
+  const posted = [];
+  const registrations = [];
+  const worker = { postMessage(message) { posted.push(message); } };
+  const serviceWorker = offline ? {
+    controller: worker,
+    addEventListener() {},
+    async register(path, options) {
+      registrations.push({ path, options });
+      return { active: worker };
+    },
+  } : undefined;
   const window = {
-    navigator: { userAgent, platform, maxTouchPoints: touch ? 5 : 0, standalone },
+    location: { origin: `https://${hostname}`, hostname },
+    performance: { getEntriesByType: () => resources.map((name) => ({ name })) },
+    navigator: { userAgent, platform, maxTouchPoints: touch ? 5 : 0, standalone, serviceWorker },
     matchMedia: (query) => ({ matches: query.includes('pointer: coarse') ? touch : standalone }),
     addEventListener(type, listener) {
       const list = windowListeners.get(type) || [];
@@ -33,11 +55,13 @@ function start({ userAgent = 'Android', platform = 'Linux', touch = true, standa
     },
   };
   const document = { documentElement: { lang }, getElementById: (id) => nodes.get(id) || null };
-  vm.runInNewContext(source, { window, document });
+  vm.runInNewContext(source, { window, document, URL });
   return {
     panel: nodes.get('pwa-install'),
     action: nodes.get('pwa-install-action'),
     help: nodes.get('pwa-install-help'),
+    posted,
+    registrations,
     dispatchWindow: async (type, event = {}) => {
       for (const listener of windowListeners.get(type) || []) await listener(event);
     },
@@ -89,5 +113,31 @@ assert.match(english.help.textContent, /browser menu/);
 await english.action.dispatch('click');
 assert.equal(english.help.textContent, 'Open your browser menu and choose “Install app” or “Add to Home Screen”.');
 assert.equal(english.panel.attributes.get('aria-label'), 'Install the web beta');
+
+const offline = start({
+  offline: true,
+  resources: [
+    'https://jogo.test/js/main.js?v=release',
+    'https://jogo.test/models/characters/test.glb?v=asset',
+    'https://jogo.test/api/private.json',
+    'https://other.test/foreign.js',
+  ],
+});
+await Promise.resolve();
+await Promise.resolve();
+await offline.dispatchWindow('load');
+assert.equal(offline.registrations.length, 1, 'page registers one service worker');
+assert.equal(offline.registrations[0].path, '/sw.js', 'service worker lives at the root');
+assert.equal(offline.registrations[0].options.scope, '/', 'service worker controls the installed game');
+assert.equal(offline.posted.at(-1).type, 'CACHE_OFFLINE_RESOURCES');
+assert.deepEqual([...offline.posted.at(-1).urls], [
+  'https://jogo.test/',
+  'https://jogo.test/js/main.js?v=release',
+  'https://jogo.test/models/characters/test.glb?v=asset',
+], 'page warms only the visited same-origin game resources');
+
+const local = start({ offline: true, hostname: 'localhost' });
+await Promise.resolve();
+assert.equal(local.registrations.length, 0, 'local eval and dev pages do not retain a service worker');
 
 console.log('PWA install contract: PASS (Android, iPhone, EN, standalone and desktop)');
