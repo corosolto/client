@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,6 +40,14 @@ function assertGuardFailure(result, clause) {
   assert.equal(result.status, 1, `${result.stdout}\n${result.stderr}`);
   assert.match(result.stdout, new RegExp(clause), result.stdout);
 }
+
+test('Dev Container Dockerfile resolves from its configuration directory', () => {
+  const config = JSON.parse(readFileSync(join(ROOT, '.devcontainer/devcontainer.json'), 'utf8'));
+  assert.equal(config.build.context, '..');
+  const dockerfile = join(ROOT, '.devcontainer', config.build.dockerfile);
+  assert.equal(dockerfile, join(ROOT, '.devcontainer/Dockerfile'));
+  assert.ok(existsSync(dockerfile));
+});
 
 test('AF4 accepts the canonical selftest plus one executable merge', (t) => {
   const dir = fixture(t);
