@@ -241,9 +241,16 @@ Não mergeie lote em paralelo nem reutilize o placar obtido antes do merge anter
 Uma issue só pode ser fechada quando o PR que a corrige já foi integrado e a verificação focada
 passou na base resultante, com evidência reproduzível. Review verde, PR aberto ou texto `Closes`
 não bastam. Use o owner e o repositório registrados para a issue, nunca o repositório do PR por
-inferência:
+inferência. Antes do comando, leia os labels e `docs/quality-gates.md`: `crash-auto` e qualquer
+outra classe reservada ao humano viram decisão **humano**, mesmo depois da verificação.
 
 ```bash
+ISSUE_LABELS=$(gh issue view NUMERO_ISSUE -R OWNER_ISSUE/REPO_ISSUE \
+  --json labels --jq '.labels[].name')
+if printf '%s\n' "$ISSUE_LABELS" | grep -Fxq crash-auto; then
+  echo "decisão humano: crash-auto não pode ser fechado pela fila" >&2
+  exit 2
+fi
 gh issue close NUMERO_ISSUE -R OWNER_ISSUE/REPO_ISSUE \
   --comment "Corrigido por OWNER_PR/REPO_PR#PR (SHA DO MERGE). Verificação na base resultante: COMANDO — RESULTADO."
 ```
