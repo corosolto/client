@@ -5,7 +5,7 @@ O workflow manual `steam-preflight.yml` prepara manifesto de hashes e VDF Previe
 ## Entrada
 
 - Run de build bem-sucedida deste repositório, SHA completo e nome exato do artefato.
-- Executável nativo Windows, Linux ou macOS e path relativo dentro do artefato.
+- Executável nativo Windows e path relativo dentro do artefato.
 - AppID e DepotID reais informados pelo operador. A ferramenta valida formato; não verifica propriedade ou acesso à conta.
 
 O run é conferido pela API GitHub contra o SHA fornecido. Cada arquivo do conteúdo recebe SHA-256 no manifesto. Um cabeçalho ELF/PE/Mach-O é somente um filtro de formato; não prova execução, assinatura ou notarização. Arquivos web não são build desktop.
@@ -14,7 +14,7 @@ O run é conferido pela API GitHub contra o SHA fornecido. Cada arquivo do conte
 
 A lane Unreal existente está suja e sem remoto. Este workflow não altera essa árvore nem cria uma build Windows. Nenhum produtor de artefato desktop está conectado a este repositório: até existir uma build identificada, o workflow fica preparado, sem run de distribuição aprovado.
 
-Uploads de artefatos do GitHub podem perder permissões Unix. O preflight recusa executável macOS/Linux sem bit de execução. O produtor precisa preservar os modos num pacote próprio, com extração revisada, antes desta integração ser considerada operacional. Não aplique chmod genérico como prova de integridade.
+Artefatos do GitHub não preservam permissões Unix. Por isso o workflow manual oferece somente Windows. Linux e macOS continuam aceitos pela ferramenta local quando o produtor preserva os modos num pacote próprio, com extração revisada; não aplique `chmod` genérico como prova de integridade.
 
 ## Verificação local
 

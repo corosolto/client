@@ -20,7 +20,7 @@ on:
         required: true
       platform:
         type: choice
-        options: [windows, linux, macos]
+        options: [windows]
         required: true
       app_id:
         required: true
@@ -72,6 +72,7 @@ jobs:
           APP_ID: ${{ inputs.app_id }}
           DEPOT_ID: ${{ inputs.depot_id }}
         run: |
+          [[ "$PLATFORM" == "windows" ]]
           python3 tools/distribution-steam/prepare.py --content native-build --output steam-prepared --launch "$LAUNCH" --platform "$PLATFORM" --app-id "$APP_ID" --depot-id "$DEPOT_ID"
           cp "$RUNNER_TEMP/source-run.json" steam-prepared/source-run.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
