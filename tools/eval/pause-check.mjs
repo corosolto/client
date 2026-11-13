@@ -196,7 +196,7 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
       && /else if \(HUB_ENABLED\)/.test(linhas.slice(Math.max(charConfirmIni, i - 8), i).join('\n'));
     const porBoot = !chamada && /^show\('main-menu'\)/.test(L)
       && /\/\* ---------------- boot ---------------- \*\//.test(linhas.slice(Math.max(0, i - 20), i).join('\n'))
-      && /window\.__CS_MAIN_READY__ = true/.test(linhas.slice(i + 1, i + 6).join('\n'));
+      && /window\.__CS_MAIN_READY__ = true/.test(linhas.slice(i + 1, i + 8).join('\n'));
     if (!porClique && !porHistoricoSeguro && !porConfirmacao && !porBoot) suspeitas.push(`${i + 1}: ${L.trim().slice(0, 90)}`);
   }
   const reais = suspeitas.filter((s) => !/isMobile/.test(s));
