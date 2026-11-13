@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1900 1000">
+<svg xmlns="http://www.w3.org/2000/svg" width="950" height="500" viewBox="0 0 1900 1000">
   <defs>
     <pattern id="stripes" width="1900" height="153.846" patternUnits="userSpaceOnUse">
       <rect width="1900" height="76.923" fill="#b31942"/>

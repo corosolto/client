@@ -6,6 +6,7 @@ import { profileSocialLinks } from '../ranking-player.js';
 import { WEAPONS } from '../data/weapons.js';
 import { MAPS, resolveMapId } from '../maps.js';
 import { heroUrl, retratoFontes } from '../data/retratos.js';
+import { origemCompartilhamento } from '../compartilhar.js';
 
 const local = () => (LANG === 'en' ? 'en-US' : 'pt-BR');
 const num = (n) => Number(n).toLocaleString(local());
@@ -572,7 +573,7 @@ export function ligar() {
     const acao = botao(tr(lider ? 'Copiar convite do clã' : 'Copiar link do clã'), 'tp-btn--primario tp-carreira__cla-acao', async () => {
       acao.disabled = true;
       try {
-        let link = `${location.origin}/clans/${encodeURIComponent(c.id)}`;
+        let link = `${origemCompartilhamento()}/clans/${encodeURIComponent(c.id)}`;
         if (lider) { const r = await api('/api/clans', { ...convidado(), action: 'invite' }); link += `#invite=${r.invite}`; }
         await navigator.clipboard.writeText(link);
         saida.textContent = tr(lider ? 'Convite copiado. Gerar outro revoga o anterior.' : 'Link do clã copiado.');

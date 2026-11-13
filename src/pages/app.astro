@@ -1,0 +1,44 @@
+---
+/* /app: landing leve (~1,4 MB) para WebView de app; a borda desvia a home para cá (desvioParaApp).
+   Réguas: server-traffic-check (matriz do desvio); detalhes no CHANGELOG. */
+import Layout from '../layouts/Layout.astro';
+import { BRAND_FULL } from '../lib/site';
+
+/* Página estática como a home: a query (utm_*) do visitante entra nos links no navegador. */
+const hrefJogo = '/?jogo=1';
+const TITLE = 'Jogue agora no navegador';
+const DESCRIPTION = 'CORO SOLTO é um FPS grátis que roda no navegador, sem instalar nada. Abra no Chrome ou Safari do seu celular e entre na treta.';
+---
+<Layout
+  title={TITLE}
+  description={DESCRIPTION}
+  ogImage="/video/landing/gameplay-vertical.jpg"
+  ogImageAlt={`${BRAND_FULL}: gameplay no Parque da Treta`}
+  ogImageWidth={720}
+  ogImageHeight={1280}
+  noindex
+  h1="FPS brasileiro, grátis, sem instalar"
+  kicker="roda no navegador do celular">
+  <p slot="sub">Dentro do app isso aqui fica travado. <strong>Abra no navegador</strong> e joga em 10 segundos.</p>
+
+  <section class="app-landing" data-landing="app">
+    <div class="app-ctas">
+      <a id="app-abrir" class="app-cta app-cta-primaria" href={hrefJogo}>ABRIR NO NAVEGADOR</a>
+      <a id="app-aqui" class="app-cta" href={hrefJogo}>jogar aqui mesmo</a>
+    </div>
+    <p id="app-dica" class="app-dica" hidden>Se nada abriu: toque nos três pontos do app e escolha <strong>Abrir no navegador</strong>.</p>
+    <video class="app-video" src="/video/landing/gameplay-vertical.mp4" poster="/video/landing/gameplay-vertical.jpg" width="720" height="1280" autoplay muted loop playsinline preload="metadata" aria-label="6 segundos de gameplay no Parque da Treta"></video>
+  </section>
+
+  <script type="module" src="/js/landing-app.js"></script>
+
+  <style>
+  .app-landing{display:grid;gap:18px;justify-items:center;padding:8px 20px 40px;max-width:520px;margin:0 auto}
+  .app-video{width:min(100%,300px);max-height:46vh;object-fit:cover;aspect-ratio:9/16;border-radius:14px;border:1px solid var(--tp-borda-forte);background:#000;box-shadow:0 18px 50px #000a}
+  .app-ctas{display:grid;gap:10px;width:100%}
+  .app-cta{display:block;text-align:center;text-decoration:none;font:400 22px/1 var(--display);letter-spacing:.04em;padding:18px 20px;border-radius:10px;color:var(--tp-tinta-2);border:1px solid var(--tp-borda-forte)}
+  .app-cta-primaria{background:var(--tp-lima);color:#131313;border-color:var(--tp-lima);font-size:26px}
+  .app-cta:focus-visible{outline:2px solid var(--tp-ambar);outline-offset:4px}
+  .app-dica{text-align:center;color:var(--tp-tinta-3);font-size:15px}
+  </style>
+</Layout>

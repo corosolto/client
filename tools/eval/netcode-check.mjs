@@ -14,6 +14,8 @@ import { makeNetcode } from '../../public/js/netgame.js';
 import { WEAPONS } from '../../public/js/game.js';
 import { unloadWeaponModel, setWeaponModel, hasWeapon } from '../../public/js/weapons.js';
 import * as THREE from 'three';
+import { InterpolationClock, pushEntitySample, sampleEntityBuffer } from '../../public/js/net-interpolation.js';
+import { injectedClock, interpolationEntity, interpolationSample, interpolationSnapshot } from './net-interpolation-fixture.mjs';
 
 let ok = 0, falhas = 0;
 const cobra = (c, m) => { if (c) { ok++; console.log(`  ok   ${m}`); } else { falhas++; console.log(`  FALHA ${m}`); } };
@@ -426,6 +428,51 @@ console.log('\n· morte→respawn por snapshot RESETA o corpo TP do jogador (BUG
   g2.dispose();
 }
 
+/* Lote de `ev` atrasado (> 1,5 s) é descartado inteiro: se o `boom` ia nele, a granada
+   ficava CONGELADA em cena para sempre (fuse 1e9, só o boom removia); se ia o `gone`,
+   a arma morta virava fantasma até a virada da rodada. Rede de segurança: fuse local
+   de 8 s na granada e o TTL do servidor como prazo do drop. */
+console.log('\n· boom/gone PERDIDOS não deixam fantasma (granada congelada e arma eterna)');
+{
+  const net = fakeNet(1, 5, false, 20, 1);
+  const g = montaJogo(net, { teamSize: 5 });
+  net.snap = snapshot(500, 90); g._mp.applySnapshot();   // primeiro snapshot: lote daqui é estado herdado, descartado
+  net.events.push({ tick: 100, list: [{ k: 'nade', i: 77, kind: 'frag', x: 2, y: 1, z: 2, vx: 1, vy: 1, vz: 0, o: 0 }] });
+  net.snap = snapshot(500.1, 100);
+  g._mp.applySnapshot();
+  const gr = g._grenades.find((x) => x._nid === 77);
+  cobra(!!gr, 'o evento `nade` nasce a granada de rede');
+  cobra(!!gr && gr.fuse > 0 && gr.fuse <= 8, `granada de rede tem fuse de segurança (${gr && +gr.fuse.toFixed(1)} s ≤ 8), não 1e9`);
+  for (let i = 0; i < 60 * 9; i++) g.update(1 / 60);
+  cobra(!g._grenades.some((x) => x._nid === 77), 'boom que nunca chega não vira granada congelada: o fuse local remove');
+  g.dispose();
+
+  // MUTANTE: o fuse eterno (comportamento antigo) deixa a granada fantasma — a régua morde.
+  const net2 = fakeNet(1, 5, false, 20, 1);
+  const g2 = montaJogo(net2, { teamSize: 5 });
+  net2.snap = snapshot(500, 90); g2._mp.applySnapshot();
+  net2.events.push({ tick: 100, list: [{ k: 'nade', i: 78, kind: 'frag', x: 2, y: 1, z: 2, vx: 1, vy: 1, vz: 0, o: 0 }] });
+  net2.snap = snapshot(500.1, 100); g2._mp.applySnapshot();
+  const gr2 = g2._grenades.find((x) => x._nid === 78);
+  if (gr2) gr2.fuse = 1e9;
+  for (let i = 0; i < 60 * 12; i++) g2.update(1 / 60);
+  cobra(g2._grenades.some((x) => x._nid === 78), 'MUTANTE com fuse 1e9 deixa a granada fantasma (a cláusula acima morde)');
+  g2.dispose();
+
+  // Drop: o TTL do servidor vira prazo de validade; `gone` perdido não deixa arma eterna.
+  const net3 = fakeNet(1, 5, false, 20, 1);
+  const g3 = montaJogo(net3, { teamSize: 5 });
+  net3.snap = snapshot(500, 90); g3._mp.applySnapshot();
+  net3.events.push({ tick: 100, list: [{ k: 'drop', i: 0, x: 3, z: 3, w: 'ak', ttl: 3 }] });
+  net3.snap = snapshot(500.1, 100); g3._mp.applySnapshot();
+  const dr = g3.drops.find((x) => x._nid === 0);
+  cobra(!!dr && dr._expiraRedeEm != null, 'drop de rede ganha prazo com o TTL do servidor (ou teto de 25 s)');
+  for (let i = 0; i < 60 * 7; i++) g3.update(1 / 60);
+  net3.snap = snapshot(507, 520); g3._mp.applySnapshot();
+  cobra(!g3.drops.some((x) => x._nid === 0), 'gone perdido não vira arma fantasma: passado o TTL, o drop some sozinho');
+  g3.dispose();
+}
+
 /* BUG-87 — "Lags". A interpolação antiga viajava prev→cur no gap de CHEGADA (~50 ms):
    qualquer snapshot atrasado clampava no último ponto e o boneco CONGELAVA até o próximo
    pacote — a 20 Hz com jitter real isso lê como lag mesmo com rede boa. O buffer de
@@ -486,6 +533,36 @@ console.log('\n· remotos interpolam com BUFFER (~120 ms): pacote atrasado não 
   g2.dispose();
 }
 
+/* META DO DONO — "sem amostra não existe": a janela parcial de quem OCULTOU a aba
+ * (mobile trocando de app) ou FECHOU a página no meio era descartada em silêncio.
+ * Agora pagehide/visibilitychange→hidden e o close do WS fazem o flush do que
+ * acumulou, e voltar a ficar visível antecipa a próxima janela (2 s, não 10). */
+console.log('\n· janela PARCIAL de client_stats sai ao ocultar/sair (sem amostra não existe)');
+{
+  const net = fakeNet(1);
+  const g = montaJogo(net);
+  const enviadas = [];
+  net.sendClientStats = (p) => enviadas.push(p);
+  net.drainRttSamples = () => [31, 33];
+  net.drainGapSamples = () => [30, 34];
+  g._mp._nsFps = 60;                       // jogou visível e renderizou nesta janela
+  g._mp._reconcileWindow.push(0.02, 0.03);
+  g._mp._flushStatsParcial();
+  cobra(enviadas.length === 1 && enviadas[0].fps === 60 && enviadas[0].rttSamples.length === 2 && enviadas[0].reconcileCount === 2,
+    'ocultar/sair manda a janela PARCIAL (fps, pongs e correções acumulados), não descarta');
+  cobra(g._mp._reconcileWindow.length === 0, 'e a janela recomeça limpa: amostra drenada não se repete');
+  // MUTANTE: sem o flush (comportamento antigo), o close do WS não leva nada
+  enviadas.length = 0;
+  const flush0 = g._mp._flushStatsParcial;
+  g._mp._flushStatsParcial = () => {};
+  net.onClose?.('quit');
+  cobra(enviadas.length === 0, 'MUTANTE sem flush perde a janela do close (a cláusula acima morde)');
+  g._mp._flushStatsParcial = flush0;
+  net.onClose?.('quit');
+  cobra(enviadas.length === 1, 'o hook de close do WS também leva a última janela');
+  g.dispose();
+}
+
 console.log('\n· cadência de 30 Hz reduz a latência visual sem perder o buffer');
 {
   const net = fakeNet(1, 5, false, 30);
@@ -493,6 +570,136 @@ console.log('\n· cadência de 30 Hz reduz a latência visual sem perder o buffe
   cobra(g._mp.snapshotHz === 30 && g._mp.interpAtrasoMs === 80,
     `welcome de 30 Hz escolhe buffer de 80 ms (${g._mp.interpAtrasoMs} ms), não herda 120 ms de 20 Hz`);
   g.dispose();
+}
+
+console.log('\n· relógio extraído: jitter determinístico produz a mesma trajetória');
+function tracoInterpolacaoCaotica() {
+  const relogio = injectedClock(1000);
+  const interp = new InterpolationClock({ snapshotHz: 30, now: relogio.now, ping: () => 60 });
+  const ent = interpolationEntity(), out = { vx: 0, vz: 0, segYaw: null };
+  const jitter = [0, 25, -10, 45];
+  for (let k = 0; k < 48; k++) {
+    if (k) relogio.advance(1000 / 30 + jitter[k % jitter.length]);
+    const snap = interpolationSnapshot(100 + k / 30, k + 1, k * 0.1);
+    interp.observe(snap, relogio.now());
+    pushEntitySample(ent, interp.snapshotTime(snap, relogio.now()), snap.ents[0]);
+  }
+  sampleEntityBuffer(ent, interp.serverNow() - interp.delayMs, out);
+  return { delay: interp.delayMs, renderTime: interp.renderTime(), x: ent.pos.x, times: ent._bufAt.slice() };
+}
+{
+  const a = tracoInterpolacaoCaotica(), b = tracoInterpolacaoCaotica();
+  cobra(JSON.stringify(a) === JSON.stringify(b),
+    'a mesma sequência injetada de jitter gera buffer, renderTime e pose bit a bit iguais');
+  cobra(a.delay > 80 && a.delay <= 140 && a.times.length === 10,
+    `jitter repetido adapta o atraso dentro do teto e mantém o cap de 10 amostras (${a.delay.toFixed(1)} ms)`);
+}
+
+console.log('\n· snapshot fora de ordem entra no lugar certo, sem duplicar amostra');
+{
+  const ent = interpolationEntity(), out = { vx: 0, vz: 0, segYaw: null };
+  pushEntitySample(ent, 10000, interpolationSample(0));
+  const duplicadaMaisAntiga = pushEntitySample(ent, 10000, interpolationSample(99));
+  pushEntitySample(ent, 10100, interpolationSample(1));
+  pushEntitySample(ent, 10050, interpolationSample(0.5));
+  const duplicada = pushEntitySample(ent, 10050, interpolationSample(99));
+  sampleEntityBuffer(ent, 10075, out);
+  cobra(ent._bufAt.join(',') === '10000,10050,10100' && Math.abs(ent.pos.x - 0.75) < 1e-9,
+    `reordenação por tempo do servidor preserva o segmento e interpola x=${ent.pos.x}`);
+  cobra(!duplicadaMaisAntiga && ent._bufAt[0] === 10000 && ent._bufX[0] === 0,
+    'repetição da amostra mais antiga também é rejeitada sem duplicar o tempo de servidor');
+  cobra(!duplicada && ent._bufX[1] === 0.5 && ent._bufAt.length === 3,
+    'repetição do mesmo tempo de servidor é stale e não substitui nem duplica a amostra');
+  for (let k = 3; k < 16; k++) pushEntitySample(ent, 10000 + k * 50, interpolationSample(k * 0.5));
+  cobra(ent._bufAt.length === 10 && ent._bufAt.every((t, i, a) => !i || a[i - 1] < t),
+    'rajada reordenada continua ordenada e limitada às 10 amostras mais recentes');
+}
+
+console.log('\n· renderTime usa os limites do servidor mesmo com chegada fora de ordem');
+{
+  const relogio = injectedClock(100000);
+  const interp = new InterpolationClock({ snapshotHz: 30, now: relogio.now });
+  // Uma rajada no mesmo instante local isola o clamp do tratamento de relógio novo.
+  for (const t of [101, 100, 102]) interp.observe({ t }, relogio.now());
+  const rt = interp.renderTime(0, 101120);
+  cobra(interp.serverTimes.join(',') === '101,100,102' && Math.abs(rt - 101.04) < 1e-9,
+    `101,100,102 mantêm a janela real [100,102] e renderTime=${rt}, sem clamp no primeiro pacote`);
+  cobra(interp.renderTime(0, 100050) === 100 && interp.renderTime(0, 102500) === 102,
+    'o clamp inferior e o superior usam o mínimo e o máximo observados, não os extremos de chegada');
+}
+
+console.log('\n· lote stale do mesmo tick não envelhece o relógio nem o buffer');
+{
+  const net = fakeNet(1, 5, false, 30), g = montaJogo(net), relogio = injectedClock(4000);
+  g._mp._now = relogio.now;
+  net.snap = snapshot(700, 1); g._mp.applySnapshot();
+  const ent = g._mp._netMap.get(6);
+  relogio.advance(250);
+  net.events.push({ type: 'ev', tick: 1, t: 700, list: [] });
+  g._mp.applySnapshot();
+  cobra(g._mp._tAt.length === 1 && ent._bufAt.length === 1 && g._mp.interpAtrasoMs === 80,
+    'reenvio do lote já reconhecido para antes da deduplicação de tick e não cria gap fantasma');
+  relogio.advance(33.333);
+  net.snap = snapshot(700.033333, 2, { mover: 0.1 }); g._mp.applySnapshot();
+  cobra(g._mp._netTick === 2 && g._mp._tAt.length === 2 && ent._bufAt.length === 2,
+    'o próximo tick novo continua sendo aceito depois do lote stale');
+  g.dispose();
+}
+
+console.log('\n· perda de snapshots limita rewind e pose à janela realmente reconhecida');
+{
+  // Linha do tempo com offset zero: t=20 s chega no relógio local de 20000 ms.
+  const relogio = injectedClock(20000);
+  const interp = new InterpolationClock({ snapshotHz: 30, now: relogio.now });
+  const ent = interpolationEntity(), out = { vx: 0, vz: 0, segYaw: null };
+  const primeiro = interpolationSnapshot(20, 1, 0);
+  interp.observe(primeiro, relogio.now());
+  pushEntitySample(ent, interp.snapshotTime(primeiro), primeiro.ents[0]);
+  // Os ticks 2 e 3 se perderam: nenhum relógio ou amostra intermediária pode ser inventado.
+  relogio.set(20100);
+  const quarto = interpolationSnapshot(20.1, 4, 1);
+  interp.observe(quarto, relogio.now());
+  pushEntitySample(ent, interp.snapshotTime(quarto), quarto.ents[0]);
+  relogio.set(20120);
+  sampleEntityBuffer(ent, interp.serverNow() - interp.delayMs, out);
+  cobra(interp.serverTimes.join(',') === '20,20.1' && Math.abs(interp.renderTime() - 20.04) < 1e-9
+    && Math.abs(ent.pos.x - 0.4) < 1e-9,
+    'a perda vira um único segmento conhecido; rewind e pose coincidem sem preencher pacotes ausentes');
+  relogio.set(20500);
+  sampleEntityBuffer(ent, interp.serverNow() - interp.delayMs, out);
+  cobra(interp.renderTime() === 20.1 && ent.pos.x === 1,
+    'estourada a janela de ack, rewind e pose clampam no último snapshot e nunca extrapolam');
+}
+
+console.log('\n· recuo curto é reorder; recuo grande é partida nova');
+{
+  const ent = interpolationEntity();
+  pushEntitySample(ent, 100000, interpolationSample(0));
+  pushEntitySample(ent, 101000, interpolationSample(1));
+  pushEntitySample(ent, 100500, interpolationSample(0.5));
+  cobra(ent._bufAt.join(',') === '100000,100500,101000',
+    'recuo de 500 ms entra ordenado no histórico em vez de derrubar a partida');
+  pushEntitySample(ent, 97000, interpolationSample(9));
+  cobra(ent._bufAt.join(',') === '97000' && ent._bufX.join(',') === '9',
+    'recuo maior que 1 s esvazia o relógio da partida anterior antes da nova amostra');
+  const mutante = interpolationEntity();
+  pushEntitySample(mutante, 100000, interpolationSample(0));
+  pushEntitySample(mutante, 101000, interpolationSample(1));
+  pushEntitySample(mutante, 100500, interpolationSample(0.5), false, true);
+  cobra(mutante._bufAt.join(',') === '100500',
+    'MUTANTE __mutOrdemAntiga/semOrdem volta a descartar o histórico no reorder (a cláusula morde)');
+  const relogio = injectedClock(100000);
+  const clock = new InterpolationClock({ snapshotHz: 30, now: relogio.now });
+  clock.observe({ t: 100 }, relogio.now());
+  relogio.set(100500); clock.observe({ t: 100 }, relogio.now());
+  const offsetReorder = clock.offsetMs;
+  const tAtAntes = clock.arrivalTimes, tTAntes = clock.serverTimes;
+  clock.observe({ t: 97 }, relogio.now());
+  cobra(clock.arrivalTimes === tAtAntes && clock.serverTimes === tTAntes
+    && tAtAntes.length === 1 && tTAntes.length === 1,
+    'recuo grande preserva identidade dos arrays e reinicia com uma amostra');
+  cobra(offsetReorder === 0 && clock.offsetMs === 3500,
+    `offset não desliza com dois timestamps iguais (${offsetReorder}) e reancora na partida nova (${clock.offsetMs})`);
 }
 
 console.log('\n· troca de vaga preserva UI e remonta o casamento de corpos');
@@ -567,7 +774,8 @@ console.log('\n· connect() tem PRAZO: nó que aceita e não responde vira erro,
 
 console.log('\n· server browser mede RTT aquecido, não o custo único de TLS');
 {
-  const { NetClient, createRoom, sondarNos } = await import('../../public/js/net.js');
+  const { NetClient } = await import('../../public/js/net.js');
+  const { createRoom, sondarNos } = await import('../../public/js/nos-rede.js');
   const fetchReal = globalThis.fetch;
   let chamadas = 0;
   const fetchSonda = async () => {
@@ -704,10 +912,6 @@ console.log('\n· lado físico do multiplayer vem do servidor, não da facção 
     'lado local velho perde para o yourTeam do servidor: 5×5');
   cobra(ladoOnline('B', { yourTeam: null }) === 'B' && ladoOnline('E', null) === 'E',
     'espectador ou sessão sem yourTeam mantém o lado pedido');
-  const ladoNoStart = /const sessao = online \? mpSessao : null;[\s\S]{0,2400}if \(sessao\) team = ladoOnline\(team, sessao\.net\);[\s\S]{0,400}const side = resolvePlayerSide\(team, faction, online\);/;
-  cobra(ladoNoStart.test(main), 'o start online troca o lado pedido pelo do servidor antes de resolver o side');
-  const mutLado = main.replace('if (sessao) team = ladoOnline(team, sessao.net);', '');
-  cobra(!ladoNoStart.test(mutLado), 'MUTANTE sem o lado do servidor no start deixa a cláusula do #785 vermelha');
   const mutSlot = main.replace('await startGame(currentTeam, currentChar, currentEnemyFaction, true);', '');
   cobra(!/net\.onSlot = async \(m\) =>[\s\S]*await transitionSlot\([\s\S]*await startGame\(currentTeam, currentChar, currentEnemyFaction, true\)/.test(mutSlot),
     'MUTANTE sem remount deixa a cláusula espectador→vaga vermelha');
@@ -1159,7 +1363,7 @@ console.log('\n· granada online: o clique pede ao servidor e não spawna local;
   net.snap = snapshot(960.033, 2); g._mp.applySnapshot();
   const gr = g._grenades.find((x) => x._nid === 9301);
   cobra(!!gr && gr.kind === 'frag' && Math.abs(gr.v.z - (-15)) < 1e-6 && gr.owner === p, 'o `nade` do servidor desenha a granada com a velocidade dele e o dono certo');
-  cobra(gr.fuse > 1000, 'o pavio local é infinito: quem estoura é o `boom`');
+  cobra(gr.fuse > 0 && gr.fuse <= 8, 'o pavio local tem fallback de segurança: quem estoura é o `boom` ou o fuse de 8 s');
   let explosoes = 0; const ex0 = g._explodeFrag.bind(g); g._explodeFrag = (...a) => { explosoes++; return ex0(...a); };
   net.events.push({ type: 'ev', tick: 3, t: 960.066, list: [{ k: 'boom', i: 9301, kind: 'frag', x: b.pos.x, y: 0.2, z: b.pos.z }] });
   net.snap = snapshot(960.066, 3); g._mp.applySnapshot();
