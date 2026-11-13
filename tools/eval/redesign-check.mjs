@@ -470,31 +470,11 @@ function diff(a, b) {
   const B = new Set(b);
   return a.filter((x) => !B.has(x));
 }
-function bytesDepois(buf, id) {
-  for (let pos = 0; pos <= buf.length - id.length - 2; pos++) {
-    if (!id.every((byte, i) => buf[pos + i] === byte)) continue;
-    const primeiro = buf[pos + id.length];
-    let largura = 1;
-    while (largura <= 8 && !(primeiro & (0x80 >> (largura - 1)))) largura++;
-    if (largura > 8 || pos + id.length + largura >= buf.length) continue;
-    let tamanho = primeiro & (0xff >> largura);
-    for (let i = 1; i < largura; i++) tamanho = tamanho * 256 + buf[pos + id.length + i];
-    const inicio = pos + id.length + largura;
-    if (tamanho < 1 || tamanho > 8 || inicio + tamanho > buf.length) continue;
-    let valor = 0;
-    for (let i = 0; i < tamanho; i++) valor = valor * 256 + buf[inicio + i];
-    if (valor > 0 && valor < 8192) return valor;
-  }
-  return null;
-}
 function metaWebm(rel) {
-  const buf = readFileSync(join(ROOT, rel)).subarray(0, 131072);
-  return {
-    webm: buf.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3])),
-    vp9: buf.includes(Buffer.from('V_VP9')),
-    width: bytesDepois(buf, [0xb0]),
-    height: bytesDepois(buf, [0xba]),
-  };
+  const probe = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name,width,height', '-of', 'json', join(ROOT, rel)], { encoding: 'utf8' });
+  if (probe.status !== 0) return { webm: false, vp9: false, width: null, height: null };
+  const stream = JSON.parse(probe.stdout).streams?.[0] || {};
+  return { webm: true, vp9: stream.codec_name === 'vp9', width: stream.width, height: stream.height };
 }
 function metaWebpAlpha(buf) {
   const chunk = buf.indexOf(Buffer.from('VP8X'));

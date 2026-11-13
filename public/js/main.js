@@ -5568,10 +5568,8 @@ function mpAvisoPersonagem(texto, oferta = null) {
   }
 }
 
-/* Conexão caiu no meio da partida. O servidor segura o corpo por 45 s (SLOT_IDLE_MS):
- * em vez de derrubar o jogador pro menu na primeira queda, TENTA RECONECTAR — o slot
- * ainda está lá, o placar continua, a economia não perde. Se todas as tentativas
- * falharem, a mensagem antiga ("entre de novo") aparece. */
+/* Queda de conexão: o servidor reserva o slot por 45 s e o cliente tenta
+ * reconectar antes de mostrar a opção de entrar novamente. */
 let mpReconectando = false;
 function mpDesconectou() {
   if (!mpSessao) return;
