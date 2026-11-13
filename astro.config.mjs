@@ -57,12 +57,10 @@ const SOCIAL_LOGO='data:image/png;base64,'+(await sharp(readFileSync('public/log
 
    Régua: `tools/eval/ssr-render-check.mjs` (`--mutante=sem-publicjs` reproduz o pacote
    sem `public/js` e volta a ficar vermelha). */
+const MANIFESTO_JS = moduleCacheManifest();
 const MANIFESTO_VENDOR = moduleCacheManifest('public/vendor');
-const MANIFESTO_JS = {
-  ...moduleCacheManifest(),
-  vendorModules: MANIFESTO_VENDOR.modules,
-  vendorRevision: MANIFESTO_VENDOR.revision,
-};
+MANIFESTO_JS.vendorModules = MANIFESTO_VENDOR.modules;
+MANIFESTO_JS.vendorRevision = MANIFESTO_VENDOR.revision;
 const PWA_REV = createHash('sha256')
   .update(MANIFESTO_JS.revision)
   .update(MANIFESTO_JS.vendorRevision)
