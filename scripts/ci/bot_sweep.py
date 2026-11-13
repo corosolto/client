@@ -20,18 +20,22 @@ def _digest(value):
 
 
 def fingerprint(pr):
-    """Base, head, labels, rollup, and reviews are the debounce keys.
+    """Every mutable input used by classification or automerge is a debounce key.
 
     Review state is included because fork review events cannot authenticate the
-    classifier. External DCO/status changes are already represented by the rollup.
-    Base advancement changes the diff and labels change classification or eligibility,
-    even when the head and check rollup stay fixed.
+    classifier. External DCO/status changes are represented by the rollup. Base
+    advancement changes the diff; repository, branch, draft, labels, assignees,
+    title, and body changes can all change routing or merge eligibility.
     """
     return {
-        "version": 1,
+        "version": 2,
         "title_digest": _digest(pr.get("title")),
         "body_digest": _digest(pr.get("body")),
         "base_oid": pr.get("baseRefOid"),
+        "base_ref": pr.get("baseRefName"),
+        "head_ref": pr.get("headRefName"),
+        "head_repository_digest": _digest(pr.get("headRepository")),
+        "is_draft": bool(pr.get("isDraft")),
         "merge_state": pr.get("mergeStateStatus"),
         "assignee_digest": _digest(sorted(
             (assignee.get("login") or "").lower() for assignee in pr.get("assignees") or []
@@ -67,14 +71,20 @@ def decode_state(marker, kind):
         state = json.loads(raw)
     except (ValueError, UnicodeDecodeError, json.JSONDecodeError, binascii.Error) as error:
         raise ValueError("malformed sweep state") from error
-    if not isinstance(state, dict) or state.get("version") != 1:
+    if not isinstance(state, dict) or state.get("version") != 2:
         raise ValueError("unsupported sweep state")
     if not re.fullmatch(r"[0-9a-f]{40}", state.get("head_oid") or ""):
         raise ValueError("sweep state has no canonical evaluated head")
     if not re.fullmatch(r"[0-9a-f]{40}", state.get("base_oid") or ""):
         raise ValueError("sweep state has no canonical evaluated base")
+    if any(not isinstance(state.get(field), str) or not state[field]
+           for field in ("base_ref", "head_ref")):
+        raise ValueError("sweep state has no canonical branch identity")
+    if not isinstance(state.get("is_draft"), bool):
+        raise ValueError("sweep state has no canonical draft state")
     if any(not re.fullmatch(r"[0-9a-f]{64}", state.get(field) or "")
-           for field in ("title_digest", "body_digest", "assignee_digest", "label_digest", "rollup_digest", "review_digest")):
+           for field in ("title_digest", "body_digest", "assignee_digest", "head_repository_digest",
+                         "label_digest", "rollup_digest", "review_digest")):
         raise ValueError("sweep state has malformed digests")
     return state
 
@@ -107,7 +117,11 @@ def selftest():
     failures = 0
     pr = {
         "baseRefOid": "c" * 40,
+        "baseRefName": "staging",
         "headRefOid": "a" * 40,
+        "headRefName": "feature/example",
+        "headRepository": {"nameWithOwner": "corosolto/client"},
+        "isDraft": False,
         "labels": [{"name": "release"}, {"name": "safe-automerge"}],
         "statusCheckRollup": [{"__typename": "CheckRun", "name": "dco", "conclusion": "SUCCESS"}],
         "latestReviews": [],
@@ -141,6 +155,15 @@ def selftest():
               current=dict(pr, baseRefOid="d" * 40), comments=comments, kind=kind)
         check(f"{kind}: label change with fixed head/rollup/reviews dispatches", True,
               current=dict(pr, labels=[{"name": "release"}]), comments=comments, kind=kind)
+        check(f"{kind}: draft conversion dispatches", True,
+              current=dict(pr, isDraft=True), comments=comments, kind=kind)
+        check(f"{kind}: base retarget dispatches", True,
+              current=dict(pr, baseRefName="main"), comments=comments, kind=kind)
+        check(f"{kind}: head rename dispatches", True,
+              current=dict(pr, headRefName="feature/renamed"), comments=comments, kind=kind)
+        check(f"{kind}: head repository change dispatches", True,
+              current=dict(pr, headRepository={"nameWithOwner": "fork/client"}),
+              comments=comments, kind=kind)
         check(f"{kind}: github-actions bot state debounces", False, comments=[{
             "body": f"fallback token result\n{marker}", "user": {"login": "github-actions[bot]"},
         }], kind=kind)
