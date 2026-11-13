@@ -16,10 +16,18 @@ let fetchAudio = readFileSync('scripts/fetch-audio.sh', 'utf8');
 let audio = readFileSync('public/js/audio.js', 'utf8');
 let vercel = readFileSync('vercel.json', 'utf8');
 if (mutante === 'sem-clique') {
+  const original = main;
   main = main.replace(
-    'selectCharacterFromAvatar(c, row, chars);',
-    'selectChar(c, row);',
+    `      row.onclick = () => {
+        if (personagemTravado(c)) { $('char-info-blurb').textContent = frase('passeTravadoAviso', c.name, nivelDoPersonagem(c) || '?'); return; }
+        selectCharacterFromAvatar(c, row, chars);
+      };`,
+    '      row.onclick = undefined;',
   );
+  if (main === original) {
+    console.error('mutante sem-clique não encontrou o handler de avatar');
+    process.exit(2);
+  }
 }
 if (mutante === 'auto-fala') {
   main = main.replace('if (row) selectChar(character, row);', 'row?.click();');
