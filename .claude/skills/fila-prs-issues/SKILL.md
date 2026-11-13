@@ -316,6 +316,14 @@ CURRENT_BASE_HEAD=$(git rev-parse "$BASE_REMOTE/$CURRENT_BASE") \
 test "$CURRENT_BASE_HEAD" = "$REVIEWED_BASE" \
   || { echo "base avançou depois da revisão; revalide a lane" >&2; exit 1; }
 CLOSING_RE='(^|[^[:alnum:]_])(close[sd]?|fix(e[sd])?|resolve[sd]?):?[[:space:]]+(([^[:space:]]+/[^[:space:]]*)?#[0-9]+|https://github\.com/[^/]+/[^/]+/issues/[0-9]+)'
+if ! CURRENT_MESSAGES=$(git log --format='%H %s%n%b' "$BASE_REMOTE/$CURRENT_BASE..$CURRENT_HEAD"); then
+  echo "não foi possível reler o histórico antes do merge" >&2
+  exit 1
+fi
+if grep -Eiq "$CLOSING_RE" <<<"$CURRENT_MESSAGES"; then
+  echo "histórico atual fecha issue automaticamente; merge recusado" >&2
+  exit 1
+fi
 if [ "$CURRENT_BASE" = "$CURRENT_DEFAULT" ] && grep -Eiq "$CLOSING_RE" <<<"$CURRENT_BODY"; then
   echo "corpo atual do PR fecha issue automaticamente; merge recusado" >&2
   exit 1
