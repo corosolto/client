@@ -53,7 +53,7 @@ export function referenceSources(root = ROOT) {
   const sources = walk(join(publicDir, 'js'), (rel) => rel.endsWith('.js') && basename(rel) !== 'assetver.js');
   sources.push(...walk(join(root, 'src'), () => true));
   sources.push(...walk(publicDir, (rel) => rel.endsWith('.json')
-    && !rel.startsWith('docs/') && !rel.startsWith('js/') && !rel.endsWith('.capture.json')));
+    && !rel.startsWith('docs/') && !rel.endsWith('.capture.json')));
   if (existsSync(publicDir)) {
     for (const name of readdirSync(publicDir, { withFileTypes: true })) {
       if (name.isFile() && name.name.endsWith('.css')) sources.push(join(publicDir, name.name));
@@ -67,23 +67,6 @@ function referenceCorpus(root = ROOT) {
 }
 
 const escaped = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-const dynamicCache = new Map();
-function dynamicPatterns(corpus) {
-  if (dynamicCache.has(corpus)) return dynamicCache.get(corpus);
-  const patterns = [];
-  const bindings = Object.fromEntries([...corpus.matchAll(/\b([A-Za-z_$][\w$]*)\s*=\s*['"`](\/?(?:models|img\/textures|textures|posters)\/[^'"`]+)['"`]/g)]
-    .map((match) => [match[1], match[2].replace(/^\//, '')]));
-  for (const match of corpus.matchAll(/['"`]([^'"`\r\n]*\$\{[^'"`\r\n]*(?:\.(?:glb|webp|jpe?g|png|json))?)['"`]/g)) {
-    const template = match[1].replace(/^\//, '').split(/[?#]/)[0]
-      .replace(/\$\{([A-Za-z_$][\w$]*)\}/g, (full, name) => bindings[name] ?? full);
-    if (!ROOT_PATTERN.test(template)) continue;
-    const expression = `^${escaped(template).replace(/\\\$\\\{[^}]+\\\}/g, '(.+)')}$`;
-    patterns.push(new RegExp(expression));
-  }
-  dynamicCache.set(corpus, patterns);
-  return patterns;
-}
 
 function identifiers(pattern, found = []) {
   if (!pattern || typeof pattern !== 'object') return found;
@@ -113,11 +96,23 @@ function templateText(node) {
   return text;
 }
 
+function inlineTemplateText(node) {
+  if (node?.type !== 'TemplateLiteral') return null;
+  let text = '';
+  for (let index = 0; index < node.quasis.length; index += 1) {
+    text += node.quasis[index].value.raw;
+    const expression = node.expressions[index];
+    if (!expression) continue;
+    text += `\${${expression.type === 'Identifier' ? expression.name : 'expression'}}`;
+  }
+  return text;
+}
+
 function analyzeModule(text) {
   let program;
   try { program = parse(text, { ecmaVersion: 'latest', sourceType: 'module' }); }
   catch { return null; }
-  const analysis = { imports: [], reexports: [], templates: [], directExports: new Set(), literals: {}, shadowed: new Set(), calls: [] };
+  const analysis = { imports: [], reexports: [], templates: [], inlineTemplates: [], helperBodies: new Set(), helperFunctions: new Set(), directExports: new Set(), literals: {}, shadowed: new Set(), calls: [] };
   const topLevelDeclarations = new Set();
   const readDeclaration = (declaration, directlyExported = false) => {
     if (declaration?.type !== 'VariableDeclaration' || declaration.kind !== 'const') return;
@@ -131,6 +126,8 @@ function analyzeModule(text) {
       const template = templateText(declarator.init.body);
       if (template?.includes('${')) {
         analysis.templates.push({ name: declarator.id.name, params: declarator.init.params.map((param) => param.name), template });
+        analysis.helperBodies.add(declarator.init.body);
+        analysis.helperFunctions.add(declarator.init);
         if (directlyExported) analysis.directExports.add(declarator.id.name);
       }
     }
@@ -150,7 +147,7 @@ function analyzeModule(text) {
   }
   const visit = (node) => {
     if (!node || typeof node.type !== 'string') return;
-    if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(node.type)) {
+    if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(node.type) && !analysis.helperFunctions.has(node)) {
       for (const param of node.params) identifiers(param).forEach((name) => analysis.shadowed.add(name));
     }
     if (['FunctionDeclaration', 'FunctionExpression', 'ClassDeclaration', 'ClassExpression'].includes(node.type) && node.id) analysis.shadowed.add(node.id.name);
@@ -162,6 +159,10 @@ function analyzeModule(text) {
     if (node.type === 'CatchClause' && node.param) identifiers(node.param).forEach((name) => analysis.shadowed.add(name));
     if (node.type === 'AssignmentExpression') assignmentIdentifiers(node.left).forEach((name) => analysis.shadowed.add(name));
     if (node.type === 'UpdateExpression') assignmentIdentifiers(node.argument).forEach((name) => analysis.shadowed.add(name));
+    if (node.type === 'TemplateLiteral' && !analysis.helperBodies.has(node)) {
+      const template = inlineTemplateText(node);
+      if (template?.includes('${')) analysis.inlineTemplates.push(template);
+    }
     if (node.type === 'CallExpression' && node.callee.type === 'Identifier') analysis.calls.push(node);
     for (const [key, value] of Object.entries(node)) {
       if (key === 'type') continue;
@@ -206,33 +207,41 @@ function resolveTemplateBinding(callerPath, localName, analyses, seen = new Set(
   return null;
 }
 
+function callReference(definition, modulePath, call, callerAnalysis, analyses) {
+  if (call.arguments.length !== definition.params.length) return null;
+  const values = call.arguments.map((argument) => {
+    if (argument.type === 'Literal' && typeof argument.value === 'string') return argument.value;
+    if (argument.type === 'Identifier' && !callerAnalysis.shadowed.has(argument.name)) return callerAnalysis.literals[argument.name];
+    return undefined;
+  });
+  if (values.some((value) => typeof value !== 'string')) return null;
+  let path = definition.template;
+  definition.params.forEach((param, index) => {
+    path = path.replace(new RegExp(`\\$\\{${escaped(param)}\\}`, 'g'), values[index]);
+  });
+  const constants = analyses.get(modulePath)?.literals || {};
+  path = path.replace(/\$\{([A-Za-z_$][\w$]*)\}/g, (full, name) => constants[name] ?? full);
+  path = path.replace(/^\//, '').split(/[?#]/)[0];
+  return !path.includes('${') && ROOT_PATTERN.test(path) && !path.includes('..') ? path : null;
+}
+
 export function dynamicCallReferences(textByPath) {
   const analyses = new Map([...textByPath].map(([path, text]) => [path, analyzeModule(text)]));
   const references = new Set();
+  const collect = (callerPath, analysis, definition, modulePath, localName) => {
+    if (analysis.shadowed.has(localName)) return;
+    for (const call of analysis.calls) {
+      if (call.callee.name !== localName) continue;
+      const path = callReference(definition, modulePath, call, analysis, analyses);
+      if (path) references.add(path);
+    }
+  };
   for (const [callerPath, analysis] of analyses) {
     if (!analysis) continue;
+    for (const definition of analysis.templates) collect(callerPath, analysis, definition, callerPath, definition.name);
     for (const binding of analysis.imports) {
-      if (analysis.shadowed.has(binding.local)) continue;
       const resolved = resolveTemplateBinding(callerPath, binding.local, analyses);
-      if (!resolved) continue;
-      const { definition, modulePath } = resolved;
-      const constants = analyses.get(modulePath)?.literals || {};
-      for (const call of analysis.calls) {
-        if (call.callee.name !== binding.local || call.arguments.length !== definition.params.length) continue;
-        const values = call.arguments.map((argument) => {
-          if (argument.type === 'Literal' && typeof argument.value === 'string') return argument.value;
-          if (argument.type === 'Identifier' && !analysis.shadowed.has(argument.name)) return analysis.literals[argument.name];
-          return undefined;
-        });
-        if (values.some((value) => typeof value !== 'string')) continue;
-        let path = definition.template;
-        definition.params.forEach((param, index) => {
-          path = path.replace(new RegExp(`\\$\\{${escaped(param)}\\}`, 'g'), values[index]);
-        });
-        path = path.replace(/\$\{([A-Za-z_$][\w$]*)\}/g, (full, name) => constants[name] ?? full);
-        path = path.replace(/^\//, '').split(/[?#]/)[0];
-        if (!path.includes('${') && ROOT_PATTERN.test(path) && !path.includes('..')) references.add(path);
-      }
+      if (resolved) collect(callerPath, analysis, resolved.definition, resolved.modulePath, binding.local);
     }
   }
   return references;
@@ -257,7 +266,26 @@ function importedSources(sourcePath, textByPath, seen = new Set()) {
   return sources;
 }
 
-export function isReferenced(path, corpus, publicDir = PUBLIC, sources = [corpus], sourcePaths = [], linkedSources = null) {
+function dynamicInlinePatterns(textByPath) {
+  const patterns = [];
+  for (const [sourcePath, text] of textByPath) {
+    const analysis = analyzeModule(text);
+    if (!analysis) continue;
+    const bindings = Object.fromEntries([...text.matchAll(/\b([A-Za-z_$][\w$]*)\s*=\s*['"`](\/?(?:models|img\/textures|textures|posters)\/[^'"`]+)['"`]/g)]
+      .map((match) => [match[1], match[2].replace(/^\//, '')]));
+    for (const raw of analysis.inlineTemplates) {
+      const template = raw.replace(/^\//, '').split(/[?#]/)[0]
+        .replace(/\$\{([A-Za-z_$][\w$]*)\}/g, (full, name) => bindings[name] ?? analysis.literals[name] ?? full);
+      if (!ROOT_PATTERN.test(template)) continue;
+      const expression = `^${escaped(template).replace(/\\\$\\\{[^}]+\\\}/g, '(.+)')}$`;
+      const concrete = !template.includes('${') && !template.includes('..') ? template : null;
+      patterns.push({ regex: new RegExp(expression), sources: importedSources(sourcePath, textByPath), concrete });
+    }
+  }
+  return patterns;
+}
+
+export function isReferenced(path, corpus, publicDir = PUBLIC, inlinePatterns = []) {
   const qualified = new RegExp(`(?<![\\w./-])\\/?(?:public/)?${escaped(path)}(?![\\w./-])`);
   if (qualified.test(corpus)) return true;
   if (path.startsWith('models/anims/')) {
@@ -271,13 +299,9 @@ export function isReferenced(path, corpus, publicDir = PUBLIC, sources = [corpus
       }
     }
   }
-  const textByPath = new Map(sourcePaths.map((sourcePath, index) => [sourcePath, sources[index] || '']));
-  for (let index = 0; index < sources.length; index++) {
-    const allowedTexts = linkedSources?.[index] || (sourcePaths.length ? importedSources(sourcePaths[index], textByPath) : [sources[index]]);
-    for (const pattern of dynamicPatterns(sources[index])) {
-      const match = pattern.exec(path);
-      if (match && match.slice(1).every((value) => allowedTexts.some((text) => new RegExp(`['"\`]${escaped(value)}['"\`]`).test(text)))) return true;
-    }
+  for (const { regex, sources } of inlinePatterns) {
+    const match = regex.exec(path);
+    if (match && match.slice(1).every((value) => sources.some((text) => new RegExp(`['"\`]${escaped(value)}['"\`]`).test(text)))) return true;
   }
   return false;
 }
@@ -339,10 +363,9 @@ export function measureInventory({ root = ROOT, previous = null } = {}) {
   const sources = sourcePaths.map((path) => readFileSync(path, 'utf8'));
   const corpus = sources.join('\n');
   const textByPath = new Map(sourcePaths.map((sourcePath, index) => [sourcePath, sources[index] || '']));
-  const linkedSources = sourcePaths.map((sourcePath) => importedSources(sourcePath, textByPath));
   const callReferences = dynamicCallReferences(textByPath);
-  const referencedRuntime = (path) => callReferences.has(path)
-    || isReferenced(path, corpus, publicDir, sources, sourcePaths, linkedSources);
+  const inlinePatterns = dynamicInlinePatterns(textByPath);
+  const referencedRuntime = (path) => callReferences.has(path) || isReferenced(path, corpus, publicDir, inlinePatterns);
   const literal = literalReferences(sources);
   const disk = diskAssets(publicDir);
   const onDisk = new Set(disk);
@@ -353,6 +376,10 @@ export function measureInventory({ root = ROOT, previous = null } = {}) {
   const add = (code, path) => findings.push({ code, path });
 
   for (const path of literal) {
+    if (!onDisk.has(path)) add('referenced-file-lost', path);
+  }
+  const checkedReferences = new Set([...callReferences, ...inlinePatterns.map(({ concrete }) => concrete).filter(Boolean)]);
+  for (const path of checkedReferences) {
     if (!onDisk.has(path)) add('referenced-file-lost', path);
   }
   if (previous) {
