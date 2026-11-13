@@ -145,6 +145,10 @@ test('csbrasil-bot-automerge.yml: nenhuma mutação abre janela entre revalidaç
   assert.ok(validou > 0 && merge > validou, 'o merge preso ao head precisa seguir a revalidação');
   assert.ok(label > merge && comentario > merge,
     'label/comentário só podem acontecer depois do merge, nunca entre validar e mergear');
+  const posterior = s.slice(merge, s.indexOf('\n          PY', merge));
+  assert.match(posterior, /try:\s*[\s\S]*except subprocess\.CalledProcessError/,
+    'falha de label/comentário depois do merge não pode reprovar o workflow');
+  assert.match(posterior, /warning: post-merge bookkeeping failed/);
 });
 
 test('.devcontainer/Dockerfile: o ambiente anunciado instala ffprobe para eval:redesign', () => {

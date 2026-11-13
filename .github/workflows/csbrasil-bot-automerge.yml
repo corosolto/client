@@ -145,15 +145,18 @@ jobs:
           # Nenhuma mutação de label/comentário pode abrir uma janela entre a
           # revalidação da elegibilidade e o merge preso ao head validado.
           subprocess.run(command, check=True)
-          ja = subprocess.run(['gh', 'pr', 'view', pr, '--json', 'labels', '--jq',
-                               '[.labels[].name] | index("pronto-pra-merge") != null'],
-                              capture_output=True, text=True).stdout.strip() == 'true'
-          subprocess.run(['gh', 'pr', 'edit', pr, '--add-label', 'pronto-pra-merge'], check=True)
-          if not ja:
-              kind = 'the daily release batch' if current_data.get('merge_kind') == 'release-batch' else 'a safe change'
-              subprocess.run(['gh', 'pr', 'comment', pr, '--body',
-                              f'🤖 **csbrasil-bot**: required checks passed and the diff met the '
-                              f'`check_automerge` criteria. Merged automatically as {kind}.'], check=True)
+          try:
+              ja = subprocess.run(['gh', 'pr', 'view', pr, '--json', 'labels', '--jq',
+                                   '[.labels[].name] | index("pronto-pra-merge") != null'],
+                                  capture_output=True, text=True).stdout.strip() == 'true'
+              subprocess.run(['gh', 'pr', 'edit', pr, '--add-label', 'pronto-pra-merge'], check=True)
+              if not ja:
+                  kind = 'the daily release batch' if current_data.get('merge_kind') == 'release-batch' else 'a safe change'
+                  subprocess.run(['gh', 'pr', 'comment', pr, '--body',
+                                  f'🤖 **csbrasil-bot**: required checks passed and the diff met the '
+                                  f'`check_automerge` criteria. Merged automatically as {kind}.'], check=True)
+          except subprocess.CalledProcessError as error:
+              print(f'warning: post-merge bookkeeping failed ({error}); merge already completed', file=sys.stderr)
           PY
       - name: Record evaluated head and rollup for sweep debounce
         if: env.pular != '1'
