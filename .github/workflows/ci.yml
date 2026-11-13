@@ -751,6 +751,8 @@ jobs:
           name: equipamento-corpo-tempos-${{ github.run_id }}
           path: tools/eval/out/equipamento-corpo.json
           if-no-files-found: warn
+      - name: Emotes de captura no runtime e no roster inteiro (99 corpos e skins)
+        run: node tools/eval/runner.mjs eval:emotes-mocap eval:emotes-roster
 
   equipamento-tp-origem:
     runs-on: ubuntu-latest

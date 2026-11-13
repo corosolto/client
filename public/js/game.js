@@ -2207,8 +2207,9 @@ export class Game {
       }   // N: 1ª → 3ª → ombro · Shift+N: troca o ombro
       if (e.code === 'KeyT' && !e.repeat) { this._emoteToggle(); return; }   // roda de dança
       if (this.emoteOpen) {
+        // 1-8: danças procedurais (anel de dentro) · Shift+1-8: emotes de captura (anel de fora)
         const n = /^Digit([1-8])$/.exec(e.code);
-        if (n) { this._emotePick(this._emoteMod?.EMOTES?.[+n[1] - 1]?.id); return; }
+        if (n) { this._emotePick(this._emoteAnel(e.shiftKey)?.[+n[1] - 1]?.id); return; }
         if (e.code === 'Escape') { this._emoteClose(); return; }
       }
       // slot memory: 1 = last primary held, 2 = last sidearm held (not a hardcoded reset)
@@ -2680,26 +2681,34 @@ export class Game {
     if (this._emoteMod) return this._emoteMod;
     try {
       const mod = await import('./emotes.js');
-      setEmoteDriver({ pose: mod.poseEmote, duracao: mod.emoteDuracao, laco: mod.emoteLaco });
+      setEmoteDriver({ pose: mod.poseEmote, duracao: mod.emoteDuracao, laco: mod.emoteLaco, clipe: mod.emoteClipe });
       this._emoteMod = mod;
       return mod;
     } catch { return null; }
+  }
+  /* Dois anéis: dentro os 8 procedurais (1-8), fora os de captura (Shift+1-8). A posição
+     no catálogo é o id de rede; a roda só agrupa. */
+  _emoteAnel(captura) {
+    const lista = this._emoteMod?.EMOTES || [];
+    return lista.filter((e) => !!e.clipe === !!captura);
   }
   _emoteUi(mod) {
     const m = this.el.emoteWheel;
     if (!m) return;
     if (!this.emoteOpen) { m.classList.add('hidden'); return; }
-    const itens = mod.EMOTES;
-    const raio = 118;
-    m.innerHTML = '<div class="emote-miolo">DANÇA<small>T fecha · 1-8</small></div>'
-      + itens.map((e, i) => {
-        const ang = (i / itens.length) * Math.PI * 2 - Math.PI / 2;
-        const x = Math.cos(ang) * raio, y = Math.sin(ang) * raio;
-        const ativo = this._emoteAtual === e.id ? ' ativo' : '';
-        return `<button type="button" class="emote-fatia${ativo}" data-emote="${e.id}" title="${e.origem}"`
-          + ` style="transform:translate(-50%,-50%) translate(${x.toFixed(0)}px,${y.toFixed(0)}px)">`
-          + `<b>${i + 1}</b>${e.nome}</button>`;
-      }).join('');
+    const fatia = (e, i, total, raio, tecla, classe, giro = 0) => {
+      const ang = ((i + giro) / total) * Math.PI * 2 - Math.PI / 2;
+      const x = Math.cos(ang) * raio, y = Math.sin(ang) * raio;
+      const ativo = this._emoteAtual === e.id ? ' ativo' : '';
+      const passe = mod.emoteDesbloqueio?.(e.id) === 'passe' ? '<i>PASSE</i>' : '';
+      return `<button type="button" class="emote-fatia${classe}${ativo}" data-emote="${e.id}" title="${e.origem}"`
+        + ` style="transform:translate(-50%,-50%) translate(${x.toFixed(0)}px,${y.toFixed(0)}px)">`
+        + `<b>${tecla}${i + 1}</b>${e.nome}${passe}</button>`;
+    };
+    const dentro = mod.EMOTES.filter((e) => !e.clipe), fora = mod.EMOTES.filter((e) => e.clipe);
+    m.innerHTML = '<div class="emote-miolo">DANÇA<small>T fecha · 1-8 · ⇧1-8</small></div>'
+      + dentro.map((e, i) => fatia(e, i, dentro.length, 118, '', '')).join('')
+      + fora.map((e, i) => fatia(e, i, fora.length, 222, '⇧', ' captura', 0.5)).join('');
     m.classList.remove('hidden');
     for (const b of m.querySelectorAll('.emote-fatia')) {
       b.onclick = () => this._emotePick(b.dataset.emote);

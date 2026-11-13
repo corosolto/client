@@ -151,7 +151,10 @@ const corpo = await page.evaluate(async () => {
 
   const medidas = {};
   let voltaPior = 0, alturaPior = 0;
-  for (const e of em.EMOTES) {
+  // Só a coreografia procedural: os emotes de captura (`clipe`) têm régua própria
+  // (eval:emotes-mocap) e aqui não haveria passo escrito para medir.
+  const procedurais = em.EMOTES.filter((e) => !e.clipe);
+  for (const e of procedurais) {
     ctrl.emote(e.id);
     const pico = { maoD: 0, maoE: 0, peD: 0, peE: 0, cabeca: 0 };
     let agachou = 0;
@@ -179,7 +182,7 @@ const corpo = await page.evaluate(async () => {
   ctrl.die({ x: 1, z: 0 }); roda(4);
   const aposMorte = ctrl.emoteAtual();
 
-  const catalogo = em.EMOTES.map((e) => ({
+  const catalogo = procedurais.map((e) => ({
     id: e.id, nome: e.nome, origem: e.origem, dur: e.dur,
     temPasso: (() => { const l = []; em.poseEmote(e.id, e.dur * 0.3, l); return l.length; })(),
   }));
