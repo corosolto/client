@@ -261,9 +261,21 @@ PR pequeno, reversível e fora das superfícies proibidas pode receber `safe-aut
 dispensa nenhum portão.
 
 ```bash
-CURRENT_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)
+CURRENT_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid) \
+  || { echo "não foi possível reler o head antes do merge" >&2; exit 1; }
+CURRENT_BODY=$(gh pr view NUMERO -R corosolto/REPO --json body --jq .body) \
+  || { echo "não foi possível reler o corpo antes do merge" >&2; exit 1; }
+CURRENT_BASE=$(gh pr view NUMERO -R corosolto/REPO --json baseRefName --jq .baseRefName) \
+  || { echo "não foi possível reler a base antes do merge" >&2; exit 1; }
+CURRENT_DEFAULT=$(gh repo view corosolto/REPO --json defaultBranchRef --jq .defaultBranchRef.name) \
+  || { echo "não foi possível reler a branch padrão antes do merge" >&2; exit 1; }
 test "$CURRENT_HEAD" = "$REVIEWED_HEAD" \
   || { echo "head atual difere do SHA revisado" >&2; exit 1; }
+CLOSING_RE='(^|[^[:alnum:]_])(close[sd]?|fix(e[sd])?|resolve[sd]?):?[[:space:]]+(([^[:space:]]+/[^[:space:]]*)?#[0-9]+|https://github\.com/[^/]+/[^/]+/issues/[0-9]+)'
+if [ "$CURRENT_BASE" = "$CURRENT_DEFAULT" ] && grep -Eiq "$CLOSING_RE" <<<"$CURRENT_BODY"; then
+  echo "corpo atual do PR fecha issue automaticamente; merge recusado" >&2
+  exit 1
+fi
 gh pr merge NUMERO -R corosolto/REPO --merge --match-head-commit "$REVIEWED_HEAD"
 ```
 
