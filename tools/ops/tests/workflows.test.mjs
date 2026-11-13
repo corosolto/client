@@ -139,7 +139,14 @@ test('smoke-web.yml: chat desktop em job próprio, partição exata, nenhum spec
 test('csbrasil-bot-automerge.yml: nenhuma mutação abre janela entre revalidação e merge', () => {
   const s = wf('csbrasil-bot-automerge.yml');
   const validou = s.indexOf('current_data = revalidate_decision');
+  const origemHead = s.indexOf("head_oid = status.get('headRefOid') or ''");
   const merge = s.indexOf('subprocess.run(command, check=True)', validou);
+  const comandoHead = s.indexOf("command = ['gh', 'pr', 'merge', pr, '--merge', '--match-head-commit', head_oid]", validou);
+  assert.ok(origemHead > 0 && origemHead < validou, 'o head precisa vir do PR atual revalidado');
+  assert.ok(comandoHead > validou && comandoHead < merge,
+    'o comando executado precisa ser o merge com --match-head-commit no mesmo head_oid revalidado');
+  assert.ok(s.indexOf("if not re.fullmatch(r'[0-9a-f]{40}', head_oid)", origemHead) < validou,
+    'o head compartilhado precisa ser validado como SHA canônico antes da decisão');
   const label = s.indexOf("'--add-label', 'pronto-pra-merge'", validou);
   const comentario = s.indexOf("subprocess.run(['gh', 'pr', 'comment'", validou);
   assert.ok(validou > 0 && merge > validou, 'o merge preso ao head precisa seguir a revalidação');
