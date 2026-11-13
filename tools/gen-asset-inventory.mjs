@@ -278,7 +278,8 @@ function dynamicInlinePatterns(textByPath) {
         .replace(/\$\{([A-Za-z_$][\w$]*)\}/g, (full, name) => bindings[name] ?? analysis.literals[name] ?? full);
       if (!ROOT_PATTERN.test(template)) continue;
       const expression = `^${escaped(template).replace(/\\\$\\\{[^}]+\\\}/g, '(.+)')}$`;
-      patterns.push({ regex: new RegExp(expression), sources: importedSources(sourcePath, textByPath) });
+      const concrete = !template.includes('${') && !template.includes('..') ? template : null;
+      patterns.push({ regex: new RegExp(expression), sources: importedSources(sourcePath, textByPath), concrete });
     }
   }
   return patterns;
@@ -377,7 +378,8 @@ export function measureInventory({ root = ROOT, previous = null } = {}) {
   for (const path of literal) {
     if (!onDisk.has(path)) add('referenced-file-lost', path);
   }
-  for (const path of callReferences) {
+  const checkedReferences = new Set([...callReferences, ...inlinePatterns.map(({ concrete }) => concrete).filter(Boolean)]);
+  for (const path of checkedReferences) {
     if (!onDisk.has(path)) add('referenced-file-lost', path);
   }
   if (previous) {

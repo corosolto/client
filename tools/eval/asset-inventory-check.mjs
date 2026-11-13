@@ -270,6 +270,16 @@ function mutations() {
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
     console.log('AI2r: a resolved dynamic call whose target was never present fails generation and check.');
 
+    put(fixture, 'public/js/refs.js', "export const id = 'ghost';\nexport const url = `models/props/${id}.glb`;\n");
+    result = runInventory(fixture);
+    expectStatus(result, 1, 'fully resolved inline target missing from disk is lost');
+    assert.match(result.stderr, /referenced-file-lost: models\/props\/ghost\.glb/);
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'fully resolved inline target also fails check');
+    assert.match(result.stderr, /referenced-file-lost: models\/props\/ghost\.glb/);
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    console.log('AI2s: a fully resolved inline template whose target was never present fails generation and check.');
+
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
     reviewed.files['models/props/legacy.glb'] = createHash('sha256')
@@ -343,7 +353,7 @@ function mutations() {
     assert.ok(existsSync(join(fixture, 'public/audio/time-e/ingame/added.mp3')));
     console.log('AU4: audio referenced add and manual orphan removal pass.');
 
-    console.log('ASSET-INVENTORY mutations OK: generate/check orphan refusal, explicit review, 3 referenced-file-lost, safe add/remove for both inventories.');
+    console.log('ASSET-INVENTORY mutations OK: generate/check orphan refusal, explicit review, 4 referenced-file-lost, safe add/remove for both inventories.');
     return 0;
   } finally {
     rmSync(fixture, { recursive: true, force: true });
