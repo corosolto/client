@@ -16,6 +16,9 @@ com código 1 em falha crítica.
 
 | Arquivo | O que mede | Artefato |
 |---|---|---|
+| `weapon-passe-check.mjs`, `treta-passe-equip-check.mjs`, `passe-viewmodel-skin-check.mjs` | Níveis, direitos, imagens e exclusão da vitrine; textura de corpo (`patternAsset`) dentro de `PATTERN_TEXTURE_BUDGET` (≤15 artes, uma por skin do passe; lado ≤512 potência de 2, ≤128 KiB); equipamento com posse e catálogo do servidor simulados; pintura dos viewmodels M4/SCAR nos GLBs reais. Mutações verificam venda, orçamento de textura, validação e seleção. Não valida concessão no servidor nem a aparência no navegador. Teto de 400 KiB por imagem: `treta-skin-video-check.mjs`. | `npm run eval:weapon-passe` |
+| `knife-steel-blade-check.mjs` | LAM0-LAM4: as 3 facas do passe (`steelBlade`) mantêm a lâmina no aço original. Pelo `_accept` real (1P, `knife-fp`) e pelo `weaponModel` real (3P, `knife-tp`): mapa e acabamento originais no material, máscara do cabo no shader, ≥95% da área clara do atlas (aço) fora da pintura e ≥99% da área escura (cabo) pintada, símbolo e letreiro só como gravação escura na lâmina, nenhuma marca no cabo (o polegar do 1P tapava 20-27% do letreiro no cabo). Verdade = atlas de cor do GLB lido com sharp. Mutantes `lamina-envelopada` (tira a máscara), `marcas-no-cabo` e `letreiro-branco` precisam reprovar. Não avalia o GLSL na GPU. | `npm run eval:weapon-passe` |
+| `vm-enquadramento-placar-check.mjs` | FP parado (idle) cabe no quadro: placar assado por `vm-enquadramento-idle-check.mjs` (jogo real no navegador, máscara com sobrevarredura ×3, 26 armas sem pintura + pistol/ak/m4/scar pintadas, 16:9 e 3:2) medido sobre o vmconfig/GLBs atuais e re-julgado VERDE: arma dentro com margem (longas saem só por baixo/direita), tamanho são, braço ≤ 5× a pistola e pistola ancorada embaixo. Re-assar: `npm run eval:vm-enquadramento-idle -- --assar` (local, catálogo pago). O hash cobre também PISTOLS, CFG.len de cada arma e a pintura de cada célula. Cada célula exatamente uma vez. Mutantes goldframe-antigo, len-do-molde, outra-pintura, sem-pistola-pintada, celula-duplicada, pistola-longe. | `npm run eval:vm-enquadramento-placar` |
 | `construtor-input-check.mjs` | Entradas de grade não esgotam memória nem travam a CLI; o handler real do editor preserva objetos ao editar campos. | `npm run eval:construtor-input` (incluído em `eval:mapjson`) |
 | `ballistics-falloff-check.mjs` | Extremos e interpolação da queda de dano; mede jogador e ambas as IAs, com mutações da curva e da distância. | `npm run eval:ballistics-falloff` |
 | `firing-cadence-check.mjs` | Cadência pelo _updatePlayer real; calendário, cooldown, teto por passo, entrada e interrupções, com mutantes. | `npm run eval:firing-cadence` |
@@ -132,6 +135,7 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `faca-porte-check.mjs` | Porte de LÂMINA em 3ª pessoa (ponta acima do porte de cano), lido do fonte vivo. Evidência: `asset-evidence/faca-3p-20261021/faca-3p-ab.png`. `npm run eval:faca-porte` |
 | `arma-orientacao-check.mjs` | Boca × coronha das 26 armas com o `rot` da CFG aplicado — pega arma montada de costas. `npm run eval:arma-orientacao` |
 | `skin-cobertura-check.mjs` | Pintura equipada na arma INTEIRA (corpo, pente, ferrolho, peça do `splitParts`) em 1ª pessoa, e no corpo de 3ª pessoa. `npm run eval:skin-cobertura` |
+| `pintura-fabrica-check.mjs` | PT-38 pintada na rota da fábrica (X18, skinned em vários ossos): só o grupo da arma é pintado (nunca a rig das mãos), o padrão é levado ao espaço da malha TP da loja e símbolo/letreiro nascem no osso `Arma`, na lateral; todo SVG de marca declara `width`/`height` (sem isso o WebGL recusa o upload). Mutantes pintura-na-mao, sem-referencia e svg-sem-tamanho. `npm run eval:pintura-fabrica` |
 | `inspect-lado-check.mjs` | Inspeção (tecla I) vira a arma de lado em 1ª pessoa sem clipe no pack e sem sair do quadro. `npm run eval:inspect-lado` |
 | `manga-tampa-check.mjs` | Manga do pacote golden sem boca aberta (o "leque" que aparece ao girar a arma na inspeção); tampa no bind space, idempotente. `npm run eval:manga-tampa` |
 
@@ -147,7 +151,6 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `mat_shade.py` | Sombreamento de material. |
 | `havan-planta.py` + `.png` | Planta baixa da Loja H. |
 | `p0-pix.py` | Comparação pixel a pixel da rodada P0. |
-| `vm_quake_measure.py` | Medição do look Quake 4 (o antecessor do look CS 1.6 atual). |
 
 ## 6. Infra
 
@@ -222,8 +225,15 @@ o que essas rodadas decidiram vivem no site/`main.js` e no `CHANGELOG.md`.
 Eram capturas de tuning de game feel; o que decidiram sobreviveu nos comentários
 de causa raiz do `game.js`/`springs.js` e no `CHANGELOG.md`.
 
-**Look Quake 4** (o projeto escolheu o look CS 1.6 na v3.2.0):
-`vm-quake-capture.mjs` · `vm-quake-scen.mjs` · `vm_quake_measure.py`
+**Aposentado — Look Quake 4** (movido para `tools/eval/aposentados/` em
+2026-11-13, issue #1085; o projeto escolheu o look CS 1.6 na v3.2.0):
+`vm-quake-capture.mjs` · `vm-quake-scen.mjs` · `vm_quake_measure.py`.
+A máscara A/B e a orientação do cano do primeiro sobrevivem nos comentários de
+`_vmFrame` e no `vm-mint-audit.mjs`; ADS, flash e recarga do segundo, nos
+contratos C8–C13 do `BAR-CONSISTENCIA.md`; as medidas de enquadramento do
+terceiro, no bloco de causa raiz do `_vmFrame` no `game.js`. A decisão e os
+valores históricos das duas famílias de look ficaram no `CHANGELOG.md` (3.1.0 e
+3.2.0).
 
 **Diagnósticos R2:** `r2_audit.py` · `r2_diag.py`
 

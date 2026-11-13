@@ -24,6 +24,9 @@ import { weaponModel, preloadWeapons, ONE_HANDED, gripPoints } from './weapons.j
 import { mountEyewear } from './eyewear.js';
 import { gloveSkinStyle } from './data/glove-skin-definitions.js';
 import { solveCCDIK } from './handik.js';
+import { CHARACTER_RELEASES, STUDIO_CHARACTER_STATES, characterRelease } from './data/content-releases.js';
+import { resolveStudioCharacter, StudioCharacterError } from './studio-character.js';
+import { studioSkeletonMismatch } from './studio-skeleton.js';
 
 // Character ids that have a real model under public/models/characters/<id>.glb.
 export const GLB_CHARS = new Set([
@@ -48,11 +51,16 @@ export const GLB_CHARS = new Set([
   'barbudo', 'capitao', 'dama', 'professor', 'senador', 'ministro', 'deputado', 'juiz',
   'julia-zanatta', 'marina-silva',
 ]);
+/* Releases do Studio entram no GLB_CHARS, mas corpo e clipes vêm só do pacote verificado;
+   a lista literal acima segue sendo a dos GLBs legados de public/. */
+for (const id of Object.keys(CHARACTER_RELEASES)) GLB_CHARS.add(id);
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando
 // (caso do Dollynho na tela de seleção). Neles, a mão L segue a pose do clipe.
 // Exportado para a select-mount.mjs: nesses, MÃO-L não se aplica (é decisão, não defeito).
-export const IK_L_SKIP = new Set(['dollynho', 'gotinha', 'et', 'canarinho']);
+// Fora do Ar: o Coronel (rig 0.2.2) ainda deixa a palma L a 10,3 cm do guarda-mão da md97 no
+// idle de jogo; segue com arma de uma mão e fora do IK. Clóvis (5,3 cm) e Bebezão (3,1) voltaram.
+export const IK_L_SKIP = new Set(['dollynho', 'gotinha', 'et', 'canarinho', 'coronel-arrego']);
 
 const STATES = ['idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'crouchwalk', 'jump'];
 // Clipes OPCIONAIS: 1 mão (pistolas) + andando atirando. Se o arquivo não existir,
@@ -176,6 +184,10 @@ const TP_CLEAR = parseFloat(qp.get('tpclear')) || 0.06;   // folga mínima entre
 // propósito: arma longe da mão é mão solta (C7), que é pior que um encosto na roupa.
 const TP_BURIED_TOL = 0.10;
 const TP_CLEAR_MAX = 0.20;
+/* Corpos cuja cabeça é mais larga que o tronco logo abaixo e cuja palma nasce na altura do
+   pescoço: o raio do tronco é medido sem pescoço/cabeça (torsoProfile). Saci mudaria também
+   (empurrão 0,094 -> 0 com mp5), mas legado fica como está. ?torsocabeca=1 desliga (mutante). */
+const TORSO_SEM_CABECA = new Set(qp.get('torsocabeca') === '1' ? [] : ['bebe-reborn']);
 /* CLAMP DE FRENTE (04-05/08, BUG do dono: "arma por trás do corpo" — jozo, trapfunk,
    coach). O clipe assentado da seleção deixa a mão direita de alguns rigs ATRÁS do plano
    do corpo (select-mount.mjs: coach frenteZ -0,052 m, esbirro -0,065) e a arma, que é
@@ -316,13 +328,15 @@ function glovePath(manifest, origin) {
   }
   return matches.length === 1 ? matches[0] : null;
 }
+/* Corpo do Studio tem origem {kind:'studio'}: nem origem base em public/ nem luva pública
+   casam com ele (docs/studio-character-release.md). */
 function baseGloveOrigin(id) {
-  if (!GLB_CHARS.has(id)) return null;
+  if (!GLB_CHARS.has(id) || characterRelease(id)) return null;
   const path = `models/characters/${id}.glb`;
   return Object.freeze({ kind: 'base', character: id, path: `public/${path}`, revision: revDe(path) });
 }
 function gloveHandleFor(origin) {
-  if (!origin) return null;
+  if (!origin || origin.kind === 'studio') return null;
   const key = JSON.stringify([origin.kind, origin.character, origin.path, origin.kind === 'cosmetic' ? origin.sha256 : origin.revision]);
   if (_gloveHandles.has(key)) return _gloveHandles.get(key);
   const handle = Object.freeze({
@@ -496,7 +510,11 @@ function torsoProfile(id, model) {
   if (sk) {
     const bones = sk.skeleton.bones;
     const arm = new Set();
-    bones.forEach((b, i) => { if (/arm|hand|shoulder|clavicle|curl/i.test(b.name)) arm.add(i); });
+    /* Pescoço/cabeça fora do perfil só em TORSO_SEM_CABECA: no Bebê Reborn a palma do idle1h
+       nasce na altura do pescoço, a faixa vizinha pegava a cabeça de boneca (raio 0,37 m contra
+       tronco de 0,09–0,13) e o empurrão tirava a pistola 15 cm da palma. */
+    const fora = TORSO_SEM_CABECA.has(id) ? /arm|hand|shoulder|clavicle|curl|^neck$|^head$/i : /arm|hand|shoulder|clavicle|curl/i;
+    bones.forEach((b, i) => { if (fora.test(b.name)) arm.add(i); });
     const excluded = withBoneDescendants(bones, arm);
     const pos = sk.geometry.attributes.position, si = sk.geometry.attributes.skinIndex, sw = sk.geometry.attributes.skinWeight;
     const at = (a, i, k) => (k === 0 ? a.getX(i) : k === 1 ? a.getY(i) : k === 2 ? a.getZ(i) : a.getW(i));
@@ -524,6 +542,8 @@ const torsoRadiusAt = (prof, y) => {
 // Preload shared clips + base meshes for the given character ids. Safe to call once
 // before a match; already-loaded assets are skipped. Failures are swallowed per-asset
 // so a missing model just falls back to the box mesh.
+// Release do Studio é tudo ou nada: falha rejeita esta chamada depois que os outros ids
+// assentam (StudioCharacterError, ou AggregateError para vários).
 export async function preloadCharacterAssets(ids, opts = {}) {
   /* Armas FORA do bootstrap de clipes: a 1ª chamada é a da tela de carregamento, e prender as
      armas ao `if (!_clips)` fazia a partida herdar a lista errada (ou as 26). Idempotente. */
@@ -560,7 +580,14 @@ export async function preloadCharacterAssets(ids, opts = {}) {
     ]);
   } else await armas;
   const wanted = [...new Set(ids)].filter((id) => GLB_CHARS.has(id) && !_base.has(id));
+  const studioFailures = [];
   await Promise.all(wanted.map(async (id) => {
+    const release = characterRelease(id);
+    if (release) {
+      try { await preloadStudioCharacter(id, release); }
+      catch (e) { console.error(`[studio] ${id}@${release.version}: ${e?.code || 'studio_load_failed'}`, e); studioFailures.push(e); }
+      return;
+    }
     try {
       const path = `models/characters/${id}.glb`;
       const origin = Object.freeze({ kind: 'base', character: id, path: `public/${path}`, revision: revDe(path) });
@@ -600,7 +627,47 @@ export async function preloadCharacterAssets(ids, opts = {}) {
     }));
     _clipsByChar[id] = set;
   }));
+  if (studioFailures.length === 1) throw studioFailures[0];
+  if (studioFailures.length) throw new AggregateError(studioFailures, 'studio_character_preload_failed');
 }
+
+/* Modelo e 11 clipes só das Blob URLs verificadas (sem animIndex, mesclado ou compartilhado);
+   _base/_clipsByChar/origem só são escritos depois que tudo carregou e conferiu. */
+const _studioRequests = new Map();
+const _studioProvenance = new Map();
+function preloadStudioCharacter(id, release) {
+  if (_studioRequests.has(id)) return _studioRequests.get(id);
+  const request = (async () => {
+    const pack = await resolveStudioCharacter(release);
+    const [model, ...clipGlbs] = await Promise.all([
+      loadGLB(pack.modelUrl),
+      ...STUDIO_CHARACTER_STATES.map((s) => loadGLB(pack.animationUrls[s])),
+    ]).catch((e) => { throw new StudioCharacterError('studio_glb_invalid', `${id}: ${e?.message || e}`, { cause: e }); });
+    const bones = new Set();
+    model.scene.traverse((o) => {
+      if (o.isSkinnedMesh && o.skeleton) for (const bone of o.skeleton.bones) bones.add(bone);
+    });
+    const detalhe = studioSkeletonMismatch([...bones]);
+    if (detalhe) throw new StudioCharacterError('studio_skeleton_mismatch', `${id}: ${detalhe}`);
+    const set = {};
+    STUDIO_CHARACTER_STATES.forEach((s, i) => {
+      const clip = clipGlbs[i].animations.find((c) => c.name === s);
+      if (!clip) throw new StudioCharacterError('studio_clip_missing', `${id}: ${s}`);
+      set[s] = clip;
+    });
+    _bodyOrigins.set(model.scene, Object.freeze({ kind: 'studio', character: id, sha256: pack.modelSha256, manifestSha256: pack.manifestSha256 }));
+    _clipsByChar[id] = set;
+    _base.set(id, model.scene);
+    _studioProvenance.set(id, Object.freeze({
+      kind: 'studio', id, version: pack.version, manifestSha256: pack.manifestSha256, modelSha256: pack.modelSha256,
+      modelUrl: pack.modelUrl, animationUrls: pack.animationUrls, previewUrls: pack.previewUrls, clips: Object.freeze({ ...set }),
+    }));
+  })().finally(() => _studioRequests.delete(id));
+  _studioRequests.set(id, request);
+  return request;
+}
+// Proveniência de um id do Studio para harness/réguas (null para legado ou não carregado).
+export function studioCharacterProvenance(id) { return _studioProvenance.get(id) || null; }
 
 const _v = new THREE.Vector3();
 const _gq = new THREE.Quaternion(), _wq = new THREE.Quaternion(), _pq = new THREE.Quaternion(), _headUpQ = new THREE.Quaternion();
@@ -895,7 +962,10 @@ export function buildCharacterModel(def, opts = {}) {
       mount.position.copy(handBone.worldToLocal(model.localToWorld(palmM)));
       // A âncora da palma em espaço do OSSO: é o que o clamp de frente por-quadro
       // (CharController.update) reprojeta no espaço do modelo a cada frame.
-      if (ctrl.tpMount) ctrl.tpMount.palmLocal = mount.position.clone();
+      if (ctrl.tpMount) {
+        ctrl.tpMount.palmLocal = mount.position.clone();
+        ctrl.tpMount.empurrao = need > 0.005 ? need : 0;   // régua porte-braco-browser (PB2)
+      }
       if(ctrl.tpMount){
         const carryPalm=mount.position.clone();
         handBone.localToWorld(carryPalm);model.worldToLocal(carryPalm);
@@ -1285,6 +1355,7 @@ class CharController {
     return `hit_${quadrante}`;
   }
 
+
   /* Levar tiro move o corpo: sem isso quem atira de longe não sabe se acertou.
      `dir` é a direção do disparo em mundo; `forca` 0..1 (dano/100). */
   flinch(dir, forca = 0.5, head = false) {
@@ -1347,7 +1418,13 @@ class CharController {
 
   die(dir = null) {
     this._emoteId = null;
-    if (this.dead) return;
+    if (this.dead) {
+      if (dir && !this._deathDir) {
+        this._deathTilt = Math.atan2(dir.x, dir.z);
+        this._deathDir = { x: dir.x, z: dir.z };
+      }
+      return;
+    }
     // Viés de tombo pela direção do disparo: o mesmo clipe deixa de cair sempre igual.
     this._deathTilt = dir ? Math.atan2(dir.x, dir.z) : 0;
     this._deathDir = dir ? { x: dir.x, z: dir.z } : null;

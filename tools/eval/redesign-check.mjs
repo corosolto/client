@@ -6,6 +6,7 @@ import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Script as VMScript, createContext } from 'node:vm';
 import sharp from 'sharp';
+import { langFromCountry } from '../../src/lib/geo.ts';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const cli = process.argv.slice(2);
@@ -17,6 +18,7 @@ const alvoPorMutante = {
   'asset-ausente': 'UIA1',
   'resultado-nao-auditado': 'UIA1',
   'video-dimensao': 'UIA2',
+  'video-container': 'UIA2',
   'splash-sem-wallpaper': 'UIA3',
   'lote-nao-auditado': 'UIA4',
   'loading-sem-canvas': 'UIA5',
@@ -162,8 +164,6 @@ let staticAudit = existsSync(join(ROOT, 'tools/eval/redesign-static-audit.json')
   ? readFileSync(join(ROOT, 'tools/eval/redesign-static-audit.json'), 'utf8') : '';
 let loading3d = existsSync(join(ROOT, 'public/js/loading3d.js'))
   ? readFileSync(join(ROOT, 'public/js/loading3d.js'), 'utf8') : '';
-const geoLib = existsSync(join(ROOT, 'src/lib/geo.ts'))
-  ? readFileSync(join(ROOT, 'src/lib/geo.ts'), 'utf8') : '';
 const apiGeoLang = existsSync(join(ROOT, 'src/pages/api/geo-lang.ts'))
   ? readFileSync(join(ROOT, 'src/pages/api/geo-lang.ts'), 'utf8') : '';
 let mutacaoAplicou = !MUTANTE;
@@ -471,31 +471,13 @@ function diff(a, b) {
   const B = new Set(b);
   return a.filter((x) => !B.has(x));
 }
-function bytesDepois(buf, id) {
-  for (let pos = 0; pos <= buf.length - id.length - 2; pos++) {
-    if (!id.every((byte, i) => buf[pos + i] === byte)) continue;
-    const primeiro = buf[pos + id.length];
-    let largura = 1;
-    while (largura <= 8 && !(primeiro & (0x80 >> (largura - 1)))) largura++;
-    if (largura > 8 || pos + id.length + largura >= buf.length) continue;
-    let tamanho = primeiro & (0xff >> largura);
-    for (let i = 1; i < largura; i++) tamanho = tamanho * 256 + buf[pos + id.length + i];
-    const inicio = pos + id.length + largura;
-    if (tamanho < 1 || tamanho > 8 || inicio + tamanho > buf.length) continue;
-    let valor = 0;
-    for (let i = 0; i < tamanho; i++) valor = valor * 256 + buf[inicio + i];
-    if (valor > 0 && valor < 8192) return valor;
-  }
-  return null;
-}
 function metaWebm(rel) {
-  const buf = readFileSync(join(ROOT, rel)).subarray(0, 131072);
-  return {
-    webm: buf.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3])),
-    vp9: buf.includes(Buffer.from('V_VP9')),
-    width: bytesDepois(buf, [0xb0]),
-    height: bytesDepois(buf, [0xba]),
-  };
+  const probe = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name,width,height:format=format_name', '-of', 'json', join(ROOT, rel)], { encoding: 'utf8' });
+  if (probe.status !== 0) return { webm: false, vp9: false, width: null, height: null };
+  const info = JSON.parse(probe.stdout);
+  const stream = info.streams?.[0] || {};
+  const formatos = String(info.format?.format_name || '').split(',');
+  return { webm: formatos.includes('webm'), vp9: stream.codec_name === 'vp9', width: stream.width, height: stream.height };
 }
 function metaWebpAlpha(buf) {
   const chunk = buf.indexOf(Buffer.from('VP8X'));
@@ -555,8 +537,10 @@ if (MUTANTE === 'asset-ausente' && avatares.length) { avatares = avatares.slice(
 const selecao = nomes('public/video/chars', (f) => f.endsWith('.webm'));
 const resultadoImg = nomes('public/img/resultado', (f) => /-(?:derrota|vitoria)\.webp$/.test(f));
 const resultadoVideo = nomes('public/video/resultado', (f) => /-(?:derrota|vitoria)\.webm$/.test(f));
-const esperadoAvatar = ids.map((id) => `${id}.webp`);
-const esperadoSelecao = ids.map((id) => `${id}.webm`);
+/* Ordena depois do sufixo, como `nomes()`: 'capitao-caveira.webp' vem antes de 'capitao.webp'
+   ('-' < '.'), embora 'capitao' venha antes de 'capitao-caveira' como id. */
+const esperadoAvatar = ids.map((id) => `${id}.webp`).sort();
+const esperadoSelecao = ids.map((id) => `${id}.webm`).sort();
 const hashResultado = createHash('sha256');
 for (const arquivo of resultadoImg) {
   const rel = `public/img/resultado/${arquivo}`;
@@ -618,10 +602,17 @@ const metas = [
   ...selecao.map((f) => ({ arquivo: `public/video/chars/${f}`, esperado: [640, 854] })),
   ...resultadoVideo.map((f) => ({ arquivo: `public/video/resultado/${f}`, esperado: [640, 640] })),
 ].map(({ arquivo, esperado }) => ({ arquivo, esperado, meta: metaWebm(arquivo) }));
+const caminhosMidia = metas.map(({ arquivo }) => arquivo).sort();
 if (MUTANTE === 'video-dimensao' && metas.length) { metas[0].meta.width = 320; mutacaoAplicou = true; }
+if (MUTANTE === 'video-container' && metas.length) {
+  const arquivo = 'public/video/landing/gameplay-vertical.mp4';
+  const meta = metaWebm(arquivo);
+  // MP4 real legível; codec e dimensões ficam válidos para isolar a recusa do contêiner.
+  metas[0] = { arquivo, esperado: [meta.width, meta.height], meta: { ...meta, vp9: true } };
+  mutacaoAplicou = !meta.webm;
+}
 const videosRuins = metas.filter(({ esperado: [w, h], meta }) => !meta.webm || !meta.vp9 || meta.width !== w || meta.height !== h);
 
-const caminhosMidia = metas.map(({ arquivo }) => arquivo).sort();
 const hashMidia = createHash('sha256');
 for (const arquivo of caminhosMidia) {
   hashMidia.update(arquivo).update('\0').update(readFileSync(join(ROOT, arquivo))).update('\0');
@@ -677,7 +668,6 @@ const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main
   && /ms-desc'\)\.textContent = tr\(MAP_DESC\[currentMap\] \|\| ''\)/.test(main)
   && /frase\('escolhaAdversario', tr\(FACTION_NAME\[myFaction\]/.test(main)
   && /continuar\.textContent = frase\('continuarSetup'\)/.test(main)
-  && /const FACTION_NAME = \{ E: 'TIME E', B: 'TIME B'/.test(main)
   && /rEl\.textContent = tr\(RARITIES\[tier\]\[0\]\)/.test(main)
   && /char-spec-name'\)\.textContent = tr\(specName\)/.test(main);
 const previewUso = /if \(pv && pv\.model && previewModelActive\(csOpen,hubPreviewOpen\)\)/.test(funcLoop)
@@ -1175,20 +1165,20 @@ const cardEscalacaoInteiro = /\.hub-roster-cell\{position:relative[^}]*\}/.test(
 const versaoMenuNoCanto = /<\/div>\s*<span class="menu-version" id="mf-ver"><\/span>\s*<\/div>\s*<!-- PAINEL DE SETUP/.test(astro)
   && /\.menu-version\{[^}]*position:fixed[^}]*right:min\(4vw,42px\)[^}]*bottom:14px/.test(css)
   && /\.menu-footer\{[^}]*bottom:48px/.test(css);
-/* UIR20 — home ESTÁTICA com idioma por país. O Stateloop só publica build estático
-   e a home SSR não emite dist/client/index.html, então a decisão de idioma migrou
-   do frontmatter para o /api/geo-lang: o fetch começa no <head>, o i18n resolve
-   ANTES do boot (translateDom) e cai no navegador quando a API não existe. */
 const idiomaGeo = !/export const prerender = false/.test(astro)
   && /window\.__GEO_LANG__/.test(astro)
-  && /const EN_GEO_COUNTRIES = new Set\(\[[\s\S]*?'US'[\s\S]*?'GB'/.test(geoLib)
-  && !/EN_GEO_COUNTRIES[\s\S]{0,400}'PT'|'ES'/.test(geoLib)
-  && /export function langFromCountry/.test(geoLib)
+  && langFromCountry('US') === 'en'
+  && langFromCountry('GB') === 'en'
+  && langFromCountry('PT') === 'pt'
+  && langFromCountry('BR') === 'pt'
+  && langFromCountry(null) === 'pt'
   && /export const prerender = false/.test(apiGeoLang)
   && /langFromCountry/.test(apiGeoLang)
   && /export async function resolveGeoLang/.test(i18n)
   && /navigator\.language/.test(i18n)
-  && /await resolveGeoLang\(\)/.test(main);
+  // Sem top-level await: o contrato autoritativo é a cadeia que traduz antes de finishBoot.
+  && /window\.__CS_LANG_READY__\s*=\s*moduleSequencingReady\.then\(\(\)\s*=>\s*resolveGeoLang\(\)\)\.then/.test(main)
+  && /void window\.__CS_LANG_READY__\.then\(finishBoot\)\.catch/.test(main);
 
 const resultados = [
   ['UIA1', 'elenco inteiro tem avatar, seleção e dois resultados estáticos', assetOk, assetEvid],

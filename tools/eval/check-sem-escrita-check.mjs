@@ -52,11 +52,17 @@ const passos = new Set();
 for (const portao of ['check:fast', 'check:deploy']) {
   const cmd = scripts[portao];
   const suite = portao.slice('check:'.length);
-  if (!cmd || cmd !== `node tools/eval/runner.mjs --suite=${suite}`) {
+  const partes = cmd.trim().split(/\s+/);
+  if (partes.slice(0, 3).join(' ') !== `node tools/eval/runner.mjs --suite=${suite}`) {
     console.error(`${portao} não usa a suite ${suite} do tools/eval/runner.mjs; não sei ler os passos`);
     process.exit(1);
   }
-  for (const p of SUITES[suite]) passos.add(p);
+  const extras = partes.slice(3);
+  if (extras.some((extra) => !/^eval:[\w:-]+$/.test(extra) || !scripts[extra])) {
+    console.error(`${portao} cita um passo extra que não é eval:* definido; não sei ler os passos`);
+    process.exit(1);
+  }
+  for (const p of [...SUITES[suite], ...extras]) passos.add(p);
 }
 if (MUTANTE === 'gerador') passos.add('grafite');
 const geradores = [], comPadrao = [], gravadores = [];

@@ -1,4 +1,5 @@
 import { nomeTimeJavaporcos } from './javaporcos_apresentacao.js';
+import { timesComTerritorio } from './objective-result.js';
 // Core game: FPS controller, weapons, bots, rounds, HUD.
 import * as THREE from 'three';
 import {alturaOlhos,alturaCabeca} from './player_height.js';
@@ -434,6 +435,13 @@ function bocaLocalDaArma(gun) {
 }
 // BUG-187: .0115 m / 58 ms era ~1 px por 3 quadros — o dono não via o traçado. Ver eval:smoke SMK3b.
 const TRACER_STYLE = Object.freeze({ radius: .03, speed: 180, minTravel: .06, fade: .07, segment: 5 });
+const LANDING_FX_STYLE = Object.freeze({
+  water: ['agua', 0x9fd0e0], agua: ['agua', 0x9fd0e0],
+  dirt: ['terra', 0xc39b68], areia: ['areia', 0xd0ad78],
+  gravel: ['cascalho', 0xb7ada0], grass: ['grama', 0x9caf78],
+  wood: ['madeira', 0x8a6033], metal: ['metal', 0xbfc6cc],
+  concrete: ['concreto', 0xaaa6a0], concreto: ['concreto', 0xaaa6a0],
+});
 
 /* CONE DO DISPARO — a MESMA conta no cliente (que desenha) e no servidor (que decide o dano).
    Duas implementações separadas foi o que deixou a arma laser no multiplayer: docs/MULTIPLAYER.md. */
@@ -748,6 +756,10 @@ const _rosterPool = (pool, want, quem, fallback, pinned = []) => {
    faz uma sala 5v5 ter DEZ vagas de gente, e não nove com um manequim do lado. */
 /* E e B são LADOS (pool único, `podeNoLado`); outra letra é facção de sala multiplayer antiga. */
 const _doLado = (f) => (c) => (f === 'E' || f === 'B' ? podeNoLado(c, f) : c.team === f);
+/* Personagem do passe (`passe` em characters.js) fica fora do SORTEIO de bot; o pin no seletor
+   só vale destravado pelo servidor (main.js recusa e filtra o travado). Motivo (pack Studio
+   travado, ARM2): docs/faccoes/fora-do-ar.md. */
+const _sorteavel = (c) => !c.passe;
 /* Pin escalado pelo jogador: só vale se pode jogar no lado pedido e não está em uso. */
 const _pinnedDefs = (ids, doLado, usados) => (ids || [])
   .map((id) => CHARACTERS.find((c) => c.id === id))
@@ -758,18 +770,18 @@ export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCha
   const want = typeof teamSize === 'number'
     ? { ally: Math.max(0, teamSize - (dedicado ? 0 : 1)), enemy: teamSize }
     : { ally: Math.max(0, teamSize.allies | 0), enemy: Math.max(0, teamSize.enemies | 0) };
-  const allies = CHARACTERS.filter(_doLado(playerFaction));
+  const allies = CHARACTERS.filter((c) => _doLado(playerFaction)(c) && _sorteavel(c));
   const others = allies.filter(c => c.id !== playerCharId);
   const pinAlly = _pinnedDefs(pinned && pinned.ally, _doLado(playerFaction), new Set([playerCharId]));
   const allyDefs = _rosterPool(others.length ? others : allies,
-    want.ally, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId), pinAlly);
+    want.ally, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId && _sorteavel(c)), pinAlly);
   const usados = new Set([playerCharId, ...allyDefs.map(d => d.id)]);
-  const enemies = CHARACTERS.filter(_doLado(enemyFaction));
+  const enemies = CHARACTERS.filter((c) => _doLado(enemyFaction)(c) && _sorteavel(c));
   const pinEnemy = _pinnedDefs(pinned && pinned.enemy, _doLado(enemyFaction), usados);
   const enemiesLivres = enemies.filter(c => !usados.has(c.id));
   return {
     allyDefs,
-    enemyDefs: _rosterPool(enemiesLivres.length >= want.enemy ? enemiesLivres : enemies, want.enemy, `inimigos (${enemyFaction})`, CHARACTERS, pinEnemy),
+    enemyDefs: _rosterPool(enemiesLivres.length >= want.enemy ? enemiesLivres : enemies, want.enemy, `inimigos (${enemyFaction})`, CHARACTERS.filter(_sorteavel), pinEnemy),
   };
 }
 
@@ -804,6 +816,10 @@ export class Game {
   constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerKnifeSkinId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, arena = false, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null, economia = false }) {
     this._ctfOpt = ctf;
     this._arenaOpt = arena;
+    /* Texturas criadas POR ESTA PARTIDA (sangue, fumaça, bandeira, zona, decalques).
+       Registradas aqui para o dispose devolver a VRAM no remount; o bundle compartilhado
+       (initTextures) e as estáticas dos módulos de mapa NÃO entram — o próximo Game usa. */
+    this._texLocais = new Set();
     this._armaN = 0;
     this._matchWeapons = matchWeapons;
     this.renderer = renderer;
@@ -1257,7 +1273,7 @@ export class Game {
         x.beginPath(); x.moveTo(32 + Math.cos(a) * 10, 32 + Math.sin(a) * 10);
         x.lineTo(32 + Math.cos(a) * (20 + Math.random() * 9), 32 + Math.sin(a) * (20 + Math.random() * 9)); x.stroke();
       }
-      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+      const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
       this._holeGeo = new THREE.PlaneGeometry(0.22, 0.22);
       this._holeMat = new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
     }
@@ -1531,7 +1547,7 @@ export class Game {
           data[o] = r * skyE; data[o + 1] = g2 * skyE; data[o + 2] = b * skyE; data[o + 3] = 1;
         }
       }
-      const tex = new THREE.DataTexture(data, W, H, THREE.RGBAFormat, THREE.FloatType);
+      const tex = this._texLocal(new THREE.DataTexture(data, W, H, THREE.RGBAFormat, THREE.FloatType));
       tex.mapping = THREE.EquirectangularReflectionMapping;
       tex.colorSpace = THREE.LinearSRGBColorSpace;   // já está em linear, sem decode
       tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter;
@@ -1991,13 +2007,16 @@ export class Game {
     return vmObj;
   }
 
+  // Textura de posse DESTE Game: registrada para o dispose devolver a VRAM no remount.
+  _texLocal(t) { this._texLocais?.add(t); return t; }
+
   _makePuffTexture() {
     const c = document.createElement('canvas'); c.width = c.height = 64;
     const x = c.getContext('2d');
     const g = x.createRadialGradient(32, 32, 2, 32, 32, 30);
     g.addColorStop(0, 'rgba(230,210,180,0.9)'); g.addColorStop(1, 'rgba(230,210,180,0)');
     x.fillStyle = g; x.fillRect(0, 0, 64, 64);
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
   // Respingo de sangue: `seed` gera 5 variantes estáveis pras manchas não repetirem.
   // Vermelho escuro coagulado (#5a0608–#6e0a0c) de propósito — não vivo.
@@ -2017,7 +2036,7 @@ export class Game {
     for (let i = 0; i < 6; i++) blob(cx + (rnd() - .5) * 26, cy + (rnd() - .5) * 26, 20 + rnd() * 16, 0.95);
     for (let i = 0; i < 22; i++) { const a = rnd() * 7, d = 24 + rnd() * 26; blob(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 3 + rnd() * 7, 0.9); }
     for (let i = 0; i < 30; i++) { const a = rnd() * 7, d = 40 + rnd() * 22; blob(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 1 + rnd() * 3, 0.85); }
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
   // Poça sob o cadáver: mais redonda e densa que o respingo, com gotas em volta. Cresce em cena.
   _makeBloodPoolTex() {
@@ -2037,7 +2056,7 @@ export class Game {
       g.addColorStop(0, 'rgba(68,6,8,0.9)'); g.addColorStop(1, 'rgba(55,4,6,0)');
       x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill();
     }
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
   // Cola uma mancha de sangue numa superfície (normal do hit). `pool` usa a textura de poça.
   // Ring buffer próprio (teto 64) — não briga com os furos de bala.
@@ -2069,7 +2088,7 @@ export class Game {
       rad.addColorStop(0, 'rgba(200,22,26,1)'); rad.addColorStop(0.62, 'rgba(150,12,16,0.95)'); rad.addColorStop(1, 'rgba(110,6,8,0)');
     }
     g.fillStyle = rad; g.fillRect(0, 0, 32, 32);
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this._texLocal(new THREE.CanvasTexture(c));
     const fx = new GPUParticles(this.scene, this.camera, { tex, additive, max: 384 });
     if (this.puffFx) { fx.uniforms.uTime = this.puffFx.uniforms.uTime; fx.uniforms.uScale = this.puffFx.uniforms.uScale; }
     fx.points.renderOrder = additive ? 7 : 6;   // por cima da fumaça de impacto
@@ -2135,14 +2154,14 @@ export class Game {
       x.beginPath(); x.moveTo(0, -w / 2); x.lineTo(len, 0); x.lineTo(0, w / 2); x.closePath(); x.fill();
       x.restore();
     }
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
   _makeFlashSoftTex() {
     const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
     const g = x.createRadialGradient(32, 32, 1, 32, 32, 32);
     g.addColorStop(0, 'rgba(255,236,190,0.9)'); g.addColorStop(0.35, 'rgba(255,196,96,0.5)'); g.addColorStop(1, 'rgba(255,150,50,0)');
     x.fillStyle = g; x.fillRect(0, 0, 64, 64);
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
   // Núcleo branco-quente do flash (centro quase branco, borda quente suave).
   _makeFlashCoreTex() {
@@ -2151,7 +2170,7 @@ export class Game {
     const g = x.createRadialGradient(32, 32, 1, 32, 32, 30);
     g.addColorStop(0, 'rgba(255,255,245,1)'); g.addColorStop(0.35, 'rgba(255,240,200,0.8)'); g.addColorStop(1, 'rgba(255,220,160,0)');
     x.fillStyle = g; x.fillRect(0, 0, 64, 64);
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
 
   /* ================= input ================= */
@@ -3355,6 +3374,7 @@ export class Game {
       : this.playerTeam;
     const mine = winner === playerSide;
     const draw = winner === 'draw';
+    const timesTerritorio = timesComTerritorio(this.objective);
     // Tela de fim estilo CoD/Valorant: VITÓRIA/DERROTA gigante, time vencedor no sub.
     this.el.matchEnd.classList.toggle('win', mine);
     this.el.matchEnd.classList.toggle('lose', !mine && !draw);
@@ -3365,8 +3385,8 @@ export class Game {
       : frase('perdeu', this._teamName(winner));
     this.el.matchStats.innerHTML = escort
       ? frase('statsFim', this.roundsWon.E, this.roundsWon.B, this.player.kills, this.player.name, this.player.deaths)
-      : this.objective
-      ? (this.objective.regras.times === 3 ? ['E', 'B', 'J'] : ['E', 'J']).map(team => `${this._teamName(team)}: <b>${Math.round((this.objective.state.territorio?.[team] || 0) * 100)}%</b>`).join(' · ') + `<br>${this.player.kills} abates · ${this.player.deaths} mortes`
+      : timesTerritorio
+      ? timesTerritorio.map(team => `${this._teamName(team)}: <b>${Math.round((this.objective.state.territorio[team] || 0) * 100)}%</b>`).join(' · ') + `<br>${this.player.kills} abates · ${this.player.deaths} mortes`
       : this.arena
         ? `${tr('CONVERSÕES')}: ${this.arenaSwitched} · ${tr('SEUS ABATES')}: ${this.player.kills}`
       : frase('statsFim', this.roundsWon.E, this.roundsWon.B, this.player.kills, this.player.name, this.player.deaths);
@@ -3536,6 +3556,7 @@ export class Game {
     // qualidade muda mapSize/bias, então invalida o cache pra ele reconfigurar.
     delete this.scene.userData.__sf;
     if (shadows) this.renderer.shadowMap.needsUpdate = true;
+    for (const fx of this._landingFxSystems || []) if (fx?.points) fx.points.visible = q !== 'low';
     this.scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
   }
   onResize() {
@@ -3589,7 +3610,7 @@ export class Game {
     if (swapBot) {
       swapBot.team = oldTeam;
       const emCampo = new Set(this.bots.map(b => b.def?.id));
-      const doLadoVelho = CHARACTERS.filter(c => _doLado(oldFaction)(c) && c.id !== p.def.id);
+      const doLadoVelho = CHARACTERS.filter(c => _doLado(oldFaction)(c) && _sorteavel(c) && c.id !== p.def.id);
       const livres = doLadoVelho.filter(c => !emCampo.has(c.id));
       const defs = livres.length ? livres : doLadoVelho;
       // prefere GLB já carregado no preload da partida; fora dele o bot cairia no procedural
@@ -4628,7 +4649,7 @@ export class Game {
     const rad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
     rad.addColorStop(0, `rgba(${rgb},1)`); rad.addColorStop(0.45, `rgba(${rgb},0.55)`); rad.addColorStop(1, `rgba(${rgb},0)`);
     g.fillStyle = rad; g.fillRect(0, 0, 32, 32);
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this._texLocal(new THREE.CanvasTexture(c));
     const fx = new GPUParticles(this.scene, this.camera, { tex, additive, max });
     const src = this.puffFx && this.puffFx.uniforms;
     if (src) { fx.uniforms.uTime = src.uTime; fx.uniforms.uScale = src.uScale; }
@@ -5083,6 +5104,33 @@ export class Game {
     this.scene.add(m);
     this.tracers.push(t);
   }
+  _landingFx(pos, strength) {
+    const k = Math.max(0, Math.min(1, strength || 0));
+    if (!k) return 0;
+    const surface = this._footstepSurface(pos);
+    const style = LANDING_FX_STYLE[surface] || LANDING_FX_STYLE.concrete;
+    const key = `_fx_land_${style[0]}`;
+    const low = this.settings?.quality === 'low';
+    let fx = low ? this.puffFx : this[key];
+    if (!fx) {
+      fx = this._tintFx(style[1], false, 64);
+      this[key] = fx;
+      (this._landingFxSystems || (this._landingFxSystems = [])).push(fx);
+    }
+    const count = 3 + Math.round(k * 3);
+    const waterY = surface === 'water' ? this.world.waterSurfaceAt?.(pos.x, pos.z, pos.y) : null;
+    const y = Number.isFinite(waterY) ? waterY : pos.y;
+    const at = pos.clone();
+    const vel = new THREE.Vector3();
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.45 + k * (0.55 + Math.random() * 0.65);
+      at.set(pos.x + Math.cos(angle) * 0.14, y + 0.05, pos.z + Math.sin(angle) * 0.14);
+      vel.set(Math.cos(angle) * speed, 0.65 + k * (0.7 + Math.random() * 0.55), Math.sin(angle) * speed);
+      fx.spawn(at, { vel, life: 0.38 + k * 0.25, size: 0.18 + k * 0.16, grow: 0.8 + k * 0.8 });
+    }
+    return count;
+  }
   _puff(pos, normal, surf = null, fumaca = true) {
     // impact smoke: one GPU particle (batched, no allocation)
     const p = pos.clone();
@@ -5417,7 +5465,7 @@ export class Game {
     // borda gasta: desfiado na ponta (fly end) e vincos no mastro
     for (let i = 0; i < 26; i++) { x.clearRect(250 + rnd() * 6, rnd() * 160, 2 + rnd() * 6, 1 + rnd() * 4); }
     x.strokeStyle = 'rgba(90,86,80,0.5)'; x.lineWidth = 3; x.beginPath(); x.moveTo(4, 0); x.lineTo(4, 160); x.stroke();
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
     t._fac = fac; t._canvas = c; this._paintFlagSymbol(t);   // emblema da facção dona (se já carregou)
     return t;
   }
@@ -5514,7 +5562,7 @@ export class Game {
       x.strokeStyle = `rgba(226,204,140,${0.35 + rnd() * 0.35})`;
       x.beginPath(); x.arc(cx, cy, 112, a0, a1); x.stroke();
     }
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace;
     t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t;
   }
 
@@ -5525,7 +5573,7 @@ export class Game {
     const g = x.createRadialGradient(64, 64, 4, 64, 64, 64);
     g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.8, 'rgba(232,234,238,0.85)'); g.addColorStop(1, 'rgba(210,212,216,0)');
     x.fillStyle = g; x.beginPath(); x.arc(64, 64, 64, 0, 6.29); x.fill();
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    const t = this._texLocal(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
 
   _updateSmokeHud() {
@@ -5900,7 +5948,7 @@ export class Game {
     const num = this.el['score' + slot + 'Num'];
     /* Treta Pop (seção 2d): o número grande é round ganho; quem está vivo fica nos retratos. */
     const horda = this.objective?.state;
-    const n = String(horda?.kills != null ? (this.objective.regras.times === 3 ? horda.teamKills[side] || 0 : horda.kills)
+    const n = String(horda?.kills != null ? (this.objective.regras?.times === 3 ? horda.teamKills[side] || 0 : horda.kills)
       : this.arena ? this._teamPopulation(side)
       : (this._uiV3() ? this.roundsWon[side] : this.roundKills[side]));
     if (num && num.textContent !== n) num.textContent = n;
@@ -7219,6 +7267,7 @@ export class Game {
   /* Física do corpo do jogador. O servidor aplica ESTA função ao slot remoto — duas
      implementações divergiriam e o jogo viveria em rubber-band. Ver docs/MULTIPLAYER.md. */
   _moveEntity(p, inp, dt) {
+    let landImpact = 0;
     // Crouch (CTRL/C) vale NO AR também, e a transição é assimétrica como no CS2.
     // Números e motivo: docs/MULTIPLAYER.md.
     const wantCrouch = !!inp.crouch;
@@ -7229,7 +7278,7 @@ export class Game {
       p._spaceHeld = !!inp.jump;
       this._stepMantle(p, dt);
       this.sfx._quiet = true;
-      return { sp: 0, walking, sprint: false, mantling: true };
+      return { sp: 0, walking, sprint: false, mantling: true, landImpact };
     }
     const slowMul = this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 0.45 : 1;  // água/lago
     // velocidade base × ARMA (MOVE_MUL) × andar × ADS × agachado × água
@@ -7302,7 +7351,7 @@ export class Game {
     if (p.mantle) {
       this._stepMantle(p, dt);
       this.sfx._quiet = true;
-      return { sp: 0, walking, sprint: false, mantling: true };
+      return { sp: 0, walking, sprint: false, mantling: true, landImpact };
     }
     const followStepDown = this.world.snapDownSteps === true && p.grounded && p.vel.y <= 0;
     p.vel.y -= 20.6 * dt;   // gravidade exagerada do CoD — arco de pulo "snappy", não flutuante
@@ -7342,10 +7391,14 @@ export class Game {
       p.pos.y = g2; p.vel.y = 0; p.grounded = true;
     }
     if (p.pos.y <= g2) {
-      if (!p.grounded && p.vel.y < -4) { this.sfx.land(); p.landDip = Math.min(1, -p.vel.y / 14); }
+      if (!p.grounded && p.vel.y < -4) {
+        landImpact = Math.min(1, Math.max(0, (-p.vel.y - 4) / 10));
+        this.sfx.land(landImpact);
+        p.landDip = Math.min(1, -p.vel.y / 14);
+      }
       p.pos.y = g2; p.vel.y = 0; p.grounded = true;
     } else if (p.pos.y > g2 + 0.05) p.grounded = false;
-    return { sp: effectiveSp, walking, sprint };
+    return { sp: effectiveSp, walking, sprint, landImpact };
   }
 
 
@@ -7404,7 +7457,8 @@ export class Game {
       jump: !!this.keys.Space,
     };
     this._emoteTick(_inp);   // andar/atirar/morrer derruba a danca (ver _emoteTick)
-    const { sp, walking, sprint } = this._moveEntity(p, _inp, dt);
+    const { sp, walking, sprint, landImpact } = this._moveEntity(p, _inp, dt);
+    if (landImpact > 0) this._landingFx(p.pos, landImpact);
     /* O movimento acima já aconteceu na tela (predição). Aqui o netcode reconcilia e manda o
        input pro servidor, que roda esta MESMA função. */
     if (this.online) this._mp?.stepPlayer(p, _inp, dt);
@@ -7712,6 +7766,8 @@ export class Game {
   _footstepSurface(pos) {
     const surface = this.world.footstepSurfaceAt?.(pos.x, pos.z, pos.y);
     if (surface) return surface;
+    const waterY = this.world.waterSurfaceAt?.(pos.x, pos.z, pos.y);
+    if (Number.isFinite(waterY)) return 'water';
     if (this.world.slowAt && this.world.slowAt(pos.x, pos.z)) return 'water';
     return {
       ferro_velho: 'gravel', quebrada: 'dirt', corrego: 'dirt', posto_treta: 'gravel',
@@ -8228,7 +8284,7 @@ export class Game {
       if (kind === 'chevAlly') { g.fillStyle = '#fff'; tri(1); g.fill(); }
       else { g.strokeStyle = '#fff'; g.lineWidth = 11; tri(1); g.stroke(); }   // inimigo = vazado
     }
-    const t = new THREE.CanvasTexture(c);
+    const t = this._texLocal(new THREE.CanvasTexture(c));
     t.colorSpace = THREE.SRGBColorSpace;
     return (this._tmTex[kind] = t);
   }
@@ -10142,7 +10198,21 @@ export class Game {
     this.vm?.melee?.dispose();
     this._pickupFallbackTpl?.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
     this.renderer.liberaPosDaCena?.(this.scene);
+    /* VRAM: descarta só texturas locais desta partida; texturas compartilhadas do
+       bundle e dos mapas permanecem vivas para o próximo Game. */
+    for (const t of this._texLocais || []) t.dispose();
+    this._texLocais = null;
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+    // Partículas de pouso são donas do material; a textura já pertence a _texLocais.
+    const puffFx = this.puffFx;
+    puffFx?.points?.material?.dispose();
+    this.puffFx = null;
+    for (const fx of this._landingFxSystems || []) {
+      if (fx === puffFx) continue;
+      fx.points?.material?.dispose();
+    }
+    this._landingFxSystems = [];
+    for (const k of Object.keys(this)) if (k.startsWith('_fx_land_')) delete this[k];
     this.scene.clear();
   }
 }

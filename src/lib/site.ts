@@ -17,6 +17,7 @@
 import { SITE } from './site-origin.mjs';
 
 export { SITE };
+export const SHARE_ORIGIN = 'https://corosol.to';
 export const HOST = new URL(SITE).host;
 
 export const BRAND = 'CORO SOLTO';

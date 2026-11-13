@@ -133,3 +133,28 @@ export function motivoDeRecusa(rel, bytes, pol, contexto = 'pack') {
   }
   return null;
 }
+
+/* Caminhos são relativos a public/audio. O arquivo versionado é o ratchet:
+   órfãos antigos ficam explícitos; qualquer órfão novo precisa de revisão humana. */
+export function carregarAllowlistOrfaos(caminho) {
+  if (!existsSync(caminho)) return { erro: `allowlist de órfãos ausente: ${caminho}` };
+  try {
+    const data = JSON.parse(readFileSync(caminho, 'utf8'));
+    if (data.schema !== 2 || !Array.isArray(data.allow)) throw new Error('schema 2 e allow[] são obrigatórios');
+    const allow = new Map();
+    for (const entry of data.allow) {
+      const rel = entry?.path;
+      const digest = entry?.sha256;
+      if (typeof rel !== 'string' || !rel || rel.includes('\\') || rel.startsWith('/') || rel.startsWith('audio/')
+        || rel.split('/').some((part) => !part || part === '.' || part === '..')) {
+        throw new Error(`caminho inválido: ${JSON.stringify(rel)}`);
+      }
+      if (typeof digest !== 'string' || !/^[0-9a-f]{64}$/.test(digest)) throw new Error(`sha256 inválido: ${rel}`);
+      if (allow.has(rel)) throw new Error(`caminho duplicado: ${rel}`);
+      allow.set(rel, digest);
+    }
+    return { allow, erro: null };
+  } catch (error) {
+    return { erro: `allowlist de órfãos inválida (${error.message})` };
+  }
+}
