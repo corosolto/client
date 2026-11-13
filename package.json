@@ -49,7 +49,7 @@
     "prod:coherence": "node tools/eval/prod-coherence.mjs",
     "eval:modgraph": "node tools/eval/module-graph-check.mjs && node tools/eval/module-graph-check.mjs --mutante=06-09 && node tools/eval/three-node-check.mjs",
     "eval:glbpeso": "node tools/eval/glb-peso-check.mjs && node tools/eval/glb-peso-check.mjs --mutante=bruto",
-    "//eval:rig-census": "Deformação de skin nunca piora: censo CPU (5 poses sintéticas + clipes em 8 instantes) dos 74 corpos + 26 skins, tetos congelados por sha (tools/eval/rig-census-tetos.json, só descem), GLB novo no estrito 3,5×/2,5×, legado acima do estrito no próprio teto; 5 mutantes.",
+    "//eval:rig-census": "Deformação de skin nunca piora: censo CPU (5 poses sintéticas + clipes em 8 instantes) dos 74 corpos + 26 skins, tetos congelados por sha (tools/eval/rig-census-tetos.json, só descem), GLB novo no estrito 3,5×/2,5×, legado acima do estrito no próprio teto; 6 mutantes.",
     "eval:rig-census": "node tools/eval/rig-census.mjs && node tools/eval/rig-census.mjs --mutacoes",
     "gen:assetrev": "node tools/gen-asset-rev.mjs",
     "eval:assetrev": "node tools/eval/asset-rev-check.mjs && node tools/eval/asset-rev-check.mjs --mutante=versao-crua && node tools/eval/asset-rev-check.mjs --mutante=rev-ignorada && node tools/eval/asset-rev-check.mjs --mutante=manifesto-cru && node tools/eval/asset-rev-check.mjs --mutante=mapa-defasado",

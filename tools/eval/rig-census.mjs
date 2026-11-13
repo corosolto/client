@@ -183,9 +183,22 @@ function clipSamplers(doc, fallbackName) {
     const value = (c, t) => {
       const T = c.times; let i = 0;
       while (i < T.length - 2 && T[i + 1] <= t) i += 1;
-      const f = T.length > 1 && !c.step ? Math.min(1, Math.max(0, (t - T[i]) / ((T[i + 1] - T[i]) || 1))) : 0;
-      const at = (k) => { const base = c.cubic ? (k * 3 + 1) * c.n : k * c.n; return Array.from(c.values.slice(base, base + c.n)); };
-      const a = at(i), b = at(Math.min(i + 1, T.length - 1));
+      const j = Math.min(i + 1, T.length - 1);
+      const f = T.length > 1 && !c.step ? Math.min(1, Math.max(0, (t - T[i]) / ((T[j] - T[i]) || 1))) : 0;
+      const at = (k, slot = 1) => {
+        const base = c.cubic ? (k * 3 + slot) * c.n : k * c.n;
+        return Array.from(c.values.slice(base, base + c.n));
+      };
+      if (c.cubic) {
+        const dt = T[j] - T[i], f2 = f * f, f3 = f2 * f;
+        const v0 = at(i), out0 = at(i, 2), v1 = at(j), in1 = at(j, 0);
+        const out = v0.map((_, k) => (2 * f3 - 3 * f2 + 1) * v0[k]
+          + dt * (f3 - 2 * f2 + f) * out0[k]
+          + (-2 * f3 + 3 * f2) * v1[k]
+          + dt * (f3 - f2) * in1[k]);
+        return c.n === 4 ? new THREE.Quaternion().fromArray(out).normalize().toArray() : out;
+      }
+      const a = at(i), b = at(j);
       if (c.n === 4) return new THREE.Quaternion().fromArray(a).slerp(new THREE.Quaternion().fromArray(b), f).toArray();
       return a.map((x, k) => x + (b[k] - x) * f);
     };
@@ -491,15 +504,22 @@ function diffTetos(de, para, idsPresentes) {
   return falhas;
 }
 
-/** Lê a cópia dos tetos da origin/main (checkout raso do CI não tem: a nota
-    avisa e o travamento por sha + estrito segue valendo). */
-function tetosDaOrigin() {
-  const rel = ARQ_TETOS.replace(`${ROOT}/`, '');
+/** Lê a cópia autoritativa dos tetos: primeiro a base publicada; no PR que criou
+    o arquivo, o commit de introdução. Sem uma das duas o gate falha fechado. */
+function tetosDaBase() {
+  const rel = ARQ_TETOS.slice(ROOT.length).replace(/^\/+/, '');
+  const le = (ref) => JSON.parse(execSync(`git show ${ref}:${JSON.stringify(rel)}`, {
+    encoding: 'utf8', cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'],
+  }));
   for (const ref of ['origin/main', 'origin/HEAD']) {
-    try {
-      return { tetos: JSON.parse(execSync(`git show ${ref}:${JSON.stringify(rel)}`, { encoding: 'utf8', cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] })) };
-    } catch { /* ref ou arquivo ausente neste checkout */ }
+    try { return le(ref); } catch { /* o arquivo ainda não chegou à base publicada */ }
   }
+  try {
+    const commits = execSync(`git log --diff-filter=A --format=%H HEAD -- ${JSON.stringify(rel)}`, {
+      encoding: 'utf8', cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim().split(/\s+/).filter(Boolean);
+    if (commits.length) return le(commits.at(-1));
+  } catch { /* histórico raso ou arquivo sem commit de introdução */ }
   return null;
 }
 
@@ -521,15 +541,14 @@ async function rodaCenso() {
     const piorao = Math.max(medido.metricas.sinteticas.maxEdge?.valor ?? 1, medido.metricas.clips.maxEdge?.valor ?? 1);
     if (piorao > ESTRITO.maxEdge) sobreEstrito += 1;
   }
-  const origin = tetosDaOrigin();
-  if (!origin) console.log('  nota: sem cópia dos tetos na origin/main (checkout raso do CI?) — sha + estrito seguem valendo; o diff de tetos roda onde há fetch completo (local/pre-push).');
-  else falhas.push(...diffTetos(origin, tetos, new Set(itens.map((i) => i.id))));
+  const base = tetosDaBase();
+  if (!base) falhas.push('tetos: base autoritativa indisponível — use checkout com histórico completo; sem base, um PR poderia inflar teto junto com o GLB');
+  else falhas.push(...diffTetos(base, tetos, new Set(itens.map((i) => i.id))));
   return { itens, falhas, sobreEstrito, durou: ((performance.now() - t0) / 1000).toFixed(1) };
 }
 
-// ---------------------------------------------------------------------------
-// --regen: congela os valores medidos. O diff contra a origin/main na corrida
-// seguinte é o que impede o arquivo de subir.
+// --regen: congela os valores medidos. O diff contra a base autoritativa na
+// corrida seguinte é o que impede o arquivo de subir.
 // ---------------------------------------------------------------------------
 
 async function regen() {
@@ -559,7 +578,7 @@ async function regen() {
 // sintética) → ~2.2×; giro de 180° (clipe) → ~4×. Gerada em tmp, nunca commitada.
 // ---------------------------------------------------------------------------
 
-async function montaFixtureBytes({ pesoTronco = [1, 0], pesoCabeca = [0.3, 0.7], giraClipe = 180 }) {
+async function montaFixtureBytes({ pesoTronco = [1, 0], pesoCabeca = [0.3, 0.7], giraClipe = 180, cubic = false }) {
   const { Document } = await import('@gltf-transform/core');
   const doc = new Document();
   const buf = doc.createBuffer('bin');
@@ -608,8 +627,12 @@ async function montaFixtureBytes({ pesoTronco = [1, 0], pesoCabeca = [0.3, 0.7],
   const anim = doc.createAnimation('cabecada');
   const tempos = doc.createAccessor('t').setType('SCALAR').setArray(new Float32Array([0, 1])).setBuffer(buf);
   const quat = (g) => [0, Math.sin((g * Math.PI) / 360), 0, Math.cos((g * Math.PI) / 360)];
-  const accRot = doc.createAccessor('rot').setType('VEC4').setArray(new Float32Array([...quat(0), ...quat(giraClipe)])).setBuffer(buf);
-  const sampler = doc.createAnimationSampler().setInput(tempos).setOutput(accRot).setInterpolation('LINEAR');
+  const identidade = quat(0);
+  const valores = cubic
+    ? [0, 0, 0, 0, ...identidade, 0, 4, 0, 0, 0, -4, 0, 0, ...identidade, 0, 0, 0, 0]
+    : [...identidade, ...quat(giraClipe)];
+  const accRot = doc.createAccessor('rot').setType('VEC4').setArray(new Float32Array(valores)).setBuffer(buf);
+  const sampler = doc.createAnimationSampler().setInput(tempos).setOutput(accRot).setInterpolation(cubic ? 'CUBICSPLINE' : 'LINEAR');
   const canal = doc.createAnimationChannel().setTargetNode(nos.get('Head')).setTargetPath('rotation').setSampler(sampler);
   anim.addSampler(sampler); anim.addChannel(canal);
   return Buffer.from(await io.writeBinary(doc));
@@ -693,6 +716,20 @@ async function mutacoes() {
       morde(verificaItem(item, cego, { tetos: {} }).length === 0, 'régua cega (clipes apagados) ficaria VERDE — a cobertura de clipes é o que reprova', 'sem clipes a régua CONTINUOU reprovando — o fixture não exercita a cobertura');
     }
 
+    console.log('mutante spline-como-linear: tangentes cúbicas movem o clipe mesmo com extremos iguais');
+    {
+      const linear = await grava('spline-linear.glb', await montaFixtureBytes({ pesoCabeca: [0, 1], giraClipe: 0 }));
+      const cubic = await grava('spline-cubic.glb', await montaFixtureBytes({ pesoCabeca: [0, 1], cubic: true }));
+      const itemLinear = await comSha(itemDe('fixture-spline-linear', 'skin', linear));
+      const itemCubic = await comSha(itemDe('fixture-spline-cubic', 'skin', cubic));
+      const mLinear = (await medeFixture(itemLinear)).metricas.clips.maxEdge?.valor ?? 0;
+      const mCubic = (await medeFixture(itemCubic)).metricas.clips.maxEdge?.valor ?? 0;
+      morde(mCubic > mLinear * 1.5, `Hermite mede tangentes (linear ${mLinear}×; cúbico ${mCubic}×)`,
+        'CUBICSPLINE caiu na interpolação linear — tangentes não alteraram a medição');
+      const r = verificaItem(itemCubic, { metricas: (await medeFixture(itemCubic)).metricas }, { tetos: {} });
+      morde(r.length > 0, `spline cúbica deformada reprova no estrito (${r[0]})`, 'spline cúbica deformada PASSOU no estrito');
+    }
+
     console.log('mutante legado-reparado: id congelado acima do estrito troca de bytes sem piorar → verde; piorando → reprova');
     {
       const legado = await montaFixtureBytes({ pesoCabeca: [0, 1] });
@@ -715,7 +752,7 @@ async function mutacoes() {
     }
 
     if (cegas) { console.error(`mutações: ${cegas} régua(s) cega(s)/frouxa(s)`); process.exitCode = 1; }
-    else console.log('mutações: as 5 morderam (teto-subiu, glb-novo-sem-teto-frouxo, pesos-trocados, clipe-ignorado, legado-reparado).');
+    else console.log('mutações: as 6 morderam (teto-subiu, glb-novo-sem-teto-frouxo, pesos-trocados, clipe-ignorado, spline-como-linear, legado-reparado).');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
