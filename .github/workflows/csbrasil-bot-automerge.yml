@@ -139,6 +139,12 @@ jobs:
               print('pronto-pra-merge: not eligible')
               subprocess.run(['gh', 'pr', 'edit', pr, '--remove-label', 'pronto-pra-merge'], check=False)
               sys.exit(0)
+          command = ['gh', 'pr', 'merge', pr, '--merge', '--match-head-commit', head_oid]
+          if current_data.get('merge_kind') != 'release-batch':
+              command.append('--delete-branch')
+          # Nenhuma mutação de label/comentário pode abrir uma janela entre a
+          # revalidação da elegibilidade e o merge preso ao head validado.
+          subprocess.run(command, check=True)
           ja = subprocess.run(['gh', 'pr', 'view', pr, '--json', 'labels', '--jq',
                                '[.labels[].name] | index("pronto-pra-merge") != null'],
                               capture_output=True, text=True).stdout.strip() == 'true'
@@ -146,12 +152,8 @@ jobs:
           if not ja:
               kind = 'the daily release batch' if current_data.get('merge_kind') == 'release-batch' else 'a safe change'
               subprocess.run(['gh', 'pr', 'comment', pr, '--body',
-                              f'🤖 **csbrasil-bot**: required checks passed and the diff meets the '
-                              f'`check_automerge` criteria. Merging automatically as {kind}.'], check=True)
-          command = ['gh', 'pr', 'merge', pr, '--merge', '--match-head-commit', head_oid]
-          if current_data.get('merge_kind') != 'release-batch':
-              command.append('--delete-branch')
-          subprocess.run(command, check=True)
+                              f'🤖 **csbrasil-bot**: required checks passed and the diff met the '
+                              f'`check_automerge` criteria. Merged automatically as {kind}.'], check=True)
           PY
       - name: Record evaluated head and rollup for sweep debounce
         if: env.pular != '1'

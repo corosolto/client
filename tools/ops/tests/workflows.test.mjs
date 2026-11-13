@@ -135,3 +135,19 @@ test('smoke-web.yml: chat desktop em job próprio, partição exata, nenhum spec
   for (const spec of SPECS) assert.ok(comInvert.includes(spec), `o job do --grep-invert perdeu ${spec}`);
   for (const e of execs) assert.match(e, /--config=playwright\.smoke\.config\.mjs/);
 });
+
+test('csbrasil-bot-automerge.yml: nenhuma mutação abre janela entre revalidação e merge', () => {
+  const s = wf('csbrasil-bot-automerge.yml');
+  const validou = s.indexOf('current_data = revalidate_decision');
+  const merge = s.indexOf('subprocess.run(command, check=True)', validou);
+  const label = s.indexOf("'--add-label', 'pronto-pra-merge'", validou);
+  const comentario = s.indexOf("subprocess.run(['gh', 'pr', 'comment'", validou);
+  assert.ok(validou > 0 && merge > validou, 'o merge preso ao head precisa seguir a revalidação');
+  assert.ok(label > merge && comentario > merge,
+    'label/comentário só podem acontecer depois do merge, nunca entre validar e mergear');
+});
+
+test('.devcontainer/Dockerfile: o ambiente anunciado instala ffprobe para eval:redesign', () => {
+  const s = readFileSync(fileURLToPath(new URL('../../../.devcontainer/Dockerfile', import.meta.url)), 'utf8');
+  assert.match(s, /apt-get install -y --no-install-recommends ffmpeg/);
+});
