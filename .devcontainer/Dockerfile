@@ -13,5 +13,8 @@ RUN NPM_VERSION="$(node -p "require('./package.json').packageManager.split('@')[
  && playwright install --with-deps chromium \
  && BIN="$(node -e "const {execSync}=require('node:child_process');const root=execSync('npm root -g',{encoding:'utf8'}).trim();console.log(require(root + '/playwright').chromium.executablePath())")" \
  && test -x "$BIN" \
+ && chown -R node:node /opt/pw-browsers \
  && ln -sf "$BIN" "$CHROME_BIN" \
  && rm -rf /tmp/coro-solto-deps
+
+WORKDIR /home/node

@@ -9,6 +9,6 @@
     "PLAYWRIGHT_BROWSERS_PATH": "/opt/pw-browsers",
     "CHROME_BIN": "/usr/local/bin/coro-solto-chromium"
   },
-  "postCreateCommand": "node scripts/setup.mjs && node scripts/ci-local.mjs --diagnose",
+  "postCreateCommand": "node scripts/ci-local.mjs --setup",
   "forwardPorts": [4321, 8123]
 }

@@ -3,7 +3,8 @@
    Uso: node scripts/ci-local.mjs [--setup|--setup-system|--diagnose|--selftest] [script-npm] */
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { accessSync, constants, readFileSync } from 'node:fs';
+import { accessSync, constants, lstatSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -11,6 +12,10 @@ const SAIDA_AMBIENTE = 78;
 const USO = 'Uso: node scripts/ci-local.mjs [--setup|--setup-system|--diagnose|--selftest] [script-npm]';
 const NODE_CI = 22;
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// Várias réguas legadas consultam `npm root -g`; o prefixo privado as mantém no
+// Playwright do lock sem exigir escrita no npm global do sistema.
+const PREFIXO_NPM = path.join(RAIZ, 'node_modules', '.ci-local-prefix');
+const ROOT_GLOBAL_PRIVADO = path.join(PREFIXO_NPM, ...(process.platform === 'win32' ? ['node_modules'] : ['lib', 'node_modules']));
 process.chdir(RAIZ);
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'));
@@ -29,7 +34,12 @@ function erroNativoNavegador(texto) {
 }
 
 function ambienteFilho(base, chromeBin) {
-  return { ...base, CHROME_BIN: chromeBin };
+  return { ...base, CHROME_BIN: chromeBin, NPM_CONFIG_PREFIX: PREFIXO_NPM };
+}
+
+function mesmoArquivo(a, b) {
+  try { return realpathSync(a) === realpathSync(b); }
+  catch { return false; }
 }
 
 function executa(cmd, args, opcoes = {}) {
@@ -47,9 +57,13 @@ function captura(cmd, args) {
   });
 }
 
-function versaoLocal(nome) {
-  try { return JSON.parse(readFileSync(path.join('node_modules', nome, 'package.json'), 'utf8')).version; }
+function versaoPacote(caminho) {
+  try { return JSON.parse(readFileSync(path.join(caminho, 'package.json'), 'utf8')).version; }
   catch { return ''; }
+}
+
+function versaoLocal(nome) {
+  return versaoPacote(path.join('node_modules', nome));
 }
 
 const NPM_LS_ARGS = [
@@ -57,10 +71,34 @@ const NPM_LS_ARGS = [
   '--include=prod', '--include=dev', '--include=optional', '--include=peer',
 ];
 
-function falhasArvoreDependencias(r) {
+function inspecionarShimThree(raiz = RAIZ) {
+  try {
+    const modules = path.join(raiz, 'node_modules');
+    const shim = path.join(modules, 'three');
+    if (!lstatSync(shim).isSymbolicLink()) return '';
+    const stage = realpathSync(shim);
+    if (path.dirname(stage) !== realpathSync(modules) || !path.basename(stage).startsWith('.cs-three-node-')) return '';
+    if (!lstatSync(stage).isDirectory()) return '';
+    const meta = JSON.parse(readFileSync(path.join(stage, 'package.json'), 'utf8'));
+    if (meta.name !== 'three' || meta.version !== '0.160.0' || meta.type !== 'module' || meta.main !== 'index.js'
+      || meta.exports?.['.'] !== './index.js' || meta.exports?.['./addons/*'] !== './addons/*') return '';
+    const vendor = path.join(raiz, 'public', 'vendor');
+    if (realpathSync(path.join(stage, 'index.js')) !== realpathSync(path.join(vendor, 'three.module.js'))) return '';
+    if (realpathSync(path.join(stage, 'addons')) !== realpathSync(path.join(vendor, 'addons'))) return '';
+    return stage;
+  } catch { return ''; }
+}
+
+function artefatoThree(local, item, destinoShim) {
+  if (item.version !== '0.160.0' || !destinoShim) return false;
+  if (path.dirname(destinoShim) !== path.join(RAIZ, 'node_modules') || !path.basename(destinoShim).startsWith('.cs-three-node-')) return false;
+  return local === 'node_modules/three' || path.resolve(item.path) === destinoShim;
+}
+
+function falhasArvoreDependencias(r, destinoShim) {
   const falhas = [];
+  const extraneousPermitidos = new Set();
   if (r.error) falhas.push(`npm ls não executou: ${r.error.message}`);
-  if (r.status !== 0) falhas.push(`npm ls terminou com status ${r.status ?? 'desconhecido'}`);
 
   let arvore;
   try { arvore = JSON.parse(r.stdout || ''); }
@@ -75,14 +113,17 @@ function falhasArvoreDependencias(r) {
   }
   if (arvore.problems !== undefined && !Array.isArray(arvore.problems)) {
     falhas.push('npm ls produziu uma lista de problemas inválida');
-  } else {
-    for (const problema of arvore.problems || []) falhas.push(`npm: ${problema}`);
   }
   if (!arvore.dependencies || typeof arvore.dependencies !== 'object' || Array.isArray(arvore.dependencies)) {
     falhas.push('npm ls não produziu a árvore completa de dependências');
     return [...new Set(falhas)];
   }
+  if (r.status !== 0 && (!Array.isArray(arvore.problems) || arvore.problems.length === 0)) {
+    falhas.push(`npm ls terminou com status ${r.status ?? 'desconhecido'} sem diagnosticar o problema`);
+  }
 
+  let destinoThree = destinoShim || '';
+  if (destinoShim === undefined) destinoThree = inspecionarShimThree();
   function percorrer(dependencias) {
     for (const [nome, item] of Object.entries(dependencias)) {
       if (!item || typeof item !== 'object' || Array.isArray(item)) {
@@ -93,15 +134,20 @@ function falhasArvoreDependencias(r) {
       if (Object.keys(item).length === 0) continue;
       if (item.missing) falhas.push(`dependência ausente: ${nome}`);
       if (item.invalid) falhas.push(`dependência inválida: ${nome} (${item.invalid})`);
-      if (item.extraneous) falhas.push(`dependência não declarada (extraneous): ${nome}`);
       if (typeof item.version !== 'string' || !item.version || typeof item.path !== 'string' || !path.isAbsolute(item.path)) {
         if (!item.missing) falhas.push(`npm ls não informou versão e caminho válidos para ${nome}`);
+        if (item.extraneous) falhas.push(`dependência não declarada (extraneous): ${nome}`);
       } else {
         const local = path.relative(RAIZ, item.path).split(path.sep).join('/');
         const travado = lock.packages?.[local];
-        if (!travado) {
+        const opcionalTravado = travado?.optional === true && travado.version === item.version;
+        const runtimeThree = artefatoThree(local, item, destinoThree);
+        const extraneousAceito = item.extraneous && (opcionalTravado || runtimeThree);
+        if (item.extraneous && !extraneousAceito) falhas.push(`dependência não declarada (extraneous): ${nome}`);
+        if (extraneousAceito) extraneousPermitidos.add(item.path);
+        if (!travado && !extraneousAceito) {
           falhas.push(`${nome}@${item.version} instalado em ${local} não consta no package-lock`);
-        } else if (travado.version !== item.version) {
+        } else if (travado && travado.version !== item.version) {
           falhas.push(`${local}: instalado ${item.version}, package-lock exige ${travado.version || 'sem versão'}`);
         }
       }
@@ -115,6 +161,11 @@ function falhasArvoreDependencias(r) {
     }
   }
   percorrer(arvore.dependencies);
+  for (const problema of arvore.problems || []) {
+    const permitido = typeof problema === 'string' && problema.startsWith('extraneous:')
+      && [...extraneousPermitidos].some((caminho) => problema.endsWith(` ${caminho}`));
+    if (!permitido) falhas.push(`npm: ${problema}`);
+  }
   return [...new Set(falhas)];
 }
 
@@ -149,26 +200,34 @@ async function diagnosticar() {
   validarDependencias(problemas);
 
   const pwLocal = versaoLocal('playwright');
-
-  let chromium;
-  try {
-    const modulo = await import(pathToFileURL(path.join(RAIZ, 'node_modules', 'playwright', 'index.js')).href);
-    chromium = modulo.chromium || modulo.default?.chromium;
-  } catch { /* diagnosticado abaixo sem transformar import ausente em falha de teste */ }
-  const localOk = pwLocal === PW_CI && !!chromium;
+  const pwPrivado = versaoPacote(path.join(ROOT_GLOBAL_PRIVADO, 'playwright'));
+  const localOk = pwLocal === PW_CI;
   console.log(`  ${localOk ? '✓' : '✗'} Playwright local ${pwLocal || 'não encontrado'} (lock: ${PW_CI})`);
   if (!localOk) problemas.push(`Playwright local ${PW_CI} ausente; rode \`node scripts/ci-local.mjs --setup\``);
 
-  let chromeBin = process.env.CHROME_BIN || '';
+  let chromium;
+  try {
+    const modulo = await import(pathToFileURL(path.join(ROOT_GLOBAL_PRIVADO, 'playwright', 'index.js')).href);
+    chromium = modulo.chromium || modulo.default?.chromium;
+  } catch { /* diagnosticado abaixo sem transformar import ausente em falha de teste */ }
+  const privadoOk = pwPrivado === PW_CI && !!chromium;
+  console.log(`  ${privadoOk ? '✓' : '✗'} Playwright do prefixo privado ${pwPrivado || 'não encontrado'} (lock: ${PW_CI})`);
+  if (!privadoOk) problemas.push(`Playwright ${PW_CI} ausente do prefixo privado das réguas; rode \`node scripts/ci-local.mjs --setup\``);
+
+  let chromeBin = '';
   if (chromium) {
-    try { if (!chromeBin) chromeBin = chromium.executablePath(); }
+    try { chromeBin = chromium.executablePath(); }
     catch (e) { problemas.push(`Chromium não resolveu: ${e.message}`); }
   }
+  const chromeConfigurado = process.env.CHROME_BIN || '';
+  const chromeCoerente = !chromeConfigurado || (!!chromeBin && mesmoArquivo(chromeConfigurado, chromeBin));
+  console.log(`  ${chromeCoerente ? '✓' : '✗'} CHROME_BIN ${chromeConfigurado || chromeBin || 'não resolveu'}`);
+  if (!chromeCoerente) problemas.push(`CHROME_BIN não aponta para o Chromium do Playwright ${PW_CI}; remova a sobrescrita ou aponte para ${chromeBin}`);
   let chromeOk = false;
   if (chromeBin) {
     try { accessSync(chromeBin, constants.X_OK); chromeOk = true; } catch { /* reportado abaixo */ }
   }
-  console.log(`  ${chromeOk ? '✓' : '✗'} CHROME_BIN ${chromeBin || 'não resolveu'}`);
+  console.log(`  ${chromeOk ? '✓' : '✗'} Chromium ${chromeBin || 'não resolveu'}`);
   if (!chromeOk) problemas.push('Chromium ausente ou não executável; rode `node scripts/ci-local.mjs --setup`');
 
   let nativasOk = chromeOk;
@@ -212,36 +271,52 @@ async function preparar() {
   }
   let status = executa(process.execPath, ['scripts/setup.mjs']);
   if (status) return SAIDA_AMBIENTE;
+  status = executa('npm', [
+    'install', '--global', '--prefix', PREFIXO_NPM,
+    '--no-audit', '--no-fund', `playwright@${PW_CI}`,
+  ]);
+  if (status) return SAIDA_AMBIENTE;
   const cli = path.join(RAIZ, 'node_modules', 'playwright', 'cli.js');
   status = executa(process.execPath, [cli, 'install', 'chromium']);
   if (status) return SAIDA_AMBIENTE;
   return (await diagnosticar()).ok ? 0 : SAIDA_AMBIENTE;
 }
 
-async function prepararSistema(plataforma = process.platform) {
+async function prepararSistema(plataforma = process.platform, executar = executa, validar = validarRuntime) {
   if (plataforma !== 'linux') {
     console.error('[ambiente] --setup-system está disponível apenas no Linux; instale as dependências nativas exigidas pelo Chromium para este sistema');
     return SAIDA_AMBIENTE;
   }
   const runtime = [];
-  validarRuntime(runtime);
+  validar(runtime);
   if (runtime.length) {
     for (const p of runtime) console.error(`  - ${p}`);
     return SAIDA_AMBIENTE;
   }
   const cli = path.join(RAIZ, 'node_modules', 'playwright', 'cli.js');
-  return executa(process.execPath, [cli, 'install-deps', 'chromium']);
+  return executar(process.execPath, [cli, 'install-deps', 'chromium']) === 0 ? 0 : SAIDA_AMBIENTE;
 }
 
 async function selftest() {
   assert.equal(await prepararSistema('darwin'), SAIDA_AMBIENTE);
+  assert.equal(await prepararSistema('linux', () => 1, () => {}), SAIDA_AMBIENTE);
+  assert.equal(await prepararSistema('linux', () => 0, () => {}), 0);
   assert.deepEqual(bibliotecasAusentes('\tlibatk-1.0.so.0 => not found\nlibx.so => /lib/libx.so (0x1)\nlibatk-1.0.so.0 => not found'), ['libatk-1.0.so.0']);
   assert.equal(erroNativoNavegador('error while loading shared libraries: libnss3.so'), true);
   assert.equal(erroNativoNavegador('Expected button to be visible'), false);
   const env = ambienteFilho({ PATH: '/bin' }, '/opt/chrome');
   assert.equal(env.CHROME_BIN, '/opt/chrome');
+  assert.equal(env.NPM_CONFIG_PREFIX, PREFIXO_NPM);
   assert.equal('PREPUSH' in env, false);
   assert.equal(ambienteFilho({ PREPUSH: '1' }, '/opt/chrome').PREPUSH, '1');
+  assert.equal(mesmoArquivo(process.execPath, process.execPath), true);
+  assert.equal(mesmoArquivo(process.execPath, fileURLToPath(import.meta.url)), false);
+  assert.equal(mesmoArquivo(process.execPath, path.join(RAIZ, 'nao-existe')), false);
+  const rootPrivado = spawnSync('npm', ['root', '-g'], {
+    env: ambienteFilho(process.env, ''), encoding: 'utf8',
+  });
+  assert.equal(rootPrivado.status, 0, rootPrivado.stderr);
+  assert.equal(rootPrivado.stdout.trim(), ROOT_GLOBAL_PRIVADO);
   assert.equal(lock.packages['node_modules/playwright'].version, PW_CI);
   assert.equal(lock.packages['node_modules/playwright-core'].version, PW_CI);
   assert(NPM_LS_ARGS.includes('--all') && NPM_LS_ARGS.includes('--offline'));
@@ -265,11 +340,71 @@ async function selftest() {
   const transitivaDefasada = falhasArvoreDependencias({ status: 0, stdout: arvoreComPlaywright('0.0.0') });
   assert(transitivaDefasada.some((f) => f.includes('playwright-core') && f.includes(PW_CI)),
     'transitiva defasada deve falhar mesmo com Playwright igual ao lock');
+  const arvoreExtraneous = (entradas) => JSON.stringify({
+    dependencies: Object.fromEntries(entradas.map(([nome, local, versao]) => [nome, {
+      version: versao, path: path.join(RAIZ, local), extraneous: true,
+    }])),
+    problems: entradas.map(([nome, local, versao]) => `extraneous: ${nome}@${versao} ${path.join(RAIZ, local)}`),
+  });
+  const opcional = lock.packages['node_modules/@img/sharp-wasm32'];
+  assert.deepEqual(falhasArvoreDependencias({
+    status: 1,
+    stdout: arvoreExtraneous([['@img/sharp-wasm32', 'node_modules/@img/sharp-wasm32', opcional.version]]),
+  }), []);
+  const arvoreDesconhecida = falhasArvoreDependencias({
+    status: 1,
+    stdout: arvoreExtraneous([['pacote-soltinho', 'node_modules/pacote-soltinho', '1.0.0']]),
+  });
+  assert(arvoreDesconhecida.some((f) => f.includes('extraneous') || f.includes('não consta no package-lock')));
+  const stageThree = path.join(RAIZ, 'node_modules', '.cs-three-node-teste');
+  const shimThree = arvoreExtraneous([
+    ['three', 'node_modules/three', '0.160.0'],
+    ['.cs-three-node-teste', 'node_modules/.cs-three-node-teste', '0.160.0'],
+  ]);
+  assert.deepEqual(falhasArvoreDependencias({ status: 1, stdout: shimThree }, stageThree), []);
+  assert(falhasArvoreDependencias({ status: 1, stdout: shimThree }, '').length > 0);
+
+  const fixture = mkdtempSync(path.join(tmpdir(), 'cs-ci-local-shim-'));
+  try {
+    const stage = path.join(fixture, 'node_modules', '.cs-three-node-teste');
+    const shim = path.join(fixture, 'node_modules', 'three');
+    const vendor = path.join(fixture, 'public', 'vendor');
+    mkdirSync(stage, { recursive: true });
+    mkdirSync(path.join(vendor, 'addons'), { recursive: true });
+    writeFileSync(path.join(vendor, 'three.module.js'), 'export const Mesh = null;\n');
+    writeFileSync(path.join(vendor, 'addons', 'loader.js'), 'export {};\n');
+    writeFileSync(path.join(stage, 'package.json'), JSON.stringify({
+      name: 'three', version: '0.160.0', type: 'module', main: 'index.js',
+      exports: { '.': './index.js', './addons/*': './addons/*' },
+    }));
+    const ligaIndex = () => symlinkSync(path.join(vendor, 'three.module.js'), path.join(stage, 'index.js'));
+    const ligaAddons = () => symlinkSync(path.join(vendor, 'addons'), path.join(stage, 'addons'), 'dir');
+    ligaIndex();
+    ligaAddons();
+    symlinkSync(stage, shim, 'dir');
+    assert.equal(inspecionarShimThree(fixture), realpathSync(stage));
+
+    rmSync(path.join(stage, 'index.js'));
+    symlinkSync(path.join(stage, 'package.json'), path.join(stage, 'index.js'));
+    assert.equal(inspecionarShimThree(fixture), '');
+    rmSync(path.join(stage, 'index.js'));
+    ligaIndex();
+
+    rmSync(path.join(stage, 'addons'));
+    symlinkSync(path.join(stage, 'package.json'), path.join(stage, 'addons'), 'dir');
+    assert.equal(inspecionarShimThree(fixture), '');
+    rmSync(path.join(stage, 'addons'));
+    ligaAddons();
+
+    rmSync(shim);
+    mkdirSync(shim);
+    assert.equal(inspecionarShimThree(fixture), '');
+  } finally { rmSync(fixture, { recursive: true, force: true }); }
   const ausente = JSON.parse(arvoreComPlaywright(PW_CI));
   ausente.problems = ['missing: exemplo@1.0.0, required by dependente@1.0.0'];
   assert(falhasArvoreDependencias({ status: 1, stdout: JSON.stringify(ausente) }).some((f) => f.includes('missing:')));
   assert(falhasArvoreDependencias({ status: 0, stdout: '{json quebrado' }).some((f) => f.includes('JSON válido')));
-  console.log('CI-ENV selftest ok: parsing nativo, ambiente filho e árvore completa de dependências cobertos.');
+  console.log('CI-ENV selftest ok: ambiente privado, Chromium fixado, dependências e shim do Three cobertos.');
   for (const modo of ['--diagnose', '--selftest']) {
     const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), modo, 'check:fast'], { encoding: 'utf8' });
     assert.equal(r.status, 64, `${modo} com script extra deve ser rejeitado em vez de ignorar o script`);
