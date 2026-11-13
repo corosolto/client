@@ -36,7 +36,11 @@ if (mutante && !['bloco-longo', 'comentario-ingles', 'cauda-longa'].includes(mut
 }
 /* PR de staging diffam contra origin/staging; main dava falso positivo (comentário da
    staging visto como "novo"). Sem staging remoto o default segue main. */
-const base = arg('base') || 'origin/staging';
+const baseExplicita = arg('base');
+let base = baseExplicita;
+if (!base) {
+  base = resolverBase('origin/staging').ok ? 'origin/staging' : 'origin/main';
+}
 
 const TETO_LINHAS = 2;
 const ZONAS = /^(public\/js\/|src\/)/;
