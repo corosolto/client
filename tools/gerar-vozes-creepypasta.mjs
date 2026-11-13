@@ -222,7 +222,10 @@ if (dry) {
   console.log(`\n${itens.length} falas × 2 tomadas = ${itens.length * 2} clipes → ${OUT}/`);
   process.exit(0);
 }
-if (!EKEY || !FKEY) { console.error('Chaves ausentes (source /Users/ruben/game/.env).'); process.exit(1); }
+const precisaFish = itens.some((it) => Boolean(it.perfil.fish));
+const precisaEleven = itens.some((it) => !it.perfil.fish);
+if (precisaEleven && !EKEY) { console.error('ELEVENLABS_API_KEY ausente.'); process.exit(1); }
+if (precisaFish && !FKEY) { console.error('FISH_AUDIO_API_KEY ausente.'); process.exit(1); }
 
 let ok = 0, erro = 0, pulado = 0;
 const falhas = [];

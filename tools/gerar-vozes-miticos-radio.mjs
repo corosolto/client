@@ -15,7 +15,7 @@
 // Chaves: ELEVENLABS_API_KEY e FISH_AUDIO_API_KEY (set -a; source /Users/ruben/game/.env; set +a).
 // Saída: public/audio/ia/miticos-radio/<id>/<evento>-<slug>-t<N>-<voz>.mp3 (gitignorado).
 
-import { mkdir, writeFile, access, unlink } from 'node:fs/promises';
+import { mkdir, writeFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const OUT = 'public/audio/ia/miticos-radio';
@@ -190,7 +190,7 @@ for (const it of itens) {
       if (tent === 1) await new Promise((r) => setTimeout(r, 2000));
     }
   }
-  if (!buf) { erro++; falhas.push(`${it.id}/${nome}`); await unlink(destino).catch(() => {}); console.error(`✗ ${it.id}/${nome}: ${err.message}`); continue; }
+  if (!buf) { erro++; falhas.push(`${it.id}/${nome}`); console.error(`✗ ${it.id}/${nome}: ${err.message}`); continue; }
   if (buf.length < 1000) { erro++; falhas.push(`${it.id}/${nome}`); console.error(`✗ ${it.id}/${nome}: áudio suspeito (${buf.length} B)`); continue; }
   await writeFile(destino, buf);
   ok++;

@@ -94,11 +94,38 @@ limpa_trava() {
   fi
 }
 trap limpa_trava EXIT
+idade_processo() {
+  local pid="$1" decorrido dias=0 horas minutos segundos
+  decorrido=$(ps -p "$pid" -o etime= 2>/dev/null | tr -d ' ')
+  [ -n "$decorrido" ] || return 1
+  case "$decorrido" in
+    *-*) dias=${decorrido%%-*}; decorrido=${decorrido#*-} ;;
+  esac
+  IFS=: read -r horas minutos segundos <<< "$decorrido"
+  if [ -z "${segundos:-}" ]; then segundos=$minutos; minutos=$horas; horas=0; fi
+  [[ "$dias" =~ ^[0-9]+$ && "$horas" =~ ^[0-9]+$ && "$minutos" =~ ^[0-9]+$ && "$segundos" =~ ^[0-9]+$ ]] || return 1
+  printf '%s\n' $((10#$dias * 86400 + 10#$horas * 3600 + 10#$minutos * 60 + 10#$segundos))
+}
+
 
 while :; do
   if [ -d "$trava" ]; then
     dono=$(cat "$trava/pid" 2>/dev/null)
-    if [ -z "$dono" ] || ! kill -0 "$dono" 2>/dev/null; then rm -rf "$trava"; continue; fi
+    agora=$(date +%s)
+    criado_dono=$(stat -f %m "$trava" 2>/dev/null || stat -c %Y "$trava" 2>/dev/null)
+    obsoleto=0
+    if ! [[ "$dono" =~ ^[0-9]+$ && "$criado_dono" =~ ^[0-9]+$ ]]; then
+      obsoleto=1
+    elif ! kill -0 "$dono" 2>/dev/null; then
+      obsoleto=1
+    else
+      idade_lock=$((agora - criado_dono))
+      idade_dono=$(idade_processo "$dono" || true)
+      if [ "$idade_lock" -ge 7200 ] || { [ -n "$idade_dono" ] && [ $((idade_dono + 2)) -lt "$idade_lock" ]; }; then
+        obsoleto=1
+      fi
+    fi
+    if [ "$obsoleto" = 1 ]; then rm -rf "$trava"; continue; fi
   elif ln "$candidato" "$trava" 2>/dev/null; then
     minha=1
     rm -f "$candidato"
@@ -121,7 +148,7 @@ while :; do
     if [ "$obsoleto" = 1 ]; then rm -f "$trava"; continue; fi
   fi
   [ "$espera" -eq 0 ] && echo "pre-push: outro pre-push em andamento (pid ${dono:-?}); esperando a vez"
-  if [ "$espera" -ge 2400 ]; then echo "pre-push: 40 min de espera; seguindo sem a trava"; break; fi
+  if [ "$espera" -ge 2400 ]; then echo "pre-push: 40 min de espera; abortei sem executar portões concorrentes" >&2; exit 1; fi
   sleep 10
   espera=$((espera + 10))
 done
