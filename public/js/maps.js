@@ -1,5 +1,6 @@
 import { withVisibleShotOccluders } from './shot_surfaces.js';
 import { JAVAPORCOS_LOADING_WALL } from './javaporcos_apresentacao.js';
+import { carregarModuloComRetry } from './module-retry.js';
 
 /* Mapas sob demanda (lane glm/peso): registro com metadados leves; o módulo da
    arena só entra por carregaMapa. Régua eval:mapasobdemanda; fiação no PR. */
@@ -135,7 +136,10 @@ const MODULOS = {
   atacadao_treta: () => import('./map_atacadao.js'),
   parque_treta: () => import('./map_parque.js'),
   velho_oeste: () => import('./map_velho_oeste.js'),
-  invasao_javaporcos: () => import('./map_invasao_javaporcos.js'),
+  invasao_javaporcos: () => carregarModuloComRetry(
+    () => import('./map_invasao_javaporcos.js'),
+    () => import(`./map_invasao_javaporcos.js?retry=${Date.now()}`),
+  ),
   distrito_rural: () => import('./map_javaporcos_rural.js'),
   vila_da_mata: () => import('./map_javaporcos_vila.js'),
   operacao_flavio: () => import('./map_operacao_flavio.js'),
@@ -188,6 +192,9 @@ export function carregaMapa(id) {
     if (nomes.preload) entrada.preload = m[nomes.preload];
     if (nomes.propsGetter) Object.defineProperty(entrada, 'props', { get: () => m[nomes.propsGetter](), configurable: true });
     return m;
+  }).catch((error) => {
+    if (_carregados.get(alvo) === promessa) _carregados.delete(alvo);
+    throw error;
   });
   _carregados.set(alvo, promessa);
   return promessa;
