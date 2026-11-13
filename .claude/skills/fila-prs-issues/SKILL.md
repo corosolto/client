@@ -118,10 +118,11 @@ git worktree list
 git fetch "$BASE_REMOTE"
 git fetch "$HEAD_REMOTE" BRANCH
 if git log --format='%H %s%n%b' "$BASE_REMOTE/$BASE_BRANCH..$REVIEWED_HEAD" \
-  | grep -Eiq '(^|[^[:alnum:]_])(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]+(([^[:space:]]+/[^[:space:]]*)?#[0-9]+|https://github\.com/[^/]+/[^/]+/issues/[0-9]+)'; then
+  | grep -Eiq '(^|[^[:alnum:]_])(close[sd]?|fix(e[sd])?|resolve[sd]?):?[[:space:]]+(([^[:space:]]+/[^[:space:]]*)?#[0-9]+|https://github\.com/[^/]+/[^/]+/issues/[0-9]+)'; then
   echo "commit fecha issue automaticamente; neutralize o histórico antes do merge" >&2
   exit 1
 fi
+```
 
 Se já existir worktree limpa para a branch, reutilize-a somente quando seu `HEAD` for o
 `REVIEWED_HEAD` capturado. Caso contrário, crie uma por PR, com o repositório no namespace:
