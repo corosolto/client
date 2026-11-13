@@ -76,6 +76,14 @@ não prova de correção nem autorização para fechar a issue antes do merge e 
 aponta para a branch padrão, troque `Fixes`/`Closes` por `Refs` antes do merge ou retargete para a
 branch de integração; o fechamento automático não pode anteceder a verificação.
 
+Antes de montar a lane, capture o head que será conferido e assuma `origin` como remote do head
+somente para PR do próprio repositório:
+
+```bash
+REVIEWED_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)
+HEAD_REMOTE=origin
+```
+
 ## 3. Isole cada lane sem tocar o checkout de ninguém
 
 Antes de criar a lane:
@@ -109,9 +117,10 @@ if git remote get-url OWNER >/dev/null 2>&1; then
 else
   git remote add OWNER "$EXPECTED_URL"
 fi
-git fetch OWNER BRANCH
-git worktree add --track -b BRANCH /tmp/corosolto-REPO-pr-NUMERO OWNER/BRANCH
-git push OWNER BRANCH
+HEAD_REMOTE=OWNER
+git fetch "$HEAD_REMOTE" BRANCH
+git worktree add --track -b BRANCH /tmp/corosolto-REPO-pr-NUMERO "$HEAD_REMOTE"/BRANCH
+git push "$HEAD_REMOTE" BRANCH
 ```
 
 Não crie uma branch substituta que desconecte a correção do PR. Se o checkout principal estiver
@@ -119,12 +128,12 @@ sujo, deixe-o como está; a worktree nova é a resposta, não `clean`, `reset` o
 
 ## 4. Prenda review e threads ao head atual
 
-Capture e preserve o SHA antes de ler ou pedir review:
+Confirme os metadados sem substituir o SHA preservado:
 
 ```bash
-REVIEWED_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)
 gh pr view NUMERO -R corosolto/REPO \
   --json headRefOid,headRefName,baseRefName,isDraft,labels,reviews
+test "$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)" = "$REVIEWED_HEAD"
 ```
 
 Siga `estragacodigo-loop` para ler separadamente reviews, review comments e threads GraphQL com
@@ -203,7 +212,7 @@ git fetch origin BASE_CORRETA
 git merge --no-ff --no-commit origin/BASE_CORRETA
 # Resolva conflitos, se houver, e rode os checks focados antes de commitar.
 git commit -s -m "merge: atualiza BASE_CORRETA na lane" -m "Agent: NOME_DO_AGENTE"
-git push origin BRANCH_ORIGINAL
+git push "$HEAD_REMOTE" BRANCH_ORIGINAL
 ```
 
 ## 8. Mergeie um a um e revalide o próximo
