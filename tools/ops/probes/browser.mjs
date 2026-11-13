@@ -26,9 +26,15 @@ import { execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { stripThirdPartyBootNoise } from '../../eval/boot-network-origin.mjs';
 
 const CHROME_MAC = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const THIRD_PARTY_BOOT_NOISE = /<script\b[^>]*>(?:[\s\S]*?(?:static\.ads-twitter\.com\/uwt\.js|X_PIXEL_ID)[\s\S]*?)<\/script>\s*/gi;
+
+function stripThirdPartyBootNoise(body) {
+  let stripped = 0;
+  const output = String(body).replace(THIRD_PARTY_BOOT_NOISE, () => { stripped++; return ''; });
+  return { body: output, stripped };
+}
 
 /* GPU ou SwiftShader? Medido em 06/09/2026 contra a produção, no Mac do dono: SwiftShader
    dá main_ready 21 s e FPS p50 3 (mede o renderizador por software); com GPU, 2,5 s e 108.
