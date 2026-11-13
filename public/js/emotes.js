@@ -4,8 +4,8 @@
 /* Vocabulário dos eixos: 'r' = direita do corpo, 'u' = cima, 'f' = frente.
    O controlador resolve esses três no mundo e converte pro quadro do pai do osso. */
 
-import { EMOTES, EMOTE_IDS, emoteInfo } from './data/emote-catalog.js';
-export { EMOTES, EMOTE_IDS, emoteInfo };
+import { EMOTES, EMOTE_IDS, V9_EMOTE_IDS, emoteInfo } from './data/emote-catalog.js';
+export { EMOTES, EMOTE_IDS, V9_EMOTE_IDS, emoteInfo };
 
 const TAU = Math.PI * 2;
 const sin = (fase) => Math.sin(fase * TAU);
@@ -207,4 +207,12 @@ export const emoteClipe = (id) => {
   const info = emoteInfo(id);
   return info && info.clipe ? info : null;
 };
+/* Descriptor único para os dois call sites de produção. Congelado para impedir que lobby
+   e partida montem subconjuntos divergentes (especialmente sem `clipe`). */
+export const EMOTE_DRIVER = Object.freeze({
+  pose: poseEmote,
+  duracao: emoteDuracao,
+  laco: emoteLaco,
+  clipe: emoteClipe,
+});
 export { emoteDesbloqueio } from './data/emote-catalog.js';

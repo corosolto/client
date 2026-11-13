@@ -1319,7 +1319,7 @@ let emotesMod = null, emotesMontados = false;
 async function carregaEmotes() {
   if (emotesMod) return emotesMod;
   const m = await import('./emotes.js');
-  setEmoteDriver({ pose: m.poseEmote, duracao: m.emoteDuracao, laco: m.emoteLaco, clipe: m.emoteClipe });
+  setEmoteDriver(m.EMOTE_DRIVER);
   emotesMod = m;
   return m;
 }
