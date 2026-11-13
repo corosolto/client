@@ -138,6 +138,28 @@ test('a dead install lock and its partial reservation are reclaimed safely', t =
   assert.equal(existsSync(staging), false);
 });
 
+test('an empty target left before reservation creation is reclaimed', t => {
+  const fixture = makePack(t);
+  const target = path.join(fixture.installRoot, 'map/contract-fixture/0.1.0');
+  mkdirSync(target, { recursive: true });
+  const result = run(['install', fixture.manifest, '--install-root', fixture.installRoot, '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).status, 'installed');
+  assert.equal(existsSync(path.join(target, 'manifest.json')), true);
+});
+
+test('an old lock with a live owner is never reclaimed', t => {
+  const fixture = makePack(t);
+  const manifestSha256 = createHash('sha256').update(readFileSync(fixture.manifest)).digest('hex');
+  const idDirectory = path.join(fixture.installRoot, 'map/contract-fixture');
+  const lock = path.join(idDirectory, '.0.1.0.install.lock');
+  mkdirSync(idDirectory, { recursive: true });
+  writeFileSync(lock, `${process.pid}\n2000-01-01T00:00:00.000Z\n${manifestSha256}\n`);
+  const result = run(['install', fixture.manifest, '--install-root', fixture.installRoot]);
+  expectFailure(result, 'E_INSTALL_BUSY');
+  assert.equal(existsSync(lock), true);
+});
+
 test('a bad payload hash is rejected without creating an install', t => {
   const fixture = makePack(t);
   appendFileSync(path.join(fixture.pack, 'geometry/alley.fixture'), 'tampered\n');

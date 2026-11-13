@@ -404,7 +404,7 @@ async function reclaimStaleLock(lockPath, idDirectory, idIdentity) {
     if (!Number.isSafeInteger(pid) || pid <= 0 || !Number.isFinite(created)) return false;
     let alive = true;
     try { process.kill(pid, 0); } catch (error) { alive = error.code !== 'ESRCH'; }
-    if (alive && Date.now() - created < 2 * 60 * 60 * 1000) return false;
+    if (alive) return false;
   } finally {
     if (handle) await handle.close().catch(() => {});
   }
@@ -477,29 +477,48 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
       }
       const targetIdentity = await captureDirectoryIdentity(target, 'Install target');
       const markerExists = await lstat(reservationPath).catch(error => error.code === 'ENOENT' ? null : (() => { throw error; })());
-      if (markerExists) {
-        let reservation;
-        try { ({ manifest: reservation } = await readManifest(reservationPath)); } catch (error) {
-          fail('E_IMMUTABLE', `Install reservation is invalid: ${relativeTarget}`, { cause: error });
-        }
-        if (reservation?.manifestSha256 !== source.manifestSha256 || reservation?.version !== source.version) {
-          fail('E_IMMUTABLE', `Install reservation belongs to a different release: ${relativeTarget}`);
-        }
+      const publishedManifest = await lstat(path.join(target, 'manifest.json')).catch(error => error.code === 'ENOENT' ? null : (() => { throw error; })());
+      const targetEntries = await readdir(target);
+      let recoveredInterrupted = false;
+      if (!markerExists && !publishedManifest && targetEntries.length === 0) {
         await assertParents();
         await assertDirectoryIdentity(target, targetIdentity, 'Install target');
-        const publishedManifest = await lstat(path.join(target, 'manifest.json')).catch(error => error.code === 'ENOENT' ? null : (() => { throw error; })());
-        if (publishedManifest) {
-          await rm(reservationPath, { force: true });
-        } else {
-          await rm(target, { recursive: true, force: true });
-          targetExists = null;
+        await rm(target, { recursive: true, force: true });
+        targetExists = null;
+        recoveredInterrupted = true;
+      } else if (markerExists) {
+        let reservation;
+        try { ({ manifest: reservation } = await readManifest(reservationPath)); } catch (error) {
+          if (!publishedManifest && targetEntries.length === 1 && targetEntries[0] === '.installing.json') {
+            await assertParents();
+            await assertDirectoryIdentity(target, targetIdentity, 'Install target');
+            await rm(target, { recursive: true, force: true });
+            targetExists = null;
+            recoveredInterrupted = true;
+          } else {
+            fail('E_IMMUTABLE', `Install reservation is invalid: ${relativeTarget}`, { cause: error });
+          }
         }
-        if (await lstat(staging).catch(error => error.code === 'ENOENT' ? null : (() => { throw error; })())) {
+        if (targetExists) {
+          if (reservation?.manifestSha256 !== source.manifestSha256 || reservation?.version !== source.version) {
+            fail('E_IMMUTABLE', `Install reservation belongs to a different release: ${relativeTarget}`);
+          }
           await assertParents();
-          const staleStagingIdentity = await captureDirectoryIdentity(staging, 'Stale staging directory');
-          await assertDirectoryIdentity(staging, staleStagingIdentity, 'Stale staging directory');
-          await rm(staging, { recursive: true, force: true });
+          await assertDirectoryIdentity(target, targetIdentity, 'Install target');
+          if (publishedManifest) {
+            await rm(reservationPath, { force: true });
+          } else {
+            await rm(target, { recursive: true, force: true });
+            targetExists = null;
+          }
+          recoveredInterrupted = true;
         }
+      }
+      if (recoveredInterrupted && await lstat(staging).catch(error => error.code === 'ENOENT' ? null : (() => { throw error; })())) {
+        await assertParents();
+        const staleStagingIdentity = await captureDirectoryIdentity(staging, 'Stale staging directory');
+        await assertDirectoryIdentity(staging, staleStagingIdentity, 'Stale staging directory');
+        await rm(staging, { recursive: true, force: true });
       }
       if (targetExists) {
         let installed;
