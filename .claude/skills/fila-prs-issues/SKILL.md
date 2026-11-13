@@ -81,8 +81,14 @@ Antes de montar a lane, capture o head que será conferido e configure remotes s
 e para o head. O remote da base precisa apontar explicitamente para o repositório do PR:
 
 ```bash
-REVIEWED_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)
-BASE_BRANCH=$(gh pr view NUMERO -R corosolto/REPO --json baseRefName --jq .baseRefName)
+REVIEWED_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid) \
+  || { echo "não foi possível ler o head do PR" >&2; exit 1; }
+BASE_BRANCH=$(gh pr view NUMERO -R corosolto/REPO --json baseRefName --jq .baseRefName) \
+  || { echo "não foi possível ler a base do PR" >&2; exit 1; }
+PR_BODY=$(gh pr view NUMERO -R corosolto/REPO --json body --jq .body) \
+  || { echo "não foi possível ler o corpo do PR" >&2; exit 1; }
+DEFAULT_BRANCH=$(gh repo view corosolto/REPO --json defaultBranchRef --jq .defaultBranchRef.name) \
+  || { echo "não foi possível ler a branch padrão" >&2; exit 1; }
 EXPECTED_BASE_URL=https://github.com/corosolto/REPO.git
 BASE_REMOTE=corosolto-base
 if git remote get-url "$BASE_REMOTE" >/dev/null 2>&1; then
@@ -123,7 +129,12 @@ if ! PR_MESSAGES=$(git log --format='%H %s%n%b' "$BASE_REMOTE/$BASE_BRANCH..$REV
   echo "não foi possível ler o histórico do PR" >&2
   exit 1
 fi
-if grep -Eiq '(^|[^[:alnum:]_])(close[sd]?|fix(e[sd])?|resolve[sd]?):?[[:space:]]+(([^[:space:]]+/[^[:space:]]*)?#[0-9]+|https://github\.com/[^/]+/[^/]+/issues/[0-9]+)' <<<"$PR_MESSAGES"; then
+CLOSING_RE='(^|[^[:alnum:]_])(close[sd]?|fix(e[sd])?|resolve[sd]?):?[[:space:]]+(([^[:space:]]+/[^[:space:]]*)?#[0-9]+|https://github\.com/[^/]+/[^/]+/issues/[0-9]+)'
+if [ "$BASE_BRANCH" = "$DEFAULT_BRANCH" ] && grep -Eiq "$CLOSING_RE" <<<"$PR_BODY"; then
+  echo "corpo do PR fecha issue automaticamente; troque o vínculo por Refs" >&2
+  exit 1
+fi
+if grep -Eiq "$CLOSING_RE" <<<"$PR_MESSAGES"; then
   echo "commit fecha issue automaticamente; neutralize o histórico antes do merge" >&2
   exit 1
 fi
