@@ -171,11 +171,11 @@ const TERRA = [.16, .118, .09];
 // Barrado de tinta gasta por casa: anil, verde-água e ocre desbotados (linear). Nada verde-escuro (escondia perna).
 const BARRADOS = [[.17, .26, .40], [.28, .42, .35], [.50, .36, .12]];
 const LUMA = 'vec3(0.3, 0.59, 0.11)';
-function acabamentoParede(scene, { albedo = .7, barrado = true, sujeira = .8, dessat = .4, fino = .9 } = {}) {
+function acabamentoParede(scene, { albedo = .7, barrado = true, sujeira = .8, dessat = .4, fino = .9, perto = 2.2, grao2 = .8, realce = 1.1, ceu = .42, sol = .15 } = {}) {
   const casas = []; scene.traverse((o) => { if (/^sertao-(casa-[a-z]+|praca-casa-interior)-\d+$/.test(o.name)) { const p = o.getWorldPosition(new THREE.Vector3()); casas.push(new THREE.Vector4(p.x, p.z, 56, casas.length % 3)); } });
   const matriz = scene.getObjectByName('sertao-igrejinha-0'); if (matriz) casas.push(new THREE.Vector4(matriz.position.x, matriz.position.z, 30, 0));
   const n = barrado ? casas.length : 0, cor = (c) => `vec3(${c.map((v) => v.toFixed(3)).join(', ')})`;
-  return { chave: `parede14-${albedo}-${n}-${sujeira}-${dessat}-${fino}`,
+  return { chave: `parede17-${albedo}-${n}-${sujeira}-${dessat}-${fino}-${perto}-${grao2}-${realce}-${ceu}-${sol}`,
     uniforms: { hdDet: { value: pbrTex('hd_sertao/white_rough_plaster_cor') }, ...(n ? { hdCasas: { value: casas } } : {}) },
     vertCabeca: `varying vec4 vHdBarra;${n ? `uniform vec4 hdCasas[${n}];` : ''}`,
     vert: `vHdBarra = vec4(0.0);${n ? `{ float hdPerto = 1e9; for (int i = 0; i < ${n}; i++) { vec2 hdDc = hdMundo.xz - hdCasas[i].xy; float hdD2c = dot(hdDc, hdDc);
@@ -184,33 +184,47 @@ function acabamentoParede(scene, { albedo = .7, barrado = true, sujeira = .8, de
     // Faixa do corpo (0,6 a 1,9 m): detalhe e mancha contidos; o grosso da sujeira fica acima de 2,1 m e abaixo de 0,5 m.
     antes: `float hdD1 = 1.0, hdD2 = 1.0, hdD3 = 1.0;
     { float hdYa = vHdPos.y; vec2 hdQa = vec2(vHdPos.x + vHdPos.z, hdYa);
-      float hdCa = smoothstep(0.5, 0.62, hdYa) * (1.0 - smoothstep(1.95, 2.12, hdYa));
+      float hdCa = smoothstep(0.5, 0.62, hdYa) * (1.0 - smoothstep(1.95, 2.12, hdYa)), hdTorso = 0.85 * smoothstep(0.4, 0.6, hdYa) * (1.0 - 0.6 * smoothstep(2.2, 2.9, hdYa));
       #ifdef USE_NORMALMAP
         hdD1 = dot(texture2D(hdDet, vNormalMapUv).rgb, ${LUMA}) / 0.61;
+        hdD1 = mix(hdD1, hdD1 / clamp(dot(texture2D(hdDet, vNormalMapUv, 3.0).rgb, ${LUMA}) / 0.61, 0.5, 1.6), hdTorso);
         hdD3 = mix(1.0, dot(texture2D(hdDet, vNormalMapUv * 3.1 + 0.23).rgb, ${LUMA}) / 0.61, smoothstep(4.0, 1.5, length(fwidth(vNormalMapUv)) * 3174.0));
       #endif
       hdD2 = dot(texture2D(hdDet, hdQa / 4.7 + 0.37).rgb, ${LUMA}) / 0.61;
+      #ifdef USE_MAP
+        diffuseColor.rgb *= mix(1.0, clamp(dot(texture2D(map, vMapUv, 7.0).rgb, ${LUMA}) / max(dot(texture2D(map, vMapUv, 3.0).rgb, ${LUMA}), 0.02), 0.6, 1.6), hdTorso);
+      #endif
       diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dot(diffuseColor.rgb, ${LUMA})), ${dessat.toFixed(3)}) * vec3(1.0, 0.995, 0.98);
-      diffuseColor.rgb *= ${albedo.toFixed(3)} * mix(1.0, clamp(hdD1, 0.5, 1.25), mix(0.95, 0.85, hdCa)) * mix(1.0, clamp(hdD2, 0.45, 1.25), mix(0.42, 0.07, hdCa)) * mix(1.0, clamp(hdD3, 0.6, 1.15), ${(0.5 * fino).toFixed(3)});
+      diffuseColor.rgb *= ${albedo.toFixed(3)} * min(${realce.toFixed(3)}, mix(1.0, clamp(hdD1, 0.5, 1.25), mix(0.95, 0.85, hdCa)) * mix(1.0, clamp(hdD3, 0.6, 1.15), ${(0.5 * fino).toFixed(3)})) * mix(1.0, clamp(hdD2, 0.45, 1.25), mix(0.42, 0.07, hdCa));
       if (vHdBarra.a > 0.5) { float hdTopo = 0.9 + (hdN(vec2(hdQa.x * 0.8, 3.0)) - 0.5) * 0.06;
         float hdGasto = smoothstep(0.42, 0.72, hdN(hdQa * vec2(1.7, 2.9) + 11.0) * 0.55 + hdN(hdQa * 7.0 + 5.0) * 0.25 + (1.0 - clamp(hdD1, 0.0, 1.0)) * 0.9);
         float hdTinta = (1.0 - smoothstep(hdTopo - 0.01, hdTopo + 0.01, hdYa)) * mix(0.8, 0.2, hdGasto);
-        diffuseColor.rgb = mix(diffuseColor.rgb, vHdBarra.rgb * (dot(diffuseColor.rgb, ${LUMA}) * 0.84 / dot(vHdBarra.rgb, ${LUMA})), hdTinta); } }`,
+        diffuseColor.rgb = mix(diffuseColor.rgb, vHdBarra.rgb * (dot(diffuseColor.rgb, ${LUMA}) * 0.93 / dot(vHdBarra.rgb, ${LUMA})), hdTinta); } }`,
     depois: `{ float hdYb = vHdPos.y; vec2 hdQb = vec2(vHdPos.x + vHdPos.z, hdYb);
-      float hdAlto = smoothstep(2.1, 2.7, hdYb), hdBaixo = 1.0 - smoothstep(0.15, 0.5, hdYb);
+      float hdAlto = smoothstep(2.5, 3.2, hdYb), hdBaixo = 1.0 - smoothstep(0.15, 0.5, hdYb);
+      float hdEsc0 = smoothstep(0.66, 0.86, hdN(vec2(hdQb.x * 1.05 + hdN(hdQb * 0.31) * 2.3, hdYb * 0.2))) * smoothstep(1.9, 3.1, hdYb);
+      diffuseColor.rgb *= (1.0 - 0.27 * hdEsc0 * hdAlto) / (1.0 - 0.27 * hdEsc0);
       float hdFio = hdN(vec2(hdQb.x * 2.6, hdYb * 0.3)) * 0.55 + hdN(vec2(hdQb.x * 9.0, hdYb * 0.7 + 4.0)) * 0.45;
       float hdEscB = smoothstep(0.4, 0.72, hdFio + (1.0 - hdD2) * 0.5) * hdAlto;
       diffuseColor.rgb *= mix(vec3(1.0), vec3(0.66, 0.58, 0.5), min(1.0, hdEscB * ${(0.8 * sujeira).toFixed(3)}));
       float hdResp = hdBaixo * smoothstep(0.35, 0.7, hdN(hdQb * vec2(5.0, 8.0)) * 0.55 + hdN(hdQb * 19.0) * 0.45 + hdBaixo * 0.3);
       diffuseColor.rgb = mix(diffuseColor.rgb, ${cor(TERRA)} * (dot(diffuseColor.rgb, ${LUMA}) * 0.8 / ${(TERRA[0] * .3 + TERRA[1] * .59 + TERRA[2] * .11).toFixed(4)}), min(1.0, hdResp * ${(0.6 * sujeira).toFixed(3)})); }`,
     // Relevo fino do reboco (grão de ~1 cm) pela derivada de tela; some de longe para não cintilar.
-    normal: `{ normal = normalize(mix(nonPerturbedNormal, normal, mix(0.88, 1.0, smoothstep(12.0, 4.0, length(fwidth(vNormalMapUv)) * 1024.0))));
+    normal: `{ float hdFw = length(fwidth(vNormalMapUv)), hdP1 = smoothstep(1.0, 0.5, hdFw * 55.0), hdP2 = smoothstep(1.0, 0.5, hdFw * 170.0), hdSolN = 1.0;
+      #if NUM_DIR_LIGHTS > 0
+        hdSolN = 1.0 - ${sol.toFixed(3)} * smoothstep(0.3, 0.7, dot(nonPerturbedNormal, directionalLights[0].direction));
+      #endif
+      #ifdef USE_NORMALMAP_TANGENTSPACE
+        vec3 hdM2 = texture2D(normalMap, vNormalMapUv * 3.1 + 0.23).xyz * 2.0 - 1.0;
+        normal = normalize(tbn * vec3(mapN.xy * (mix(0.88, 1.0, smoothstep(12.0, 4.0, hdFw * 1024.0)) * mix(1.0, ${perto.toFixed(3)}, hdP1) * hdSolN) + hdM2.xy * normalScale * (${grao2.toFixed(3)} * hdP2 * hdSolN), mapN.z));
+        diffuseColor.rgb *= 1.0 + ${ceu.toFixed(3)} * hdSolN * mix(0.3, 1.0, hdP1) * clamp(mapN.y * mix(1.0, ${perto.toFixed(3)}, hdP1) + hdM2.y * normalScale.y * ${grao2.toFixed(3)} * hdP2, -3.0, 0.9) / 3.0;
+      #endif
       float hdAltP = (hdD3 - 1.0) * ${(0.017 * fino).toFixed(4)} * smoothstep(26.0, 9.0, length(vViewPosition));
       vec3 hdSx = dFdx(-vViewPosition), hdSy = dFdy(-vViewPosition), hdR1 = cross(hdSy, normal), hdR2 = cross(normal, hdSx); float hdDt = dot(hdSx, hdR1);
       normal = normalize(abs(hdDt) * normal - sign(hdDt) * (dFdx(hdAltP) * hdR1 + dFdy(hdAltP) * hdR2));
       // Face quase de costas para o sol: o relevo não pode acender ponto que a parede lisa não acenderia.
       #if NUM_DIR_LIGHTS > 0
-        { vec3 hdLd = directionalLights[0].direction; float hdLim = max(dot(nonPerturbedNormal, hdLd), 0.0) * 3.0 + 0.02, hdPl = dot(normal, hdLd);
+        { vec3 hdLd = directionalLights[0].direction; float hdLim = max(dot(nonPerturbedNormal, hdLd), 0.0) * ${realce.toFixed(3)} + 0.02, hdPl = dot(normal, hdLd);
           if (hdPl > hdLim) normal = normalize(normal - hdLd * (hdPl - hdLim)); }
       #endif
     }` };
@@ -626,7 +640,12 @@ function chaoHD(scene, { cor = [.6, .535, .6], sulcos = true, rachado = true, co
         s = max(s, hdRoda(p.y + 1.6 - 2.4 * sin(p.x * 0.05 + 1.0) - 0.07 * p.x + w, HD_E(p.x, 13.5)));
         s = max(s, hdRoda(p.y + 33.0 - 1.5 * sin(p.x * 0.05 + 2.0) + w, HD_E(p.x, 19.5)));
         s = max(s, hdRoda(length(p - vec2(0.6, 1.0)) - 9.2 + w, smoothstep(0.3, 0.6, hdN(p0 * 0.09 + 5.0))));
-        return s * smoothstep(64.0, 52.0, abs(p0.x)) * smoothstep(110.0, 80.0, abs(p0.y)); }`)
+        return s * smoothstep(64.0, 52.0, abs(p0.x)) * smoothstep(110.0, 80.0, abs(p0.y)); }
+      // Trilha de pisoteio: terra batida e clara das portas até o largo.
+      float hdSeg(vec2 p, vec2 a, vec2 b){ vec2 pa = p - a, ba = b - a; return length(pa - ba * clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0)); }
+      float hdTrilha(vec2 p0){ vec2 p = p0 + (vec2(hdN(p0 * 0.31 + 3.0), hdN(p0 * 0.31 + 19.0)) - 0.5) * 1.6;
+        float d = min(min(hdSeg(p, vec2(-11.5, 10.6), vec2(-2.5, 4.0)), hdSeg(p, vec2(11.5, 10.6), vec2(2.5, 4.0))), min(hdSeg(p, vec2(0.0, -11.2), vec2(0.0, -2.5)), min(hdSeg(p, vec2(-12.6, -7.2), vec2(-3.0, 0.5)), hdSeg(p, vec2(12.4, 7.0), vec2(3.0, 3.0)))));
+        return (1.0 - smoothstep(0.28, 0.95, d)) * (0.6 + 0.4 * hdN(p0 * 1.7)); }`)
       .replace('#include <color_fragment>', `float hdAlt = 0.0;
       { vec2 hdP = vHdPos.xz; float hdL = length(vViewPosition), hdPx = fwidth(hdP.x) + fwidth(hdP.y);
         float hdLum = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)), hdRef = dot(diffuse * vec3(0.32666, 0.17893, 0.0758), vec3(0.3, 0.59, 0.11));
@@ -637,14 +656,17 @@ function chaoHD(scene, { cor = [.6, .535, .6], sulcos = true, rachado = true, co
         // Pedrisco e torrão: mesma UV do relevo, para o albedo casar com a normal.
         #ifdef USE_NORMALMAP
           float hdT1 = dot(texture2D(hdSolo, vNormalMapUv).rgb, vec3(0.3, 0.59, 0.11)) / 0.0793;
-          diffuseColor.rgb *= mix(1.0, clamp(hdT1, 0.4, 1.8), ${detalhe.toFixed(3)} * mix(0.45, 1.0, smoothstep(0.09, 0.025, hdPx)));
+          float hdPertoC = smoothstep(0.03, 0.012, hdPx);
+          diffuseColor.rgb *= mix(1.0, clamp(hdT1, 0.4, 1.8), ${detalhe.toFixed(3)} * mix(0.45, 1.0, smoothstep(0.09, 0.025, hdPx)) * (1.0 + 0.7 * hdPertoC)) * (1.0 + 0.3 * smoothstep(1.2, 1.7, hdT1) * hdPertoC);
           float hdF3 = smoothstep(0.05, 0.012, hdPx), hdT3 = dot(texture2D(hdSolo, vNormalMapUv * 3.0 + 0.37).rgb, vec3(0.3, 0.59, 0.11)) / 0.0793;
           diffuseColor.rgb *= mix(1.0, clamp(hdT3, 0.5, 1.6), ${fino.toFixed(3)} * hdF3); hdAlt += (clamp(hdT3, 0.4, 1.7) - 1.0) * 0.007 * hdF3;
         #endif
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11))), ${dessat.toFixed(3)});
         ${sulcos ? `if (hdPx < 0.9) { vec2 hdS = hdSulcos(hdP) * smoothstep(0.9, 0.2, hdPx);
-          diffuseColor.rgb *= (1.0 - 0.46 * hdS.x) * (1.0 + 0.26 * (hdS.y - hdS.x));
-          hdAlt += -0.035 * hdS.x + 0.012 * (hdS.y - hdS.x); }` : ''}
+          diffuseColor.rgb *= (1.0 - 0.5 * hdS.x) * (1.0 + 0.3 * (hdS.y - hdS.x));
+          hdAlt += -0.045 * hdS.x + 0.016 * (hdS.y - hdS.x);
+          float hdTr = hdTrilha(hdP) * smoothstep(0.9, 0.2, hdPx) * (1.0 - hdS.x);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11))) * vec3(1.2, 1.1, 0.96), 0.55 * hdTr); hdAlt -= 0.012 * hdTr; }` : ''}
         ${rachado ? `if (hdPx < 0.4) { float hdV = hdVor(hdP * 1.25 + 3.0);
           float hdR = (1.0 - smoothstep(0.012, 0.04 + hdPx * 1.25, hdV)) * smoothstep(0.25, 0.5, hdMac) * smoothstep(0.4, 0.1, hdPx);
           diffuseColor.rgb *= 1.0 - 0.42 * hdR; hdAlt -= 0.01 * hdR; }` : ''}
@@ -657,7 +679,7 @@ function chaoHD(scene, { cor = [.6, .535, .6], sulcos = true, rachado = true, co
         float hdDet = dot(hdSx, hdR1);
         normal = normalize(abs(hdDet) * normal - sign(hdDet) * (dFdx(hdAlt) * hdR1 + dFdy(hdAlt) * hdR2) * 1.6); }`);
   };
-  m.customProgramCacheKey = () => `sertao-hd-chao7-${sulcos}-${rachado}-${contraste}-${detalhe}-${dessat}-${fino}-${antes.key ? antes.key.call(m) : ''}`;
+  m.customProgramCacheKey = () => `sertao-hd-chao8-${sulcos}-${rachado}-${contraste}-${detalhe}-${dessat}-${fino}-${antes.key ? antes.key.call(m) : ''}`;
   m.needsUpdate = true;
   return () => { m.color.copy(antes.cor); m.onBeforeCompile = antes.obc; m.customProgramCacheKey = antes.key; m.needsUpdate = true; };
 }
@@ -681,7 +703,7 @@ export function ceuTardeHD(scene, sol, { zenite = 0x7a6c70, horizonte = null, ho
         float lado = pow(max(dot(az, azSol), 0.0), 2.5);
         vec3 hz = mix(uH, uHS, lado * 0.85);
         vec3 c = mix(hz, uZ, smoothstep(0.0, uCurva, y) * (0.82 + 0.18 * smoothstep(uCurva, 0.9, y)));
-        c += uSolCor * (pow(s, 3.0) * 0.16 + pow(s, 7.0) * 0.34 + pow(s, 40.0) * 0.9 + pow(s, 600.0) * 2.5) + vec3(1.0, 0.9, 0.72) * uDisco * smoothstep(0.99975, 0.99990, dot(d, uSol));
+        c += uSolCor * (pow(s, 3.0) * 0.16 + pow(s, 7.0) * 0.34 + pow(s, 18.0) * 0.3 + pow(s, 40.0) * 0.9 + pow(s, 600.0) * 2.5) + vec3(1.0, 0.9, 0.72) * uDisco * smoothstep(0.99975, 0.99990, dot(d, uSol));
         vec2 q1 = d.xz / (d.y + 0.3) * 2.2, q2 = d.xz / (d.y + 0.42) * 2.4, lz = azSol * 0.2;
         vec2 k1 = vec2(0.8, 1.2); mat2 r1 = mat2(0.83, -0.56, 0.56, 0.83), r2 = mat2(0.6, 0.8, -0.8, 0.6); q1 = r1 * q1; q1 += (vec2(hdN(q1 * 0.4 + 9.0), hdN(q1 * 0.4 + 23.0)) - 0.5) * 1.1; q2 = r2 * q2 * vec2(0.7, 1.2);
         vec2 lz1 = r1 * lz, lz2 = r2 * lz * vec2(0.7, 1.2);
@@ -696,6 +718,7 @@ export function ceuTardeHD(scene, sol, { zenite = 0x7a6c70, horizonte = null, ho
         c = mix(c, c2, n2 * 0.7); c = mix(c, c1, n1 * 0.92);
         if (uMorroAlt > 0.0) { float h1 = uMorroAlt * (0.25 + 0.75 * hdFbm(az * 2.3 + 5.0)) + uMorroAlt * 0.12 * hdN(az * 9.0);
           c = mix(c, mix(uH, uMorro * 0.8, 0.85), smoothstep(h1, h1 - 0.005, d.y)); }
+        float alto = smoothstep(0.1, 0.34, d.y); c = mix(c, vec3(dot(c, vec3(0.3, 0.59, 0.11))) * vec3(1.03, 1.0, 0.95), 0.42 * alto) * (1.0 - 0.25 * alto);
         // Poeira dourada rente ao horizonte, mais densa contra o sol: mora no céu, sem quad nem overdraw.
         c = mix(c, uBruma, exp(-y / 0.05) * uBrumaF * (0.35 + 0.65 * lado));
         if (d.y < 0.0) c = mix(hz * 0.9, uBruma, uBrumaF * (0.35 + 0.65 * lado));
@@ -748,7 +771,7 @@ export function aplicaSertaoHD(scene, renderer, opts = {}) {
   if (opts.luz !== false) {
     const tarde = q.get('hdsol') !== '0' && opts.solTarde !== false, ceuNovo = opts.ceu !== false;
     desfaz.push(luzHD(scene, renderer, { hemi: .16, solGanho: 1.5, ceu: { ganho: .34, halo: .6 }, cupula: ceuNovo ? null : { morro: { cor: 0x5e3f38, altura: .16 } },
-      ...(tarde ? { solDir: SOL_TARDE, solCor: 0xffc088, solGanho: 3.19, hemi: .94, ambiente: false, rebote: 0xa08468 } : {}), ...(opts.luz || {}) }));
+      ...(tarde ? { solDir: SOL_TARDE, solCor: 0xffc088, solGanho: 3.19, hemi: 1.13, ambiente: false, rebote: 0xa08468 } : {}), ...(opts.luz || {}) }));
     if (tarde) desfaz.push(sombraRasante(scene));
     if (opts.nevoa !== false) desfaz.push(nevoaHD(scene, opts.nevoa));
     if (ceuNovo) { let sol = null; scene.traverse((o) => { if (o.isDirectionalLight && o.castShadow) sol = o; });
