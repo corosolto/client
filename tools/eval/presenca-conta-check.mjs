@@ -24,6 +24,27 @@ const muta = (src, ancora, troca) => {
   if (src.split(ancora).length !== 2) { console.error(`mutante ${mutante} NÃO APLICOU: âncora ${ancora}`); process.exit(2); }
   return src.replace(ancora, troca);
 };
+const extraiBloco = (src, ancora) => {
+  const inicio = src.indexOf(ancora);
+  const abre = inicio < 0 ? -1 : src.indexOf('{', inicio + ancora.length);
+  if (abre < 0) return '';
+  let profundidade = 0;
+  let aspas = '';
+  let escape = false;
+  for (let i = abre; i < src.length; i++) {
+    const c = src[i];
+    if (aspas) {
+      if (escape) escape = false;
+      else if (c === '\\') escape = true;
+      else if (c === aspas) aspas = '';
+      continue;
+    }
+    if (c === "'" || c === '"' || c === '`') { aspas = c; continue; }
+    if (c === '{') profundidade++;
+    else if (c === '}' && --profundidade === 0) return src.slice(abre + 1, i);
+  }
+  return '';
+};
 let main = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
 if (mutante === 'sem-ping-partida') main = muta(main, "  pingPresencaConta();   // posse navegador→conta + last_active desde o 1º segundo de jogo\n", '');
 if (mutante === 'ping-sem-conta') main = muta(main, '  if (!contaNick || testMode) return;\n  void api(', '  if (testMode) return;\n  void api(');
@@ -38,7 +59,8 @@ cobra('PC2', /if \(!contaNick \|\| testMode\) return;/.test(fn), 'sem conta loga
 const startGame = main.match(/async function _startGame\([^)]*\) \{([\s\S]{0,600})/)?.[1] || '';
 cobra('PC3', /pingPresencaConta\(\);/.test(startGame), '_startGame dispara a presença da conta');
 const onSession = main.match(/onSession:auth=>\{([\s\S]*?)\},onReady:/)?.[1] || '';
-cobra('PC4', /if\(auth\?\.profile\)\{[^}]*pingPresencaConta\(\);/.test(onSession) && /cs-account-change[^\n]*pingPresencaConta\(\);/.test(main), 'sessão pronta e troca de conta disparam a presença');
+const perfilLogado = extraiBloco(onSession, 'if(auth?.profile)');
+cobra('PC4', perfilLogado.includes('pingPresencaConta();') && /cs-account-change[^\n]*pingPresencaConta\(\);/.test(main), 'sessão pronta e troca de conta disparam a presença');
 cobra('PC5', /setInterval\(\(\) => \{ if \(game\) pingPresencaConta\(\); \}, 30_000\);/.test(main), 'pulso de 30 s em jogo');
 cobra('PC6', /sendMatchEvent[\s\S]{0,900}weaponMode: settings\.wpnMode \|\| 'all'/.test(main), 'sendMatchEvent leva weaponMode');
 
