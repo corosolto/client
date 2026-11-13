@@ -199,10 +199,13 @@ const beforeMessage = fetched.length;
 await lifecycle('message', {
   type: 'CACHE_OFFLINE_RESOURCES',
   revision: BUILD_REVISION,
-  urls: [`${ORIGIN}/js/rotas.js`, `${ORIGIN}/api/private.json`, 'https://other.test/foreign.js'],
+  urls: [`${ORIGIN}/js/rotas.js`, `${ORIGIN}/models/bot-brain/weights.bin`, `${ORIGIN}/api/private.json`, 'https://other.test/foreign.js'],
 });
 const messageFetches = fetched.slice(beforeMessage);
-assert.deepEqual(messageFetches, [`${ORIGIN}/js/rotas.js`], 'warm-up accepts only same-origin static resources');
+assert.deepEqual(messageFetches, [
+  `${ORIGIN}/js/rotas.js`,
+  `${ORIGIN}/models/bot-brain/weights.bin`,
+], 'warm-up accepts only same-origin static resources, including BotBrain weights');
 
 cache.failWrites = true;
 const uncached = await request(new Request(`${ORIGIN}/js/pwa-install.js?v=quota-full`));

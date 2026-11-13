@@ -193,6 +193,7 @@ const offline = start({
   resources: [
     'https://jogo.test/js/main.js?v=release',
     'https://jogo.test/models/characters/test.glb?v=asset',
+    'https://jogo.test/models/bot-brain/weights.bin?v=asset',
     'https://jogo.test/api/private.json',
     'https://other.test/foreign.js',
   ],
@@ -209,6 +210,7 @@ assert.deepEqual([...offline.posted.at(-1).urls], [
   'https://jogo.test/',
   'https://jogo.test/js/main.js?v=release',
   'https://jogo.test/models/characters/test.glb?v=asset',
+  'https://jogo.test/models/bot-brain/weights.bin?v=asset',
 ], 'page warms only the visited same-origin game resources');
 await offline.dispatchResources([
   'https://jogo.test/models/maps/late-prop.glb?v=visited',

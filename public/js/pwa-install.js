@@ -1,4 +1,4 @@
-const OFFLINE_STATIC_PATH = /\.(?:avif|css|glb|gif|ico|jpe?g|js|json|mp3|ogg|png|svg|wasm|wav|webmanifest|webm|webp|woff2?)$/i;
+const OFFLINE_STATIC_PATH = /\.(?:avif|bin|css|glb|gif|ico|jpe?g|js|json|mp3|ogg|png|svg|wasm|wav|webmanifest|webm|webp|woff2?)$/i;
 let offlineRegistration = null;
 let offlineRevision = null;
 const MAX_RECURSOS_PENDENTES = 600;

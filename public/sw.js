@@ -32,7 +32,7 @@ const OFFLINE_CORE = [
   '/models/props/urna.glb',
 ];
 const CORE_MANIFEST_URL = new URL('/__offline_core_manifest__', self.location.origin).href;
-const STATIC_PATH = /\.(?:avif|css|glb|gif|ico|jpe?g|js|json|mp3|ogg|png|svg|wasm|wav|webmanifest|webm|webp|woff2?)$/i;
+const STATIC_PATH = /\.(?:avif|bin|css|glb|gif|ico|jpe?g|js|json|mp3|ogg|png|svg|wasm|wav|webmanifest|webm|webp|woff2?)$/i;
 let cacheMutation = Promise.resolve();
 let cachedEntryCount = null;
 
