@@ -365,7 +365,7 @@
     "eval:nick32-cards": "node tools/eval/nick32-cards.mjs",
     "eval:nick32-layout": "node tools/eval/nick32-layout.mjs",
     "eval:analytics": "node tools/eval/player-analytics-check.mjs",
-    "eval:presenca-conta": "node tools/eval/presenca-conta-check.mjs && for m in sem-ping-partida ping-sem-conta sem-modo-arma; do node tools/eval/presenca-conta-check.mjs --mutante=$m >/dev/null 2>&1; [ $? -eq 1 ] || exit 1; done",
+    "eval:presenca-conta": "node tools/eval/presenca-conta-check.mjs && for m in sem-ping-partida ping-sem-conta sem-modo-arma ping-duplicado ping-antes-guarda; do node tools/eval/presenca-conta-check.mjs --mutante=$m >/dev/null 2>&1; [ $? -eq 1 ] || exit 1; done",
     "eval:telemetrytransport": "node tools/eval/telemetry-transport-check.mjs",
     "eval:online": "node tools/eval/online-counter-check.mjs",
     "eval:netcodecbin": "node tools/eval/netcodec-check.mjs && node tools/eval/netcodec-mutants-check.mjs && npm run -s eval:netcodec-v8 && npm run -s eval:client-snapshot-negotiation",
