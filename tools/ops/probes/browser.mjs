@@ -28,9 +28,9 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const CHROME_MAC = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const THIRD_PARTY_BOOT_NOISE = /<script\b[^>]*>(?:[\s\S]*?(?:static\.ads-twitter\.com\/uwt\.js|X_PIXEL_ID)[\s\S]*?)<\/script>\s*/gi;
+const THIRD_PARTY_BOOT_NOISE = /<script\b[^>]*>(?:(?!<\/script>)[\s\S])*?(?:static\.ads-twitter\.com\/uwt\.js|X_PIXEL_ID)(?:(?!<\/script>)[\s\S])*?<\/script>\s*/gi;
 
-function stripThirdPartyBootNoise(body) {
+export function stripThirdPartyBootNoise(body) {
   let stripped = 0;
   const output = String(body).replace(THIRD_PARTY_BOOT_NOISE, () => { stripped++; return ''; });
   return { body: output, stripped };
