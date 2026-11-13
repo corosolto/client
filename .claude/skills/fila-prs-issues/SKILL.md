@@ -158,6 +158,10 @@ git worktree add --track -b BRANCH /tmp/corosolto-REPO-pr-NUMERO "$HEAD_REMOTE"/
 
 test "$(git -C /tmp/corosolto-REPO-pr-NUMERO rev-parse HEAD)" = "$REVIEWED_HEAD" \
   || { echo "worktree não aponta para o head revisado" >&2; exit 1; }
+LANE_STATUS=$(git -C /tmp/corosolto-REPO-pr-NUMERO status --porcelain) \
+  || { echo "não foi possível conferir a limpeza da worktree" >&2; exit 1; }
+[ -z "$LANE_STATUS" ] \
+  || { echo "worktree da lane contém mudanças não commitadas" >&2; exit 1; }
 ```
 
 Para PR de fork, o `HEAD_REMOTE` já foi selecionado antes da worktree. Depois da correção,
