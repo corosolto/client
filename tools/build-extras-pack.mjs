@@ -4,21 +4,10 @@
    Uso: node tools/build-extras-pack.mjs --library=<caminho>/library/index.json */
 import fs from 'node:fs';
 import path from 'node:path';
-import { NodeIO } from '@gltf-transform/core';
-import { prune, mergeDocuments, unpartition } from '@gltf-transform/functions';
+import { lerBiblioteca, montarPack, gravarPack, LICENCAS } from './anim-pack.mjs';
 
-const arg = process.argv.find((a) => a.startsWith('--library='));
-if (!arg) {
-  console.error('uso: node tools/build-extras-pack.mjs --library=<caminho>/library/index.json');
-  process.exit(1);
-}
-const indexPath = path.resolve(arg.slice('--library='.length));
-const clipsOutArg = process.argv.find((a) => a.startsWith('--clips-out='));
-const clipsOut = clipsOutArg ? path.resolve(clipsOutArg.slice('--clips-out='.length)) : null;
-if (clipsOut) fs.mkdirSync(clipsOut, { recursive: true });
-const libraryDir = path.dirname(indexPath);
-const index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
-if (index.skeleton !== 'meshy-28' || !Array.isArray(index.clips)) throw new Error('biblioteca não é meshy-28 ou não tem clips[]');
+const { index, libraryDir, clipsOut } = lerBiblioteca(process.argv,
+  'uso: node tools/build-extras-pack.mjs --library=<caminho>/library/index.json');
 
 // Escolha editorial: laço fechado para locomoção; reações curtas; arremesso próximo da
 // janela de 1,05 s do jogo. Dois estados ficam ausentes por falta de fonte convertida.
@@ -46,72 +35,34 @@ const FONTES = Object.freeze({
   defeat: 'mixamo/loose/sad-idle',
 });
 const AUSENTES = ['draw_pistol', 'holster_pistol'];
-const io = new NodeIO();
-let base = null;
-const linhas = [];
-
-for (const [estado, id] of Object.entries(FONTES)) {
-  const candidatos = index.clips.filter((c) => c.id === id);
-  if (candidatos.length !== 1) throw new Error(`${estado}: catálogo ${id} aparece ${candidatos.length}×`);
-  const meta = candidatos[0];
-  if (meta.key !== estado && !(estado === 'run_back_pistol' && meta.keyStatus === 'proposed')) {
-    throw new Error(`${estado}: catálogo ${id} declara key=${meta.key}`);
-  }
-  const arquivo = path.join(libraryDir, meta.file);
-  const doc = await io.read(arquivo);
-  const animacoes = doc.getRoot().listAnimations();
-  if (animacoes.length !== 1) throw new Error(`${estado}: ${meta.file} tem ${animacoes.length} animações`);
-  animacoes[0].setName(estado);
-  // A faca não move a cabeça: o aim/head-lag do runtime já a controla, e a tomada
-  // levantava a malha do pescoço da dama-creepy acima do teto de 3,5× (medido em R2).
-  if (estado === 'knife_stab') {
-    for (const canal of animacoes[0].listChannels()) {
-      if (/^(Head|neck)$/.test(canal.getTargetNode()?.getName() || '')) animacoes[0].removeChannel(canal);
+const pack = await montarPack({
+  index, libraryDir, clipsOut,
+  fontes: Object.entries(FONTES),
+  validar(estado, meta) {
+    if (meta.key !== estado && !(estado === 'run_back_pistol' && meta.keyStatus === 'proposed')) {
+      throw new Error(`${estado}: catálogo ${meta.id} declara key=${meta.key}`);
     }
-  }
-  // Na pistola o punho da mão dominante fica com o clipe-base; o take UAL torcia
-  // a mão direita de nanica/coronel-arrego além do teto de 2,5× (R1).
-  if (estado === 'reload_pistol') {
-    for (const canal of animacoes[0].listChannels()) {
-      if (canal.getTargetNode()?.getName() === 'RightHand') animacoes[0].removeChannel(canal);
-    }
-  }
-  if (clipsOut) await io.write(path.join(clipsOut, `${estado}.glb`), doc);
-  if (!base) {
-    base = doc;
-    const cena = base.getRoot().listScenes()[0];
-    if (cena && cena.listChildren().length === 0) {
-      const comPai = new Set();
-      for (const n of base.getRoot().listNodes()) for (const c of n.listChildren()) comPai.add(c);
-      for (const n of base.getRoot().listNodes()) if (!comPai.has(n)) cena.addChild(n);
-    }
-  } else {
-    const root = base.getRoot();
-    const antesAnim = new Set(root.listAnimations());
-    const antesNos = new Set(root.listNodes());
-    const porNome = new Map(root.listNodes().map((n) => [n.getName(), n]));
-    mergeDocuments(base, doc);
-    for (const anim of root.listAnimations()) {
-      if (antesAnim.has(anim)) continue;
-      for (const canal of anim.listChannels()) {
-        const alvo = canal.getTargetNode() && porNome.get(canal.getTargetNode().getName());
-        if (!alvo) throw new Error(`${estado}: osso ${canal.getTargetNode()?.getName()} ausente na referência`);
-        canal.setTargetNode(alvo);
+  },
+  ajustar(estado, animacao) {
+    // A faca não move a cabeça: o aim/head-lag do runtime já a controla, e a tomada
+    // levantava a malha do pescoço da dama-creepy acima do teto de 3,5× (medido em R2).
+    if (estado === 'knife_stab') {
+      for (const canal of animacao.listChannels()) {
+        if (/^(Head|neck)$/.test(canal.getTargetNode()?.getName() || '')) animacao.removeChannel(canal);
       }
     }
-    for (const n of root.listNodes()) if (!antesNos.has(n)) n.dispose();
-    for (const s of root.listScenes().slice(1)) s.dispose();
-  }
-  linhas.push(`| ${estado} | ${id} | ${meta.duration.toFixed(4)} s | ${meta.loop ? 'sim' : 'não'} |`);
-}
-
-if (!base) throw new Error('nenhum clipe selecionado');
-await base.transform(prune(), unpartition());
+    // Na pistola o punho da mão dominante fica com o clipe-base; o take UAL torcia
+    // a mão direita de nanica/coronel-arrego além do teto de 2,5× (R1).
+    if (estado === 'reload_pistol') {
+      for (const canal of animacao.listChannels()) {
+        if (canal.getTargetNode()?.getName() === 'RightHand') animacao.removeChannel(canal);
+      }
+    }
+  },
+});
+const linhas = pack.metas.map(({ nome, id, meta }) => `| ${nome} | ${id} | ${meta.duration.toFixed(4)} s | ${meta.loop ? 'sim' : 'não'} |`);
 const saida = path.resolve('public/models/anims/extras.glb');
-await io.write(saida, base);
-const nomes = base.getRoot().listAnimations().map((a) => a.getName()).sort();
-const esperados = Object.keys(FONTES).sort();
-if (JSON.stringify(nomes) !== JSON.stringify(esperados)) throw new Error(`pacote divergente: ${nomes.join(', ')}`);
+const nomes = await gravarPack(pack, saida, Object.keys(FONTES));
 
 const fonteDoc = `# SOURCES — models/anims/extras.glb\n\n`
   + `Pacote único de estados extras 3P no esqueleto meshy-28. Gerado por `
@@ -120,9 +71,7 @@ const fonteDoc = `# SOURCES — models/anims/extras.glb\n\n`
   + `## Catálogo\n\n| Estado | ID do catálogo | Duração | Laço declarado |\n|---|---|---:|---|\n`
   + `${linhas.join('\n')}\n\n`
   + `Ausentes na biblioteca e com fallback procedural/estado atual: ${AUSENTES.map((x) => `\`${x}\``).join(', ')}.\n\n`
-  + `## Licenças\n\n`
-  + `- IDs \`mixamo/*\`: Adobe Mixamo, uso em jogos e mídia, inclusive comercial; a redistribuição dos FBX brutos não é permitida. https://helpx.adobe.com/mixamo/faq/mixamo-faq.html\n`
-  + `- IDs \`ual/*\`: Quaternius Universal Animation Library, CC0 1.0 Universal. https://creativecommons.org/publicdomain/zero/1.0/\n\n`
+  + LICENCAS
   + `A conversão para meshy-28 preserva \`extras.clip.source.id\` em cada animação. `
   + `A mescla reaproveita os nós por nome e elimina cenas duplicadas; o jogo consome somente \`g.animations\`.\n`;
 fs.writeFileSync('public/models/anims/extras.SOURCES.md', fonteDoc);
