@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.147`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.148`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -249,6 +249,364 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.148] — 2026-11-13
+
+### Mudado
+- Online drop with network ID 0 works end to end (#1301)
+- fix(viewmodel): painted pistol on the factory X18 with full store art, idle framing gate (#1315)
+- feat: horror rework of the Sessão da Treta weapon skins, steel knife blades (#1298)
+- ci: PR previews leave Vercel for good; Cloudflare only (#1317)
+- feat(pass): Sessão da Treta season pass in the client (screen, announcement, locked characters) (#1294)
+- fix(ci): accept both published sitemap modes (#1321)
+- fix(net): boom/gone perdidos não deixam fantasma; erros de convite dizem a verdade (#1292)
+- fix(net): flush the partial client_stats window when the tab hides or the socket closes (#1305)
+- feat(net): auto-reconnect on unexpected disconnect (#1319)
+- fix(game): dispose devolve a VRAM das texturas da partida (#1293)
+- Fix staging: put eval:dispose in the deploy suite and stop double-disposing the landing texture (#1337)
+- fix(ci): close release gate blind spots (#1334)
+- fix(studio): Fora do Ar weight repaint and a bake where the cape no longer lifts the hips (packs 0.2.2) (#1331)
+- feat(packs): serve pinned Studio packs from Cloudflare R2 with an immutable publisher (#1320)
+- fix(eval): fail on browser page errors (#1339)
+- feat(faccao): Fora do Ar faction with the 30 battle-pass characters (Studio packs) (#1302)
+- feat(studio): optional extra clips and animation families from the character pack (#1260)
+- feat(studio): ship pinned and verified character release (#1244)
+- fix(ci): close release review findings (#1340)
+- fix(ci): close remaining release review findings (#1341)
+- fix(ci): close remaining gate findings (#1343)
+- Pass: real weapon skin posters, announce after Flávio, refuse pinning locked bots (#1342)
+- Recover slow boot and WebView WASM failures (#1345)
+- film: prepare reviewed gameplay for social channels (#1072)
+- chore(ratchet): registrar advisory RM4 legado (#1318)
+- ci: shard test steps by historical duration (#1324)
+- ci: add manifest-driven asset inventory and orphan ratchets (#1327)
+- release: daily batch 2026-11-11 (#1332)
+- fix(eval): isolate lobby mutants by browser process
+- fix(ci): make mutation failures exact
+- docs: regenerate weapon matrix source links
+- fix(eval): remove avatar handler in click mutant
+- fix(ci): include public runtime JSON references
+- fix(ci): require exact robots mutant exit status
+- fix(ci): validate audio generation and WebM containers
+- fix(ci): reject missing inline asset targets
+- fix(ci): close clean-checkout and dynamic asset gaps
+- fix(ci): preserve strict runtime stderr validation
+- Mata regressão do watchdog de entrada
+- fix(ci): complete local environment validation
+- docs: refresh weapon source links
+- Prova que gesto cedo não libera o boot
+- Aceita marcador de boot na régua de pausa
+- fix(assets): support current faction and media contracts
+- Preserva contratos de telemetria no boot
+- Reforça contrato de idioma sem top-level await
+- Regenera revisão de assets após merge
+- Libera entrada após fallback do cenário
+- Trata rejeição do Meshopt em WebViews
+- fix(ci): preserve secrets in YAML scalars
+- docs: shorten the family URL comment
+- docs: shorten the family URL comment
+- docs: shorten Studio character comments
+- docs: shorten Studio character comments
+- fix(ci): close remaining gate findings
+- docs: shorten the extra-clips release comment
+- fix(ci): close remaining release review findings
+- réguas do passe: pôster, ordem dos anúncios e bot travado
+- seletor: ＋ recusa escalar personagem travado do passe como bot
+- passe: anúncio espera o da Operação Flávio fechar em vez de desistir
+- passe: pôster real das skins de arma na tela do passe
+- fix(ci): classify zero-byte image aborts as UI cancellations
+- fix(ci): classify zero-byte image aborts as UI cancellations
+- fix(ci): accept deploy extras and isolate lobby announcements
+- fix(ci): accept deploy extras and isolate lobby announcements
+- fix(ci): reject stale resolutions and flow triggers
+- fix(ci): detect quoted workflow triggers
+- fix(net): expire network drop id zero
+- fix(ci): ignore dismissed estraga reviews in resolution
+- fix(ci): réguas novas rodam mesmo após passo vermelho; publicador com prazo; porte-braco vazio reprova
+- fix(eval): fail viewmodel gate on page errors
+- fix(ci): serve the pass through its boot mock
+- fix(ci): serve the pass through its boot mock
+- fix(ci): tolerate the known Node 26 register warning
+- fix(ci): tolerate the known Node 26 register warning
+- fix(studio): validar esqueleto pelo nome do glTF, não pelo nome único do loader
+- fix(ci): resolve explicit exports before private templates
+- docs: keep new runtime comments within two lines
+- fix(ci): handle named expressions and comment limits
+- fix(ci): include object-rest bindings in shadow analysis
+- fix(ci): follow destructured values instead of property keys
+- fix(ci): ignore member writes in lexical shadow analysis
+- fix(ci): mark loop declarations as scoped shadows
+- fix(ci): parse dynamic asset calls with acorn
+- fix(ci): exclude method signatures from call evidence
+- fix(ci): exclude property calls from template evidence
+- fix(ci): distinguish control guards from method parameters
+- fix(ci): accept guarded avatar click handlers
+- fix(ci): reject anonymous callee shadowing and guarded clicks
+- fix(ci): reject shadowed template callees
+- fix(ci): reject shadowed dynamic asset literals
+- fix(ci): select framing gate for tracked inputs
+- fix(ci): retain VRAM disposal gate in deploy suite
+- fix(ci): classify framing evaluator as VM suite
+- fix(ci): include p90 in framing integrity hash
+- fix(ci): close release gate blind spots
+- fix(ci): prove dynamic assets through immutable call bindings
+- fix(ci): scope system setup to Linux without sudo
+- fix(ci): bind dynamic asset references to import graphs
+- fix(ci): make local setup unprivileged and lockfile-bound
+- fix(game): preserve puff identity during cleanup
+- fix(game): preserve puff identity during cleanup
+- fix(game): preserve puff identity during cleanup
+- chore: migrate audio orphan approvals to schema 2
+- fix: bind asset approvals to literals and reviewed bytes
+- test(studio): R8c fixa o piso obrigatório de runtime no pin
+- fix(eval): eval:dispose não nega o mutante que já sai 0 quando detectado
+- fix(eval): eval:dispose entra na suíte deploy e check:deploy volta a --suite=deploy
+- fix(game): textura do pouso descartada só pelo registro da partida
+- fix(game): make puff disposal idempotent
+- fix(game): make puff disposal idempotent
+- fix(ci): fix devcontainer path and puff teardown idempotency
+- fix(ci): allow duration bootstrap to read Actions
+- fix(game): dispose per-game puff during landing cleanup
+- fix(game): dispose per-game puff during landing cleanup
+- fix(game): dispose per-game puff during landing cleanup
+- fix(ci): reject extra args with local mode flags
+- fix: require full asset path boundaries
+- test(ci): compare full runner aggregator tokens
+- test(ci): compare full runner aggregator tokens
+- test(ci): compare full runner aggregator tokens
+- fix(ci): accept the Cloudflare preview comment author
+- fix(ci): accept the Cloudflare preview comment author
+- fix(ci): accept the Cloudflare preview comment author
+- fix: require proven asset paths or dynamic templates
+- fix(eval): sonda mede a escala do mundo com o mapa carregado
+- fix(game): keep shared puff alive during landing cleanup
+- fix(game): keep shared puff alive during landing cleanup
+- test(ci): allow explicit eval steps after suite aggregators
+- fix(game): keep shared puff alive during landing cleanup
+- test(ci): allow explicit eval steps after suite aggregators
+- test(ci): allow explicit eval steps after suite aggregators
+- fix(ci): skip runs without timing artifacts during bootstrap
+- test(ci): accept step outputs in PI4 conditions
+- fix(eval): sonda mede a escala do mundo com o mapa carregado
+- fix: prove dynamic asset references by path template
+- fix(ci): restore duration cache by matched prefix
+- chore(docs): regenerate derived blocks (autofix)
+- fix(pacotes): comentário público não nomeia o provedor de armazenamento
+- fix(studio): garantir gate e mutação WebCrypto
+- fix(eval): sonda com ERRO reprova CHR6 e pack não medido sai 78 no select
+- fix(studio): controle negativo B8 ausente sai NÃO MEDIDO
+- fix(game): dispose devolve a VRAM das texturas da partida
+- fix(ci): bootstrap duration manifest on an empty cache
+- docs(game): motivo do sorteio sem personagem do passe vai para o doc da facção
+- fix(site): catálogo gerado passa no tsc estrito
+- fix: require lexical boundaries for asset stems
+- fix: valida árvore completa de dependências no diagnóstico
+- fix(ci): share calibrated duration cache
+- chore(midia): avatar, hero, recorte e vídeo de seleção dos packs 0.2.2 (vlad)
+- chore(midia): avatar, hero, recorte e vídeo de seleção dos packs 0.2.2 (satanista-talkshow, sorridente-onibus, teletreco-chiadinho)
+- chore(midia): avatar, hero, recorte e vídeo de seleção dos packs 0.2.2 (prata, profeta-auditorio, roqueiro-mistico-70)
+- chore(midia): avatar, hero, recorte e vídeo de seleção dos packs 0.2.2 (dracula, nanica, padre-parapsicologo)
+- chore(midia): avatar, hero, recorte e vídeo de seleção dos packs 0.2.2 (chupa-cabra, coelho-pascoa-shopping, dom-pedro-i)
+- chore(midia): avatar, hero, recorte e vídeo de seleção dos packs 0.2.2 (assombracao-lanhouse, bicho-do-bueiro, capitao-caveira)
+- fix(ci): download de pack Studio com teto de 60 s por tentativa
+- fix(chr3): tabela de pé regerada com os packs 0.2.2; offsets da capa caem
+- test(select): baixa a dívida de rasgo da Fora do Ar com os packs 0.2.2
+- feat(studio): 16 packs Studio em 0.2.2 — repintura de pesos e bake sem barra erguendo o quadril
+- test(ci): allow runner fixture time for expanded core
+- fix(ci): close estraga review label races
+- fix(eval): LX5 reconhece atlas de mão montado pelo vmhands
+- fix(ci): honor confirmed estraga review resolution
+- fix(eval): pack Studio NÃO MEDIDO reprova em CI
+- docs(game): comentário público sem o nome do provedor de armazenamento
+- fix(charvideo): sem ?id= o harness volta a abrir o mandrake
+- ci: eval:passe:browser roda no portão de navegador, em job próprio
+- fix(chr3): pés dos packs Studio no chão no agachado; tabela regerada
+- fix(chr3): offset de pé pelo pé mais baixo do ciclo, não pelo pico
+- fix(eval): C3 amostra o clipe inteiro e passa a medir o crouchwalk
+- fix: preserve initial asset inventory bootstrap
+- fix: require review for new asset orphans
+- fix(ci): use local Playwright for environment setup
+- fix(studio): contar ossos repetidos por instância
+- chore(docs): regenerate derived blocks (autofix)
+- fix(ci): reject undersized sitemap indexes
+- fix(eval): BV4 volta com id de brasão hifenizado; CF4 sem captura não fica verde
+- test(select): congela os 13 packs Studio acima do teto de rasgo, por personagem
+- ci: réguas e servidores do CI recebem os packs Studio fixados do R2
+- fix(eval): select-inflate diz NÃO MEDIDO para pack Studio sem /packs/
+- fix(studio): esqueleto do pack conferido pelo nome do glTF, não pelo renomeado do loader
+- fix(pacotes): HEAD/GET no R2 pedem identity para medir o objeto real
+- fix(eval): CHR mede o corpo do pack Studio, não o procedural que o jogo não desenha
+- fix(vm): mão de time do Fora do Ar nos três rigs
+- fix(ci): validate sitemap XML structure
+- fix(faccao): personagem do passe fora do sorteio de bot e do preload da seleção
+- fix(site): catálogo gerado troca travessão por ' - ' no texto público
+- chore: record asset inventory baseline
+- ci: add non-audio asset inventory checks
+- ci: ratchet audio orphans with reviewed baseline
+- ci: shard test steps by historical duration
+- ci: standardize local environment with CI
+- docs(pacotes): origem R2 e publicador dos pacotes do Studio
+- test(pacotes): régua do publicador R2 no pr-fast
+- feat(pacotes): publicador R2 imutável dos pacotes fixados
+- test(pacotes): régua R19 da origem R2 com mutantes
+- feat(pacotes): origem R2 dos pacotes do Studio em produção
+- fix(ci): harden sitemap validation
+- fix(ci): accept published sitemap modes
+- feat(net): auto-reconnect on unexpected disconnect - session survives network blips
+- fix(ratchet): aceitar justificativa English
+- ci: reagenda o pr-fast (workflow nao subiu no push anterior)
+- ci: preview de PR sai da Vercel; só Cloudflare
+- chore(ratchet): registrar advisory RM4 legado
+- test(viewmodel): placar do FP parado exige cada célula uma única vez
+- test(viewmodel): placar do FP parado re-assado com o hash novo
+- test(viewmodel): hash do placar do FP parado cobre PISTOLS, CFG.len e a pintura da célula
+- fix(skins): letreiro da faca gravado na lâmina, cabo só com o padrão
+- test(viewmodel): placar do FP parado assado com a célula pintada estrita
+- fix(skins): comentário do cloneMaterial no teto de duas linhas
+- test(viewmodel): célula pintada do FP parado exige a pintura pedida
+- test(viewmodel): placar do FP parado re-assado depois do merge do #1315
+- test(viewmodel): dívida de mão da gold#pistol quitada com a pintura no X18
+- fix(skins): marcas das pistolas do passe na frente do ferrolho do X18
+- test(viewmodel): structure-preserved ignora as marcas da pintura no osso
+- test(skins): PF6 cobra width/height em todo SVG de marca
+- fix(skins): SVG de marca com width/height, bandeira e 47 aparecem no X18
+- test(viewmodel): placar do FP parado re-assado com authoredvm.js no hash
+- test(viewmodel): authoredvm.js entra no hash do placar do FP parado
+- fix(viewmodel): marcas da X18 na frente do ferrolho, fora da mão no 1P
+- docs(viewmodel): doc viva da pistola pintada na fábrica
+- docs(viewmodel): comentário do TP_REFERENCE no teto de duas linhas
+- test(viewmodel): régua da pintura na fábrica, com mutante pintura-na-mao
+- fix(viewmodel): pintura da X18 cai no espaço da loja, só na arma
+- fix(viewmodel): pistola pintada usa a X18 da fábrica e só troca o material
+- fix(ci): preservar réguas do Studio na atualização
+- docs(viewmodel): histórico da pistola pintada longe vai para docs/viewmodels
+- test(viewmodel): régua de enquadramento do FP parado em 16:9 e 3:2
+- fix(viewmodel): pistola pintada volta pro canto de baixo, sem braço esticado
+- fix(net): freeze gap and RTT samples while the tab is hidden
+- test(mp): baseline do net-event-id-proof acompanha as dez cláusulas
+- fix(ci): passar SHA pelo ambiente do preview Cloudflare
+- chore(studio): alinhar versão do release
+- arte: cartazes das 12 skins de terror do passe
+- feat: 12 skins do passe refeitas como terror de verdade
+- arte: 12 marcas-herói de terror para as skins do passe
+- arte: 12 padrões de terror tileáveis para o corpo das armas do passe
+- feat: faca do passe com lâmina de aço e pintura só no cabo
+- test(studio): cobrir esqueleto no gate CI
+- fix(net): document may not exist as a global in headless harnesses
+- fix(passe): sorteio inicial sem ninguém livre no lado não cai num travado
+- fix(net): janela parcial de client_stats sai ao ocultar a aba ou sair
+- feat(faccao): mídia de coronel-arrego boneca-da-cristaleira nos packs 0.2.2 e recibos
+- feat(faccao): mídia de clovis-fora-do-ar bebezao-de-feira nos packs 0.2.2
+- test(faccao): régua do porte troca o alcance da compensação por PB3 JUNTA
+- fix(faccao): sai a compensação de clavícula; Clóvis e Bebezão voltam às duas mãos
+- feat(faccao): clovis, bebezão, coronel e boneca nos packs Studio 0.2.2
+- test(redesign): recibos de mídia após os pins 0.2.1
+- feat(faccao): mídia de teletreco-fora-do-ar nos packs 0.2.1
+- feat(faccao): mídia de teletreco-antenao, teletreco-chiadinho nos packs 0.2.1
+- feat(faccao): mídia de roqueiro-mistico-70, sorridente-onibus nos packs 0.2.1
+- feat(faccao): mídia de pm-arrego, profeta-auditorio nos packs 0.2.1
+- feat(faccao): mídia de nanica, padre-parapsicologo nos packs 0.2.1
+- feat(faccao): mídia de dracula, muro-de-caco nos packs 0.2.1
+- feat(faccao): mídia de coelho-pascoa-shopping, coronel-arrego nos packs 0.2.1
+- feat(faccao): mídia de chupa-cabra, clovis-fora-do-ar nos packs 0.2.1
+- feat(faccao): mídia de boneca-da-cristaleira, boneco-falante-87 nos packs 0.2.1
+- feat(faccao): mídia de assombracao-lanhouse, bebe-reborn nos packs 0.2.1
+- docs(faccao): comentário dos pins cita 0.2.1 e 0.2.0
+- feat(faccao): 19 personagens do Fora do Ar fixados nos packs Studio 0.2.1
+- test(passe): smoke usa o Chromium do Playwright fora do Mac
+- fix(midia): gerador e régua usam o Chromium do Playwright sem CHROME_BIN
+- feat(faccao): mídia do bebe-reborn com a pistola na palma e recibos
+- feat(faccao): mídia de bebezao-de-feira boneca-da-cristaleira com o braço fora do T
+- feat(faccao): mídia de clovis-fora-do-ar coronel-arrego com o braço fora do T
+- fix(midia): hero de arma de uma mão cresce até a pistola caber
+- fix(studio): limitar leitura de respostas do pack
+- docs(anim): braço no ombro dos rigs Studio e folga do Bebê Reborn
+- test(faccao): régua do porte de 1 mão com braço em T e folga, e mutantes
+- fix(faccao): braço no ombro e folga do Bebê Reborn no porte de 1 mão
+- fix(passe): chip ＋ do personagem travado volta ao canto da célula (UIR44)
+- test(redesign): recibos de mídia após a recalibração de empunhadura
+- feat(faccao): mídia de bebezao-de-feira coelho-pascoa-shopping com arma de uma mão
+- feat(faccao): mídia de clovis-fora-do-ar coronel-arrego com arma de uma mão
+- fix(faccao): rótulo do grupo Fora do Ar em caixa alta no seletor
+- fix(faccao): mão de apoio e arma de uma mão onde o IK não alcança
+- fix(mp): drop de rede com ID 0 vale em todo o ciclo (achado do estraga-codigo)
+- test: régua do passe conhece o brasão por slug; LX5 entende arte de resultado
+- feat(faccao): mídia de corisco e vlad
+- feat(faccao): mídia de dom-pedro-i e tiradentes
+- feat(faccao): mídia de bicheiro-barracao e prata
+- feat(faccao): mídia de roqueiro-mistico-70 e profeta-auditorio
+- feat(faccao): mídia de pm-arrego e nanica
+- feat(faccao): mídia de teletreco-fora-do-ar e coelho-pascoa-shopping
+- feat(faccao): mídia de padre-parapsicologo e muro-de-caco
+- feat(faccao): mídia de bebezao-de-feira e boneco-falante-87
+- feat(faccao): mídia de coronel-arrego e sorridente-onibus
+- feat(faccao): mídia de teletreco-chiadinho e bicho-do-bueiro
+- feat(faccao): mídia de satanista-talkshow e clovis-fora-do-ar
+- feat(faccao): mídia de dracula e boneca-da-cristaleira
+- feat(faccao): mídia de teletreco-antenao e assombracao-lanhouse
+- feat(faccao): mídia de bebe-reborn e chupa-cabra
+- feat(faccao): mídia de capitao-caveira e teletreco-sinal-fraco
+- test(redesign): ordena avatar/seleção esperados depois do sufixo
+- fix(studio): validar multiplicidade do skeleton
+- feat(faccao): registra hero e recorte do elenco Fora do Ar
+- feat: gerar mídia de seleção dos packs Studio no charvideo
+- feat(faccao): elenco Fora do Ar completo com nível do passe
+- feat(faccao): fixa os 29 packs Fora do Ar restantes em 0.2.0
+- test(faccao): FA5 mede a preferência do passe no ouvinte do #1294
+- docs: guardar ficha da facção na documentação de produção
+- fix: ordem dos grupos do hub e times do site saem do registro de facções
+- test: tirar da facção os portões de pegada autorada
+- test: registrar portões da facção e preservar seleção de passe
+- feat: gerar seleção VP9 a partir do renderer de packs no Ego
+- fix: enquadrar personagem pelo envelope deformado da animação
+- test(faccao): executa catálogo e versiona brasão por slug
+- feat(passe): isola bypass de QA do elenco do passe no debug local
+- feat(faccao): publica identidade Fora do Ar e catálogo derivado
+- feat(faccao): registra Fora do Ar e fixa piloto Studio 0.2.0
+- test(faccao): cobra registro extensível e pacote Fora do Ar
+- fix(passe): multiplayer pede o mesmo personagem livre que o lobby mostra
+- test(passe): mock não abre resgate antes da temporada
+- test(passe): pedido em voo fica com a conta que o mandou
+- fix(passe): resgate em voo não serve outra conta
+- fix(i18n): manter lista de países em contrato UIR20
+- docs: comentários das skins do passe no teto de duas linhas
+- test: declara eval:weapon-passe como passo novo das suítes
+- fix(ci): compactar comentario de geo da borda
+- test(passe): PS7 executa os caminhos de main.js com personagem travado
+- refactor: ids explícitos nas skins do passe
+- arte: cartazes das 15 armas da Sessão da Treta
+- feat: textura de corpo nas skins do passe e marcas no 1P
+- arte: texturas de TV e marcas-herói do passe
+- fix(passe): seletor antigo guarda o primeiro personagem livre; fixture do preview conhece a trava
+- ci(passe): eval:passe entra no baseline das suites e passe-mock no gatilho do portão
+- fix(passe): anúncio espera a resposta do passe em vez de desistir em 4 s
+- test(passe): smoke repete o fetch do characters.js quando o servidor de eval derruba a conexão
+- chore(passe): cabeçalhos dos módulos em duas linhas (eval:comentario)
+- test(passe): régua com relógio fixo e smoke com o funil
+- feat(passe): funil modal_view e open só com consentimento de medição
+- test(passe): régua eval:passe com 9 mutantes, mock do contrato e smoke no lobby
+- feat(passe): personagem do passe travado no seletor e na partida
+- feat(passe): tela do passe, aba no lobby e anúncio por versão
+- feat(passe): cliente do /api/passe e rota em rollout no proxy
+- wip: prepara skins e equipamento do passe
+- arte: registra cartazes das armas do passe
+- arte: cria marcas originais da sessão da treta
+- fix(net): boom/gone perdidos nao deixam fantasma; erros de convite dizem a verdade
+- Régua do personagem Studio: famílias R16/R17 e 26 mutantes
+- Resolvedor do Studio: packs de família e states.glb compartilhado
+- Vocabulário de clipes extras: 45 nomes da biblioteca de conversão
+- Régua do personagem Studio: cláusulas R15 e 20 mutantes
+- Resolvedor do Studio: clipes extras opcionais do pacote
+- feat(personagens): pin do capitao-caveira em 0.1.1 com rig encaixado
+- test(personagens): régua Chrome cobra mão sem lâmina e morde na 0.1.0
+- refactor(personagens): comentários do Studio dentro do teto de duas linhas
+- docs(personagens): release de personagem do Studio
+- test(personagens): réguas do personagem do Studio (node com mutantes e Chrome)
+- feat(dev): /packs/ servido de STUDIO_PACK_ROOT no Astro e no eval
+- feat(personagens): glbchars carrega release do Studio tudo-ou-nada
+- feat(personagens): registro de releases e resolvedor verificado do Studio
+- film: include skin shop in reviewed social queue
+- film: package reviewed gameplay for social channels
 
 ## [2.1.0-alpha.147] — 2026-11-13
 
