@@ -38,6 +38,7 @@ uma destas servir, e **use o termo dele**, não o seu:
 
 ### Recarga — é aqui que mora a maioria
 - **"recarregar tira o cano"** — sai o cano ou o guarda-mão, não o carregador.
+- **"recarregar tira o trigger"** — sai o gatilho/punho.
 - **"fica parte do pente"** — o carregador sai pela metade; um pedaço fica preso
   na arma. Diga QUAL parte fica: de cima, de baixo, a lateral.
 - **"sai parte do cano e fica parte do pente"** — os dois erros juntos.
