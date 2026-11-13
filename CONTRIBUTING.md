@@ -129,7 +129,8 @@ gate seu pular com 78, a leitura é "não medi": rode `npm ci` e rode de novo. O
 mecanismo mora em `tools/eval/sonda-filho.mjs`, e o porquê de SKIP ter código
 próprio em vez de virar 0 ou 1 está em `docs/docs/sonda-processos.md`.
 
-Todo script de `tools/eval/` e `tools/ops/` usa a mesma convenção de veredito:
+Ao introduzir ou consumir estes veredictos em `tools/eval/` e `tools/ops/`, use a
+mesma convenção:
 
 | exit | significado |
 |---:|---|
