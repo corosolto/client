@@ -18,10 +18,11 @@
    Corpos com GLB mas fora de CHARACTERS (ainda não jogáveis) entram com def emprestada.
    MUTANTES (`--mutante=<nome>`, num subconjunto; `--self-test` roda o roster inteiro verde
    e cada mutante, que TEM de reprovar pela falha dele):
-     rotacao-local   copia a rotação local da referência (o runtime de antes)  -> estica
-     capsula-aberta  sem encolher o horizontal do Hips                         -> quadril
-     sem-contato     Hips só na escala da altura, sem o chão da malha          -> piso
-     curl-ignorado   contato sem o curl vivo da mão (Lampião no freeze)        -> piso
+     rotacao-local      copia a rotação local da referência (o runtime de antes) -> estica
+     capsula-aberta     sem encolher o horizontal do Hips                        -> quadril
+     sem-contato        Hips só na escala da altura, sem o chão da malha         -> piso
+     curl-ignorado      contato sem o curl vivo da mão (Lampião no freeze)       -> piso
+     referencia-ausente remove um teto assado congelado                          -> ref-estica
    Uso: node tools/eval/emotes-mocap-roster.mjs [--ids=a,b] [--json=<saída>] [--mutante=<nome>]
           [--assado=<legacy-out> [--congela] [--modo=assado]] [--glbchars=<arquivo>] [--self-test] */
 import fs from 'node:fs';
@@ -35,6 +36,7 @@ const MUTANTES = {
   'capsula-aberta': ['quadril', (s) => once(s, 'const fXZ = maxXZ > limite ? limite / maxXZ : 1;', 'const fXZ = 1;')],
   'sem-contato': ['piso', (s) => once(s, '      if (apoio) {\n', '      if (apoio && false) {\n')],
   'curl-ignorado': ['piso', (s) => once(s, 'q[i].fromArray(locais[i], f * 4) : vivos[i]; });', 'q[i].fromArray(locais[i], f * 4) : null; });')],
+  'referencia-ausente': ['ref-estica', null],
 };
 const IDS_MUTANTE = 'capitao,gotinha,lampiao,lula-drip';
 if (process.argv.includes('--self-test')) {
@@ -83,9 +85,11 @@ const ARQ_ASSADO = { capoeira: 'emote_capoeira_capoeira', meia_lua: 'emote_capoe
 // --glbchars=<arquivo>: mede outra versão do runtime (ex.: `git show <rev>:public/js/glbchars.js`).
 const mutante = arg('mutante');
 if (mutante && !MUTANTES[mutante]) throw new Error(`mutante desconhecido: ${mutante}`);
+if (mutante === 'referencia-ausente') delete REF.esticaAssado.capitao?.capoeira;
 const { E, G } = await carregaRuntime({ arquivoGlbchars: arg('glbchars') || undefined,
   glbchars: (s) => {
-    const m = mutante ? MUTANTES[mutante][1](s) : s;
+    const mutacao = mutante ? MUTANTES[mutante][1] : null;
+    const m = mutacao ? mutacao(s) : s;
     return m.includes('clip = emoteClipDoCorpo(info.id, this);')
       ? once(m, 'clip = emoteClipDoCorpo(info.id, this);', 'clip = globalThis.__emoteClipe?.(this, info.id) || emoteClipDoCorpo(info.id, this);')
       : once(m, 'const clip = emoteClipDoCorpo(', 'const clip = globalThis.__emoteClipe?.(this, info.id) || emoteClipDoCorpo(');
@@ -266,12 +270,14 @@ async function medeItem(item) {
       step(b, passo); if (gemeo) step(gemeo, passo);
     }
     const refEstica = gemeo ? esticaG : REF.esticaAssado[item.id]?.[id];
-    const teto = Math.max(LIMITES.esticaAbs, idle.jogo * LIMITES.esticaRel, (refEstica || 0) * LIMITES.esticaRel, (RESIDUOS[`${item.id}|${id}`] || 0) * 1.02);
+    const refAusente = !gemeo && refEstica == null;
+    const teto = Math.max(LIMITES.esticaAbs, idle.jogo * LIMITES.esticaRel, (refEstica ?? 0) * LIMITES.esticaRel, (RESIDUOS[`${item.id}|${id}`] || 0) * 1.02);
     const r = { pisoCm: +(piso * 100).toFixed(1), flutuaCm: EM_PE.has(id) ? +(flutua * 100).toFixed(1) : null, peIdleCm: +(peMax * 100).toFixed(1),
       peNoArCm: EM_PE.has(id) ? +(peNoAr * 100).toFixed(1) : null,
       quadrilM: +quadril.toFixed(3), estica: +estica.toFixed(2), esticaTeto: +teto.toFixed(2),
       ...(gemeo ? { esticaAssado: +esticaG.toFixed(2), fidelGraus: +fidel[0].toFixed(1), fidelOsso: fidel[1] } : {}) };
     const falhas = [];
+    if (refAusente) falhas.push('ref-estica');
     if (r.pisoCm < Math.min(LIMITES.pisoCm, RESIDUOS_PISO[item.id] ?? 0)) falhas.push('piso');
     if (r.flutuaCm != null && r.flutuaCm > LIMITES.flutuaCm) falhas.push('flutua');
     if (r.peNoArCm != null && r.peNoArCm > LIMITES.peNoArCm) falhas.push('pe-no-ar');

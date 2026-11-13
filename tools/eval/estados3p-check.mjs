@@ -21,6 +21,17 @@ const MUT_JOGO = {
   'jogo-cerimonia-invertida': ['b.mesh?.ctrl?.ceremony?.(!!winner && winner === b.team)', 'b.mesh?.ctrl?.ceremony?.(!!winner && winner !== b.team)', 'EX10e-cerimonia'],
   'bot-strafe-espelhado': ['const lat = (mz * Math.sin(b.yaw) - mx * Math.cos(b.yaw)) / dtSafe;', 'const lat = (mx * Math.cos(b.yaw) - mz * Math.sin(b.yaw)) / dtSafe;', 'EX11-bot-strafe-lado'],
 };
+const MUT_ALVO = {
+  'strafe-mudo': ['EX2-strafe-8way'],
+  'reload-perna-congelada': ['EX3-reload-pernas-livres'],
+  'hit-sem-direcao': ['EX4-hit-direcao'],
+  'saque-mudo': ['EX1b-primeiro-saque-lazy', 'EX5-saque'],
+  'faca-usa-rifle': ['EX6-faca'],
+  'vitoria-muda': ['EX8-cerimonia', 'EX8b-cerimonia-segura-parado'],
+  'cerimonia-vira-idle': ['EX8b-cerimonia-segura-parado'],
+  'flinch-preso-no-hit': ['EX4d-flinch-volta-se-clipe-interrompido'],
+  'granada-perdida-lazy': ['EX7b-granada-antes-do-pack'],
+};
 const mutants = ['strafe-mudo', 'reload-perna-congelada', 'hit-sem-direcao', 'saque-mudo', 'faca-usa-rifle', 'vitoria-muda', 'cerimonia-vira-idle', 'flinch-preso-no-hit', 'granada-perdida-lazy', ...Object.keys(MUT_JOGO)];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
 if (process.argv.includes('--self-test')) {
@@ -341,7 +352,8 @@ const failures = results.filter((x) => !x.ok);
 for (const r of results) console.log(`${r.ok ? 'ok  ' : 'FALHA'} ${r.id}${r.erro ? ` · ${r.erro}` : ''}`);
 if (mutant) {
   assert.ok(failures.length > 0, `MUTAÇÃO PASSOU — ${mutant}`);
-  if (MUT_JOGO[mutant]) assert.deepEqual(failures.map((x) => x.id), [MUT_JOGO[mutant][2]], `mutante ${mutant} fora da cláusula dele`);
+  const esperado = MUT_JOGO[mutant] ? [MUT_JOGO[mutant][2]] : MUT_ALVO[mutant];
+  assert.deepEqual(failures.map((x) => x.id), esperado, `mutante ${mutant} fora das cláusulas dele`);
   console.log(`MUTANTE ${mutant} REPROVADO: ${failures.map((x) => x.id).join(', ')}`);
 } else {
   assert.equal(failures.length, 0, `${failures.length} cláusulas vermelhas`);
