@@ -1381,7 +1381,7 @@ class CharController {
     this.oneHanded = false; // arma de 1 mão: idle/walk trocam p/ idle1h/walk1h (setado em buildCharacterModel)
     this.weaponId = 'awp';
     this._upperName = null; this._upperDur = 0; this._upperT = 0; this._upperAction = null;
-    this._upperActions = new Map(); this._drawPending = false; this._drawRequested = false; this._reloadClip = false; this._hitClip = false; this._grenadePending = null;
+    this._upperActions = new Map(); this._drawPending = false; this._drawRequested = false; this._reloadClip = false; this._hitClip = false; this._grenadePending = null; this._ceremonyPending = null;
     this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
     this._loco = 'idle'; // current locomotion state (hysteresis memory for walk/run choice)
     for (const name of EXTRA_STATES) if (_extraClips[name]) actions[name] = mixer.clipAction(_extraClips[name]);
