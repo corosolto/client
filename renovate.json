@@ -3,7 +3,6 @@
   "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
   "schedule": ["after 9am and before 11am every monday"],
   "timezone": "America/Sao_Paulo",
-  "rangeStrategy": "pin",
   "labels": ["renovate"],
   "packageRules": [
     {
