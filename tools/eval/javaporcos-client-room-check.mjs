@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import vm from 'node:vm';
 
 const ROOT=new URL('../../',import.meta.url),SELF=fileURLToPath(import.meta.url);
-const FILES={main:'public/js/main.js',net:'public/js/net.js',nos:'public/js/nos.js',maps:'public/js/maps.js'};
+const FILES={main:'public/js/main.js',rede:'public/js/nos-rede.js',nos:'public/js/nos.js',maps:'public/js/maps.js'};
 const IDS=['HEALTH_FIELDS','SOLO_JAVA','SOLO_ROUNDS','SOLO_CTF','FORM_ROUNDS','FORM_CTF','FORM_STALE','FORM_JAVA','FRIENDS','QUICK_PVP','QUICK_CREATE','QUICK_FULL_PRIVATE','SP_JAVA','LIST_JAVA','PAYLOAD_MODE','NODE_QUICK','NODE_NONE','NODE_FORM','NODE_FRIENDS','NODE_SOLO','NODE_MIXED','NODE_LEGACY','NODE_RANK'];
 const MUTANTS={
  'solo-guard':['SOLO_JAVA'], 'catalog-horde':['FORM_JAVA'], 'quick-horde':['QUICK_PVP','NODE_QUICK'],
@@ -43,15 +43,15 @@ function mutate(source,kind,parse){
   const before=out.main;out.main=replaceNodes(m,objects,n=>'{'+n.properties.filter(p=>p.key?.name!=='mode').map(p=>cut(m,p)).join(',')+'}');
   return {source:out,application:{kind,file:FILES.main,count:4,before:sha(before),after:sha(out.main)}};
  }else if(kind==='stale-selection'){
-  nodes=matches(form,n=>n.type==='IfStatement'&&/escolhidos/.test(cut(m,n.test))&&/some|every|MAPS|mpMapasDoNo/.test(cut(m,n.test)));replace=n=>'if(aDedo&&!escolhidos.length)'+cut(m,n.consequent);
+  nodes=matches(form,n=>n.type==='IfStatement'&&/escolhidos/.test(cut(m,n.test))&&cut(m,n.test).includes('mpMapasDoNo')&&/some|every|MAPS/.test(cut(m,n.test)));replace=n=>'if(aDedo&&!escolhidos.length)'+cut(m,n.consequent);
  }else if(kind==='node-guard'||kind==='mixed-overfilter'){
   nodes=matches(a,n=>n.type==='BinaryExpression'&&/^(===|!==|==|!=)$/.test(n.operator)&&((n.left.type==='MemberExpression'&&['nodeMode','roomCreation'].includes(n.left.property?.name))||(n.right.type==='MemberExpression'&&['nodeMode','roomCreation'].includes(n.right.property?.name))));
   if(kind==='mixed-overfilter')nodes=nodes.filter(n=>cut(m,n).includes('nodeMode'));
   need(nodes.length>0,'nodeguard anchors absent');
   replace=n=>{const member=n.left.type==='MemberExpression'?n.left:n.right,allow=n.operator.includes('!');if(kind==='node-guard')return allow?'true':'false';return (allow?'!':'!!')+cut(m,member.object)+'.horde';};
  }else if(kind==='health-fields'){
-  key='net';const net=out.net,na=tree(net,parse),probe=functionNode(na,'sondarNos');const object=unique(probe,n=>n.type==='ObjectExpression'&&n.properties.some(p=>p.key?.name==='ticketNode'),'health return');
-  need(object.properties.filter(p=>['nodeMode','roomCreation'].includes(p.key?.name)).length===2,'health2 anchors');nodes=[object];replace=n=>'{'+n.properties.filter(p=>!['nodeMode','roomCreation'].includes(p.key?.name)).map(p=>cut(net,p)).join(',')+'}';
+  key='rede';const rede=out.rede,na=tree(rede,parse),probe=functionNode(na,'sondarNos');const object=unique(probe,n=>n.type==='ObjectExpression'&&n.properties.some(p=>p.key?.name==='ticketNode'),'health return');
+  need(object.properties.filter(p=>['nodeMode','roomCreation'].includes(p.key?.name)).length===2,'health2 anchors');nodes=[object];replace=n=>'{'+n.properties.filter(p=>!['nodeMode','roomCreation'].includes(p.key?.name)).map(p=>cut(rede,p)).join(',')+'}';
  }else if(kind==='sp-overfilter'){
   nodes=[variable(a,'MAPAS_MENU').init];replace=n=>'('+cut(m,n)+").filter(id=>MAPS[id].objectiveMode!=='horde')";
  }else if(kind==='list-overfilter'){
@@ -64,7 +64,7 @@ function mutate(source,kind,parse){
 const element=()=>({dataset:{},value:'',checked:false,disabled:false,children:[],innerHTML:'',textContent:'',appendChild(x){this.children.push(x);},append(...x){this.children.push(...x);},querySelectorAll:()=>[],querySelector(){return this.actions??=element();}});
 async function evaluate(source,parse){
  const ast=Object.fromEntries(Object.entries(source).map(([k,s])=>[k,tree(s,parse)])),ex=(k,n)=>cut(source[k],variable(ast[k],n).init),fn=(k,n)=>cut(source[k],functionNode(ast[k],n));
- const metadata=vm.runInNewContext('const JAVAPORCOS_META='+ex('maps','JAVAPORCOS_META')+';const MAPS='+ex('maps','MAPS')+';const MAP_IDS=Object.keys(MAPS);const MAPAS_PARADOS='+ex('maps','MAPAS_PARADOS')+';const MAP_IDS_JOGAVEIS=MAP_IDS.filter(id=>!MAPAS_PARADOS.has(id));({MAPS,MAP_IDS,MAPAS_PARADOS,MAP_IDS_JOGAVEIS});');
+ const metadata=vm.runInNewContext('const JAVAPORCOS_LOADING_WALL="/fixture/java-wall.jpg";const JAVAPORCOS_META='+ex('maps','JAVAPORCOS_META')+';const MAPS='+ex('maps','MAPS')+';const MAP_IDS=Object.keys(MAPS);const MAPAS_PARADOS='+ex('maps','MAPAS_PARADOS')+';const MAP_IDS_JOGAVEIS=MAP_IDS.filter(id=>!MAPAS_PARADOS.has(id));({MAPS,MAP_IDS,MAPAS_PARADOS,MAP_IDS_JOGAVEIS});');
  const units={solo:cut(source.main,soloNode(ast.main)),form:cut(source.main,callback(ast.main,'criar')),friends:cut(source.main,callback(ast.main,'amigos')),quick:cut(source.main,callback(ast.main,'quick'))};
  const java={id:'javaporcos',codigo:'JAVA',name:'JAVA',mode:'horde',cooperative:true,map:'invasao_javaporcos',oficial:true,players:4,max:8,livre:{E:4,B:0}},pvp={id:'pvp',mode:'rounds',cooperative:false,map:'praca_poderes',oficial:true,players:1,max:10,livre:{E:4,B:5}};
  const normal={id:'normal',ping:20,health:{salaConvite:true,soloVerified:true}},mixed={id:'mixed',ping:20,health:{nodeMode:'mixed',roomCreation:true,horde:{protocol:8},salaConvite:true,soloVerified:true}};
@@ -84,8 +84,8 @@ async function evaluate(source,parse){
     return {ok:true,json:async()=>String(url).endsWith('/maps')?{maps:metadata.MAP_IDS_JOGAVEIS}:{rooms:rooms.map(r=>({...r}))}};}};
   vm.createContext(ctx);
   for(const n of ast.main.body){const d=n.type==='ExportNamedDeclaration'?n.declaration:n;if(d?.type==='FunctionDeclaration'&&!(d.id.name in ctx))ctx[d.id.name]=vm.runInContext('('+cut(source.main,d)+')',ctx);if(d?.type==='VariableDeclaration')for(const v of d.declarations)if(v.id.type==='Identifier'&&['ArrowFunctionExpression','FunctionExpression'].includes(v.init?.type)&&!(v.id.name in ctx))ctx[v.id.name]=vm.runInContext('('+cut(source.main,v.init)+')',ctx);}
-  const defs=fn('net','mpUrls')+';const j='+ex('net','j')+';globalThis.createRoom='+ex('net','createRoom')+';globalThis.listRooms='+ex('net','listRooms')+';globalThis.listMaps='+ex('net','listMaps')+';'+fn('net','prazoAcordado')+';'+fn('net','observaRede')+';'+fn('net','sondarNos')+';globalThis.sondarNos=sondarNos;';vm.runInContext(defs,ctx);
-  vm.runInContext('const PASSO_MS='+ex('net','PASSO_MS')+';const FAIXA_PING_MS='+ex('nos','FAIXA_PING_MS')+';const TETO_COMPANHIA_MS='+ex('nos','TETO_COMPANHIA_MS')+';'+fn('nos','ordenarNos')+';globalThis.ordenarNos=ordenarNos;'+fn('nos','melhorNoParaJogar')+';globalThis.rankReal=melhorNoParaJogar;',ctx);
+  const defs=fn('rede','mpUrls')+';const j='+ex('rede','j')+';globalThis.createRoom='+ex('rede','createRoom')+';globalThis.listRooms='+ex('rede','listRooms')+';globalThis.listMaps='+ex('rede','listMaps')+';'+fn('rede','prazoAcordado')+';'+fn('rede','observaRede')+';'+fn('rede','sondarNos')+';globalThis.sondarNos=sondarNos;';vm.runInContext(defs,ctx);
+  vm.runInContext('const PASSO_MS='+ex('rede','PASSO_MS')+';const FAIXA_PING_MS='+ex('nos','FAIXA_PING_MS')+';const TETO_COMPANHIA_MS='+ex('nos','TETO_COMPANHIA_MS')+';'+fn('nos','ordenarNos')+';globalThis.ordenarNos=ordenarNos;'+fn('nos','melhorNoParaJogar')+';globalThis.rankReal=melhorNoParaJogar;',ctx);
   ctx.melhorNoParaJogar=(ns,...args)=>{events.rankInputs.push(ns.map(n=>n.id));return ctx.rankReal(ns,...args);};
   vm.runInContext('const ALIAS_MAPA='+ex('maps','ALIAS_MAPA')+';const DEFAULT_MAP='+ex('maps','DEFAULT_MAP')+';'+fn('maps','resolveMapId')+';globalThis.ehMapaJavaporcos='+ex('maps','ehMapaJavaporcos')+';',ctx);
   ctx.mapasDoMenu=vm.runInContext(fn('maps','mapasDoMenu')+';mapasDoMenu;',ctx);ctx.MAPAS_MENU=vm.runInContext(ex('main','MAPAS_MENU'),ctx);

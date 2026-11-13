@@ -23,6 +23,8 @@
 // USO
 //   node tools/eval/invariants.mjs            # tudo que roda sem browser
 //   node tools/eval/invariants.mjs --json     # saída pra máquina
+//   INVARIANTES_FAMILIA=vm,bots node tools/eval/invariants.mjs
+//   node tools/eval/invariants.mjs --plano-json  # resolve blocos/sims, sem executar
 // Sai com código 1 se qualquer invariante crítica falhar (serve de gate em CI).
 //
 // ESCOPO
@@ -73,15 +75,60 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { freshReport } from './fresh-report.mjs';
 import { DUEL_REACTION_SECONDS } from './duel-metrics.mjs';
+import { MAP_IDS as IDS_MAPAS } from '../../public/js/maps.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
 const JSON_OUT = process.argv.includes('--json');
+const PLANO_JSON = process.argv.includes('--plano-json');
+
+/* Os grupos são o particionamento estável usado pelo CI. `mapas` seleciona todos;
+   um grupo individual nunca compartilha o map-check com outro job. Loja/Lajes ficam
+   juntas porque MAP2B consome LSP1; Amazônia fica com MAP6/AME, seus consumidores. */
+const GRUPOS_MAPAS = {
+  'mapas-nucleo': ['loja_h', 'lajes', 'praca_poderes', 'piscina_treta', 'ferro_velho'],
+  'mapas-comunidades': ['campomorro', 'mansao', 'escadao', 'quebrada', 'corrego'],
+  'mapas-amazonia': ['amazonia', 'posto_treta', 'upa_24h', 'obras_prefeitura', 'atacadao_treta'],
+  'mapas-oeste': ['parque_treta', 'velho_oeste', 'operacao_flavio', 'penitenciaria'],
+  'mapas-invasao': ['invasao_javaporcos'],
+  'mapas-rural': ['distrito_rural'],
+  'mapas-vila': ['vila_da_mata'],
+};
+const FAMILIAS = ['fonte', 'vm', 'bots', 'bots-base', 'bots-duelo', 'bots-diagnostico', 'bots-mount', 'chars-mat', 'mapas', ...Object.keys(GRUPOS_MAPAS)];
+const mapasAgrupados = Object.values(GRUPOS_MAPAS).flat();
+if (mapasAgrupados.length !== IDS_MAPAS.length || new Set(mapasAgrupados).size !== IDS_MAPAS.length
+  || IDS_MAPAS.some((id) => !mapasAgrupados.includes(id))) {
+  console.error('INVARIANTES: GRUPOS_MAPAS precisa cobrir cada mapa do registro exatamente uma vez');
+  process.exit(1);
+}
+const filtroFamilia = process.env.INVARIANTES_FAMILIA;
+const escolhidas = new Set();
+if (filtroFamilia !== undefined) {
+  const partes = filtroFamilia.split(',').map((s) => s.trim());
+  const invalidas = partes.filter((s) => !s || !FAMILIAS.includes(s));
+  if (invalidas.length) {
+    console.error(`INVARIANTES_FAMILIA desconhecida: ${invalidas.join(', ') || '(vazia)'}. Válidas: ${FAMILIAS.join(', ')}`);
+    process.exit(1);
+  }
+  for (const familia of partes) escolhidas.add(familia);
+}
+const ativa = (familia) => filtroFamilia === undefined || escolhidas.has(familia)
+  || (familia.startsWith('bots-') && escolhidas.has('bots'))
+  || (familia in GRUPOS_MAPAS && escolhidas.has('mapas'))
+  || (familia === 'mapas' && Object.keys(GRUPOS_MAPAS).some((g) => escolhidas.has(g)));
+const BLOCOS = [];
+let BLOCO_ATUAL = null;
+function bloco(familia, ids, fn, { sims = [], cenario = null } = {}) {
+  BLOCOS.push({ familia, ids, fn, sims, cenario });
+}
+const simsDoPlano = (b) => b.sims.map((s) => s === 'map-check' ? `map-check[${GRUPOS_MAPAS[b.familia].join(',')}]` : s);
 
 const results = [];
 /** @param {string} id @param {string} desc @param {boolean|null} ok @param {string} evid @param {'crit'|'warn'} sev */
-const put = (id, desc, ok, evid, sev = 'crit') => results.push({ id, desc, ok, evid, sev });
-const skip = (id, desc, why) => results.push({ id, desc, ok: null, evid: why, sev: 'skip' });
+const put = (id, desc, ok, evid, sev = 'crit') => results.push({ id, desc, ok, evid, sev,
+  ...(BLOCO_ATUAL?.cenario ? { cenario: BLOCO_ATUAL.cenario } : {}) });
+const skip = (id, desc, why) => results.push({ id, desc, ok: null, evid: why, sev: 'skip',
+  ...(BLOCO_ATUAL?.cenario ? { cenario: BLOCO_ATUAL.cenario } : {}) });
 
 const num = (v, d = 3) => (typeof v === 'number' && isFinite(v) ? +v.toFixed(d) : String(v));
 
@@ -181,52 +228,79 @@ async function runNode(script, env = {}, args = [], timeout = 600000) {
 }
 
 // ── 0. PRÉ-DISPARO DAS SUB-SIMULAÇÕES ───────────────────────────────────────
-/* As ~20 sub-simulações não dependem umas das outras: cada uma lê o jogo e grava, no
-   máximo, o PRÓPRIO relatório. Elas são todas disparadas aqui, até PARALELO por vez,
-   na ordem da mais lenta para a mais rápida (tempos medidos com INVARIANTES_PARALELO=1,
-   ver a tabela que este arquivo imprime no fim). Os blocos abaixo continuam na mesma
-   ordem e só esperam a saída que já está pronta ou a caminho: o relatório sai idêntico.
-   QUEM NÃO ENTRA AQUI roda na hora em que o bloco pede, como antes.
-   Os relatórios versionados (map/mat/pickup/char) passam pelo freshReport AQUI: o
-   arquivo velho some ANTES de o auditor começar, e o bloco lê o novo depois (#652). */
-plantarPontesThree();
-PRE_DISPARO = true;
+/* Os blocos primeiro se REGISTRAM; só depois o seletor dispara as simulações dos
+   blocos ativos. Assim o plano e a execução não podem divergir, e nenhuma simulação
+   atravessa shards. Relatórios versionados continuam passando por freshReport no
+   MESMO processo de seus consumidores (#652). */
+const SIMULACOES = {
+  'botdiag': ['botdiag.mjs', { SIM_SHOOTGATE: '1' }, ['180', 'all']],
+  'botsim-duel': ['botsim.mjs', { SIM_DUEL: '1' }, []],
+  'botsim': ['botsim.mjs', {}, []],
+  'tp-mount': ['tp-mount-probe.mjs', {}, []],
+  'vmrig': ['vmrig-test.mjs', {}, []],
+  'char-floor': ['char-floor.mjs', {}, []],
+  'lajes-spawn': ['lajes-spawn-space-check.mjs', {}, []],
+  'lajes-raycast': ['lajes-raycast-check.mjs', {}, []],
+  'amazonia-water': ['amazonia-water-movement-check.mjs', {}, []],
+  'amazonia-estacoes': ['amazonia-agua-estacoes-check.mjs', {}, []],
+  'pause': ['pause-check.mjs', {}, []],
+  'mode': ['mode-check.mjs', {}, []],
+  'hud': ['vmlab-hud-check.mjs', {}, ['--json']],
+  'vm-kick': ['vm-kick-sim.mjs', {}, ['--json']],
+  'vm-presence': ['vm-presence-check.mjs', {}, ['--mutantes'], 60000],
+  'golden-barrel': ['golden-barrel-check.mjs', {}, ['--mutantes'], 0],
+};
 const MAP_JSON = join(ROOT, 'tools', 'eval', 'map_check.json');
-const REL_MAP = existsSync(join(HERE, 'map-check.mjs'))
-  ? freshReport(MAP_JSON, () => runNode('map-check.mjs', {}, [], 1500000)) : null;
 const MAT_JSON = join(ROOT, 'tools', 'eval', 'mat_check.json');
-const REL_MAT = existsSync(join(HERE, 'mat-check.mjs'))
-  ? freshReport(MAT_JSON, () => runNode('mat-check.mjs')) : null;
 const CHAR_JSON = join(ROOT, 'tools', 'eval', 'char_probe.json');
-const REL_CHAR = freshReport(CHAR_JSON, () => runNode('char-probe.mjs', {}, ['--sem-c4']));
 const PICKUP_JSON = join(ROOT, 'tools', 'eval', 'pickup_check.json');
-const REL_PICKUP = existsSync(join(HERE, 'pickup-check.mjs'))
-  ? freshReport(PICKUP_JSON, () => runNode('pickup-check.mjs')) : null;
-for (const [script, env, args, ...resto] of [
-  ['botdiag.mjs', { SIM_SHOOTGATE: '1' }, ['180', 'all']],
-  ['botsim.mjs', { SIM_DUEL: '1' }, []],
-  ['botsim.mjs', {}, []],
-  ['tp-mount-probe.mjs', {}, []],
-  ['vmrig-test.mjs', {}, []],
-  ['char-floor.mjs', {}, []],
-  ['lajes-spawn-space-check.mjs', {}, []],
-  ['lajes-raycast-check.mjs', {}, []],
-  ['amazonia-water-movement-check.mjs', {}, []],
-  ['amazonia-agua-estacoes-check.mjs', {}, []],
-  ['pause-check.mjs', {}, []],
-  ['mode-check.mjs', {}, []],
-  ['vmlab-hud-check.mjs', {}, ['--json']],
-  ['vm-kick-sim.mjs', {}, ['--json']],
-]) if (existsSync(join(HERE, script))) simular(script, env, args, ...resto);
-for (const nome of ['authored-attach-check.mjs', 'authored-transition-check.mjs', 'authored-locomotion-check.mjs']) {
-  simular(nome, {}, [], { timeout: 0, cwd: process.cwd(), caminho: join(ROOT, 'tools/eval/' + nome) });
+let REL_MAP, REL_MAT, REL_CHAR, REL_PICKUP;
+async function dispararSimulacoes() {
+  const ativos = BLOCOS.filter((b) => ativa(b.familia));
+  const sims = new Set(ativos.flatMap((b) => b.sims));
+  plantarPontesThree();
+  PRE_DISPARO = true;
+  if (sims.has('map-check') && existsSync(join(HERE, 'map-check.mjs'))) {
+    const ids = ativos.filter((b) => b.sims.includes('map-check')).flatMap((b) => GRUPOS_MAPAS[b.familia]);
+    REL_MAP = freshReport(MAP_JSON, () => runNode('map-check.mjs', {}, [ids.join(',')], 1500000));
+  }
+  if (sims.has('mat-check') && existsSync(join(HERE, 'mat-check.mjs')))
+    REL_MAT = freshReport(MAT_JSON, () => runNode('mat-check.mjs'));
+  if (sims.has('char-probe'))
+    REL_CHAR = freshReport(CHAR_JSON, () => runNode('char-probe.mjs', {}, ['--sem-c4']));
+  if (sims.has('pickup-check') && existsSync(join(HERE, 'pickup-check.mjs')))
+    REL_PICKUP = freshReport(PICKUP_JSON, () => runNode('pickup-check.mjs'));
+  for (const b of ativos) for (const id of b.sims) {
+    if (id === 'map-check' || id === 'mat-check' || id === 'char-probe' || id === 'pickup-check') continue;
+    if (id.startsWith('authored-')) {
+      const nome = `${id}.mjs`;
+      simular(nome, {}, [], { timeout: 0, cwd: process.cwd(), caminho: join(ROOT, 'tools/eval/' + nome) });
+      continue;
+    }
+    const desc = SIMULACOES[id];
+    if (!desc) throw new Error(`simulação não registrada: ${id}`);
+    const [script, env, args, timeout = 600000] = desc;
+    if (existsSync(join(HERE, script))) {
+      const caminho = join(ROOT, 'tools/eval/' + script);
+      simular(script, env, args, { timeout, cwd: timeout === 0 ? process.cwd() : ROOT, caminho });
+    }
+  }
+  PRE_DISPARO = false;
 }
-PRE_DISPARO = false;
+async function executarBlocos() {
+  await dispararSimulacoes();
+  for (const b of BLOCOS) {
+    if (!ativa(b.familia)) continue;
+    BLOCO_ATUAL = b;
+    await b.fn();
+    BLOCO_ATUAL = null;
+  }
+}
 
 // ── 1. SINTAXE ──────────────────────────────────────────────────────────────
 // Barato e pega o erro mais caro: um arquivo que não parseia derruba o jogo
 // inteiro numa tela preta, e sob SwiftShader isso custa 4 minutos pra descobrir.
-{
+bloco('fonte', ['SYN'], async () => {
   const { readdirSync } = await import('node:fs');
   const dir = join(ROOT, 'public', 'js');
   const bad = [];
@@ -235,13 +309,13 @@ PRE_DISPARO = false;
     catch { bad.push(f); }
   }
   put('SYN', 'todos os public/js/*.js parseiam', bad.length === 0, bad.length ? bad.join(', ') : 'ok');
-}
+});
 
 // ── 2. VIEWMODEL: enquadramento e cano (vm_mint_audit.json) ─────────────────
 // O enquadramento é DERIVADO de len/gripZ medidos no GLB, não tabelado por arma.
 // Estes tetos vêm das referências que o dono escolheu (CS 1.6 / ev.io / VALORANT,
 // em /root/ref) e do que já tinha sido medido contra o CS2.
-{
+bloco('vm', ['VM1','VM2','VM3','VM4','VM5','VM6','VM9','VM10','VM12','VM15','VM16','VM18','VM18b','VM19','VM20'], async () => {
   const p = join(ROOT, 'tools', 'eval', 'vm_mint_audit.json');
   if (!existsSync(p)) {
     skip('VM*', 'enquadramento do viewmodel', 'vm_mint_audit.json ausente — rode o auditor de VM');
@@ -964,13 +1038,13 @@ PRE_DISPARO = false;
       } else skip('VM15', 'distância do grip até a banda', 'campo ausente no audit');
     }
   }
-}
+});
 
 // ── 2b. COICE DO VIEWMODEL (vm_kick_sim.json) ──────────────────────────────
 // O bloco acima mede a arma PARADA. VM7/VM8 medem a arma ATIRANDO, que é o único
 // estado capaz de empurrar a coronha através do near plane (0,01 m) da vmCamera —
 // o "arma cortada/invertida ao atirar" que nenhum número do repo pegava.
-{
+bloco('vm', ['VM7','VM8'], async () => {
   /* O ARTEFATO É REGERADO AQUI, DE PROPÓSITO. Custa 0,08 s (só regex sobre game.js +
      a mola do springs.js — sem GLB, sem three) e fecha dois buracos que já morderam:
      (a) vm_kick_sim.json não está versionado, então num checkout limpo de CI o bloco
@@ -1015,7 +1089,7 @@ PRE_DISPARO = false;
         mx <= 6, `máx ${num(mx, 1)}° (${pior ? pior[0] : '?'}) | ${acimaP.length}/${ws.length} acima do teto`);
     }
   }
-}
+}, { sims: ['vm-kick'] });
 
 // ── 2c. AUD1 — A RÉGUA BATE COM O JOGO (invariante META) ────────────────────
 // TODAS as invariantes VM acima confiam em vm_mint_audit.json. Esse JSON é produzido
@@ -1027,7 +1101,7 @@ PRE_DISPARO = false;
 // (VM_FRAME de vmconfig.js + VM_FOV_DEFAULT/VM_OFF de game.js), e conferindo contra o
 // grip em view space que o auditor gravou. Diverge = o JSON está velho OU o espelho
 // quebrou; nos dois casos os números das VM não valem nada até alguém olhar.
-{
+bloco('vm', ['AUD1'], async () => {
   const gsrc = readFileSync(join(ROOT, 'public', 'js', 'game.js'), 'utf8');
   const vsrc = readFileSync(join(ROOT, 'public', 'js', 'data', 'vmconfig.js'), 'utf8');
   const pj = join(ROOT, 'tools', 'eval', 'vm_mint_audit.json');
@@ -1308,9 +1382,9 @@ PRE_DISPARO = false;
         ` | termo vertical do argumento Y ${vertOk ? `casa (vmOffY(16:9)=${num(offY169, 4)} = VM_OFF[1])` : `DIVERGE: vmOffY(16:9)=${num(offY169, 4)} vs VM_OFF[1]=${num(OFF[1], 4)}`}`);
     }
   }
-}
+});
 
-{
+bloco('vm', ['AUD1A','AUD1B','AUD1C','AUD1C-CTL','AUD1D'], async () => {
   let audit;
   try {
     const r = await simular('authored-attach-check.mjs', {}, [], { timeout: 0, cwd: process.cwd(), caminho: join(ROOT, 'tools/eval/authored-attach-check.mjs') });
@@ -1323,8 +1397,6 @@ PRE_DISPARO = false;
   const failed = audit.checks.filter((c) => !c.ok);
   put('AUD1A', 'encaixe autorado usa corpo deformado e preserva montagem ao reequipar', audit.ok,
     failed.length ? failed.map((c) => `${c.name}: ${c.error}`).join(' | ') : 'skin, interleaved, reattach e famílias de controle conferem');
-}
-
 {
   let audit;
   try {
@@ -1391,6 +1463,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
   put('AUD1C-CTL', 'a aceitação do AUD1C classifica filho GREEN/exit0, JSON GREEN+exit1, JSON RED e erro sem JSON (mesma função, filhos sintéticos)',
     casos.every((s) => s.endsWith('ok')), casos.join(' · '));
 }
+}, { sims: ['authored-attach-check','authored-transition-check','authored-locomotion-check','golden-barrel','authored-game-ctx-check'] });
 
 /* ── 2d. VM17 — O ADS ZERA O PITCH/YAW PRÓPRIOS DA ARMA ────────────────────────
    POR QUE ESTA INVARIANTE NASCEU JUNTO COM O PITCH: um crítico anterior provou que o ADS
@@ -1411,7 +1484,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
    barato de a correção sumir com o portão verde. As duas juntas fecham os dois caminhos.
    O ROLL FICA DE FORA de propósito: girar em torno do eixo da câmera não tira a alça do
    centro, e o roll já existia antes desta rodada sem ninguém reclamar. */
-{
+bloco('fonte', ['VM17'], async () => {
   const gsrc2 = readFileSync(join(ROOT, 'public', 'js', 'game.js'), 'utf8');
   const m = /const\s+vmAdsRot\s*=\s*\(\s*ang\s*,\s*adsF\s*\)\s*=>\s*([^;]+);/.exec(gsrc2);
   if (!m) {
@@ -1429,12 +1502,12 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
       `vmAdsRot(24°, adsF): quadril ${num(v0 * 180 / Math.PI, 2)}° | meio ${num(vm * 180 / Math.PI, 2)}° | mira ${num(v1 * 180 / Math.PI, 2)}°` +
       (ok ? ' — a arma volta ao eixo antes da alça' : ' — a arma NÃO volta ao eixo: no ADS ela fica apontando torto'));
   }
-}
+});
 
 // ── 3. RIG PROCEDURAL DO VIEWMODEL (vmrig-test.mjs) ─────────────────────────
 // Aqui moram as invariantes de ANIMAÇÃO — o que faz "parecer jogo": ADS curto,
 // bob que zera ao parar, recarga que casa com o número, troca sem frame vazio.
-{
+bloco('vm', ['RIG'], async () => {
   if (!existsSync(join(HERE, 'vmrig-test.mjs'))) {
     skip('RIG', 'rig procedural do viewmodel', 'vmrig-test.mjs ausente');
   } else {
@@ -1444,14 +1517,14 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
     put('RIG', 'rig de viewmodel: ADS/bob/recarga/troca/coice', fail === 0 && pass > 0,
       `${pass} PASS / ${fail} FAIL`);
   }
-}
+}, { sims: ['vmrig'] });
 
 // ── 4. MOUNT DE ARMA NA 3ª PESSOA (tp-mount-probe.mjs) ──────────────────────
 // "Dollynho não segura arma nenhuma", "Coach com a arma pra trás", "Ancap não
 // segura direito", "ET estranho". A raiz medida: o cano vinha da linha
 // antebraço→mão e ficava entre −21° e −35° (apontado pro chão) nos 27
 // personagens. Esta invariante impede a volta disso.
-{
+bloco('bots-mount', ['TPM1','TPM2','TPM3'], async () => {
   if (!existsSync(join(HERE, 'tp-mount-probe.mjs'))) {
     skip('TPM', 'mount de arma na 3ª pessoa', 'tp-mount-probe.mjs ausente');
   } else {
@@ -1477,12 +1550,12 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
         `pior |pitch| ${num(piorPitch, 1)}° em ${pitches.length} medidas`);
     }
   }
-}
+}, { sims: ['tp-mount'] });
 
 // ── 5. BOTS: justiça, legibilidade e movimento (botsim.mjs) ─────────────────
 // Roda a classe Game real + mapas reais em node, com sementes fixas. É o que
 // permite afirmar "melhorou X%" em vez de "acho que melhorou".
-{
+bloco('bots-base', ['BOT1','BOT2','BOT3'], async () => {
   if (!existsSync(join(HERE, 'botsim.mjs'))) {
     skip('BOT', 'simulação de bots', 'botsim.mjs ausente');
   } else {
@@ -1504,7 +1577,13 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
     if (lat === null && spin === null && stuck === null) {
       skip('BOT*', 'métricas de movimento do bot', 'botsim não imprimiu a linha MEDIA');
     }
+  }
+}, { sims: ['botsim'] });
 
+bloco('bots-duelo', ['BOT4','BOT5','BOT6','BOT7'], async () => {
+  if (!existsSync(join(HERE, 'botsim.mjs'))) {
+    skip('BOT', 'simulação de bots', 'botsim.mjs ausente');
+  } else {
     // BOT4 — justiça. Rodada em modo duelo: o jogador tem que ter tempo de
     // reagir entre o primeiro tiro que encosta e a morte. "Morri e entendi por
     // quê" em vez de "morri do nada".
@@ -1548,7 +1627,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
     // BOT7 — ritmo. Morrer mais de 3 vezes por minuto contra bot é frustração.
     if (mpm !== null) put('BOT7', 'jogador morre ≤ 3 vezes/min no duelo', mpm <= 3, `${num(mpm, 2)}/min`, 'warn');
   }
-}
+}, { sims: ['botsim-duel'] });
 
 // ── 5b. BOT QUE VÊ E NÃO ATIRA (botdiag.mjs SIM_SHOOTGATE=1) ────────────────
 // BOT4/BOT6/BOT7 medem o bot atirando DEMAIS. O defeito simétrico — "o bot fica me
@@ -1564,7 +1643,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
 // janela de observação for a maior que couber no portão. Medido: a 60 s dá 0 episódios
 // e a 180 s dá 0,7 nos MESMOS binários — encurtar para caber no verde seria afrouxar o
 // limiar disfarçado de escolha de performance. Custo: ~25 s.
-{
+bloco('bots-diagnostico', ['BOT8'], async () => {
   if (!existsSync(join(HERE, 'botdiag.mjs'))) {
     skip('BOT8', 'bot que vê o jogador e não atira', 'botdiag.mjs ausente');
   } else {
@@ -1582,7 +1661,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
         epi === 0, `${num(epi, 1)} episódios | maior silêncio ${num(maior ?? 0, 2)} s | ${num(tCond ?? 0, 0)} s em condição`);
     }
   }
-}
+}, { sims: ['botdiag'] });
 
 // ── 5c. VM14 — TODO PICKUP É ALCANÇÁVEL (pickup-check.mjs) ──────────────────
 // O defeito que este número existe pra pegar: `_dropWeapon(x, z, w, true, TOP)`
@@ -1604,7 +1683,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
 // O arnês é REGERADO aqui (custa ~4 s, sem browser); o pickup_check.json versionado sai antes (#652),
 // e num checkout limpo a alternativa seria `skip` — portão verde por AUSÊNCIA de dado,
 // que é o mesmo modo de falha que deixou VM1-VM6 puladas por rodadas inteiras.
-{
+bloco('chars-mat', ['VM14'], async () => {
   if (!existsSync(join(HERE, 'pickup-check.mjs'))) {
     skip('VM14', 'todo pickup é alcançável', 'pickup-check.mjs ausente');
   } else {
@@ -1638,12 +1717,12 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
             ` | flood-fill: ${alcance.join(', ')}`);
     }
   }
-}
+}, { sims: ['pickup-check'] });
 
 // ── 6. ARSENAL: coerência da tabela de armas ────────────────────────────────
 // Invariantes que se leem direto do código, sem rodar nada. Baratas e pegam
 // classes inteiras de bug que já morderam o projeto.
-{
+bloco('fonte', ['ARM1','ARM2','ARM4','ARM5'], async () => {
   const gsrc = readFileSync(join(ROOT, 'public', 'js', 'game.js'), 'utf8');
   const wsrc = readFileSync(join(ROOT, 'public', 'js', 'weapons.js'), 'utf8');
 
@@ -1679,26 +1758,26 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
   const feedCalls = (gsrc.match(/this\._feed\(/g) || []).length;
   put('ARM5', 'killfeed emitido de um lugar só por morte', feedCalls <= 3,
     `${feedCalls} chamadas de _feed`, 'warn');
-}
+});
 
 // ── 7. ESPAÇO DE JOGO ───────────────────────────────────────────────────────
 // C4 da régua nova: a banda de 0-2 m das linhas de tiro tem que estar limpa.
 // Nos screenshots do dono há 10+ armas largadas no chão jogável em todo mapa.
-{
+bloco('fonte', ['ESP1'], async () => {
   const gsrc = readFileSync(join(ROOT, 'public', 'js', 'game.js'), 'utf8');
   const rackConcentrado = /rack|armario|_rack/i.test(gsrc);
   put('ESP1', 'existe rack/armário de armas (em vez de arma espalhada)', rackConcentrado,
     rackConcentrado ? 'ok' : 'não achei rack', 'warn');
-}
+});
 
 // ── 8. MODOS ────────────────────────────────────────────────────────────────
 // "os mapas todos podem ser rounds ou CTF, mas tem uns que forçam ser CTF".
-{
+bloco('fonte', ['MOD1'], async () => {
   const msrc = readFileSync(join(ROOT, 'public', 'js', 'maps.js'), 'utf8');
   const forcados = (msrc.match(/ctfOnly:\s*true/g) || []).length;
   put('MOD1', 'nenhum mapa força CTF (ctfOnly removido)', forcados === 0,
     `${forcados} mapas com ctfOnly:true`);
-}
+});
 
 // ── 8b. PERSONAGENS: C1..C6 da RÉGUA (tools/eval/char-probe.mjs) ────────────
 /* POR QUE ESTAS SEIS EXISTEM
@@ -1723,7 +1802,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
    Os tetos do CHR2 e do CHR6 saem do PRÓPRIO JOGO: 0,15 m é meia hitbox de cabeça
    (glbchars.js:296, BoxGeometry(0.26, 0.30, 0.26)) e 0,98 de IoU é o mesmo patamar que a
    PX2 já usa para silhueta de arma. Nenhum deles é palpite novo. */
-{
+bloco('chars-mat', ['CHR1','CHR2','CHR3','CHR5','CHR5B','CHR6','CHR7'], async () => {
   const { data: j, error } = await REL_CHAR;
   if (error) {
     for (const id of ['CHR1', 'CHR2', 'CHR3', 'CHR5', 'CHR6']) {
@@ -1733,7 +1812,11 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
     const P = j.personagens || [];
     const ref = j.refHumano || {};
     const fonteGLB = P.filter((c) => c.fonte === 'glb').length;
-    const nota = fonteGLB ? `${fonteGLB}/${P.length} medidos no GLB` : `0/${P.length} no GLB — TODOS no fallback procedural (nenhum .glb de personagem nesta árvore)`;
+    /* Pack Studio sem STUDIO_PACK_ROOT (CI): fora das coortes e DITO aqui, nunca medido no
+       procedural que o jogo não desenha (char-probe.mjs, bloco PERSONAGEM DO STUDIO). */
+    const studioNaoMedido = j.studioNaoMedido || [];
+    const nota = (fonteGLB ? `${fonteGLB}/${P.length} medidos no GLB` : `0/${P.length} no GLB — TODOS no fallback procedural (nenhum .glb de personagem nesta árvore)`)
+      + (studioNaoMedido.length ? ` · ${studioNaoMedido.length} pack(s) Studio NÃO MEDIDOS (sem STUDIO_PACK_ROOT)` : '');
 
     // ── CHR1 PROPORÇÃO ────────────────────────────────────────────────────────
     // Duas condições, porque "balão" tem duas leituras e as duas importam:
@@ -1829,9 +1912,12 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
     const mundo = j.escalaDoMundoC5 || {};
     const melhorMapa = (mundo.porMapa || []).reduce((a, m) => (((m.normalMap || 0) > (a.normalMap || 0)) ? m : a), { normalMap: 0 });
     const semSuperficie = P.filter((c) => (c.C5.mapasDeSuperficie || 0) === 0).length;
+    const mundoComErro = mundo.erro ? ['(sonda)'] : (mundo.porMapa || []).filter((m) => m.erro).map((m) => m.mapa);
+    const mundoMedido = mundoComErro.length === 0 && (mundo.porMapa || []).length > 0;
     put('CHR5', 'todo personagem tem geometria e material (e o acabamento é medido contra o mundo)',
-      vazios.length === 0,
+      vazios.length === 0 && mundoMedido,
       `${vazios.length ? 'SEM GEOMETRIA: ' + vazios.join(', ') + ' | ' : ''}`
+      + `${mundoMedido ? '' : `MUNDO NÃO MEDIDO (${mundoComErro.join(', ') || 'sem mapas'}) | `}`
       + `personagens: mediana ${P.map((c) => c.C5.triangulos).sort((a, b) => a - b)[P.length >> 1]} triângulos, `
       + `${semSuperficie}/${P.length} com ZERO mapa de superfície (normal+rough+ao). `
       + `Mundo MEDIDO em runtime: ${(mundo.porMapa || []).length} mapas, ${(mundo.total || {}).materiais || 0} materiais, `
@@ -1859,9 +1945,16 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
     const pares = j.C6topo || [];
     const iguais = pares.filter((x) => x.pior > 0.98);
     const inter = (j.C6interTimePior || [])[0];
+    /* Pack NÃO MEDIDO não é uma medição: sem o pacote, o portão não pode sair verde em
+       nenhuma máquina. O char-probe mantém a lista para a evidência; CHR6 reprova até fora
+       de CI, evitando que uma régua local passe depois de excluir o elenco Studio. */
+    const semStudio = studioNaoMedido.length > 0;
+    const comErro = P.filter((c) => c.fonte === 'ERRO').map((c) => c.id);
     put('CHR6', 'nenhum par de personagens com a MESMA silhueta (IoU par a par ≤ 0,98)',
-      iguais.length === 0,
+      iguais.length === 0 && !semStudio && comErro.length === 0,
       `${j.C6silhuetasDistintas ?? '?'} silhuetas distintas para ${P.length} personagens; `
+      + (comErro.length ? `${comErro.length} personagem(ns) com ERRO na sonda, fora da coorte: ${comErro.join(', ')}; ` : '')
+      + (studioNaoMedido.length ? `${studioNaoMedido.length} pack(s) Studio NÃO MEDIDOS (sem STUDIO_PACK_ROOT — isto REPROVA); ` : '')
       + `${iguais.length} pares acima de 0,98`
       + (iguais.length ? ` [${iguais.slice(0, 4).map((x) => `${x.a}×${x.b} ${x.pior.toFixed(3)}`).join(', ')}]` : '')
       + (j.C6grupos && j.C6grupos.length ? ` | maior grupo de clones: ${j.C6grupos[0].length} (${j.C6grupos[0].slice(0, 5).join(', ')}${j.C6grupos[0].length > 5 ? '…' : ''})` : '')
@@ -1893,7 +1986,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
       + (semDado ? ` | ${semDado} sem medida (fonte procedural)` : '')
       + ' — osso distal pintando o membro inteiro é a causa raiz do "balão"; ver tools/reskin-glb.mjs');
   }
-}
+}, { sims: ['char-probe'] });
 
 /* ── CHR8 PISO DE ALBEDO NÃO COME CONTRASTE ─────────────────────────────────
    Reclamação do dono (04/08): "todos os personagens depois desses também tão ruim
@@ -1908,7 +2001,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
    lido do fonte, então devolver o piso ao degrau acende esta invariante sozinho.
    Mutantes que a fazem ficar vermelha: `--mutante=bloco1` (região de 1 texel =
    degrau) e `--mutante=pisozero` (piso que não levanta). */
-{
+bloco('chars-mat', ['CHR8'], async () => {
   const out = await runNode('char-floor.mjs');
   const a = out.match(/C10a CONTRASTE[^\n]*: (✓|✗[^\n]*)/);
   const b = out.match(/C10b CLAREZA[^\n]*: (✓|✗[^\n]*)/);
@@ -1922,10 +2015,10 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
       `contraste: ${a[1]} | clareza: ${b[1]}`
       + (med ? ` | perda mediana: degrau ${med[1]}% → regional ${med[2]}%` : ''));
   }
-}
+}, { sims: ['char-floor'] });
 
 // ── 8c. C4: mão na arma (a régua delega ao tp-mount-probe, e aqui também) ───
-{
+bloco('bots-mount', ['CHR4'], async () => {
   const out = await runNode('tp-mount-probe.mjs');
   const semModelo = (out.match(/^\w+: SEM MODELO$/gm) || []).length;
   const enterrados = (out.match(/ENTERRADA/g) || []).length;
@@ -1938,7 +2031,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
     put('CHR4', 'nenhuma palma nasce ENTERRADA no corpo (mount de 3ª pessoa)',
       enterrados === 0, `${enterrados} personagens com a palma dentro da silhueta do corpo`);
   }
-}
+}, { sims: ['tp-mount'] });
 
 // ── 8b. MOD2 — O MODO ESCOLHIDO É O MODO JOGADO (mode-check.mjs) ─────────────
 // "esse mapa está como CAPTURA, mas eu selecionei SINGLE PLAYER — e esse erro se repete
@@ -1947,7 +2040,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
 // mapa, e o carrossel vem DEPOIS da escolha do modo no fluxo. O arnês EXECUTA o código
 // real de `openSetup`/`gotoMap`/badge/`ctf:` recortado do main.js (não é regex: um bug
 // reescrito com outro nome de variável continuaria vermelho).
-{
+bloco('fonte', ['MOD2'], async () => {
   if (!existsSync(join(HERE, 'mode-check.mjs'))) {
     skip('MOD2', 'o modo escolhido é o modo jogado', 'mode-check.mjs ausente');
   } else {
@@ -1963,7 +2056,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
         ok === tot, `${ok}/${tot} casos` + (falhas ? ` | ${falhas.slice(0, 240)}` : ' | 0 falhas'));
     }
   }
-}
+}, { sims: ['mode'] });
 
 // ── 8b1. LOOP1 — O QUADRO NÃO DEPENDE DE ELEMENTO QUE PODE SUMIR ─────────────
 /* BUG-177 (issue #617, alpha.262): `loop()` lia `$('char-select').classList` a cada
@@ -1972,7 +2065,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
    o erro não para o laço — só o envenena. Regra: dentro do corpo de `loop()` todo
    `$('…')` é acessado com `?.` ou guardado. Mutante: devolver `$('char-select').` à
    linha do `csOpen` reprova. */
-{
+bloco('fonte', ['LOOP1'], async () => {
   const src = readFileSync(join(ROOT, 'public/js/main.js'), 'utf8');
   const ini = src.indexOf('\nfunction loop() {');
   const fim = ini < 0 ? -1 : src.indexOf('\nloop();', ini);
@@ -1984,7 +2077,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
     put('LOOP1', 'o laço de quadro não quebra quando um elemento do DOM some (acesso por `?.`)',
       nus.length === 0, nus.length ? `acesso sem guarda em loop(): ${nus.join(', ')}` : '0 acessos sem guarda');
   }
-}
+});
 
 // ── 8b2. PAUSA — A PARTIDA NÃO ACABA SOZINHA (pause-check.mjs) ───────────────
 /* "pela quinta vez o jogo reiniciou sozinho, eu estava no meio de uma partida e ele foi
@@ -1996,7 +2089,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
    estava saindo apertava o botão.
    As 6 cláusulas e as 7 mutações que as fazem morder estão no cabeçalho do
    pause-check.mjs. Ele roda em node puro (~5 s) e dirige a classe Game de verdade. */
-{
+bloco('fonte', ['PAUSA'], async () => {
   if (!existsSync(join(HERE, 'pause-check.mjs'))) {
     skip('PAUSA', 'a partida não volta pro menu sozinha', 'pause-check.mjs ausente');
   } else {
@@ -2012,10 +2105,10 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
         ok === tot, `${ok}/${tot} cláusulas` + (falhas ? ` | ${falhas.slice(0, 240)}` : ' | 0 falhas'));
     }
   }
-}
+}, { sims: ['pause'] });
 
 // ── 8c. MAPAS: corpo dentro de sólido / respawn / escada / bandeiras ─────────
-/* Sete invariantes alimentadas por tools/eval/map-check.mjs, que sobe os 4 mapas REAIS
+/* Sete invariantes alimentadas por tools/eval/map-check.mjs, que sobe os mapas REAIS do shard
    e mede com o instrumento do próprio jogo (`_collide`, `groundHeightAt`, `_losClear`,
    raycast contra `world.root`). Cada uma nasceu de uma frase do dono:
      MAP1 "os jogadores estão SUBMERSOS EMBAIXO DA ESTÁTUA"
@@ -2035,27 +2128,36 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
    no fundo da piscina encostando na parede dela; nos outros, bases de coluna e canteiros
    decorativos) e mexer nesses mapas não estava no pedido. O teto NÃO deixa a dívida crescer:
    qualquer sólido novo sobre chão andável reprova na hora. */
-{
+function registrarBlocoMapas(familia, idsMapas) {
+  const nucleo = familia === 'mapas-nucleo';
+  const ids = ['MAPAUD','MAP1','MAP2','MAP2B','MAP4','CTF1','CTF2',
+    ...(nucleo ? ['LRP1','LSP1','MAP3','MAP5'] : [])];
+  bloco(familia, ids, async () => {
   if (!existsSync(join(HERE, 'map-check.mjs'))) {
     skip('MAP*', 'geometria de mapa (submerso/respawn/escada/bandeiras)', 'map-check.mjs ausente');
   } else {
-    const raycast = await runNode('lajes-raycast-check.mjs');
-    put('LRP1', 'Lajes: raycast conserva impactos e elimina trabalho fora do raio',
-      !raycast.includes('__ERRO__') && raycast.includes('✓ LRP1'),
-      raycast.split('\n').find(line => line.includes('LRP1')) || raycast.slice(-400));
-    const beco = await runNode('lajes-spawn-space-check.mjs');
-    const respawnBecoValido = !beco.includes('__ERRO__') && beco.includes('✓ LSP1');
-    put('LSP1', 'Lajes: slots térreos distintos, espaço para corpos e saída física até o campo',
-      respawnBecoValido, beco.split('\n').find(linha => linha.includes('LSP1')) || beco.slice(-400));
-    // O pré-disparo reserva 1500 s para os 21 mapas; relatório ausente continua falha.
+    let respawnBecoValido = true;
+    if (nucleo) {
+      const raycast = await runNode('lajes-raycast-check.mjs');
+      put('LRP1', 'Lajes: raycast conserva impactos e elimina trabalho fora do raio',
+        !raycast.includes('__ERRO__') && raycast.includes('✓ LRP1'),
+        raycast.split('\n').find(line => line.includes('LRP1')) || raycast.slice(-400));
+      const beco = await runNode('lajes-spawn-space-check.mjs');
+      respawnBecoValido = !beco.includes('__ERRO__') && beco.includes('✓ LSP1');
+      put('LSP1', 'Lajes: slots térreos distintos, espaço para corpos e saída física até o campo',
+        respawnBecoValido, beco.split('\n').find(linha => linha.includes('LSP1')) || beco.slice(-400));
+    }
+    // O pré-disparo reserva 1500 s para os mapas do shard; relatório ausente continua falha.
     // Perfil e comparação dos critérios: docs/maps/javaporcos-continuacao-20261030.md.
     const { data: j, error } = await REL_MAP;
-    if (error || !Array.isArray(j?.mapas) || j.mapas.length === 0) {
+    const mapasMedidos = (j?.mapas || []).filter((m) => idsMapas.includes(m.map));
+    if (error || !Array.isArray(j?.mapas) || mapasMedidos.length !== idsMapas.length) {
+      const faltam = idsMapas.filter((id) => !mapasMedidos.some((m) => m.map === id));
       put('MAPAUD', 'map-check.mjs gera relatório fresco e válido de geometria',
-        false, error || 'map-check.mjs gerou JSON sem mapas');
+        false, error || `map-check.mjs não cobriu o shard: faltam ${faltam.join(', ') || 'mapas'}`);
     } else {
-      const M = Object.fromEntries((j.mapas || []).map((m) => [m.map, m]));
-      const erros = (j.mapas || []).filter((m) => m.err);
+      const M = Object.fromEntries(mapasMedidos.map((m) => [m.map, m]));
+      const erros = mapasMedidos.filter((m) => m.err);
 
       // ---- MAP1: corpo dentro de sólido ----
       // praca_old saiu do dicionário junto com o mapa (o dono mandou apagar a praça clássica).
@@ -2087,7 +2189,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
       {
         const desnivel = [], evid = [];
         let havanAndar = null, havanExp = null, havanVis = null;
-        for (const m of (j.mapas || [])) {
+        for (const m of mapasMedidos) {
           if (m.err) continue;
           for (const t of (m.exposicaoPorTime || [])) {
             if (t.chaoMax - t.chaoMin > 0.30) desnivel.push(`${m.map}/${t.team} Δ${(t.chaoMax - t.chaoMin).toFixed(2)} m`);
@@ -2095,7 +2197,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
             if (m.map === 'loja_h' && t.team === 'B') { havanAndar = t.chaoMin; havanExp = t.fracMedia; havanVis = t.maiorVisada; }
           }
         }
-        const ok = !desnivel.length && havanAndar !== null && havanAndar >= 3.0 && havanExp === 0 && havanVis === 0;
+        const ok = !desnivel.length && (!nucleo || (havanAndar !== null && havanAndar >= 3.0 && havanExp === 0 && havanVis === 0));
         put('MAP2', 'cada time nasce todo no MESMO andar, e o respawn da loja (loja_h/B) fica no andar de cima e não é visto de fora',
           ok,
           `loja_h/B chão ${havanAndar} m (mezanino = 3,4) · exposição ${havanExp === null ? '?' : (havanExp * 100).toFixed(1)}% dos pontos a ≥ 25 m · maior visada ${havanVis} m` +
@@ -2109,7 +2211,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
          andável e o topo do degrau em que se pisa (≤ 0,10 m — foi um desencontro de 23 cm
          que fez o jogador "escalar parede invisível"), e a TRAVESSIA (o A* e o flood-fill de
          andabilidade têm que subir por ela; o mezanino já foi uma ILHA no grafo). */
-      {
+      if (nucleo) {
         const m = M.loja_h;
         const es = m && (m.escadas || [])[0];
         const tv = m && (m.travessia || [])[0];
@@ -2138,7 +2240,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
          se atira nela": a MID do loja_h estava cravada na estátua e media 0,0 m. */
       {
         const R_CAP = 4.5, colin = [], perto = [], enterrada = [], evid = [];
-        for (const m of (j.mapas || [])) {
+        for (const m of mapasMedidos) {
           if (m.err) continue;
           if (m.alturaTrianguloMin <= R_CAP) colin.push(`${m.map} ${m.alturaTrianguloMin} m`);
           for (const b of (m.bandeiras || [])) {
@@ -2169,7 +2271,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
          A exigência de pátio não se aplica ali; demais mapas preservam ambos os tetos. */
       {
         const ruins = [], evid = [];
-        for (const m of (j.mapas || [])) {
+        for (const m of mapasMedidos) {
           if (m.err) continue;
           evid.push(`${m.map} folga ${m.piorFolga} m / área ${m.piorArea} m²`);
           // V6 aceita exige respawn em beco; segurança física cobrada por LSP1.
@@ -2202,7 +2304,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
          com `userData.proxyGLB`) são PULADAS e o número de pulos entra na evidência. */
       {
         const ruins = [], evid = [];
-        for (const m of (j.mapas || [])) {
+        for (const m of mapasMedidos) {
           if (m.err) continue;
           evid.push(`${m.map} ${m.occluderSemMalha.length}/${m.occMedidos} (${(m.fracSemMalha * 100).toFixed(1)}% da superfície, ${m.occPulados} proxy de GLB pulado)`);
           for (const o of (m.occluderSemMalha || []).slice(0, 3))
@@ -2235,10 +2337,10 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
          25 m onde um quadrante da grade 4×4 mede 6 m — menos que uma gôndola. Cobrar um teto
          de povoamento nesses dois seria pedir outro mapa, não consertar um defeito.
          A CTF2 é cobrada nos 4: "ter mais de um caminho" não é estilo de mapa nenhum. */
-      {
+      if (nucleo) {
         const ALVO_MAP5 = 'loja_h';
         const evid = [], ruins = [];
-        for (const m of (j.mapas || [])) {
+        for (const m of mapasMedidos) {
           if (m.err) continue;
           evid.push(`${m.map} espaçamento ${m.piorEspacamento} m · prop ${m.piorRazaoProp}× / wp ${m.piorRazaoWp}× da mediana`);
           if (m.map !== ALVO_MAP5) continue;
@@ -2254,7 +2356,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
       }
       {
         const ruins = [], evid = [];
-        for (const m of (j.mapas || [])) {
+        for (const m of mapasMedidos) {
           if (m.err) continue;
           evid.push(`${m.map} mín ${m.piorRotas}`);
           for (const r of (m.rotasSpawnBandeira || []))
@@ -2267,28 +2369,30 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
       }
     }
   }
+  }, { sims: ['map-check', ...(nucleo ? ['lajes-raycast','lajes-spawn'] : [])], cenario: familia });
 }
+for (const [familia, ids] of Object.entries(GRUPOS_MAPAS)) registrarBlocoMapas(familia, ids);
 
 // MAP6: o acesso água→madeira precisa funcionar com a física real, não apenas
 // coincidir no groundHeightAt. Os quatro trajetos cobrem os dois pontões do mercado.
-{
+bloco('mapas-amazonia', ['MAP6'], async () => {
   const out = await runNode('amazonia-water-movement-check.mjs');
   put('MAP6', 'jogador alcança os dois pontões baixos da Amazônia com e sem salto',
     out.includes('PASS AMW4') && !out.includes('__ERRO__'),
     (out.match(/(?:PASS|FAIL) AMW4[^\n]*/) || ['AMW4 sem resultado'])[0]);
-}
+}, { sims: ['amazonia-water'], cenario: 'amazonia' });
 
 // AME (#680): as 11 estações têm de ser alcançáveis A PARTIR DA ÁGUA. Três delas
 // (A 14,−27 · D 14,6 · F −14,6) mediam o chão-base na rampa da margem (h −0,03) e o
 // primeiro degrau nascia a menos de 0,30 m do chão de quem chega da água: o corpo entra
 // na sombra do colisor e trava antes do primeiro degrau. Conserto: tabuleiro de acesso
 // no idioma dos `pontoes`. O mutante `pe-na-agua` volta ao estado de antes.
-{
+bloco('mapas-amazonia', ['AME'], async () => {
   const out = await runNode('amazonia-agua-estacoes-check.mjs');
   put('AME', 'as 11 estações da Amazônia são alcançáveis a partir da água',
     out.includes('PASS AME3') && !out.includes('__ERRO__'),
     (out.match(/(?:PASS|FAIL) AME3[^\n]*/) || ['AME3 sem resultado'])[0]);
-}
+}, { sims: ['amazonia-estacoes'], cenario: 'amazonia' });
 
 /* ── 8d. MATERIAL, LUZ E SUPERFÍCIE (mat-check.mjs) ──────────────────────────
    Quatro invariantes nascidas de três frases do dono sobre a MESMA coisa: o jogo não
@@ -2320,7 +2424,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
           ≥ 6 m² (uma parede de 2 × 3 m) e albedo claro (luminância ≥ 0,55). As três
           condições juntas são a definição operacional de "retângulo branco grande e liso";
           caixa escura sem textura não é a queixa e não entra. */
-{
+bloco('chars-mat', ['MAT1','MAT2','FOG1','TEX1'], async () => {
   if (!existsSync(join(HERE, 'mat-check.mjs'))) {
     skip('MAT*', 'material/luz/superfície', 'mat-check.mjs ausente');
   } else {
@@ -2447,12 +2551,12 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
       }
     }
   }
-}
+}, { sims: ['mat-check'] });
 
 // ── 9. HUD EXPERIMENTAL ─────────────────────────────────────────────────────
 // BUG-43: o protótipo do menu de armas existia apenas em dev.html, podado da
 // produção. A régua executa o método real com e sem ?vmlab=1.
-{
+bloco('vm', ['HUD1'], async () => {
   const out = await runNode('vmlab-hud-check.mjs', {}, ['--json']);
   let audit = null;
   try { audit = JSON.parse(out); } catch {}
@@ -2463,7 +2567,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
   put('HUD1', '?vmlab=1 materializa o menu de armas do loadout no HUD real',
     itens.length === 6 && falhasHud.length === 0,
     itens.length ? itens.map((item) => `${item.id}:${item.ok ? 'ok' : item.evid}`).join(' · ') : out.trim());
-}
+}, { sims: ['hud'] });
 
 /* ── 9.9 CUSTO DE CENA ───────────────────────────────────────────────────────
    Lê a medição que `tools/eval/cena-check.mjs` gravou. Ela precisa de navegador e por
@@ -2479,7 +2583,7 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
    outro jogo, só que o de antigamente. Probe velho fica AMARELO (warn) em vez de vermelho
    porque a árvore de quem só mexeu no site não tem por que reprovar por isso; quem
    precisa do número fresco é o pré-deploy, e lá quem manda é a própria `eval:cena`. */
-{
+bloco('fonte', ['CENA1','CENA2','CENA3'], async () => {
   const pProbe = join(ROOT, 'tools/eval/cena_probe.json');
   if (!existsSync(pProbe)) {
     skip('CENA1', 'custo de cena dentro do teto', 'sem tools/eval/cena_probe.json — rode `npm run eval:cena`');
@@ -2514,22 +2618,22 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
       + ' | atualize com `npm run eval:cena`',
       'warn');
   }
-}
+});
 
-{
+bloco('vm', ['AUD1V'], async () => {
   const out = await runNode('vm-presence-check.mjs', {}, ['--mutantes'], 60000);
   let report;
   try { report = JSON.parse(out.split('\n').find((line) => line.startsWith('{"ok":'))); } catch {}
   put('AUD1V', 'mobile e desktop habilitam autorado com mãos e mantêm arma durante falha de assets',
     report?.ok === true && !out.includes('__ERRO__'),
     report ? `${report.samples} verificações; ${report.failures} falhas` : out.slice(-300));
-}
+}, { sims: ['vm-presence'] });
 
 // ── 10. INVARIANTES QUE EXIGEM PIXEL (marcadas, não rodadas aqui) ───────────
 // Regressões reportadas em 27/09: a validação de área útil do ADS e da MGX5
 // em jogo real está em `node tools/eval/ads-visibility-check.mjs`. Estas três
 // condições de fonte/produto são baratas e permanecem no portão Node.
-{
+bloco('fonte', ['VM21','VM22','VM23'], async () => {
   const svd = JSON.parse(readFileSync(join(ROOT, 'tools/fabrica/fichas/svd.json'), 'utf8'));
   const scope = svd.zonaLivre?.find((p) => p.peca === 'luneta-svd');
   const own = svd.malhaPropria;
@@ -2553,16 +2657,30 @@ function aud1Classifica({ audit, execFalha }, rotuloFalha) {
   put('VM23', 'MGX5 mantém luneta funcional no jogo normal',
     /lmg:\s*\{[^\n]*scope:\s*true/.test(weapons) && /lmg:\s*38/.test(game),
     'scope:true na tabela de armas e FOV 38 no ADS');
-}
+});
 
 // O antigo `tools/eval/motion.mjs` citado aqui nunca existiu. PX1 agora tem
 // arnês de browser dedicado, executado separadamente deste runner Node; as
 // demais PX seguem pendentes de medições visuais próprias (ver KNOWN-BUGS).
-for (const id of ['AMH1','AMH2','AMH3','AMH4']) skip(id, 'Amazônia: apoios, cabanas, tiros e movimento', 'exige browser: HABITAT=1 node tools/eval/amazonia-visual-capture.mjs');
-skip('PX1', 'no ADS o jogador vê o alvo nas três câmeras', 'exige browser — rode node tools/eval/ads-visibility-check.mjs');
-skip('PX2', 'silhuetas das 26 armas diferem (IoU par a par < 0,85)', 'exige browser — sem arnês dedicado (divida PX)');
-skip('PX3', 'mão travada no grip em todo frame de toda animação', 'exige browser/traço — sem arnês dedicado (divida PX)');
-skip('PX4', 'aliado × inimigo distinguíveis em 1 frame a 5/20/40 m', 'exige browser — sem arnês dedicado (divida PX)');
+bloco('mapas-amazonia', ['AMH1','AMH2','AMH3','AMH4'], async () => {
+  for (const id of ['AMH1','AMH2','AMH3','AMH4']) skip(id, 'Amazônia: apoios, cabanas, tiros e movimento', 'exige browser: HABITAT=1 node tools/eval/amazonia-visual-capture.mjs');
+}, { cenario: 'amazonia' });
+bloco('vm', ['PX1','PX2','PX3','PX4'], async () => {
+  skip('PX1', 'no ADS o jogador vê o alvo nas três câmeras', 'exige browser — rode node tools/eval/ads-visibility-check.mjs');
+  skip('PX2', 'silhuetas das 26 armas diferem (IoU par a par < 0,85)', 'exige browser — sem arnês dedicado (divida PX)');
+  skip('PX3', 'mão travada no grip em todo frame de toda animação', 'exige browser/traço — sem arnês dedicado (divida PX)');
+  skip('PX4', 'aliado × inimigo distinguíveis em 1 frame a 5/20/40 m', 'exige browser — sem arnês dedicado (divida PX)');
+});
+
+if (PLANO_JSON) {
+  const blocos = BLOCOS.filter((b) => ativa(b.familia)).map((b) => ({
+    familia: b.familia, ids: b.ids, cenario: b.cenario, sims: simsDoPlano(b),
+    ...(b.familia in GRUPOS_MAPAS ? { mapas: GRUPOS_MAPAS[b.familia] } : {}),
+  }));
+  console.log(JSON.stringify({ familias: [...new Set(blocos.map((b) => b.familia))], blocos }, null, 1));
+  process.exit(0);
+}
+await executarBlocos();
 
 // ── RELATÓRIO ───────────────────────────────────────────────────────────────
 /* KNOWN-RED.json: dívidas conhecidas viram DÍVIDA (não reprovam); crítica

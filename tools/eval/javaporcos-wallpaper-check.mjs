@@ -2,7 +2,7 @@
  *
  * Pedido do dono (30/10/2026): "fazer um wallpaper pra ler no modo javaporco com os javaporcos".
  *
- *   JW1  carregando invasao_javaporcos, o #load-overlay usa /img/loading-javaporcos.webp;
+ *   JW1  carregando invasao_javaporcos, o #load-overlay usa /img/loading-javaporcos.webp com revisão;
  *   JW2  carregando outro mapa (praca_poderes), a rotação normal continua (sem a arte do modo);
  *   JW3  o arquivo existe e é servido como imagem.
  *
@@ -16,7 +16,7 @@ const BASE = process.env.BASE;
 if (!BASE) { console.error('BASE obrigatório (ex.: BASE=http://localhost:4321)'); process.exit(1); }
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 if (!['', 'sem-fixa'].includes(MUTANTE)) { console.error(`mutante desconhecido: ${MUTANTE}`); process.exit(1); }
-const ALVO = "_loadWallFixa = (mapName && MAPS[currentMap]?.loadingWall) || '';";
+const ALVO = "_loadWallFixa = (mapName && MAPS[currentMap]?.loadingWall) || loadingWallDoPersonagem(currentChar) || '';";
 
 const b = await chromium.launch({ args: ['--use-angle=metal', '--headless=new', '--mute-audio'] });
 async function paredeDaEspera(mapa) {
@@ -45,7 +45,7 @@ async function paredeDaEspera(mapa) {
 
 const res = [];
 const java = await paredeDaEspera('invasao_javaporcos');
-res.push(['JW1', 'espera do javaporcos usa a arte do modo', /loading-javaporcos\.webp/.test(java), java]);
+res.push(['JW1', 'espera do javaporcos usa a arte revisada do modo', /loading-javaporcos\.webp\?v=[^'")]+/.test(java), java]);
 const praca = await paredeDaEspera('praca_poderes');
 res.push(['JW2', 'outro mapa segue a rotação normal', /loading-\d+\.webp/.test(praca), praca]);
 const ctx = await b.newContext();

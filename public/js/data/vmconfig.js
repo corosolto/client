@@ -91,9 +91,18 @@ export const VM_WEAPON = {
       slideLiner: { mesh: 'GEO-deagle-slide-liner-reconstructed', bone: 'Slider' },
       hammer: { mesh: 'GEO-deagle-hammer', bone: 'Hammer' },
     } }),
-  // PT-38 no enquadramento APROVADO (FAMILY_FRAME.pistol); a reescala do #631 foi revertida.
-  // As curtas medem-se contra ela: ARMAS_CURTAS em tools/eval/lib/vm-limiares.mjs.
-  pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
+  // PT-38 sem pintura = X18 da fábrica (dono, 06/11: a golden pública via a traseira); pintura
+  // também (pinturaNaFabrica, 10/11): docs/viewmodels/pistola-pintada-fabrica.md.
+  pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay', pinturaNaFabrica: true,
+    // A câmera do piloto (fov 34°) dava 1,99× a PT-38 aprovada (playtest 06/11). Unidades do
+    // piloto (~97 un/m); medido em vm-reguas pistola-ref: 1,05×, desvio 1 px.
+    goldFrame: { x: -7.5, y: -5.5, z: 0, fov: 60 },
+    ads: { auto: true, off: [0, 0.04, 0], rotDeg: [0, 0, 0], pull: 0, fovScale: 1, alivio: 36.9, estilo: 'foco',
+      linha: { off: [0, -7.8, 0], estilo: 'foco' },
+      golden: { osso: 'CoroWeapon',
+        alca: [-0.1032791669, -6.2635508196, 20.0436404436],
+        massa: [-0.2081203062, -31.7511911266, 19.731317572],
+        cima: [0, 0, 1] } } }),
   // M92: arma até o
   // punho (grip-support.mjs), cabo na borda e ADS pela alça tangente (sockets 10° fora da linha).
   m92: W('ak', { baked: true, ready: true, assetLimit: 'pente-fundido-na-malha Mint',
@@ -194,7 +203,7 @@ export const VM_FABRICA = Object.freeze({
   pistol: F('pistol', 'X18', { frame: CURTA, ads: { ...A(0.38), auto: false, off: [0, 0.04, 0], estilo: 'foco', linha: { off: [0, -0.08, 0], estilo: 'foco' } } }),
   deagle: F('deagle', 'DGL50', { recoilScale: 0.45, frame: CURTA, ads: { ...A(0.38), auto: false, off: [0, 0.04, 0], estilo: 'foco', linha: { off: [0, -0.08, 0], estilo: 'foco' } } }),
   revolver38: F('revolver', 'Viper-357', { frame: { ...CURTA, y: -0.07, rotDeg: [-10, 0, -5] }, ads: A(0.38) }),
-  m92: F('ak', 'AK', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
+  m92: F('ak', 'AK', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, frame: { x: 0.03, y: -0.01, z: -0.26, rotDeg: [1.69, 22, 6.19] }, ads: A(0.3) }),
   md97: F('ar', 'MX16A4', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: A(0.3) }),
   m400: F('ar', 'MX16A4', { variante: true, recoilScale: 4.5, recoilLoc: 1.5, ads: S(0.3) }),
   g3sg1: F('g3', 'G3', { variante: true, recoilScale: 7, recoilLoc: 1.5, ads: S(0.1) }),
@@ -309,7 +318,8 @@ export function authoredFrameFor(weapon, family, sourceKey = '', cameraFov = 84)
       ...(VM_FABRICA[weapon]?.frame || {}),
     };
   }
-  if (sourceKey.startsWith('gold#')) return { x: 0, y: 0, z: 0, fov: cameraFov };
+  // gold#: câmera do próprio piloto; goldFrame (unidades do piloto) reenquadra sem tocar o A/B family.
+  if (sourceKey.startsWith('gold#')) return { x: 0, y: 0, z: 0, fov: cameraFov, ...(VM_WEAPON[weapon]?.goldFrame || {}) };
   if (sourceKey.startsWith('rt#')) return { x: 0, y: 0, z: 0, fov: 74 };
   if (sourceKey.startsWith('gs#')) {
     const frame = VM_AUTHORED_FRAME.goldsrc[weapon];

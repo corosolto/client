@@ -1,18 +1,24 @@
 # preview-deploy — PUBLICA o que já veio compilado, sem executar nada do fork.
 #
-# Metade 2 de 2 do preview de fork. Este job TEM o `VERCEL_TOKEN`, e por isso a
-# regra dele é uma só: nunca rodar código que veio do PR. Ele não faz checkout da
-# branch do fork, não roda `npm ci`, não roda script de build. Baixa o artefato
-# produzido pelo `preview-build.yml` — bytes estáticos de `.vercel/output` — e
-# chama `vercel deploy --prebuilt`, que apenas envia arquivo.
+# Aposentado com o build (fase 2): o preview de PR agora é cf-preview.yml (Cloudflare).
+# Este workflow continua em `workflow_run` porque é o que publica o preview de
+# EMERGÊNCIA: alguém com write dispara `preview-build` por `workflow_dispatch`, e a
+# conclusão dele acende este job com o contexto base e o VERCEL_TOKEN. Como o build
+# não roda mais por push de PR, nenhum PR gasta Vercel aqui.
 #
-# `workflow_run` é o que torna isso possível: ele roda no contexto do repositório
-# BASE, com segredo, mesmo quando o PR original veio de fork.
+# O desenho de segurança é o mesmo desde 22/08: este job TEM o `VERCEL_TOKEN`, e por
+# isso a regra dele é uma só: nunca rodar código que veio do PR. Ele não faz checkout
+# da branch do fork, não roda `npm ci`, não roda script de build. Baixa o artefato
+# produzido pelo `preview-build.yml` — bytes estáticos de `.vercel/output` — e chama
+# `vercel deploy --prebuilt`, que apenas envia arquivo.
 #
 # ATENÇÃO A QUEM FOR MEXER: qualquer passo aqui que execute conteúdo do artefato
 # (um `npm run`, um `node` sobre arquivo baixado, um `bash` de script do fork)
 # desfaz a separação inteira e devolve o token para as mãos de quem abriu o PR. É
 # o que a régua PRV3 guarda.
+#
+# `workflow_run` roda no contexto do repositório BASE, com segredo, mesmo quando o
+# build veio de dispatch sobre ref de PR.
 name: preview-deploy
 
 on:
@@ -51,15 +57,23 @@ jobs:
         run: |
           NUM=$(cat /tmp/artefato/preview-meta-*/pr-numero.txt 2>/dev/null | tr -dc '0-9')
           SHA=$(cat /tmp/artefato/preview-meta-*/pr-sha.txt 2>/dev/null | tr -dc '0-9a-f')
-          # Confere contra a API em vez de confiar no arquivo: ele veio de um job que
-          # rodou código do fork, então é entrada não confiável.
+          REPO=$(cat /tmp/artefato/preview-meta-*/pr-repo.txt 2>/dev/null | tr -d '\r\n')
+          # Confere contra a API em vez de confiar nos arquivos: eles vieram de um job
+          # que rodou código do fork, então são entrada não confiável.
           case "$NUM" in ''|*[!0-9]*) echo "número de PR inválido no artefato"; exit 1 ;; esac
-          REAL=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$NUM" --jq .head.sha)
-          if [ "$REAL" != "$SHA" ]; then
-            echo "::warning::o PR #$NUM avançou desde o build ($SHA != $REAL) — preview descartado"
+          case "$SHA" in ''|*[!0-9a-f]*) echo "SHA inválido no artefato"; exit 1 ;; esac
+          if ! printf '%s\n' "$REPO" | grep -Eq '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
+            echo "repositório inválido no artefato"
+            exit 1
+          fi
+          REAL_REPO=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$NUM" --jq .head.repo.full_name)
+          REAL_SHA=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$NUM" --jq .head.sha)
+          if [ "$REAL_REPO" != "$REPO" ] || [ "$REAL_SHA" != "$SHA" ]; then
+            echo "::warning::o PR #$NUM avançou ou mudou de origem desde o build (repo $REPO != $REAL_REPO ou SHA $SHA != $REAL_SHA) — preview descartado"
             echo "pular=1" >> "$GITHUB_OUTPUT"
           fi
           echo "numero=$NUM" >> "$GITHUB_OUTPUT"
+          echo "repositorio=$REPO" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -77,7 +91,7 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+          HEAD_REPO: ${{ steps.pr.outputs.repositorio }}
         run: |
           mkdir -p .vercel/output
           cp -R /tmp/artefato/preview-*/. .vercel/output/ 2>/dev/null || true
@@ -107,4 +121,4 @@ jobs:
           PREVIEW_URL: ${{ steps.deploy.outputs.url }}
         run: |
           gh pr comment "$PR_NUM" --repo "$GITHUB_REPOSITORY" \
-            --body "🤖 **preview** no ar → $PREVIEW_URL"
+            --body "🤖 **preview** is live → $PREVIEW_URL"

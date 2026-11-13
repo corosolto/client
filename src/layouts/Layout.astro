@@ -1,6 +1,7 @@
 ---
-import { SITE, BRAND, BRAND_FULL, BRAND_ALT, DESC_SHORT, ORG_ID, WEBSITE_ID, abs, routeOgPath, RANKING_ON, DISCORD_URL, TELEGRAM_URL, GITHUB_URL } from '../lib/site';
+import { SHARE_ORIGIN, SITE, BRAND, BRAND_FULL, BRAND_ALT, DESC_SHORT, ORG_ID, WEBSITE_ID, abs, routeOgPath, RANKING_ON, DISCORD_URL, TELEGRAM_URL, GITHUB_URL } from '../lib/site';
 import { PT_EN_PAIRS } from '../lib/i18n-pairs';
+import { X_PIXEL_ID } from '../lib/x-pixel';
 import pkg from '../../package.json';
 declare const __MANIFESTO_JS__: { revision: string };
 const V = pkg.version;
@@ -146,6 +147,9 @@ const currentLabel = h1 ?? title.split(' | ')[0];
 <head>
 <link rel="preload" as="script" href={`/js/privacy-runtime.js?v=${V}-${JS_REV}`} />
 <script src={`/js/privacy-runtime.js?v=${V}-${JS_REV}`} is:inline></script>
+<script is:inline define:vars={{ SHARE_ORIGIN }}>
+window.__SHARE_ORIGIN = SHARE_ORIGIN;
+</script>
 <script type="module" src={`/js/site-visit.js?v=${V}-${JS_REV}`} is:inline></script>
 {import.meta.env.DEV && import.meta.env.SOCIAL_LOCAL_GAME_URL && <meta name="cs-local-game" content={import.meta.env.SOCIAL_LOCAL_GAME_URL} />}
 <meta charset="UTF-8">
@@ -199,6 +203,14 @@ const currentLabel = h1 ?? title.split(' | ')[0];
 <script is:inline>
   if (window.self !== window.top && new URLSearchParams(location.search).get('embed') === '1') document.documentElement.dataset.embedded = 'true';
 </script>
+<!-- X conversion tracking base code -->
+<script is:inline define:vars={{ X_PIXEL_ID }}>
+!function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);
+},s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,u.src='https://static.ads-twitter.com/uwt.js',
+a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
+twq('config', X_PIXEL_ID);
+</script>
+<!-- End X conversion tracking base code -->
 <slot name="head" />
 <style is:global>
 @font-face{font-family:'Anton';src:url('/fonts/anton-latin-400-normal.woff2') format('woff2');font-weight:400;font-display:swap}

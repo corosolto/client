@@ -1,0 +1,22 @@
+# Staging paralelo da migração Vercel -> Cloudflare Workers.
+# Sem DNS nesta fase: o host workers.dev é a prova de saída da fase 3.
+name = "csb-staging"
+main = "dist/server/entry.mjs"
+compatibility_date = "2026-11-09"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[assets]
+binding = "ASSETS"
+directory = "./dist/client"
+not_found_handling = "none"
+html_handling = "drop-trailing-slash"
+run_worker_first = ["/", "/index.html"]
+
+[observability]
+enabled = true
+
+# Texto, não segredo. Os quatro segredos entram com `wrangler secret put`.
+[vars]
+PUBLIC_API_BASE = "https://csbrasil-backend-hupd3weo5q-rj.a.run.app"
+RANKING_ON = "true"

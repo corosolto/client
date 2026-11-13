@@ -27,8 +27,8 @@ export function fonteMutante() {
   const s2 = s1.replace("e.kind === 'smoke' || e.kind === 'flash' ? e.kind : 'frag'",
     "e.kind === 'smoke' || (e.kind === 'flash' && this.flashOn) ? e.kind : 'frag'");
   if (s2 === s1) throw new Error('mutante: mapeamento de kind não encontrado');
-  const s3 = s2.replace(/else if \(e\.kind === 'flash'\) \{ if \(this\.flashOn\) game\._popFlash\(pos, this\._netMap\.get\(e\.o \| 0\) \|\| null\); \}/,
-    "else if (e.kind === 'flash' && this.flashOn) game._popFlash(pos, this._netMap.get(e.o | 0) || null)");
+  const s3 = s2.replace(/else if \(e\.kind === 'flash'\) \{ if \(this\.flashOn\) game\._popFlash\(pos, dono\); \}/,
+    "else if (e.kind === 'flash' && this.flashOn) game._popFlash(pos, dono)");
   if (s3 === s2) throw new Error('mutante: ramo boom do flash não encontrado');
   return s3;
 }

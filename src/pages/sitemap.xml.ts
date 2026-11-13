@@ -63,7 +63,8 @@ export const STATIC: [string, string, string][] = [
      As outras telas do hub são estado do app e ficam fora (noindex). ADR 0008. */
   ...ROTAS_HUB.filter((r) => r.indexavel && (!r.dependeDoRanking || RANKING_ON)).map((r) => [r.caminho, '0.6', 'daily'] as [string, string, string]),
   ['/changelog',   '0.5', 'weekly'],
-  ...PT_EN_PAIRS.map(([, en]) => [en, '0.5', 'weekly'] as [string, string, string]),
+  /* `/en` é a home em inglês: peso de home, não de página de apoio. */
+  ...PT_EN_PAIRS.map(([pt, en]) => [en, pt === '/' ? '0.9' : '0.5', pt === '/' ? 'daily' : 'weekly'] as [string, string, string]),
 ];
 
 export const GET: APIRoute = async () => {
@@ -75,8 +76,9 @@ export const GET: APIRoute = async () => {
      índice, e um `count` com `head: true` não traz linha nenhuma - é bem mais
      barato que puxar 5.000 registros só pra contar. */
   let totalPerfis = 0;
-  if (RANKING_ON && supabaseAdmin) {
-    const { count } = await supabaseAdmin
+  const db = supabaseAdmin();
+  if (RANKING_ON && db) {
+    const { count } = await db
       .from('player_points')
       .select('id', { count: 'exact', head: true });
     totalPerfis = count ?? 0;
@@ -100,11 +102,12 @@ export const GET: APIRoute = async () => {
 
 /** Uma fatia dos perfis, já como entradas de sitemap. Usada pelas duas rotas. */
 export async function perfis(offset: number, limite: number): Promise<Entrada[]> {
-  if (!RANKING_ON || !supabaseAdmin || limite <= 0) return [];
+  const db = supabaseAdmin();
+  if (!RANKING_ON || !db || limite <= 0) return [];
   const out: Entrada[] = [];
   // O PostgREST do Supabase corta cada resposta em max-rows (1.000) sem erro.
   for (let de = offset, fim = offset + limite; de < fim;) {
-    const { data } = await supabaseAdmin
+    const { data } = await db
       .from('player_points')
       .select('id,nick')
       .order('id', { ascending: true })

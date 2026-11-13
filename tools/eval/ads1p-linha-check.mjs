@@ -48,9 +48,12 @@ const CURTAS = new Set(['pistol', 'deagle', 'revolver38']);
 // armas TEM de medir linha (massa na cruz), mesmo que a config diga 'foco'.
 const LINHA = new Set(['ak']);
 
-// Lançamento: arma com produto da fábrica serve `fab#`; a AK fica na golden.
+// Lançamento, MESMA ordem do entryKeyFor (authoredvm.js): golden aprovada (catálogo
+// público — ak e pistol) vence o chassi da fábrica. cfg por ROTA como o update real
+// (05/11): golden lê a tabela do PRÓPRIO produto (VM_WEAPON), fábrica lê VM_FABRICA —
+// o piloto da PT-38 tem unidades próprias e o ADS dele vive na tabela K.
 function fonte(arma) {
-  if (VM_FABRICA[arma]) {
+  if (VM_FABRICA[arma] && !VM_WEAPON[arma]?.golden) {
     return { chave: `fab#${arma}`, familia: VM_FABRICA[arma].familia, cfg: VM_FABRICA[arma],
       glb: path.join(ASSET_ROOT, 'fabrica', `${arma}-fabrica.glb`) };
   }
@@ -115,17 +118,40 @@ async function montar(arma) {
   const ads = adsEfetivo(f.cfg.ads, FIX);
   // Pontos de mira em espaço de cena (câmera do GLB na origem).
   let pontos;
-  if (f.chave.startsWith('gold#')) {
+  let semSockets = false;
+  if (f.chave.startsWith('gold#') && ads.golden) {
     const g = ads.golden;
     const B = camInv.clone().multiply(W[pose.byName.get(g.osso)]);
     const p = (v) => new THREE.Vector3(...v).applyMatrix4(B);
     pontos = { sight: p(g.alca), muzzle: p(g.massa), up: p(g.alca.map((c, k) => c + g.cima[k] * 0.1)) };
+  } else if (f.chave.startsWith('gold#')) {
+    // Golden FOCO sem ads.golden (PT-38 pública, 05/11): o runtime NÃO ergue adsSockets —
+    // o mount é frame ∘ residual e a alça/massa de MEDIÇÃO derivam da malha, como
+    // _gunPoint/_frontMuzzle fazem para boca/tracer.
+    semSockets = true;
+    const verts = [];
+    for (const t of pose.triangulos(W)) {
+      if (HAND_MATERIAL.test(t.mat)) continue;
+      for (let k = 0; k < 3; k++) verts.push(new THREE.Vector3(t.p[k * 3], t.p[k * 3 + 1], t.p[k * 3 + 2]).applyMatrix4(camInv));
+    }
+    const zs = verts.map((v) => v.z);
+    const zMin = Math.min(...zs), zMax = Math.max(...zs);
+    const estacao = (frente) => {
+      const corte = frente ? zMin + (zMax - zMin) * 0.02 : zMax - (zMax - zMin) * 0.02;
+      const banda = verts.filter((v) => (frente ? v.z <= corte : v.z >= corte))
+        .sort((a, b) => b.y - a.y).slice(0, Math.max(4, Math.round(verts.length * 0.002)));
+      const c = new THREE.Vector3();
+      for (const v of banda) c.add(v);
+      return c.divideScalar(banda.length);
+    };
+    const alca = estacao(false), massa = estacao(true);
+    pontos = { sight: alca, muzzle: massa, up: alca.clone().add(new THREE.Vector3(0, 0.01, 0)) };
   } else {
     const p = (n) => new THREE.Vector3().setFromMatrixPosition(W[pose.byName.get(n)]).applyMatrix4(camInv);
     pontos = { sight: p('SOCKET_FAB_SIGHT'), muzzle: p('SOCKET_FAB_MUZZLE'), up: p('SOCKET_FAB_UP') };
   }
   const tris = pose.triangulos(W).map((t) => ({ ...t, mao: HAND_MATERIAL.test(t.mat) }));
-  return { arma, f, pose, camInv, frame, ads, pontos, tris,
+  return { arma, f, pose, camInv, frame, ads, pontos, semSockets, tris,
     fovPacote: f.chave.startsWith('gold#') ? cameraFov : frame.fov, cameraAspect };
 }
 
@@ -150,9 +176,13 @@ function mountAds(m) {
     mount.visible = true;
     vm.parent.add(mount);
     // Pose do GLB já fixada: mixer sem ações, saque concluído, recuo zerado.
+    // semSockets (golden FOCO sem ads.golden): o update real aplica SÓ o residual —
+    // sem mint/adsSockets o caminho automático de linha não existe, igual ao jogo.
     const entry = {
       key: f.chave, family: f.familia, golden: f.chave.startsWith('gold#'), frame,
-      scene, mount, sockets, mint: { active: sockets.sight }, adsSockets: sockets, weaponMeshes: [],
+      scene, mount, sockets: m.semSockets ? null : sockets,
+      mint: m.semSockets ? { active: null } : { active: sockets.sight },
+      adsSockets: m.semSockets ? null : sockets, weaponMeshes: [],
       mixer: new THREE_RT.AnimationMixer(scene), clips: new Map(), action: null, queue: [],
       drawTime: 1, drawDuration: 0.32, state: 'idle', stateUntil: 0, shootCycle: 0,
     };

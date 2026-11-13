@@ -46,7 +46,7 @@ const declaracoes = body.split(/\r?\n/).map((linha) => {
   return linha;
 }).join('\n').replace(/<!--[\s\S]*?(?:-->|$)/g, '');
 const motivos = new Map();
-for (const m of declaracoes.matchAll(/^ratchet:\s*([+-]?)([A-Z0-9_]+)(?:\s+porque\s+(.+))?\s*$/gim)) {
+for (const m of declaracoes.matchAll(/^ratchet:\s*([+-]?)([A-Z0-9_]+)(?:\s+(?:porque|because)\s+(.+))?\s*$/gim)) {
   motivos.set(m[2].toUpperCase(), { libera: m[1] === '+', motivo: m[3] || '' });
 }
 
@@ -58,7 +58,7 @@ console.log(`\nR1 · entradas NOVAS no KNOWN-RED: ${novas.length}`);
 if (novas.length) console.log(`     ${novas.join(', ')}`);
 for (const id of novas) {
   const ok = motivos.has(id) && motivos.get(id).libera && motivos.get(id).motivo.trim();
-  console.log(`   · ${id}  ${ok ? 'liberada por ratchet: motivo presente' : 'REPROVA — precisa de ratchet: +ID porque <motivo>'}`);
+  console.log(`   · ${id}  ${ok ? 'liberada por ratchet: motivo presente' : 'REPROVA — precisa de ratchet: +ID porque/because <motivo>'}`);
 }
 console.log(`     ${semMotivo.length === 0 ? 'PASSA' : 'FALHA'}\n`);
 
@@ -71,5 +71,5 @@ console.log(`R3 · saldo: +${novas.length} novas, −${entradas.length} quitadas
 const passou = semMotivo.length === 0;
 console.log(`\n${passou
   ? '✓ RATC1  ratchet só andou para frente (novas justificadas ou ausentes)'
-  : '✗ RATC1  dívida nova sem motivo escrito — escreva ratchet: +<ID> porque <motivo> no corpo do PR'}`);
+  : '✗ RATC1  dívida nova sem motivo escrito — escreva ratchet: +<ID> porque/because <motivo> no corpo do PR'}`);
 process.exit(passou ? 0 : 1);

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import sys
 
 GOOD = {"SUCCESS", "SKIPPED", "NEUTRAL"}
@@ -43,26 +44,67 @@ def decide(pr: dict) -> dict:
     lista_incompleta = arquivos_brutos is None or changed_files > len(files)
     desconhecido = lista_incompleta or rollup_bruto is None
     touches_workflows = any(path.startswith(".github/workflows/") for path in files)
+    touches_sensitive = any(path.startswith(("public/", "src/", "supabase/")) for path in files)
+    human_blocked = touches_sensitive or bool(
+        labels.intersection({"needs-human-gameplay", "needs-human-backend", "needs-hotfix-review"})
+    )
     estragacodigo_blocked = (
         "needs-estragacodigo-resolution" in labels
         and "estragacodigo-resolved" not in labels
     )
-    eligible = (
+    checks_green = bool(rollup_bruto) and check_rollup_ok(rollup_bruto)
+    hotfix_main = "hotfix" in labels and pr.get("baseRefName") == "main"
+    hotfix_verified = any(
+        item.get("__typename") == "CheckRun"
+        and item.get("name") == "hotfix-ancestry"
+        and item.get("conclusion") == "SUCCESS"
+        for item in rollup_bruto or []
+    )
+    common = (
+        not pr.get("isDraft", False)
+        and not estragacodigo_blocked
+        and pr.get("mergeStateStatus") in {"CLEAN", "HAS_HOOKS"}
+        and checks_green
+    )
+    release_batch = (
+        "release" in labels
+        and not labels.intersection({"needs-human-gameplay", "needs-human-backend", "needs-hotfix-review"})
+        and pr.get("baseRefName") == "main"
+        and (not lista_incompleta or pr.get("full_diff_verified") is True)
+        and pr.get("headRefName") == "staging"
+        and (pr.get("headRepository") or {}).get("nameWithOwner") == pr.get("expected_repository")
+        and bool(pr.get("expected_repository"))
+    )
+    eligible_safe = (
         not desconhecido
-        and not pr.get("isDraft", False)
         and "safe-automerge" in labels
         and not touches_workflows
-        and not estragacodigo_blocked
-        and pr.get("reviewDecision") != "CHANGES_REQUESTED"
-        and pr.get("mergeStateStatus") in {"CLEAN", "HAS_HOOKS"}
-        and check_rollup_ok(rollup_bruto or [])
+        and not human_blocked
+        and (not hotfix_main or ("release" in labels and hotfix_verified))
+    )
+    batch_review_ok = "estragacodigo-resolved" in labels and pr.get("reviewDecision") != "CHANGES_REQUESTED"
+    eligible = common and (
+        (release_batch and batch_review_ok)
+        or (eligible_safe and pr.get("reviewDecision") == "APPROVED")
     )
     return {
         "eligible": eligible,
+        "merge_kind": "release-batch" if release_batch else "safe",
         "estragacodigo_blocked": estragacodigo_blocked,
         "touches_workflows": touches_workflows,
+        "human_blocked": human_blocked,
         "lista_incompleta": lista_incompleta,
     }
+
+
+def revalidate_decision(evaluated_pr, evaluated_result, current_pr):
+    """Reject stale eligibility even when a mutation leaves the decision unchanged."""
+    if current_pr != evaluated_pr:
+        raise ValueError("automerge eligibility inputs changed after evaluation; aborting merge")
+    current_result = decide(current_pr)
+    if current_result != evaluated_result:
+        raise ValueError("automerge eligibility decision changed after evaluation; aborting merge")
+    return current_result
 
 
 def selftest() -> int:
@@ -75,7 +117,7 @@ def selftest() -> int:
     base = {
         "isDraft": False,
         "labels": [{"name": "safe-automerge"}],
-        "files": [{"path": "src/pages/index.astro"}],
+        "files": [{"path": "docs/a.md"}],
         "reviewDecision": "APPROVED",
         "mergeStateStatus": "CLEAN",
         "statusCheckRollup": [{"__typename": "CheckRun", "conclusion": "SUCCESS"}],
@@ -96,9 +138,11 @@ def selftest() -> int:
         ("estragacodigo resolvido libera",
          com(labels=[{"name": "safe-automerge"}, {"name": "needs-estragacodigo-resolution"},
                      {"name": "estragacodigo-resolved"}]), True),
-        ("label morto do coderabbit não bloqueia",
-         com(labels=[{"name": "safe-automerge"}, {"name": "needs-coderabbit-resolution"}]), True),
+        ("label sem regra de revisão não bloqueia",
+         com(labels=[{"name": "safe-automerge"}, {"name": "legacy-review-note"}]), True),
         ("mudança pedida não mescla", com(reviewDecision="CHANGES_REQUESTED"), False),
+        ("revisão obrigatória pendente não mescla", com(reviewDecision="REVIEW_REQUIRED"), False),
+        ("decisão de revisão ausente não mescla", com(reviewDecision=None), False),
         ("conflito não mescla", com(mergeStateStatus="DIRTY"), False),
         ("check vermelho não mescla",
          com(statusCheckRollup=[{"__typename": "CheckRun", "conclusion": "FAILURE"}]), False),
@@ -116,6 +160,84 @@ def selftest() -> int:
         ("lista completa e declarada mescla",
          com(files=[{"path": "docs/a.md"}], changedFiles=1), True),
         ("rollup nulo não mescla", com(statusCheckRollup=None), False),
+        ("rollup vazio não prova build verde", com(statusCheckRollup=[]), False),
+        ("lote oficial verde mescla mesmo com superfícies sensíveis já integradas",
+         com(labels=[{"name": "release"}, {"name": "estragacodigo-resolved"}], files=[{"path": ".github/workflows/ci.yml"}],
+             baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), True),
+        ("lote oficial sem resolução de revisão não mescla nem com aprovação",
+         com(labels=[{"name": "release"}], baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), False),
+        ("lote com lista incompleta e diff Git verificado mescla",
+         com(labels=[{"name": "release"}, {"name": "estragacodigo-resolved"}],
+             files=None, changedFiles=1720, full_diff_verified=True,
+             baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), True),
+        ("lote com lista incompleta e sem prova de diff não mescla",
+         com(labels=[{"name": "release"}, {"name": "estragacodigo-resolved"}],
+             files=None, changedFiles=1720,
+             baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), False),
+        ("lote resolvido mescla sem reviewDecision formal",
+         com(labels=[{"name": "release"}, {"name": "estragacodigo-resolved"}],
+             reviewDecision=None, baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), True),
+        ("lote com mudanças pedidas não mescla nem com label de resolução",
+         com(labels=[{"name": "release"}, {"name": "estragacodigo-resolved"}],
+             reviewDecision="CHANGES_REQUESTED", baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), False),
+        ("lote de fork não mescla",
+         com(labels=[{"name": "release"}], baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "fork/client"}, expected_repository="corosolto/client"), False),
+        ("staging de outro repo do mesmo dono não mescla",
+         com(labels=[{"name": "release"}], baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/other"}, expected_repository="corosolto/client"), False),
+        ("branch comum com label release não vira lote",
+         com(labels=[{"name": "release"}], baseRefName="main", headRefName="feature",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), False),
+        ("lote com check vermelho não mescla",
+         com(labels=[{"name": "release"}], baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client",
+             statusCheckRollup=[{"__typename": "CheckRun", "conclusion": "FAILURE"}]), False),
+        ("lote com revisão pendente não mescla",
+         com(labels=[{"name": "release"}, {"name": "needs-estragacodigo-resolution"}],
+             baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), False),
+        ("lote com bloqueio de hotfix não mescla",
+         com(labels=[{"name": "release"}, {"name": "needs-hotfix-review"}],
+             baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), False),
+        ("lote com bloqueio humano de gameplay não mescla",
+         com(labels=[{"name": "release"}, {"name": "needs-human-gameplay"}],
+             baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), False),
+        ("lote com bloqueio humano de backend não mescla",
+         com(labels=[{"name": "release"}, {"name": "needs-human-backend"}],
+             baseRefName="main", headRefName="staging",
+             headRepository={"nameWithOwner": "corosolto/client"}, expected_repository="corosolto/client"), False),
+        ("label manual não libera gameplay",
+         com(files=[{"path": "public/js/game.js"}]), False),
+        ("label manual não libera backend",
+         com(files=[{"path": "src/pages/api/ranking.ts"}]), False),
+        ("label humana pendente bloqueia mesmo em docs",
+         com(labels=[{"name": "safe-automerge"}, {"name": "needs-human-gameplay"}]), False),
+        ("hotfix com ancestry incerta não mescla",
+         com(labels=[{"name": "safe-automerge"}, {"name": "needs-hotfix-review"}]), False),
+        ("hotfix na main sem check de ancestry não mescla",
+         com(labels=[{"name": "safe-automerge"}, {"name": "hotfix"}, {"name": "release"}],
+             baseRefName="main"), False),
+        ("hotfix na main com ancestry verde mescla",
+         com(labels=[{"name": "safe-automerge"}, {"name": "hotfix"}, {"name": "release"}],
+             baseRefName="main",
+             statusCheckRollup=[{"__typename": "CheckRun", "name": "pr-fast", "conclusion": "SUCCESS"},
+                                {"__typename": "CheckRun", "name": "hotfix-ancestry", "conclusion": "SUCCESS"}]), True),
+        ("hotfix na main com ancestry vermelha não mescla",
+         com(labels=[{"name": "safe-automerge"}, {"name": "hotfix"}, {"name": "release"}],
+             baseRefName="main",
+             statusCheckRollup=[{"__typename": "CheckRun", "name": "hotfix-ancestry", "conclusion": "FAILURE"}]), False),
+        ("hotfix na staging não exige ancestry main-only para integrar",
+         com(labels=[{"name": "safe-automerge"}, {"name": "hotfix"}, {"name": "release-hotfix"}],
+             baseRefName="staging"), True),
     ]
     erros = 0
     for nome, pr, esperado in casos:
@@ -123,13 +245,37 @@ def selftest() -> int:
         ok = obtido == esperado
         erros += 0 if ok else 1
         print(f"  {'ok  ' if ok else 'FALHOU'} {nome}: eligible={obtido} (esperado {esperado})")
+
+    evaluated_result = decide(base)
+    revalidation_cases = [
+        ("revalidação inalterada preserva elegibilidade", dict(base), True),
+        ("revalidação rejeita label posterior", com(labels=[
+            {"name": "safe-automerge"}, {"name": "target:staging"},
+        ]), False),
+        ("revalidação rejeita review posterior", com(reviewDecision="CHANGES_REQUESTED"), False),
+        ("revalidação rejeita check posterior", com(statusCheckRollup=[
+            {"__typename": "CheckRun", "conclusion": "FAILURE"},
+        ]), False),
+    ]
+    for nome, current_pr, deve_aceitar in revalidation_cases:
+        try:
+            revalidate_decision(base, evaluated_result, current_pr)
+        except ValueError:
+            aceitou = False
+        else:
+            aceitou = True
+        ok = aceitou == deve_aceitar
+        erros += 0 if ok else 1
+        print(f"  {'ok  ' if ok else 'FALHOU'} {nome}")
     return 0 if not erros else 1
 
 
 def main() -> int:
     if "--selftest" in sys.argv:
         return selftest()
-    print(json.dumps(decide(json.load(sys.stdin))))
+    payload = json.load(sys.stdin)
+    payload['expected_repository'] = os.environ.get('GITHUB_REPOSITORY', '')
+    print(json.dumps(decide(payload)))
     return 0
 
 

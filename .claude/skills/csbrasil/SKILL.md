@@ -1,13 +1,13 @@
 ---
 name: csbrasil
-description: Pipeline de criação de conteúdo novo para o CS BRASIL — times de personagens, mapas de lugares reais e assets 3D. Use SEMPRE que for criar personagem, time, mapa ou asset novo; para pesquisar referências históricas/visuais de tema brasileiro; para transformar uma ficha em prompt de geração; e para gerar o asset em si. Subcomandos: `spec` (pesquisa e escreve o MD de ficha), `compose` (ficha → referências → prompts), `map` (lugar real → spec de mapa), `generate` (prompt → asset). NÃO use para consertar defeito (isso é a `bug-hunt`) nem para melhorar o que já existe (isso é a `gauntlet-fps`). Toda criação passa pelos 6 portões abaixo — pular portão é o mesmo que não usar a skill.
+description: Pipeline de criação de conteúdo novo para o CS BRASIL — times de personagens, mapas, modos e assets 3D. Use SEMPRE que for criar personagem, time, mapa, modo ou asset novo; para pesquisar referências históricas/visuais de tema brasileiro; para transformar uma ficha em prompt de geração; e para gerar o asset em si. Subcomandos: `spec` (pesquisa e escreve o MD de ficha), `compose` (ficha → referências → prompts), `map` (lugar real → spec de mapa), `mode` (conceito → modo+mapa verificáveis), `generate` (prompt → asset). NÃO use para consertar defeito (isso é a `bug-hunt`) nem para melhorar o que já existe (isso é a `gauntlet-fps`). Toda criação passa pelos 6 portões abaixo — pular portão é o mesmo que não usar a skill.
 ---
 
 # csbrasil — pipeline de conteúdo novo
 
 Criar coisa nova neste repositório tem o mesmo preço de consertar coisa velha: se não
 virou régua e ninguém OLHOU o resultado, não está pronto. Esta skill existe para que
-personagem, mapa e asset nasçam já dentro das leis da casa, em vez de serem
+personagem, mapa, modo e asset nasçam já dentro das leis da casa, em vez de serem
 rebobinados depois.
 
 Funciona em qualquer agente (Claude, Kimi, OpenCode): a fonte canônica é
@@ -51,11 +51,43 @@ Versão mapa do `spec`: pesquisa o lugar real (plantas, fotos aéreas, street vi
 e escreve o spec com layout, cobertura (cover) e linhas de visão. Lugar aberto sem
 cover deliberado vira sniper fest — o spec tem que mostrar onde o jogador se esconde
 antes de qualquer geometria existir.
+### `/csbrasil mode <conceito>`
+
+Cria modo e mapa como uma entrega única, do conceito ao multiplayer verificável:
+
+1. A ficha define loop, vitória/derrota, papéis, layout, cover, linhas de visão,
+   estados de HUD e quem é autoridade de cada estado no multiplayer.
+2. OpenRouter produz concept, cartaz e demais superfícies **2D**. Mint produz props,
+   personagens e demais fontes **3D**. Siga os roteamentos e a procedência exigidos
+   por `AGENTS.md`; uma ferramenta não substitui a outra.
+3. Blender monta, normaliza e otimiza os 3D aprovados. Não redesenha silenciosamente
+   no Blender um candidato que a revisão visual rejeitou.
+4. Integre o modo como estado autoritativo serializável: o servidor simula; cada
+   cliente recebe e aplica o mesmo snapshot; versões anteriores do protocolo continuam
+   decodificáveis sem inventar o campo novo.
+5. Capture o jogo real no navegador nos estados decisivos do loop. Sonda, render
+   isolado e viewport preto não são evidência visual.
+6. Rode `asset-review` nos insumos e `gauntlet-fps` na cena integrada. Quem gerou ou
+   integrou não aprova. Feche com régua normal, mutante causal e smoke multiplayer.
+
+Se uma etapa não exige 2D, 3D ou Blender, registre `não se aplica` na ficha com o motivo;
+não fabrique um asset sem uso só para cumprir a sequência.
+
 
 ### `/csbrasil generate <ficha.md>`
 
 Gera os assets a partir dos prompts, usando o que o projeto já tem:
 skill `threejs-3d-generator` (Tripo) ou o Mint MCP. **Não reinvente geração.**
+
+**Personagem 3P (terceira pessoa) tem rota própria: o processo padrão do Studio.** O
+Mint gera o modelo final **sem rig**; a partir daí o personagem só chega ao jogo como
+pack `kind: character` do `corosolto/studio` (`docs/character-pipeline.md`, com
+`docs/character-rig.md`, `docs/animation-conversion.md` e `docs/character-pack.md`):
+rig Blender no esqueleto `meshy-28` com pose gate, clipes convertidos com QA, pack
+construído pelo `build-character-pack.mjs` e verificado/instalado pelo client
+(`scripts/studio-pack.mjs`, `docs/studio-character-release.md`). Regras: **nenhum GLB
+novo de personagem em `public/` do client**, sem rig de proximidade ou auto-rig do Mint,
+sem clipe sem QA. Entrar no elenco e virar release pin é PR próprio do client.
 
 ## Os 6 portões (nenhum é opcional)
 

@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.135`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.145`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,95 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## Unreleased — 2026-11-04
+
+### Added
+- Installed PWA now opens and starts single-player without a connection. A root service worker keeps the game shell, the default Praça dos Três Poderes match and the same-origin resources loaded by the current installation; successful later visits refresh the cache and add maps/assets the player uses. Multiplayer, account, ranking and other server-backed features remain online-only.
+- Pacotes do Studio em produção pelo R2: em produção e preview o resolvedor busca os pacotes fixados em `https://assets.corosolto.com.br/packs/<kind>/<id>/<versão>/` (`public/js/data/pack-origin.js`; host local segue em `/packs/` com `STUDIO_PACK_ROOT`, `?packorigin=cdn|local` força), com a mesma verificação de SHA-256; a CSP lista a origem no `connect-src`. `npm run publish:packs` (`scripts/publish-studio-packs.mjs`) sobe só pacote fixado e íntegro, com `Content-Type` pela extensão, `Cache-Control` imutável, `If-None-Match: *`, pula o que já está igual, recusa sobrescrever conteúdo diferente, tem `--dry-run` e confere cada objeto pela origem pública (SHA-256, bytes, MIME, cache, CORS). Réguas: `eval:studiochar` R19 (4 mutantes novos: origem errada, origem ignorada, sempre CDN, CSP sem origem) e `eval:packpublish` (13 mutantes), as duas no pr-fast.
+- Passe grátis "Sessão da Treta" (temporada 1, facção Fora do Ar): aba PASSE no lobby (só aparece com `GET /api/passe` respondendo), tela com os 15 níveis e as 5 recompensas de cada um, barra de XP, missões diárias e semanais, convites, bônus de XP ativo e RESGATAR; anúncio uma vez por versão do passe (visitante vai para o convite de login, que ganhou `abrirLoginPrompt`). Personagem com `passe:{season, level}` em `characters.js` aparece com cadeado e "Nível N" e só é escolhido quando `unlocked.characters` do servidor o lista; a partida offline e o pedido de personagem no multiplayer passam pela mesma trava. O client só manda `{action:'claim', level}` e, com consentimento de medição (`window.__csPrivacy`), o funil do painel `{action:'analytics', event:'modal_view'|'open'}`. `/api/passe` entra no proxy em rollout (404 do backend vira 503). Réguas: `eval:passe` (pr-fast + `check:fast`, 20 mutantes; os caminhos de main.js rodam num vm) e `tools/eval/passe-browser.mjs` (lobby real com o mock `tools/eval/passe-mock.mjs`; `PASSE_MOCK=conta|visitante` no `serve.mjs` para dev local).
+- `/app`: a light landing for visitors who open the game inside an app's browser (TikTok, Instagram, Facebook, LinkedIn, X). On 08/11 the TikTok paid campaign sent 517 visits in one hour; 72% loaded the 8 MB game inside the WebView and 85% left in under a minute without entering. Both edges (`middleware.js` on Vercel, `src/middleware.ts` on Workers) now answer the home with a 302 to `/app` when `server-traffic.mjs` classifies the user agent as `app/*` (`desvioParaApp`): only the home, query kept intact, `?jogo=1` and `?sala=` pass through, the redirected request is not counted (the landing is). The page weighs about 1.4 MB (6 s vertical gameplay clip + poster from `launch-media/2026-10-18-tricolor-morumbi`), is static and `noindex`, puts both calls above the fold and rewrites every link to the home with the visitor's `utm_*` plus `jogo=1`; ABRIR NO NAVEGADOR tries `intent://` on Android and `x-safari-https://` on iOS, with the in-app menu tip after 1.8 s if nothing opened. Origem shows it as landing `/app` under the app agents; Campanhas keeps attribution by source. `server-traffic-check` gains the redirect matrix (home, query, `jogo=1`, `sala`, deep route, open Chrome, preview bot, HEAD, foreign host) and the Vercel middleware 302 case; mutants "sem UA" and "loop jogo=1" die.
+- itch.io listing package: `tools/portal/itch/index.html` is a one-file HTML upload that embeds `https://www.corosolto.com.br/?lang=en&utm_source=itch&utm_medium=portal` in a full-viewport iframe (`allow="pointer-lock; fullscreen; autoplay; gamepad"`). itch serves uploads from `html-classic.itch.zone` inside `*.itch.io`, and `frame-ancestors` checks every ancestor, so `https://*.itch.zone` joins the CSP in `vercel.json` (only `*.itch.io` was listed; the wrapper rendered a black frame). `eval:portalembed` (pr-fast + `check:fast`) ties each `tools/portal/*` wrapper to the CSP list, the site origin, the UTM and the pointer-lock permission, with 4 mutants. Publishing on itch stays with the owner (`tools/portal/README.md`).
+- `/en` is the English home the crawler can read: the real home (`/`) is the game and its published HTML is PT-only (the EN layer only exists after boot). `/en` carries title, description, FAQ (`HOME_FAQ_EN`), the links to every EN twin plus `/docs/en/`, a `WebPage` node pointing at the home's `VideoGame`, and the PLAY CTA at `/?lang=en`. Paired with `/` in `src/lib/i18n-pairs.ts`, so hreflang `en` + `og:locale:alternate` now appear on the home (index.astro, own `<head>`), `/en` is in the sitemap with home weight, in the AEO index and in `llms.txt`. Pinned by `eval:game-pages` (home → `/en`, `/en` → home, `inLanguage`, EN links, FAQ visible == JSON-LD; 4 new mutants), `eval:seo` and `canonical-host-check` now also read `/en`.
+- Lobby (Treta Pop): the bottom-left Resenha button is replaced by an **Operação Flávio** card in the same corner and height (owner request, 07/11). The card opens Flávio's story — parody with in-game character names only, PT/EN — over a real GPU capture of the boarding cinematic (`npm run gen:lobby-flavio-arte` → `public/img/mode-announcements/flavio-embarque{,-card}.webp`, URL with content hash via `assetUrl`; `img/mode-announcements` joins `gen-asset-rev`). JOGAR starts VS BOTS on `operacao_flavio`; FECHAR/Escape close and return focus to the card. The dialog reuses the mode-announcement `<dialog>` (`abrirHistoria`). The chat drawer keeps the Y shortcut (focus now returns to whoever opened it, and Y is ignored while a dialog is open); conversations stay under AMIGOS/Comunidade. At ≥1440 px wide and 800–1010 px tall the left column now stops above the corner: the news cover shrinks (chip hidden below 90 px) and the panel hides under 930 px — before, the Resenha button covered "VER NOVIDADES" at 1536×960. Rulers: `lobby-flavio-check.mjs` (node, `eval:mode-announcements` → `check:fast`/CI; mutants `card-resenha`, `modal-sem-imagem`, `esc-sem-foco`, `jogar-mapa-errado`, `en-faltando`) and `lobby-flavio-browser.mjs` (Chrome, 6 screens, `eval:ui-v3:lobby-flavio`, chained from `eval:ui-v3:social`); `ui-v3-social` SO2/SO3/SO7/SO11 follow the cutover (mutants `botao-volta`, `vazio-sem-acao`) and mark the opening announcements as seen.
+- Operação Flávio now has five connected escort routes, human-scale airport seating, additional solid cover and a route-facing first-person spawn.
+- Boarding lounge and apron protection now revolves around real airport objects (1.8 m planters, a container bay, GPUs, check-in counters) that hide the 1.72 m VIP and break attacker approach lanes; the nav graph stays one dead-end-free component. `escortCoverPoints` grows to 28 role/zone slots supporting 6×6 escorts (4 direct guards + 2 roamers), and attacker spawns or graph paths never funnel into the boarding lounge.
+- Operação Flávio side lanes (|x| 19–43) get real cover every ~10 m on both sides (owner playtest 08/11: "nas laterais não tem onde se proteger, muito fácil pro time E"): two parked apron buses outside the terminal and courtyard, ULDs and stacked cargo crates along the terminal sides, courtyard and the 120 m outer hangar corridor (staggered, no straight sightline from the apron to the courtyard), plus crate stacks inside the hangar. The six box-built tactical covers become crate stacks with the same height. The crate is a 12-triangle box with a baked atlas (`tools/operacao-flavio-caixote-asset.mjs`, CC0 Poly Haven source), instanced in one draw call; the scene stays at ~361k triangles (was 330k). Colliders are identical with or without GLB (headless server). Pinned by `operacao-flavio-collider-check` (4 new clauses) and 4 new collider mutants.
+- Gauntlet iteration from live captures: staggered real cover islands every ~8–12 m across the patio, hangar mouth and apron (baggage tugs, service cars, barriers, tool carts); boarding stairs tucked against the fuselage with a hard-cover service car at their base; both E approach lanes balanced (10×8 tall cover); the oversized foreground railing at the west E spawn removed; the queue belt split with a central gap; amber checkpoint rings as semantic route markings; distant ridges restore sky/aircraft contrast; the black terminal capture was an invalid vantage inside the new counter, now pinned by a waypoints-and-lighting contract. `escortCoverPoints` grows to 43 slots with ≥2 VIP cover slots within 8 m of every intermediate checkpoint.
+- Operação Flávio escorts now run as a role squad: four direct VIP guards carry exactly one LMG, one shotgun, one rifle and one sniper (armor + helmet every life, skill floor above the enemy average), and extra defenders become forward roamers holding the vanguard two checkpoints ahead — no wall-hacks, online authority unchanged.
+- Attacker respawns are forward/base-only: never behind the convoy, never inside the boarding lounge (south terminal pocket, `x∈(-29,29) z∈(-57,-44)` mirrored in map evals and docs), always ≥7 m from the VIP and route-reachable from the next checkpoint; defenders keep the rear wave.
+- Attackers actively contest the escort, while VIP always carries armor, a helmet and a working PT-38.
+- Escort recovery includes physical path replanning, stable formation slots and online-authoritative respawn waves.
+
+### Changed
+- Preview de PR não gasta mais Vercel: `scripts/ci/vercel-ignore.sh` sai 0 para toda branch de PR (o preview é o `*.workers.dev` do `cf-preview.yml`); `staging`, `main`, `lote-*` e `*/lote-*` continuam buildando sempre e produção segue só no `chore(release):`. A régua `eval:vercelignore` foi reescrita para o contrato novo (mutantes `preview-pr-builda`, `staging-pulado`, `release-pulado`). `preview-build.yml` passou a `workflow_dispatch` (input `pr_number`, emergência); `preview-deploy.yml` segue em `workflow_run` publicando `--prebuilt` só quando alguém despacha o build — nenhum PR dispara mais esse par. A PRV1 do `workflow_security_check.py` proíbe o build de voltar a disparar sozinho por `pull_request`/`push`/`schedule` (mutante novo `compila-volta-pr`) e mantém a proibição de `secrets.`; DG3/DG6 e o concurrency-check prendem o par como estava; o bot do `preview-bot.yml` e o label `preview-autorizado` não prometem mais URL da Vercel. Fatura esperada: Build CPU Minutes ≈ builds de release + staging/main/lote (~3/semana); Fast Origin Transfer só muda na virada (fase 4).
+- Bloqueios do release #1251: respostas do smoke passam a ser classificadas pelo hostname antes da lista de terceiros, impedindo que `/img/facebook-*` ou `?origem=twitter.com` esconda 404/500 do próprio host; `eval:cfparidade` só aceita mutante com exit 1; `eval:bots-perf` entra em `operacao-flavio-comportamento` e a prova browser fica no Chrome com GPU real, pois o runner `portao-controles` usa SwiftShader (`degraded=true`, 3,5 s/quadro), sem novos jobs nem falsa cobertura de GPU. `cf-preview.yml` compila o PR via `pull_request` sem segredos e entrega somente o artefato; `cf-preview-deploy.yml` reage ao `workflow_run`, carrega a configuração do branch base e publica com Wrangler pinado, sem executar código do PR com tokens Cloudflare/GitHub. Sticky e smoke exigem `github-actions[bot]` e SHA+URL no mesmo comentário; `tools/cf/` passa a disparar preview e o job `skip` declara `runs-on: ubuntu-latest` para o workflow voltar a iniciar.
+- Compartilhamento: links de convite, perfil, clã e botões sociais usam `https://corosol.to` com seus UTMs; canonical, `og:url`, hreflang, sitemap e JSON-LD continuam em `https://www.corosolto.com.br`. A régua `eval:shareorigin` mede o build e morde duas mutações.
+- Pre-push and CI gates stop burning an hour per push on staging branches. `selecao-pre-push.mjs` now diffs a new branch against the nearest of `origin/main` and `origin/staging` (a branch cut from staging was compared with main and dragged 691 files into the diff, forcing the full `check:deploy`); `.agents/`, `.claude/`, `plans/`, `launch-media/` and any `.md` select only `core`; `src/lib/server-traffic.mjs` and its check select `network`; `tests/eval-suites.test.mjs` is transversal like the selector. `smoke-cf` (Cloudflare preview, #1271) failed on language because the GitHub runner sits in the US and `cf-ipcountry=US` turns the home into EN while the specs assert PT copy: `playwright.smoke.config.mjs` seeds `cs_lang=pt` through `storageState` (and `chat-sala.spec.js` on its own page), proven against a forged US geo. `scripts/ci/cf_preview_comment.py` gains `--selftest` (FX2) with the comment choice extracted into a pure `escolher`. `privacy-runtime.js` header comment back within the 2-line cap.
+- CI dos contratos visuais: os 17 comandos passam a seis jobs paralelos (`contratos-visuais-personagens-camera`, `contratos-visuais-ferro-balcao`, `contratos-visuais-mapas-materiais`, `contratos-visuais-visual-map`, `contratos-visuais-campo-uv`, `contratos-visuais-gameplay-grafite`), cada um com JSON e timeout próprios. `eval:portaointeiro` cobre os aliases na ordem dos shards, rejeita perda/duplicata e preserva a duplicação já contratual de `eval:movimento-fluidez` entre AK/mantle. Personagens/câmera usa três shards balanceados pelo manifesto diário: produtor e consumidor compartilham a chave `eval-durations-v1-<hash do conteúdo>` e o prefixo estável `eval-durations-v1-`; manifesto ausente, vencido ou inválido reprova o runner, sem retorno silencioso à execução completa.
+- Equipamento TP: `eval:tp-cosmetic-source` sai de `equipamento-tp-corpo` para `equipamento-tp-origem`, sem criar jobs ou alterar aliases. Na run 42665557931, corpo tinha 422,4 s (identity 321,5 + cosmetic 100,9) e origem 294,8 s; a distribuição projeta ~321,5 s e ~395,7 s, reduzindo o maior job sem perder cobertura. PI4 agora prende os quatro aliases a esses dois jobs e rejeita perda/duplicação; `npm ci` ganha `id: deps` e guarda nos dois jobs, impedindo execução após setup falho.
+- Operação Flávio: o alias público `eval:operacao-flavio` continua sequencial, agora composto por `core`, `collider` completo, `menu`, `online`, `integracao`, `comportamento` e `escolta`; no CI os 50 mutantes de collider são divididos em quatro shards disjuntos (13/13/13/12), com todos esses cenários em jobs próprios e o `build` agregando todos. O seletor real falha fechado, expõe o plano JSON e tem união, ordem e interseção vazia verificadas; a cobertura de reset/duração/relógio/permissões/NPC/anúncios permanece no CI. Integração reúne formulário, prova de integração, recuperação e pressão; comportamento reúne roles e cobertura; escolta reúne flicker, VIP e pickups.
+- Pre-push: `package.json` alterado é comparado semanticamente entre os blobs do range; mudanças em scripts de `check:fast`/`check:deploy` executam só o núcleo e os passos afetados. Workflows com mapa estático validado seguem a mesma seleção; locks, dependências, metadados, agregadores, remoções, scripts desconhecidos e diffs indisponíveis continuam forçando `check:deploy`.
+- Lobby (Treta Pop), owner request 08/11: **Operação Flávio** becomes the first panel of the left column, above the Javaporco hunt, with the same full-art design (`montarPainelFlavio` in `public/js/tp/flavio.js`; the bottom-left corner card, its mini art `flavio-embarque-card.webp` and the footer offset are gone). **Quests da Treta** and **Novidades de skins** move under **Amigos online** in the right column; where that column is hidden (height ≤ 799 px) Quests returns to the left column instead of disappearing, and a right-column panel that would reach the match panel is dropped bottom-up (`encaixarDireita`). On landscape phones both promos stay top-left as compact one-line rows. Pinned by `eval:ui-v3:lobby-flavio` (LFB1 order above the invasion in 6 screens, new LFB6 columns; mutants `card-depois`, `quests-esquerda`) and `lobby-flavio-check.mjs`.
+- Vercel costs, phase 0 (owner decision 09/11, runbook `docs/runbooks/MIGRACAO-CLOUDFLARE.md`): Git-integration previews only build when the range since the branch's last deploy (`VERCEL_GIT_PREVIOUS_SHA..HEAD`) touches something the site serves (`src/`, `public/`, `vercel.json`, `package*.json`, `astro.config.mjs`, `middleware.js`, fetch/build scripts, `tools/audio/`, `CHANGELOG.md`); `staging`, `main` and `lote-*` always build, a missing or out-of-clone previous SHA builds, production is unchanged. Pinned by `eval:vercelignore` (real git repo, 3 mutants) in pr-fast. The audio/decals zips and every viewmodel asset are cached in `node_modules/.cache/csb-packs/` between Vercel builds (keyed by sha + URL; no-op locally). `middleware.js` and `/api/[rota]` log each ingest/X-conversion failure once per instance and cause instead of once per request.
+- Usage measurement is now on by default (owner decision, 09/11, legitimate interest): `privacy-runtime.js` `allowed()` returns `true` unless an explicit refusal is stored in `cs_privacy`; corrupt or old-version storage counts as "no choice". Since the 13/10 opt-in (`c74421f10`) the analytics checkbox only existed inside the account dialog, which never opens for anonymous players, so identified telemetry collapsed from 50 to 60 browsers/day down to 1 to 4 while `count_hourly` still saw 100 to 1000 `game_loaded`/day (08/11: 1046 loads, 125 SP match starts, 2 browsers in `player_daily`). The admin's Fiéis/Geografia/Funil/Usuários read only the consented tables and were showing about 0.2% of real players. What travels is the same local UUID (`cs_anon`), no IP and no e-mail; refusal still wipes `cs_acq`/`cs_ops_last`/`cs_session`/`cs_invite_landing` and keeps Vercel Analytics off. The entry/hub checkbox now starts checked and reads "Vem ligado; desmarque para parar", `/privacidade` §2 and §5 describe the default and the refusal path. `privacy-choice-check` proves default allow, refusal wins and withdrawal purge (mutants `ignore-refusal`, `keep-optional-storage-on-refusal`, `vercel-continue-after-withdraw`); `privacy-ops-check` boots `ops.js` under a stored refusal (mutant `ops-ignore-refusal`) and under no choice; `login-prompt-check` LP8 expects events unless refused.
+
+- CI and local test orchestration no longer requires the full 116-step deploy suite on every push. `check:prepush` runs core plus lightweight contracts for the files changed and falls back to the full suite for unknown or transversal changes; measured runs finished documentation in 46.8 s and a map change in 73.9 s, versus 1455 s for the previous full hook. `check:fast` and `check:deploy` now expand `tools/eval/suites.mjs`, with all original 338 and 116 steps preserved token-for-token and order-checked, plus `eval:portalembed` from staging. The CI keeps its complete independent lists.
+- Invariants now run in source, VM, bots, characters/materials and four map shards. `INVARIANTES_FAMILIA` and map-check selectors reject unknown IDs before starting simulations, preserve each `freshReport` producer with its consumers and keep bots, mount and recoil execution in one shard. Equipment and Sertão are split by existing command/check IDs, with no duplicated scenario and no quality split.
+- Every runner execution writes a timing JSON artifact with per-step status, duration and final exit. `--jobs=2` is available only for the core suite as an explicit opt-in; the pre-push stays sequential after local CPU-contention measurements.
+- Edge traffic count (`src/lib/server-traffic.mjs`) now names in-app browsers: TikTok (`musical_ly`/`BytedanceWebview`/`TikTok`), Instagram, Facebook (`FBAN`/`FBAV`/`FB_IAB`), LinkedIn (`LinkedInApp`) and X (`TwitterAndroid`/`Twitter for iPhone`) stay `kind: browser` (they are people) with `agent: app/<name>`; open browsers keep the empty agent. Reason: the 08/11 TikTok paid campaign sent 517 visits in one hour, 72% loaded the game and 85% left in under a minute without entering, and the admin had no way to tell them from Chrome. `server-traffic-check.mjs` gains the five UA cases plus the open-Chrome and `facebookexternalhit` counter-cases, and is finally wired as `eval:servertraffic` inside `check:fast` (it had no script since #988).
+
+### Fixed
+- Production crash recovery: the match result no longer treats every objective as Javaporcos territory (Operação Flávio has no `regras.times`); map downloads retry once after transient module-network failures and failed map promises can be attempted again; optional Javaporcos audio retries its fetch without escalating the fallback to `console.error`; menu scenery failures release the splash instead of aborting boot; and `main.js`/`site-links.js` no longer require top-level `await`, restoring module parsing on Safari 14-era WebViews.
+- Browsers and embedded WebViews that disallow WebAssembly now keep the Meshopt decoder rejection inside the existing compressed-model fallback instead of emitting an actionable global `WebAssembly.instantiate()` rejection.
+- Slow menu scenery no longer turns the 20-second splash failsafe into `boot-watchdog`: the accepted entry gesture releases module sequencing while the optional 3D arena continues loading, and the watchdog recognizes that handoff without masking a genuinely unresponsive boot.
+- Revisão atual do release #1251: o artefato do PR é extraído em `dist`, isolado do checkout confiável usado por Wrangler e pelo comentário sticky; o smoke Cloudflare por `workflow_dispatch` não consulta mais sticky de PR e falha imediatamente se `BASE_URL` estiver vazio. WFS cobre os três caminhos com mutantes; E05 ganhou DOM completo e timeout, confirmando que o retry de `guest_invalid` termina sem alterar o login.
+- Pre-push no longer falls back to the full `check:deploy` when a change touches the two edge entry points: `middleware.js` (Vercel proxy root) and `src/middleware.ts` (Workers) now select `core + network` in `selecao-pre-push.mjs` (the landing PR #1291 burned a full local run because of this). Covered by a new case in `eval-suites.test.mjs`.
+- Online drops with network ID 0 work end to end (finding by estraga-codigo on #1291, minor). Server event IDs are uint32 and 0 is valid, but three checks used truthiness: `pedirPick` on a network drop with `_nid === 0` fell through to the spawn-rack path (`pickupWeapon`) and the server got the wrong request; `limparDropsDeRede` never removed it on round reset; and `_pickPendente = 0` doubled as the "nothing pending" sentinel, so an input carrying `pick: 0` was omitted from `sendInput`. The sentinel is now `null` (set in the constructor), every check is `!= null`, and `net-event-id-check` grows the drop lifecycle clause (drop 0/1/0xffffffff spawns, `gone` removes it, round reset removes it, `pick: 0` reaches `sendInput` and is consumed) plus the rack counter-case; the truthiness mutant dies. `eval:netcode` fails on virgin staging with `protocolo_incompativel` (protocol v8 bump in flight by another lane) and is not affected by this change.
+- Revisão do release #1251: `origemCompartilhamento` só usa `corosol.to` no apex ou em subdomínios com fronteira (`*.corosolto.com.br`), sem desviar hosts como `evilcorosolto.com.br`; o middleware Astro devolve `next()` na Vercel, cujo proxy já conta a requisição, e só agenda `/api/server-traffic` no Workers. Regressões comportamentais cobrem apex/subdomínio/host estranho e os dois adaptadores; `eval:shareorigin` ganha o mutante sem fronteira e os builds Vercel/Cloudflare passam. UIR20 deixa de prender a forma `new Set` de `geo.ts` e chama `langFromCountry` para verificar `US/GB → en` e `PT/BR/ausente → pt`.
+- Social login no longer gets stuck on `guest_invalid` when the browser holds a stale guest proof. Google, other OAuth providers and email now retry automatically without the invalid proof, preserving local history and never accepting it as valid; subsequent clicks do not resend it, and each provider gets one retry and navigation. Covered by LP15/E05 and both recovery mutants.
+- Multiplayer character voices belong to the character again (owner, 09/11: Saci and other absent characters shouting in a Lampião room). `Sfx.characterVoice` now resolves take of the event → another in-game take of the SAME character (kill/radio/round) → faction pool only for characters without structured in-game voice; the legacy string form (select-only) keeps the pool. The live pack stored every Mítico as that string with all 56 kill takes mixed in `voice.M`, so any Mítico kill picked any Mítico: `tools/audio/miticos-character-voice-apply.mjs` + `miticos-voice-map.json` (pool M identified offline by transcription + voice pitch band) restructure the 9 Míticos as `{select, kill}` with captions, zero new bytes, pool untouched — the owner applies it to the private manifest. Pinned by `eval:mp-voz-personagem` (VOZ1–6, mutant `pool-da-faccao`).
+- Bot radio callouts reach the multiplayer: the dedicated node died in `_botCall` at the DOM check, so the snapshot `voice` channel (room.js/netcodec v5+) was never filled and the online team was mute while single-player had "Contato!". The node now marks `_voiceSnap='radio'` with the same 5 s global cooldown and each client applies the single-player rule in `NetGame.voice` (≤55 m from you, enemies speak less, line in the radio log). Headless room A/B over 90 s: 10 radio events vs 0 on main. Pinned by VOZ7–9 (mutant `rede-muda`). Needs a backend image with this client ref to reach production.
+- The match loading wall shows the character you picked when the lot has its art (the 9 Míticos: `LOADING_WALL_BY_CHAR`), instead of the random rotation that showed Maria Bonita for a `?personagem=lampiao` start; map art (javaporcos) still wins, other characters keep rotating. `javaporcos-wallpaper-check` anchor updated.
+- The v3 multiplayer lobby keeps **CRIAR SALA PRIVADA**, quick play and private-room options visible when `/api/geo-lang` resolves after `tp/servidores.js` mounts. The legacy hub bootstrap no longer moves those controls back into hidden markup; SV20 forces this module order and clicks the visible private-room action.
+- UI eval fixtures now pass the real Javaporcos map predicate into the rounds callback, exclude the recording action from the account-button count and drop the stale funnel forwarding assertion. The rounds, hub identity and login-prompt checks pass again without changing game behavior.
+- Offline matches no longer stutter as the bot count grows past 4 (owner report, 08/11). Measured in Chrome with GPU and 4× CPU throttling, Operação Flávio with 12 bots went from p50 333 / p95 533 ms per frame to 33 / 50 ms, and 8 bots from p95 317 to 33 ms. Causes, from CPU and allocation profiles: on Flávio every defender re-raycast the VIP's line of sight against every attacker each frame, through all 321k occluder triangles (66% of CPU); `_collide` scanned every collider (1403 on Amazônia) dozens of times per bot per frame and produced 102 MB/s of garbage; three.js rebuilt program keys 60-130 times per frame (shared shadow depth material flipping skinning per character, two-pass transparent halos and contact shadows, post passes that hid the lights); every gunshot and footstep allocated a new noise `AudioBuffer`. Fixes: exact per-step memo of the VIP LOS, first-hit LOS exit, an XZ collider grid, the static raycast index on every plain occluder, a shared skinned depth material, single-pass ground planes, lights on every pass layer and pooled noise buffers. Program lookups per frame dropped to 2-16, and 12-bot allocation fell from 127 to 20 MB/s on Amazônia. The simulation is unchanged: the match hash is identical with and without each fix on five maps, and the halo/contact-shadow frame is bit-identical. Pinned by `eval:bots-perf` (node: LOS per bot, colliders visited, triangles per ray, same hash; 3 mutants) and `eval:bots-perf:browser` (Chrome, Flávio 12 bots, CPU 4×: p95 ≤ 100 ms and ≤ 40 program lookups per frame; mutants `ia-antiga` and `render-antigo`).
+- Operação Flávio: weapons dropped by dead enemies or allies can be picked up again (E / mobile PEGAR). The escort (VIP + role guards/roamers) no longer collects drops by walking over them — its tight formation took 80–94% of death drops within 1 s, before the player could reach them, and swapped the guards' role weapons. Attackers keep the generic walk-over pickup of every map; the dedicated node runs the same `_updatePickups`, so online stays server-authoritative. Guarded by `eval:operacao-flavio-pickup` (4 mutants), wired into `eval:operacao-flavio`.
+- Multiplayer map transitions now build the mantle collider index before sampling walkable cells instead of testing every collider per cell. In local start probes, `_mantleAlcance` fell from 308→28 ms at Praça dos Três Poderes, 195→14 ms at Escadão and 397→22 ms at Quebrada; movement, spawn and mantle suites remain the behavioral gate.
+- The legacy multiplayer lobby now labels the one-click invite-room action **CRIAR SALA PRIVADA** instead of the ambiguous JOGAR COM AMIGOS. The v3 label and the create/connect behavior stay unchanged, so logged-in players can find the same action in either UI.
+- The release train no longer waits up to 25 min for pr-fast to re-run on the main push of a lote merge (and no longer stays in the station when that run is slow): `embarque` accepts the head at once when it is a 2-parent merge whose tree equals parent 2 and `ci.yml` already finished `success` on parent 2 (the lote PR run); any other case falls back to waiting for the push run. `bump-tag-release` applies the same `verde_por_lote` check before `pr_fast_verde` when main moves, so only green SHAs are published (RLS17). Pinned by RLS18 in `eval:release` (real `verde` step with fake `gh`/`sleep`, 11 scenarios; mutants `lote-sem-arvore`, `lote-sem-ci`, `lote-desligado`).
+- The X conversion pixel (live in production from a branch deploy) joins the release line with its base code fixed: `insertBefore(s,a)` passed the `twq` function instead of the `<script>` element and threw on every boot (ops-diag #1231). Guarded by `eval:xpixel`, which runs the real snippet from both pages, with the `insere-funcao` mutant (CI and `check:fast`).
+- prod-watch no longer fails every scheduled run when `CF_API_TOKEN` can't see the `corosolto.com.br` zone: the Cloudflare purge is best-effort (`continue-on-error` plus guarded parse), emits a `::warning` pointing at the token scopes (Zone:Read + Cache Purge) or the new `CF_ZONE_NAME` repository variable, also warns on `success:false` purges, and the edge-coherence probe still runs — no more false `prod-crash` incidents. Pinned by `eval:wfpurge` (fake-`curl` runs of the real step, 3 mutants), wired into pr-fast.
+- No code requests a missing `/img/chars-hero/<id>.webp` anymore (ops-diag #1231, `julia-zanatta` 404 at boot): `public/js/data/retratos.js` is the single source of which ids have hero (45) and model-cutout (54) art, and `retratoFontes`/`heroUrl` feed the lobby preview, HUD, loading VS, modes, profile, invite card and bot ranking avatars. The 18 hero-less characters fall back to the cutout/bust that exists. Pinned by `eval:retratohero` (sets == disk both ways, real `portraitUrl`/fallback for all 63 ids, no hand-built hero URL; 3 mutants).
+- Dedicated online escort simulation, round lifecycle, match-end statistics, online objective reset and horde round-end audio.
+- A dedicated online spectator is now distinct from the authoritative escort server (`net.espectador`): spectators apply objective snapshots and keep presentation, but never decide the winner, schedule respawn waves or run the VIP controller; authoritative guard armor remains scoped to VIP/escort roles instead of every dedicated entity.
+- Prop rotation, aircraft collision, boarding navigation, low-profile solid-cover shadows and recovery firing/movement regressions.
+- Flávio now hides for real: threatened or unescorted, the VIP seeks exported map cover slots (`escortCoverPoints` — sticky choice with margin + minimum dwell, never closer to the threat, immediate switch only for a glued threat or a much safer slot), crouches behind the solid object and only resumes when the escort recovers; engaged guards snap to conflict-zone `guard` cover without sharing points, roamers keep pressuring their lane and converge on contact. Line of sight remains the only acquisition path — no attacker wall-hack, no VIP invisibility.
+- Shelter threat focus is now LOS-gated end to end: a hidden attacker behind a wall never moves the VIP's cover, heading or resume decisions — after losing sight, only a short memory of the last SEEN position (snapshot) applies. No authoritative-information leaks from the escort mode.
+- Formation and cover routing follow the same rule: threats the VIP cannot see never engage the formation, pull roamers off their lane or reserve guard cover — attackers remain visible only through genuine line of sight, with a short seen-recently memory so marching sightline gaps don't re-trigger engagements.
+- Escort timeout now derives the round winner from the objective when one exists (`objective.state.winner`) and keeps attackers as the fallback; a fixed-E mutation is caught by the duration ruler.
+- Hangar lane stripes now sit at y=0.13, above the 0.10 m hangar slab, preventing z-fighting/hidden markings; the collider ruler catches a `faixa-afunda` mutation.
+- The real Chromium escort scenario now runs in `check:deploy` through a self-hosted local server; the VIP is exempt from generic bot depenetration so converging guards cannot shove Flávio out of real cover.
+- Local dev now proxies `/private-assets/` viewmodel products in DEV only, so localhost loads the real authored weapons and hands instead of the legacy fallback; the escort browser gate fails on any private-viewmodel 404.
+- Right-click on an unlocked game canvas now requests pointer lock and engages ADS as soon as the lock succeeds; releasing the button before lock cancels the pending aim, covered by `sem-ads-lock` and `cancela-mouseup` mutants.
+- Attacker respawns are fixed at the four E apron bases near the aircraft (`-33,54`, `-28,56`, `33,54`, `30,56`) with yaw 0 facing the convoy — no mobile forward spawns — while escort roamers follow the west/east service lanes through the hangar and then keep lateral offset on the central checkpoint.
+- Escort formation stays smooth with the fixed E base and denser apron: stable guards reroute every 0.37 s, pocketed guards keep the 0.28 s escape cadence and the direct-escape hold rises to 0.75 s; all four flicker scenarios and mutants stay green.
+- The boarding apron gains render-only ground operation: ten safety cones, four wheel chocks, tire marks, oil stains and asphalt patches, service valves/cables, two baggage carts with 14 bags, a translucent perimeter fence, distant north hangars, a windsock and an off-play-area fuel truck — all collision-free. The factory M92 framing is retuned to 1.01× AK with centered ADS and passes all image rulers.
+- The unpainted PT-38 serves the factory X18 chassis again (`fab#pistol`, owner decision 06/11): the public golden pilot showed the back of the slide with blob hands. The golden (`gold#pistol`) now appears only with the gold paint or `?vmgolden=pistol`. Local DEV already proxies `/private-assets/`, so localhost no longer falls back to the legacy pistol. The X18 measures 0.99× with a green magazine in 3:2 and 16:9. Guarded by `pistol-golden-no-lancamento` (VL8) and `golden-no-lancamento` (golden-skin-selection), and the hand-rig debt moved to the paint route.
+- The first switch to the secondary no longer flashes the legacy viewmodel before the authored one: the game now builds the primary and secondary authored packages hidden in the background (`prime`, `?vmprime=0` disables it). The real-browser ruler `eval:vm-troca-sem-legado` saw 4 legacy frames on the first switch without `prime` and 0 with it; it runs in `check:deploy`, with the `sem-prime` mutant.
+- The boot budget proxy now isolates the externally injected X/Twitter ad snippet from public HTML before measurement and reports `thirdPartyScriptsStripped`; any game script or page error still fails the gate, and a dedicated no-removal mutant catches regression. Production HTML itself still needs the malformed third-party snippet repaired or removed by the owner.
+- CI: the former `reguas-e-site` serial queue is split into parallel `reguas-e-site` and `mapas-e-site` jobs after measured cancellations at 30m16s (run `42009772988`) and 35m18s (run `42016661426`), both without a red verdict. Every step moved intact; the build job now requires both. The online escort suite is single-sourced through `eval:operacao-flavio`, with a `suite-duplicada` mutant guarding the gate list.
+- The golden PT-38 used by the paint route is no longer giant: the pilot camera (34°) rendered it at 1.99× the approved pistol. `VM_WEAPON.pistol.goldFrame` reframes only the `gold#` route (60°, pilot units) to 1.05×. The image scoreboard hashes the pistol again (the previous exclusion kept a stale 0.99× green), guarded by a `quadro-pistola` mutant, and the magazine ruler knows the pilot's `L_*/R_*` hand rig.
+- The escort HUD no longer reveals tactics to either team: it shows only checkpoint progress and the timer (no escort count, contested or cover state), with a `hud-anuncia-escolta` mutant. The server-recovery suite now requires its green base before mutants; the client-respawn clause was red since the spectator split and is aligned with the server-owned respawn.
+- Picking Zero Um (`senador`) on side B offline now makes the player the VIP: there is no duplicate senador bot, escort state follows the player, a player VIP death ends the round for E without respawn, and boarding works without auto-movement. Online rosters stay server-owned. Covered by `operacao-flavio-vip-jogador-check` with 13 mutants.
+- Flávio's team now rushes instead of waiting. Each round picks one of three deterministic VIP routes (middle/west/east, from `roundNum`, no wire change). The VIP keeps moving under visible threat with two or more guards and boards while escorted even if contested. Guards intercept up to 2 m ahead, and flankers act as decoys on three or more lanes, starting opposite the VIP. A guard formation hold no longer crashes `_updateBot` after the VIP dies.
+- Map props now render at real scale next to 1.72 m characters, with colliders equal to the render: service car, baggage tractor, ground power unit, scanner, maintenance station, containers, tool cart, light tower, check-in counters, planters and Jersey barrier walls (the boarding stairs are real scale too, but walkable instead of solid). Standing VIP concealment comes from genuinely tall props, with the cover balance kept at 10×8. Guarded by `carro-gigante`, `carro-eixo-trocado`, `balcao-gigante`, `jardineira-render-baixo` and `kit-barreira-no-patio`.
+- Flávio can board again. The boarding stairs moved to the aircraft's east side at the cinematic door (`z 52`): the real GLB platform (native `-z`) touches the door and the steps descend outward. The aircraft GLB is mirrored in x so its painted door faces the stairs, and all three routes reach the foot, `(6.2, 52)`. Before, the stairs sat on the west side with the platform facing away, and the final checkpoint was on the other side of the fuselage. Guarded by `escada-invertida`, `escada-longe-da-porta` and `aviao-sem-espelho`.
+- Flávio's stairs are walkable ("a escada está bloqueada"). The stairs lost their solid box: `groundHeightAt` follows the treads measured from the GLB, up to a platform at the door sill (1.57 m; stairs height 2.22 m), and every step stays below the 0.55 m `STEP_H`. All routes end at the foot, `(6.2, 52)`, then the platform, `(2.3, 52)`. The nav graph climbs through three axis nodes, the stairs footprint blocks side shortcuts, attackers can climb too, and flankers hold their vanguard at the foot. Guarded by `escada-solida`, `escada-plana`, `escada-degrau-alto`, `escada-sem-nav` and `vanguarda-sobe-escada`.
+- Boarding is automatic ("tinha que ser automático"): B wins on the frame Flávio enters the stairs zone (`escortBoardingZone`, a 1 m capsule along foot → platform), with or without escort and even when contested, for the bot VIP and the player VIP, offline and on the authoritative server. The 3 s `BOARDING_TIME` hold, the 0.45 m platform radius and `boardedFor` are gone; a guard crouched on the platform no longer blocks the win, and guard/flanker destinations never land on the stairs footprint (attackers may still climb). Guarded by `embarque-so-no-topo`, `guarda-na-escada`, `embarque-jogador-nunca`, `embarque-jogador-so-no-topo`, `embarque-jogador-so-livre`, `embarque-exige-escolta` and `embarque-exige-limpo`.
+- Players can walk all the way around the aircraft ("a parte em volta de trás da aeronave não é acessível"). The north bound moved from `z 57` to `z 64` (tail end); the plane colliders follow the GLB mesh at body height instead of the old 3.4 × 12 m fuselage and 16 × 3.2 m wing boxes (invisible walls past the wingtips); the service car moved to `(-8.6, 54.5)` to clear the west wingtip; the barrier-kit scenery moved to `z 70`; and a 12-point `aircraftRing` joins the nav graph. The west route now passes south of the ULD stack `(-1, 44.6)`, because the real nose sits flush against it. Guarded by `aircraft-ring-walkable-and-faithful-colliders` with `asa-larga`, `fuselagem-larga`, `limite-norte-antigo`, `carro-na-asa` and `anel-fora-do-grafo`.
+- A render-only "EMBARQUE DO FLÁVIO ▼" billboard now marks the door for both teams. It is anchored at the arrow tip just above the door, has no collider/occluder/raycast, and hides during the boarding cinematic. Guarded by `placa-sem-seta`, `placa-oclusora`, the browser gate's arrow-pixel probe and the `placa-boiando` timeline scenario. The amber checkpoint floor rings that read as unexplained circles in the boarding lounge are gone (`anel-no-lounge` mutant); the blue ring under allies is the pre-existing global team halo (`_makeTeamMark`, `?teammark=0`).
+- A B boarding win now reads "FLÁVIO FUGIU PROS EUA" in the round result and in the cinematic HUD (offline and online), guarded by the `titulo-antigo` and `hud-antigo` mutants.
 
 ## Não lançado — 2026-10-19
 
@@ -44,6 +133,10 @@
 
 ### Corrigido
 - A Piscina deixa de repetir grafites ou pintá-los sobre a faixa azul; armários não engolem a câmera, e armas estáticas deixam os mapas com a loja ligada. Esquerdomacho segura pistola e faca sem disputar duas poses, recebe colete proporcional, e a AK volta ao tamanho certo em primeira pessoa. O menu de compra ocupa a tela, B fica exclusivo da loja, N troca a câmera, o saldo vai para a direita, a janela de compra fica mais longa e vírgula/ponto compram munição extra.
+- O modo Treta Pop deixa de importar diretamente o catálogo de mapas para detectar Javaporcos; a informação vem da API do menu, evitando erro fatal quando o navegador mistura módulos de releases diferentes.
+- O wallpaper de espera dos Javaporcos agora leva revisão na URL; evita que a CDN mantenha o 404 antigo do asset recém-publicado.
+- A matriz gerada do arsenal acompanha as linhas atuais de `game.js`, mantendo o gate de consistência do CI verde.
+- O gate de processos CPU do Treta Pop ganha teto de 30 minutos; o runner cancelava antes de executar `tp-glove-origin` em máquina fria.
 - A arma equipada volta a aparecer no celular. Se o modelo animado ainda estiver carregando ou falhar, uma arma alternativa continua visível também no desktop.
 - Canarinho e suas três skins deixam de carregar uma cauda maior que quase metade do corpo. A pistola fica à frente do tronco, com cotovelo dobrado e montagem recalculada depois da pose de uma mão.
 - A contagem diária de visitantes cobre todas as páginas públicas. Antes, só a entrada do jogo emitia a visita e deixava de fora quem chegava por conteúdo, perfil ou documento legal.
@@ -158,6 +251,892 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.145] — 2026-11-12
+
+### Mudado
+- hotfix: recover production boot and objective crashes (#1336)
+- fix: retain shared profile source contract
+- fix: retain boot readiness source contract
+- fix: keep delayed boot initializers standalone-safe
+- fix: preserve boot sequencing without top-level await
+- fix: share resolved language with dependent UI
+- fix: handle matches without objectives
+- test: target the objective crash regression
+- test: decouple language gate from top-level await
+- fix: recover production boot and objective crashes
+
+## [2.1.0-alpha.144] — 2026-11-10
+
+### Mudado
+- Anima reações e saque dos personagens remotos (#1273)
+- fix(ci): pass Cloudflare preview SHA through the environment (#1310)
+- Merge CI fix for the Cloudflare sticky preview comment. Owner explicitly authorized this merge; required checks are green and the only failing check is the smoke-cf failure fixed by this PR. (#1309)
+- Pre-push: edge entry points select network, not full deploy (#1303)
+- release: daily batch 2026-11-10 (#1316)
+- test: cover invalid CF comment arity
+- fix: accept positional SHA in CF preview comment
+- fix(ci): corrigir argumentos do comentário Cloudflare
+- ci(pre-push): bordas de contagem (middleware.js e src/middleware.ts) são network
+- Preserva ordem da régua de animação
+- Restaura mutação do hit local
+- Corrige câmera do arnês de mantle remoto
+- Documenta arnês remoto fora do código
+- Aplica direção à morte remota atrasada
+- Enquadra arma durante saque remoto
+- Evita morte atrasada após respawn remoto
+- Documenta limite de dano em bots remotos
+- Mantém apoio da arma durante saque remoto
+- Preserva dano local e morte sem evento
+- Aplica LOD de animação aos remotos
+- Mede animações de remotos com mutantes
+- Anima saque na troca de arma remota
+- Direciona morte remota pelo autor
+- Anima reação de remotos ao dano
+- Anima inclinação lateral de remotos
+
+## [2.1.0-alpha.143] — 2026-11-10
+
+### Mudado
+- Merge main-only CI hotfix. Owner explicitly authorized CI correction and release. All checks are green. (#1314)
+- chore(bots): standardize csbrasil-bot public output in English (#1311)
+- Merge account modal polish 2.1.0-alpha.142. Owner explicitly authorized CI correction and release. All checks, including smoke-cf, are green; all review threads are resolved with evidence. (#1307)
+- test: cover invalid CF comment arity
+- fix: accept positional SHA in CF preview comment
+- chore(bots): standardize csbrasil-bot public output in English
+- test: reject transient stale guest error
+
+## [2.1.0-alpha.142] — 2026-11-10
+
+### Mudado
+- fix(ci): protege preview Cloudflare e smoke manual (#1300)
+- chore: versiona módulos do modal atualizado
+- test(ci): limita regras CF ao passo exato
+- test(ci): prende guarda do smoke ao dispatch
+- fix(ci): isola artefato e corrige smoke manual
+
+## [2.1.0-alpha.141] — 2026-11-10
+
+### Mudado
+- fix(ci): protege preview Cloudflare e smoke manual (#1300)
+- test(ci): limita regras CF ao passo exato
+- test(ci): prende guarda do smoke ao dispatch
+- fix(ci): isola artefato e corrige smoke manual
+
+## [2.1.0-alpha.140] — 2026-11-10
+
+### Mudado
+- Jogo para de travar com muitos bots (#1245)
+- Emit google-site-verification meta on the home head (#1254)
+- Add itch.io embed wrapper and allow itch.zone ancestor (#1252)
+- ci: harden post-deploy smoke classification (#1255)
+- Remove 157 eval scripts with no caller anywhere in the repo (#1256)
+- ci(browser): validar agregado do portão em staging (#1246)
+- ci: acelerar pre-push e isolar gates pesados (#1257)
+- fix(ui): manter ação privada visível no boot v3 (#1250)
+- Use English bot updates and retire obsolete review requirements (#1262)
+- feat(cf): spike do site no Cloudflare Workers (fase 1 da migração) (#1261)
+- fix(audio): voz é do personagem e rádio dos bots chega ao multiplayer (#1263)
+- ci: shard heavy simulations and publish timings (#1267)
+- Medição ligada por padrão: recusa explícita desliga (#1264)
+- Cortar build de preview, cache de packs e log por requisição na Vercel (fase 0) (#1258)
+- chore: régua eval:lixo (LX1-LX5) + bloco 1 da limpeza (#1259)
+- chore: limpeza de órfãos lote 2 (#1272)
+- feat: preview Cloudflare por PR (#1271)
+- Segredos de SSR em runtime no Workers: env-runtime + ponte de bindings (achado 1 do spike CF) (#1276)
+- ci: paraleliza contratos visuais e Flávio (#1275)
+- Contagem de borda nomeia navegador interno de app (#1278)
+- Pre-push e CI param de queimar uma hora por push (#1281)
+- ci: rebalanceia equipamento TP sem novos jobs (#1282)
+- feat: usar corosol.to nos links compartilháveis (#1285)
+- feat(cf): publica Worker de staging em paralelo (#1283)
+- fix(cf): restaurar geo e assets de áudio no Workers (#1284)
+- docs(skills): personagem 3P pelo processo padrão do Studio (#1269)
+- [REA] Adicionar impacto de pouso por superfície e vínculo de look (#1289)
+- fix(login): continua OAuth quando a prova do convidado expira (#1296)
+- feat: automate daily releases and build repair (#1290)
+- fix(login): continua OAuth quando a prova do convidado expira (#1297)
+- ci(preview): builda mudanças do adaptador (#1299)
+- /app: landing leve para quem abre o jogo dentro de app (#1291)
+- fix(ci): desbloqueia a promoção staging (#1286)
+- lote release 08/11: jogo sem travar com muitos bots (#1245) (#1251)
+- fix(ci): declara runner do preview pulado
+- ci(preview): builda mudanças do adaptador
+- style(ci): compacta comentario de geo da borda
+- fix(login): separa recuperação por provider
+- fix(login): continua OAuth quando a prova do convidado expira
+- fix(login): separa recuperação por provider
+- fix(bot): classify batches from verified complete diffs
+- fix(bot): verify complete release diff before merging
+- fix(bot): preserve feature routing and require positive English detection
+- fix(release): resolve hostname e trafego duplicado
+- test(game): usar ID canônico do córrego
+- docs(game): atualizar âncoras da matriz
+- chore(ci): remover diário do diff da PR
+- fix(bot): require main ancestry and lockfile-free Node setup
+- test(smoke): detect locale from rendered faction label
+- fix(bot): secure dependency reinstall and batch review resolution
+- Constrain preview build timeout
+- Satisfy Cloudflare workflow gate requirements
+- fix(login): continua OAuth quando a prova do convidado expira
+- fix(bot): refresh release ancestry refs explicitly
+- fix(bot): require approval and clear human blocks for batches
+- fix(landing): alvo do iOS com uma autoridade https e fiação testável
+- fix(bot): bind automerge to evaluated head
+- fix(bot): block merges while review is pending
+- Detect chat smoke locale from rendered UI
+- fix(ci): permite config do Worker staging
+- fix(bot): protect quality gates from build repair
+- test(ci): enforce automerge decision ordering
+- fix(bot): reject missing hotfix ancestry evidence
+- fix(ci): nao mede GPU real em SwiftShader
+- test(game): ampliar timeout da régua de pouso
+- Fix preview artifact gating and chat smoke collector
+- fix(ci): align bot merge policy guards
+- test(smoke): cover remaining chat locale labels
+- fix(cf): respeita teto de timeout do deploy
+- docs(game): regenerar matriz de armas
+- fix(cf): preserva contrato do gate smoke
+- fix(ci): executa preview CF do branch base
+- fix(ci): split Cloudflare preview deploy
+- fix(ci): isolate Cloudflare preview secrets
+- test(smoke): localize chat assertions
+- test(bot): retire CI fixture debt
+- docs(bot): document release and PR language policies
+- feat(bot): require English PR titles and descriptions
+- feat(bot): repair failed builds with isolated Codex jobs
+- test(bot): add build repair trust guards
+- feat(bot): merge safe PRs into daily release batches
+- feat(bot): classify releases and assign bugfixes
+- test: register share origin in fast suite
+- test(smoke): accept edge locale labels
+- docs: comentários da landing e do privacy-runtime no teto de 2 linhas
+- test: harden share link gates
+- fix(ci): resolve bloqueios da promocao staging
+- feat: use corosol.to for shared links
+- fix(cf): restore geo and audio assets on Workers
+- docs(cf): registra prova do staging
+- fix(cf): torna issue de paridade shell seguro
+- feat(cf): publica Worker de staging em paralelo
+- ci: rebalanceia contratos de equipamento TP
+- fix(game): respeitar altura da água no pouso
+- feat(borda): landing /app para quem abre o jogo dentro de app
+- ci(pre-push): scripts/ci/*.py são core (eval:fixture cobra o selftest)
+- docs: changelog dos portões de CI
+- ci(smoke): smoke-cf e FX2 saem do vermelho crônico do staging
+- ci(pre-push): o teste das suítes é transversal como o seletor
+- ci(pre-push): base mais próxima entre main e staging; skills e markdown são core
+- test(suites): eval:servertraffic entra no baseline da suíte fast
+- ci: separa visual-map de materiais
+- ci: isola contrato ferro-balcao
+- ER1 pega leitura de env por alias e destructuring (review do estraga-codigo)
+- ci: separa integracao comportamento e escolta Flavio
+- CI: passo --varre precisa das sentinelas no próprio env
+- chore: disparar validacao do smoke por SHA
+- Segredos de SSR saem do build e viram leitura de runtime (achado 1 do spike CF)
+- fix(ci): prepara three no shard de grafite
+- fix: vincular smoke ao preview do commit
+- fix(borda): comentário da classe de app dentro do teto
+- docs: registrar preview Cloudflare validado
+- fix: considerar config do Worker no filtro
+- fix: restaurar executor do preview Cloudflare
+- chore: disparar preview após token dedicado
+- chore: reexecutar preview Cloudflare
+- fix: tornar preview opcional e registrar asset ausente
+- chore: permitir config de preview na raiz
+- docs: registrar permissão ausente no preview
+- docs: detalha shards e selecao do pre-push
+- feat(pre-push): seleciona scripts e workflows alterados
+- ci: divide contratos visuais e Flavio em shards
+- fix: permitir token dedicado no preview Cloudflare
+- feat: publicar preview Cloudflare por PR
+- chore: arquiva históricos e pastas privadas
+- chore: remove geradores raiz órfãos
+- chore: remove órfãos eval da lote 2
+- chore(docs): regenera bloco de scripts com eval:servertraffic
+- feat(borda): nomear navegador interno de app na contagem de tráfego
+- docs(skills): personagem 3P passa pelo processo padrão do Studio
+- fix(eval): lixo conta rename como adição (--no-renames) e prova com mutante
+- Chave do cache de packs vira sha256 da URL inteira
+- test(eval): eval:lixo é passo novo da suite fast, fora do baseline congelado
+- ci(eval): add runner timings and optional core parallelism
+- ci(browser): split livestock checks by id
+- ci(invariants): shard simulations by family and map
+- test(audio): VOZ8 executa o produtor real do room.js; mutantes exigem saída 1
+- chore(audio): encurta comentários novos (régua comentario)
+- fix(audio): voz é do personagem e rádio dos bots chega ao multiplayer
+- docs(review): retire obsolete reviewer requirements in historical records
+- chore(review): remove retired provider references from CI fixtures
+- feat(privacidade): medição ligada por padrão, recusa explícita desliga
+- fix(cf): middleware lê API_PROXY_SECRET e PUBLIC_API_BASE em runtime; adaptador.mjs no gatilho
+- test(cf): _headers/_redirects gerados de vercel.json, réguas de paridade e runbook da fase 1
+- feat(cf): adaptador por ADAPTER, Worker csb-spike e imagens em resvg-wasm nas duas bordas
+- build(deps): @astrojs/cloudflare 14.3.4 e wrangler 4.158 para o spike do Workers
+- chore(limpeza): bloco 1, só o que tem zero chamador
+- feat(eval): régua eval:lixo, PR não nasce com lixo (LX1-LX5)
+- Registrar o PR #1258 no status do runbook
+- Cortar build de preview, cache de packs e log por requisição na Vercel
+- fix(bots): write public PR updates in English
+- test(ui): require visible private-room options
+- test(vm): drop inconclusive local-weapon mutant
+- test(vm): include initial weapon in MP boot budget
+- Remove 157 eval scripts with no caller anywhere in the repo
+- ci(workflow): isolate heavy and external checks
+- ci(eval): select lightweight pre-push suites
+- fix: exclude /api/* proxy failures from site smoke
+- Regenerate docs blocks for check:fast with eval:portalembed
+- fix: keep backend smoke noise out of site gate
+- Emit google-site-verification meta on the home head
+- ci: harden post-deploy smoke classification
+- test(game): proteger vínculo visual e régua de look
+- feat(game): adicionar impacto de pouso por superfície
+- Add itch.io embed wrapper and allow itch.zone ancestor
+- chore(docs): regenera bloco derivado (autofix)
+- fix(ui): preserve private-room actions during v3 boot
+- ci(browser): replace aggregate heredoc with python -c
+- test(vm): drop inconclusive local-weapon mutant
+- Regenerate the weapon matrix line anchors
+- Give the plane LOS clause the Game scratch vectors
+- Inject the static raycast index so shot_surfaces stays three-free
+- test(vm): include initial weapon in MP boot budget
+- ci(browser): indent aggregate heredoc
+- chore(docs): regenera bloco derivado (autofix)
+- Regenerate the weapon matrix line anchors
+- Trim the light-layers comment to the two-line limit
+- Log the bot-count stutter fix in the changelog
+- Add bots-perf rulers for bot-count stutter
+- Add a mutation hook that restores the old all-hits LOS path
+- Regenerate ARCH.md for the new game.js methods
+- Key the VIP line-of-sight memo on the LOS function too
+- Keep lights visible to every post pass layer
+- Render character contact shadows in a single pass
+- Reuse noise buffers for synthesized gunshots and steps
+- Stop per-frame shader key churn from bot shadows and team halos
+- Index static occluder meshes for every map
+- Memoize the VIP line of sight within a Flávio sim step
+- Stop bot line-of-sight checks at the first occluder hit
+- Index colliders in an XZ grid for _collide
+
+## [2.1.0-alpha.139] — 2026-11-08
+
+### Mudado
+- Release sai na hora quando a main recebe um lote já testado (#1239)
+- Lobby: Operação Flávio primeiro; Quests e skins embaixo de Amigos online (#1240)
+- Add /en as the crawlable English home (#1243)
+- fix(mp): expor sala privada e reduzir stalls do mantle (#1241)
+- Flávio: cobertura nas laterais e arma caída pegável (#1242)
+- feat(client): randomize anonymous initial character (#1247)
+- fix(ci): exigir mutantes aplicadas no contrato de personagem (#1249)
+- lote release: promover staging para main (#1248)
+- test(client): detect unapplied character mutants
+- test(client): cover anonymous character bootstrap
+- Point the card-resenha proof at the renamed LF1 clause
+- feat(client): randomize anonymous initial character
+- test(lobby): isolate card-resenha failure
+- Add /en as the crawlable English home
+- chore(docs): regenera bloco derivado (autofix)
+- Regenerate ARCH.md for _botPegaArma
+- Give the Flávio side lanes real cover every ten meters
+- Add a 12-triangle baked cargo crate for Flávio cover
+- perf(mp): index mantle colliders before sampling
+- Let the Flávio escort leave dropped weapons for the player
+- docs: changelog do lobby com Flávio primeiro
+- test(lobby): réguas do painel do Flávio e das colunas (LFB6)
+- chore(lobby): tira a miniatura do card de canto da revisão de assets
+- feat(lobby): Operação Flávio primeiro, quests e skins sob amigos online
+- fix(ui): expose private room action in legacy lobby
+- Ship the release train at once when main merges a tested lot
+
+## [2.1.0-alpha.138] — 2026-11-07
+
+### Mudado
+- fix(javaporcos): restaura wallpaper e desacopla Treta Pop (#1227)
+- fix: remover flickering da calcada dos javaporcos (#1229)
+- release: promover staging para produção (#1230)
+- Operação Flávio: escolta 6×6, embarque pela escada e PT-38 da fábrica (#1232)
+- Operação Flávio no lobby e monitor de produção limpo (#1236)
+- Pixel do X na linha de release, com insertBefore corrigido (#1237)
+- lote release 07/11: Operação Flávio (#1232, #1236, #1237) (#1235)
+- Insert the X pixel script element instead of twq
+- Serve unpublished candidate media in the boot budget proxy
+- Feature Operação Flávio in the lobby and fix production monitoring
+- Measure the secondary switch at the switch instant
+- Board Flávio automatically and open the aircraft ring
+- Let Flávio climb the stairs and board at the door
+- Serve the factory X18 PT-38 again without paint
+- Board Flávio through the real stairs door
+- Trim new escort comments to the two-line ceiling
+- Rush Flávio, hide escort tactics and fix prop scale
+- Reframe the golden PT-38 to the approved pistol size
+- Single-source the escort online suite
+- Harden escort replay edge cases
+- Address the Operação Flávio localhost replay
+- Run the escort browser ruler as a local deploy gate
+- Raise escort markings above the hangar slab
+- Honor escort objective verdict on timeout
+- Split the CI rules and site queue into parallel jobs
+- Raise measured reguas-e-site CI timeout
+- Preserve team color in spawn shield and factory scoreboard inputs
+- Align escort CI gates with authoritative spectator split
+- Fixture da régua de sala fornece a parede Javaporcos
+- comentarios: comprime blocos remanescentes para o teto de 2 linhas
+- comentarios: encurta blocos novos da Operacao Flavio para o teto de 2 linhas
+- Isolate third-party boot noise from production HTML
+- Complete Operação Flávio gauntlet feedback
+- fix: use configured X conversion event ids
+- Refresh weapon matrix and room mutation coverage
+- fix: keep API gate aware of X modules
+- fix: harden X conversion delivery
+- Use concise Portuguese HUD comment
+- Shorten escort comments for the repository limit
+- feat: add X conversion tracking
+- Keep matchRounds within the UI contract
+- fix: remove z-fighting da calcada dos javaporcos
+- Fix Operação Flávio gameplay and bot authority
+- Improve Operação Flávio map routes and presentation
+- fix(ci): amplia janela do gate Treta Pop
+- test: align escort and boot fixtures with the mainline
+- fix(ci): regenera matriz do arsenal
+- fix(javaporcos): invalida cache do wallpaper
+- fix(treta-pop): desacopla detecção de mapa Javaporcos
+- test: atualizar âncora do mutante flash
+- Corrija as provas de defesa e ambiente
+- Complete o piso no acesso ao avião
+- Traduza os comentários das garantias de embarque
+- Corrige verificadores de inicialização, menu e escolta
+- fix: restaura a cena quando o embarque falha
+- Registra envio do anúncio Flávio
+- Ajusta anúncio Flávio em paisagem baixa
+- Registra envio da integração Flávio200
+- Registra validação da integração Flávio200
+- docs: registre validação integrada do Flávio
+- docs(operacao): fixa a base da integracao Flavio
+- test: exercita atraso do quadril no LOD apropriado
+- test: ligar CTF e recarga pareada ao CI e preservar diagnóstico de boot
+- test: confere o modo efetivo na contagem de partida
+- test: modelar anúncio na jornada B7
+- docs: preservar recibo da correção de autoria local
+- test: medir rounds no modo efetivo do formulário
+- docs: registrar quarenta cenários e par WebSocket final
+- test: alinhar smoke à sequência real de embarque
+- fix: preservar o VIP na troca de time offline
+- docs: registrar reconciliação local do Flávio
+- fix(net): preservar v7 e publicar objetivo em snapshot v8
+- fix(flavio): aceitar identidade NPC no intervalo uint32
+- feat(flavio): ligar embarque com passos e palco isolados
+- fix: coleta recursos próprios de atores de apresentação
+- Prepare asset reproduzível para o embarque
+- Registre contrato e aceite estático do embarque
+- fix: usa tempo real na apresentação de Flávio
+- fix: preserva duração do objetivo na rodada decisiva
+- docs: registra aceite local das quarenta partidas
+- fix: mantém defesa e reagrupamento físico da escolta
+- test: valida atalhos dirigidos na fachada do Flávio
+- Proteja as travessias físicas e atualize o hash
+- Ligue as portas do terminal às rotas dos guardas
+- Registre o diagnóstico físico das portas do terminal
+- fix: mantém os guardas no ponto físico da formação
+- test(flavio): keep stale winner alive until snapshot transition
+- fix(flavio): honor explicit current-round winner after reconnect
+- fix(flavio): defend escort formation without chasing distant targets
+- docs(ops): record complete Flavio seed balance rejection
+- fix(operacao): preserve spectator presentation across round resets
+- Exige prova causal nas réguas da Operação Flávio
+- Add Flávio hangar emergency presentation
+- fix(flavio): share visible prop geometry with the server
+- fix(flavio): filter incompatible room options before creating
+- fix(mp): retoma rodadas por identidade e resultado autoritativo
+- docs: registrar revisão e sincronização do Flávio
+- fix: preservar escolta na retomada e no menu
+- test: percorrer anúncio antes de medir o lobby
+- Mantém avião no quadro da cinemática
+- Corrige mutação dos marcos de entrada no lobby
+- chore: reduz notas redundantes na entrada do lobby
+- test: compara retorno da recarga com controle no mesmo estado
+- docs: registra pilotos de gameplay e revisão dos dois formatos
+- fix: mantém marcha original na duração prevista e cancelável
+- fix: alinha ondas de respawn e prova aplicação do objetivo online
+- fix: preserva apresentação online e cobertura dos mapas CTF
+- feat: apresenta Operação Flávio antes do lobby com capturas reais
+- fix: sincroniza resultado online e encerra marcha do Flávio
+- fix: converge codec dos modos no contrato v7
+- fix: conecta apresentação online da Operação Flávio
+- fix: reinicia avião da Operação Flávio entre rodadas
+- fix: preserve selected mode across objectives
+- fix: keep objective bots isolated from viewmodels
+- fix: use native GPU for boot gate on macOS
+- feat: finalize Operation Flavio mode
+- fix: reconstruir escolta da Operação Flávio
+- feat: rebuild operacao flavio airport
+- Integrar a escolta aos contratos do cliente
+- Implementar escolta autoritativa de Flávio
+- Adicionar mapa da Operação Flávio
+
+## [2.1.0-alpha.137] — 2026-11-03
+
+### Mudado
+- fix(audio): ambiência do v9 no ramo privado do fetch-audio (build de produção) (#1226)
+- lote release: Javaporcos aberto a todos + luvas/origem, câmera/ombro, pouso com peso, strict v7, pack v9 (16 ambiente), migração corosolto.com.br (#1224)
+- fix(audio): ambiência do v9 roda também no ramo privado do fetch-audio
+- fix(net): igualdade estrita na primária — snapshot v7 sem economia não apaga arma
+
+## [2.1.0-alpha.136] — 2026-11-03
+
+### Mudado
+- fix: medir grafites da Piscina com identidade canônica (#1202)
+- fix: liga as réguas ao contexto e ao PBR atuais (#1203)
+- fix: manter arma e luva no corpo em terceira pessoa (#1197)
+- fix: medir salto de Lajes no integrador atual (#1205)
+- fix: alinhar réguas da Mansão ao runtime atual (#1206)
+- fix: sincronizar luvas TP sem reiniciar animações (#1204)
+- fix: bake de grafite cancela sem entrada e ganha prova de determinismo (base atualizada do #1173) (#1211)
+- Régua de mãos nas 26 armas sem mutar node_modules (base atualizada do #1170) (#1212)
+- fix: integrar luvas e atualização TP em staging (#1208)
+- [REA] Restaurar ambiência da Piscina (#1137)
+- Respawn e troca de time limpam o estado de mantle e os buffers de salto. A composição preserva a curadoria de fauna e grafites e a propagação de falhas da CI. (#1155)
+- Adicionar Caça ao Javaporco na Cidade Invadida (#1160)
+- [REA] Câmera de ombro com troca lateral e colisão volumétrica (#1153)
+- push direto em main/staging recusado: todo push vira PR (#1215)
+- fix(vm): toda arma com pente declara parts.mag — a régua passava verde sem medir 24 delas (#1144)
+- Compra no multiplayer, armas grátis só no Javaporcos, TRETA$ 2x no HUD (#1216)
+- fix(ui): rearma a trava de Ctrl+W quando a tela cheia cai na pausa (#1136)
+- fix(audio): nomes neutros no manifest — 15 URLs de marca saíam pelo carregador em runtime (#1145)
+- fix(eval): lote autoral da piscina prova a permissao de pintura com mutante semantico (#1217)
+- fix(net): overlay NET mede snapshots/s e banda pelo relógio do servidor, não por quadros (#1143)
+- feat: compor Javaporcos, Arena e consistência visual (#1214)
+- audio-pack v9: ambiência autoral dos mapas (plans/22) (#1218)
+- lote release 02/11: Javaporcos, luvas, câmera/ombro, pouso com peso, ambiência autoral (pack v9), grafite e mãos (#1219)
+- fix(release): cópias EN das páginas novas do #1101 (broken link no docusaurus en) (#1222)
+- docs(i18n): cópias EN das páginas construtor-de-mapas e criar-mapa-com-ia
+- ops: produção canônica passa a ser www.corosolto.com.br
+- fix(javaporcos): variante devolve o stem do GLB, não o apelido
+- fix(arena): veredito na morte esvaziando o lado de vivos
+- fix(net): oferece todos os subprotocolos do codec no handshake do WebSocket
+- ci(portao): divide o portão em 4 jobs paralelos + agregador
+- docs(audio): procedência do ambiente sai de public/ — tools/audio/FONTE-ambiente.md
+- docs(assets): FONTE.md público sem nomes de provedor nem caminho de sessão
+- docs(javaporcos): faixas por domínio de coordenadas — cidade quadrada, anéis de r=max
+- ci(lote): mantle no teto de 30 min da régua WT2
+- fix(lote): veredito objetivo no placar de fim, música do menu pós-manifesto e teto do mantle
+- fix(audio): ambiente-mapas só importa o harness quando constrói mapa
+- feat(audio): ambiência autoral dos mapas no pack v9 (plans/22)
+- fix(grafite): renew validated map input fingerprints
+- chore(sim): refresh generated simulation fingerprint
+- fix(map): preserve Quebrada physics with optional props
+- fix: preservar caches e cancelar viewmodels descartados
+- fix: encerrar banners e identificar versao dos erros
+- fix: preservar input e identificadores do construtor
+- fix: limpar temporarios de deadline e recusar CLI invalida
+- Faz o mutante de relevo quebrar a funcao usada pelo Game
+- Atualiza blocos gerados da composicao de fauna e transporte
+- Encerra stream WebTransport no cabecalho acima do limite
+- Corrige fixtures de fauna para o contrato de boot atual
+- test(release): atualiza contratos da composicao Arena e Campo
+- test(sdk): recusa infraestrutura como mutante detectado
+- docs: regenera índices da composição Arena e SDK
+- fix(mapas): valida dimensões sólidas e respeita rotação
+- fix(campo): constrói vãos e cargas de obra legíveis
+- fix(campo): separa reboco e vidro sem alterar oclusao
+- test(net): usa protocolo 8 nas fixtures de taxa
+- fix(net): publica indisponibilidade sem relógio confiável
+- fix: alinhar fixtures ao vendor e ao áudio atual
+- fix(mapa): refinar casario e unir bordas da encosta
+- fix: version.js do merge anterior sai duplicada (regex pegou só o bloco do SIM_HASH)
+- fix(net): drenagem em lote no protocolo antigo não inventa rajada
+- fix(mapa): assentar casario e concreto do Campo
+- ci: reguas-e-site no teto admitido pela wf-timeout (25 - 30 min)
+- fix: version.js do merge anterior sai com marcadores de conflito
+- fix(audio): família cs vira jogo — marca não mora em chave de manifest tampouco
+- docs: regenerar links da matriz de armas
+- test: atualizar referência dos pisos após curadoria
+- fix(eval): exercitar grafites vivos e cobrir gatilho global
+- fix(grafite): preservar cartazes manuais na curadoria
+- ci: reguas-e-site ganha folga real de timeout (25 - 35 min)
+- ci: teto do reguas-e-site acompanha o conteúdo que o staging puxou
+- test(net): preserva compra e objetivo no snapshot v8
+- fix(audio): inicia música do menu após a entrada
+- fix(mapas): aplica curadoria também a cartazes manuais
+- feat(mapas): reserva arte única por cenário
+- fix(eval): mede boot pelo build de produção explícito
+- fix: troca de lado usa o tamanho real da lista de spawns
+- fix(eval): preserva origem pública e módulos do candidato
+- fix(eval): lote autoral da piscina prova a permissao de pintura com mutante semantico
+- fix(compra): Javaporcos fica sem loja também no online
+- Meça o frevo pelos dois pés em movimento
+- chore(push): push direto em main e staging é recusado — tudo vira PR
+- fix(eval): menuprops leva o modoObjetivoAtual real pós-#1160
+- fix(eval): versaoorigem leva o modoTelemetria real pós-r844
+- Separe IDs vivos das provas históricas na régua
+- Alinhe as fixtures ao mapa solicitado
+- Use IDs canônicos nas sondas visuais dos mapas
+- Prepare uma troca real no teste dos ícones de toque
+- Vincule as capturas aos IDs reais dos mapas
+- Confira a versão nos payloads reais da integração
+- style: encolhe comentários novos ao teto de 2 linhas (réguas cm1)
+- fix(eval): alinhar contratos dos instrumentos Javaporcos
+- fix(eval): match-options acompanha o guard javaporcos no roundsMax
+- test: cobre consumidor legado da ponte Three
+- fix(eval): respawn-sp-preso acompanha o guard javaporcos do renascer SP
+- test: alinhe a captura ao contrato atual da horda
+- fix: preserve pacotes ao resolver o Three no arnês
+- ci: aposenta o passo boot-assets --mutantes desta PR (fixture superseded)
+- fix(compra): recola o saldo no topo da pilha quando o HUD recria
+- fix: envie o placar da horda antes do primeiro abate
+- docs(economia): seção do multiplayer implementada (nó + cliente)
+- test(pickup): réguas medem o novo contrato de armas grátis
+- style(hud): saldo TRETA$ dobra e gruda no topo da pilha de armas
+- feat(compra): TRETA$ 2x acima da pilha de armas e compra remota no MP
+- feat(net): pedido de compra no MP e sync do saldo/janela/equipamento
+- feat(net): protocolo de snapshot v8 com reboque da economia de partida
+- feat(compra): loja do MP lê a flag do nó; armas grátis no chão só no Javaporcos
+- fix(eval): régua do READY do boot acompanha o veredito r844
+- fix(eval): régua do veredicto do boot acompanha a decisão r844
+- fix(eval): match-options acompanha o guard javaporcos no roundsMax
+- fix(test): fauna curada reconhece o preload javaporcos do bloco real
+- docs: Registrar composição do stack de pisos
+- fix: Normalizar UV dos pisos da Quebrada e Escadão
+- chore(docs): regenera blocos derivados e version.js pós-r844
+- fix(eval): skin-profile-flow reconhece o preload javaporcos do bloco real
+- test: Registrar baseline dos UVs dos pisos
+- test: atualize a âncora do mutante de respawn
+- chore(ci): re-dispara o synchronize após resolver a base com a main r843
+- chore(ci): reentrega o evento synchronize (pr-fast não disparou no push 0213ef91d)
+- fix(eval): réguas do menu e do backpedal acompanham o head mergeado
+- test: Corrigir bindings da fixture de fauna
+- chore: registra geração e BOOT atuais do CtrlW
+- docs: alinhar limites da mata à geometria real
+- Allow measured third-person equipment CI duration
+- Clean cosmetic mutant files on worker timeout
+- fix(ci): ajuste o timeout de réguas e site
+- Atualize esperado do catálogo antes de provar mutantes
+- fix: aplique pinturas equipadas nas golden de pistola e AK
+- chore: remover linha vazia no fim do checker
+- docs: descreva o controlador causal de grafite
+- Corrija o alias Piscina e preserve a curadoria
+- fix: respeite o tempo de saque declarado pelo jogo
+- fix(eval): medir filtro jogável do multiplayer
+- test: Exija os quatro lotes no controle de permissão da Piscina
+- Corrige o driver causal do batch de grafite da Piscina
+- docs: Registre adoção dos hooks de mãos e gates focais
+- docs(java): checkpoint repaired integration gates
+- fix(multiplayer): keep PvP room callers separate from horde
+- docs: regenera AGENTS/comecando após o merge da base (docs:check)
+- fix(eval): complete o contexto das fixtures de boot
+- test(multiplayer): freeze real client room caller contract
+- fix(quality): derive mutant census from current catalog
+- Reduza construções repetidas nos fixtures de fauna
+- fix(eval): Preserve a régua estrita de mãos separada
+- fix: Recupere o manifesto TP após falha temporária
+- test: Meça retry transitório do manifesto TP
+- docs: registrar integração local do cliente e backend v8
+- docs: registrar checkpoint causal do ORC2
+- fix: medir início dos cartazes no ORC2
+- fix: alinhar a malha do córrego ao campo de altura
+- fix(eval): repair Javaporco checker surfaces and mutation targets
+- fix: negociar snapshots v8 antes de aceitar a sessão
+- docs: registrar checkpoint causal do ORC2
+- fix: medir início dos cartazes no ORC2
+- chore(docs): regenera bloco derivado (autofix)
+- Preserve v7 ao integrar o codec cooperativo v8
+- fix: preservar diagnóstico dos preloads do corpo
+- docs: descrever o controlador de mutações das mãos
+- docs: remover contagem desatualizada dos mutantes TP
+- fix(eval): valide mutantes de mãos com recibos
+- fix: isolar luvas pela origem efetiva do corpo TP
+- test: medir origem das luvas no corpo TP
+- docs: registrar revisão e checkpoint da factory Drip
+- feat: extrair luva da origem cosmética Drip
+- test: fornecer origem do corpo na fixture de preview
+- fix(eval): resolve three via hooks de import em vez de mutar node_modules
+- fix(ci): cobrir helper de resposta no gatilho do portão
+- test(fauna): consolidar QA G/P e prova de corpo no MOV
+- test: isolar mutações de procedência em terceira pessoa
+- fix: reconhecer rótulos e lote reais de Mansão
+- fix: vincular luvas ao corpo realmente clonado
+- fix: atualizar derivados das fontes de luvas
+- fix(eval): restaura contrato de assets e teto da Mansão
+- fix(regua): valida escada antes de ler a posição
+- fix(regua): ancora LS6 no salto aprovado
+- fix: preservar falhas de infraestrutura nas réguas TP
+- fix: sincronizar luvas TP sem reiniciar animações
+- docs: precisar a contagem dos controles de telemetria
+- fix: ligar a régua local ao material PBR do Córrego
+- fix: medir o DPR enviado pelas funções reais de desempenho
+- fix: reparar a régua de grafite da Piscina
+- fix: reparar o mutante de revisão do manifesto
+- fix: limpar o desenho repetido na luva em primeira pessoa
+- test: declarar a seleção de luva na fixture de fauna
+- fix: carregar as duas partes da luva no corpo
+- fix: preserve arma e luva na terceira pessoa
+- ci: separa validação do mantle sem enfraquecer o portão
+- test: atualiza o golden após o pulo 5.6
+- test: cobrir trajetória de mantle em passos de50ms
+- fix(regua): recusa erro de infraestrutura em mut:mantle
+- fix: descarta travessia ao trocar de time
+- chore(docs): regenera bloco derivado (autofix)
+- Registra envio normal e próximos passos do PR1138
+- Registra validação da integração do PR1138
+- Registra validação da integração do PR1155
+- docs: preserve validação e envio da Arena
+- docs: registra envio e próxima integração local
+- docs: registra causa e recuperação dos loaders locais
+- docs(ops): registra boot do build completo e calibração de mídia
+- fix(eval): registra referência de família ausente como sem medida
+- test: usa backend gráfico padrão do Mac no orçamento de boot
+- test: executa os fluxos de modo e fecha falsos positivos do boot
+- fix: cancelar rearme tardio do teclado ao pausar ou sair
+- test: exigir morte semântica da fluidez e rodar movimento no CI
+- test: instrumenta o carregador real dos rigs nas provas CPU
+- fix: limpar mantle entre rodadas e animar remoto no ar
+- Medir janelas abertas e terreno sob os refúgios
+- Corrigir o contrato das clareiras e da grade de altura
+- Exibir o empate no resultado e no compartilhamento
+- Alinhar as fichas às seis frentes e à arena atual
+- Retirar os dois carros NC novos da publicação
+- fix: incluir ponte three no gatilho do navegador
+- fix: servir dependencias locais na regua de boot
+- fix: preparar three nas reguas em checkout limpo
+- Registre revisão e integração do SDK
+- fix: corrigir respawn da vila e sondas numericas nas arestas
+- Evite revisão trocada no preview do construtor
+- test: exigir abandono do alimento cercado antes de aprovar desistencia
+- test: cobrar regras da horda na CI e detectar perda do contorno
+- ci: reservar tempo para auditoria dos 21 mapas
+- test: comparar objetivo com snapshot atual
+- test: exigir consumo real do objetivo no cliente
+- test: corrigir fixture da corrida de introducao
+- test: preservar captura nos mapas de entrada rounds
+- fix: corrigir HUD remoto e contato da horda
+- perf: calcular limites estaticos na auditoria de mapas
+- docs: registrar arsenal e preview dos javaporcos
+- fix: entrega orientação autorada dos mapas ao jogador e aos bots
+- docs: registra revisão integral antes do envio de rede
+- fix: preservar apoio das patas ao parar
+- docs: registra revisão integral antes do envio de áudio
+- test: alinha fixtures TP ao loader de produção e prova recuo
+- test: corrige fixtures TP e exige mutantes de recuo no CI
+- Mostre presas nos abates dos javaporcos
+- Meça o tempo de cada mapa na auditoria
+- docs: corrige evidência do merge de áudio
+- Reduza o comentário do diagnóstico de rede
+- Registre a checagem visual do preview Javaporcos
+- Confira a origem nos payloads reais de perf e match
+- Valide o boot na branch de câmera sem perder seus ajustes
+- Valide o boot do menu na branch de rede
+- Preserve a origem e ordem dos assets nos redirects
+- Recuse assets falhados na medição do boot
+- Exija a falha correta nos mutantes do boot
+- Carregue só os props auditados no lobby da Praça
+- test: usa o backend gráfico padrão do Chrome no macOS
+- fix: marca taxa indisponível com relógio de simulação parado
+- fix(audio): reject invalid manifest families in required CI
+- docs(weapons): regenerate matrix source links after camera fix
+- Registre o preview publicado e o orçamento da horda
+- Registre MAPCHECK verde da Cidade Invadida
+- Preserve a continuação do gauntlet e do canário
+- test(camera): reject unapplied HUD mutants in the required gate
+- Registre a revisão e os testes reais da cidade
+- Ajuste os controles da invasão no lobby
+- fix(camera): align TP hints and enforce camera gates in CI
+- Proteja os vãos e o patamar da torre
+- fix(camera): reserve N and Shift+N for view controls
+- Registre o gauntlet da cidade e sincronize os índices
+- Dê curvas e flancos à horda e mostre seus abates
+- Integre a sala cooperativa sem humanizar a horda
+- Apresente Javaporcos no lobby com arte GPT
+- Concentre a invasão na cidade com 4 a 8 defensores
+- Abra a torre e mais casas da Cidade Invadida
+- Silencie as falas políticas no modo Javaporcos
+- test: exigir navegação válida na plataforma elevada
+- fix: validar relevo e identificadores do construtor
+- Registra validação do construtor após main atual
+- Corrige colisão e validação dos props carregados no construtor
+- Registra validação de áudio após sincronizar main
+- test: impedir vacuidade no contrato de áudio
+- fix: preservar proporção e liberar cenas da prévia
+- fix: publicar posições XYZ nos ambientes da Piscina
+- fix: preservar mapa ao importar JSON inválido
+- docs(javaporcos): registre o preview dos três mapas para teste
+- fix: limitar grade do construtor ao viewport
+- fix(javaporcos): alinhe o relevo da vila e complete a página de mapas
+- docs: reter SDK para reparos da revisão independente
+- fix(javaporcos): complete a ambiência dos mapas e ajuste os refúgios
+- ci: rodar contrato de áudio dos mapas no portão
+- fix(javaporcos): libere os sobrados e proteja as escadas
+- fix(javaporcos): liberar vias e alinhar colisão das coberturas
+- feat(javaporcos): preservar produção dos três ambientes e interiores
+- Registra armas GLB na criação da partida real
+- fix: preserva as armas pré-carregadas dos bots
+- docs(javaporcos): registra preview da morte e estado dos mapas
+- docs: registra edição e exportação de spawn no navegador
+- docs: registra rebase validado e gate de armas ainda pendente
+- fix: orienta seta do construtor pela visão real do spawn
+- fix: estabiliza pose após animação de morte
+- docs(javaporcos): registra três pilotos de arquitetura no Mint
+- docs: registra avanço remoto antes de integrar reparo
+- fix: restaura alvo de rounds no formato da partida
+- docs(javaporcos): registrar push e validacao do preview
+- fix(javaporcos): traduzir o confronto triplo no loading
+- fix(javaporcos): completar fixtures de carregamento e audio
+- chore(javaporcos): catalogar os pacotes Mint prontos
+- fix(javaporcos): expor regras solo no menu atual
+- feat(javaporcos): variar a aparencia da horda com modelos Mint
+- feat(javaporcos): disputar territorio com tres faccoes e refugios
+- feat(javaporcos): separar tres faccoes e regras de sobrevivencia
+- feat(javaporcos): abrir mata exploravel em seis frentes
+- fix(javaporcos): isolar intro por tentativa de lancamento
+- feat(javaporcos): dispersar bandos e tombar corpos de lado
+- feat(javaporcos): apresentar praga na entrada apos carregar
+- fix(javaporcos): mostrar defesa cooperativa e retomar setores limpos
+- fix(javaporcos): reconhecer gravacoes runtime no pacote privado
+- test(javaporcos): integrar imports e réguas do pre-push
+- feat(javaporcos): explicar a praga antes da partida
+- feat(javaporcos): nomear times e alternar wallpapers visíveis
+- test(launch): atualizar fixture do nascimento da partida
+- test(javaporcos): registrar física do pasto ampliado
+- fix(viewmodel): preservar atributos da tampa da AK
+- feat(javaporcos): ampliar campo e cinturão de mata
+- feat(javaporcos): saquear seis lojas e disputar domínio
+- feat(javaporcos): reproduzir grunhidos e guinchos reais CC0
+- Dá passada com apoio no chão aos javaporcos
+- Registra push e validação do wallpaper javaporcos
+- Corrige régua do loading com wallpaper do mapa
+- Lixo de guia que se vê da câmera do centro
+- Cupinzeiro sem orelhas de gato
+- Halo na lâmpada do beco
+- Lâmpada do beco com cone a 32 e lente mais quente
+- Forro de tábua no beiral dos telhados
+- Régua ORC2 para os telhados em lote
+- Telhados de 4 águas num lote por material
+- Rodapé do beco em reboco descascado com relevo
+- Folhagem deixa passar mais luz por baixo
+- Hemisfério do javaporcos volta a 1,35
+- Atualiza map_check.json do javaporcos com a rodada 4
+- Saco e caixa GLB somem mais perto
+- Lixo encostado na guia da rua do centro
+- Torrão do cupinzeiro em malha própria e simples
+- Puxa o céu do hemisfério para o lilás
+- Cupinzeiro com lóbulo fundo, ruído e torrinha
+- Saco de lixo em monte, amassado e tombado
+- PropBatch aceita escala por eixo e inclinação
+- Clareia o albedo do muro de bloco
+- Cortina da janela deixa de ler grade de tábua
+- Luz do beco vira cone para o chão
+- Clareia a trilha da mata sem amarelar
+- Hemisfério volta a escurecer e esfriar menos
+- Atualiza map_check.json do javaporcos com a cidade da rodada 3
+- Fusca 1968 sai da lista de carro comercial da régua
+- Rua do centro com fila de carros, caçamba e bar
+- Carro velho repintado por instância
+- Sombra de carro por caixa no lugar do GLB
+- Muro de bloco com mancha e junta
+- Fundo do beco com reboco, portão e pichação
+- Poste de sódio e fios no rasgo de céu dos becos
+- Janela com cortina e cômodo atrás do vidro
+- Saco de lixo com brilho de plástico
+- Desgaste da faixa de pedestre mais curto
+- Atualiza map_check.json do javaporcos com a mata nova
+- Régua da mata javaporcos: trilha, copa, cupinzeiro
+- Cupinzeiro do javaporcos em domo de 3 lóbulos
+- Copa do javaporcos desce no tronco, sem pirulito
+- Trilha do javaporcos deita na normal do barranco
+- Trilha do javaporcos deixa de ler piche
+- Clareia e esfria o hemisfério do javaporcos
+- Faixa de pedestre gasta sem veio de tábua
+- Atualiza map_check.json do javaporcos com a cidade nova
+- Régua da cidade javaporcos: icosaedro, janela, carro, poste
+- Dezesseis carros encostados na guia, só licença comercial
+- Letreiro pintado, porta de aço e cadeira de bar nas lojas
+- Decalque de lixo, poça e faixa no chão da cidade
+- Janela com vidro recuado, moldura e grade grossa
+- Saco, entulho e moita do javaporcos sem icosaedro
+- Poste redondo com luminária e luz na praça
+- PBR do Poly Haven em rodapé, muro, loja e poste
+- Cimento do beco javaporcos ganha junta e rachadura
+- Atualiza map_check.json do javaporcos com a mata nova
+- Capim do pasto javaporcos menos amarelo
+- Mata e chão até o horizonte no mapa javaporcos
+- Tira as árvores GLB da clareira do javaporcos
+- Copa da mata vira cartão de folha escaneada
+- Esfria a luz de sombra do mapa javaporcos
+- Troca o céu chapado do javaporcos por panorama
+- Atualiza map_check.json com o mapa javaporcos novo
+- Orla da mata volta a fechar atrás da samambaia
+- Documenta o layout de pasto, frentes e becos
+- Props realistas posicionados no mapa javaporcos
+- Texturas PBR no chão e nas paredes do mapa javaporcos
+- Capim do pasto sem verso preto no mapa javaporcos
+- Corrige a leitura do domínio no mapa novo
+- Ficha do modo documenta o domínio e o A/B
+- Onda com bicho escondido vira no relógio
+- Domínio por setor substitui os três objetivos
+- Fúria da horda cresce com o relógio da partida
+- Simulação da partida inteira mede domínio e becos
+- Setores de domínio da cidade no mapa javaporcos
+- Becos entre fundos de casa no mapa javaporcos
+- Pasto e 3 frentes de trilha no mapa javaporcos
+- Texturas de pasto, beco e trilha no mapa javaporcos
+- Texturas PBR do Poly Haven para os javaporcos
+- Mato, arbustos e troncos realistas dos javaporcos
+- Postes de madeira com fiação e transformador
+- Lixo e mobiliário de rua realistas dos javaporcos
+- Carros realistas no catálogo dos javaporcos
+- Régua de acervo cobra licença e teto dos javaporcos
+- Pipeline dos props realistas dos javaporcos
+- feat(loading): a espera do mapa javaporcos mostra a horda
+- docs(mapa): artes-conceito do layout com pasto e 3 frentes
+- docs(mapa): as duas tabelas de cotas que saíram do código
+- refactor(mapa): as cotas do relevo e da mata apontam para o doc
+- feat(audio): o javaporco rosna, carrega e morre
+- feat(horda): ondas gigantes, fúria e o bicho colado no chão
+- feat(mapa): a cidade dos javaporcos sai do blockout
+- feat: animate javaporco deaths with blood
+- O bake de grafite cancela quando falta entrada na cena
+- O lote dos props da piscina volta a levar a permissão de pintura
+- chore(docs): regenera bloco derivado (autofix)
+- fix: model objective maps as explicit modes
+- fix: use native GPU for boot gate on macOS
+- fix: finalize Javaporcos mode
+- Liga a régua de mãos com os mutantes no melee-vm e a versão com catálogo no check:vm
+- Régua de mãos passa a medir as 26 armas em todas as rotas e o rig de cada uma
+- Cobrir rounds próprios do modo horda
+- Integrar a horda aos contratos do cliente
+- Replicar e verificar a horda autoritativa
+- Implementar invasão em oito ondas
+- Adicionar cenário da invasão dos javaporcos
+- Medir a causa real do desbloqueio da splash
+- fix: cobrir volume completo da câmera
+- chore: atualizar índice de símbolos da câmera
+- docs: reduzir comentário dos probes
+- feat: tornar câmera de ombro mais dinâmica
+- docs: regenerar documentacao apos renomear caminhos do manifest
+- chore(docs): regenera bloco derivado (autofix)
+- fix(net): comentarios de campo abaixo do teto do CM1
+- fix(net): JSDoc do medidor dentro do teto de 2 linhas do CM1
+- fix(net): separa cabecalho do JSDoc para o CM1 contar blocos certos
+- docs(net): historia do defeito migra para o cabecalho da regua
+- docs(changelog): registrar ambiência da Piscina
+- docs(changelog): registrar Vira-Casaca
+- fix(net): comentario do relogio do servidor dentro do teto de 2 linhas
+- test(menu): cobrir Vira-Casaca no seletor legacy
+- feat(game): lançar modo Vira-Casaca
+- fix(audio): restaurar ambiência da Piscina
+- test(eval): régua do Ctrl+W passa a medir o navegador
+- fix(ui): rearma a trava de atalhos quando a tela cheia cai
+- fix(eval): vm-consistencia mede o caminho assado em vez de sair 25/25 calada
+- fix(eval): a rede do SUSPEITO da PRV9 não via `ak47`
+- fix(audio): nomes neutros nos caminhos do manifest de exemplo
+- test(audio): régua que reprova marca de terceiro em manifest versionado
+- fix(net): mede snapshots/s e banda pelo relógio do servidor, não por quadros
+- docs: Mova o contrato JSON para o guia do construtor
+- fix: Limite grade e preserve edição no construtor
+- docs: verify map editor export through CLI
+- feat(mapas): validate exported JSON file with map gate
+- docs: registrar que mapa-como-dado ja existe (arquitetura, CONTRIBUTING)
+- docs(mapas): pagina do construtor, good-first-issue e cross-links
+- feat(construtor): editor visual de mapa (public/construtor.html)
+- test(mapas): prova in-engine do formato JSON (eval:mapjsonboot)
+- feat(mapas): relevo no formato mapa-como-dado (rampas, plataformas, agua, props)
 
 ## [2.1.0-alpha.135] — 2026-11-01
 
@@ -5209,7 +6188,7 @@
 ## [2.0.0-alpha.119] — 2026-08-14
 
 ### Mudado
-- feat(ci): CodeRabbit no lugar do Greptile como revisor de PR (#272)
+- feat(ci): revisor legado no lugar do Greptile como revisor de PR (#272)
 
 ## [2.0.0-alpha.118] — 2026-08-14
 

@@ -94,6 +94,11 @@ body:has(#main-menu:not(.hidden)[data-hub-tab=comunidade]) #rotate-prompt{displa
 .login-prompt-treta b{color:#f5c400;font-weight:700}
 .login-prompt-treta .login-prompt-treta-cap{margin-top:6px;color:#b9bcb1;font:500 13px/1.4 system-ui,sans-serif}
 .login-prompt :focus-visible{outline:2px solid #d0ee7d;outline-offset:3px}
+@keyframes account-dialog-in{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes account-backdrop-in{from{opacity:0}to{opacity:1}}
+.account-entry-dialog[open],.login-prompt[open]{animation:account-dialog-in .18s cubic-bezier(.2,.8,.2,1) both}
+.account-entry-dialog[open]::backdrop,.login-prompt[open]::backdrop{animation:account-backdrop-in .22s ease-out both}
+@media(prefers-reduced-motion:reduce){.account-entry-dialog[open],.login-prompt[open],.account-entry-dialog[open]::backdrop,.login-prompt[open]::backdrop{animation:none}}
 @media(max-width:480px){.login-prompt-card{padding:18px 18px 14px}.login-prompt h2{font-size:38px}.login-prompt-treta{grid-template-columns:48px 1fr;gap:12px;padding:12px}.login-prompt-treta img{width:48px;height:48px}}
 .social-inline-status{min-height:20px;margin:-6px 0 14px;color:#b4d92e;font:600 14px/1.4 system-ui,sans-serif}.social-inline-status:empty{display:none}
 /* Perfil: ADICIONAR AMIGO em destaque, estado da amizade como selo e abas do dono. */

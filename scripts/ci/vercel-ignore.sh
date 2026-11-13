@@ -12,7 +12,7 @@
 # na main um PR de lote (label `release` ou branch lote-*, claude/lote-*, */lote-*) ou por
 # workflow_dispatch, só se o pr-fast estiver verde na head da main, e só ele cria commit
 # `chore(release):`.
-# Este script faz a Vercel buildar produção SÓ nesse commit. Preview continua igual.
+# Este script faz a Vercel buildar produção SÓ nesse commit. Preview de PR é Cloudflare.
 #
 # A integração Git da Vercel continua sendo o caminho de produção (RLS6, decisão do dono
 # de 08/08) — ela só passa a ignorar o merge que ainda não embarcou no trem.
@@ -20,10 +20,20 @@
 # Precisa sair AGORA (hotfix)? `gh workflow run release.yml` — embarca no trem na hora,
 # com bump, SIM_HASH e aviso aos nós de MP. Não existe atalho que pule o bump: produção
 # com SIM_HASH velho tiraria os jogadores do multiplayer em silêncio.
+#
+# PREVIEW (10/11/2026, fase 2 da saída da Vercel): preview de PR agora é Cloudflare
+# (`cf-preview.yml`); Vercel builda só staging/main/lote-* e produção no trem.
+# Qualquer outra branch sai aqui com 0 (pula): o comentário do PR aponta workers.dev.
 set -u
 if [ "${VERCEL_ENV:-}" != "production" ]; then
-  echo "vercel-ignore: ${VERCEL_ENV:-?} — builda (preview não espera o trem)"
-  exit 1
+  REF="${VERCEL_GIT_COMMIT_REF:-}"
+  case "$REF" in
+    staging|main|lote-*|*/lote-*)
+      echo "vercel-ignore: ${VERCEL_ENV:-?} de $REF — builda sempre"
+      exit 1 ;;
+  esac
+  echo "vercel-ignore: preview de PR agora é Cloudflare (cf-preview.yml); Vercel só produção/trem"
+  exit 0
 fi
 MSG="${VERCEL_GIT_COMMIT_MESSAGE:-}"
 case "$MSG" in
