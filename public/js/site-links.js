@@ -1,7 +1,7 @@
 // Guias no lobby; as mesmas URLs continuam navegáveis sem JavaScript.
 import { LANG, resolveGeoLang } from './i18n.js';
 import { estadoDaUrl } from './rotas.js';
-await resolveGeoLang();
+void resolveGeoLang().then(() => {
 const pairs = { '/personagens': '/characters', '/como-jogar': '/how-to-play', '/armas': '/weapons', '/mapas': '/maps', '/sobre': '/about', '/changelog': '/whats-new' };
 if (LANG === 'en') {
   for (const link of document.querySelectorAll('.hub-link-grid a, a.hub-changelog, .hub-content-tabs a')) {
@@ -167,4 +167,5 @@ window.addEventListener('popstate', () => {
   const guide = guideFromUrl();
   if (documents[`/${guide}`]) return selectDocument(`/${guide}`, false);
   select(tabs.find(tab => tab.dataset.guide === guide) ?? tabs[0], false);
+});
 });
