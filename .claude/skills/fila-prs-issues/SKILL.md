@@ -201,7 +201,8 @@ PR pequeno, reversível e fora das superfícies proibidas pode receber `safe-aut
 dispensa nenhum portão.
 
 ```bash
-gh pr merge NUMERO -R corosolto/REPO --merge
+HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)
+gh pr merge NUMERO -R corosolto/REPO --merge --match-head-commit "$HEAD"
 ```
 
 Depois de **cada** merge:
