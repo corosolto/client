@@ -50,6 +50,7 @@
    Uso: node tools/eval/autofix-check.mjs [--mutante=<nome>]
    ============================================================================ */
 import { readFileSync, readdirSync } from 'node:fs';
+import { gatilhoDe, gatilhosDe, ifDe, jobsDe, parseWorkflow, passosDe, runDe } from './workflow-yaml.mjs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const MUTANTES = {
@@ -81,6 +82,14 @@ if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); proc
 
 const ler = (p) => { try { return readFileSync(p, 'utf8'); } catch { return ''; } };
 const falhas = [];
+const estrutura = (nome, texto, clausula) => {
+  try {
+    return parseWorkflow(texto, nome);
+  } catch (error) {
+    falhas.push(`${clausula} ${error.message}`);
+    return null;
+  }
+};
 
 let wf = ler('.github/workflows/autofix.yml');
 let lista = ler('scripts/ci/autofix_allowlist.py');
@@ -210,8 +219,12 @@ for (const nome of WORKFLOWS) {
 
 /* ---- AF6: a varredura pós-release existe e enxerga quem ficou para trás ---- */
 if (MUT === 'sem-varredura-pos-release') wf = wf.replace(/\n  push:\n    branches: \[main\]/, '');
-const temPush = /^\s{2}push:\n\s{4}branches: \[main\]/m.test(wf);
-const temVarredura = /varredura:\n\s+if: github\.event_name == 'push'/.test(wf);
+const workflowAf6 = estrutura('autofix.yml', wf, 'AF6');
+const push = gatilhoDe(workflowAf6, 'push');
+const temPush = gatilhosDe(workflowAf6).includes('push')
+  && Array.isArray(push?.branches) && push.branches.includes('main');
+const condicaoVarredura = ifDe(jobsDe(workflowAf6).varredura).trim().replace(/^\$\{\{\s*|\s*\}\}$/g, '');
+const temVarredura = condicaoVarredura === "github.event_name == 'push'";
 const filtraAtrasado = /"CONFLICTING"/.test(wf) && /gh workflow run autofix\.yml/.test(wf);
 if (!temPush) falhas.push('AF6 autofix.yml não acorda quando a main anda — PR parado esperando revisão nunca é consertado');
 else if (!temVarredura) falhas.push('AF6 o gatilho de push existe mas não há job de varredura');
@@ -228,8 +241,9 @@ if (MUT === 'merge-limpo-commita') wf = wf.replace(AVISO_LIMPO, `${AVISO_LIMPO}\
 if (MUT === 'merge-limpo-descartado') wf = wf.replace(AVISO_LIMPO, `git reset -q --hard 'HEAD@{1}'\n            ${AVISO_LIMPO}`);
 if (MUT === 'push-sem-trava') wf = wf.replace("(steps.trava.outputs.commitar == '1' || steps.merge.outputs.mesclou == '1') && env.PODE_EDITAR == 'true'", "env.PODE_EDITAR == 'true'");
 {
-  const ini = wf.indexOf('\n  varredura:');
-  const varredura = ini < 0 ? '' : wf.slice(ini, wf.indexOf('\n  autofix:', ini));
+  const workflowAf8 = estrutura('autofix.yml', wf, 'AF8');
+  const jobs = jobsDe(workflowAf8);
+  const varredura = passosDe(jobs.varredura).map(runDe).join('\n');
   /* Quem dispara é a linha ANTES do `gh workflow run`; o que vale é o filtro final,
      não a listagem (a listagem tem de enxergar UNKNOWN para saber se espera). */
   const filtro = varredura.slice(0, varredura.indexOf('gh workflow run'));
@@ -242,8 +256,7 @@ if (MUT === 'push-sem-trava') wf = wf.replace("(steps.trava.outputs.commitar == 
   if (!/UNKNOWN/.test(filtro) || !/sleep \d+/.test(filtro)) {
     falhas.push('AF8 a varredura não espera o GitHub calcular o `mergeable` antes de escolher quem dispara');
   }
-  const ini2 = wf.indexOf('id: merge');
-  const merge = ini2 < 0 ? '' : wf.slice(ini2, wf.indexOf('diff-filter=U', ini2));
+  const merge = runDe(passosDe(jobs.autofix).find((passo) => passo.id === 'merge'));
   const tentativa = /if git merge[^\n]*(?:\\\n[^\n]*)*FETCH_HEAD; then\n([\s\S]*?)\n\s*fi\n/.exec(merge);
   if (!tentativa) {
     falhas.push('AF8 não achei o caminho do merge limpo no passo `id: merge` — a régua ficou cega');
@@ -255,13 +268,36 @@ if (MUT === 'push-sem-trava') wf = wf.replace("(steps.trava.outputs.commitar == 
       falhas.push('AF8 merge limpo é desfeito antes dos geradores — no cenário A/B a árvore mesclada fica com a contagem errada e o PR vermelho');
     }
   }
-  const push = /- name: Empurra o conserto\n\s+if: ([^\n]+)/.exec(wf)?.[1] || '';
+  const push = ifDe(passosDe(jobs.autofix).find((passo) => passo.name === 'Empurra o conserto'));
   if (!push.includes("steps.trava.outputs.commitar == '1'")) {
     falhas.push('AF8 o push do autofix não depende da trava ter achado regeneração — merge limpo local subiria sem motivo');
   }
 }
 
 /* ---- AF4: merge só no automerge, depois da guarda e por merge commit ---- */
+const MERGE = /\bgh\s+pr\s+merge\b|['"]gh['"]\s*,\s*['"]pr['"]\s*,\s*['"]merge['"]|\bgh\s+api\b(?=[\s\S]*(?:\/pulls\/[\s\S]*\/merge\b|\bmergePullRequest\b))|['"]gh['"]\s*,\s*['"]api['"](?=[\s\S]*(?:\/pulls\/[\s\S]*\/merge\b|\bmergePullRequest\b))|\bautomerge_merge\.py(?!\s+--selftest)\b|\bscripts\.ci\.automerge_merge\b/gi;
+const chamadasMerge = (texto) => {
+  /* Comentários não executam; todo o resto continua suspeito até ser classificado.
+     Em particular, não descartamos `gh pr merge` direto no shell: o YAML estrutura
+     ONDE ele roda, mas só o recorte conservador do comando prova seus argumentos. */
+  const executavel = texto.split('\n').filter((linha) => !/^\s*#/.test(linha)).join('\n').replace(/\\\n\s*/g, ' ');
+  let resolvido = executavel;
+  for (let rodada = 0; rodada < 32; rodada += 1) {
+    const antes = resolvido;
+    for (const assignment of resolvido.matchAll(/^\s*(?:(?:export|readonly|local|declare|typeset)(?:\s+-[A-Za-z]+)*\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*(?:\:\s*[^=\r\n]+)?\s*=\s*[A-Za-z]*(?:'([^'\r\n]*(?:\/pulls\/[^'\r\n]*\/merge|\bmergePullRequest\b)[^'\r\n]*)'|"([^"\r\n]*(?:\/pulls\/[^"\r\n]*\/merge|\bmergePullRequest\b)[^"\r\n]*)")/gm)) {
+      const nome = assignment[1];
+      const endpoint = assignment[2] ?? assignment[3];
+      resolvido = resolvido.replace(new RegExp(`\\$\\{${nome}\\}|\\$${nome}\\b|\\b${nome}\\b`, 'g'), (referencia) => referencia.startsWith('$') ? endpoint : `'${endpoint}'`);
+    }
+    if (resolvido === antes) break;
+  }
+  return [...resolvido.matchAll(MERGE)].map((match) => {
+    const restante = resolvido.slice(match.index, resolvido.indexOf('\n', match.index) < 0 ? undefined : resolvido.indexOf('\n', match.index));
+    const separador = restante.search(/;|&&|\|\|/);
+    const comando = restante.slice(0, separador < 0 ? undefined : separador);
+    return { pos: match.index, comando, executavel: resolvido };
+  });
+};
 for (const nome of WORKFLOWS) {
   let texto = ler(`.github/workflows/${nome}`);
   if (MUT === 'automerge-volta' && nome === 'csbrasil-bot-automerge.yml') {
@@ -269,25 +305,46 @@ for (const nome of WORKFLOWS) {
   }
   const decisao = 'python3 scripts/ci/check_automerge.py < /tmp/automerge.json > /tmp/automerge-result.json';
   if (MUT === 'automerge-fora-ordem' && nome === 'csbrasil-bot-automerge.yml') {
-    texto = texto.replace(decisao, '').replace('subprocess.run(command, check=True)', `subprocess.run(command, check=True)\n          ${decisao}`);
+    texto = texto.replace(decisao, '').replace('          python3 scripts/ci/automerge_merge.py\n', `          python3 scripts/ci/automerge_merge.py\n          ${decisao}\n`);
   }
   if (MUT === 'automerge-cheque-outro-job' && nome === 'csbrasil-bot-automerge.yml') {
     texto = texto.replace(decisao, '');
     texto += `\n  unrelated:\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - run: ${decisao}\n`;
   }
-  /* Só a CHAMADA conta: o comentário que explica a política pode citá-la. */
-  const linhas = texto.split('\n').filter((l) => !/^\s*#/.test(l));
-  const chamadas = linhas.filter((l) => /gh['"]?,\s*['"]pr['"],\s*['"]merge['"]|gh pr merge/.test(l));
-  if (!chamadas.length) continue;
-  const automerge = texto.match(/^  automerge:\n([\s\S]*?)(?=^  [\w-]+:\n|\Z)/m)?.[1] || '';
-  const posDecisao = automerge.indexOf(decisao);
-  const mergesNoJob = [...automerge.matchAll(/\['gh', 'pr', 'merge', pr, '--merge', '--match-head-commit', head_oid\]/g)].map((m) => m.index);
-  const guardado = nome === 'csbrasil-bot-automerge.yml'
-    && posDecisao >= 0
-    && mergesNoJob.length === chamadas.length
-    && mergesNoJob.every((pos) => pos > posDecisao);
-  if (!guardado) {
-    falhas.push(`AF4 ${nome} tem merge fora do job automerge, antes de check_automerge.py ou sem merge commit`);
+  const todas = chamadasMerge(texto);
+  if (!todas.length) continue;
+  const workflow = estrutura(nome, texto, 'AF4');
+  if (!workflow) continue;
+  let estruturadas = 0;
+  for (const [jobId, job] of Object.entries(jobsDe(workflow))) {
+    const passos = passosDe(job);
+    for (const [indice, passo] of passos.entries()) {
+      const run = runDe(passo);
+      for (const chamada of chamadasMerge(run)) {
+        estruturadas += 1;
+        const decisaoAntes = passos.slice(0, indice).some((anterior) => {
+          const condicao = ifDe(anterior);
+          const condicaoMerge = ifDe(passo);
+          const pulada = anterior.if === false || /^(?:\$\{\{\s*)?false(?:\s*\}\})?$/.test(condicao)
+            || anterior['continue-on-error'] === true || /\bif\s+false\b/.test(runDe(anterior));
+          const executavel = anterior.name === 'Check eligibility'
+            && runDe(anterior).trim() === `python3 scripts/ci/check_automerge.py --selftest\n${decisao}`;
+          return !pulada && executavel && (!condicao || condicao === condicaoMerge);
+        });
+        const mergeCanonico = passo.name === 'Merge when eligible'
+          && run.trim() === 'python3 scripts/ci/automerge_merge.py --selftest\npython3 scripts/ci/automerge_merge.py'
+          && chamadasMerge(run).length === 1;
+        if (nome !== 'csbrasil-bot-automerge.yml' || jobId !== 'automerge'
+            || !decisaoAntes || !mergeCanonico) {
+          falhas.push(`AF4 ${nome} · job ${jobId}: merge fora do job automerge, antes de check_automerge.py no MESMO job, sem --merge ou sem --match-head-commit head_oid`);
+        }
+      }
+    }
+  }
+  /* Um merge fora de um passo `run` sob `jobs` não pode ser classificado como seguro.
+     A comparação também impede que uma forma YAML nova desapareça da régua silenciosamente. */
+  if (estruturadas !== todas.length) {
+    falhas.push(`AF4 ${nome}: ${todas.length - estruturadas} chamada(s) de merge fora de um passo run estruturado — comando não comprovadamente seguro`);
   }
 }
 
