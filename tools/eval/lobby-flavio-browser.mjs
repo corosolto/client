@@ -25,10 +25,11 @@ const TOQUE = 44;
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
-const browser = await chromium.launch({
+const launchBrowser = () => chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   args: ['--headless=new', '--mute-audio'],
 });
+let browser = await launchBrowser();
 
 const MUT = {
   'card-resenha': [/\/js\/tp\/flavio\.js/, (t) => t.replace("card.id = 'tp-lobby-flavio';", "card.id = 'tp-resenha-botao';").replace("no('strong', 'tp-disp', tr('OPERAÇÃO FLÁVIO'))", "no('strong', 'tp-disp', tr('Resenha'))"), 'LFB1', 'telas'],
@@ -211,7 +212,10 @@ const GRUPOS = { telas, jogar, idioma };
 mkdirSync(OUT, { recursive: true });
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
-  for (const [mut, [, , alvo, grupo]] of Object.entries(MUT).filter(([m]) => !process.env.LFB || process.env.LFB === m)) {
+  const mutantes = Object.entries(MUT).filter(([m]) => !process.env.LFB || process.env.LFB === m);
+  for (const [indice, [mut, [, , alvo, grupo]]] of mutantes.entries()) {
+    // Um Chromium por mutante evita esgotar o route.fetch após dezenas de contexts.
+    if (indice) { await browser.close(); browser = await launchBrowser(); }
     let c;
     try { c = (await GRUPOS[grupo](mut, false)).find((x) => x.id === alvo); }
     catch (e) { c = { ok: true, msg: `erro: ${e.message.split('\n')[0]}` }; }

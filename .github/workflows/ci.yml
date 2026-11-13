@@ -175,6 +175,9 @@ jobs:
       - name: Structured workflow guards reject unsafe merges
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:workflowguards
+      - name: Duration-based sharding preserves full coverage
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node --test tests/eval-duration-shards.test.mjs
       - name: Asset manifests and orphan ratchets stay exact
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:assetinventory
@@ -184,25 +187,64 @@ jobs:
         run: npm run eval:passe
   contratos-visuais-personagens-camera:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
           cache: npm
+      - name: Restore calibrated duration manifest
+        id: duration-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        # Mesma chave do produtor; sem o arquivo local, o prefixo encontra a
+        # calibração mais recente. Cache vazio é reconstruído com dados reais da main;
+        # o shard nunca é desligado silenciosamente.
+        with:
+          path: tools/eval/out/durations.json
+          key: eval-durations-v1-
+          restore-keys: |
+            eval-durations-v1-
+      - name: Bootstrap duration manifest on an empty cache
+        if: steps.duration-cache.outputs.cache-matched-key == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mapfile -t ids < <(gh run list --repo "$REPO" --workflow ci.yml --branch main \
+            --event push --status success --limit 3 --json databaseId --jq '.[].databaseId')
+          if [ "${#ids[@]}" -eq 0 ]; then
+            echo '::error::No successful main CI timing source found' >&2
+            exit 1
+          fi
+          for id in "${ids[@]}"; do
+            destino="tools/eval/out/timing-artifacts/$id"
+            mkdir -p "$destino"
+            if ! gh run download "$id" --repo "$REPO" --dir "$destino" --pattern '*-tempos-*'; then
+              echo "::warning::Run $id has no downloadable timing artifact; skipping it"
+            fi
+          done
+          node tools/eval/calibrate-durations.mjs
       - name: Dependências (npm ci)
         id: deps
         run: npm ci
-      - name: Contratos visuais de personagens e câmera
+      - name: Contratos visuais de personagens e câmera (shard ${{ matrix.shard }}/3)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:knife-skin-markings --json-out=tools/eval/out/contratos-visuais-personagens-camera.json
+        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:knife-skin-markings --shard=${{ matrix.shard }}/3 --json-out=tools/eval/out/contratos-visuais-personagens-camera-shard-${{ matrix.shard }}.json
       - name: Tempos dos contratos visuais de personagens e câmera
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: contratos-visuais-personagens-camera-tempos-${{ github.run_id }}
-          path: tools/eval/out/contratos-visuais-personagens-camera.json
+          name: contratos-visuais-personagens-camera-tempos-${{ github.run_id }}-${{ matrix.shard }}
+          path: tools/eval/out/contratos-visuais-personagens-camera-shard-${{ matrix.shard }}.json
           if-no-files-found: warn
 
   contratos-visuais-ferro-balcao:
@@ -505,9 +547,15 @@ jobs:
           node tools/eval/cla-ssr-check.mjs
           node tools/eval/cla-ssr-check.mjs --mutate
           node tools/eval/rotas-check.mjs --dist
-          if node tools/eval/rotas-check.mjs --dist --mutante=robots; then
-            echo '::error::rotas-check aceitou o mutante robots'
+          status=0
+          node tools/eval/rotas-check.mjs --dist --mutante=robots || status=$?
+          if [ "$status" -eq 0 ]; then
+            echo "::error::o mutante robots passou"
             exit 1
+          fi
+          if [ "$status" -ne 1 ]; then
+            echo "::error::o mutante robots terminou com status inesperado $status"
+            exit "$status"
           fi
           node tools/eval/perfil-abas-check.mjs
           node tools/eval/perfil-abas-check.mjs --mutate
