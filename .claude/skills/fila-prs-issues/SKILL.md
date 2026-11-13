@@ -76,12 +76,20 @@ não prova de correção nem autorização para fechar a issue antes do merge e 
 aponta para a branch padrão, troque `Fixes`/`Closes` por `Refs` antes do merge ou retargete para a
 branch de integração; o fechamento automático não pode anteceder a verificação.
 
-Antes de montar a lane, capture o head que será conferido e assuma `origin` como remote do head
-somente para PR do próprio repositório:
+Antes de montar a lane, capture o head que será conferido e configure remotes separados para a base
+e para o head. O remote da base precisa apontar explicitamente para o repositório do PR:
 
 ```bash
 REVIEWED_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)
-HEAD_REMOTE=origin
+EXPECTED_BASE_URL=https://github.com/corosolto/REPO.git
+BASE_REMOTE=corosolto-base
+if git remote get-url "$BASE_REMOTE" >/dev/null 2>&1; then
+  test "$(git remote get-url "$BASE_REMOTE")" = "$EXPECTED_BASE_URL" \
+    || { echo "remote da base aponta para outro repositório" >&2; exit 1; }
+else
+  git remote add "$BASE_REMOTE" "$EXPECTED_BASE_URL"
+fi
+HEAD_REMOTE="$BASE_REMOTE"
 ```
 
 ## 3. Isole cada lane sem tocar o checkout de ninguém
@@ -91,7 +99,7 @@ Antes de criar a lane:
 ```bash
 git status --short --branch
 git worktree list
-git fetch origin
+git fetch "$BASE_REMOTE"
 ```
 
 Se já existir worktree limpa para a branch, reutilize-a somente quando seu `HEAD` for o
@@ -102,7 +110,7 @@ Se já existir worktree limpa para a branch, reutilize-a somente quando seu `HEA
 git worktree add /tmp/corosolto-REPO-pr-NUMERO BRANCH
 
 # Branch que existe apenas no remoto:
-git worktree add --track -b BRANCH /tmp/corosolto-REPO-pr-NUMERO origin/BRANCH
+git worktree add --track -b BRANCH /tmp/corosolto-REPO-pr-NUMERO "$HEAD_REMOTE"/BRANCH
 
 test "$(git -C /tmp/corosolto-REPO-pr-NUMERO rev-parse HEAD)" = "$REVIEWED_HEAD" \
   || { echo "worktree não aponta para o head revisado" >&2; exit 1; }
@@ -172,7 +180,7 @@ o pre-push. Não alargue o escopo para aproveitar a lane.
 
 ```bash
 git commit -s -m "fix: descreva a correção" -m "Agent: NOME_DO_AGENTE"
-git push REMOTO_DO_HEAD BRANCH_ORIGINAL
+git push "$HEAD_REMOTE" BRANCH_ORIGINAL
 ```
 
 Depois do push, responda às threads tratadas com causa, correção/rebatimento, SHA e evidência.
@@ -211,8 +219,8 @@ publicada, atualize a base com merge normal e o mesmo sign-off/trailer, nunca re
 force-push:
 
 ```bash
-git fetch origin BASE_CORRETA
-git merge --no-ff --no-commit origin/BASE_CORRETA
+git fetch "$BASE_REMOTE" BASE_CORRETA
+git merge --no-ff --no-commit "$BASE_REMOTE"/BASE_CORRETA
 # Resolva conflitos, se houver, e rode os checks focados antes de commitar.
 git commit -s -m "merge: atualiza BASE_CORRETA na lane" -m "Agent: NOME_DO_AGENTE"
 git push "$HEAD_REMOTE" BRANCH_ORIGINAL
