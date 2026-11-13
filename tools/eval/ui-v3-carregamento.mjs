@@ -51,7 +51,7 @@ const TROCAS = {
   'legado-visivel': [/\/css\/tp\/carregamento\.css/, ':root[data-ui="v3"] #load-overlay>:not(.tp-carga){display:none}', ''],
   'vaga-some': [/\/js\/tp\/carregamento\.js/, 'while (d.tamanho &&', 'while (false && d.tamanho &&'],
   'rotulo-bot-online': [/\/js\/tp\/carregamento\.js/, "const rotuloBot = d.online ? '' : tr('BOT');", "const rotuloBot = tr('BOT');"],
-  'retrato-quebrado': [/\/js\/tp\/carregamento\.js/, "['chars-hero', 'chars/avatars', 'chars']", "['chars-sumiu']"],
+  'retrato-quebrado': [/\/js\/tp\/carregamento\.js/, '[heroUrl(id), bustoUrl(id), recorteUrl(id)]', "['/img/chars-sumiu']"],
   'celular-inclinado': [/\/css\/tp\/carregamento\.css/, '{width:72px;height:86px;transform:none;', '{width:72px;height:86px;transform:skewX(-8deg);'],
 };
 async function preparar(page, mutante) {

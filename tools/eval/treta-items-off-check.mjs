@@ -10,27 +10,30 @@ import {TRETA_SKINS,TRETA_WEAPON_SKINS,TRETA_GLOVES,TRETA_PACKS} from '../../pub
 import {assetUrl} from '../../public/js/data/asseturl.js';
 const mutant=process.argv.find(x=>x.startsWith('--mutant='))?.split('=')[1];
 if(process.argv.includes('--mutations')){
- for(const id of ['enabled','preload','mount','equipped','unapproved-skin']){
-  const r=spawnSync(process.execPath,[new URL(import.meta.url).pathname,'--mutant='+id],{encoding:'utf8'});
-  assert.notEqual(r.status,0,`Surviving OFF/approval mutant: ${id}`);
+ for(const [id,clause] of [['enabled','OFF preload must not fetch its manifest'],['preload','OFF preload must not fetch its manifest'],['mount','OFF mount must return null'],['equipped','OFF must not expose equipped items'],['unapproved-skin','Characters tab contains only approved character skins']]){
+  const r=spawnSync(process.execPath,[new URL(import.meta.url).pathname,'--mutant='+id],{encoding:'utf8',timeout:30000,maxBuffer:1000000});
+  assert(r.status===1 && !r.signal && !r.error && r.stdout.split(/\r?\n/).includes('Mutação aplicada: '+id) && /AssertionError/.test(r.stderr) && r.stderr.includes(clause) && !/TypeError:|ReferenceError:|SyntaxError:/.test(r.stderr),`OFF mutant without semantic rejection: ${id}\n${(r.stdout+r.stderr).slice(-1500)}`);
  }
  console.log('PASS: 5/5 OFF and skin approval mutations rejected');process.exit(0);
 }
 const read=p=>fs.readFileSync(new URL(p,root),'utf8');
-const feature=read('public/js/treta-features.js').replace('= false',mutant==='enabled'?'= true':'= false');
+const replaceOnce=(source,before,after)=>{assert.equal(source.split(before).length-1,1,'mutation requires unique target');return source.replace(before,after);};
+let feature=read('public/js/treta-features.js');
+if(mutant==='enabled')feature=replaceOnce(feature,'= false','= true');
 let eyeSource=read('public/js/eyewear.js');
-if(mutant==='preload')eyeSource=eyeSource.replace('export async function preloadEyewearAssets(ids=[]) {\n  if(!TRETA_ITEMS_ENABLED)return;','export async function preloadEyewearAssets(ids=[]) {');
-if(mutant==='mount')eyeSource=eyeSource.replace('export function mountEyewear(model,def) {\n  if(!TRETA_ITEMS_ENABLED)return null;','export function mountEyewear(model,def) {return {};');
+if(mutant==='preload')eyeSource=replaceOnce(eyeSource,'export async function preloadEyewearAssets(ids=[]) {\n  if(!TRETA_ITEMS_ENABLED)return;','export async function preloadEyewearAssets(ids=[]) {');
+if(mutant==='mount')eyeSource=replaceOnce(eyeSource,'export function mountEyewear(model,def,owned) {\n  if(!TRETA_ITEMS_ENABLED)return null;','export function mountEyewear(model,def,owned) {return {};');
 let storeSource=read('public/js/treta-store.js');
-if(mutant==='equipped')storeSource=storeSource.replace('export function equippedTretaEyewear() {\n  if(!TRETA_ITEMS_ENABLED)return null;',"export function equippedTretaEyewear() {return 'metal-de-rua';");
-if(mutant==='unapproved-skin')storeSource=storeSource.replace('TRETA_SKINS.filter(s=>manifest.skins[s.id]?.approved===true)','TRETA_SKINS');
+if(mutant==='equipped')storeSource=replaceOnce(storeSource,'export function equippedTretaEyewear() {\n  if(!TRETA_ITEMS_ENABLED)return null;',"export function equippedTretaEyewear() {return 'metal-de-rua';");
+if(mutant==='unapproved-skin')storeSource=replaceOnce(storeSource,'TRETA_SKINS.filter(s=>manifest.skins[s.id]?.approved===true)','TRETA_SKINS');
+if(mutant){assert(['enabled','preload','mount','equipped','unapproved-skin'].includes(mutant),'known mutant');console.log('Mutação aplicada: '+mutant);}
 const strip=s=>s.replace(/^import[^\n]*\n/gm,'').replace(/export /g,'');
 let eyeFetches=0;
 const eye=vm.createContext({console,THREE:{},GLTFLoader:class{},fetch:async()=>{eyeFetches++;return {ok:true,json:async()=>({eyewear:{}})};}});
 vm.runInContext(strip(feature)+'\n'+strip(eyeSource),eye);
 await eye.preloadEyewearAssets(['metal-de-rua']);
 assert.equal(eyeFetches,0,'OFF preload must not fetch its manifest');
-assert.equal(eye.mountEyewear({traverse(){throw Error('OFF traverse');}},{id:'capitao',eyewearId:'metal-de-rua'}),null);
+assert.equal(eye.mountEyewear({traverse(){throw Error('OFF traverse');}},{id:'capitao',eyewearId:'metal-de-rua'}),null,'OFF mount must return null');
 class Element {
   constructor(id=''){this.id=id;this.children=[];this.dataset={};this.style={setProperty(){}};this.hidden=false;this.open=false;this.classList={contains(){return false;}};this.attributes={};}
   append(...nodes){this.children.push(...nodes);}
@@ -48,6 +51,7 @@ const tabs=['weapons','characters','gloves','packs','quests'].map(view=>{const e
 let requests=[];
 const fixture={authenticated:true,accountId:'review-fixture',wallet:{balance:1000},inventory:[{skin_id:'metal-de-rua',equipped:true}],catalog:[{id:'metal-de-rua',slot:'eyewear',available:true,model_path:'/models/items/test.glb'}]};
 const context=vm.createContext({...ROTAS,...COMPARTILHAR,tr,frase,console,Intl,Date,URLSearchParams,URL,AbortController,clearTimeout,location:{search:'',origin:'http://fixture.invalid',href:'http://fixture.invalid/'},localStorage:{getItem(){return null;},setItem(){}},navigator:{},CustomEvent:class{constructor(type){this.type=type;}},MutationObserver:class{observe(){}},setInterval(){},setTimeout(){},fetch:async url=>{requests.push(url);return {ok:true,json:async()=>JSON.parse(read('public/models/skins/manifest.json'))};},loadAccount:async()=>({authenticated:false}),socialApi:async(url,body)=>{requests.push({url,body});return fixture;},initTretaRewards(){},updateTretaRewards(){},byId:id=>({id}),eyewearProfile:eye.eyewearProfile,TRETA_SKINS,TRETA_WEAPON_SKINS,TRETA_GLOVES,TRETA_PACKS,TRETA_EYEWEAR:[{id:'metal-de-rua',slot:'eyewear'}],TRETA_COINS:[],TRETA_ACCESSORY_PROPOSALS:[{name:'BONÉ'}],TRETA_DEFAULT_REWARDS:{},TRETA_COIN_ART:{poster:'/img/coin.webp'},document:{getElementById:get,createElement:()=>new Element(),querySelectorAll:selector=>selector==='[data-treta-view]'?tabs:[],querySelector(){return null;},addEventListener(){},dispatchEvent(){},body:new Element()}});
+context.TRETA_PASSE_WEAPON_SKINS=[];
 context.assetUrl=assetUrl;
 vm.runInContext(strip(feature)+'\n'+strip(storeSource),context);
 context.initTretaStore({skipPrompt:true});
@@ -63,7 +67,7 @@ tabs[4].onkeydown({key:'ArrowRight',preventDefault(){}});
 assert.equal(tabs[0].attributes['aria-selected'],'true','OFF keyboard navigation must wrap quests to weapons');
 assert(!requests.some(r=>typeof r==='string' && r.includes('/items/')),'OFF store must not fetch items');
 assert(requests.some(r=>typeof r==='string' && /^models\/skins\/manifest\.json\?v=[0-9a-f]{10}$/.test(r)),'Store must fetch the skin manifest with its content revision');
-assert.equal(context.equippedTretaEyewear(),null,'OFF must not expose owned/equipped server items');
+assert.equal(context.equippedTretaEyewear(),null,'OFF must not expose equipped items');
 vm.runInContext("eyeManifest={eyewear:{'metal-de-rua':{approved:true,model:'/models/items/test.glb',profiles:{capitao:{approved:true,width:1,height:1,depth:1}}}}};selected={id:'metal-de-rua',slot:'eyewear'};previewReady=true;",context);
 vm.runInContext('state='+JSON.stringify(fixture),context);
 assert.equal(context.equippedTretaEyewear(),null,'OFF blocks server equipped items even after manifest injection');

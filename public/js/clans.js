@@ -1,3 +1,4 @@
+import { origemCompartilhamento } from './compartilhar.js';
 const $ = id => document.getElementById(id);
 const app = $('clans-app');
 const uuid = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -89,7 +90,7 @@ function renderMine() {
   });
 }
 function showInvite(invite, id) {
-  $('clan-invite-link').value = `${location.origin}/clans/${id}#invite=${invite}`;
+  $('clan-invite-link').value = `${origemCompartilhamento()}/clans/${id}#invite=${invite}`;
   $('clan-invite-panel').hidden = false;
 }
 async function refreshMine() {

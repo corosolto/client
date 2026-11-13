@@ -3,9 +3,13 @@
    existir sem nenhum vermelho (foi assim que eval:boot ficou quebrado na main por dias). */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { casa } from '../../../scripts/ci/gatilho.mjs';
+import { LIVESTOCK_CHECK_IDS, parseLivestockChecks } from '../../eval/sertao-livestock-runtime-check.mjs';
 
 const wf = (n) => readFileSync(fileURLToPath(new URL(`../../../.github/workflows/${n}`, import.meta.url)), 'utf8');
 
@@ -36,10 +40,10 @@ test('portao-browser.yml: eval:boot e os cenários de navegador do selftest roda
   for (const p of ['public/js/main.js', 'public/js/ops.js', 'src/pages/index.astro', 'tools/eval/boot-check.mjs', 'tools/ops/selftest.mjs']) assert.ok(casa('portao', p), `gatilho sem ${p}`);
 });
 
-/* O portão LENTO em dois jobs paralelos (14/10/2026): o Sertão sozinho custava 8,7 a 12,9 min
-   de um job de 18,7 a 27,7. Separar só vale se nenhum passo sair no caminho, e se o Sertão não
-   esperar o resto (sem `needs:` entre os dois). */
-test('portao-browser.yml: Sertão em job próprio e paralelo, e nenhum passo do portão saiu', () => {
+/* O Sertão usa dois shards de IDs, não de qualidade: criação fica no perfil médio e ciclo
+   de vida mantém juntos os checks que consomem as amostras médio+bajo. A união tem de ser
+   EXATA, sem cancelamento do irmão em falha e sem colisão de artefatos. */
+test('portao-browser.yml: Sertão em dois shards balanceados, cobertura exata e nenhum passo saiu', () => {
   const s = wf('portao-browser.yml');
   const jobs = {};
   let atual = null;
@@ -52,12 +56,57 @@ test('portao-browser.yml: Sertão em job próprio e paralelo, e nenhum passo do 
   for (const p of PASSOS) assert.ok(new RegExp(`run: ${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`).test(todos), `passo sumiu: ${p}`);
   const sertao = Object.entries(jobs).find(([, c]) => c.includes('run: npm run eval:sertao-livestock-runtime'));
   assert.ok(sertao, 'sem job com o Sertão');
-  assert.ok(!/run: npm run eval:(grafite|select|entrada|armas|boot)\b/.test(sertao[1]), 'o Sertão divide job com o resto do portão');
-  assert.doesNotMatch(sertao[1], /^ {4}needs:.*\bportao\b/m, 'o Sertão espera o resto do portão');
-  for (const [nome, corpo] of Object.entries(jobs)) {
-    if (!/run: npm run eval:/.test(corpo)) continue;
-    assert.match(corpo, /run: npm run eval:serve/, `${nome} roda eval:* sem subir o eval:serve`);
-    assert.match(corpo, /CHROME_BIN=/, `${nome} roda eval:* sem resolver o CHROME_BIN`);
+  const corpo = sertao[1];
+  assert.ok(!/run: npm run eval:(grafite|select|entrada|armas|boot)\b/.test(corpo), 'o Sertão divide job com o resto do portão');
+  assert.match(corpo, /^ {4}needs: decide$/m);
+  assert.match(corpo, /^ {4}if: needs\.decide\.outputs\.rodar == 'true'$/m);
+  assert.match(corpo, /^ {6}fail-fast: false$/m);
+  assert.doesNotMatch(corpo, /^ {4}needs:.*\bportao\b/m, 'o Sertão espera o resto do portão');
+
+  const shards = [...corpo.matchAll(/^ {10}- nome: ([\w-]+)\n {12}checks: (LG\d(?:,LG\d)*)$/gm)];
+  assert.equal(shards.length, 2, 'o Sertão precisa de exatamente dois shards');
+  const nomes = shards.map(m => m[1]);
+  assert.equal(new Set(nomes).size, 2, 'artefatos precisam de nomes de shard distintos');
+  const ids = shards.flatMap(m => m[2].split(','));
+  assert.equal(new Set(ids).size, ids.length, 'um ID não pode rodar nos dois shards');
+  assert.deepEqual([...ids].sort(), [...LIVESTOCK_CHECK_IDS].sort(), 'a união dos shards perdeu ou inventou um ID');
+  for (const coupled of [['LG1', 'LG2', 'LG3'], ['LG4', 'LG5', 'LG6', 'LG7', 'LG8']]) {
+    const owners = new Set(shards.filter(m => coupled.some(id => m[2].split(',').includes(id))).map(m => m[1]));
+    assert.equal(owners.size, 1, `checks que compartilham amostras foram separados: ${coupled.join(',')}`);
+  }
+  assert.match(corpo, /ARTIFACT_DIR: artifacts\/sertao-astra\/livestock-runtime-\$\{\{ matrix\.shard\.nome \}\}/);
+  assert.match(corpo, /name: sertao-livestock-runtime-\$\{\{ matrix\.shard\.nome \}\}/);
+  assert.match(corpo, /path: artifacts\/sertao-astra\/livestock-runtime-\$\{\{ matrix\.shard\.nome \}\}\//);
+  assert.match(jobs.portao, /^ {4}needs: \[decide, portao-fauna, portao-armas, portao-controles, portao-core, portao-passe\]$/m, 'agregação do portao mudou');
+
+  for (const [nome, corpoJob] of Object.entries(jobs)) {
+    if (!/run: npm run eval:/.test(corpoJob)) continue;
+    assert.match(corpoJob, /run: npm run eval:serve/, `${nome} roda eval:* sem subir o eval:serve`);
+    assert.match(corpoJob, /CHROME_BIN=/, `${nome} roda eval:* sem resolver o CHROME_BIN`);
+  }
+});
+
+test('sertao-livestock-runtime: default cobre tudo, CSV seleciona IDs e filtro inválido falha antes do Chrome', () => {
+  assert.deepEqual(parseLivestockChecks([]), LIVESTOCK_CHECK_IDS);
+  assert.deepEqual(parseLivestockChecks(['--mutante=patas-paradas']), LIVESTOCK_CHECK_IDS);
+  assert.deepEqual(parseLivestockChecks(['--checks=LG2, LG1']), ['LG1', 'LG2']);
+  assert.throws(() => parseLivestockChecks(['--checks=LG1,LG1']), /Checks repetidos: LG1/);
+
+  const temp = mkdtempSync(join(tmpdir(), 'livestock-checks-'));
+  const artifacts = join(temp, 'nao-deve-existir');
+  try {
+    const cli = fileURLToPath(new URL('../../eval/sertao-livestock-runtime-check.mjs', import.meta.url));
+    const child = spawnSync(process.execPath, [cli, '--checks=LG1,LG99'], {
+      encoding: 'utf8', timeout: 15000,
+      env: { ...process.env, ARTIFACT_DIR: artifacts, CHROME_BIN: '/nonexistent-livestock-chrome' },
+    });
+    assert.equal(child.error, undefined);
+    assert.equal(child.status, 1);
+    assert.match(child.stderr, /Checks desconhecidos: LG99/);
+    assert.doesNotMatch(child.stderr, /nonexistent-livestock-chrome/, 'o filtro inválido tentou abrir o Chrome');
+    assert.equal(existsSync(artifacts), false, 'o filtro inválido criou artefato antes de validar');
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
   }
 });
 
@@ -85,4 +134,24 @@ test('smoke-web.yml: chat desktop em job próprio, partição exata, nenhum spec
   const comInvert = execs.find((e) => e.includes('--grep-invert'));
   for (const spec of SPECS) assert.ok(comInvert.includes(spec), `o job do --grep-invert perdeu ${spec}`);
   for (const e of execs) assert.match(e, /--config=playwright\.smoke\.config\.mjs/);
+});
+
+test('ci.yml: robots aceita só status 1 com a cláusula documentada', () => {
+  const ci = wf('ci.yml');
+  const inicio = ci.indexOf('          output=$(mktemp)');
+  const fim = ci.indexOf('          node tools/eval/perfil-abas-check.mjs', inicio);
+  const bloco = ci.slice(inicio, fim).replace(
+    'node tools/eval/rotas-check.mjs --dist --mutante=robots',
+    'bash -c \'printf "%s\\n" "$ROBOTS_OUT"; exit "$ROBOTS_STATUS"\'',
+  );
+  assert.ok(inicio >= 0 && fim > inicio, 'wrapper de status do robots ausente');
+  const clausula = '/jogar/multiplayer: robots "index, follow" com indexavel=false';
+  const executar = (status, out) => spawnSync('bash', ['-c', bloco], {
+    encoding: 'utf8',
+    env: { ...process.env, ROBOTS_STATUS: String(status), ROBOTS_OUT: out },
+  });
+  assert.equal(executar(1, clausula).status, 0, 'status 1 com a cláusula deve passar');
+  assert.equal(executar(0, clausula).status, 1, 'status 0 significa mutante sobrevivente');
+  assert.equal(executar(1, 'crash sem cláusula').status, 1, 'status 1 sem cláusula deve falhar');
+  assert.equal(executar(2, clausula).status, 2, 'erro de infraestrutura preserva seu status');
 });

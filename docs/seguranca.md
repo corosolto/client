@@ -348,10 +348,14 @@ select jobname, schedule from cron.job;     -- purge_submit_log · 0 4 * * *
    página. Trocar por nonce exigiria mexer no `index.astro` inteiro no dia do
    release. A CSP como está já bloqueia script de origem externa não listada,
    que é o vetor mais comum.
-2. **`frame-ancestors` libera `*.crazygames.com`, `*.itch.io` e
+2. **`frame-ancestors` libera `*.crazygames.com`, `*.itch.io`, `*.itch.zone` e
    `*.gamedistribution.com`.** Os portais embedam o jogo em iframe; travar em
    `'self'` quebraria a distribuição que o plano de lançamento pretende. Se
-   algum portal novo entrar, ele entra aqui.
+   algum portal novo entrar, ele entra aqui. O itch.io serve o HTML enviado em
+   `html-classic.itch.zone` dentro da página `*.itch.io`: a diretiva checa TODOS
+   os ancestrais, então só `*.itch.io` bloqueava o wrapper de
+   `tools/portal/itch/index.html` (iframe para o site). `eval:portalembed` amarra
+   a lista aos wrappers.
 
 `script-src`/`style-src` não têm mais **nenhum** host externo: o Leaflet foi
 vendorizado em `public/vendor/leaflet/` (issue #38) e o `https://unpkg.com` que

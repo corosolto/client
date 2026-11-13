@@ -1,5 +1,6 @@
 import { JAVAPORCO_GRAVACOES } from './data/javaporcos_audio.js';
 import { normalizarManifestAudio } from './audio_manifest.js';
+import { fetchComRetry } from './apibase.js';
 // Procedural WebAudio SFX + user sample packs (audio/manifest.json).
 // Registre samples próprios e licenciados na família `jogo` de audio/manifest.json.
 /* Fator global do tiro — ver shotWeapon(). 0,42 = -7,5 dB, revisão pedida pelo dono no
@@ -68,6 +69,8 @@ const LEGACY_VOICE_ALLOWLIST = Object.freeze({
     'audio/a/d983d18b544ff48a.mp3',
   ]),
 });
+// Eventos de fala dentro da partida; `select` fica fora (frase longa da tela de seleção).
+const INGAME_VOICE_EVENTS = Object.freeze(['kill', 'radio', 'round']);
 
 export class Sfx {
   constructor() {
@@ -175,16 +178,24 @@ export class Sfx {
     this._lastVoice = performance.now();
     return true;
   }
-  // Fala autoral do personagem. Sem take próprio ou pool curado, não há voz substituta.
+  /* Take do evento → outro take ingame do MESMO personagem → pool da facção só para quem não
+     tem voz ingame própria (string legada = só seleção). Pool M mistura todos os Míticos. */
+  _ownIngameVoice(characterId, event) {
+    const own = this.pack?.characterVoice?.[characterId];
+    if (!own || typeof own !== 'object') return null;
+    if (own[event]?.length) return own[event];
+    if (!INGAME_VOICE_EVENTS.includes(event)) return null;   // seleção não pega bordão de kill
+    const outros = INGAME_VOICE_EVENTS.filter((e) => e !== event).flatMap((e) => own[e] || []);
+    return outros.length ? outros : null;
+  }
   characterVoice(characterId, event, { fallbackFaction = null, interrupt = false } = {}) {
     if (this.gameMode === 'horde') return false;
     if (!this.speechEnabled) return false;
     const now = performance.now();
     if (event === 'kill' && this._lastKillVoice > 0 && now - this._lastKillVoice < 3500) return false;
     const rollback = !!LEGACY_VOICE_ALLOWLIST[fallbackFaction];
-    const own = rollback ? null : this.pack?.characterVoice?.[characterId]?.[event];
-    const genericPool = this._voicePool(fallbackFaction);
-    const file = this._pick(own?.length ? own : genericPool);
+    const own = rollback ? null : this._ownIngameVoice(characterId, event);
+    const file = this._pick(own || this._voicePool(fallbackFaction));
     if (file) {
       if (interrupt && this._characterAudio) this._characterAudio.pause();
       const audio = this._sample(file);
@@ -356,9 +367,19 @@ export class Sfx {
     node.gain.exponentialRampToValueAtTime(end, t0 + a + d);
   }
   _noise(dur) {
-    const n = this.ctx.sampleRate * dur, buf = this.ctx.createBuffer(1, n, this.ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    // Ruído reaproveitado: 6 buffers por duração em vez de um AudioBuffer novo (e milhares de
+    // Math.random) por camada de cada tiro e passo — com 12 bots isso virava lixo de GC.
+    if (this._ruidoCtx !== this.ctx) { this._ruidoCtx = this.ctx; this._ruido = new Map(); }
+    const sr = this.ctx.sampleRate, n = Math.max(1, Math.floor(sr * dur)), banco = this._ruido;
+    let lista = banco.get(n);
+    if (!lista) banco.set(n, lista = []);
+    let buf;
+    if (lista.length < 6) {
+      buf = this.ctx.createBuffer(1, n, sr);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      lista.push(buf);
+    } else buf = lista[(Math.random() * 6) | 0];
     const src = this.ctx.createBufferSource(); src.buffer = buf; return src;
   }
   _osc(type, freq) { const o = this.ctx.createOscillator(); o.type = type; o.frequency.value = freq; return o; }
@@ -907,7 +928,11 @@ export class Sfx {
     this._burst(0.14, 0.34 * vol, 220, 0.8, 'lowpass', propDelay, out);
   }
   jump()      { this.ensure(); this._beep('sine', 220, 330, .08, .1); }
-  land()      { this.ensure(); this._burst(.08, .18, 400); }
+  land(strength = 0.5) {
+    const k = Math.max(0, Math.min(1, strength));
+    this.ensure();
+    this._burst(0.08 + k * 0.03, 0.11 + k * 0.13, 320 + k * 180);
+  }
   // passos: round-robin nos samples (nunca repete o anterior) + playbackRate ±8% +
   // volume ±15%. Fallback synth: timbre por surface (água do piscinão = splash grave+ruído,
   // metal = brilho agudo, concreto = seco). surface vem do game.js (world.slowAt).
@@ -1061,7 +1086,7 @@ export class Sfx {
     this._boarSamples ||= new Map();
     if (!this._boarLoading) this._boarLoading = Promise.all(Object.entries(JAVAPORCO_GRAVACOES).map(async ([key, sample]) => {
       if (this._boarSamples.has(key)) return;
-      const response = await fetch(sample.file);
+      const response = await fetchComRetry(sample.file, {}, { tentativas: 2, esperaMs: 350 });
       if (!response.ok) throw new Error(`JAV-AUDIO: HTTP ${response.status} em ${sample.file}`);
       const decoded = await this.ctx.decodeAudioData(await response.arrayBuffer());
       if (!(decoded.duration > 0)) throw new Error(`JAV-AUDIO: gravação vazia em ${sample.file}`);

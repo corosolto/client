@@ -16,6 +16,8 @@ export const TEAM_HANDS = Object.freeze({
   F: F_OPCOES[F_QS] || F_OPCOES.ouro,
   U: Object.freeze({ id: 'U', glove: '#34363a', sleeve: '#292b30', accent: '#d9d7cf', motif: 'checker', fingerless: true }),
   M: Object.freeze({ id: 'M', glove: '#4a3b28', sleeve: '#3d1f66', accent: '#b8914a', motif: 'trama', fingerless: false }),
+  // Fora do Ar (factions.js, ready): verde-fósforo de TV velha sobre o petróleo do brasão.
+  'fora-do-ar': Object.freeze({ id: 'fora-do-ar', glove: '#24594f', sleeve: '#142e38', accent: '#72d6b1', motif: 'plain', fingerless: false }),
 });
 // Neutro = base da fábrica (braco-coro-ak.json): luva e manga Mandrake da AK aprovada, em sRGB.
 const NEUTRAL_HANDS = Object.freeze({ id: 'neutral', glove: '#242f38', sleeve: '#243c4d', accent: '#797d80', motif: 'plain', fingerless: false });

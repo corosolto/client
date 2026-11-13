@@ -14,7 +14,8 @@
    Mutantes: --mutante=placar-velho (troca o hash), --mutante=sem-dono (tira uma
    dívida), --mutante=chave-ligada (altera um vermelho),
    --mutante=celula-nova (vermelho novo), --mutante=pose-defeituosa (devolve a
-   receita de foco do ADS sem o off[1] = -0,08 — o defeito do #679) — todos reprovam.
+   receita de foco do ADS sem o off[1] = -0,08 — o defeito do #679),
+   --mutante=quadro-pistola (mexe no goldFrame da PT-38) — todos reprovam.
    Conserto quando P1 reprova: `npm run eval:vm-reguas -- --placar` (local).
    ============================================================================ */
 import crypto from 'node:crypto';
@@ -71,9 +72,17 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   // `pose-defeituosa` (#679): devolve a receita de foco do ADS sem o `off[1] = -0.08`
   // que baixa a arma para liberar a cruz. É a pose que o dono viu em quase todas as
   // armas. O hash muda e a P1 reprova: conserto de pose sem remedir = vermelho.
-  let atual = mut === 'pose-defeituosa'
+  // `quadro-pistola`: o palco de fábrica RENDERIZA a golden pública da PT-38; tirar a
+  // pistola do hash deixou o placar em 0,99× com a arma viva a 1,99× (playtest 06/11).
+  const vmconfig = fs.readFileSync('public/js/data/vmconfig.js', 'utf8');
+  const quadroPistola = (txt) => {
+    const mudado = txt.replace(/goldFrame: \{ x: (-?[\d.]+),/, (_, x) => `goldFrame: { x: ${Number(x) + 3},`);
+    if (mudado === txt) throw new Error('mutante não aplicou: goldFrame da PT-38 sumiu de vmconfig.js');
+    return mudado;
+  };
+  let atual = mut === 'pose-defeituosa' || mut === 'quadro-pistola'
     ? entradasDoPlacar(process.cwd(), {
-      'public/js/data/vmconfig.js': quebrandoReceitaFoco(fs.readFileSync('public/js/data/vmconfig.js', 'utf8')),
+      'public/js/data/vmconfig.js': mut === 'pose-defeituosa' ? quebrandoReceitaFoco(vmconfig) : quadroPistola(vmconfig),
     }).hash
     : entradasDoPlacar().hash;
   if (mut === 'placar-velho') atual = `${atual.slice(0, -1)}x`;

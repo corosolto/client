@@ -70,7 +70,7 @@ try {
       gpu: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : g.renderer.__csWebgl,
       webgl2: g.renderer.capabilities.isWebGL2,
       modeLabel: document.getElementById('map-mode')?.textContent,
-      objectiveLabel: document.getElementById('horde-objective')?.textContent,
+      objectiveLabel: g.objective.hudTexto?.textContent || document.getElementById('horde-objective')?.textContent,
     };
   });
   assert.equal(runtime.map, 'invasao_javaporcos');
@@ -197,7 +197,7 @@ try {
   assert.equal(cinematic.active, true);
   assert.equal(cinematic.winner, 'E');
   assert.ok(cinematic.duration >= 9.9);
-  assert.match(cinematic.title || '', /LORDE DO TERROR/);
+  assert.match(cinematic.title || '', /DEFENSORES VENCEU/i);
   assert.equal(cinematic.viewmodelVisible, false);
   await page.screenshot({ path: `${out}/06-cinematica-vitoria.png` });
   await page.waitForTimeout(3500);

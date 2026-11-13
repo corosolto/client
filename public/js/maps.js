@@ -1,4 +1,6 @@
 import { withVisibleShotOccluders } from './shot_surfaces.js';
+import { JAVAPORCOS_LOADING_WALL } from './javaporcos_apresentacao.js';
+import { carregarModuloComRetry } from './module-retry.js';
 
 /* Mapas sob demanda (lane glm/peso): registro com metadados leves; o módulo da
    arena só entra por carregaMapa. Régua eval:mapasobdemanda; fiação no PR. */
@@ -23,7 +25,7 @@ import { withVisibleShotOccluders } from './shot_surfaces.js';
    Ver `ALIAS_MAPA` logo abaixo do registro: id antigo continua resolvendo, e o motivo
    de isso não ser opcional está lá. */
 const JAVAPORCOS_META = { ctfMode: false, objectiveMode: 'horde',
-    loadingWall: '/img/loading-javaporcos.webp',
+    loadingWall: JAVAPORCOS_LOADING_WALL,
     props: ['carro_batido_scan_03', 'perua_pichada_scan', 'junk_car', 'carro_batido_scan_07',
       'dumpster', 'porta_aco', 'arvore_mata', 'shopping_cart', 'capim_touceira_a', 'capim_touceira_b',
       'arbusto_mata_a', 'arbusto_mata_b', 'samambaia_mata', 'calathea_mata', 'galhos_secos', 'toco_arvore',
@@ -103,6 +105,10 @@ export const MAPS = {
   invasao_javaporcos: { name: 'Cidade Invadida', ...JAVAPORCOS_META },
   distrito_rural: { name: 'Distrito Rural', ...JAVAPORCOS_META },
   vila_da_mata: { name: 'Vila da Mata', ...JAVAPORCOS_META },
+  operacao_flavio: { name: 'Operação Flávio',
+    objectiveMode: 'escort',
+    props: [],
+  },
   penitenciaria: { name: 'CARANDIRU', ctfMode: true,
     props: [],
     ambience: ['rat', 'pigeonGround'],
@@ -130,9 +136,13 @@ const MODULOS = {
   atacadao_treta: () => import('./map_atacadao.js'),
   parque_treta: () => import('./map_parque.js'),
   velho_oeste: () => import('./map_velho_oeste.js'),
-  invasao_javaporcos: () => import('./map_invasao_javaporcos.js'),
+  invasao_javaporcos: () => carregarModuloComRetry(
+    () => import('./map_invasao_javaporcos.js'),
+    () => import(`./map_invasao_javaporcos.js?retry=${Date.now()}`),
+  ),
   distrito_rural: () => import('./map_javaporcos_rural.js'),
   vila_da_mata: () => import('./map_javaporcos_vila.js'),
+  operacao_flavio: () => import('./map_operacao_flavio.js'),
   penitenciaria: () => import('./map_penitenciaria.js'),
 };
 
@@ -158,6 +168,7 @@ const EXPORTS = {
   invasao_javaporcos: { build: 'buildInvasaoJavaporcos', props: 'INVASAO_JAVAPORCOS_PROPS', preload: 'preloadJavaporcos' },
   distrito_rural: {build:'buildDistritoRural',props:'DISTRITO_RURAL_PROPS',preload:'preloadJavaporcos'},
   vila_da_mata: {build:'buildVilaDaMata',props:'VILA_DA_MATA_PROPS',preload:'preloadJavaporcos'},
+  operacao_flavio: { build: 'buildOperacaoFlavio', props: 'OPERACAO_FLAVIO_PROPS', preload: 'preloadOperacaoFlavio' },
   penitenciaria: { build: 'buildPenitenciaria', props: 'PENITENCIARIA_PROPS', ambience: 'PENITENCIARIA_AMBIENCE' },
 };
 
@@ -181,6 +192,9 @@ export function carregaMapa(id) {
     if (nomes.preload) entrada.preload = m[nomes.preload];
     if (nomes.propsGetter) Object.defineProperty(entrada, 'props', { get: () => m[nomes.propsGetter](), configurable: true });
     return m;
+  }).catch((error) => {
+    if (_carregados.get(alvo) === promessa) _carregados.delete(alvo);
+    throw error;
   });
   _carregados.set(alvo, promessa);
   return promessa;

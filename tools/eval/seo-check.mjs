@@ -56,7 +56,7 @@ const JSON_OUT = process.argv.includes('--json');
 const APEX = SITE.replace('://www.', '://');
 /** Páginas prerenderizadas que o build produz. `/ranking`, `/mapa` e `/u/*` são
  *  SSR e não existem aqui — o que o crawler vê nelas é medido em runtime. */
-const PAGES = ['/', '/armas', '/mapas', '/personagens', '/como-jogar', '/sobre', '/changelog'];
+const PAGES = ['/', '/en', '/armas', '/mapas', '/personagens', '/como-jogar', '/sobre', '/changelog'];
 
 /* Afirmações que só podem aparecer com RANKING_ON=true. São recortes de frase,
    não palavras soltas: "ranking" sozinho é legítimo (o menu RANKING do jogo

@@ -90,6 +90,7 @@ const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
 // Revisão: ?vmgolden=ak serve a golden da arma sem mexer no `golden` do vmconfig.
 const GOLDEN_QS = new Set((_QS?.get('vmgolden') || '').split(',').filter((w) => GOLDEN_VER[w]));
 const GOLDEN_ADS = AUTHORED_VM_ENABLED && _QS?.get('vmgoldenads') !== '0';
+const PRIME_VM = _QS?.get('vmprime') !== '0';
 // ADS 1P pela linha de mira (adsEfetivo em vmconfig.js); ?ads1pfix=0 volta ao foco.
 const ADS1P_FIX = _QS?.get('ads1pfix') !== '0';
 // ?vmlocomotion=0: kill-switch do gait/sway 1P para A/B sem deploy (espírito ?vmkick).
@@ -230,7 +231,8 @@ export function preloadAuthoredFamilies(keys = []) {
 
 // Chaves que o boot deve esperar: as READY do loadout (arma assada tem chave
 // própria — família#arma) + granada, se aberta.
-const skinnedEntryKey = (weapon, weaponSkins) => weaponSkins?.[weapon] && GOLDEN_VER[weapon] ? `gold#${weapon}` : entryKeyFor(weapon);
+// `pinturaNaFabrica` (vmconfig): a pintura fica na rota sem pintura e só troca o material.
+const skinnedEntryKey = (weapon, weaponSkins) => weaponSkins?.[weapon] && GOLDEN_VER[weapon] && !VM_WEAPON[weapon]?.pinturaNaFabrica ? `gold#${weapon}` : entryKeyFor(weapon);
 export function authoredBootFamilies(weaponIds = [], weaponSkins = null) {
   const keys = new Set(weaponIds.map((id) => skinnedEntryKey(id, weaponSkins)).filter(Boolean));
   if (!AUTHORED_KILLED && familyReady('grenade')) keys.add('grenade');
@@ -303,10 +305,11 @@ const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
 export const entryKeyFor = (weapon) => {
   const family = familyFor(weapon);
   if (!family) return '';
-  if (fabricaAtiva(weapon)) return `fab#${weapon}`;
   if (VM_FONTE === 'retarget') return `rt#${weapon}`;
   if (VM_FONTE === 'goldsrc') return `gs#${weapon}`;
+  // Golden marcada no vmconfig (hoje só a AK) vence o chassi da fábrica; `?vmgolden=0` devolve para A/B.
   if (GOLDEN_VM && (VM_WEAPON[weapon]?.golden === true || GOLDEN_QS.has(weapon))) return `gold#${weapon}`;
+  if (fabricaAtiva(weapon)) return `fab#${weapon}`;
   return weaponBaked(weapon) ? `${family}#${weapon}` : family;
 };
 // Fonte que o runtime serve para a arma (revisão/QA/réguas): chave e URL. VL7 do eval:vm-launch.
@@ -453,10 +456,10 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
     const k = weaponLength / alvo;
     if (k > 1.5) mount.scale.multiplyScalar(1 / k);
   }
-  // golden: a câmera do GLB É a composição aprovada (vm-camera-check mede isto no
-  // navegador). O clamp pelo fov da família só vale para o molde goldsrc/retarget.
+  // golden: a câmera do GLB é a composição, salvo goldFrame (PT-38 a 60°, pistola-ref).
+  // O clamp pelo fov da família só vale para o molde goldsrc/retarget.
   return {
-    scene, mount, cameraFov: golden ? cameraFov : molde ? Math.max(cameraFov, frame.fov) : frame.fov, cameraAspect,
+    scene, mount, cameraFov: molde ? Math.max(cameraFov, frame.fov) : frame.fov, cameraAspect,
     frame, handMeshes, weaponMeshes, utilityModels,
   };
 }
@@ -464,6 +467,8 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
 const GOLDEN_PAINT_BODY = Object.freeze({
   'gold#pistol': 'coro_solto_project_pistol',
   'gold#ak': 'coro_solto_project_ak_body',
+  'gold#m4': 'coro_solto_project_ak_body',
+  'gold#scar': 'coro_solto_project_ak_body',
 });
 
 /* Pintura usa body golden explícito sem criar wrap de montagem Mint; peças irmãs
@@ -478,6 +483,22 @@ export function pecasDaPintura(entry) {
   const irmas = [...(entry.weaponMeshes || []), ...(corpo.userData?.mintParts || [])];
   const fora = irmas.filter((peca) => peca && peca !== corpo && !corpo.getObjectById?.(peca.id));
   return [corpo, ...new Set(fora)];
+}
+
+/* Fábrica (X18): só o grupo da arma é pintado, nunca a rig das mãos. Boca/alça/cima da ficha
+   (filhos do osso da arma) orientam padrão e marcas no espaço da arma 3P (referenceFrame). */
+export function pinturaDaFabrica(entry) {
+  const meshes = entry?.weaponMeshes || [];
+  const corpo = meshes[0]?.parent;
+  const { muzzle, sight, up } = entry?.sockets || {};
+  const bone = sight?.parent;
+  if (!corpo || meshes.some((mesh) => mesh.parent !== corpo) || !bone || muzzle?.parent !== bone || up?.parent !== bone) return null;
+  let comMao = false;
+  corpo.traverse((object) => { if ((entry.handMeshes || []).includes(object)) comMao = true; });
+  if (comMao) return null;
+  return { corpo, referencia: {
+    bone, barrel: muzzle.position.clone().sub(sight.position), up: up.position.clone().sub(sight.position),
+  } };
 }
 
 export class AuthoredViewModels {
@@ -514,11 +535,17 @@ export class AuthoredViewModels {
   _applyWeaponSkin(entry, weaponId) {
     const skinId = this.profile.weaponSkins?.[weaponId];
     if (!skinId) return;
+    if (entry.mint?.fabrica) {
+      const fabrica = pinturaDaFabrica(entry);
+      if (!fabrica) console.warn(`[viewmodel] ${entry.key}: pintura ${skinId} sem referência da ficha; arma sem pintura`);
+      else if (fabrica.corpo.userData.weaponSkin !== skinId) applyWeaponSkinCandidate(fabrica.corpo, weaponId, skinId, { referencia: fabrica.referencia });
+      return;
+    }
     const pecas = pecasDaPintura(entry);
     for (let i = 0; i < pecas.length; i += 1) {
       const peca = pecas[i];
       if (peca.userData.weaponSkin === skinId) continue;
-      applyWeaponSkinCandidate(peca, weaponId, skinId, { marcas: i === 0 });
+      applyWeaponSkinCandidate(peca, weaponId, skinId, { marcas: i === 0, patternReference: pecas[0] });
     }
   }
 
@@ -537,6 +564,16 @@ export class AuthoredViewModels {
         : setTimeout(prime, 1400);
     }
     return this;
+  }
+
+  // Monta oculto (request -1) o pacote das outras armas do inventário: a 1ª troca não
+  // mostra o legado enquanto clona o GLB (playtest 06/11, PT-38). ?vmprime=0 desliga.
+  prime(ids = []) {
+    if (!PRIME_VM || this._disposed) return;
+    for (const id of ids) {
+      const key = id ? this._keyFor(id) : '';
+      if (key && !this.entries.has(key) && !this.pending.has(key)) this._loadFamily(key, -1);
+    }
   }
 
   async _loadFamily(key, request = this._activeRequest) {
@@ -797,7 +834,9 @@ export class AuthoredViewModels {
     // ADS (M6): o CANO fica colinear com o eixo óptico (rotação do mount) e só
     // então a alça MEDIDA desliza ao centro — não um ponto cruzando em diagonal.
     const ads = this.adsAmount;
-    const adsConfig = adsEfetivo(cfgArma(this.weapon)?.ads, ADS1P_FIX);
+    // ADS por ROTA: golden usa a tabela do PRÓPRIO piloto (unidades ~97 un/m; off/alívio
+    // em metro da fábrica seria invisível).
+    const adsConfig = adsEfetivo((active.golden ? VM_WEAPON[this.weapon] : cfgArma(this.weapon))?.ads, ADS1P_FIX);
     const wrap = active.mint?.active || active.adsSockets?.sight;
     if (ads > 0.001 && adsConfig && wrap) {
       if (adsConfig.auto) {
