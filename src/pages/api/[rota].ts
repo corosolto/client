@@ -1,25 +1,22 @@
 // Rede de segurança e caminho do preview para as rotas que mudaram de casa. Ver docs/APIS.md.
 import type { APIRoute } from 'astro';
 import { proxyApiRequest } from '../../lib/api-proxy.mjs';
+import { backendUrl, envRuntime } from '../../lib/env-runtime';
 import { sendXConversion } from '../../lib/x-conversions';
 import { X_EVENT_IDS } from '../../lib/x-pixel';
 
 export const prerender = false;
 
-const BACKEND = import.meta.env.PUBLIC_API_BASE || 'https://csbrasil-backend-hupd3weo5q-rj.a.run.app';
-// Prova ao backend que a geo/IP vieram deste proxy (api/_lib/borda.mjs no backend).
-const SEGREDO = import.meta.env.API_PROXY_SECRET || '';
-
 const MIGRADAS = new Set([
-  'treta',
+  'treta', 'passe',
   'social','social-auth','social-avatar','gameplay-upload','acquisition', 'avatar', 'clans', 'count', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
   'leaderboard', 'live-map', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
   'submit-match', 'telemetry', 'train-frames', 'unique',
 ]);
 
 // Social e avatar usam 404 para perfis ausentes ou privados; preservar esse status.
-// clans (backend#72) ainda depende do rollout: 404 upstream vira 503.
-const EM_ROLLOUT = ['social-auth','treta','clans'];
+// clans (backend#72) e passe (temporada Sessão da Treta) ainda dependem do rollout: 404 upstream vira 503.
+const EM_ROLLOUT = ['social-auth','treta','clans','passe'];
 
 // Cada linha de log é evento pago na Vercel: falha do X sai UMA vez por instância e causa.
 const falhasX = new Set<string>();
@@ -45,10 +42,10 @@ const handler: APIRoute = async (context) => {
   }
   const resposta = await proxyApiRequest(
     request,
-    `${BACKEND.replace(/\/$/, '')}/api/${rota}${url.search}`,
+    `${backendUrl().replace(/\/$/, '')}/api/${rota}${url.search}`,
     clientAddress,
     fetch,
-    { segredo: SEGREDO, session: ['treta','social','social-auth','social-avatar','gameplay-upload','register','avatar','mp-ticket','clans','unique'].includes(rota), userAgent: rota === 'unique' },
+    { segredo: envRuntime('API_PROXY_SECRET') || '', session: ['treta','passe','social','social-auth','social-avatar','gameplay-upload','register','avatar','mp-ticket','clans','unique'].includes(rota), userAgent: rota === 'unique' },
   );
   const step = funnelBody?.step;
   if (resposta.ok && (step === 'match_start' || step === 'match_end')) {

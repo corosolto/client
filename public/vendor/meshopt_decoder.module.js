@@ -32,6 +32,10 @@ var MeshoptDecoder = (function () {
 		instance.exports.__wasm_call_ctors();
 	});
 
+	// WebViews podem proibir o WASM iniciado no import; observe a rejeição imediatamente
+	// sem alterar a promise que os consumidores usam para acionar o fallback 3D.
+	ready.catch(function () {});
+
 	function unpack(data) {
 		var result = new Uint8Array(data.length);
 		for (var i = 0; i < data.length; ++i) {

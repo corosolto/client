@@ -11,7 +11,7 @@
      LFB5 ?lang=en: painel e história em inglês
      LFB6 6 telas: com a coluna da direita à vista, Quests e skins moram nela, depois de Amigos online, sem
           entrar no painel da partida; sem a coluna, Quests continua à vista na esquerda
-   Os anúncios de abertura (Javaporco e Operação Flávio) entram como já vistos: são outra régua.
+   Os anúncios de abertura (Javaporco, Operação Flávio e o passe) entram como já vistos: são outra régua.
    Capturas em OUT (padrão tools/eval/out/lobby-flavio). Um navegador por vez (with-browser-lock.sh). */
 import { execSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
@@ -25,10 +25,11 @@ const TOQUE = 44;
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
-const browser = await chromium.launch({
+const launchBrowser = () => chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   args: ['--headless=new', '--mute-audio'],
 });
+let browser = await launchBrowser();
 
 const MUT = {
   'card-resenha': [/\/js\/tp\/flavio\.js/, (t) => t.replace("card.id = 'tp-lobby-flavio';", "card.id = 'tp-resenha-botao';").replace("no('strong', 'tp-disp', tr('OPERAÇÃO FLÁVIO'))", "no('strong', 'tp-disp', tr('Resenha'))"), 'LFB1', 'telas'],
@@ -48,6 +49,7 @@ async function lobby({ w = 1536, h = 960, toque = false, lang = 'pt', mutante = 
   await page.addInitScript(() => {
     localStorage.setItem('csbr-mode-ann-seen', JSON.stringify(['operacao_flavio']));
     localStorage.setItem('cs-javaporcos-cidade-anuncio-v1', '1');
+    localStorage.setItem('cs-passe-anuncio', 'sessao-da-treta-s1/1');
   });
   if (mutante) {
     const [teste, troca] = MUT[mutante];
@@ -210,7 +212,10 @@ const GRUPOS = { telas, jogar, idioma };
 mkdirSync(OUT, { recursive: true });
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
-  for (const [mut, [, , alvo, grupo]] of Object.entries(MUT).filter(([m]) => !process.env.LFB || process.env.LFB === m)) {
+  const mutantes = Object.entries(MUT).filter(([m]) => !process.env.LFB || process.env.LFB === m);
+  for (const [indice, [mut, [, , alvo, grupo]]] of mutantes.entries()) {
+    // Um Chromium por mutante evita esgotar o route.fetch após dezenas de contexts.
+    if (indice) { await browser.close(); browser = await launchBrowser(); }
     let c;
     try { c = (await GRUPOS[grupo](mut, false)).find((x) => x.id === alvo); }
     catch (e) { c = { ok: true, msg: `erro: ${e.message.split('\n')[0]}` }; }

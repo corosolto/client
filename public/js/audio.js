@@ -1,5 +1,6 @@
 import { JAVAPORCO_GRAVACOES } from './data/javaporcos_audio.js';
 import { normalizarManifestAudio } from './audio_manifest.js';
+import { fetchComRetry } from './apibase.js';
 // Procedural WebAudio SFX + user sample packs (audio/manifest.json).
 // Registre samples próprios e licenciados na família `jogo` de audio/manifest.json.
 /* Fator global do tiro — ver shotWeapon(). 0,42 = -7,5 dB, revisão pedida pelo dono no
@@ -963,7 +964,11 @@ export class Sfx {
     this._burst(0.14, 0.34 * vol, 220, 0.8, 'lowpass', propDelay, out);
   }
   jump()      { this.ensure(); this._beep('sine', 220, 330, .08, .1); }
-  land()      { this.ensure(); this._burst(.08, .18, 400); }
+  land(strength = 0.5) {
+    const k = Math.max(0, Math.min(1, strength));
+    this.ensure();
+    this._burst(0.08 + k * 0.03, 0.11 + k * 0.13, 320 + k * 180);
+  }
   // passos: round-robin nos samples (nunca repete o anterior) + playbackRate ±8% +
   // volume ±15%. Fallback synth: timbre por surface (água do piscinão = splash grave+ruído,
   // metal = brilho agudo, concreto = seco). surface vem do game.js (world.slowAt).
@@ -1117,7 +1122,7 @@ export class Sfx {
     this._boarSamples ||= new Map();
     if (!this._boarLoading) this._boarLoading = Promise.all(Object.entries(JAVAPORCO_GRAVACOES).map(async ([key, sample]) => {
       if (this._boarSamples.has(key)) return;
-      const response = await fetch(sample.file);
+      const response = await fetchComRetry(sample.file, {}, { tentativas: 2, esperaMs: 350 });
       if (!response.ok) throw new Error(`JAV-AUDIO: HTTP ${response.status} em ${sample.file}`);
       const decoded = await this.ctx.decodeAudioData(await response.arrayBuffer());
       if (!(decoded.duration > 0)) throw new Error(`JAV-AUDIO: gravação vazia em ${sample.file}`);

@@ -7,7 +7,7 @@ const PAGES = new Set([
   '/', '/sobre', '/about', '/como-jogar', '/how-to-play', '/mapas', '/maps',
   '/personagens', '/characters', '/armas', '/weapons', '/mapa', '/clans',
   '/apoie', '/termos', '/privacidade', '/regras-de-uso', '/excluir-dados',
-  '/whats-new', '/changelog',
+  '/whats-new', '/changelog', '/app',
 ]);
 
 function landing(pathname) {
@@ -56,11 +56,22 @@ const AGENTS = [
   [/facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|whatsapp/i, 'social-preview', 'social/preview'],
 ];
 
+/* Navegador interno de app: segue `kind: 'browser'` (é gente) com agente nomeado, porque se
+   comporta diferente (08/11: 85% das visitas do TikTok saíram em menos de 1 min). Régua: eval:servertraffic. */
+const APPS = [
+  [/musical_ly|bytedancewebview|tiktok/i, 'app/tiktok'],
+  [/instagram/i, 'app/instagram'],
+  [/\bFBAN\b|\bFBAV\b|FB_IAB/, 'app/facebook'],
+  [/linkedinapp/i, 'app/linkedin'],
+  [/twitterandroid|twitter for iphone/i, 'app/x'],
+];
+
 function classify(agent) {
   const ua = agent || '';
   for (const [pattern, kind, name] of AGENTS) if (pattern.test(ua)) return { kind, agent: name };
   if (/bot|crawler|spider|ahrefs|semrush/i.test(ua)) return { kind: 'other-bot', agent: 'other/unknown-bot' };
   if (/curl|python-requests|wget|httpclient|axios|node-fetch/i.test(ua) || !ua) return { kind: 'automation', agent: 'automation/tool' };
+  for (const [pattern, name] of APPS) if (pattern.test(ua)) return { kind: 'browser', agent: name };
   return { kind: 'browser', agent: '' };
 }
 
@@ -77,6 +88,19 @@ export function trafficEntry(request) {
     utmSource: classification.kind === 'browser' && /^[a-z0-9_.-]{1,60}$/.test(utm) ? utm : null,
     ...classification,
   };
+}
+
+/* WebView de app abrindo a home vai para /app (landing leve) com a query intacta; `?jogo=1`
+   é a escolha já feita lá e não volta. Só a home: perfil, sala e docs seguem onde apontam. */
+export function desvioParaApp(request) {
+  if (request.method !== 'GET') return null;
+  const url = new URL(request.url);
+  if (url.hostname !== SITE_HOST || !request.headers.get('accept')?.includes('text/html')) return null;
+  const path = url.pathname.replace(/\/+$/, '') || '/';
+  if (path !== '/' || url.searchParams.get('jogo') === '1' || url.searchParams.has('sala')) return null;
+  if (!classify(request.headers.get('user-agent')).agent.startsWith('app/')) return null;
+  url.pathname = '/app';
+  return url.toString();
 }
 export function uniqueRegister(ip, agent, secret, day) {
   if (!ip || !agent || !secret || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;

@@ -1,7 +1,7 @@
 import { ipAddress, next } from '@vercel/functions';
 import { isIP } from 'node:net';
 import { saltoDaCloudflare } from './src/lib/api-proxy.mjs';
-import { trafficEntry, uniqueRegister } from './src/lib/server-traffic.mjs';
+import { desvioParaApp, trafficEntry, uniqueRegister } from './src/lib/server-traffic.mjs';
 
 const BACKEND = process.env.PUBLIC_API_BASE || 'https://csbrasil-backend-hupd3weo5q-rj.a.run.app';
 export const config = { runtime: 'nodejs' };
@@ -15,6 +15,9 @@ const avisaUmaVez = (causa) => {
 };
 
 export default function middleware(request, context) {
+  // WebView de app na home: 302 para /app antes de qualquer byte do jogo; a landing é que conta.
+  const desvio = desvioParaApp(request);
+  if (desvio) return Response.redirect(desvio, 302);
   const entry = trafficEntry(request);
   const secret = process.env.API_PROXY_SECRET;
   if (entry && secret && secret.length >= 32) {

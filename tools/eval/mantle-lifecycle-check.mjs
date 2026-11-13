@@ -94,7 +94,7 @@ check('troca de lado limpa trajetória e mantém o spawn do bot desertor',()=>{
 check('consumidor remoto entra no ar e pousa antes do update',()=>{
  const ctrl=Object.create(CharController.prototype);Object.assign(ctrl,{_ar:false,_landT:0,_mantleF:null});
  const samples=[];ctrl.update=()=>samples.push({ar:ctrl._ar,land:ctrl._landT,mantle:ctrl._mantleF});
- const nc=netcodeFactory({time:0,_updateTeamMark(){}},{meta:{snapshotHz:20},startPing(){},stopPing(){}});clearInterval(nc._nsTimer);
+ const nc=netcodeFactory({time:0,camera:{position:new THREE.Vector3()},_updateTeamMark(){}},{meta:{snapshotHz:20},startPing(){},stopPing(){}});clearInterval(nc._nsTimer);
  const p={alive:true,mesh:{isGLB:true,group:new THREE.Group(),ctrl},pos:new THREE.Vector3(),yaw:0,_netBot:false};
  try{
  for(const f of [0,.25,.75,0,-1,1,NaN,undefined]){p.mantleF=f;nc.updateRemoteBot(p,1/60);}

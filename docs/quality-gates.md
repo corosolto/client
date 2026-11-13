@@ -5,6 +5,8 @@
 - `pr-fast`
 - `smoke-web` quando a PR toca jogo/UI/site
 - `dco` para toda contribuição via PR
+- `pr-language`: título e descrição da PR em inglês, para humanos e bots
+- `hotfix-ancestry`: obrigatório e verde na head atual de hotfix que mira `main`
 
 ## Labels
 
@@ -14,17 +16,20 @@
 - `needs-human-backend`: mudança em API/Supabase/anti-cheat
 - `bot-fixable`: docs, manifests, changelog, pequenos fixes determinísticos
 - `covered-by-pr`: issue já atacada por PR aberta
+- `bugfix`: bug identificado; o bot atribui a `@nunreasonable` (configurável por `BUGFIX_ASSIGNEE`)
+- `release-batch`: entra na próxima PR diária `staging → main`
+- `release-hotfix` + `hotfix`: correção urgente; `release` só com base `main` e ancestry main-only
+- `needs-hotfix-review`: hotfix contém commits de `staging` ou ancestry desconhecida; merge/release bloqueados
+- `release`: merge na `main` dispara o trem de release
 
 ## Merge policy
 
 Pode entrar em automerge:
 
-- docs
-- changelog
-- workflows pequenos
-- manifestos e pequenos ajustes de CSS/texto
+- docs, changelog e templates pequenos classificados por `safe-automerge`
+- a PR oficial `staging → main` com label `release`, depois de checks verdes e revisões resolvidas
 
-Não entra em automerge:
+Não entra no automerge de PR individual:
 
 - gameplay
 - render/WebGL
@@ -32,6 +37,11 @@ Não entra em automerge:
 - personagens
 - anti-cheat
 - backend/ranking
+- workflows
+
+Essas superfícies seguem a aprovação humana antes de integrar `staging`. O lote diário só
+recombina o que já foi integrado; não dispensa revisão pendente nem check vermelho. O bot usa
+merge commit e nunca apaga `staging`.
 
 ## Lixo não nasce em PR (`eval:lixo`)
 
@@ -57,10 +67,16 @@ no CI vem de `FILA_BASE` (base do PR ou do lote).
 ## Local e pre-push
 
 `check:prepush` executa o núcleo e as suites afetadas pelo diff (`core`, `maps`, `ui`, `audio`,
-`browser`, `network`, `vm`). Caminho desconhecido, dependência transversal ou falha ao ler o diff
-executa `check:deploy` completo. A seleção só existe localmente: o CI nunca usa diff para pular testes.
+`browser`, `network`, `vm`). Em `package.json`, compara os scripts entre os blobs do range e inclui
+somente os passos alterados de `check:fast`/`check:deploy`; workflows com mapa estático validado
+incluem suas réguas. Caminho ou workflow desconhecido, lock/dependência/metadado, agregador,
+remoção de script, JSON inválido ou falha ao ler o diff executa `check:deploy` completo. A seleção
+só existe localmente: o CI nunca usa diff para pular testes.
 
 `check:fast` e `check:deploy` expandem `tools/eval/suites.mjs` com a sequência anterior preservada.
+Os 17 contratos visuais são distribuídos em seis jobs sem perda ou duplicação. O pai local
+`eval:operacao-flavio` continua sequencial e completo; no CI, os 50 mutantes de collider usam
+quatro shards disjuntos, com core, menu, online, integração, comportamento e escolta em jobs separados.
 O `soundscape` é um job obrigatório separado no `build`, então falha externa de áudio não invalida
 um agregado inteiro. Packs de assets usam cache por tag exata e checksum quando existir; os asserts
 nominais continuam obrigatórios. As invariantes são divididas por família e por mapa, sem separar

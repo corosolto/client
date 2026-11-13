@@ -118,6 +118,15 @@ jobs:
         run: npm run eval:character-preview-media
       - name: Retrato hero só para personagem com arquivo (#1231, com mutantes)
         run: npm run eval:retratohero
+      - name: Personagem do Studio por release fixada, verificação fail-closed, /packs/ e origem R2 (com mutantes)
+        if: always()
+        run: npm run eval:studiochar
+      - name: Publicador R2 dos pacotes do Studio — imutável, MIME, Cache-Control, CORS, SHA (com mutantes)
+        if: always()
+        run: npm run eval:packpublish
+      - name: Fora do Ar — registro, packs, arte, passe e catálogo (com mutantes)
+        if: always()
+        run: npm run eval:fora-do-ar
       - name: Pixel do X insere o script do uwt.js (#1231, com mutante)
         run: npm run eval:xpixel
       - name: Acúmulo de armas no chão tem teto
@@ -136,6 +145,10 @@ jobs:
         run: npm run eval:lixo
       - name: Preview da Vercel só builda quando o site muda (com mutantes)
         run: npm run eval:vercelignore
+      - name: Segredo de SSR é lido em runtime, não inlinado no build (com mutantes)
+        run: npm run eval:envruntime
+      - name: Allowlist de divergências conhecidas do staging Cloudflare
+        run: npm run eval:cfallowlist
       - name: Wrapper de portal embeda o site (frame-ancestors, UTM, pointer-lock)
         run: npm run eval:portalembed
       # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
@@ -159,8 +172,82 @@ jobs:
       - name: Suites preservam cobertura e seleção do pre-push
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node --test tests/eval-suites.test.mjs
+      - name: Structured workflow guards reject unsafe merges
+        if: ${{ always() && !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:workflowguards
+      - name: Duration-based sharding preserves full coverage
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node --test tests/eval-duration-shards.test.mjs
+      - name: Asset manifests and orphan ratchets stay exact
+        if: ${{ always() && !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:assetinventory
 
-  contratos-visuais:
+      - name: Passe Sessão da Treta obedece ao servidor (sem XP do client, com mutantes)
+        if: always()
+        run: npm run eval:passe
+  contratos-visuais-personagens-camera:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Restore calibrated duration manifest
+        id: duration-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        # Mesma chave do produtor; sem o arquivo local, o prefixo encontra a
+        # calibração mais recente. Cache vazio é reconstruído com dados reais da main;
+        # o shard nunca é desligado silenciosamente.
+        with:
+          path: tools/eval/out/durations.json
+          key: eval-durations-v1-
+          restore-keys: |
+            eval-durations-v1-
+      - name: Bootstrap duration manifest on an empty cache
+        if: steps.duration-cache.outputs.cache-matched-key == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mapfile -t ids < <(gh run list --repo "$REPO" --workflow ci.yml --branch main \
+            --event push --status success --limit 3 --json databaseId --jq '.[].databaseId')
+          if [ "${#ids[@]}" -eq 0 ]; then
+            echo '::error::No successful main CI timing source found' >&2
+            exit 1
+          fi
+          for id in "${ids[@]}"; do
+            destino="tools/eval/out/timing-artifacts/$id"
+            mkdir -p "$destino"
+            if ! gh run download "$id" --repo "$REPO" --dir "$destino" --pattern '*-tempos-*'; then
+              echo "::warning::Run $id has no downloadable timing artifact; skipping it"
+            fi
+          done
+          node tools/eval/calibrate-durations.mjs
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Contratos visuais de personagens e câmera (shard ${{ matrix.shard }}/3)
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:knife-skin-markings --shard=${{ matrix.shard }}/3 --json-out=tools/eval/out/contratos-visuais-personagens-camera-shard-${{ matrix.shard }}.json
+      - name: Tempos dos contratos visuais de personagens e câmera
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: contratos-visuais-personagens-camera-tempos-${{ github.run_id }}-${{ matrix.shard }}
+          path: tools/eval/out/contratos-visuais-personagens-camera-shard-${{ matrix.shard }}.json
+          if-no-files-found: warn
+
+  contratos-visuais-ferro-balcao:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -172,15 +259,110 @@ jobs:
       - name: Dependências (npm ci)
         id: deps
         run: npm ci
-      - name: Contratos visuais de mapas, personagens, câmera e equipamento
+      - name: Contrato visual de ferro e balcão
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:grafite-curation eval:map-material-finish eval:ferro-balcao eval:match-pickups eval:net-flash-disable eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:visual-map-contracts eval:knife-skin-markings eval:campo-uv eval:grafite-atual:prova eval:piscina-graffiti-batch --json-out=tools/eval/out/contratos-visuais.json
-      - name: Tempos dos contratos visuais
+        run: node tools/eval/runner.mjs eval:ferro-balcao --json-out=tools/eval/out/contratos-visuais-ferro-balcao.json
+      - name: Tempos do contrato visual de ferro e balcão
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: contratos-visuais-tempos-${{ github.run_id }}
-          path: tools/eval/out/contratos-visuais.json
+          name: contratos-visuais-ferro-balcao-tempos-${{ github.run_id }}
+          path: tools/eval/out/contratos-visuais-ferro-balcao.json
+          if-no-files-found: warn
+
+  contratos-visuais-mapas-materiais:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Contratos visuais de mapas e materiais
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:map-material-finish --json-out=tools/eval/out/contratos-visuais-mapas-materiais.json
+      - name: Tempos dos contratos visuais de mapas e materiais
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: contratos-visuais-mapas-materiais-tempos-${{ github.run_id }}
+          path: tools/eval/out/contratos-visuais-mapas-materiais.json
+          if-no-files-found: warn
+
+  contratos-visuais-visual-map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Contratos visuais de geometria e UV
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:visual-map-contracts --json-out=tools/eval/out/contratos-visuais-visual-map.json
+      - name: Tempos dos contratos visuais de geometria e UV
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: contratos-visuais-visual-map-tempos-${{ github.run_id }}
+          path: tools/eval/out/contratos-visuais-visual-map.json
+          if-no-files-found: warn
+
+  contratos-visuais-campo-uv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Contrato visual de campo UV
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:campo-uv --json-out=tools/eval/out/contratos-visuais-campo-uv.json
+      - name: Tempos do contrato visual de campo UV
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: contratos-visuais-campo-uv-tempos-${{ github.run_id }}
+          path: tools/eval/out/contratos-visuais-campo-uv.json
+          if-no-files-found: warn
+
+  contratos-visuais-gameplay-grafite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Shim local de Three para os contratos de grafite
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node --input-type=module -e "await import('./tools/eval/three-node.mjs')"
+      - name: Contratos visuais de gameplay e grafite
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:grafite-curation eval:match-pickups eval:net-flash-disable eval:grafite-atual:prova eval:piscina-graffiti-batch --json-out=tools/eval/out/contratos-visuais-gameplay-grafite.json
+      - name: Tempos dos contratos visuais de gameplay e grafite
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: contratos-visuais-gameplay-grafite-tempos-${{ github.run_id }}
+          path: tools/eval/out/contratos-visuais-gameplay-grafite.json
           if-no-files-found: warn
 
   economia-ak-hud:
@@ -257,6 +439,7 @@ jobs:
       - name: Escadão — circulação, estrutura e casa
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
+
       - name: Escadão — compatibilidade com pacote de áudio publicado
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/escadao-audio-pack-check.mjs
@@ -327,7 +510,19 @@ jobs:
         run: npm run verify:skills
 
       - name: Astro build
+        env:
+          API_PROXY_SECRET: SENTINEL_ci_api_proxy
+          SUPABASE_URL: SENTINEL_ci_supabase_url
+          SUPABASE_SERVICE_ROLE_KEY: SENTINEL_ci_supabase_key
+          X_PIXEL_TOKEN: SENTINEL_ci_x_pixel
         run: npm run build
+      - name: Build não inlina segredo (varre os artefatos com as sentinelas)
+        env:
+          API_PROXY_SECRET: SENTINEL_ci_api_proxy
+          SUPABASE_URL: SENTINEL_ci_supabase_url
+          SUPABASE_SERVICE_ROLE_KEY: SENTINEL_ci_supabase_key
+          X_PIXEL_TOKEN: SENTINEL_ci_x_pixel
+        run: node tools/eval/env-runtime-check.mjs --varre
 
       - name: SEO e links publicados (com mutações)
         run: |
@@ -352,7 +547,22 @@ jobs:
           node tools/eval/cla-ssr-check.mjs
           node tools/eval/cla-ssr-check.mjs --mutate
           node tools/eval/rotas-check.mjs --dist
-          ! node tools/eval/rotas-check.mjs --dist --mutante=robots
+          output=$(mktemp)
+          status=0
+          node tools/eval/rotas-check.mjs --dist --mutante=robots >"$output" 2>&1 || status=$?
+          cat "$output"
+          if [ "$status" -eq 0 ]; then
+            echo "::error::o mutante robots passou"
+            exit 1
+          fi
+          if [ "$status" -ne 1 ]; then
+            echo "::error::o mutante robots terminou com status inesperado $status"
+            exit "$status"
+          fi
+          if ! grep -Fq '/jogar/multiplayer: robots "index, follow" com indexavel=false' "$output"; then
+            echo "::error::o mutante robots terminou sem a cláusula documentada"
+            exit 1
+          fi
           node tools/eval/perfil-abas-check.mjs
           node tools/eval/perfil-abas-check.mjs --mutate
           node tools/eval/profile-character-empty-check.mjs
@@ -369,7 +579,7 @@ jobs:
       - name: Smoke do site (13 rotas, contrato + JSON-LD)
         run: node tools/eval/site-smoke.mjs
 
-  operacao-flavio:
+  operacao-flavio-core:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -381,15 +591,222 @@ jobs:
       - name: Dependências (npm ci)
         id: deps
         run: npm ci
-      - name: Operação Flávio, objetivo, autoridade e anúncio
+      - name: Operação Flávio, núcleo e veredito estático
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:operacao-flavio eval:operacao-reset eval:operacao-duration eval:operacao-clock eval:operacao-boarding eval:character-owned eval:objective-codec-contract eval:operacao-npc eval:mode-announcements eval:ctflabels eval:tpreloadpaired --json-out=tools/eval/out/operacao-flavio.json
-      - name: Tempos da Operação Flávio
+        run: node tools/eval/runner.mjs eval:operacao-flavio-core eval:operacao-reset eval:operacao-duration eval:operacao-clock eval:operacao-boarding eval:character-owned eval:objective-codec-contract eval:operacao-npc --json-out=tools/eval/out/operacao-flavio-core.json
+      - name: Tempos do núcleo da Operação Flávio
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: operacao-flavio-tempos-${{ github.run_id }}
-          path: tools/eval/out/operacao-flavio.json
+          name: operacao-flavio-core-tempos-${{ github.run_id }}
+          path: tools/eval/out/operacao-flavio-core.json
+          if-no-files-found: warn
+
+  operacao-flavio-collider-1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Operação Flávio, collider 1
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:operacao-flavio-collider-1 --json-out=tools/eval/out/operacao-flavio-collider-1.json
+      - name: Tempos do collider 1 da Operação Flávio
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operacao-flavio-collider-1-tempos-${{ github.run_id }}
+          path: tools/eval/out/operacao-flavio-collider-1.json
+          if-no-files-found: warn
+
+  operacao-flavio-collider-2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Operação Flávio, collider 2
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:operacao-flavio-collider-2 --json-out=tools/eval/out/operacao-flavio-collider-2.json
+      - name: Tempos do collider 2 da Operação Flávio
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operacao-flavio-collider-2-tempos-${{ github.run_id }}
+          path: tools/eval/out/operacao-flavio-collider-2.json
+          if-no-files-found: warn
+
+  operacao-flavio-collider-3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Operação Flávio, collider 3
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:operacao-flavio-collider-3 --json-out=tools/eval/out/operacao-flavio-collider-3.json
+      - name: Tempos do collider 3 da Operação Flávio
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operacao-flavio-collider-3-tempos-${{ github.run_id }}
+          path: tools/eval/out/operacao-flavio-collider-3.json
+          if-no-files-found: warn
+
+  operacao-flavio-collider-4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Operação Flávio, collider 4
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:operacao-flavio-collider-4 --json-out=tools/eval/out/operacao-flavio-collider-4.json
+      - name: Tempos do collider 4 da Operação Flávio
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operacao-flavio-collider-4-tempos-${{ github.run_id }}
+          path: tools/eval/out/operacao-flavio-collider-4.json
+          if-no-files-found: warn
+
+  operacao-flavio-menu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Operação Flávio, menu e anúncios
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:operacao-flavio-menu eval:mode-announcements eval:ctflabels eval:tpreloadpaired --json-out=tools/eval/out/operacao-flavio-menu.json
+      - name: Tempos do menu da Operação Flávio
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operacao-flavio-menu-tempos-${{ github.run_id }}
+          path: tools/eval/out/operacao-flavio-menu.json
+          if-no-files-found: warn
+
+  operacao-flavio-online:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Operação Flávio, online e objetivo
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:operacao-online --json-out=tools/eval/out/operacao-online.json
+      - name: Tempos online da Operação Flávio
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operacao-online-tempos-${{ github.run_id }}
+          path: tools/eval/out/operacao-online.json
+          if-no-files-found: warn
+
+  operacao-flavio-integracao:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Operação Flávio, integração, recuperação e pressão
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:operacao-flavio-integracao --json-out=tools/eval/out/operacao-flavio-integracao.json
+      - name: Tempos de integração da Operação Flávio
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operacao-flavio-integracao-tempos-${{ github.run_id }}
+          path: tools/eval/out/operacao-flavio-integracao.json
+          if-no-files-found: warn
+
+  operacao-flavio-comportamento:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Operação Flávio, comportamento e simulação
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:operacao-flavio-comportamento eval:bots-perf --json-out=tools/eval/out/operacao-flavio-comportamento.json
+      - name: Tempos de comportamento da Operação Flávio
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operacao-flavio-comportamento-tempos-${{ github.run_id }}
+          path: tools/eval/out/operacao-flavio-comportamento.json
+          if-no-files-found: warn
+
+  operacao-flavio-escolta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências (npm ci)
+        id: deps
+        run: npm ci
+      - name: Operação Flávio, escolta, VIP e pickups
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:operacao-flavio-escolta --json-out=tools/eval/out/operacao-flavio-escolta.json
+      - name: Tempos de escolta da Operação Flávio
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: operacao-flavio-escolta-tempos-${{ github.run_id }}
+          path: tools/eval/out/operacao-flavio-escolta.json
           if-no-files-found: warn
 
   equipamento-tp-corpo:
@@ -402,9 +819,11 @@ jobs:
           node-version: 22
           cache: npm
       - name: Dependências (npm ci)
+        id: deps
         run: npm ci
-      - name: Corpo e cosméticos em processos CPU reais
-        run: node tools/eval/runner.mjs eval:tp-identity eval:tp-cosmetic-source --json-out=tools/eval/out/equipamento-corpo.json
+      - name: Corpo em processos CPU reais
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:tp-identity --json-out=tools/eval/out/equipamento-corpo.json
       - name: Tempos do equipamento corpo
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -423,9 +842,11 @@ jobs:
           node-version: 22
           cache: npm
       - name: Dependências (npm ci)
+        id: deps
         run: npm ci
-      - name: Drip e luvas em processos CPU reais
-        run: node tools/eval/runner.mjs eval:tp-drip-source eval:tp-glove-origin --json-out=tools/eval/out/equipamento-origem.json
+      - name: Drip, luvas e cosméticos em processos CPU reais
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:tp-drip-source eval:tp-glove-origin eval:tp-cosmetic-source --json-out=tools/eval/out/equipamento-origem.json
       - name: Tempos do equipamento origem
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -556,6 +977,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Packs Studio fixados (R2, SHA conferido) para o CHR medir o corpo real
+        uses: ./.github/actions/studio-packs
       - name: Invariantes de personagens, materiais e pickups
         env:
           INVARIANTES_FAMILIA: chars-mat
@@ -621,7 +1044,7 @@ jobs:
         run: npm ci
       - name: Validar fluidez, território e rede do mantle
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network --json-out=tools/eval/out/mantle.json
+        run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network eval:landing-impact --json-out=tools/eval/out/mantle.json
       - name: Tempos do mantle
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -629,9 +1052,12 @@ jobs:
           name: mantle-tempos-${{ github.run_id }}
           path: tools/eval/out/mantle.json
           if-no-files-found: warn
+      - name: Penitenciária liga o look do próprio mapa (mutante corrego)
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:lookbinding
 
   build:
-    needs: [reguas-e-site, mapas-e-site, invariantes-fonte, invariantes-vm, invariantes-bots, invariantes-chars-mat, invariantes-mapas, mantle, equipamento-tp-corpo, equipamento-tp-origem, contratos-visuais, economia-ak-hud, soundscape, operacao-flavio]
+    needs: [reguas-e-site, mapas-e-site, invariantes-fonte, invariantes-vm, invariantes-bots, invariantes-chars-mat, invariantes-mapas, mantle, equipamento-tp-corpo, equipamento-tp-origem, contratos-visuais-personagens-camera, contratos-visuais-ferro-balcao, contratos-visuais-mapas-materiais, contratos-visuais-visual-map, contratos-visuais-campo-uv, contratos-visuais-gameplay-grafite, economia-ak-hud, soundscape, operacao-flavio-core, operacao-flavio-collider-1, operacao-flavio-collider-2, operacao-flavio-collider-3, operacao-flavio-collider-4, operacao-flavio-menu, operacao-flavio-online, operacao-flavio-integracao, operacao-flavio-comportamento, operacao-flavio-escolta]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

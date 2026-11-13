@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { SUITES, passosDaSuite } from '../tools/eval/suites.mjs';
-import { selecionarPorArquivos } from '../tools/eval/selecao-pre-push.mjs';
+import { selecionarPorArquivos, validarMapaWorkflows } from '../tools/eval/selecao-pre-push.mjs';
 
 /* Baseline congelado das duas linhas que existiam antes do manifesto. O resumo
  * cobre ordem, repetições e conteúdo; ele NÃO é derivado do manifesto atual. */
@@ -14,7 +14,10 @@ const BASELINE = {
   fast: { quantidade: 338, sha256: '05c5d2027a8229f379a4556ee991daf1bc0e9f45b04ee3515d4e458259d6bfdf' },
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
-const NOVOS = { fast: new Set(['eval:portalembed', 'eval:lixo']), deploy: new Set() };
+const NOVOS = {
+  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:prodcrash', 'eval:workflowguards']),
+  deploy: new Set(['eval:weapon-passe', 'eval:dispose', 'eval:workflowguards']),
+};
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
 
 for (const [nome, baseline] of Object.entries(BASELINE)) {
@@ -35,9 +38,23 @@ for (const [nome, baseline] of Object.entries(BASELINE)) {
   });
 }
 
-test('staging adiciona portalembed e lixo sem apagar os passos migrados', () => {
+test('staging adds portal, pass and production-crash checks without deleting migrated steps', () => {
   assert.ok(SUITES.fast.includes('eval:portalembed'));
   assert.ok(SUITES.fast.includes('eval:lixo'));
+  assert.ok(SUITES.fast.includes('eval:envruntime'));
+  assert.ok(SUITES.fast.includes('eval:servertraffic'));
+  assert.ok(SUITES.fast.includes('eval:shareorigin'));
+  assert.ok(SUITES.fast.includes('eval:prodcrash'));
+  assert.ok(SUITES.fast.includes('eval:vm-enquadramento-placar'));
+  assert.ok(SUITES.fast.includes('eval:pintura-fabrica'));
+  assert.ok(SUITES.fast.includes('eval:passe'));
+  assert.ok(SUITES.fast.includes('eval:packpublish'));
+  assert.ok(SUITES.deploy.includes('eval:dispose'));
+});
+
+test('release de personagem do Studio entra na fast logo depois do characterkit', () => {
+  const i = SUITES.fast.indexOf('eval:characterkit');
+  assert.equal(SUITES.fast[i + 1], 'eval:studiochar');
 });
 
 test('suites temáticas só reutilizam passos existentes, sem duplicar execução', () => {
@@ -106,7 +123,7 @@ process.exit(distintos >= 2 ? 78 : 97);
       'tools/eval/runner.mjs', '--jobs=2', '--suite=core', `--json-out=${jsonOut}`,
     ], {
       encoding: 'utf8',
-      timeout: 20000,
+      timeout: 60000,
       env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, FAKE_NPM_LOG: log },
     });
     assert.equal(r.status, 78, r.stderr);
@@ -174,13 +191,35 @@ test('sem diff ou com documentação, o pre-push mantém os checks centrais bara
   }
 });
 
+test('skills de agente, markdown em qualquer pasta e mídia de lançamento são só core (09/11: caíam no deploy completo)', () => {
+  for (const arquivo of ['.agents/skills/game-3d-assets/SKILL.md', '.claude/agents/revisor.md', 'public/docs/estado/nota.md', 'launch-media/2026-11-09/post.png', 'plans/landing-app.md', 'scripts/ci/cf_preview_comment.py']) {
+    const r = selecionarPorArquivos([arquivo]);
+    assert.equal(r.fallback, false, arquivo);
+    assert.deepEqual(r.suites, ['core'], arquivo);
+  }
+});
+
+test('contagem de borda é network, não fallback', () => {
+  const r = selecionarPorArquivos(['src/lib/server-traffic.mjs', 'tools/eval/server-traffic-check.mjs']);
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core', 'network']);
+});
+
+test('as duas bordas de contagem (middleware da Vercel e do Workers) são network, não fallback', () => {
+  const r = selecionarPorArquivos(['middleware.js', 'src/middleware.ts']);
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core', 'network']);
+});
+
 const CASOS = [
   ['public/js/map_campo.js', 'maps', 'eval:mapcontrato'],
   ['src/components/Lobby.astro', 'ui', 'eval:ui-v3'],
   ['public/audio/manifest.json', 'audio', 'audio:check'],
   ['playwright.config.mjs', 'browser', 'eval:vm-troca-sem-legado'],
   ['public/js/transporte.js', 'network', 'eval:netcode'],
-  ['tools/viewmodels/validate_paid_catalog.mjs', 'vm', 'eval:vm-presence'],
+  ['tools/eval/lib/vm-enquadramento.mjs', 'vm', 'eval:vm-enquadramento-placar'],
+  ['tools/fabrica/fabrica-candidates.json', 'vm', 'eval:vm-enquadramento-placar'],
+  ['public/models/viewmodels/coro/p90-hires.glb', 'vm', 'eval:vm-enquadramento-placar'],
 ];
 for (const [arquivo, suite, passo] of CASOS) {
   test(`diff de ${suite} seleciona core + ${suite}`, () => {
@@ -219,7 +258,8 @@ test('caminho desconhecido cai no check:deploy completo e explica o fallback', (
 });
 
 for (const arquivo of [
-  'package.json',
+  'package-lock.json',
+  'yarn.lock',
   'public/js/game.js',
   'public/js/main.js',
   'public/js/bootstrap.js',
@@ -233,3 +273,140 @@ for (const arquivo of [
     assert.deepEqual(r.passos, SUITES.deploy);
   });
 }
+
+const manifesto = (scripts, extras = {}) => ({ name: 'coro-solto', version: '1.0.0', ...extras, scripts });
+const blobsPackage = (antes, depois) => new Map([['package.json', {
+  antes: typeof antes === 'string' ? antes : JSON.stringify(antes),
+  depois: typeof depois === 'string' ? depois : JSON.stringify(depois),
+}]]);
+const selecaoPackage = (antes, depois) => selecionarPorArquivos(['package.json'], blobsPackage(antes, depois));
+
+test('package.json com um script real alterado executa core e esse passo', () => {
+  const r = selecaoPackage(
+    manifesto({ 'eval:release': 'node antes.mjs' }),
+    manifesto({ 'eval:release': 'node depois.mjs' }),
+  );
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core']);
+  assert.deepEqual(r.passos, [...SUITES.core, 'eval:release']);
+  assert.ok(r.passos.length > 0);
+});
+
+test('package.json com múltiplos scripts faz união deduplicada após core', () => {
+  const r = selecaoPackage(
+    manifesto({ syntax: 'node antes.mjs', 'eval:release': 'node antes.mjs', 'eval:edgecache': 'node mesmo.mjs' }),
+    manifesto({ syntax: 'node depois.mjs', 'eval:release': 'node depois.mjs', 'eval:edgecache': 'node depois.mjs' }),
+  );
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core']);
+  assert.deepEqual(r.passos.slice(0, SUITES.core.length), SUITES.core);
+  assert.equal(r.passos.filter((passo) => passo === 'syntax').length, 1);
+  assert.ok(r.passos.includes('eval:release') && r.passos.includes('eval:edgecache'));
+  assert.equal(new Set(r.passos).size, r.passos.length);
+});
+
+const PACKAGE_FULL = [
+  ['dependencies', manifesto({ syntax: 'node a.mjs' }), manifesto({ syntax: 'node a.mjs' }, { dependencies: { astro: '1.0.0' } })],
+  ['version', manifesto({ syntax: 'node a.mjs' }), { ...manifesto({ syntax: 'node a.mjs' }), version: '2.0.0' }],
+  ['name', manifesto({ syntax: 'node a.mjs' }), { ...manifesto({ syntax: 'node a.mjs' }), name: 'outro-nome' }],
+  ['agregador', manifesto({ 'check:fast': 'node antes.mjs' }), manifesto({ 'check:fast': 'node depois.mjs' })],
+  ['script removido', manifesto({ 'eval:release': 'node a.mjs' }), manifesto({})],
+  ['build fora das suites', manifesto({ build: 'node antes.mjs' }), manifesto({ build: 'node depois.mjs' })],
+  ['nome alterado divergente', manifesto({ 'eval:release': 'node a.mjs' }), manifesto({ 'eval:edgecache': 'node a.mjs' })],
+];
+for (const [nome, antes, depois] of PACKAGE_FULL) {
+  test(`package.json com ${nome} força deploy completo`, () => {
+    const r = selecaoPackage(antes, depois);
+    assert.equal(r.fallback, true);
+    assert.deepEqual(r.passos, SUITES.deploy);
+  });
+}
+
+test('package.json agregador dentro das suites também força deploy completo', () => {
+  const r = selecaoPackage(
+    manifesto({ 'eval:release': 'npm run eval:outro' }),
+    manifesto({ 'eval:release': 'npm run eval:novo' }),
+  );
+  assert.equal(r.fallback, true);
+  assert.match(r.motivo, /agregador/);
+});
+
+for (const [nome, antes, depois] of [
+  ['base', '{', JSON.stringify(manifesto({}))],
+  ['head', JSON.stringify(manifesto({})), '{'],
+]) {
+  test(`package.json com JSON inválido na ${nome} força deploy completo`, () => {
+    const r = selecaoPackage(antes, depois);
+    assert.equal(r.fallback, true);
+    assert.match(r.motivo, /inválido/);
+  });
+}
+
+test('--files=package.json sem blobs injetados falha fechado', () => {
+  const r = selecionarPorArquivos(['package.json']);
+  assert.equal(r.fallback, true);
+  assert.match(r.motivo, /blobs antes\/depois/);
+  assert.deepEqual(r.passos, SUITES.deploy);
+});
+
+test('lock real vence uma seleção segura de package.json', () => {
+  const blobs = blobsPackage(
+    manifesto({ 'eval:release': 'node antes.mjs' }),
+    manifesto({ 'eval:release': 'node depois.mjs' }),
+  );
+  const r = selecionarPorArquivos(['package.json', 'package-lock.json'], blobs);
+  assert.equal(r.fallback, true);
+  assert.deepEqual(r.passos, SUITES.deploy);
+});
+
+const WORKFLOWS = [
+  ['ci.yml', ['eval:operacao-flavio', 'eval:release']],
+  ['release.yml', ['eval:release']],
+  ['deploy-prod.yml', ['eval:edgecache', 'eval:release']],
+  ['prod-watch.yml', ['eval:edgecache', 'eval:wfpurge']],
+  ['preview-build.yml', []],
+  ['preview-deploy.yml', []],
+  ['preview-bot.yml', []],
+  ['portao-browser.yml', []],
+  ['autofix.yml', []],
+];
+for (const [arquivo, extras] of WORKFLOWS) {
+  test(`workflow mapeado ${arquivo} seleciona core e suas réguas`, () => {
+    const r = selecionarPorArquivos([`.github/workflows/${arquivo}`]);
+    assert.equal(r.fallback, false);
+    assert.deepEqual(r.suites, ['core']);
+    assert.deepEqual(r.passos, [...new Set([...SUITES.core, ...extras])]);
+    assert.ok(r.passos.length > 0);
+  });
+}
+
+for (const arquivo of ['.github/workflows/issues-bot.yml', '.github/workflows/ci.yaml', '.github/CODEOWNERS']) {
+  test(`arquivo GitHub sem mapa seguro ${arquivo} força deploy completo`, () => {
+    const r = selecionarPorArquivos([arquivo]);
+    assert.equal(r.fallback, true);
+    assert.deepEqual(r.passos, SUITES.deploy);
+  });
+}
+
+test('workflow e categoria temática mistos unem réguas sem duplicatas', () => {
+  const r = selecionarPorArquivos(['public/js/map_campo.js', '.github/workflows/ci.yml']);
+  assert.equal(r.fallback, false);
+  assert.deepEqual(r.suites, ['core', 'maps']);
+  for (const passo of ['eval:campo-contract', 'eval:operacao-flavio', 'eval:release']) {
+    assert.ok(r.passos.includes(passo), `perdeu ${passo}`);
+  }
+  assert.equal(new Set(r.passos).size, r.passos.length);
+});
+
+test('transversal real sempre vence misto com workflow mapeado', () => {
+  const r = selecionarPorArquivos(['.github/workflows/ci.yml', 'yarn.lock']);
+  assert.equal(r.fallback, true);
+  assert.deepEqual(r.passos, SUITES.deploy);
+});
+
+test('mapa de workflows rejeita passo fantasma fora de fast e deploy', () => {
+  assert.throws(
+    () => validarMapaWorkflows({ '.github/workflows/ci.yml': ['eval:passo-fantasma'] }),
+    /passo fantasma/,
+  );
+});
