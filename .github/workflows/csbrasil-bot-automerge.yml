@@ -108,6 +108,41 @@ jobs:
         run: |
           python3 scripts/ci/automerge_merge.py --selftest
           python3 scripts/ci/automerge_merge.py
+      - name: Record evaluated state for sweep debounce
+        if: env.pular != '1'
+        continue-on-error: true
+        run: |
+          python3 scripts/ci/bot_sweep.py --selftest
+          python3 - <<'PY'
+          import json, os, subprocess
+          from scripts.ci.bot_sweep import BOT_AUTHORS, PREFIX, encode_state
+          repo = os.environ['GITHUB_REPOSITORY']
+          number = os.environ['PR_NUMBER']
+          body = encode_state('automerge', json.load(open('/tmp/automerge.json')))
+          pages = json.loads(subprocess.check_output([
+              'gh', 'api', '--paginate', '--slurp',
+              f'repos/{repo}/issues/{number}/comments?per_page=100',
+          ], text=True))
+          comments = [comment for page in pages for comment in page]
+          mine = [
+              comment for comment in comments
+              if (comment.get('user') or {}).get('login', '').lower() in BOT_AUTHORS
+              and PREFIX + 'automerge:' in (comment.get('body') or '')
+          ]
+          for extra in mine[1:]:
+              subprocess.run([
+                  'gh', 'api', '-X', 'DELETE', f"repos/{repo}/issues/comments/{extra['id']}",
+              ], check=False)
+          if mine:
+              subprocess.run([
+                  'gh', 'api', '-X', 'PATCH', f"repos/{repo}/issues/comments/{mine[0]['id']}",
+                  '--input', '-',
+              ], input=json.dumps({'body': body}), text=True, check=True)
+          else:
+              subprocess.run([
+                  'gh', 'api', '-X', 'POST', f'repos/{repo}/issues/{number}/comments', '--input', '-',
+              ], input=json.dumps({'body': body}), text=True, check=True)
+          PY
 
   sweep:
     if: github.event_name == 'schedule'
