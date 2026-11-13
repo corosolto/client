@@ -30,23 +30,42 @@ function start({
   resources = [],
   pwaRevision = 'pwa-build-123',
   hostname = 'jogo.test',
+  controlled = true,
+  controlledRevision = pwaRevision,
 } = {}) {
   const nodes = new Map(['pwa-install', 'pwa-install-action', 'pwa-install-help'].map((id) => [id, new Element()]));
   const windowListeners = new Map();
   const posted = [];
   const registrations = [];
-  const worker = { postMessage(message) { posted.push(message); } };
+  let resourceObserver = null;
+  class PerformanceObserver {
+    constructor(callback) { resourceObserver = callback; }
+    observe() {}
+  }
+  const makeWorker = (revision) => ({
+    scriptURL: `https://${hostname}/sw.js?v=${encodeURIComponent(revision)}`,
+    postMessage(message) { posted.push(message); },
+  });
+  const worker = makeWorker(pwaRevision);
+  const initialWorker = controlled ? makeWorker(controlledRevision) : null;
+  const serviceWorkerListeners = new Map();
+  const registration = { active: initialWorker };
   const serviceWorker = offline ? {
-    controller: worker,
-    addEventListener() {},
+    controller: initialWorker,
+    addEventListener(type, listener) {
+      const list = serviceWorkerListeners.get(type) || [];
+      list.push(listener);
+      serviceWorkerListeners.set(type, list);
+    },
     async register(path, options) {
       registrations.push({ path, options });
-      return { active: worker };
+      return registration;
     },
   } : undefined;
   const window = {
     location: { origin: `https://${hostname}`, hostname },
     performance: { getEntriesByType: () => resources.map((name) => ({ name })) },
+    PerformanceObserver,
     navigator: { userAgent, platform, maxTouchPoints: touch ? 5 : 0, standalone, serviceWorker },
     matchMedia: (query) => ({ matches: query.includes('pointer: coarse') ? touch : standalone }),
     addEventListener(type, listener) {
@@ -69,6 +88,17 @@ function start({
     registrations,
     dispatchWindow: async (type, event = {}) => {
       for (const listener of windowListeners.get(type) || []) await listener(event);
+    },
+    dispatchResources: async (names) => {
+      resourceObserver?.({ getEntries: () => names.map((name) => ({ name })) });
+      await Promise.resolve();
+    },
+    activateWorker: async () => {
+      if (!serviceWorker) return;
+      serviceWorker.controller = worker;
+      registration.active = worker;
+      for (const listener of serviceWorkerListeners.get('controllerchange') || []) listener();
+      await Promise.resolve();
     },
   };
 }
@@ -141,6 +171,44 @@ assert.deepEqual([...offline.posted.at(-1).urls], [
   'https://jogo.test/js/main.js?v=release',
   'https://jogo.test/models/characters/test.glb?v=asset',
 ], 'page warms only the visited same-origin game resources');
+await offline.dispatchResources([
+  'https://jogo.test/models/maps/late-prop.glb?v=visited',
+  'https://jogo.test/api/late.json',
+  'https://other.test/foreign.js',
+]);
+assert.deepEqual([...offline.posted.at(-1).urls], [
+  'https://jogo.test/models/maps/late-prop.glb?v=visited',
+], 'resources loaded after the load event are warmed continuously');
+
+const activating = start({ offline: true, controlled: false, resources: [] });
+await activating.dispatchResources([
+  'https://jogo.test/models/maps/loaded-before-activation.glb?v=visited',
+]);
+await Promise.resolve();
+await Promise.resolve();
+assert.equal(activating.posted.length, 0, 'observed resources wait while no worker can receive them');
+await activating.activateWorker();
+assert.ok(
+  [...activating.posted.at(-1).urls].includes('https://jogo.test/models/maps/loaded-before-activation.glb?v=visited'),
+  'resources observed before activation flush to the controlling worker',
+);
+
+const updating = start({
+  offline: true,
+  controlledRevision: 'pwa-build-old',
+  resources: [],
+});
+await Promise.resolve();
+await Promise.resolve();
+await updating.dispatchResources([
+  'https://jogo.test/models/maps/loaded-during-update.glb?v=visited',
+]);
+assert.equal(updating.posted.length, 0, 'new-revision resources are not discarded through the old controller');
+await updating.activateWorker();
+assert.ok(
+  [...updating.posted.at(-1).urls].includes('https://jogo.test/models/maps/loaded-during-update.glb?v=visited'),
+  'resources loaded during an update flush only to the matching revision',
+);
 
 const local = start({ offline: true, hostname: 'localhost' });
 await Promise.resolve();

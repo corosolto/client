@@ -1,11 +1,13 @@
 const OFFLINE_STATIC_PATH = /\.(?:avif|css|glb|gif|ico|jpe?g|js|json|mp3|ogg|png|svg|wasm|wav|webmanifest|webm|webp|woff2?)$/i;
 let offlineRegistration = null;
 let offlineRevision = null;
+const MAX_RECURSOS_PENDENTES = 600;
+const recursosOfflinePendentes = new Set();
 
-function recursosOfflineVisitados() {
+function recursosOfflineVisitados(entries = window.performance?.getEntriesByType?.('resource') || [], incluiRaiz = true) {
   const origin = window.location?.origin;
-  const urls = new Set(origin ? [`${origin}/`] : ['/']);
-  for (const entry of window.performance?.getEntriesByType?.('resource') || []) {
+  const urls = new Set(incluiRaiz ? [origin ? `${origin}/` : '/'] : []);
+  for (const entry of entries) {
     try {
       const url = new URL(entry.name, origin);
       if (url.origin === origin && OFFLINE_STATIC_PATH.test(url.pathname) && !url.pathname.startsWith('/api/')) {
@@ -17,11 +19,46 @@ function recursosOfflineVisitados() {
   }
   return [...urls];
 }
+function workerDaRevisaoAtual() {
+  const workers = [
+    window.navigator.serviceWorker?.controller,
+    offlineRegistration?.active,
+  ];
+  return workers.find((worker) => {
+    if (!worker?.scriptURL) return false;
+    try {
+      return new URL(worker.scriptURL, window.location.origin).searchParams.get('v') === offlineRevision;
+    } catch {
+      return false;
+    }
+  });
+}
 
-async function guardaRecursosOffline() {
-  if (!offlineRegistration) return;
-  const worker = window.navigator.serviceWorker?.controller || offlineRegistration.active;
-  worker?.postMessage({ type: 'CACHE_OFFLINE_RESOURCES', revision: offlineRevision, urls: recursosOfflineVisitados() });
+function guardaRecursosOffline(urls = recursosOfflineVisitados()) {
+  for (const url of urls) {
+    recursosOfflinePendentes.delete(url);
+    recursosOfflinePendentes.add(url);
+    if (recursosOfflinePendentes.size > MAX_RECURSOS_PENDENTES) {
+      recursosOfflinePendentes.delete(recursosOfflinePendentes.values().next().value);
+    }
+  }
+  if (!offlineRegistration || !recursosOfflinePendentes.size) return;
+  const worker = workerDaRevisaoAtual();
+  if (!worker) return;
+  worker.postMessage({
+    type: 'CACHE_OFFLINE_RESOURCES',
+    revision: offlineRevision,
+    urls: [...recursosOfflinePendentes],
+  });
+  recursosOfflinePendentes.clear();
+}
+
+function observaRecursosOffline() {
+  if (!window.PerformanceObserver) return;
+  const observer = new window.PerformanceObserver((list) => {
+    void guardaRecursosOffline(recursosOfflineVisitados(list.getEntries(), false));
+  });
+  observer.observe({ type: 'resource' });
 }
 
 function inicializaOffline() {
@@ -29,6 +66,7 @@ function inicializaOffline() {
   const serviceWorker = window.navigator.serviceWorker;
   if (!serviceWorker) return;
   serviceWorker.addEventListener('controllerchange', () => void guardaRecursosOffline());
+  observaRecursosOffline();
   window.addEventListener('load', () => void guardaRecursosOffline());
   offlineRevision = document.querySelector('script[data-pwa-rev]')?.dataset.pwaRev || null;
   const workerUrl = offlineRevision ? `/sw.js?v=${encodeURIComponent(offlineRevision)}` : '/sw.js';
