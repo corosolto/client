@@ -95,7 +95,8 @@ if git remote get-url "$BASE_REMOTE" >/dev/null 2>&1; then
   test "$(git remote get-url "$BASE_REMOTE")" = "$EXPECTED_BASE_URL" \
     || { echo "remote da base aponta para outro repositório" >&2; exit 1; }
 else
-  git remote add "$BASE_REMOTE" "$EXPECTED_BASE_URL"
+  git remote add "$BASE_REMOTE" "$EXPECTED_BASE_URL" \
+    || { echo "não foi possível adicionar o remote da base" >&2; exit 1; }
 fi
 HEAD_REMOTE="$BASE_REMOTE"
 ```
@@ -109,7 +110,8 @@ if git remote get-url OWNER >/dev/null 2>&1; then
   test "$(git remote get-url OWNER)" = "$EXPECTED_HEAD_URL" \
     || { echo "remote OWNER aponta para outro repositório" >&2; exit 1; }
 else
-  git remote add OWNER "$EXPECTED_HEAD_URL"
+  git remote add OWNER "$EXPECTED_HEAD_URL" \
+    || { echo "não foi possível adicionar o remote do fork" >&2; exit 1; }
 fi
 HEAD_REMOTE=OWNER
 ```
@@ -147,10 +149,12 @@ Se já existir worktree limpa para a branch, reutilize-a somente quando seu `HEA
 
 ```bash
 # Branch local já existente:
-git worktree add /tmp/corosolto-REPO-pr-NUMERO BRANCH
+git worktree add /tmp/corosolto-REPO-pr-NUMERO BRANCH \
+  || { echo "não foi possível criar a worktree da branch local" >&2; exit 1; }
 
 # Branch que existe apenas no remoto:
-git worktree add --track -b BRANCH /tmp/corosolto-REPO-pr-NUMERO "$HEAD_REMOTE"/BRANCH
+git worktree add --track -b BRANCH /tmp/corosolto-REPO-pr-NUMERO "$HEAD_REMOTE"/BRANCH \
+  || { echo "não foi possível criar a worktree da branch remota" >&2; exit 1; }
 
 test "$(git -C /tmp/corosolto-REPO-pr-NUMERO rev-parse HEAD)" = "$REVIEWED_HEAD" \
   || { echo "worktree não aponta para o head revisado" >&2; exit 1; }
@@ -160,7 +164,8 @@ Para PR de fork, o `HEAD_REMOTE` já foi selecionado antes da worktree. Depois d
 empurre para o mesmo owner/branch:
 
 ```bash
-git push "$HEAD_REMOTE" BRANCH
+git push "$HEAD_REMOTE" BRANCH \
+  || { echo "não foi possível publicar a branch no fork" >&2; exit 1; }
 ```
 
 Não crie uma branch substituta que desconecte a correção do PR. Se o checkout principal estiver
@@ -172,7 +177,8 @@ Confirme os metadados sem substituir o SHA preservado:
 
 ```bash
 gh pr view NUMERO -R corosolto/REPO \
-  --json headRefOid,headRefName,baseRefName,isDraft,labels,reviews
+  --json headRefOid,headRefName,baseRefName,isDraft,labels,reviews \
+  || { echo "não foi possível confirmar os metadados do PR" >&2; exit 1; }
 test "$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid)" = "$REVIEWED_HEAD" \
   || { echo "head mudou depois da captura" >&2; exit 1; }
 ```
@@ -188,7 +194,8 @@ Solicite review real no head que será avaliado:
 
 ```bash
 gh api -X POST repos/corosolto/REPO/pulls/NUMERO/requested_reviewers \
-  -f 'reviewers[]=estraga-codigo'
+  -f 'reviewers[]=estraga-codigo' \
+  || { echo "não foi possível solicitar a revisão adversarial" >&2; exit 1; }
 ```
 
 Depois de qualquer push ou retarget, leia o novo SHA e repita. Não transfira aprovação, resolução
@@ -209,8 +216,15 @@ Rode o check focado que reproduz o achado e os checks exigidos pela superfície 
 o pre-push. Não alargue o escopo para aproveitar a lane.
 
 ```bash
-git commit -s -m "fix: descreva a correção" -m "Agent: NOME_DO_AGENTE"
-git push "$HEAD_REMOTE" BRANCH_ORIGINAL
+git commit -s -m "fix: descreva a correção" -m "Agent: NOME_DO_AGENTE" \
+  || { echo "não foi possível criar o commit de correção" >&2; exit 1; }
+git push "$HEAD_REMOTE" BRANCH_ORIGINAL \
+  || { echo "não foi possível publicar a correção" >&2; exit 1; }
+PUSHED_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid) \
+  || { echo "não foi possível confirmar o head publicado" >&2; exit 1; }
+test "$PUSHED_HEAD" = "$(git rev-parse HEAD)" \
+  || { echo "o PR não aponta para a correção publicada" >&2; exit 1; }
+REVIEWED_HEAD="$PUSHED_HEAD"
 ```
 
 Depois do push, responda às threads tratadas com causa, correção/rebatimento, SHA e evidência.
@@ -222,7 +236,8 @@ Resolva apenas as que têm correção publicada ou rebatimento técnico; depois 
 Local verde não substitui CI, e CI verde não substitui review:
 
 ```bash
-gh pr checks NUMERO -R corosolto/REPO
+gh pr checks NUMERO -R corosolto/REPO \
+  || { echo "checks ausentes, pendentes ou vermelhos" >&2; exit 1; }
 # Somente para investigar check vermelho; obtenha RUN_ID do link desse check:
 gh run view RUN_ID -R corosolto/REPO --log-failed
 ```
@@ -249,11 +264,26 @@ publicada, atualize a base com merge normal e o mesmo sign-off/trailer, nunca re
 force-push:
 
 ```bash
-git fetch "$BASE_REMOTE" BASE_CORRETA
-git merge --no-ff --no-commit "$BASE_REMOTE"/BASE_CORRETA
-# Resolva conflitos, se houver, e rode os checks focados antes de commitar.
-git commit -s -m "merge: atualiza BASE_CORRETA na lane" -m "Agent: NOME_DO_AGENTE"
-git push "$HEAD_REMOTE" BRANCH_ORIGINAL
+git fetch "$BASE_REMOTE" BASE_CORRETA \
+  || { echo "não foi possível atualizar a nova base" >&2; exit 1; }
+if ! git merge --no-ff --no-commit "$BASE_REMOTE"/BASE_CORRETA; then
+  CONFLICTS=$(git diff --name-only --diff-filter=U) \
+    || { echo "não foi possível inspecionar o merge" >&2; exit 1; }
+  [ -n "$CONFLICTS" ] \
+    || { echo "merge da nova base falhou sem conflitos resolvíveis" >&2; exit 1; }
+fi
+# Resolva conflitos, se houver, e rode os checks focados antes de continuar.
+UNRESOLVED=$(git diff --name-only --diff-filter=U) \
+  || { echo "não foi possível conferir conflitos" >&2; exit 1; }
+[ -z "$UNRESOLVED" ] || { echo "ainda há conflitos não resolvidos" >&2; exit 1; }
+git commit -s -m "merge: atualiza BASE_CORRETA na lane" -m "Agent: NOME_DO_AGENTE" \
+  || { echo "não foi possível criar o merge da base" >&2; exit 1; }
+git push "$HEAD_REMOTE" BRANCH_ORIGINAL \
+  || { echo "não foi possível publicar a lane retargeted" >&2; exit 1; }
+PUSHED_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid) \
+  || { echo "não foi possível confirmar o head retargeted" >&2; exit 1; }
+test "$PUSHED_HEAD" = "$(git rev-parse HEAD)" \
+  || { echo "o PR não aponta para o merge de base publicado" >&2; exit 1; }
 ```
 
 ## 8. Mergeie um a um e revalide o próximo
@@ -286,7 +316,10 @@ if [ "$CURRENT_BASE" = "$CURRENT_DEFAULT" ] && grep -Eiq "$CLOSING_RE" <<<"$CURR
   echo "corpo atual do PR fecha issue automaticamente; merge recusado" >&2
   exit 1
 fi
-gh pr merge NUMERO -R corosolto/REPO --merge --match-head-commit "$REVIEWED_HEAD"
+gh pr checks NUMERO -R corosolto/REPO \
+  || { echo "checks finais ausentes, pendentes ou vermelhos" >&2; exit 1; }
+gh pr merge NUMERO -R corosolto/REPO --merge --match-head-commit "$REVIEWED_HEAD" \
+  || { echo "merge recusado ou não confirmado" >&2; exit 1; }
 ```
 
 Depois de **cada** merge:
@@ -317,7 +350,8 @@ if printf '%s\n' "$ISSUE_LABELS" | grep -Fxq crash-auto; then
   exit 2
 fi
 gh issue close NUMERO_ISSUE -R OWNER_ISSUE/REPO_ISSUE \
-  --comment "Corrigido por OWNER_PR/REPO_PR#PR (SHA DO MERGE). Verificação na base resultante: COMANDO — RESULTADO."
+  --comment "Corrigido por OWNER_PR/REPO_PR#PR (SHA DO MERGE). Verificação na base resultante: COMANDO — RESULTADO." \
+  || { echo "não foi possível fechar a issue verificada" >&2; exit 1; }
 ```
 
 Se a verificação falhar, reabra a lane de correção e deixe a issue aberta. Se depender de decisão
