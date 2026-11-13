@@ -353,7 +353,7 @@ async function medir(mutante = '') {
   /* Sessão G: auto inicia a partida sem anúncio, mas ainda precisa descobrir o passe. */
   if (!mutante) {
     const mock = mockNoAr({ autenticado: true, xp: 2350, claimed: [] });
-    const { page, ctx, erros, gets } = await abrir({ mock, mutante, auto: true });
+    const { page, ctx, erros, gets } = await abrir({ mock, mutante, auto: true, anuncioVisto: true });
     const estado = await page.evaluate(() => ({
       aba: !!document.querySelector('[data-tp-aba="passe"]:not([hidden])'),
       anuncio: !!document.getElementById('passe-anuncio')?.open,
