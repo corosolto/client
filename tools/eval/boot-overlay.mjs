@@ -110,7 +110,7 @@ export function cancelaUi(r,e,base) {
   return e.canceled===true && e.errorText==='net::ERR_ABORTED' && !e.blockedReason && !e.corsErrorStatus
     && ['Other','Image'].includes(e.type) && u.origin===b.origin
     && (u.pathname==='/favicon.ico' || u.pathname==='/img/treta/coin-classic-saci.webp'
-      || (e.type==='Image' && u.pathname.startsWith('/img/') && r.recebidoResposta===0 && r.recebidoChunks===0));
+      || (e.type==='Image' && u.pathname==='/img/wall-10.webp' && r.recebidoResposta===0 && r.recebidoChunks===0));
 }
 export function prefixoRecebido(r) {
   return validaEnc(r.recebidoResposta)+validaEnc(r.recebidoChunks);
@@ -140,6 +140,7 @@ export function selfTest() {
     eq(cancelaUi({...r,url:'https://h/models/ambient/a.glb'},e,'https://h'),false);
     const imagem={url:'https://h/img/wall-10.webp',recebidoResposta:0,recebidoChunks:0},eventoImagem={...e,type:'Image'};
     eq(cancelaUi(imagem,eventoImagem,'https://h'),true);
+    eq(cancelaUi({...imagem,url:'https://h/img/missing.webp'},eventoImagem,'https://h'),false);
     eq(cancelaUi({...imagem,recebidoResposta:1},eventoImagem,'https://h'),false);
     eq(cancelaUi({...imagem,recebidoChunks:1},eventoImagem,'https://h'),false);
     for(const x of [NaN,undefined,-1])lancaInfra(()=>prefixoRecebido({...r,recebidoChunks:x}));
