@@ -13,11 +13,11 @@
    PC5 community.js mantém o único intervalo de 30 s
    PC6 sendMatchEvent leva weaponMode = settings.wpnMode (perfil separa só-pistolas/AWP/facas)
 
-   Mutantes: --mutante=sem-ping-partida | ping-sem-conta | sem-modo-arma | ping-duplicado | ping-antes-guarda */
+   Mutantes: --mutante=sem-ping-partida | ping-sem-conta | sem-modo-arma | ping-duplicado | ping-antes-guarda | ping-partida-comentado */
 import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((a) => a.startsWith('--mutante='))?.slice(10) || '';
-if (mutante && !['sem-ping-partida', 'ping-sem-conta', 'sem-modo-arma', 'ping-duplicado', 'ping-antes-guarda'].includes(mutante)) { console.error(`mutante desconhecido: ${mutante}`); process.exit(2); }
+if (mutante && !['sem-ping-partida', 'ping-sem-conta', 'sem-modo-arma', 'ping-duplicado', 'ping-antes-guarda', 'ping-partida-comentado'].includes(mutante)) { console.error(`mutante desconhecido: ${mutante}`); process.exit(2); }
 const muta = (src, ancora, troca) => {
   if (src.split(ancora).length !== 2) { console.error(`mutante ${mutante} NÃO APLICOU: âncora ${ancora}`); process.exit(2); }
   return src.replace(ancora, troca);
@@ -46,7 +46,9 @@ const extraiBloco = (src, ancora) => {
 const chamadaPresenca = "  void api('/api/social', { action: 'presence', uid: getAnonId() });";
 let main = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
 const community = readFileSync(new URL('../../public/js/community.js', import.meta.url), 'utf8');
-if (mutante === 'sem-ping-partida') main = muta(main, "  pingPresencaConta();   // posse navegador→conta + last_active desde o 1º segundo de jogo\n", '');
+const partidaPresenca = "  pingPresencaConta();   // posse navegador→conta + last_active desde o 1º segundo de jogo\n";
+if (mutante === 'sem-ping-partida') main = muta(main, partidaPresenca, '');
+if (mutante === 'ping-partida-comentado') main = muta(main, partidaPresenca, `  // pingPresencaConta();   // posse navegador→conta + last_active desde o 1º segundo de jogo\n`);
 if (mutante === 'ping-sem-conta') main = muta(main, '  if (!contaNick || testMode) return;\n  void api(', '  if (testMode) return;\n  void api(');
 if (mutante === 'sem-modo-arma') main = muta(main, "weaponMode: settings.wpnMode || 'all',", '');
 if (mutante === 'ping-duplicado') main = muta(main, chamadaPresenca, `${chamadaPresenca}\n${chamadaPresenca}`);
@@ -77,7 +79,7 @@ const chamadasLogin = executaPing();
 cobra('PC1', chamadasLogin.length === 1 && JSON.stringify(chamadasLogin[0]) === JSON.stringify(['/api/social', { action: 'presence', uid: 'anon-teste' }]), "pingPresencaConta manda {action:'presence', uid:getAnonId()} e só isso");
 cobra('PC2', executaPing('').length === 0 && executaPing('conta-logada', true).length === 0, 'sem conta logada ou em testMode não manda');
 const startGame = main.match(/async function _startGame\([^)]*\) \{([\s\S]{0,600})/)?.[1] || '';
-cobra('PC3', /pingPresencaConta\(\);/.test(startGame), '_startGame dispara a presença da conta');
+cobra('PC3', /^\s*pingPresencaConta\(\);/m.test(startGame), '_startGame dispara a presença da conta');
 const onSession = main.match(/onSession:auth=>\{([\s\S]*?)\},onReady:/)?.[1] || '';
 const perfilLogado = extraiBloco(onSession, 'if(auth?.profile)');
 const trocaConta = extraiBloco(main, "document.addEventListener('cs-account-change',(e)=>");
