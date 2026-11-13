@@ -363,8 +363,10 @@ function mutations() {
 if (process.argv.includes('--mutations')) process.exit(mutations());
 const result = spawnSync(process.execPath, [GENERATOR, '--check'], { cwd: ROOT, stdio: 'inherit' });
 const audioManifest = join(ROOT, 'public/audio/manifest.json');
-const audioResult = existsSync(audioManifest)
+const audioPrepare = existsSync(audioManifest)
+  ? { status: 0 }
+  : spawnSync(process.execPath, [AUDIO_GENERATOR], { cwd: ROOT, stdio: 'inherit' });
+const audioResult = audioPrepare.status === 0
   ? spawnSync(process.execPath, [AUDIO_GENERATOR, '--check'], { cwd: ROOT, stdio: 'inherit' })
-  : { status: 0 };
-if (!existsSync(audioManifest)) console.log('AUDIO manifest.json ausente (artefato local não versionado); baseline verificada pelos mutantes AU1–AU4.');
-process.exit(combinedStatus(result, audioResult));
+  : { status: 1 };
+process.exit(combinedStatus(result, audioPrepare, audioResult));

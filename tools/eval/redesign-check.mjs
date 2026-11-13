@@ -18,6 +18,7 @@ const alvoPorMutante = {
   'asset-ausente': 'UIA1',
   'resultado-nao-auditado': 'UIA1',
   'video-dimensao': 'UIA2',
+  'video-container': 'UIA2',
   'splash-sem-wallpaper': 'UIA3',
   'lote-nao-auditado': 'UIA4',
   'loading-sem-canvas': 'UIA5',
@@ -471,10 +472,15 @@ function diff(a, b) {
   return a.filter((x) => !B.has(x));
 }
 function metaWebm(rel) {
-  const probe = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name,width,height', '-of', 'json', join(ROOT, rel)], { encoding: 'utf8' });
+  const probe = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'format=format_name:stream=codec_name,width,height', '-of', 'json', join(ROOT, rel)], { encoding: 'utf8' });
   if (probe.status !== 0) return { webm: false, vp9: false, width: null, height: null };
-  const stream = JSON.parse(probe.stdout).streams?.[0] || {};
-  return { webm: true, vp9: stream.codec_name === 'vp9', width: stream.width, height: stream.height };
+  const parsed = JSON.parse(probe.stdout);
+  if (MUTANTE === 'video-container') {
+    parsed.format = { format_name: 'mov,mp4,m4a,3gp,3g2,mj2' };
+    mutacaoAplicou = true;
+  }
+  const stream = parsed.streams?.[0] || {};
+  return { webm: parsed.format?.format_name?.split(',').includes('webm') || false, vp9: stream.codec_name === 'vp9', width: stream.width, height: stream.height };
 }
 function metaWebpAlpha(buf) {
   const chunk = buf.indexOf(Buffer.from('VP8X'));
