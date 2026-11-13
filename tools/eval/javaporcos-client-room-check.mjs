@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import vm from 'node:vm';
 
 const ROOT=new URL('../../',import.meta.url),SELF=fileURLToPath(import.meta.url);
-const FILES={main:'public/js/main.js',net:'public/js/net.js',nos:'public/js/nos.js',maps:'public/js/maps.js'};
+const FILES={main:'public/js/main.js',rede:'public/js/nos-rede.js',nos:'public/js/nos.js',maps:'public/js/maps.js'};
 const IDS=['HEALTH_FIELDS','SOLO_JAVA','SOLO_ROUNDS','SOLO_CTF','FORM_ROUNDS','FORM_CTF','FORM_STALE','FORM_JAVA','FRIENDS','QUICK_PVP','QUICK_CREATE','QUICK_FULL_PRIVATE','SP_JAVA','LIST_JAVA','PAYLOAD_MODE','NODE_QUICK','NODE_NONE','NODE_FORM','NODE_FRIENDS','NODE_SOLO','NODE_MIXED','NODE_LEGACY','NODE_RANK'];
 const MUTANTS={
  'solo-guard':['SOLO_JAVA'], 'catalog-horde':['FORM_JAVA'], 'quick-horde':['QUICK_PVP','NODE_QUICK'],
@@ -50,8 +50,8 @@ function mutate(source,kind,parse){
   need(nodes.length>0,'nodeguard anchors absent');
   replace=n=>{const member=n.left.type==='MemberExpression'?n.left:n.right,allow=n.operator.includes('!');if(kind==='node-guard')return allow?'true':'false';return (allow?'!':'!!')+cut(m,member.object)+'.horde';};
  }else if(kind==='health-fields'){
-  key='net';const net=out.net,na=tree(net,parse),probe=functionNode(na,'sondarNos');const object=unique(probe,n=>n.type==='ObjectExpression'&&n.properties.some(p=>p.key?.name==='ticketNode'),'health return');
-  need(object.properties.filter(p=>['nodeMode','roomCreation'].includes(p.key?.name)).length===2,'health2 anchors');nodes=[object];replace=n=>'{'+n.properties.filter(p=>!['nodeMode','roomCreation'].includes(p.key?.name)).map(p=>cut(net,p)).join(',')+'}';
+  key='rede';const rede=out.rede,na=tree(rede,parse),probe=functionNode(na,'sondarNos');const object=unique(probe,n=>n.type==='ObjectExpression'&&n.properties.some(p=>p.key?.name==='ticketNode'),'health return');
+  need(object.properties.filter(p=>['nodeMode','roomCreation'].includes(p.key?.name)).length===2,'health2 anchors');nodes=[object];replace=n=>'{'+n.properties.filter(p=>!['nodeMode','roomCreation'].includes(p.key?.name)).map(p=>cut(rede,p)).join(',')+'}';
  }else if(kind==='sp-overfilter'){
   nodes=[variable(a,'MAPAS_MENU').init];replace=n=>'('+cut(m,n)+").filter(id=>MAPS[id].objectiveMode!=='horde')";
  }else if(kind==='list-overfilter'){
@@ -84,8 +84,8 @@ async function evaluate(source,parse){
     return {ok:true,json:async()=>String(url).endsWith('/maps')?{maps:metadata.MAP_IDS_JOGAVEIS}:{rooms:rooms.map(r=>({...r}))}};}};
   vm.createContext(ctx);
   for(const n of ast.main.body){const d=n.type==='ExportNamedDeclaration'?n.declaration:n;if(d?.type==='FunctionDeclaration'&&!(d.id.name in ctx))ctx[d.id.name]=vm.runInContext('('+cut(source.main,d)+')',ctx);if(d?.type==='VariableDeclaration')for(const v of d.declarations)if(v.id.type==='Identifier'&&['ArrowFunctionExpression','FunctionExpression'].includes(v.init?.type)&&!(v.id.name in ctx))ctx[v.id.name]=vm.runInContext('('+cut(source.main,v.init)+')',ctx);}
-  const defs=fn('net','mpUrls')+';const j='+ex('net','j')+';globalThis.createRoom='+ex('net','createRoom')+';globalThis.listRooms='+ex('net','listRooms')+';globalThis.listMaps='+ex('net','listMaps')+';'+fn('net','prazoAcordado')+';'+fn('net','observaRede')+';'+fn('net','sondarNos')+';globalThis.sondarNos=sondarNos;';vm.runInContext(defs,ctx);
-  vm.runInContext('const PASSO_MS='+ex('net','PASSO_MS')+';const FAIXA_PING_MS='+ex('nos','FAIXA_PING_MS')+';const TETO_COMPANHIA_MS='+ex('nos','TETO_COMPANHIA_MS')+';'+fn('nos','ordenarNos')+';globalThis.ordenarNos=ordenarNos;'+fn('nos','melhorNoParaJogar')+';globalThis.rankReal=melhorNoParaJogar;',ctx);
+  const defs=fn('rede','mpUrls')+';const j='+ex('rede','j')+';globalThis.createRoom='+ex('rede','createRoom')+';globalThis.listRooms='+ex('rede','listRooms')+';globalThis.listMaps='+ex('rede','listMaps')+';'+fn('rede','prazoAcordado')+';'+fn('rede','observaRede')+';'+fn('rede','sondarNos')+';globalThis.sondarNos=sondarNos;';vm.runInContext(defs,ctx);
+  vm.runInContext('const PASSO_MS='+ex('rede','PASSO_MS')+';const FAIXA_PING_MS='+ex('nos','FAIXA_PING_MS')+';const TETO_COMPANHIA_MS='+ex('nos','TETO_COMPANHIA_MS')+';'+fn('nos','ordenarNos')+';globalThis.ordenarNos=ordenarNos;'+fn('nos','melhorNoParaJogar')+';globalThis.rankReal=melhorNoParaJogar;',ctx);
   ctx.melhorNoParaJogar=(ns,...args)=>{events.rankInputs.push(ns.map(n=>n.id));return ctx.rankReal(ns,...args);};
   vm.runInContext('const ALIAS_MAPA='+ex('maps','ALIAS_MAPA')+';const DEFAULT_MAP='+ex('maps','DEFAULT_MAP')+';'+fn('maps','resolveMapId')+';globalThis.ehMapaJavaporcos='+ex('maps','ehMapaJavaporcos')+';',ctx);
   ctx.mapasDoMenu=vm.runInContext(fn('maps','mapasDoMenu')+';mapasDoMenu;',ctx);ctx.MAPAS_MENU=vm.runInContext(ex('main','MAPAS_MENU'),ctx);

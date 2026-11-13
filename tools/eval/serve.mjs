@@ -6,9 +6,13 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { dev } from 'astro';
 import { moduleCacheManifest } from '../../scripts/module-cache.mjs';
+import { serveStudioPack } from '../../scripts/studio-pack-serving.mjs';
 import { rotaDoCaminho } from '../../public/js/rotas.js';
+import { criarPasseMock } from './passe-mock.mjs';
 
 const PORT = parseInt(process.argv[2] || '8123', 10);
+// PASSE_MOCK=conta|visitante: /api/passe sai do mock (passe-mock.mjs) até o backend do passe publicar.
+const passeMock = process.env.PASSE_MOCK ? criarPasseMock({ autenticado: process.env.PASSE_MOCK !== 'visitante' }) : null;
 const ROOT = 'public';
 const ASTRO = 'src/pages/index.astro';
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.glb': 'model/gltf-binary', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.wasm': 'application/wasm', '.txt': 'text/plain' };
@@ -31,18 +35,24 @@ const startAstro = async manifest => {
     server: { strictPort: true, ws: { host: '127.0.0.1', clientPort: port } },
   } });
 };
-const initial = moduleCacheManifest();
-let revision = initial.revision;
+const completeModuleManifest = () => {
+  const main = moduleCacheManifest();
+  const vendor = moduleCacheManifest('public/vendor');
+  return { ...main, vendorModules: vendor.modules, vendorRevision: vendor.revision };
+};
+const initial = completeModuleManifest();
+let revision = `${initial.revision}:${initial.vendorRevision}`;
 let astro = await startAstro(initial);
 let refresh = null;
 async function currentRenderer() {
   if (refresh) await refresh;
-  const manifest = moduleCacheManifest();
-  if (manifest.revision !== revision) {
+  const manifest = completeModuleManifest();
+  const nextRevision = `${manifest.revision}:${manifest.vendorRevision}`;
+  if (nextRevision !== revision) {
     refresh = (async () => {
       await astro.stop();
       astro = await startAstro(manifest);
-      revision = manifest.revision;
+      revision = nextRevision;
     })();
     try { await refresh; } finally { refresh = null; }
   }
@@ -50,7 +60,20 @@ async function currentRenderer() {
 }
 const server = http.createServer(async (req, res) => {
   try {
+    /* Pacotes do Studio (STUDIO_PACK_ROOT, fora de public/): o handler recebe o caminho
+       CRU (sem normalizar `..` nem decodificar) e decide sozinho: canônico, contido,
+       no-store. Sem raiz → 404. Mesmo handler do dev server do Astro. */
+    const rawPath = String(req.url).split(/[?#]/, 1)[0];
+    if (rawPath.startsWith('/packs/')) return await serveStudioPack(req, res, { rawPath: rawPath.slice('/packs'.length) });
     const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+    if (passeMock && p === '/api/passe') {
+      let texto = '';
+      for await (const parte of req) texto += parte;
+      const { status, body } = passeMock.handle(req.method, texto);
+      res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+      res.end(JSON.stringify(body));
+      return;
+    }
     // Rotas fixas do hub (/loja, /jogar/multiplayer...) saem do mesmo renderer, como no build (ADR 0008).
     if (p === '/' || rotaDoCaminho(p) || /^\/(?:api\/|private-assets\/|@|src\/|node_modules\/|\.astro\/)/.test(p)) {
       const renderer = await currentRenderer();

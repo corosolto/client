@@ -50,13 +50,11 @@ import * as THREE from 'three';
    de `characters.js` e o `_teamColor` do próprio `game.js`. */
 import { BASE_POR_FACCAO } from './paleta.js';
 import { urlDoBrasao } from './brasoes_versao.js';
+import { FACTIONS, faction } from './factions.js';
 
 const COR_TIME = BASE_POR_FACCAO;
 
-/* Só estas seis têm brasão. Facção fora da lista devolve `null` de propósito: é o sinal
-   combinado com o chamador para ele manter o pano que já desenhava. */
-// E: arquivo renomeado p.png->e.png no rename Time E (06/08)
-const BRASAO = { E: 'e', B: 'b', U: 'u', C: 'c', F: 'f', M: 'm' };
+const BRASAO = Object.fromEntries(FACTIONS.map((f) => [f.id, f.crest]));
 
 const W = 512, H = 320;          // 1,6:1 — a mesma proporção do pano que o jogo já usava
 const EMB = 0.74;                // altura do brasão como fração da altura do pano
@@ -128,7 +126,7 @@ function pintaBrasao(x, img) {
 
 /* CONTRATO PÚBLICO — ver cabeçalho. Não mude a assinatura. */
 export function bandeiraTextura(teamId) {
-  const fac = String(teamId || '').toUpperCase();
+  const fac = faction(teamId)?.id;
   const cor = COR_TIME[fac];
   if (!cor || !BRASAO[fac]) return null;
   if (_cache.has(fac)) return _cache.get(fac);

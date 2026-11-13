@@ -136,6 +136,12 @@ test('validador real cobre os 17 contratos visuais uma única vez e na ordem dos
   assert.match(duplicado.stdout, /eval:knife-skin-markings: esperado uma execução no CI, encontradas 2/);
 });
 
+test('consumidor sem npm ci nem action composta falha fechado', () => {
+  const semSetup = executar(PORTAO_INTEIRO, ['--mutante=sem-setup-compartilhado']);
+  assert.equal(semSetup.status, 1, semSetup.stderr || semSetup.stdout);
+  assert.match(semSetup.stdout, /PI4 economia-ak-hud: consumidor precisa usar exatamente \.\/\.github\/actions\/setup-ci-environment; encontrados 0/);
+});
+
 test('seletor real divide collider em shards balanceados, disjuntos, ordenados e completos', () => {
   const completo = selecaoFlavio('collider');
   const shards = COLLIDER_SHARDS.map((indice) => selecaoFlavio(`collider:${indice}`));

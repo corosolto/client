@@ -45,32 +45,48 @@ const cobra = (ok, msg, extra = '') => {
 // O jogo lê `location` no caminho do welcome (kill-switch ?mpversao=0): em node não existe.
 globalThis.location = { search: '', hostname: 'localhost' };
 
+const REDE_SRC = path.join(ROOT, 'public/js/nos-rede.js');
 const NET_SRC = path.join(ROOT, 'public/js/net.js');
-let fonte = fs.readFileSync(NET_SRC, 'utf8');
+let redeFonte = fs.readFileSync(REDE_SRC, 'utf8');
+let netFonte = fs.readFileSync(NET_SRC, 'utf8');
 if (MUT === 'aceita-tudo') {
-  const antes = fonte;
-  fonte = fonte.replace(
+  const antes = redeFonte;
+  redeFonte = redeFonte.replace(
     /export const versaoCompativel = \([^)]*\) => \{[\s\S]*?\n\};/,
     'export const versaoCompativel = () => true;',
   );
-  if (fonte === antes) { console.error('mutante não encontrou versaoCompativel em net.js'); process.exit(1); }
+  if (redeFonte === antes) { console.error('mutante não encontrou versaoCompativel em nos-rede.js'); process.exit(1); }
 }
 if (MUT === 'bloqueia') {
-  const antes = fonte;
-  fonte = fonte.replace(".get('mpversao') === '1'", ".get('mpversao') !== '0'");
-  if (fonte === antes) { console.error('mutante não encontrou o modo estrito em net.js'); process.exit(1); }
+  const antes = netFonte;
+  netFonte = netFonte.replace(".get('mpversao') === '1'", ".get('mpversao') !== '0'");
+  if (netFonte === antes) { console.error('mutante não encontrou o modo estrito em net.js'); process.exit(1); }
 }
 if (MUT === 'ignora-hash') {
-  const antes = fonte;
-  fonte = fonte.replace('if (simNo && nossoSim) return simNo === nossoSim;', '');
-  if (fonte === antes) { console.error('mutante não encontrou a comparação de simHash em net.js'); process.exit(1); }
+  const antes = redeFonte;
+  redeFonte = redeFonte.replace('if (simNo && nossoSim) return simNo === nossoSim;', '');
+  if (redeFonte === antes) { console.error('mutante não encontrou a comparação de simHash em nos-rede.js'); process.exit(1); }
 }
-/* O módulo mutado vive ao LADO do original para que os imports relativos (./nos.js,
-   ./netcodec.js, ./version.js) resolvam na árvore de verdade. */
-const alvo = MUT ? path.join(ROOT, `public/js/.net-mutante-${process.pid}.js`) : NET_SRC;
-if (MUT) fs.writeFileSync(alvo, fonte);
-let mod;
-try { mod = await import(pathToFileURL(alvo).href); } finally { if (MUT) fs.unlinkSync(alvo); }
+/* Os módulos mutados vivem AO LADO dos originais para que os imports relativos resolvam na
+   árvore de verdade. O NetClient mutado aponta para a paridade mutada: testar só a função pura
+   deixaria o caminho real do welcome medindo a regra original. */
+const mutaParidade = MUT === 'aceita-tudo' || MUT === 'ignora-hash';
+const redeAlvo = mutaParidade ? path.join(ROOT, `public/js/.nos-rede-mutante-${process.pid}.js`) : REDE_SRC;
+const netAlvo = MUT ? path.join(ROOT, `public/js/.net-mutante-${process.pid}.js`) : NET_SRC;
+if (mutaParidade) {
+  const antes = netFonte;
+  netFonte = netFonte.replace("from './nos-rede.js';", `from './${path.basename(redeAlvo)}';`);
+  if (netFonte === antes) { console.error('mutante não encontrou o import de nos-rede.js em net.js'); process.exit(1); }
+}
+if (mutaParidade) fs.writeFileSync(redeAlvo, redeFonte);
+if (MUT) fs.writeFileSync(netAlvo, netFonte);
+let mod, netMod;
+try {
+  [mod, netMod] = await Promise.all([import(pathToFileURL(redeAlvo).href), import(pathToFileURL(netAlvo).href)]);
+} finally {
+  if (mutaParidade) fs.unlinkSync(redeAlvo);
+  if (MUT) fs.unlinkSync(netAlvo);
+}
 
 const { VERSION } = await import(pathToFileURL(path.join(ROOT, 'public/js/version.js')).href);
 const compativel = mod.versaoCompativel;
@@ -105,7 +121,7 @@ const transporteFalso = (versao, simHash) => {
   return tp;
 };
 
-const NetClient = mod.NetClient || mod.default;
+const NetClient = netMod.NetClient || netMod.default;
 async function tentar(versao, simHash, busca = '') {
   globalThis.location = { search: busca };
   const cli = new NetClient('ws://x/ws', { nome: 'r', room: 'r' });

@@ -1,0 +1,22 @@
+/* Rotas fixas da régua de paridade da borda. A allowlist referencia estes valores. */
+export const ROTAS = [
+  { rota: '/' },
+  { rota: '/en' },
+  { rota: '/api/geo-lang' },
+  { rota: '/api/og/pagina.png?rota=/en&titulo=x', metodo: 'GET' },
+  { rota: '/u/00000000-0000-4000-8000-00000000c0de' },
+  { rota: '/mapa' },
+  { rota: '/sala/ABC' },
+  { rota: '/sitemap.xml' },
+  { rota: '/api/health' },
+  { rota: '/discord' },
+  { rota: '/jogar' },
+  { rota: '/?janela=configuracoes' },
+  { rota: '/?secao=comunidade&social=feed' },
+  { rota: '/docs/en/status' },
+  { rota: '/audio/manifest.json' },
+  { rota: '/img/reticle.png' },
+  { rota: '/models/nao-existe.glb' },
+  { rota: '/api/badge/00000000-0000-4000-8000-00000000c0de.png', metodo: 'GET' },
+  { rota: '/api/profile-card/00000000-0000-4000-8000-00000000c0de.png', metodo: 'GET' },
+];

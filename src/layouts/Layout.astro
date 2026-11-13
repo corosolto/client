@@ -1,5 +1,5 @@
 ---
-import { SITE, BRAND, BRAND_FULL, BRAND_ALT, DESC_SHORT, ORG_ID, WEBSITE_ID, abs, routeOgPath, RANKING_ON, DISCORD_URL, TELEGRAM_URL, GITHUB_URL } from '../lib/site';
+import { SHARE_ORIGIN, SITE, BRAND, BRAND_FULL, BRAND_ALT, DESC_SHORT, ORG_ID, WEBSITE_ID, abs, routeOgPath, RANKING_ON, DISCORD_URL, TELEGRAM_URL, GITHUB_URL } from '../lib/site';
 import { PT_EN_PAIRS } from '../lib/i18n-pairs';
 import { X_PIXEL_ID } from '../lib/x-pixel';
 import pkg from '../../package.json';
@@ -147,6 +147,9 @@ const currentLabel = h1 ?? title.split(' | ')[0];
 <head>
 <link rel="preload" as="script" href={`/js/privacy-runtime.js?v=${V}-${JS_REV}`} />
 <script src={`/js/privacy-runtime.js?v=${V}-${JS_REV}`} is:inline></script>
+<script is:inline define:vars={{ SHARE_ORIGIN }}>
+window.__SHARE_ORIGIN = SHARE_ORIGIN;
+</script>
 <script type="module" src={`/js/site-visit.js?v=${V}-${JS_REV}`} is:inline></script>
 {import.meta.env.DEV && import.meta.env.SOCIAL_LOCAL_GAME_URL && <meta name="cs-local-game" content={import.meta.env.SOCIAL_LOCAL_GAME_URL} />}
 <meta charset="UTF-8">

@@ -35,17 +35,19 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
       ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+      BUGFIX_ASSIGNEE: ${{ vars.BUGFIX_ASSIGNEE || 'nunreasonable' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
       - name: Ensure labels exist
-        run: python3 scripts/ci/ensure_labels.py crash-auto bot-fixable covered-by-pr
+        run: python3 scripts/ci/ensure_labels.py crash-auto bot-fixable covered-by-pr bugfix hotfix
       - name: Classify issue
         id: triage
         run: |
-          gh issue view "$ISSUE_NUMBER" --json number,title,url,labels,body,author,createdAt,state > /tmp/issue.json
+          gh issue view "$ISSUE_NUMBER" --json number,title,url,labels,body,author,assignees,createdAt,state > /tmp/issue.json
+          python3 scripts/ci/issue_triage.py --selftest
           python3 scripts/ci/issue_triage.py < /tmp/issue.json > /tmp/triage.json
           cat /tmp/triage.json
       - name: Apply labels
@@ -56,6 +58,12 @@ jobs:
           labels = data.get('labels_add', [])
           if labels:
               subprocess.run(['gh', 'issue', 'edit', os.environ['ISSUE_NUMBER'], '--add-label', ','.join(labels)], check=True)
+          if data.get('add_assignee'):
+              subprocess.run([
+                  'gh', 'api', '-X', 'POST',
+                  f"repos/{os.environ['GITHUB_REPOSITORY']}/issues/{os.environ['ISSUE_NUMBER']}/assignees",
+                  '--input', '-',
+              ], input=json.dumps({'assignees': [data['add_assignee']]}), text=True, check=True)
           PY
       - name: Review issue and comment
         run: |
@@ -120,12 +128,12 @@ jobs:
               raise SystemExit(0)
           body = (
               "> [!TIP]\n"
-              "> **Possível duplicata detectada automaticamente.**\n"
-              f"> \n> - candidata: **#{dup['number']}** — {dup['title']}\n"
-              f"> - similaridade: **{dup['score']}**\n"
-              f"> - comparar: {dup['url']}\n"
+              "> **Possible duplicate detected automatically.**\n"
+              f"> \n> - candidate: **#{dup['number']}** — {dup['title']}\n"
+              f"> - similarity: **{dup['score']}**\n"
+              f"> - compare: {dup['url']}\n"
               "\n"
-              "Sugestão de bot — o fechamento continua sendo humano."
+              "Bot suggestion only — closing the issue remains a human decision."
           )
           subprocess.run([
               'gh', 'issue', 'comment', os.environ['ISSUE_NUMBER'],
@@ -143,32 +151,38 @@ jobs:
     timeout-minutes: 10
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      BUGFIX_ASSIGNEE: ${{ vars.BUGFIX_ASSIGNEE || 'nunreasonable' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
       - name: Ensure labels exist
-        run: python3 scripts/ci/ensure_labels.py bot-fixable covered-by-pr crash-auto stale-backlog needs-repro
+        run: python3 scripts/ci/ensure_labels.py bot-fixable covered-by-pr crash-auto stale-backlog needs-repro bugfix hotfix
       - name: Fetch open issues and PRs
         run: |
-          gh issue list --state open --limit 200 --json number,title,body,url,labels > /tmp/issues.json
+          gh issue list --state open --limit 200 --json number,title,body,url,labels,assignees > /tmp/issues.json
           gh pr list --state open --limit 100 --json number,title,url,body > /tmp/prs.json
           python3 - <<'PY'
           import json
+          import os
           from pathlib import Path
           payload = {
               "issues": json.loads(Path('/tmp/issues.json').read_text()),
               "prs": json.loads(Path('/tmp/prs.json').read_text()),
+              "bugfix_assignee": os.environ['BUGFIX_ASSIGNEE'],
           }
           Path('/tmp/issue-sweep-input.json').write_text(json.dumps(payload))
           PY
       - name: Compute sweep actions
-        run: python3 scripts/ci/issue_sweep.py < /tmp/issue-sweep-input.json > /tmp/issue-sweep-actions.json
+        run: |
+          python3 scripts/ci/issue_sweep.py --selftest
+          python3 scripts/ci/issue_sweep.py < /tmp/issue-sweep-input.json > /tmp/issue-sweep-actions.json
       - name: Apply labels and comments
         run: |
           python3 - <<'PY'
           import json
+          import os
           import subprocess
           from pathlib import Path
 
@@ -178,6 +192,12 @@ jobs:
               labels = action.get('labels_add', [])
               if labels:
                   subprocess.run(['gh', 'issue', 'edit', number, '--add-label', ','.join(labels)], check=True)
+              if action.get('add_assignee'):
+                  subprocess.run([
+                      'gh', 'api', '-X', 'POST',
+                      f"repos/{os.environ['GITHUB_REPOSITORY']}/issues/{number}/assignees",
+                      '--input', '-',
+                  ], input=json.dumps({'assignees': [action['add_assignee']]}), text=True, check=True)
               if action.get('should_comment'):
                   subprocess.run(['gh', 'issue', 'comment', number, '--body', action['comment']], check=True)
           PY
@@ -255,7 +275,7 @@ jobs:
           # assim. Quem decide o pulo agora é o `if:` de cada step a jusante.
           abertas=$(gh pr list --state open --search "#${ISSUE_NUMBER}" --json number --jq 'length')
           if [ "${abertas:-0}" -gt 0 ]; then
-            gh issue comment "$ISSUE_NUMBER" --body "Já existe PR aberta referenciando esta issue. Bootstrap cancelado."
+            gh issue comment "$ISSUE_NUMBER" --body "An open PR already references this issue. Bootstrap skipped."
             echo "pular=true" >> "$GITHUB_OUTPUT"
           else
             echo "pular=false" >> "$GITHUB_OUTPUT"
@@ -282,13 +302,11 @@ jobs:
           python3 - <<'PY'
           import json, os, subprocess
           issue = json.load(open('/tmp/issue.json'))
-          title = f"bot: bootstrap fix for #{issue['number']} {issue['title']}"
+          title = f"bot: bootstrap fix for issue #{issue['number']}"
           body = f"""## Summary
           - bootstrap PR opened by csbrasil-bot from issue #{issue['number']}
-          - issue: {issue['url']}
-
-          ## Original issue (verbatim)
-          {issue.get('body') or '(no description provided)'}
+          - source issue: {issue['url']}
+          - the original report remains available in the linked issue
 
           ## Notes
           - initial draft PR; implementation still needs to be added
@@ -304,6 +322,6 @@ jobs:
           ], check=True)
           subprocess.run([
               'gh', 'issue', 'comment', str(issue['number']),
-              '--body', f"Draft PR bootstrap aberta a partir desta issue na branch `{os.environ['BRANCH']}`."
+              '--body', f"Draft bootstrap PR opened from this issue on branch `{os.environ['BRANCH']}`."
           ], check=True)
           PY

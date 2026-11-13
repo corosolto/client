@@ -39,9 +39,9 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 81.802 linhas em 204 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **10.090** linhas | `wc -l public/js/game.js` |
-| `main.js` | 5.630 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 82.325 linhas em 209 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **10.190** linhas | `wc -l public/js/game.js` |
+| `main.js` | 5.654 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 74 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 274 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
@@ -49,10 +49,10 @@ esta página envelhecia no primeiro commit — ver
 | Personagens jogáveis | 63, em 7 grupos | array `CHARACTERS` de `characters.js` |
 | Mapas no menu | 14 | `MAPS` menos `MAPAS_PARADOS` |
 | Arnêses visuais em HTML | 26 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 1169 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
-| Scripts de pipeline | 127 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Scripts do arnês | 1029 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts de pipeline | 91 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 27 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.1.0-alpha.139` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.1.0-alpha.145` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -280,7 +280,7 @@ E os dois quality gates, com a lista exata do que cada um roda — direto do `pa
 npm run check:fast   # node tools/eval/runner.mjs --suite=fast
 ```
 
-`package.json` tem **777 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
+`package.json` tem **806 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 
