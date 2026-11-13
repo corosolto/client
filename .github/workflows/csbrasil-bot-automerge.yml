@@ -100,64 +100,14 @@ jobs:
         # caminho, e portão quebrado que passa calado aqui mescla PR vermelho.
         run: |
           python3 scripts/ci/check_automerge.py --selftest
-          python3 - <<'PY'
-          import json, os
-          path = '/tmp/automerge.json'
-          pr = json.load(open(path))
-          pr['expected_repository'] = os.environ['GITHUB_REPOSITORY']
-          open(path, 'w').write(json.dumps(pr))
-          PY
           python3 scripts/ci/check_automerge.py < /tmp/automerge.json > /tmp/automerge-result.json
       # O dono autorizou merge automático em 09/11/2026: PR segura entra na base
       # classificada; o lote oficial staging→main entra por merge commit, sem apagar staging.
       - name: Merge when eligible
         if: env.pular != '1'
         run: |
-          gh pr view "$PR_NUMBER" --json title,body,assignees,isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,latestReviews,reviewRequests,files,changedFiles,baseRefName,baseRefOid,headRefName,headRefOid,headRepository > /tmp/automerge-current-raw.json
-          python3 - <<'PY'
-          import json, os
-          payload = json.load(open('/tmp/automerge-attestation-input.json'))
-          payload['pr'] = json.load(open('/tmp/automerge-current-raw.json'))
-          payload['expected_repository'] = os.environ['GITHUB_REPOSITORY']
-          open('/tmp/automerge-revalidate.json', 'w').write(json.dumps(payload))
-          PY
-          # Applying the attestation also revalidates the current head/base, live refs,
-          # ancestry, and complete diff before producing the current eligibility input.
-          python3 scripts/ci/pr_attestation.py --apply < /tmp/automerge-revalidate.json > /tmp/automerge-current.json
-          python3 - <<'PY'
-          import json, os, re, subprocess, sys
-          from scripts.ci.check_automerge import revalidate_decision
-          evaluated = json.load(open('/tmp/automerge.json'))
-          data = json.load(open('/tmp/automerge-result.json'))
-          status = json.load(open('/tmp/automerge-current.json'))
-          pr = os.environ['PR_NUMBER']
-          head_oid = status.get('headRefOid') or ''
-          if not re.fullmatch(r'[0-9a-f]{40}', head_oid):
-              raise RuntimeError('automerge requires the evaluated canonical head OID')
-          current_data = revalidate_decision(evaluated, data, status)
-          if not current_data.get('eligible'):
-              print('pronto-pra-merge: not eligible')
-              subprocess.run(['gh', 'pr', 'edit', pr, '--remove-label', 'pronto-pra-merge'], check=False)
-              sys.exit(0)
-          command = ['gh', 'pr', 'merge', pr, '--merge', '--match-head-commit', head_oid]
-          if current_data.get('merge_kind') != 'release-batch':
-              command.append('--delete-branch')
-          # Nenhuma mutação de label/comentário pode abrir uma janela entre a
-          # revalidação da elegibilidade e o merge preso ao head validado.
-          subprocess.run(command, check=True)
-          try:
-              ja = subprocess.run(['gh', 'pr', 'view', pr, '--json', 'labels', '--jq',
-                                   '[.labels[].name] | index("pronto-pra-merge") != null'],
-                                  capture_output=True, text=True).stdout.strip() == 'true'
-              subprocess.run(['gh', 'pr', 'edit', pr, '--add-label', 'pronto-pra-merge'], check=True)
-              if not ja:
-                  kind = 'the daily release batch' if current_data.get('merge_kind') == 'release-batch' else 'a safe change'
-                  subprocess.run(['gh', 'pr', 'comment', pr, '--body',
-                                  f'🤖 **csbrasil-bot**: required checks passed and the diff met the '
-                                  f'`check_automerge` criteria. Merged automatically as {kind}.'], check=True)
-          except subprocess.CalledProcessError as error:
-              print(f'warning: post-merge bookkeeping failed ({error}); merge already completed', file=sys.stderr)
-          PY
+          python3 scripts/ci/automerge_merge.py --selftest
+          python3 scripts/ci/automerge_merge.py
       - name: Record evaluated head and rollup for sweep debounce
         if: env.pular != '1'
         # Depois do merge não há rollback: falha de comentário do sweep só pode

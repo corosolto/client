@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import sys
 
 GOOD = {"SUCCESS", "SKIPPED", "NEUTRAL"}
@@ -272,7 +273,9 @@ def selftest() -> int:
 def main() -> int:
     if "--selftest" in sys.argv:
         return selftest()
-    print(json.dumps(decide(json.load(sys.stdin))))
+    payload = json.load(sys.stdin)
+    payload['expected_repository'] = os.environ.get('GITHUB_REPOSITORY', '')
+    print(json.dumps(decide(payload)))
     return 0
 
 
