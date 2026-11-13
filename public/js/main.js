@@ -12,8 +12,14 @@ import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
 import { clientUuid, getAnonId } from './client-id.js';
 import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
+import {carregarPasse,trocarContaPasse,personagemTravado as travadoNoPasse,nivelDoPersonagem,PASSE_EVENTO} from './passe.js';
+import { passeDebugAtivo } from './passe-debug.js';
+/* QA local (passe-debug.js): só loopback + ?debug=1&passeDev=1 joga com o elenco do passe sem resgate. */
+const passeDev = passeDebugAtivo();
+const personagemTravado = (def) => !passeDev && travadoNoPasse(def);
 import {tretaPack} from './data/pack-definitions.js';
 import {retratoFontes} from './data/retratos.js';
+import {characterRelease} from './data/content-releases.js';
 import { initTextures, ajustarAnisotropia } from './textures.js';
 import { CHARACTERS, buildCharacter, charWeapon, ladosDe, podeNoLado } from './characters.js';
 import { EMOTES_ENABLED } from './emote-features.js';
@@ -25,6 +31,8 @@ import { preloadMapAmbientLife } from './ambientlife.js';   // fauna do mapa (MA
 import { apiUrl, fetchComRetry, versaoComOrigem } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
 import { MAPS, DEFAULT_MAP, ehMapaJavaporcos, resolveMapId, mapaDaSessao, mapasDoMenu, MAPAS_PARADOS, comMapaCarregado, defineSeedHavan } from './maps.js';
 import { PALETA } from './paleta.js';
+import { FACTIONS, faction as factionDefinition } from './factions.js';
+import { urlDoBrasao } from './brasoes_versao.js';
 import { preloadWeapons, WEAPON_IDS } from './weapons.js';
 import {preloadWeaponSkinCandidate} from './weapon-skins.js';
 import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
@@ -40,7 +48,8 @@ import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
 /* E/B são os dois times de gameplay; as demais chaves são grupos do elenco. */
-const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV', P: 'POLÍTICOS' };
+/* Rótulo de grupo no jogo é caixa alta, como os outros; o registro guarda o nome editorial ("Fora do Ar"). */
+const FACTION_NAME = { ...Object.fromEntries(FACTIONS.map((f) => [f.id, f.name.toLocaleUpperCase('pt-BR')])), P: 'POLÍTICOS' };
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
@@ -357,6 +366,7 @@ let _splashReady = false;
 const ENTRADA_MS = 350;
 let _entradaEm = 0;
 let _splashPorFailsafe = false;
+let _menuBackdropBypass = null;
 function _splashSetReady() {
   // Marco do funil: `assets_ready` é o caminho dos assets (menuBackdropReady), nunca o
   // failsafe. splash_ready SEM assets_ready = o botão saiu por tempo, com a carga em pé.
@@ -483,6 +493,7 @@ async function loadMenuBackdrop() {
 }
 // Rotas compartilhadas, inclusive na query antiga, carregam o cenário em fundo.
 // No perfil móvel, o wallpaper 2D evita baixar e compilar uma arena coberta pelo menu.
+// Em máquinas lentas, o gesto após o failsafe libera o módulo sem cancelar o cenário.
 const directRoute = document.documentElement.hasAttribute('data-direct-route')
   || Object.keys(estadoDaUrl(location.href) || {}).length > 0;
 const menuBackdropReady = MOBILE_AUTO ? Promise.resolve() : loadMenuBackdrop();
@@ -491,7 +502,12 @@ const menuBackdropSettled = menuBackdropReady.catch((error) => {
 });
 if (MOBILE_AUTO) _splashSetReady();
 else void menuBackdropSettled.then(_splashSetReady);
-const moduleSequencingReady = MOBILE_AUTO || directRoute ? Promise.resolve() : menuBackdropSettled;
+/* RÉGUA:boot-module-sequencing início */
+const moduleSequencingReady = MOBILE_AUTO || directRoute ? Promise.resolve() : Promise.race([
+  menuBackdropSettled,
+  new Promise((resolve) => { _menuBackdropBypass = resolve; }),
+]);
+/* RÉGUA:boot-module-sequencing fim */
 
 /* ---------------- screens ---------------- */
 const screens = ['main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
@@ -785,11 +801,13 @@ const _armMusic = () => {
 // SPLASH DE BOOT ("pressione para entrar"): o gesto que sai da splash é GARANTIDO, então
 // destrava o áudio COM SOM na hora — sem fallback mudo e sem fade atrapalhado. Registrado
 // em capture ANTES do _armMusic, que vira no-op (musicArmed já true).
+/* RÉGUA:boot-splash-dismiss início */
 function dismissSplash(e) {
   if (document.querySelector('#javaporcos-intro:modal')) return;
   const sp = document.getElementById('boot-splash');
   if (!sp || !_splashReady || sp.classList.contains('gone')) return;
   if (e?.target?.closest?.('[data-splash-fica]')) return;
+  if (sp.dataset.csEntradaPendente) return;   // o gesto será consumido depois de finishBoot
   e?.preventDefault?.(); e?.stopPropagation?.();   // bloqueia ANTES da anti-reentrada: 2º gesto preso na splash não vaza atalho para o lobby
   if (sp.dataset.csEntrada) return;   // splash presa aguardando anúncio/import: 2º gesto não reprocessa
   sp.dataset.csEntrada = '1';
@@ -828,6 +846,7 @@ function dismissSplash(e) {
   if (musicFade) { clearInterval(musicFade); musicFade = null; }
   startMenuMusic();
 }
+/* RÉGUA:boot-splash-dismiss fim */
 /* Foco no 1º item visível do menu CS: o handler de setas vive no #cs-menu e só dispara com
    o foco lá dentro. Guardas: não rouba foco de campo de texto nem do painel de setup. */
 function focusMenu() {
@@ -841,8 +860,31 @@ function focusMenu() {
   const first = [...document.querySelectorAll('.cs-item')].find((b) => b.offsetParent !== null);
   if (first) first.focus();
 }
+/* RÉGUA:boot-main-ready início */
+if (!MOBILE_AUTO && !directRoute) {
+  const aceitaEntradaDuranteBackdrop = (e) => {
+    const sp = document.getElementById('boot-splash');
+    if (!sp || !_splashReady || sp.dataset.csEntradaPendente) return;
+    if (e?.target?.closest?.('[data-splash-fica]')) return;
+    e?.preventDefault?.(); e?.stopPropagation?.();
+    sp.dataset.csEntradaPendente = '1';
+    _armMusic();
+    _menuBackdropBypass?.();
+  };
+  const encerraFallbackDoBackdrop = () => {
+    _menuBackdropBypass = null;
+    window.removeEventListener('pointerdown', aceitaEntradaDuranteBackdrop, true);
+    window.removeEventListener('keydown', aceitaEntradaDuranteBackdrop, true);
+    window.__CS_BOOT_FALLBACK_ARMED__ = false;
+  };
+  window.__CS_BOOT_FALLBACK_ARMED__ = true;
+  window.addEventListener('pointerdown', aceitaEntradaDuranteBackdrop, true);
+  window.addEventListener('keydown', aceitaEntradaDuranteBackdrop, true);
+  void moduleSequencingReady.then(encerraFallbackDoBackdrop, encerraFallbackDoBackdrop);
+}
 window.addEventListener('pointerdown', dismissSplash, true);
 window.addEventListener('keydown', dismissSplash, true);
+/* RÉGUA:boot-main-ready fim */
 window.addEventListener('pointerdown', _armMusic);
 window.addEventListener('keydown', _armMusic);
 const menuMusicToggle = $('hub-music-toggle');
@@ -1420,8 +1462,8 @@ const storedCharacterId = localStorage.getItem('csbr-home-character');
 const rememberedChar = routeCharacterId || storedCharacterId;
 const rememberedSide = localStorage.getItem('csbr-home-side') === 'B' ? 'B' : 'E';
 const randomInitialCharacter = () => {
-  const eligible = CHARACTERS.filter((character) => podeNoLado(character, rememberedSide));
-  if (!eligible.length) return CHARACTERS[0];
+  const eligible = CHARACTERS.filter((character) => podeNoLado(character, rememberedSide) && !personagemTravado(character));
+  if (!eligible.length) return CHARACTERS.find((character) => !personagemTravado(character)) || CHARACTERS[0];
   const seed = new Uint32Array(1);
   crypto.getRandomValues(seed);
   return eligible[seed[0] % eligible.length];
@@ -1432,6 +1474,11 @@ if (!routeCharacterId && !rememberedDef) {
   try { localStorage.setItem('csbr-home-character', initialChar.id); } catch {}
 }
 const ladoValido = (def, lado) => (podeNoLado(def, lado) ? lado : ladosDe(def)[0]);
+/* Passe Sessão da Treta (passe.js): personagem do passe só joga com o inventário do SERVIDOR dizendo
+   que está destravado. A escolha salva fica guardada; até o servidor confirmar, entra um livre do lado. */
+const personagemLivre = (def, lado) => (def && !personagemTravado(def) ? def
+  : CHARACTERS.find((c) => !personagemTravado(c) && podeNoLado(c, lado || ladosDe(def)[0])) || CHARACTERS.find((c) => !personagemTravado(c)));
+const ICONE_CADEADO_PASSE = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 const initialSide = ladoValido(initialChar, rememberedSide);
 let game = null, currentTeam = initialSide, currentFaction = initialSide, currentChar = initialChar.id, selChar = null, tretaStoreReady = Promise.resolve();
 function returnPreviewToSelection() {
@@ -1444,10 +1491,10 @@ function syncHomeCharacter() {
   const box = document.querySelector('.char-preview-box');
   const host = $('hub-character');
   if (box && host && box.parentElement !== host) host.appendChild(box);
-  const def = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
+  const def = personagemLivre(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);
   const lado = ladoValido(def, currentTeam);
   $('hub-character-name').textContent = `${tr(FACTION_NAME[lado])} · ${def.name}`;
-  $('hub-character-crest').src = `/img/brasoes/${lado.toLowerCase()}.png`;
+  $('hub-character-crest').src = '/' + urlDoBrasao(factionDefinition(lado).crest);
   $('hub-change-character').style.setProperty('--hub-faction', PALETA[lado]?.base || '#b4d92e');
   pvSetChar(def);
 }
@@ -1511,7 +1558,7 @@ function openHubRoster(updateRoute = true) {
     lados.replaceChildren(); filters.replaceChildren(); grid.replaceChildren();
     for (const lado of ['E', 'B']) {
       const button = document.createElement('button'); button.type = 'button'; button.setAttribute('role', 'tab');
-      const crest = document.createElement('img'); crest.src = `/img/brasoes/${lado.toLowerCase()}.png`; crest.alt = '';
+      const crest = document.createElement('img'); crest.src = '/' + urlDoBrasao(factionDefinition(lado).crest); crest.alt = '';
       button.append(crest, tr(FACTION_NAME[lado]));
       button.style.setProperty('--lado', PALETA[lado].base);
       button.setAttribute('aria-selected', String(lado === hubRosterLado));
@@ -1547,15 +1594,30 @@ function openHubRoster(updateRoute = true) {
       const equipada = skinsDoChar.find((s) => s.equipped) || null;
       /* Célula = card (escolhe SEU personagem, como sempre) + chip ＋ (trava quem entra).
          Papel do escalado: pode no seu lado = aliado, senão inimigo; montagem re-filtra. */
+      const travado = personagemTravado(def), nivel = nivelDoPersonagem(def);
+      /* escolhido de fato: com a escolha salva ainda travada pelo passe, é o livre que o lobby mostra */
+      const efetivo = personagemLivre(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam)?.id;
       const cell = document.createElement('div'); cell.className = 'hub-roster-cell';
+      if (travado) cell.classList.add('hub-roster-cell--travado');
       const button = document.createElement('button'); button.type = 'button';
-      button.setAttribute('aria-pressed', String(def.id === currentChar && !equipada));
+      button.setAttribute('aria-pressed', String(!travado && def.id === efetivo && !equipada));
       const avatar = document.createElement('img'); avatar.src = `/img/chars/avatars/${def.id}.webp`;
       avatar.alt = ''; avatar.loading = 'lazy';
       const name = document.createElement('span'); name.textContent = def.name;
       button.append(avatar, name);
+      /* Passe: cadeado e o nível onde destrava; o clique só explica, quem decide é o servidor. */
+      if (travado) {
+        const trava = document.createElement('b'); trava.className = 'hub-roster-trava';
+        trava.dataset.passeNivel = String(nivel || '');
+        trava.innerHTML = ICONE_CADEADO_PASSE;
+        trava.append(frase('passeTravado', nivel || '?'));
+        button.setAttribute('aria-disabled', 'true');
+        button.title = frase('passeTravadoAviso', def.name, nivel || '?');
+        button.append(trava);
+      }
       button.onclick = async () => {
         ui.click();
+        if (personagemTravado(def)) { $('hub-roster-selected').textContent = frase('passeTravadoAviso', def.name, nivel || '?'); return; }
         // Voltar ao personagem base com skin equipada TIRA a skin no servidor antes de trocar.
         if (equipada) {
           try { if (!await desequiparTretaSkin()) throw new Error('unequip_recusado'); }
@@ -1564,7 +1626,7 @@ function openHubRoster(updateRoute = true) {
         escolher(def.id);
       };
       cell.appendChild(button);
-      if (def.id !== currentChar) {
+      if (def.id !== efetivo) {
         const pin = document.createElement('button'); pin.type = 'button';
         const ehPin = settings.pinnedChars.includes(def.id);
         const papel = podeNoLado(def, currentTeam) ? tr('ALIADO') : tr('INIMIGO');
@@ -1574,6 +1636,9 @@ function openHubRoster(updateRoute = true) {
         pin.textContent = ehPin ? papel : '＋';
         pin.onclick = (ev) => {
           ev.stopPropagation();
+          /* Escalar personagem travado como bot = jogar com ele de graça: recusa como a escolha,
+             com o mesmo aviso. Tirar um escalado antigo continua valendo. */
+          if (!ehPin && personagemTravado(def)) { ui.click(); $('hub-roster-selected').textContent = frase('passeTravadoAviso', def.name, nivel || '?'); return; }
           settings.pinnedChars = ehPin
             ? settings.pinnedChars.filter((id) => id !== def.id)
             : [...settings.pinnedChars, def.id];
@@ -1600,7 +1665,7 @@ function openHubRoster(updateRoute = true) {
         grid.appendChild(skinCell);
       }
     }
-    const selected = CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0];
+    const selected = personagemLivre(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);
     const skinAtual = armario.find((s) => s.equipped && s.character === selected.id) || null;
     $('hub-roster-selected').textContent = frase('selecionado', tr(FACTION_NAME[ladoValido(selected, currentTeam)]), selected.name, skinAtual ? skinAtual.name : '');
     /* ESCALAÇÃO travada: contagem por papel contra as VAGAS do formato escolhido —
@@ -2115,6 +2180,10 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // Offline a identidade visual é o próprio lado (E Esquerda, B Direita) e o adversário é o
   // lado oposto; online a facção ainda vem da sala do servidor.
   if (sessao) team = ladoOnline(team, sessao.net);
+  /* Passe: personagem travado não entra em partida offline, venha de onde vier (rota, armário local,
+     troca no M). Online o corpo é o que o servidor da sala deu. */
+  const escolhidoDef = CHARACTERS.find(c => c.id === charId);
+  if (!online && escolhidoDef && personagemTravado(escolhidoDef)) charId = personagemLivre(escolhidoDef, team).id;
   const charDef = CHARACTERS.find(c => c.id === charId) || {};
   if (!online && !podeNoLado(charDef, team)) team = ladosDe(charDef)[0];
   if (!online && ehMapaJavaporcos(currentMap)) team = 'E';
@@ -2182,9 +2251,10 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
      cada jogador da mesma sala ver bonecos diferentes, e o nome do killfeed não bateria com o
      rosto que apareceu na tela. Fora do multiplayer, sorteio normal — com a ESCALAÇÃO do
      jogador (pinnedChars da tela de escalação) entrando primeiro. Papel do escalado: do lado
-     do jogador = aliado; senão inimigo (pickMatchRoster re-filtra por lado). */
+     do jogador = aliado; senão inimigo (pickMatchRoster re-filtra por lado). Escalado travado pelo
+     passe (pin salvo antes da trava ou sem o servidor ter destravado) fica de fora da partida. */
   const _podeNoLadoSp = (id) => { const c = CHARACTERS.find((x) => x.id === id); return !!(c && podeNoLado(c, side)); };
-  const _escalados = sessao ? [] : settings.pinnedChars.filter((id) => id !== charId);
+  const _escalados = sessao ? [] : settings.pinnedChars.filter((id) => id !== charId && !personagemTravado(CHARACTERS.find((c) => c.id === id)));
   const _pinned = sessao ? null : {
     ally: _escalados.filter(_podeNoLadoSp),
     enemy: _escalados.filter((id) => !_podeNoLadoSp(id)),
@@ -2216,13 +2286,15 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const playerWeaponSkins = Object.fromEntries(['ak','pistol','m4','scar']
     .map((weaponId)=>[weaponId,playerPack?.weaponSkins[weaponId] || equippedTretaWeaponSkin(weaponId)])
     .filter(([,skinId])=>skinId));
-  const playerKnifeSkinId = playerPack?.knifeSkin || null;
+  const playerKnifeSkinId = playerPack?.knifeSkin || equippedTretaWeaponSkin('knife') || null;
   const matchEyewear = [playerEyewearId,...matchRoster.allyDefs.map(d=>d.eyewearId),...matchRoster.enemyDefs.map(d=>d.eyewearId)];
   const matchSkins = [playerSkinId, ...matchRoster.allyDefs.map(d=>d.skinId), ...matchRoster.enemyDefs.map(d=>d.skinId)];
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
     .map((d) => (typeof d === 'string' ? d : d.id))
     .filter((id, i, a) => GLB_CHARS.has(id) && a.indexOf(id) === i);
-  const _charsToLoad = _rosterGlb.length ? _rosterGlb : [...GLB_CHARS];
+  // Fallback sem roster GLB: só o acervo legado. Release do Studio só carrega quando está
+  // na partida; aqui baixaria todos os pacotes fixados sem ninguém usá-los.
+  const _charsToLoad = _rosterGlb.length ? _rosterGlb : [...GLB_CHARS].filter((id) => !characterRelease(id));
   /* Armas da partida sorteadas aqui pelo mesmo motivo do roster: as 26 custavam 164 MB de VRAM
      e 7,5 MB de download numa partida que usa ~9. O resto chega em ocioso. Régua: ARM1. */
   /* Armas: no multiplayer também são do servidor (ele é dono do estado de arma de cada corpo).
@@ -2924,7 +2996,8 @@ if (HUB_ENABLED) {
   const factionGrid = $('hub-factions');
   // Grupos saem do elenco jogável: grupo novo em characters.js aparece aqui sem lista à mão.
   // Políticos não têm brasão próprio e jogam pelos dois lados, então mostram os dois.
-  const groupOrder = ['E', 'B', 'P', 'U', 'C', 'F', 'M'];
+  const groupOrder = FACTIONS.map((fac) => fac.id);
+  groupOrder.splice(2, 0, 'P');
   const groups = [...new Set(CHARACTERS.map((c) => c.team))]
     .sort((a, b) => (groupOrder.indexOf(a) + 1 || 99) - (groupOrder.indexOf(b) + 1 || 99));
   for (const fac of groups) {
@@ -2932,8 +3005,8 @@ if (HUB_ENABLED) {
     item.dataset.faction = fac;
     item.style.setProperty('--hub-faction', PALETA[fac]?.base || (fac === 'P' ? '#d6b55a' : '#b4d92e'));
     const crests = document.createElement('span'); crests.className = 'hub-faction-crests';
-    for (const letter of fac === 'P' ? ['e', 'b'] : [fac.toLowerCase()]) {
-      const crest = document.createElement('img'); crest.src = `/img/brasoes/${letter}.png`; crest.alt = ''; crests.appendChild(crest);
+    for (const crestId of fac === 'P' ? ['e', 'b'] : [factionDefinition(fac).crest]) {
+      const crest = document.createElement('img'); crest.src = '/' + urlDoBrasao(crestId); crest.alt = ''; crests.appendChild(crest);
     }
     const name = document.createElement('span'); name.textContent = tr(FACTION_NAME[fac] || fac);
     item.append(crests, name); factionGrid.appendChild(item);
@@ -3728,7 +3801,7 @@ function abrirTrocaOnline() {
 }
 $('char-confirm').onclick = () => {
   sfx.uiClick();
-  if (!selChar) return;
+  if (!selChar || personagemTravado(selChar)) return;
   // Only take the in-match "switch team" path when there's a live game to switch;
   // a stale switchMode flag (e.g. backed out of M) must NOT hit game._switchTeam on a
   // disposed game — that used to throw and leave the next match unable to load.
@@ -4233,7 +4306,7 @@ function ensureTeamPreviews() {
     const box = document.querySelector(`#${btn} .team-chars`);
     if (!box || !(box.checkVisibility?.() ?? box.getClientRects().length > 0)) continue;
     if (teamPreviewsDone.has(lado) || teamPreviewsPending.has(lado)) continue;
-    const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id)).slice(0, 4);
+    const chars = CHARACTERS.filter(c => podeNoLado(c, lado) && GLB_CHARS.has(c.id) && !personagemTravado(c)).slice(0, 4);
     if (!chars.length) continue;
     teamPreviewsPending.add(lado);
     box.innerHTML = chars.map(() => '<span class="tc-slot"></span>').join('');
@@ -4249,10 +4322,10 @@ function ensureTeamPreviews() {
   }
 }
 function pickTeam(faction) {
-  /* Time sem elenco disponível não abre lista vazia. */
-  if (!CHARACTERS.some(c => podeNoLado(c, faction))) { ui.back(); return; }
-  const lado = faction;
-  currentTeam = lado;
+  const lado = faction === 'E' || faction === 'B' ? faction : null;
+  /* Time ou grupo sem elenco disponível não abre lista vazia. */
+  if (!CHARACTERS.some(c => lado ? podeNoLado(c, lado) : c.team === faction)) { ui.back(); return; }
+  currentTeam = lado || currentTeam;
   currentFaction = currentTeam;
   // estado de seleção persistente nos cards: ao voltar do personagem, a tela diz qual é o SEU lado
   for (const f of ['e', 'b']) {
@@ -4266,8 +4339,8 @@ function pickTeam(faction) {
     hideLoading();
     const list = $('char-list');
     list.innerHTML = '';
-    let firstRow = null;
-    chars.forEach((c, i) => {
+    let firstRow = null, firstChar = null;
+    chars.forEach((c) => {
       const row = document.createElement('button');
       row.className = 'char-row';
       // Avatar = busto cortado da ARTE APROVADA (molde/neutro), não do GLB low-poly —
@@ -4275,6 +4348,13 @@ function pickTeam(faction) {
       const thumb0 = `/img/chars/avatars/${c.id}.webp?v=${VERSION}`;
       row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false'); row.title = c.name;
       row.innerHTML = `<img src="${thumb0}" alt="${c.name}" loading="lazy"><span>${c.name}</span>`;
+      if (personagemTravado(c)) {
+        row.classList.add('char-row--travado'); row.setAttribute('aria-disabled', 'true');
+        const trava = document.createElement('b'); trava.className = 'hub-roster-trava';
+        trava.dataset.passeNivel = String(nivelDoPersonagem(c) || '');
+        trava.innerHTML = ICONE_CADEADO_PASSE; trava.append(frase('passeTravado', nivelDoPersonagem(c) || '?'));
+        row.append(trava);
+      }
       row.onmouseenter = () => ui.hover();
       // A faixa é horizontal, mas ↑↓ continuam aceitos para quem já usava o fluxo antigo.
       row.onkeydown = (e) => {
@@ -4286,19 +4366,24 @@ function pickTeam(faction) {
         if (n < 0) return;
         e.preventDefault(); rows[n].focus(); rows[n].click();
       };
-      row.onclick = () => selectCharacterFromAvatar(c, row, chars);
+      row.onclick = () => {
+        if (personagemTravado(c)) { $('char-info-blurb').textContent = frase('passeTravadoAviso', c.name, nivelDoPersonagem(c) || '?'); return; }
+        selectCharacterFromAvatar(c, row, chars);
+      };
       list.appendChild(row);
-      if (i === 0) firstRow = row;
+      if (!firstRow && !personagemTravado(c)) { firstRow = row; firstChar = c; }
     });
     // seleciona DEPOIS de gerar todos os thumbs — senão o preview fica com o último
     show('char-select');
-    if (firstRow) selectChar(chars[0], firstRow);
+    if (firstRow) selectChar(firstChar, firstRow);
   };
   if (navOnly || previewUsesStills()) { mountCharList(); return; }
   // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
   // nada de thumbnails de caixa montando aos poucos (o "minecraft" que o dono viu)
   showLoading('CARREGANDO PERSONAGENS…');
-  preloadCharacterAssets(chars.map(c => c.id)).catch(() => {}).then(mountCharList);
+  /* Travado pelo passe não é escolhível (o clique só explica o nível): a fileira usa o avatar
+     estático e o pack Studio dele não é baixado aqui. */
+  preloadCharacterAssets(chars.filter(c => !personagemTravado(c)).map(c => c.id)).catch(() => {}).then(mountCharList);
 }
 /* Ficha do personagem (tela de seleção): raridade + atributos derivados da arma inicial
    (charWeapon) e de um hash estável do id. É FLAVOR de apresentação no estilo CS2/Valorant —
@@ -4737,9 +4822,11 @@ function mpDevolverEscolhaSp() {
   syncHomeCharacter();
 }
 // O personagem do jogador: dentro do MP é o guardado na entrada (a sala só empresta o corpo).
+// Passe travado: pede o mesmo livre que o lobby mostra (personagemLivre), sem apagar a escolha salva.
 function personagemEscolhido() {
   const id = escolhaSpAntesDoMp ? escolhaSpAntesDoMp.char : currentChar;
-  return CHARACTERS.find((c) => c.id === id) || null;
+  const def = CHARACTERS.find((c) => c.id === id);
+  return def ? personagemLivre(def, escolhaSpAntesDoMp?.team || currentTeam) : null;
 }
 let mpNoAtual = null;
 let mpConectando = false;   // trava de reentrada do mpEntrar (BUG-88)
@@ -5138,7 +5225,14 @@ async function mpEntrarPorConvite(txt) {
   mpEstado('conectando', `PROCURANDO ${alvo.convite}…`);
   const http = httpDoNo(alvo.no);
   mpNoAtual = { ...alvo.no, http, ticketNode: alvo.no.id };
-  const sala = await salaPorConvite(http, alvo.codigo);
+  let sala;
+  try { sala = await salaPorConvite(http, alvo.codigo); }
+  catch (e) {
+    await abrirMultiplayer();
+    return mpErro(String(e && e.message || '').includes('http_429')
+      ? 'Calma aí: muitas tentativas seguidas. Espere um minuto antes de abrir outro convite.'
+      : 'Não deu pra procurar a sala agora. Tente novamente em instantes.');
+  }
   if (!sala) { await abrirMultiplayer(); return mpErro(`A sala ${alvo.convite} não existe mais. Escolha outra abaixo.`); }
   mpEntrar(sala, 'auto');
 }
@@ -5360,6 +5454,8 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
     return mpErro(m.includes('bad_password') ? 'Senha errada.'
       : m.includes('room_full') ? 'Sala cheia.'
       : m.includes('room_not_found') ? 'Essa sala não existe mais.'
+      : m.includes('muitas_tentativas') ? 'Muitas tentativas seguidas. Espere um minuto e tente de novo.'
+      : m.includes('protocolo_incompativel') ? 'Este servidor fala uma versão antiga do jogo. Recarregue a página; se continuar, escolha outra região.'
       : m.includes('timeout') ? 'O servidor demorou demais pra responder. Tente de novo ou escolha outra região.'
       : 'Não deu pra conectar nesse servidor.');
   }
@@ -5515,14 +5611,20 @@ function mpAvisoPersonagem(texto, oferta = null) {
   }
 }
 
-/* Conexão caiu no meio da partida. Nada de "reconectar sozinho e fingir que não houve nada":
-   o jogador precisa SABER, porque o corpo dele já voltou a ser bot no servidor. */
+/* Queda de conexão: o servidor reserva o slot por 45 s e o cliente tenta
+ * reconectar antes de mostrar a opção de entrar novamente. */
+let mpReconectando = false;
 function mpDesconectou() {
   if (!mpSessao) return;
+  if (mpReconectando) return;   // desconectou DURANTE tentativa de reconexão — o loop cuida
+  const sessao = mpSessao;
+  const { sala, no } = sessao;
+  const team = sessao.net?._lastTeam || 'auto';
+  /* limpeza igual à antiga — mas SEM enviar 'quit' de telemetria: a partida continua no
+   * servidor; se a reconexão falhar, o quit sai na última tentativa */
   mpPararContagemProximo();
   mpLimparIdentidade();
-  try { if (game) { sendTelemetry(); sendMatchEvent('quit'); } } catch { /* diagnóstico não bloqueia a saída */ }
-  mpSessao.chat?.destruir();
+  sessao.chat?.destruir();
   mpSessao = null;
   mpDevolverEscolhaSp();
   clearTelemetryGameContext();
@@ -5531,8 +5633,32 @@ function mpDesconectou() {
   soltarPartida();
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
   show('mp-panel');
-  /* o aviso entra DEPOIS da sondagem: abrirMultiplayer começa com mpErro('') — na ordem
-     antiga a mensagem "caiu" vivia um frame e era apagada antes de alguém ler */
+  mpTentarReconectar(sala, no, team);
+}
+
+async function mpTentarReconectar(sala, no, team) {
+  const PRAZO = 45_000, INTERVALO = 2000, inicio = Date.now();
+  mpReconectando = true;
+  let tentativa = 0;
+  while (Date.now() - inicio < PRAZO) {
+    tentativa += 1;
+    mpEstado('conectando', `RECONNECTING · tentativa ${tentativa}…`);
+    const restante = PRAZO - (Date.now() - inicio);
+    await new Promise((r) => setTimeout(r, Math.min(tentativa === 1 ? 600 : INTERVALO, restante)));
+    if (!document.getElementById('mp-panel') || document.getElementById('mp-panel').hidden) {
+      mpReconectando = false; return;   // jogador navegou para fora — cancela
+    }
+    if (Date.now() - inicio >= PRAZO) break;
+    mpNoAtual = no;
+    mpConectando = false;   // mpEntrar guarda com este flag — reseta da tentativa anterior
+    try {
+      await mpEntrar(sala, team);
+      if (mpSessao) { mpReconectando = false; return; }   // reconectou
+    } catch { /* tenta de novo até SLOT_IDLE_MS */ }
+  }
+  mpReconectando = false;
+  /* saiu de todas — agora sim o quit de telemetria e a mensagem honesta */
+  try { sendTelemetry(); sendMatchEvent('quit'); } catch { /* diagnóstico não bloqueia */ }
   abrirMultiplayer().then(() => mpErro('A conexão com o servidor caiu. Entre de novo.'));
 }
 
@@ -5615,9 +5741,16 @@ show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de 
     if (!location.pathname.startsWith('/u/')) hubNavigate({ map: currentMap, personagem: currentChar }, true); // /u/<perfil> fica limpo para compartilhar
     restoreHubRoute();
   }
+  /* RÉGUA:boot-pending-entry início */
 window.__CS_MAIN_READY__ = true;
 window.__gameLaunch?.ready('boot');
 contagem.evento('game_loaded');
+  const entradaPendente = document.getElementById('boot-splash');
+  if (entradaPendente?.dataset.csEntradaPendente) {
+    delete entradaPendente.dataset.csEntradaPendente;
+    dismissSplash();
+  }
+  /* RÉGUA:boot-pending-entry fim */
   // Convite de sala e perfil compartilhado (/u/<perfil>) chegam com destino: nem o convite de conta nem o da loja cobrem esse destino.
   // /u/<perfil> é o hub (SSR); ?perfil= é o link antigo.
 const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location.href)?.perfil);
@@ -5626,6 +5759,14 @@ const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location
   document.addEventListener('cs-account-change',(e)=>{contaNick=e.detail?.profile?.nick || '';const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);});
   tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
   document.addEventListener('cs-treta-inventory-change',refreshMenuEquipment);
+  /* Passe Sessão da Treta: o GET com conta também registra o login do dia no servidor. Conta trocada
+     esquece o status anterior; fim de partida pergunta de novo depois que o resultado foi enviado. */
+  if(!testMode){
+    void carregarPasse();
+    document.addEventListener('cs-account-change',()=>{void trocarContaPasse();});
+    document.addEventListener('cs-match-end',()=>{setTimeout(()=>{void carregarPasse();},4000);});
+  }
+  document.addEventListener(PASSE_EVENTO,refreshMenuEquipment);
   // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
   if (directRoute) document.getElementById('boot-splash')?.remove();
   const abrirVitrine=()=>{if(!tretaVitrine()?.length)return;document.removeEventListener('cs-treta-state',abrirVitrine);void import('./treta-vitrine.js').then(m=>m.iniciarVitrine()).catch(()=>{});};

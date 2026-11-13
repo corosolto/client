@@ -1,0 +1,19 @@
+name: Packs Studio fixados
+description: >-
+  Baixa da origem pública (R2) os packs do Studio fixados em public/js/data/content-releases.js,
+  conferindo o SHA do pin e de cada arquivo (scripts/fetch-studio-packs.mjs), e exporta
+  STUDIO_PACK_ROOT para as réguas e servidores do job (/packs/ do eval:serve e do dev server,
+  char-probe). Cache pela hash do registro de releases. Exige checkout e Node já configurados.
+runs:
+  using: composite
+  steps:
+    - name: Cache dos packs Studio
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+      with:
+        path: ${{ runner.temp }}/studio-packs
+        key: studio-packs-${{ hashFiles('public/js/data/content-releases.js') }}
+    - name: Baixa e confere os packs Studio
+      shell: bash
+      run: |
+        node scripts/fetch-studio-packs.mjs "$RUNNER_TEMP/studio-packs"
+        echo "STUDIO_PACK_ROOT=$RUNNER_TEMP/studio-packs" >> "$GITHUB_ENV"

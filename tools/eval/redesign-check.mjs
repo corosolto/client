@@ -18,6 +18,7 @@ const alvoPorMutante = {
   'asset-ausente': 'UIA1',
   'resultado-nao-auditado': 'UIA1',
   'video-dimensao': 'UIA2',
+  'video-container': 'UIA2',
   'splash-sem-wallpaper': 'UIA3',
   'lote-nao-auditado': 'UIA4',
   'loading-sem-canvas': 'UIA5',
@@ -470,31 +471,16 @@ function diff(a, b) {
   const B = new Set(b);
   return a.filter((x) => !B.has(x));
 }
-function bytesDepois(buf, id) {
-  for (let pos = 0; pos <= buf.length - id.length - 2; pos++) {
-    if (!id.every((byte, i) => buf[pos + i] === byte)) continue;
-    const primeiro = buf[pos + id.length];
-    let largura = 1;
-    while (largura <= 8 && !(primeiro & (0x80 >> (largura - 1)))) largura++;
-    if (largura > 8 || pos + id.length + largura >= buf.length) continue;
-    let tamanho = primeiro & (0xff >> largura);
-    for (let i = 1; i < largura; i++) tamanho = tamanho * 256 + buf[pos + id.length + i];
-    const inicio = pos + id.length + largura;
-    if (tamanho < 1 || tamanho > 8 || inicio + tamanho > buf.length) continue;
-    let valor = 0;
-    for (let i = 0; i < tamanho; i++) valor = valor * 256 + buf[inicio + i];
-    if (valor > 0 && valor < 8192) return valor;
-  }
-  return null;
-}
 function metaWebm(rel) {
-  const buf = readFileSync(join(ROOT, rel)).subarray(0, 131072);
-  return {
-    webm: buf.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3])),
-    vp9: buf.includes(Buffer.from('V_VP9')),
-    width: bytesDepois(buf, [0xb0]),
-    height: bytesDepois(buf, [0xba]),
-  };
+  const probe = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'format=format_name:stream=codec_name,width,height', '-of', 'json', join(ROOT, rel)], { encoding: 'utf8' });
+  if (probe.status !== 0) return { webm: false, vp9: false, width: null, height: null };
+  const parsed = JSON.parse(probe.stdout);
+  if (MUTANTE === 'video-container') {
+    parsed.format = { format_name: 'mov,mp4,m4a,3gp,3g2,mj2' };
+    mutacaoAplicou = true;
+  }
+  const stream = parsed.streams?.[0] || {};
+  return { webm: parsed.format?.format_name?.split(',').includes('webm') || false, vp9: stream.codec_name === 'vp9', width: stream.width, height: stream.height };
 }
 function metaWebpAlpha(buf) {
   const chunk = buf.indexOf(Buffer.from('VP8X'));
@@ -554,8 +540,10 @@ if (MUTANTE === 'asset-ausente' && avatares.length) { avatares = avatares.slice(
 const selecao = nomes('public/video/chars', (f) => f.endsWith('.webm'));
 const resultadoImg = nomes('public/img/resultado', (f) => /-(?:derrota|vitoria)\.webp$/.test(f));
 const resultadoVideo = nomes('public/video/resultado', (f) => /-(?:derrota|vitoria)\.webm$/.test(f));
-const esperadoAvatar = ids.map((id) => `${id}.webp`);
-const esperadoSelecao = ids.map((id) => `${id}.webm`);
+/* Ordena depois do sufixo, como `nomes()`: 'capitao-caveira.webp' vem antes de 'capitao.webp'
+   ('-' < '.'), embora 'capitao' venha antes de 'capitao-caveira' como id. */
+const esperadoAvatar = ids.map((id) => `${id}.webp`).sort();
+const esperadoSelecao = ids.map((id) => `${id}.webm`).sort();
 const hashResultado = createHash('sha256');
 for (const arquivo of resultadoImg) {
   const rel = `public/img/resultado/${arquivo}`;
@@ -676,7 +664,6 @@ const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main
   && /ms-desc'\)\.textContent = tr\(MAP_DESC\[currentMap\] \|\| ''\)/.test(main)
   && /frase\('escolhaAdversario', tr\(FACTION_NAME\[myFaction\]/.test(main)
   && /continuar\.textContent = frase\('continuarSetup'\)/.test(main)
-  && /const FACTION_NAME = \{ E: 'TIME E', B: 'TIME B'/.test(main)
   && /rEl\.textContent = tr\(RARITIES\[tier\]\[0\]\)/.test(main)
   && /char-spec-name'\)\.textContent = tr\(specName\)/.test(main);
 const previewUso = /if \(pv && pv\.model && previewModelActive\(csOpen,hubPreviewOpen\)\)/.test(funcLoop)
@@ -1184,7 +1171,10 @@ const idiomaGeo = !/export const prerender = false/.test(astro)
   && /export const prerender = false/.test(apiGeoLang)
   && /langFromCountry/.test(apiGeoLang)
   && /export async function resolveGeoLang/.test(i18n)
-  && /navigator\.language/.test(i18n);
+  && /navigator\.language/.test(i18n)
+  // Sem top-level await: o contrato autoritativo é a cadeia que traduz antes de finishBoot.
+  && /window\.__CS_LANG_READY__\s*=\s*moduleSequencingReady\.then\(\(\)\s*=>\s*resolveGeoLang\(\)\)\.then/.test(main)
+  && /void window\.__CS_LANG_READY__\.then\(finishBoot\)\.catch/.test(main);
 
 const resultados = [
   ['UIA1', 'elenco inteiro tem avatar, seleção e dois resultados estáticos', assetOk, assetEvid],

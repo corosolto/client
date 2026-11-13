@@ -501,6 +501,10 @@ window.__GEO_LANG__ = (function () {
       if (alvo.id === 'boot-splash') {
         var prompt = document.getElementById('splash-enter');
         var pronto = prompt && !prompt.classList.contains('hidden');
+        /* RÉGUA:launch-watchdog entrada início */
+        /* Só o gesto que o fallback pode aceitar agora é isento; outro clique volta a diagnosticar. */
+        if (window.__CS_BOOT_FALLBACK_ARMED__ && pronto) return;
+        /* RÉGUA:launch-watchdog entrada fim */
         if (!window.__CS_MAIN_READY__) {
           if (erroDoBoot || window.__CS_MAIN_FAILED) {
             /* O relatório saía sem UMA evidência: a migalha leva o módulo que falhou, o

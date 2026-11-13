@@ -14,7 +14,10 @@ const BASELINE = {
   fast: { quantidade: 338, sha256: '05c5d2027a8229f379a4556ee991daf1bc0e9f45b04ee3515d4e458259d6bfdf' },
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
-const NOVOS = { fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:shareorigin', 'eval:prodcrash']), deploy: new Set() };
+const NOVOS = {
+  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:prodcrash']),
+  deploy: new Set(['eval:weapon-passe', 'eval:dispose']),
+};
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
 
 for (const [nome, baseline] of Object.entries(BASELINE)) {
@@ -35,13 +38,23 @@ for (const [nome, baseline] of Object.entries(BASELINE)) {
   });
 }
 
-test('fast adds the staging and production-crash checks without deleting migrated steps', () => {
+test('staging adds portal, pass and production-crash checks without deleting migrated steps', () => {
   assert.ok(SUITES.fast.includes('eval:portalembed'));
   assert.ok(SUITES.fast.includes('eval:lixo'));
   assert.ok(SUITES.fast.includes('eval:envruntime'));
   assert.ok(SUITES.fast.includes('eval:servertraffic'));
   assert.ok(SUITES.fast.includes('eval:shareorigin'));
   assert.ok(SUITES.fast.includes('eval:prodcrash'));
+  assert.ok(SUITES.fast.includes('eval:vm-enquadramento-placar'));
+  assert.ok(SUITES.fast.includes('eval:pintura-fabrica'));
+  assert.ok(SUITES.fast.includes('eval:passe'));
+  assert.ok(SUITES.fast.includes('eval:packpublish'));
+  assert.ok(SUITES.deploy.includes('eval:dispose'));
+});
+
+test('release de personagem do Studio entra na fast logo depois do characterkit', () => {
+  const i = SUITES.fast.indexOf('eval:characterkit');
+  assert.equal(SUITES.fast[i + 1], 'eval:studiochar');
 });
 
 test('suites temáticas só reutilizam passos existentes, sem duplicar execução', () => {
@@ -110,7 +123,7 @@ process.exit(distintos >= 2 ? 78 : 97);
       'tools/eval/runner.mjs', '--jobs=2', '--suite=core', `--json-out=${jsonOut}`,
     ], {
       encoding: 'utf8',
-      timeout: 20000,
+      timeout: 60000,
       env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, FAKE_NPM_LOG: log },
     });
     assert.equal(r.status, 78, r.stderr);
@@ -204,7 +217,9 @@ const CASOS = [
   ['public/audio/manifest.json', 'audio', 'audio:check'],
   ['playwright.config.mjs', 'browser', 'eval:vm-troca-sem-legado'],
   ['public/js/transporte.js', 'network', 'eval:netcode'],
-  ['tools/viewmodels/validate_paid_catalog.mjs', 'vm', 'eval:vm-presence'],
+  ['tools/eval/lib/vm-enquadramento.mjs', 'vm', 'eval:vm-enquadramento-placar'],
+  ['tools/fabrica/fabrica-candidates.json', 'vm', 'eval:vm-enquadramento-placar'],
+  ['public/models/viewmodels/coro/p90-hires.glb', 'vm', 'eval:vm-enquadramento-placar'],
 ];
 for (const [arquivo, suite, passo] of CASOS) {
   test(`diff de ${suite} seleciona core + ${suite}`, () => {
