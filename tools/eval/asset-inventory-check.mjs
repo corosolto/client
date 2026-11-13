@@ -69,6 +69,14 @@ function mutations() {
     expectStatus(result, 0, 'initial non-audio inventory check');
     console.log('AI1: post-rewrite JSON reference baseline passes.');
 
+    put(fixture, 'public/js/runtime.json', '{"hero":"models/props/json-only.glb"}\n');
+    put(fixture, 'public/models/props/json-only.glb', 'json-runtime-reference');
+    expectStatus(runInventory(fixture), 0, 'public/js JSON runtime reference generation');
+    expectStatus(runInventory(fixture, ['--check']), 0, 'public/js JSON runtime reference check');
+    rmSync(join(fixture, 'public/js/runtime.json'));
+    rmSync(join(fixture, 'public/models/props/json-only.glb'));
+    console.log('AI1b: a public/js/*.json file alone proves a runtime asset reference.');
+
     put(fixture, 'public/models/props/new-orphan.glb', 'unreviewed');
     const beforeOrphan = readFileSync(manifestPath, 'utf8');
     result = runInventory(fixture);

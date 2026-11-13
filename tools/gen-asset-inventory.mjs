@@ -53,7 +53,7 @@ export function referenceSources(root = ROOT) {
   const sources = walk(join(publicDir, 'js'), (rel) => rel.endsWith('.js') && basename(rel) !== 'assetver.js');
   sources.push(...walk(join(root, 'src'), () => true));
   sources.push(...walk(publicDir, (rel) => rel.endsWith('.json')
-    && !rel.startsWith('docs/') && !rel.startsWith('js/') && !rel.endsWith('.capture.json')));
+    && !rel.startsWith('docs/') && !rel.endsWith('.capture.json')));
   if (existsSync(publicDir)) {
     for (const name of readdirSync(publicDir, { withFileTypes: true })) {
       if (name.isFile() && name.name.endsWith('.css')) sources.push(join(publicDir, name.name));
