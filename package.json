@@ -747,7 +747,7 @@
     "eval:perfil-abas": "node tools/eval/perfil-abas-check.mjs && node tools/eval/perfil-abas-check.mjs --mutate",
     "//eval:rotas-browser": "Deep-link, link antigo e voltar do navegador no hub de verdade. Precisa de BASE com tools/eval/serve.mjs numa porta própria.",
     "eval:rotas-browser": "node tools/eval/rotas-browser.mjs && ! node tools/eval/rotas-browser.mjs --mutante=query && ! node tools/eval/rotas-browser.mjs --mutante=loja-fixa",
-    "//eval:pesos-braco-perna": "Manga não segue a perna: todo GLB de personagem/skin com 0 vértice de braço pesado em UpLeg/Leg, legados no teto congelado (tools/eval/pesos-braco-perna-tetos.json); 4 mutantes.",
+    "//eval:pesos-braco-perna": "Manga não segue a perna: todo GLB de personagem/skin com 0 vértice de braço pesado em UpLeg/Leg, legados no teto congelado (tools/eval/pesos-braco-perna-tetos.json); 6 mutantes.",
     "eval:pesos-braco-perna": "node tools/eval/pesos-braco-perna-check.mjs && node tools/eval/pesos-braco-perna-check.mjs --mutacoes",
     "evidencia:pesos-lula": "node tools/eval/pesos-lula-capture.mjs",
     "eval:hub-loja": "node tools/eval/hub-loja-rotulo-check.mjs && node tools/eval/hub-loja-rotulo-check.mjs --mutations",
