@@ -28,6 +28,7 @@ function start({
   lang = 'pt-BR',
   offline = false,
   resources = [],
+  pwaRevision = 'pwa-build-123',
   hostname = 'jogo.test',
 } = {}) {
   const nodes = new Map(['pwa-install', 'pwa-install-action', 'pwa-install-help'].map((id) => [id, new Element()]));
@@ -54,7 +55,11 @@ function start({
       windowListeners.set(type, list);
     },
   };
-  const document = { documentElement: { lang }, getElementById: (id) => nodes.get(id) || null };
+  const document = {
+    documentElement: { lang },
+    getElementById: (id) => nodes.get(id) || null,
+    querySelector: (selector) => selector === 'script[data-pwa-rev]' ? { dataset: { pwaRev: pwaRevision } } : null,
+  };
   vm.runInNewContext(source, { window, document, URL });
   return {
     panel: nodes.get('pwa-install'),
@@ -127,9 +132,10 @@ await Promise.resolve();
 await Promise.resolve();
 await offline.dispatchWindow('load');
 assert.equal(offline.registrations.length, 1, 'page registers one service worker');
-assert.equal(offline.registrations[0].path, '/sw.js', 'service worker lives at the root');
+assert.equal(offline.registrations[0].path, '/sw.js?v=pwa-build-123', 'service worker URL follows the deployed PWA revision');
 assert.equal(offline.registrations[0].options.scope, '/', 'service worker controls the installed game');
 assert.equal(offline.posted.at(-1).type, 'CACHE_OFFLINE_RESOURCES');
+assert.equal(offline.posted.at(-1).revision, 'pwa-build-123', 'warm-up is scoped to the active build');
 assert.deepEqual([...offline.posted.at(-1).urls], [
   'https://jogo.test/',
   'https://jogo.test/js/main.js?v=release',

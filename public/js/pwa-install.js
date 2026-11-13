@@ -1,5 +1,6 @@
 const OFFLINE_STATIC_PATH = /\.(?:avif|css|glb|gif|ico|jpe?g|js|json|mp3|ogg|png|svg|wasm|wav|webmanifest|webm|webp|woff2?)$/i;
 let offlineRegistration = null;
+let offlineRevision = null;
 
 function recursosOfflineVisitados() {
   const origin = window.location?.origin;
@@ -20,7 +21,7 @@ function recursosOfflineVisitados() {
 async function guardaRecursosOffline() {
   if (!offlineRegistration) return;
   const worker = window.navigator.serviceWorker?.controller || offlineRegistration.active;
-  worker?.postMessage({ type: 'CACHE_OFFLINE_RESOURCES', urls: recursosOfflineVisitados() });
+  worker?.postMessage({ type: 'CACHE_OFFLINE_RESOURCES', revision: offlineRevision, urls: recursosOfflineVisitados() });
 }
 
 function inicializaOffline() {
@@ -29,7 +30,9 @@ function inicializaOffline() {
   if (!serviceWorker) return;
   serviceWorker.addEventListener('controllerchange', () => void guardaRecursosOffline());
   window.addEventListener('load', () => void guardaRecursosOffline());
-  void serviceWorker.register('/sw.js', { scope: '/' }).then((registration) => {
+  offlineRevision = document.querySelector('script[data-pwa-rev]')?.dataset.pwaRev || null;
+  const workerUrl = offlineRevision ? `/sw.js?v=${encodeURIComponent(offlineRevision)}` : '/sw.js';
+  void serviceWorker.register(workerUrl, { scope: '/' }).then((registration) => {
     offlineRegistration = registration;
     return guardaRecursosOffline();
   }).catch(() => {
