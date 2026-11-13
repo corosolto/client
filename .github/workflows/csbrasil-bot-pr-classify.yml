@@ -77,7 +77,7 @@ jobs:
       - name: Ensure labels exist
         run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-estragacodigo-resolution estragacodigo-resolved bugfix hotfix release release-batch release-hotfix needs-hotfix-review
       - name: Fetch PR metadata
-        run: gh pr view "$PR_NUMBER" --json title,body,labels,files,additions,deletions,changedFiles,baseRefName,headRefName,headRefOid,headRepository,author,assignees > /tmp/pr.json
+        run: gh pr view "$PR_NUMBER" --json title,body,labels,files,additions,deletions,changedFiles,baseRefName,baseRefOid,mergeStateStatus,headRefName,headRefOid,headRepository,author,assignees,statusCheckRollup,latestReviews,reviewRequests,reviewDecision > /tmp/pr.json
       - name: Route PR and set assignee
         run: |
           python3 - <<'PY'
@@ -130,65 +130,29 @@ jobs:
                              input=json.dumps({'assignees': [route['add_assignee']]}), text=True, check=True)
           PY
       - name: Refresh PR metadata after routing
-        run: gh pr view "$PR_NUMBER" --json title,body,labels,files,additions,deletions,changedFiles,baseRefName,headRefName,headRefOid,headRepository,author,assignees > /tmp/pr.json
-      - name: Verify hotfix ancestry and repository identity
+        run: gh pr view "$PR_NUMBER" --json title,body,labels,files,additions,deletions,changedFiles,baseRefName,baseRefOid,mergeStateStatus,headRefName,headRefOid,headRepository,author,assignees,statusCheckRollup,latestReviews,reviewRequests,reviewDecision > /tmp/pr.json
+      - name: Attest complete Git evidence
         run: |
           python3 scripts/ci/release_policy.py --selftest
+          python3 scripts/ci/pr_attestation.py --selftest
           python3 - <<'PY'
-          import json, os, subprocess
-          path = '/tmp/pr.json'
-          pr = json.load(open(path))
-          pr['expected_repository'] = os.environ['GITHUB_REPOSITORY']
-          official_batch = (
-              pr.get('baseRefName') == 'main'
-              and pr.get('headRefName') == 'staging'
-              and (pr.get('headRepository') or {}).get('nameWithOwner') == pr['expected_repository']
-          )
-          if official_batch:
-              subprocess.run([
-                  'git', 'fetch', 'origin', 'main:refs/remotes/origin/main',
-                  'staging:refs/remotes/origin/staging',
-              ], check=True)
-              remote_head = subprocess.check_output(['git', 'rev-parse', 'origin/staging'], text=True).strip()
-              if remote_head != pr.get('headRefOid'):
-                  raise RuntimeError('release batch head moved before classification')
-              files = subprocess.check_output([
-                  'git', 'diff', '--name-only', 'origin/main...origin/staging',
-              ], text=True).splitlines()
-              if not files:
-                  raise RuntimeError('release batch diff is empty')
-              pr['files'] = [{'path': path} for path in files]
-              pr['changedFiles'] = len(files)
-              pr['full_diff_verified'] = True
-          channel = json.loads(subprocess.check_output([
-              'python3', 'scripts/ci/release_policy.py',
-          ], input=json.dumps(pr), text=True))
-          if channel['hotfix'] and pr.get('baseRefName') == 'main':
-              number = os.environ['PR_NUMBER']
-              subprocess.run(['git', 'fetch', 'origin', 'main:refs/remotes/origin/main', 'staging:refs/remotes/origin/staging'], check=True)
-              head_ref = f'refs/remotes/origin/pr/{number}'
-              subprocess.run([
-                  'git', 'fetch', 'origin', f'refs/pull/{number}/head:{head_ref}',
-              ], check=True)
-              head = subprocess.check_output([
-                  'git', 'rev-list', f"origin/main..{head_ref}",
-              ], text=True).splitlines()
-              staging = subprocess.check_output([
-                  'git', 'rev-list', 'origin/main..origin/staging',
-              ], text=True).splitlines()
-              main_is_ancestor = subprocess.run([
-                  'git', 'merge-base', '--is-ancestor', 'origin/main', head_ref,
-              ], check=False).returncode == 0
-              result = json.loads(subprocess.check_output([
-                  'python3', 'scripts/ci/release_policy.py', '--ancestry',
-              ], input=json.dumps({
-                  'head_commits': head,
-                  'staging_commits': staging,
-                  'main_is_ancestor': main_is_ancestor,
-              }), text=True))
-              pr.update(result)
-          open(path, 'w').write(json.dumps(pr))
+          import json, os
+          payload = {
+              'pr': json.load(open('/tmp/pr.json')),
+              'pr_number': int(os.environ['PR_NUMBER']),
+              'expected_repository': os.environ['GITHUB_REPOSITORY'],
+          }
+          open('/tmp/pr-attestation-input.json', 'w').write(json.dumps(payload))
           PY
+          python3 scripts/ci/pr_attestation.py --emit < /tmp/pr-attestation-input.json > /tmp/pr-attestation.json
+          python3 - <<'PY'
+          import json
+          payload = json.load(open('/tmp/pr-attestation-input.json'))
+          payload['attestation'] = json.load(open('/tmp/pr-attestation.json'))
+          open('/tmp/pr-attestation-input.json', 'w').write(json.dumps(payload))
+          PY
+          python3 scripts/ci/pr_attestation.py --apply < /tmp/pr-attestation-input.json > /tmp/pr-attested.json
+          mv /tmp/pr-attested.json /tmp/pr.json
       - name: Classify PR
         run: |
           python3 scripts/ci/pr_classify.py --selftest
@@ -309,7 +273,15 @@ jobs:
           pathlib.Path('/tmp/pr-comment-payload.json').write_text(json.dumps(payload))
           PY
           python3 scripts/ci/pr_comment.py --selftest
+          python3 scripts/ci/bot_sweep.py --selftest
           python3 scripts/ci/pr_comment.py < /tmp/pr-comment-payload.json > /tmp/pr-comment.md
+          python3 - <<'PY'
+          import json
+          from scripts.ci.bot_sweep import encode_state
+          pr = json.load(open('/tmp/pr.json'))
+          with open('/tmp/pr-comment.md', 'a') as output:
+              output.write('\n' + encode_state('classify', pr) + '\n')
+          PY
           python3 - <<'PY'
           import json, os, subprocess
           marker = '## csbrasil-bot classification'
@@ -317,9 +289,11 @@ jobs:
           # sai como github-actions[bot], o filtro nunca casa e cada gatilho posta
           # um NOVO (PR #348 chegou a 5 idênticos). O marcador no corpo é a
           # identidade; extras são deletados e o primeiro é atualizado.
-          comments = json.loads(subprocess.check_output([
-              'gh', 'api', f"repos/${{ github.repository }}/issues/{os.environ['PR_NUMBER']}/comments?per_page=100"
+          pages = json.loads(subprocess.check_output([
+              'gh', 'api', '--paginate', '--slurp',
+              f"repos/${{ github.repository }}/issues/{os.environ['PR_NUMBER']}/comments?per_page=100"
           ], text=True))
+          comments = [comment for page in pages for comment in page]
           body = open('/tmp/pr-comment.md').read()
           meus = [c for c in comments if marker in c.get('body', '')]
           for c in meus[1:]:
@@ -348,14 +322,31 @@ jobs:
             exit 1
           fi
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Dispara o classify de cada PR aberto
+      - name: Dispara classify só quando algum insumo de decisão mudou
         run: |
-          # Só quem mexeu na última hora e meia (o sweep roda a cada 30 min). Reclassificar os
-          # 50 PRs abertos 48×/dia era ~2.400 disparos por dia para quase nenhuma mudança —
-          # o PR parado já foi classificado no último evento dele.
-          DESDE=$(date -u -d '90 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
-          for pr in $(gh pr list --repo "$REPO" --state open --limit 50 --json number,updatedAt \
-                        --jq ".[] | select(.updatedAt >= \"$DESDE\") | .number"); do
-            gh workflow run csbrasil-bot-pr-classify.yml --repo "$REPO" -f pr_number="$pr" \
-              || echo "::warning::não deu para reclassificar o PR #$pr"
-          done
+          python3 scripts/ci/bot_sweep.py --selftest
+          gh pr list --repo "$REPO" --state open --limit 100 \
+            --json number,title,body,isDraft,baseRefName,baseRefOid,mergeStateStatus,assignees,labels,headRefName,headRefOid,headRepository,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
+            > /tmp/classify-sweep.json
+          python3 - <<'PY'
+          import json, os, subprocess
+          from scripts.ci.bot_sweep import should_dispatch
+          repo = os.environ['REPO']
+          for pr in json.load(open('/tmp/classify-sweep.json')):
+              number = pr['number']
+              try:
+                  pages = json.loads(subprocess.check_output([
+                      'gh', 'api', '--paginate', '--slurp',
+                      f'repos/{repo}/issues/{number}/comments?per_page=100',
+                  ], text=True))
+                  comments = [comment for page in pages for comment in page]
+              except subprocess.CalledProcessError:
+                  comments = []  # Sem estado legível, reavalia em vez de suprimir.
+              if not should_dispatch(pr, comments, 'classify'):
+                  print(f'PR #{number}: unchanged base/head/labels/rollup/reviews; skipping classify')
+                  continue
+              subprocess.run([
+                  'gh', 'workflow', 'run', 'csbrasil-bot-pr-classify.yml',
+                  '--repo', repo, '-f', f'pr_number={number}',
+              ], check=False)
+          PY

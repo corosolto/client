@@ -151,7 +151,6 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `mat_shade.py` | Sombreamento de material. |
 | `havan-planta.py` + `.png` | Planta baixa da Loja H. |
 | `p0-pix.py` | Comparação pixel a pixel da rodada P0. |
-| `vm_quake_measure.py` | Medição do look Quake 4 (o antecessor do look CS 1.6 atual). |
 
 ## 6. Infra
 
@@ -226,8 +225,15 @@ o que essas rodadas decidiram vivem no site/`main.js` e no `CHANGELOG.md`.
 Eram capturas de tuning de game feel; o que decidiram sobreviveu nos comentários
 de causa raiz do `game.js`/`springs.js` e no `CHANGELOG.md`.
 
-**Look Quake 4** (o projeto escolheu o look CS 1.6 na v3.2.0):
-`vm-quake-capture.mjs` · `vm-quake-scen.mjs` · `vm_quake_measure.py`
+**Aposentado — Look Quake 4** (movido para `tools/eval/aposentados/` em
+2026-11-13, issue #1085; o projeto escolheu o look CS 1.6 na v3.2.0):
+`vm-quake-capture.mjs` · `vm-quake-scen.mjs` · `vm_quake_measure.py`.
+A máscara A/B e a orientação do cano do primeiro sobrevivem nos comentários de
+`_vmFrame` e no `vm-mint-audit.mjs`; ADS, flash e recarga do segundo, nos
+contratos C8–C13 do `BAR-CONSISTENCIA.md`; as medidas de enquadramento do
+terceiro, no bloco de causa raiz do `_vmFrame` no `game.js`. A decisão e os
+valores históricos das duas famílias de look ficaram no `CHANGELOG.md` (3.1.0 e
+3.2.0).
 
 **Diagnósticos R2:** `r2_audit.py` · `r2_diag.py`
 

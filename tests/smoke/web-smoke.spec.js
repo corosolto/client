@@ -148,3 +148,90 @@ test('menu, ranking, map, teams, character and initial hud boot', async ({ page 
   await testInfo.attach('navegacao-timings.json', { body: JSON.stringify(timings, null, 2), contentType: 'application/json' });
   console.log('NAVEGAÇÃO', JSON.stringify(timings));
 });
+
+test('queda do nó mostra estado de reconexão e permite entrar de novo', async ({ page }, testInfo) => {
+  const base = process.env.BASE_URL || 'http://127.0.0.1:4321';
+  if (MUTANTE === 'sem-aviso-reconexao') {
+    testInfo.annotations.push({ type: 'mutação', description: 'sem-aviso-reconexao — esconde o aviso depois do onClose; a régua DEVE reprovar' });
+    await page.route('**/js/main.js*', async (rota) => {
+      const r = await rota.fetch();
+      const corpo = await r.text();
+      const mutado = corpo.replace("abrirMultiplayer().then(() => mpErro('A conexão com o servidor caiu. Entre de novo.'));", 'abrirMultiplayer();');
+      if (mutado === corpo) throw new Error('mutante sem-aviso-reconexao não encontrou o aviso de onClose');
+      await rota.fulfill({ status: 200, contentType: 'application/javascript', body: mutado });
+    });
+  }
+  await page.route('**/health', (rota) => {
+    const host = new URL(rota.request().url()).hostname;
+    if (host !== 'fixture.invalid') return rota.abort();
+    return rota.fulfill({ json: { regiao: 'url', players: 1, rooms: 1, salaConvite: true, soloVerified: true } });
+  });
+  await page.route('http://fixture.invalid/rooms', (rota) => rota.fulfill({ json: { rooms: [{
+    id: 'smoke', name: 'SALA SMOKE', map: 'praca_poderes', mapId: 'praca_poderes', mode: 'rounds',
+    oficial: true, private: false, players: 1, max: 10, livre: { E: 4, B: 5 }, convite: 'BR-SMOKE',
+  }] } }));
+  await page.addInitScript((forceFail) => {
+    const sockets = [];
+    class WebSocketSmoke {
+      constructor(url) {
+        this.url = url;
+        this.protocol = 'coro-snapshot-v8';
+        this.readyState = 0;
+        sockets.push(this);
+        setTimeout(() => {
+          if (window.__mpSmokeForceFail && sockets.length > 1) {
+            this.readyState = 3;
+            this.onclose?.();
+            return;
+          }
+          this.readyState = 1;
+          this.onopen?.();
+          this.onmessage?.({ data: JSON.stringify({
+            type: 'welcome', protocolVersion: 8, yourEnt: 1, yourTeam: 'E', espectador: false,
+            map: 'praca_poderes', roster: [], faccaoE: 'E', faccaoB: 'B', ctf: false,
+            partida: 1, room: 'smoke', regiao: 'url', teamSize: 1, roundsMax: 1, recursos: [],
+          }) });
+        }, 20);
+      }
+      send() {}
+      close() {
+        if (this.readyState === 3) return;
+        this.readyState = 3;
+        setTimeout(() => this.onclose?.(), 0);
+      }
+    }
+    Object.defineProperty(window, 'WebSocket', { configurable: true, writable: true, value: WebSocketSmoke });
+    window.__mpSmokeSockets = sockets;
+    window.__mpSmokeForceFail = false;
+  }, MUTANTE === 'sem-aviso-reconexao');
+
+  await page.goto(`${base}/?debug=1&nav=1&home=legacy&ui=legacy&mp=fixture.invalid`);
+  await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#boot-splash')).toHaveCount(0);
+  await page.locator('.cs-item[data-act="mp"]').click();
+  await expect(page.locator('.mp-sala .mp-entrar[data-lado="E"]')).toBeVisible({ timeout: 25_000 });
+  await page.locator('.mp-sala .mp-entrar[data-lado="E"]').dispatchEvent('click');
+  await expect(page.locator('#mp-estado')).toHaveText(/NA SALA/, { timeout: 25_000 });
+
+  // Fecha DEPOIS do welcome: o NetClient já aceitou a sessão e o onClose de produção é obrigatório.
+  // Sondas podem abrir sockets auxiliares sem onClose; a queda precisa atingir a sessão aceita.
+  const socketsAntes = await page.evaluate((forceFail) => {
+    const ativos = window.__mpSmokeSockets.filter((socket) => typeof socket.onclose === 'function');
+    if (ativos.length !== 1) throw new Error(`expected one accepted socket, got ${ativos.length}`);
+    ativos[0].close();
+    window.__mpSmokeForceFail = forceFail;
+    return window.__mpSmokeSockets.length;
+  }, MUTANTE === 'sem-aviso-reconexao');
+  if (MUTANTE === 'sem-aviso-reconexao') {
+    await expect(page.locator('#mp-panel')).toBeVisible();
+    await expect(page.locator('#mp-erro')).toBeVisible({ timeout: 25_000 });
+    await expect(page.locator('#mp-erro')).toHaveText('A conexão com o servidor caiu. Entre de novo.');
+  } else {
+    await expect.poll(() => page.evaluate(() => window.__mpSmokeSockets.length)).toBe(socketsAntes + 1);
+    await expect(page.locator('#mp-estado')).toHaveText(/NA SALA/, { timeout: 25_000 });
+    await expect(page.locator('#hud')).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('#mp-panel')).toBeHidden();
+    await expect(page.locator('#mp-erro')).toBeHidden();
+  }
+});
