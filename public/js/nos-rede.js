@@ -9,13 +9,8 @@ const { VERSION } = versao;
 // ausente em árvore anterior ao fingerprint: degrada para comparar VERSION
 const SIM_HASH = versao.SIM_HASH || null;
 
-/* PARIDADE DE SIMULAÇÃO (incidente da frota, KNOWN-BUGS): protocolo igual não é jogo
-   igual. O nó diz no `welcome` que versão simula; `?mpversao=0` libera no local.
-
-   Quando os DOIS lados trazem `SIM_HASH` (scripts/sim-hash.mjs), compara-se o código que o
-   nó simula, não o rótulo: release de menu ou chat muda VERSION e não muda a física, e não
-   pode deixar todo mundo fora do multiplayer até o nó ser reimplantado. Sem hash de um dos
-   lados, vale a regra antiga de versão idêntica. */
+/* PARIDADE: com SIM_HASH nos dois lados compara a simulação, não VERSION; sem hash,
+   mantém a regra antiga de versão idêntica. `?mpversao=0` libera no local. */
 export const versaoCompativel = (doNo, nossa = VERSION, simNo = null, nossoSim = SIM_HASH) => {
   if (simNo && nossoSim) return simNo === nossoSim;
   return !doNo || doNo === nossa;
@@ -48,9 +43,8 @@ export const createRoom = (httpBase, cfg, ticket = '') => j(`${httpBase}/rooms`,
   method: 'POST', headers: { 'content-type': 'application/json', ...(ticket ? { authorization: `Bearer ${ticket}` } : {}) }, body: JSON.stringify(cfg),
 });
 
-/* Sonda TODOS os nós em paralelo e devolve cada um com ping e lotação. É a coluna de ping do
-   server browser — sem ela o jogador não tem como saber que o nó da Europa é o dele. Nó que
-   não responde volta com ping null e NÃO some da lista: sumir esconde a queda do servidor. */
+/* Sonda todos os nós em paralelo. Nó sem resposta fica visível com ping null;
+   esconder a entrada também esconderia a queda do servidor. */
 // Prazo que só anda quando o navegador dá a vez: thread travada não pode consumi-lo.
 // `setTimeout` mede relógio de parede e derrubava a sonda inteira no boot — BUG-169.
 const PASSO_MS = 100;
