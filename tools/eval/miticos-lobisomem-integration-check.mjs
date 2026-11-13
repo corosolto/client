@@ -2,6 +2,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { NodeIO } from '@gltf-transform/core';
 import * as THREE from '../../public/vendor/three.module.js';
+import { faction, FACTIONS } from '../../public/js/factions.js';
+import { CHARACTER_RELEASES } from '../../public/js/data/content-releases.js';
 
 const mutant = (process.argv.find(a => a.startsWith('--mutate=')) || '').split('=')[1];
 if (mutant && !['sem-lobisomem', 'roster', 'links', 'gloves', 'resultados', 'clipes', 'curltwist', 'loading'].includes(mutant)) throw new Error(`Mutante desconhecido: ${mutant}`);
@@ -26,8 +28,9 @@ expect(/lobisomem:\s*'shotgun'/.test(characters), 'loadout de lobisomem não est
 const glb = read('public/js/glbchars.js');
 expect(/'lobisomem'/.test(glb), 'GLB_CHARS não carrega lobisomem');
 const palette = read('public/js/paleta.js');
-expect(/FACCOES\s*=\s*\[[^\]]*'M'/.test(palette) && /M:\s*\{ base: '#9d4edd', escura: '#5e35b1', palida: '#d0a3f0' \}/.test(palette), 'paleta M está incompleta');
-expect(/M:\s*'m'/.test(read('public/js/brasoes.js')), 'brasão M não está registrado');
+expect(/export const PALETA = Object.fromEntries\(FACTIONS.map/.test(palette)
+  && /id:'M'[\s\S]*?color:'#9d4edd'[\s\S]*?dark:'#5e35b1'[\s\S]*?ink:'#d0a3f0'/.test(read('public/js/factions.js')), 'paleta M está incompleta');
+expect(/crest:'m'/.test(read('public/js/factions.js')) && /urlDoBrasao\(BRASAO\[fac\]\)/.test(read('public/js/brasoes.js')), 'brasão M não está registrado');
 const main = read('public/js/main.js');
 expect(/btn-team-e/.test(main) && /btn-team-b/.test(main) && !/btn-team-m/.test(main), 'seleção deve expor apenas Time E e Time B');
 expect(/TEAM_ART_URLS[^;]*time-e\.webp[^;]*time-b\.webp/.test(main) && !/TEAM_ART_URLS[^;]*mitico\.webp/.test(main), 'preload do menu deve carregar apenas as artes dos dois times');
@@ -78,7 +81,7 @@ for (const dedicated of [false, true]) for (const size of [1, 5, 8]) {
 }
 let query = read('public/js/screenquery.js');
 if (mutant === 'links') query = change(query, ", 'M'", '');
-const resolveQuery = new Function(`${query.replace('export function', 'function')}return resolveInspectionScreen;`)();
+const resolveQuery = new Function('faction', `${query.replace("import { faction } from './factions.js';", '').replace('export function', 'function')}return resolveInspectionScreen;`)(faction);
 for (const tela of ['personagem', 'hud', 'vitoria', 'derrota']) {
   const target = resolveQuery(new URLSearchParams({ tela, time: 'M', char: 'lobisomem' }));
   expect(target.faction === 'M' && target.character === 'lobisomem', `inspeção ${tela} perde M`);
@@ -181,21 +184,20 @@ expect(!torcidos.length,
    por `tools/eval/miticos-browser-review.mjs`, que foi quem achou. */
 const loading3d = read('public/js/loading3d.js');
 const paleta = read('public/js/paleta.js');
-const faccoes = (paleta.match(/export const FACCOES = \[([^\]]*)\]/) || [])[1]
-  ?.match(/'([A-Z])'/g)?.map((f) => f.slice(1, -1)) || [];
+const faccoes = FACTIONS.filter((entry) => entry.ready).map((entry) => entry.id);
 expect(faccoes.length >= 6, `FACCOES não foi lido do paleta.js: ${JSON.stringify(faccoes)}`);
 let mapaLoading = (loading3d.match(/LOADING_CHARACTER_IDS = Object\.freeze\(\{([\s\S]*?)\}\)/) || [])[1] || '';
 if (mutant === 'loading') mapaLoading = mapaLoading.replace(/\n\s*M: '[^']*',/, '');
-const porFaccao = Object.fromEntries([...mapaLoading.matchAll(/([A-Z]):\s*'([^']+)'/g)].map((m) => [m[1], m[2]]));
+const porFaccao = Object.fromEntries([...mapaLoading.matchAll(/['"]?([A-Za-z-]+)['"]?:\s*'([^']+)'/g)].map((m) => [m[1], m[2]]));
 const glbChars = read('public/js/glbchars.js');
 for (const f of faccoes) {
   const id = porFaccao[f];
   expect(!!id, `facção ${f} não tem personagem no palco de carregamento — o fallback mostra o Time E no lugar dela (loading3d.js)`);
   if (!id) continue;
-  const dono = new RegExp(`\\{ id: '${id}',[^}]*team: '([A-Z])'`).exec(characters)?.[1]
-    || new RegExp(`id: '${id}',\\s*team: '([A-Z])'`).exec(characters)?.[1];
+  const dono = new RegExp(`\\{ id: '${id}',[^}]*team: '([A-Za-z-]+)'`).exec(characters)?.[1]
+    || new RegExp(`id: '${id}',\\s*team: '([A-Za-z-]+)'`).exec(characters)?.[1];
   expect(dono === f, `palco de carregamento da facção ${f} usa '${id}', que é da facção ${dono}`);
-  expect(glbChars.includes(`'${id}'`), `palco de carregamento da facção ${f} usa '${id}', que não está em GLB_CHARS — o palco fica vazio`);
+  expect(glbChars.includes(`'${id}'`) || Object.hasOwn(CHARACTER_RELEASES, id), `palco de carregamento da facção ${f} usa '${id}', que não está em GLB_CHARS — o palco fica vazio`);
 }
 
 if (mutant) {
