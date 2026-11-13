@@ -56,7 +56,9 @@ import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
 import { createMapPreview, VIDEO_MAPS } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
-import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, mpUrls, sondarNos, listRooms, listMaps, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, ladoOnline, transitionSlot, decidirPersonagemMp } from './net.js';
+import { NOS, NO_RE, ordenarNos, melhorNoParaJogar, parseConvite, linkDeConvite, httpDoNo } from './nos.js';
+import { mpUrls, sondarNos, listRooms, listMaps, createRoom, salaPorConvite } from './nos-rede.js';
+import { NetClient, resolvePlayerSide, ladoOnline, transitionSlot, decidirPersonagemMp } from './net.js';
 import { montarChatSala } from './chat-painel.js';
 import { planoPreload, segundosAteVirada, textoProximo } from './mp-proximo.js';
 import { makeNetcode } from './netgame.js';

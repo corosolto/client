@@ -29,8 +29,8 @@ if (mut && mut !== 'relogio-de-parede') throw new Error(`mutante desconhecido: $
 /* O mutante reescreve o MÓDULO, não uma variável desta régua. A primeira versão trocava só
    um `const` local, e a cláusula que importa (SP3, que passa pelo `sondarNos`) continuava
    chamando o prazo verdadeiro: ela ficava VERDE contra o mutante, medindo nada. */
-const ORIGEM = new URL('../../public/js/net.js', import.meta.url);
-const COPIA = new URL('../../public/js/net.__mutante__.js', import.meta.url);
+const ORIGEM = new URL('../../public/js/nos-rede.js', import.meta.url);
+const COPIA = new URL('../../public/js/nos-rede.__mutante__.js', import.meta.url);
 let alvo = ORIGEM;
 if (mut === 'relogio-de-parede') {
   const src = readFileSync(ORIGEM, 'utf8');
