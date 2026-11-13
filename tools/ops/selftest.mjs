@@ -80,7 +80,7 @@ function fixture(cenario) {
 function servidor(cenario, raiz) {
   const chamadas = {};
   const escritas = [];
-  const html = `<!doctype html><html><head><link rel="stylesheet" href="/style.css?v=${V}"><script type="importmap">${JSON.stringify({ imports: { './js/main.js': `./js/main.js?v=${V}-x`, './js/dep.js': `./js/dep.js?v=${V}-x`, './js/version.js': `./js/version.js?v=${V}-x`, './js/ops.js': `./js/ops.js?v=${V}-x` } })}</script></head><body><div id="btn-jogar"></div><script type="module" src="/js/ops.js?v=${V}-x"></script><script type="module" src="/js/main.js?v=${V}-x"></script></body></html>`;
+  const html = `<!doctype html><html><head><link rel="stylesheet" href="/style.css?v=${V}"><script>const X_PIXEL_ID='teste';const u=document.createElement('script');u.src='https://static.ads-twitter.com/uwt.js';document.head.appendChild(u);</script><script type="importmap">${JSON.stringify({ imports: { './js/main.js': `./js/main.js?v=${V}-x`, './js/dep.js': `./js/dep.js?v=${V}-x`, './js/version.js': `./js/version.js?v=${V}-x`, './js/ops.js': `./js/ops.js?v=${V}-x` } })}</script></head><body><div id="btn-jogar"></div><script type="module" src="/js/ops.js?v=${V}-x"></script><script type="module" src="/js/main.js?v=${V}-x"></script></body></html>`;
   const saude = { ok: true, service: 'fixture', database: true, telemetrySchema: true, fresh: true, stale: [], never: [], operationalFresh: true, operationalStale: [], operationalNever: [] };
   if (cenario === 'banco-fora') saude.database = false;
   if (cenario === 'schema-telemetria') saude.telemetrySchema = false;
@@ -94,7 +94,7 @@ function servidor(cenario, raiz) {
     chamadas[caminho] = (chamadas[caminho] || 0) + 1;
     const n = chamadas[caminho];
     const envia = (status, corpo, headers = {}) => { res.writeHead(status, headers); res.end(corpo); };
-    const csp = cenario === 'sem-csp' ? {} : { 'content-security-policy': "default-src 'self'" };
+    const csp = cenario === 'sem-csp' ? {} : { 'content-security-policy': "default-src 'self'; script-src 'self' 'unsafe-inline'" };
     if (caminho === '/') { const f = () => envia(200, cenario === 'html-sem-importmap' ? '<!doctype html><html><body>manutencao</body></html>' : html, { 'content-type': 'text/html', ...csp }); return cenario === 'html-lento' && n === 1 ? setTimeout(f, 2700) : cenario === 'html-nao-200' ? envia(500, 'erro') : f(); }
     if (caminho === '/js/main.js') return cenario === 'main-js-indisponivel' ? envia(404, '') : cenario === 'main-js-e-html' ? envia(200, '<!doctype html><html>404</html>', { 'content-type': 'text/html' }) : envia(200, readFileSync(join(raiz, 'public/js/main.js')), { 'content-type': 'text/javascript', 'access-control-allow-origin': '*' });
     if (caminho === '/js/dep.js') return cenario === 'modulo-404' ? envia(404, '') : envia(200, cenario === 'export-sumido' ? 'export const bar = 1;\n' : readFileSync(join(raiz, 'public/js/dep.js')), { 'content-type': 'text/javascript' });
@@ -259,6 +259,9 @@ if (!SO || SO === 'navegador') {
           else if (s.escritas.length) ruim(`navegador 'saudavel' ESCREVEU no servidor: ${s.escritas.join(', ')} — o contrato "só lê" está furado`);
           else ok(`navegador 'saudavel' → ${nav.escritasBloqueadas.length} escrita(s) barradas antes da rede (${nav.escritasBloqueadas.join(', ')}), 0 chegaram`);
           // a fixture também aborta um fetch de propósito: cancelamento pela página não é recurso falho
+          if (nav.ruidoTerceirosRemovido !== 1) ruim(`MUTAÇÃO de terceiro não aplicou: pixel removido=${nav.ruidoTerceirosRemovido}, esperado 1`);
+          else if (nav.consoleErros.length) ruim(`navegador 'saudavel' mediu o pixel bloqueado pela CSP como erro do jogo: ${nav.consoleErros.join(' · ')}`);
+          else ok("navegador 'saudavel' → pixel de anúncio removido antes da avaliação, sem erro de CSP no relatório");
           if (nav.requestsFalhas.length) ruim(`navegador 'saudavel' acusou recurso falho por pedido cancelado/barrado: ${nav.requestsFalhas.join(' · ')}`);
           else ok("navegador 'saudavel' → fetch abortado pela página e escritas barradas não contam como recurso falho");
         } else {
