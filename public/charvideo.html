@@ -238,34 +238,6 @@ if (ALPHA) {
   enableLightBloom(renderer, { quality: qp.get('q') || 'high' });
 }
 
-const ctrl = built.ctrl || null;
-let t = 0;
-
-/* shoot e walkfire só existem enquanto o controlador está ATIRANDO (o update() do
-   jogo volta para idle quando `shooting` cai, e walkfire ainda exige movimento).
-   Para esses dois a página mantém o gatilho apertado e, no walkfire, o passo de
-   caminhada — sem isso ?pose=shoot e ?pose=walkfire renderizavam o idle. */
-let atirando = null;
-function aplicaPose(s) {
-  atirando = s === 'shoot' || s === 'walkfire' ? s : null;
-  if (atirando && ctrl?.shoot) ctrl.shoot();
-  else if (ctrl && ctrl._to) ctrl._to(s);
-}
-function avanca(dt) {
-  if (ctrl) {
-    if (atirando && ctrl.shoot && !ctrl.shooting) ctrl.shoot();
-    const andando = atirando === 'walkfire' ? 1 : 0;
-    ctrl.update(dt, andando, false, andando * 1.3);
-  }
-  if (SPIN) built.group.rotation.y = Math.PI + THREE.MathUtils.degToRad(YAW0 + SPIN * t);
-  built.group.updateMatrixWorld(true);
-}
-
-aplicaPose(POSE0);
-/* Aquecimento: o mesmo laço de 30 quadros do charlineup.html. Um clipe recém-
-   ligado começa na pose de bind (braços em T) e leva alguns quadros para assentar.
-   Capturar antes disso põe um frame de boneco de vitrine no início do vídeo. */
-for (let k = 0; k < 30; k++) avanca(1 / FPS);
 renderer.render(scene, camera);
 
 /* Personagem de release do Studio (data/content-releases.js): `studio` diz de onde
