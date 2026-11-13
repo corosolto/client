@@ -180,6 +180,7 @@ function runEmitter(fnName, calls, opts) {
     testMode: opts.testMode ?? false,
     analyticsAllowed: () => opts.allow ?? true,
     matchMode: opts.menuMode ?? 'rounds',
+    settings: { wpnMode: 'all' },
     game: opts.game ? makeGame(opts.row ?? null) : undefined,
     sendJsonKeepalive: (route, payload) => ctx.__captures.push({ route, payload: JSON.parse(JSON.stringify(payload)) }),
     __captures: [], Math, Object, JSON,
