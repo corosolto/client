@@ -73,6 +73,27 @@ npm run dev               # http://localhost:4321 · o JOGO está na rota /
 Confira o requisito de Node no [quickstart do README](README.md#rodar-localmente)
 e rode `node --version` e `npm --version` no terminal que vai instalar as dependências.
 
+Para repetir o ambiente do CI sem caçar versão ou biblioteca do Chromium, abra o clone num
+**Dev Container**. A imagem usa Node 22, o npm de `packageManager` e o Playwright exato do
+lock; o `postCreateCommand` executa o mesmo `scripts/setup.mjs` acima e termina com o
+diagnóstico do navegador. Num terminal já configurado, o caminho equivalente é:
+
+```bash
+node scripts/ci-local.mjs --setup       # setup + Playwright do lock num prefixo privado + Chromium (sem root)
+node scripts/ci-local.mjs --setup-system  # Linux: Playwright eleva só a instalação das libs nativas
+node scripts/ci-local.mjs --diagnose    # só ambiente; não roda teste
+node scripts/ci-local.mjs               # diagnóstico e check:fast
+node scripts/ci-local.mjs eval:boot     # qualquer script npm, com CHROME_BIN já descoberto
+```
+
+O prefixo privado em `node_modules/.ci-local-prefix` atende às réguas que consultam
+`npm root -g`, sem escrever no npm global do sistema. Uma sobrescrita de `CHROME_BIN`
+só é aceita quando resolve para o mesmo Chromium instalado pelo Playwright do lock.
+
+O runner não define `PREPUSH=0` nem outra forma de pular portão. Falta de Node/npm, pacote,
+Chromium ou biblioteca nativa sai como `⊘ SKIP` com exit **78** (`EX_CONFIG`), antes dos testes;
+depois do diagnóstico verde, o exit e o veredito são do script executado.
+
 **O jogo é a rota `/`, e o HTML dele é `src/pages/index.astro`.** Não existe
 `public/index.html` — servir `public/` com um servidor estático te dá os assets,
 não o jogo. (A versão anterior deste arquivo mandava justamente pro lugar
