@@ -90,14 +90,14 @@ function mutations() {
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
     console.log('AI2b: a stem embedded in unrelated text cannot hide an orphan.');
 
-    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\nexport const character = 'adjim';\nexport const state = 'crouch';\n");
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\nexport const character = 'adjim';\nexport const state = 'crouch';\nexport const url = clipUrl(character, state);\n");
     put(fixture, 'public/models/anims/adjim/crouch.glb', 'dynamic-reference');
     expectStatus(runInventory(fixture), 0, 'path-qualified dynamic reference generation');
     expectStatus(runInventory(fixture, ['--check']), 0, 'path-qualified dynamic reference check');
     rmSync(join(fixture, 'public/models/anims/adjim/crouch.glb'));
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
     expectStatus(runInventory(fixture), 0, 'dynamic reference removal generation');
-    console.log('AI2c: a template with literal path values proves a dynamic reference.');
+    console.log('AI2c: a direct local template call proves a dynamic reference.');
 
     put(fixture, 'public/js/refs.js', "export const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\n");
     put(fixture, 'public/models/anims/other.json', '{"id":"adjim","state":"crouch"}\n');
@@ -249,6 +249,37 @@ function mutations() {
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
     console.log('AI2p: an export alias never resolves to a same-named private template.');
 
+    put(fixture, 'public/js/refs.js', "export const clipUrl = (id, state) => `models/anims/${id}/${state}.glb`;\nexport const character = 'dead';\nexport const state = 'idle';\n");
+    put(fixture, 'public/models/anims/dead/idle.glb', 'unused-template');
+    result = runInventory(fixture);
+    expectStatus(result, 1, 'unused local template cannot approve an on-disk orphan');
+    assert.match(result.stderr, /orphan-new: models\/anims\/dead\/idle\.glb/);
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'unused local template also fails check');
+    rmSync(join(fixture, 'public/models/anims/dead/idle.glb'));
+    console.log('AI2q: an unused template and same-module literals cannot prove a call site.');
+
+    put(fixture, 'public/js/consumer.js', "import { clipUrl } from './refs.js';\nexport const url = clipUrl('dead', 'idle');\n");
+    result = runInventory(fixture);
+    expectStatus(result, 1, 'dynamic call target missing from disk is lost');
+    assert.match(result.stderr, /referenced-file-lost: models\/anims\/dead\/idle\.glb/);
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'dynamic missing target also fails check');
+    assert.match(result.stderr, /referenced-file-lost: models\/anims\/dead\/idle\.glb/);
+    rmSync(join(fixture, 'public/js/consumer.js'));
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    console.log('AI2r: a resolved dynamic call whose target was never present fails generation and check.');
+
+    put(fixture, 'public/js/refs.js', "export const id = 'ghost';\nexport const url = `models/props/${id}.glb`;\n");
+    result = runInventory(fixture);
+    expectStatus(result, 1, 'fully resolved inline target missing from disk is lost');
+    assert.match(result.stderr, /referenced-file-lost: models\/props\/ghost\.glb/);
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'fully resolved inline target also fails check');
+    assert.match(result.stderr, /referenced-file-lost: models\/props\/ghost\.glb/);
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\n");
+    console.log('AI2s: a fully resolved inline template whose target was never present fails generation and check.');
+
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
     reviewed.files['models/props/legacy.glb'] = createHash('sha256')
@@ -322,7 +353,7 @@ function mutations() {
     assert.ok(existsSync(join(fixture, 'public/audio/time-e/ingame/added.mp3')));
     console.log('AU4: audio referenced add and manual orphan removal pass.');
 
-    console.log('ASSET-INVENTORY mutations OK: generate/check orphan refusal, explicit review, 2 referenced-file-lost, safe add/remove for both inventories.');
+    console.log('ASSET-INVENTORY mutations OK: generate/check orphan refusal, explicit review, 4 referenced-file-lost, safe add/remove for both inventories.');
     return 0;
   } finally {
     rmSync(fixture, { recursive: true, force: true });
@@ -331,5 +362,11 @@ function mutations() {
 
 if (process.argv.includes('--mutations')) process.exit(mutations());
 const result = spawnSync(process.execPath, [GENERATOR, '--check'], { cwd: ROOT, stdio: 'inherit' });
-const audioResult = spawnSync(process.execPath, [AUDIO_GENERATOR, '--check'], { cwd: ROOT, stdio: 'inherit' });
-process.exit(combinedStatus(result, audioResult));
+const audioManifest = join(ROOT, 'public/audio/manifest.json');
+const audioPrepare = existsSync(audioManifest)
+  ? { status: 0 }
+  : spawnSync(process.execPath, [AUDIO_GENERATOR], { cwd: ROOT, stdio: 'inherit' });
+const audioResult = audioPrepare.status === 0
+  ? spawnSync(process.execPath, [AUDIO_GENERATOR, '--check'], { cwd: ROOT, stdio: 'inherit' })
+  : { status: 1 };
+process.exit(combinedStatus(result, audioPrepare, audioResult));
