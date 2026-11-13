@@ -41,7 +41,7 @@ algo está errado e o quality gate está verde, o defeito é do quality gate.
 
 | Zona | O que é | Tamanho medido | Regra |
 |---|---|---|---|
-| `public/` | o **jogo** | 207 arquivos `.js`, 82.277 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
+| `public/` | o **jogo** | 209 arquivos `.js`, 82.325 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
 | `src/` | o **site** | 30 páginas `.astro`, 5 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
 | `tools/` | o **arnês** | 1029 scripts em `tools/eval/`, 91 em `tools/` | node puro: sobe o jogo real sem browser |
 
@@ -166,7 +166,7 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 npm run check:fast   # node tools/eval/runner.mjs --suite=fast
 ```
 
-`package.json` tem **805 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
+`package.json` tem **806 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 

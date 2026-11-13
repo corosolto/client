@@ -1155,10 +1155,6 @@ const cardEscalacaoInteiro = /\.hub-roster-cell\{position:relative[^}]*\}/.test(
 const versaoMenuNoCanto = /<\/div>\s*<span class="menu-version" id="mf-ver"><\/span>\s*<\/div>\s*<!-- PAINEL DE SETUP/.test(astro)
   && /\.menu-version\{[^}]*position:fixed[^}]*right:min\(4vw,42px\)[^}]*bottom:14px/.test(css)
   && /\.menu-footer\{[^}]*bottom:48px/.test(css);
-/* UIR20 — home ESTÁTICA com idioma por país. O Stateloop só publica build estático
-   e a home SSR não emite dist/client/index.html, então a decisão de idioma migrou
-   do frontmatter para o /api/geo-lang: o fetch começa no <head>, o i18n resolve
-   ANTES do boot (translateDom) e cai no navegador quando a API não existe. */
 const idiomaGeo = !/export const prerender = false/.test(astro)
   && /window\.__GEO_LANG__/.test(astro)
   && langFromCountry('US') === 'en'
@@ -1170,7 +1166,9 @@ const idiomaGeo = !/export const prerender = false/.test(astro)
   && /langFromCountry/.test(apiGeoLang)
   && /export async function resolveGeoLang/.test(i18n)
   && /navigator\.language/.test(i18n)
-  && /await resolveGeoLang\(\)/.test(main);
+  // Sem top-level await: o contrato autoritativo é a cadeia que traduz antes de finishBoot.
+  && /window\.__CS_LANG_READY__\s*=\s*moduleSequencingReady\.then\(\(\)\s*=>\s*resolveGeoLang\(\)\)\.then/.test(main)
+  && /void window\.__CS_LANG_READY__\.then\(finishBoot\)\.catch/.test(main);
 
 const resultados = [
   ['UIA1', 'elenco inteiro tem avatar, seleção e dois resultados estáticos', assetOk, assetEvid],
