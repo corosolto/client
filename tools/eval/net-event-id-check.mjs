@@ -8,7 +8,7 @@ const edits={
  'invalid-alias':['return Number.isInteger(id) && id >= 0 && id <= 0xffffffff ? id : null;','return Number.isInteger(id) && id >= 0 && id <= 0xffffffff ? id : 0;'],
  'signed-attacker':['this._netMap.get(aId)','this._netMap.get(aId | 0)'],
  'signed-victim':['this._netMap.get(vId)','this._netMap.get(vId | 0)'],
- 'signed-hit':['vId !== meu','(vId | 0) !== meu'],
+ 'signed-hit':['if (!att || this.espectador || vId !== meu) return;','if (!att || this.espectador || (vId | 0) !== meu) return;'],
  'signed-nade':['this._netMap.get(oId) || (oId === meu ? p : null)','this._netMap.get(oId | 0) || ((oId | 0) === meu ? p : null)'],
  'signed-boom':['const dono = oId == null ? null : (this._netMap.get(oId) || null);','const dono = oId == null ? null : (this._netMap.get(oId | 0) || null);'],
 };
@@ -28,18 +28,20 @@ const rows=[];
 const check=(clause,run)=>{try{run();rows.push({clause,pass:true});console.log('ok '+clause);}
  catch(e){rows.push({clause,pass:false,type:e.name,message:e.message});console.error('FALHA '+clause+': '+e.message);}};
 function fixture(me=1){
- const calls={hit:[],arc:[],feed:[],kills:[],blood:[],tracer:[],nade:[],boom:[]};
+ const calls={hit:[],arc:[],feed:[],kills:[],blood:[],tracer:[],nade:[],boom:[],drop:[],sumir:[],input:[]};
  const body=team=>({team,def:{id:'senador'},pos:new THREE.Vector3(1,0,2),yaw:0});
  const p=body('E'),other=body('B');
  const game={player:p,el:{},settings:{quality:'high'},camera:new THREE.PerspectiveCamera(),
-  scene:new THREE.Scene(),sfx:{death(){}},drops:[],_grenades:[],
+  scene:new THREE.Scene(),sfx:{death(){}},drops:[],_grenades:[],camView:{yaw:0,pitch:0},mouseDown0:false,renderTime(){return 0;},
   _dmgArc:(...a)=>calls.arc.push(a),_noteHit:(...a)=>calls.hit.push(a),
   _feed:(...a)=>calls.feed.push(a),_playerKillFeedback:(...a)=>calls.kills.push(a),
   _bloodPoolAt:(...a)=>calls.blood.push(a),_tracer:(...a)=>calls.tracer.push(a),
+  _dropWeapon:(...a)=>{calls.drop.push(a);game.drops.push({weapon:a[2]});},
+  _sumirDrop:(...a)=>calls.sumir.push(a),
   _spawnGrenade:(...a)=>{calls.nade.push(a);game._grenades.push({v:new THREE.Vector3(),mesh:new THREE.Object3D()});},
   _explodeFrag:(...a)=>calls.boom.push(a),
  };
- const net={meta:{events:1},yourEnt:me,startPing(){},stopPing(){}};
+ const net={meta:{events:1},yourEnt:me,startPing(){},stopPing(){},sendInput:(cmd)=>{calls.input.push(cmd);return calls.input.length;}};
  const mp=makeNetcode(game,net);mp._netMap.set(me,p);
  return{game,p,other,mp,calls,net};
 }
@@ -100,6 +102,31 @@ check('invalid IDs never alias entity zero or valid local victim',()=>{
   mp._evento({k:'kill',a:id,v:2});assert.equal(calls.feed.length,1);
   assert.equal(calls.feed[0][0],null,'invalid attacker remains an environmental kill');
   assert.equal(mp._netMap.get(0),p);
+ });
+});
+check('drop de rede com ID 0 nasce, some no gone e no reset, e o pick pede ID 0 ao servidor',()=>{
+ for(const id of [0,1,0xffffffff])withFixture(1,({mp,game,calls})=>{
+  mp._evento({k:'drop',i:id,w:'ak',x:1,z:2});
+  assert.equal(game.drops.length,1,'drop '+id+' nasceu');assert.equal(game.drops[0]._nid,id);
+  mp.pedirPick(game.drops[0]);
+  assert.equal(mp._pickPendente,id,'pick pendente '+id);
+  mp.stepPlayer(game.player,{ax:0,az:0},0.016);
+  assert.equal(calls.input.at(-1).pick,id,'input carrega pick '+id);
+  assert.equal(mp._pickPendente,null,'pedido consumido, mesmo com ID 0');
+  mp._evento({k:'gone',i:id});
+  assert.equal(calls.sumir.length,1,'gone '+id+' sumiu o drop');
+  mp._evento({k:'drop',i:id,w:'ak',x:1,z:2});
+  mp.limparDropsDeRede();
+  assert.equal(calls.sumir.length,2,'reset '+id+' limpa drop de rede');
+ });
+});
+check('rack de spawn (sem _nid) continua fora do pipeline de rede',()=>{
+ withFixture(1,({mp,game,calls})=>{
+  const rack={weapon:'ak'};
+  mp.pedirPick(rack);
+  assert.equal(mp._pickPendente,null,'rack não vira pick de rede');
+  mp.stepPlayer(game.player,{ax:0,az:0},0.016);
+  assert.equal(calls.input.at(-1).pickupWeapon,'ak','rack segue como pickupWeapon');
  });
 });
 console.log(JSON.stringify({mutant:mutant||null,cases:rows.length,failed:rows.filter(r=>!r.pass)}));

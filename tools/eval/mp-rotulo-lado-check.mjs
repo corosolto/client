@@ -104,7 +104,9 @@ const pega = (re, nome) => {
   if (!m) { console.error(`REPROVA (mp-rotulo-lado-check) — não achei ${nome} no main.js; a régua precisa ser reapontada`); process.exit(1); }
   return m[1];
 };
-const FACTION_NAME = new Function(`${pega(/^(const FACTION_NAME = \{[^\n]*\};)$/m, 'FACTION_NAME')}\nreturn FACTION_NAME;`)();
+// FACTION_NAME sai do registro de facções (public/js/factions.js), como no main.js.
+const { FACTIONS } = await import('../../public/js/factions.js');
+const FACTION_NAME = new Function('FACTIONS', `${pega(/^(const FACTION_NAME = \{[^\n]*\};)$/m, 'FACTION_NAME')}\nreturn FACTION_NAME;`)(FACTIONS);
 const identidade = new Function('CHARACTERS', 'charId', 'team', 'online', 'enemyFaction', 'currentEnemyFaction', 'podeNoLado', 'ladosDe', 'resolvePlayerSide',
   `${pega(/\n(  const charDef = CHARACTERS\.find\(c => c\.id === charId\) \|\| \{\};\n[\s\S]*?\n  const enemyFac = [^\n]*\n)/, 'a decisão de lado/facção do _startGame')}
   return { faction, side, enemyFac };`);

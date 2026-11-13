@@ -6,7 +6,7 @@ on:
   # volta para bloquear a pendência. Medido na PR #373, cujo autor real dos reviews é
   # `estraga-codigo`.
   pull_request_target:
-    types: [opened, reopened, synchronize, ready_for_review]
+    types: [opened, edited, labeled, unlabeled, reopened, synchronize, ready_for_review]
   pull_request_review:
     types: [submitted, dismissed]
   pull_request_review_comment:
@@ -57,6 +57,7 @@ jobs:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
       PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
       DESIRED_BASE_BRANCH: ${{ vars.PR_DEFAULT_BASE_BRANCH || 'staging' }}
+      BUGFIX_ASSIGNEE: ${{ vars.BUGFIX_ASSIGNEE || 'nunreasonable' }}
     steps:
       - name: Guard de identidade
         run: |
@@ -67,23 +68,26 @@ jobs:
       # Leve (CL1): o job só roda scripts/ci/*.py e `git ls-remote`; o resto vem da API.
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          fetch-depth: 0
           filter: blob:none
           sparse-checkout: scripts/ci
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
       - name: Ensure labels exist
-        run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-estragacodigo-resolution estragacodigo-resolved
+        run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-estragacodigo-resolution estragacodigo-resolved bugfix hotfix release release-batch release-hotfix needs-hotfix-review
       - name: Fetch PR metadata
-        run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,headRefOid,author,assignees > /tmp/pr.json
+        run: gh pr view "$PR_NUMBER" --json title,body,labels,files,additions,deletions,changedFiles,baseRefName,baseRefOid,mergeStateStatus,headRefName,headRefOid,headRepository,author,assignees,statusCheckRollup,latestReviews,reviewRequests,reviewDecision > /tmp/pr.json
       - name: Route PR and set assignee
         run: |
           python3 - <<'PY'
-          import json, pathlib
+          import json, os, pathlib
           pr = json.load(open('/tmp/pr.json'))
-          payload = {'pr': pr, 'desired_base': '${{ env.DESIRED_BASE_BRANCH }}'}
+          payload = {'pr': pr, 'desired_base': os.environ['DESIRED_BASE_BRANCH'],
+                     'bugfix_assignee': os.environ['BUGFIX_ASSIGNEE']}
           pathlib.Path('/tmp/pr-route-input.json').write_text(json.dumps(payload))
           PY
+          python3 scripts/ci/pr_route.py --selftest
           python3 scripts/ci/pr_route.py < /tmp/pr-route-input.json > /tmp/pr-route.json
           python3 - <<'PY'
           import json, os, re, subprocess
@@ -126,7 +130,29 @@ jobs:
                              input=json.dumps({'assignees': [route['add_assignee']]}), text=True, check=True)
           PY
       - name: Refresh PR metadata after routing
-        run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,author,assignees > /tmp/pr.json
+        run: gh pr view "$PR_NUMBER" --json title,body,labels,files,additions,deletions,changedFiles,baseRefName,baseRefOid,mergeStateStatus,headRefName,headRefOid,headRepository,author,assignees,statusCheckRollup,latestReviews,reviewRequests,reviewDecision > /tmp/pr.json
+      - name: Attest complete Git evidence
+        run: |
+          python3 scripts/ci/release_policy.py --selftest
+          python3 scripts/ci/pr_attestation.py --selftest
+          python3 - <<'PY'
+          import json, os
+          payload = {
+              'pr': json.load(open('/tmp/pr.json')),
+              'pr_number': int(os.environ['PR_NUMBER']),
+              'expected_repository': os.environ['GITHUB_REPOSITORY'],
+          }
+          open('/tmp/pr-attestation-input.json', 'w').write(json.dumps(payload))
+          PY
+          python3 scripts/ci/pr_attestation.py --emit < /tmp/pr-attestation-input.json > /tmp/pr-attestation.json
+          python3 - <<'PY'
+          import json
+          payload = json.load(open('/tmp/pr-attestation-input.json'))
+          payload['attestation'] = json.load(open('/tmp/pr-attestation.json'))
+          open('/tmp/pr-attestation-input.json', 'w').write(json.dumps(payload))
+          PY
+          python3 scripts/ci/pr_attestation.py --apply < /tmp/pr-attestation-input.json > /tmp/pr-attested.json
+          mv /tmp/pr-attested.json /tmp/pr.json
       - name: Classify PR
         run: |
           python3 scripts/ci/pr_classify.py --selftest
@@ -247,7 +273,15 @@ jobs:
           pathlib.Path('/tmp/pr-comment-payload.json').write_text(json.dumps(payload))
           PY
           python3 scripts/ci/pr_comment.py --selftest
+          python3 scripts/ci/bot_sweep.py --selftest
           python3 scripts/ci/pr_comment.py < /tmp/pr-comment-payload.json > /tmp/pr-comment.md
+          python3 - <<'PY'
+          import json
+          from scripts.ci.bot_sweep import encode_state
+          pr = json.load(open('/tmp/pr.json'))
+          with open('/tmp/pr-comment.md', 'a') as output:
+              output.write('\n' + encode_state('classify', pr) + '\n')
+          PY
           python3 - <<'PY'
           import json, os, subprocess
           marker = '## csbrasil-bot classification'
@@ -255,9 +289,11 @@ jobs:
           # sai como github-actions[bot], o filtro nunca casa e cada gatilho posta
           # um NOVO (PR #348 chegou a 5 idênticos). O marcador no corpo é a
           # identidade; extras são deletados e o primeiro é atualizado.
-          comments = json.loads(subprocess.check_output([
-              'gh', 'api', f"repos/${{ github.repository }}/issues/{os.environ['PR_NUMBER']}/comments?per_page=100"
+          pages = json.loads(subprocess.check_output([
+              'gh', 'api', '--paginate', '--slurp',
+              f"repos/${{ github.repository }}/issues/{os.environ['PR_NUMBER']}/comments?per_page=100"
           ], text=True))
+          comments = [comment for page in pages for comment in page]
           body = open('/tmp/pr-comment.md').read()
           meus = [c for c in comments if marker in c.get('body', '')]
           for c in meus[1:]:
@@ -286,14 +322,31 @@ jobs:
             exit 1
           fi
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Dispara o classify de cada PR aberto
+      - name: Dispara classify só quando algum insumo de decisão mudou
         run: |
-          # Só quem mexeu na última hora e meia (o sweep roda a cada 30 min). Reclassificar os
-          # 50 PRs abertos 48×/dia era ~2.400 disparos por dia para quase nenhuma mudança —
-          # o PR parado já foi classificado no último evento dele.
-          DESDE=$(date -u -d '90 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
-          for pr in $(gh pr list --repo "$REPO" --state open --limit 50 --json number,updatedAt \
-                        --jq ".[] | select(.updatedAt >= \"$DESDE\") | .number"); do
-            gh workflow run csbrasil-bot-pr-classify.yml --repo "$REPO" -f pr_number="$pr" \
-              || echo "::warning::não deu para reclassificar o PR #$pr"
-          done
+          python3 scripts/ci/bot_sweep.py --selftest
+          gh pr list --repo "$REPO" --state open --limit 100 \
+            --json number,title,body,isDraft,baseRefName,baseRefOid,mergeStateStatus,assignees,labels,headRefName,headRefOid,headRepository,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
+            > /tmp/classify-sweep.json
+          python3 - <<'PY'
+          import json, os, subprocess
+          from scripts.ci.bot_sweep import should_dispatch
+          repo = os.environ['REPO']
+          for pr in json.load(open('/tmp/classify-sweep.json')):
+              number = pr['number']
+              try:
+                  pages = json.loads(subprocess.check_output([
+                      'gh', 'api', '--paginate', '--slurp',
+                      f'repos/{repo}/issues/{number}/comments?per_page=100',
+                  ], text=True))
+                  comments = [comment for page in pages for comment in page]
+              except subprocess.CalledProcessError:
+                  comments = []  # Sem estado legível, reavalia em vez de suprimir.
+              if not should_dispatch(pr, comments, 'classify'):
+                  print(f'PR #{number}: unchanged base/head/labels/rollup/reviews; skipping classify')
+                  continue
+              subprocess.run([
+                  'gh', 'workflow', 'run', 'csbrasil-bot-pr-classify.yml',
+                  '--repo', repo, '-f', f'pr_number={number}',
+              ], check=False)
+          PY

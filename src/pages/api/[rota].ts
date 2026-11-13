@@ -8,15 +8,15 @@ import { X_EVENT_IDS } from '../../lib/x-pixel';
 export const prerender = false;
 
 const MIGRADAS = new Set([
-  'treta',
+  'treta', 'passe',
   'social','social-auth','social-avatar','gameplay-upload','acquisition', 'avatar', 'clans', 'count', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
   'leaderboard', 'live-map', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
   'submit-match', 'telemetry', 'train-frames', 'unique',
 ]);
 
 // Social e avatar usam 404 para perfis ausentes ou privados; preservar esse status.
-// clans (backend#72) ainda depende do rollout: 404 upstream vira 503.
-const EM_ROLLOUT = ['social-auth','treta','clans'];
+// clans (backend#72) e passe (temporada Sessão da Treta) ainda dependem do rollout: 404 upstream vira 503.
+const EM_ROLLOUT = ['social-auth','treta','clans','passe'];
 
 // Cada linha de log é evento pago na Vercel: falha do X sai UMA vez por instância e causa.
 const falhasX = new Set<string>();
@@ -45,7 +45,7 @@ const handler: APIRoute = async (context) => {
     `${backendUrl().replace(/\/$/, '')}/api/${rota}${url.search}`,
     clientAddress,
     fetch,
-    { segredo: envRuntime('API_PROXY_SECRET') || '', session: ['treta','social','social-auth','social-avatar','gameplay-upload','register','avatar','mp-ticket','clans','unique'].includes(rota), userAgent: rota === 'unique' },
+    { segredo: envRuntime('API_PROXY_SECRET') || '', session: ['treta','passe','social','social-auth','social-avatar','gameplay-upload','register','avatar','mp-ticket','clans','unique'].includes(rota), userAgent: rota === 'unique' },
   );
   const step = funnelBody?.step;
   if (resposta.ok && (step === 'match_start' || step === 'match_end')) {

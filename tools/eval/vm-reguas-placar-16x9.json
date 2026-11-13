@@ -1,7 +1,7 @@
 {
- "gerado": "2026-11-06",
+ "gerado": "2026-11-10",
  "aspecto": "16x9",
- "entradas": "b01361413dfd9278",
+ "entradas": "664dca8f894d3070",
  "resultados": {
   "awp": {
    "mira": {
@@ -717,6 +717,6 @@
   "armas": [
    "pistol"
   ],
-  "base": "2026-11-06"
+  "base": "2026-11-10"
  }
 }

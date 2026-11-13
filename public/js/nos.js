@@ -1,5 +1,6 @@
 /* NÓS DE MULTIPLAYER — um por região. Fonte única: o jogo importa daqui e a página de convite
    do site também. Duas listas fariam um link cair num nó que a outra não conhece. */
+import { origemCompartilhamento } from './compartilhar.js';
 
 /* Só entram nós que EXISTEM. Servidor que nunca respondeu não é informação, é ruído — e é
    diferente de "caiu agora", que a lista de servidores mostra. */
@@ -28,8 +29,12 @@ export function parseConvite(txt) {
 /* A URL que se compartilha. Fica no SITE, e não no servidor de jogo: o link tem de abrir o
    jogo, e o servidor fala JSON e WebSocket, não HTML. */
 const ORIGEM_CONVITE = 'utm_source=convite&utm_medium=sala';
-export const linkDeConvite = (convite, origem) =>
-  `${origem || (typeof location !== 'undefined' ? location.origin : '')}/sala/${convite}?${ORIGEM_CONVITE}`;
+export const linkDeConvite = (convite, origem) => {
+  const base = origem || origemCompartilhamento();
+  const url = new URL(`/sala/${convite}`, base || 'https://www.corosolto.com.br');
+  url.search = ORIGEM_CONVITE;
+  return url.href;
+};
 
 /* http do lobby a partir da url ws do nó — o mesmo host, outro esquema. */
 export const httpDoNo = (no) => String(no.url).replace(/^ws/, 'http').replace(/\/ws.*$/, '');

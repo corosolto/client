@@ -28,13 +28,16 @@
  *
  * USO
  *   node tools/gen-audio-manifest.mjs           escreve o manifest e relata órfãos
- *   node tools/gen-audio-manifest.mjs --check   não escreve; sai 1 se estiver defasado
+ *   node tools/gen-audio-manifest.mjs --check   não escreve; sai 1 se estiver defasado,
+ *                                               houver referência ausente ou órfão fora
+ *                                               de tools/audio/orfaos.json
+ *   --orfaos=<arquivo>                          allowlist alternativa para fixtures
  */
 import { readdirSync, statSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { carregarPolitica, motivoDeRecusa } from './audio/politica.mjs';
+import { carregarPolitica, carregarAllowlistOrfaos, motivoDeRecusa } from './audio/politica.mjs';
 import { execFileSync } from 'node:child_process';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MENU_MUSIC_ACTIVE_IDS } from '../public/js/menu-music-selection.js';
 import { JAVAPORCO_GRAVACOES } from '../public/js/data/javaporcos_audio.js';
@@ -49,6 +52,32 @@ const AUDIO = RAIZ ? resolve(RAIZ) : join(ROOT, 'public', 'audio');
 const PUBLICO = RAIZ ? dirname(AUDIO) : join(ROOT, 'public');
 const MANIFEST = join(AUDIO, 'manifest.json');
 const CHECK = process.argv.includes('--check');
+const ORFAOS = (process.argv.find((a) => a.startsWith('--orfaos=')) || '').slice(9)
+  || join(ROOT, 'tools', 'audio', 'orfaos.json');
+const politicaOrfaos = carregarAllowlistOrfaos(ORFAOS);
+if (politicaOrfaos.erro) {
+  console.error(`FALTA a política de órfãos (${politicaOrfaos.erro}).`);
+  process.exit(1);
+}
+const orfaosPermitidos = politicaOrfaos.allow;
+function aprovadoOrfao(rel) {
+  const expected = orfaosPermitidos.get(rel);
+  if (!expected) return false;
+  const path = join(AUDIO, rel);
+  if (!existsSync(path)) return false;
+  return createHash('sha256').update(readFileSync(path)).digest('hex') === expected;
+}
+
+function referenciasAudio(value) {
+  const refs = [];
+  const collect = (entry) => {
+    if (typeof entry === 'string' && entry.startsWith('audio/')) refs.push(entry);
+    else if (Array.isArray(entry)) entry.forEach(collect);
+    else if (entry && typeof entry === 'object') Object.values(entry).forEach(collect);
+  };
+  collect(value);
+  return refs;
+}
 
 // facção em disco -> letra de time usada pelo jogo (game.js/characters.js)
 const FACTIONS = { 'time-e': 'E', 'time-b': 'B', tribos: 'U', palhacos: 'C', funkeiros: 'F' };
@@ -97,15 +126,9 @@ const prev = normalizarManifestAudio(prevBruto);
 // hasheadas pelo espelho menu-music/, criando exatamente 44 falsos órfãos. Neste formato
 // o check correto é integridade referencial e ausência de arquivos opacos não usados.
 if (prev?._privateBuild?.format === 'content-addressed-v1') {
-  const refs = [];
-  const collect = (value) => {
-    if (typeof value === 'string' && value.startsWith('audio/')) refs.push(value);
-    else if (Array.isArray(value)) value.forEach(collect);
-    else if (value && typeof value === 'object') Object.values(value).forEach(collect);
-  };
-  collect(prev);
+  const refs = referenciasAudio(prev);
   // As gravações instaladas fora do zip são consumidas diretamente pelo runtime.
-  collect(Object.values(JAVAPORCO_GRAVACOES).map(sample => sample.file));
+  refs.push(...Object.values(JAVAPORCO_GRAVACOES).map(sample => sample.file));
   const unique = new Set(refs);
   const missing = [...unique].filter((ref) => !existsSync(join(PUBLICO, decodeURIComponent(ref))));
   const opaqueDir = join(AUDIO, 'a');
@@ -113,6 +136,8 @@ if (prev?._privateBuild?.format === 'content-addressed-v1') {
     ? readdirSync(opaqueDir).filter((name) => AUDIO_EXT.test(name)).map((name) => `audio/a/${name}`)
     : [];
   const orphanOpaque = opaque.filter((ref) => !unique.has(ref));
+  const newOrphanOpaque = orphanOpaque.filter((ref) => !aprovadoOrfao(ref.slice('audio/'.length)));
+  const staleOrphanAllow = [...orfaosPermitidos.keys()].filter((rel) => !orphanOpaque.includes(`audio/${rel}`));
   const menuExpected = MENU_MUSIC_ACTIVE_IDS.map((id) => `audio/menu-music/${id}.mp3`);
   const missingMenuMirror = menuExpected.filter((ref) => !existsSync(join(PUBLICO, ref)));
   const extraMenuMirror = listAudio(join(AUDIO, 'menu-music')).map(toUrl).filter((ref) => !menuExpected.includes(ref));
@@ -124,9 +149,10 @@ if (prev?._privateBuild?.format === 'content-addressed-v1') {
     return prev.menuMusic?.[index] !== `audio/a/${hash}.mp3`;
   });
   console.log(`AUDIO PRIVATE  ${refs.length} referências · ${unique.size} únicas · ${opaque.length} opacas`);
-  if (missing.length || orphanOpaque.length || missingMenuMirror.length || extraMenuMirror.length || staleMenuCount || staleMenuRefs) {
-    if (missing.length) console.error(`✗ ${missing.length} referência(s) ausente(s): ${missing.slice(0, 8).join(', ')}`);
-    if (orphanOpaque.length) console.error(`✗ ${orphanOpaque.length} arquivo(s) opaco(s) órfão(s): ${orphanOpaque.slice(0, 8).join(', ')}`);
+  if (staleOrphanAllow.length) console.log(`  ⚠ ${staleOrphanAllow.length} órfão(s) permitido(s) já não existem; remova da allowlist na próxima limpeza`);
+  if (missing.length || newOrphanOpaque.length || missingMenuMirror.length || extraMenuMirror.length || staleMenuCount || staleMenuRefs) {
+    if (missing.length) console.error(`✗ referenced-file-lost: ${missing.length} referência(s) ausente(s): ${missing.slice(0, 8).join(', ')}`);
+    if (newOrphanOpaque.length) console.error(`✗ orphan-new: ${newOrphanOpaque.length} arquivo(s) opaco(s) órfão(s): ${newOrphanOpaque.slice(0, 8).join(', ')}`);
     if (missingMenuMirror.length) console.error(`✗ espelho das músicas instrumentais incompleto: ${missingMenuMirror.join(', ')}`);
     if (extraMenuMirror.length) console.error(`✗ espelho contém músicas fora da seleção instrumental: ${extraMenuMirror.join(', ')}`);
     if (staleMenuCount) console.error(`✗ manifesto privado contém ${(prev.menuMusic || []).length} músicas; seleção atual exige ${menuExpected.length}`);
@@ -270,7 +296,7 @@ const orphans = [];
     if (f.startsWith('.')) continue;
     const p = join(d, f);
     if (statSync(p).isDirectory()) walk(p);
-    else if (AUDIO_EXT.test(f) && !used.has(p)) orphans.push(relative(AUDIO, p));
+    else if (AUDIO_EXT.test(f) && !used.has(p)) orphans.push(relative(AUDIO, p).split(sep).join('/'));
   }
 })(AUDIO);
 
@@ -282,6 +308,11 @@ const total = (function count(d) {
     return n + (statSync(p).isDirectory() ? count(p) : (AUDIO_EXT.test(f) ? 1 : 0));
   }, 0);
 })(AUDIO);
+
+const missingRefs = [...new Set(referenciasAudio(out))]
+  .filter((ref) => !existsSync(join(PUBLICO, decodeURIComponent(ref))));
+const newOrphans = orphans.filter((rel) => !aprovadoOrfao(rel));
+const staleOrphanAllow = [...orfaosPermitidos.keys()].filter((rel) => !orphans.includes(rel));
 
 const next = JSON.stringify(out, null, 1) + '\n';
 const same = existsSync(MANIFEST) && readFileSync(MANIFEST, 'utf8') === next;
@@ -301,6 +332,19 @@ else if (longas.length) {
   console.log(`  ⚠ ${longas.length} fala(s) de ingame acima de ${LIMITE_INGAME}s (tocam por cima do jogo):`);
   for (const l of longas.sort((a, b) => b.d - a.d)) console.log(`     ${l.d.toFixed(1)}s  ${l.f}`);
 } else console.log(`  ✓ nenhuma fala de ingame acima de ${LIMITE_INGAME}s`);
+
+if (staleOrphanAllow.length) console.log(`  ⚠ ${staleOrphanAllow.length} órfão(s) permitido(s) já não existem; remova da allowlist na próxima limpeza`);
+if (!CHECK && (missingRefs.length || newOrphans.length)) {
+  console.log(`  ⚠ ratchet pendente: ${missingRefs.length} referência(s) ausente(s), ${newOrphans.length} órfão(s) novo(s); --check reprova`);
+}
+if (CHECK && (missingRefs.length || newOrphans.length)) {
+  if (missingRefs.length) console.error(`\n✗ referenced-file-lost: ${missingRefs.join(', ')}`);
+  if (newOrphans.length) {
+    console.error(`\n✗ orphan-new: ${newOrphans.join(', ')}`);
+    console.error(`  Revise a referência ou adicione conscientemente a ${relative(ROOT, ORFAOS)}; nenhum arquivo foi removido.`);
+  }
+  process.exit(1);
+}
 
 if (CHECK) {
   if (!same) {
