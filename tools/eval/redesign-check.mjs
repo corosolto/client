@@ -18,6 +18,7 @@ const alvoPorMutante = {
   'asset-ausente': 'UIA1',
   'resultado-nao-auditado': 'UIA1',
   'video-dimensao': 'UIA2',
+  'video-container': 'UIA2',
   'splash-sem-wallpaper': 'UIA3',
   'lote-nao-auditado': 'UIA4',
   'loading-sem-canvas': 'UIA5',
@@ -471,10 +472,12 @@ function diff(a, b) {
   return a.filter((x) => !B.has(x));
 }
 function metaWebm(rel) {
-  const probe = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name,width,height', '-of', 'json', join(ROOT, rel)], { encoding: 'utf8' });
+  const probe = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name,width,height:format=format_name', '-of', 'json', join(ROOT, rel)], { encoding: 'utf8' });
   if (probe.status !== 0) return { webm: false, vp9: false, width: null, height: null };
-  const stream = JSON.parse(probe.stdout).streams?.[0] || {};
-  return { webm: true, vp9: stream.codec_name === 'vp9', width: stream.width, height: stream.height };
+  const info = JSON.parse(probe.stdout);
+  const stream = info.streams?.[0] || {};
+  const formatos = String(info.format?.format_name || '').split(',');
+  return { webm: formatos.includes('webm'), vp9: stream.codec_name === 'vp9', width: stream.width, height: stream.height };
 }
 function metaWebpAlpha(buf) {
   const chunk = buf.indexOf(Buffer.from('VP8X'));
@@ -599,10 +602,17 @@ const metas = [
   ...selecao.map((f) => ({ arquivo: `public/video/chars/${f}`, esperado: [640, 854] })),
   ...resultadoVideo.map((f) => ({ arquivo: `public/video/resultado/${f}`, esperado: [640, 640] })),
 ].map(({ arquivo, esperado }) => ({ arquivo, esperado, meta: metaWebm(arquivo) }));
+const caminhosMidia = metas.map(({ arquivo }) => arquivo).sort();
 if (MUTANTE === 'video-dimensao' && metas.length) { metas[0].meta.width = 320; mutacaoAplicou = true; }
+if (MUTANTE === 'video-container' && metas.length) {
+  const arquivo = 'public/video/landing/gameplay-vertical.mp4';
+  const meta = metaWebm(arquivo);
+  // MP4 real legível; codec e dimensões ficam válidos para isolar a recusa do contêiner.
+  metas[0] = { arquivo, esperado: [meta.width, meta.height], meta: { ...meta, vp9: true } };
+  mutacaoAplicou = !meta.webm;
+}
 const videosRuins = metas.filter(({ esperado: [w, h], meta }) => !meta.webm || !meta.vp9 || meta.width !== w || meta.height !== h);
 
-const caminhosMidia = metas.map(({ arquivo }) => arquivo).sort();
 const hashMidia = createHash('sha256');
 for (const arquivo of caminhosMidia) {
   hashMidia.update(arquivo).update('\0').update(readFileSync(join(ROOT, arquivo))).update('\0');
