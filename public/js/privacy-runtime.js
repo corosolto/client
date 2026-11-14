@@ -1,5 +1,5 @@
 /* Medição LIGADA por padrão (dono, 09/11/2026): só recusa gravada em `cs_privacy` desliga;
-   storage corrompido/antigo vale como padrão. Réguas: privacy-choice-check, privacy-ops-check. */
+   storage corrompido/antigo vale como padrão; nenhum script de terceiro. Réguas: privacy-choice-check, privacy-ops-check. */
 (function () {
   if (window.__csPrivacy) return;
   const VERSION='corosolto-analytics-v1',KEY='cs_privacy';
@@ -10,23 +10,6 @@
     } catch { return null; }
   }
   function allowed() { return choice()?.analytics!==false; }
-  let vercelLoaded=false;
-  function enableVercelAnalytics() {
-    if(vercelLoaded || !allowed() || /^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname))return;
-    vercelLoaded=true;
-    window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};
-    window.va('beforeSend',event=>{
-      if(!allowed())return null;
-      try{
-        const url=new URL(event.url);
-        url.search='';url.hash='';
-        if(url.pathname.startsWith('/u/'))url.pathname='/u/:perfil';
-        return {...event,url:url.toString()};
-      }catch{return null;}
-    });
-    const script=document.createElement('script');
-    script.defer=true;script.src='/_vercel/insights/script.js';document.head.appendChild(script);
-  }
   function clearOptionalStorage() {
     try { localStorage.removeItem('cs_acq');localStorage.removeItem('cs_ops_last');sessionStorage.removeItem('cs_session');sessionStorage.removeItem('cs_invite_landing'); } catch {}
   }
@@ -40,8 +23,6 @@
     return value;
   }
   if(!allowed())clearOptionalStorage();
-  enableVercelAnalytics();
-  window.addEventListener('cs-privacy-change',enableVercelAnalytics);
   window.addEventListener('storage',event=>{
     if(event.key!==KEY && event.key!==null)return;
     if(!allowed())clearOptionalStorage();
