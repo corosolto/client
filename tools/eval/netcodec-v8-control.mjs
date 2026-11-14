@@ -23,7 +23,7 @@ const cases = [
 ];
 let failures = 0;
 const run = (name, codecPath, expected) => {
-  const child = spawnSync(process.execPath, ['--test', 'tests/netcodec-v8.test.mjs'], {
+  const child = spawnSync(process.execPath, ['--no-warnings', '--test', '--test-reporter=tap', 'tests/netcodec-v8.test.mjs'], {
     cwd: root, encoding: 'utf8', timeout: 15000,
     env: { ...process.env, CODEC_UNDER_TEST: pathToFileURL(codecPath).href },
   });
