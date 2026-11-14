@@ -188,12 +188,26 @@ export function validateManifest(manifest, root) {
   must(JSON.stringify(Object.keys(manifest.slots).sort()) === JSON.stringify([...CANONICAL_SLOTS].sort()), 'canonical slot set mismatch');
   const slotEntries = CANONICAL_SLOTS.map(slot => {
     const policy = manifest.slots[slot];
-    exactKeys(policy, ['allowedModes', 'layer', 'regions', 'conflicts', 'socketRole'], `slot ${slot}`);
+    const keys = ['allowedModes', 'layer', 'regions', 'conflicts', 'socketRole'];
+    if (slot === 'head') keys.push('fitPolicy', 'knownIncompatibleBodies');
+    exactKeys(policy, keys, `slot ${slot}`);
     uniqueStrings(policy.allowedModes, `${slot}.allowedModes`); must(policy.allowedModes.every(mode => MODES.has(mode)), `${slot}: invalid attachment mode`);
     must(Number.isSafeInteger(policy.layer) && policy.layer >= 0, `${slot}: invalid layer`);
     uniqueStrings(policy.regions, `${slot}.regions`); uniqueStrings(policy.conflicts, `${slot}.conflicts`);
     must(policy.conflicts.every(conflict => CANONICAL_SLOTS.includes(conflict) && conflict !== slot), `${slot}: invalid slot conflict`);
     must(policy.socketRole === null || Object.hasOwn(REQUIRED_ROLES, policy.socketRole), `${slot}: invalid socket role`);
+    if (slot === 'head') {
+      must(policy.fitPolicy === 'deferred-per-body', 'head: invalid fit policy');
+      must(Array.isArray(policy.knownIncompatibleBodies), 'head.knownIncompatibleBodies array required');
+      const incompatibleIds = new Set();
+      for (const row of policy.knownIncompatibleBodies) {
+        exactKeys(row, ['bodyId', 'bodySha256', 'reason'], 'head known incompatible body');
+        must(typeof row.bodyId === 'string' && /^(character|skin):[a-z0-9-]+$/.test(row.bodyId) && !incompatibleIds.has(row.bodyId), 'head: invalid or duplicate incompatible body');
+        incompatibleIds.add(row.bodyId);
+        must(typeof row.bodySha256 === 'string' && /^[a-f0-9]{64}$/.test(row.bodySha256), `head: invalid body hash for ${row.bodyId}`);
+        must(typeof row.reason === 'string' && row.reason.length > 0, `head: missing incompatibility reason for ${row.bodyId}`);
+      }
+    }
     return [slot, policy];
   });
   for (const [slot, policy] of slotEntries) for (const conflict of policy.conflicts) {
@@ -225,7 +239,10 @@ export function validateManifest(manifest, root) {
       must(item.asset === null && item.provenance === null, `${item.id}: missing inventory cannot claim asset/provenance`);
       must(item.certifiedFamilies.length === 0 && item.certifiedBodies.length === 0 && item.fitProfiles.length === 0, `${item.id}: missing asset cannot certify fit`);
     } else {
-      must(item.inventoryStatus === 'versioned', `${item.id}: invalid inventory status`);
+      must(item.inventoryStatus === 'versioned' || item.inventoryStatus === 'deferred', `${item.id}: invalid inventory status`);
+      if (item.inventoryStatus === 'deferred') {
+        must(item.certifiedFamilies.length === 0 && item.certifiedBodies.length === 0 && item.fitProfiles.length === 0, `${item.id}: deferred asset cannot certify fit`);
+      }
       exactKeys(item.asset, ['path', 'sha256', 'bytes'], `${item.id}.asset`);
       const asset = safeFile(root, item.asset.path, `${item.id} asset`), bytes = readFileSync(asset);
       must(item.asset.bytes === bytes.length && item.asset.sha256 === hash(bytes), `${item.id}: asset bytes/hash mismatch`);
