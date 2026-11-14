@@ -23,6 +23,12 @@ case "$URL" in
     AUTH_ARGS=(-H "Authorization: Bearer ${BLOB_READ_WRITE_TOKEN}")
     PACOTE_PRIVADO=1
     ;;
+  # Cópia do pack privado no R2 (bucket corosolto-private): lida pelo wrangler com o token
+  # do deploy (CLOUDFLARE_API_TOKEN/CF_API_TOKEN + CLOUDFLARE_ACCOUNT_ID). Formato r2://bucket/chave.
+  r2://*/*)
+    : "${AUDIO_PACK_SHA256:?AUDIO_PACK_SHA256 ausente para verificar o pacote privado de audio}"
+    PACOTE_PRIVADO=1
+    ;;
 esac
 
 # O manifest que o jogo consome precisa de `mapSoundscapes` para todo mapa do
@@ -63,8 +69,13 @@ if [ -f "$CACHE_ZIP" ] && confere_sha "$CACHE_ZIP"; then
 else
   rm -f "$CACHE_ZIP"
   echo "Baixando pacote de áudio de: $URL"
-  curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL \
-    "${AUTH_ARGS[@]}" "$URL" -o /tmp/csbrasil-audio.zip
+  if [[ "$URL" == r2://* ]]; then
+    rm -f /tmp/csbrasil-audio.zip
+    npx --no-install wrangler r2 object get "${URL#r2://}" --file /tmp/csbrasil-audio.zip --remote
+  else
+    curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL \
+      "${AUTH_ARGS[@]}" "$URL" -o /tmp/csbrasil-audio.zip
+  fi
   confere_sha /tmp/csbrasil-audio.zip
   if [ -d "$CACHE_DIR" ]; then cp /tmp/csbrasil-audio.zip "$CACHE_ZIP"; fi
 fi

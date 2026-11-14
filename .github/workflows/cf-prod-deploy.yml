@@ -1,0 +1,77 @@
+# Produção no Cloudflare Workers (docs/runbooks/MIGRACAO-CLOUDFLARE.md, fase 4).
+# Mesmo gatilho da Vercel (scripts/ci/vercel-ignore.sh): só o commit `chore(release):` que o trem
+# de release empurra na main com o RELEASE_TOKEN publica; `workflow_dispatch` com tag reimplanta
+# uma versão (rollback de código). Publicar o Worker não muda o tráfego: os hosts só chegam nele
+# pelas Worker Routes de tools/cf/virada.sh.
+name: cf-prod-deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag a publicar (ex.: v2.1.0-alpha.150)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cf-prod-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      REF: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.sha }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ env.REF }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Confere conta e pacote de áudio
+        env:
+          AUDIO_PACK_URL: ${{ vars.AUDIO_PACK_URL }}
+        run: |
+          set -euo pipefail
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || { echo "::error::Configure CLOUDFLARE_ACCOUNT_ID em Actions Variables"; exit 1; }
+          [ -n "$CF_API_TOKEN" ] || { echo "::error::Configure CF_WORKERS_TOKEN com Workers Scripts:Edit e R2 em Actions Secrets"; exit 1; }
+          # Produção nunca cai no pacote público em silêncio: sem o privado, o deploy nem começa.
+          [ -n "$AUDIO_PACK_URL" ] || { echo "::error::Configure AUDIO_PACK_URL/AUDIO_PACK_SHA256 em Actions Variables"; exit 1; }
+      - run: npm ci
+      - name: Build Cloudflare
+        id: build
+        env:
+          AUDIO_PACK_URL: ${{ vars.AUDIO_PACK_URL }}
+          AUDIO_PACK_SHA256: ${{ vars.AUDIO_PACK_SHA256 }}
+        run: |
+          set -euo pipefail
+          CS_BUILD_SHA="$(git rev-parse HEAD)"
+          export CS_BUILD_SHA
+          echo "sha=$CS_BUILD_SHA" >> "$GITHUB_OUTPUT"
+          npm run build:cf
+      - name: Publica csb-prod
+        env:
+          SUBDOMAIN: ${{ vars.CF_WORKERS_SUBDOMAIN }}
+        run: |
+          set -euo pipefail
+          npx wrangler deploy --config wrangler.prod.toml 2>&1 | tee "$RUNNER_TEMP/wrangler-prod.log"
+          echo "PROD_WORKER_URL=https://csb-prod.${SUBDOMAIN:-rubenmarcus-dev}.workers.dev" >> "$GITHUB_ENV"
+      - name: Verifica o deploy (build, áudio e viewmodels)
+        env:
+          CS_BUILD_SHA: ${{ steps.build.outputs.sha }}
+        run: |
+          set -euo pipefail
+          node tools/cf/verifica-deploy.mjs --base="$PROD_WORKER_URL" --sha="$CS_BUILD_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
