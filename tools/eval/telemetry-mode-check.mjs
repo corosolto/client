@@ -174,6 +174,7 @@ function runEmitter(fnName, calls, opts) {
     versaoComOrigem: (v) => `v${v}`, VERSION: '1.2.3',
     telemetryGameContext: { gameType: 'fps' }, sinaisDeBuild: () => ({}),
     currentMap: 'cs_arena', currentChar: 'ze', currentFaction: 'sp',
+    settings: { wpnMode: 'all' },
     registeredNick: 'nick', _matchEventId: 'ev1',
     telemetrySent: false, _matchEventSent: false,
     testMode: opts.testMode ?? false,
