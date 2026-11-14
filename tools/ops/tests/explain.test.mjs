@@ -17,7 +17,7 @@ test('alvo bloqueado por proxy é inconclusivo, não vermelho; sem rede é crít
   assert.equal(proxy[0].severidade, 'inconclusivo');
   const v = veredito(proxy, {});
   assert.equal(v.inconclusivo, true);
-  assert.equal(codigoDeSaida(v), 3);
+  assert.equal(codigoDeSaida(v), 78);
   const caido = explicar({ boot: { sonda: 'boot', alvo: 'https://x', html: { status: 0, erro: 'timeout', ms: 10000 } } });
   assert.equal(caido[0].severidade, 'critico');
   assert.equal(codigoDeSaida(veredito(caido, {})), 1);
