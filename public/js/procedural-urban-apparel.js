@@ -40,11 +40,14 @@ export const URBAN_BODY_ADAPTERS = Object.freeze({
   'e5a31ca1d72b6a4cb3231757c6a9ad075c3713e8a32722a665f10b3a7f4a177b': adapter('weighted-mesh-motoca-cachorro-loko', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
   '7714dbb9ff324e0c1fac93de2e0ee2d2fb150c3576eba304840bcaa876ee955e': adapter('bounds-cuca', 'body-local-depth-envelope', { maximumDepth: 1.75 }),
   '6b3839025c194b1418c71c7ddb68a9a9afe59794d50d49c4409197edf6f0093d': adapter('bounds-lobisomem', 'body-local-width-envelope', { maximumWidth: 2.2 }),
+  'd2f5f8e2808522c52c41d38cd3ad996c39db51ef10edbca954078be1a5fade81': adapter('weights-depth-lobisomem-cyborg', 'normalize-weight-sum-headfront-measurement-and-preserve-body-local-depth-envelope', { normalizeReadWeights: true, maximumDepth: 1.6, measureFrom: Object.freeze({ Head: 'headfront' }) }),
   'e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119': adapter('spine02-lula-cyborg', 'spine-region-is-weighted-to-spine02', { measureFrom: Object.freeze({ Spine: 'Spine02' }) }),
+  '881e87facd893855a2139824a489160014847c2506bdb712ae120c2f8727e0b1': adapter('spine02-lula-drip', 'spine-region-is-weighted-to-spine02', { measureFrom: Object.freeze({ Spine: 'Spine02' }) }),
+  '4e58761e8ed5827ad7ef35432e57c20885c2490d70721d2c309497b1f7cf84dd': adapter('spine02-lula-mandrake', 'spine-region-is-weighted-to-spine02', { measureFrom: Object.freeze({ Spine: 'Spine02' }) }),
   '4db27d13f43fd0f3a06b0d564747e62722e848c1667af4e8fc362923e9716f1b': adapter('spine02-senador-drip', 'spine-region-is-weighted-to-spine02', { measureFrom: Object.freeze({ Spine: 'Spine02' }) }),
   '43eb4d073d4a485b24c3916e0259049667f07440a88c4aac52f27888ed4b48e8': adapter('spine02-zero-um-mandrake', 'spine-region-is-weighted-to-spine02', { measureFrom: Object.freeze({ Spine: 'Spine02' }) }),
   'acecd2a763dc417f6b132a2d555bffd2c6a5e7cf3b1a83a50ee24d938fce4b0f': adapter('roles-mst', 'duplicate-curl-joints-are-outside-required-fit-roles'),
-  '98b41671c7b1ca47cffbd4177fd620045cd20ace5d7e6b266911ec24f8aa34d4': adapter('weights-lampiao', 'normalize-weight-sum-for-measurement-read', { normalizeReadWeights: true }),
+  'd32764d5254aa221951d0ea37f013d2a32f07f925a5aeaec8907ee6ed032a129': adapter('weights-lampiao', 'normalize-weight-sum-for-measurement-read', { normalizeReadWeights: true }),
   '96aa7ef6278dce4d8b11a5d58ab8d9f0c6d0b835b9ab3ab530d5bd1bbeea0048': adapter('weights-mariabonita', 'normalize-weight-sum-for-measurement-read', { normalizeReadWeights: true }),
 });
 const COLORS = Object.freeze({

@@ -3,43 +3,50 @@
   "sourceHashes": {
     "urbanCatalog": "47baca9a13940c67e51826031ff87742bd49f763aa62ee14985ff48193118743",
     "mintBatch": "061c6af4061e62540d7ec2ab072d609dea2fe24e9f9facc5696607390750b8eb",
-    "bodyCensus": "4f37f66a40f8c71614684605f1ca951b19d21fc1cd1c3d6210609ccd3ddc8f9b",
-    "rigidFactory": "b76add300328a8c450a392d50008942ff8e4230d9617230ba565ce93e13e8f7f",
-    "apparelFactory": "1389cb9a320860df7bf8f7fd8ff5bb5198bbfc04e0bb6b514421b3153877a5f4",
+    "bodyCensus": "c8751a6a138f1e864e51957de464594719daa7be9507654be3a606732493f10c",
+    "rigidFactory": "a6d654d010bae8c629180a3e0d0c9b78eba0fc4abed4435f6be9f78d339938a5",
+    "apparelFactory": "d98e66ae663cab9c8081d7fd3bf6261165b50523a3ba2c1561c54a39c2c38927",
     "eyewearManifest": "9d28f8f7e84e0b9bacc1dffabb71b5adc213601853e7ec5167cf39a223fecc32",
-    "eyewearRuntime": "389ef195aae7fc62409faa6ad802813f51e1755da1debd3264116d36f5eec0f0",
+    "eyewearRuntime": "69bb2b162cea02cce46fee1ba252764dc7028667e0232a3d445bed2f39459c4d",
     "faceLandmarks": "cf178868a1cc58449d710a4d7c2557be3eef15efd38440178ae674a08a0bee43",
     "scene": "1c1a06efd230ffb56ce93c36d9fbf826d8d0f8f580720abe57fc3ed896b2fa0a",
-    "captureTool": "2c140df3b8bb64b4b78cf0260e21ec0b9cc3f69f750fbab9a6a18a94bf74316a"
+    "captureTool": "f9e2995e4835087fdd613403dba9396e6df600da5625d64a8c4a47706c798f34"
   },
   "files": {
     "bodies-01.png": {
       "kind": "body-contact-sheet",
-      "bytes": 3174083,
-      "sha256": "cf1dffd62a0bcbf5a4d7a21974a7dac2c45e26c46de9e97ad9e190fddd9e4a5c",
+      "bytes": 3183754,
+      "sha256": "0a096bc9939c412dd5ddb102ea51a04fe09239e3f06a6c3065f1b65962863974",
       "width": 1120,
       "height": 4969
     },
     "bodies-02.png": {
       "kind": "body-contact-sheet",
-      "bytes": 3228093,
-      "sha256": "e02fd4dc4b254dcafe1f17dcfb62649b167e1bf9b29a57b16be79b38fbd26b7e",
+      "bytes": 3229180,
+      "sha256": "40eb9757eda3ba990611f97c302b35924beb56cd6b6a08d505edc943b164e4bb",
       "width": 1120,
       "height": 4969
     },
     "bodies-03.png": {
       "kind": "body-contact-sheet",
-      "bytes": 3295742,
-      "sha256": "dc58898c48366f1756e417560a516ccc6797fc5d0e64153a17142a9d73992bee",
+      "bytes": 3294934,
+      "sha256": "c76873f308a0a5cab0079fe05bb2a8b7d67c764c394b14fad3e5ac3a13e23318",
       "width": 1120,
       "height": 4969
     },
     "bodies-04.png": {
       "kind": "body-contact-sheet",
-      "bytes": 3622130,
-      "sha256": "5e1ce26712fc9ae50d0578d1a5e097bf5dc70d6e5cd39427e054becdb91d78e1",
+      "bytes": 3420513,
+      "sha256": "0d113f529d6025ce955881f1c9d91bda3ef65079921b01aa44a3e8186a767019",
       "width": 1120,
       "height": 4969
+    },
+    "bodies-05.png": {
+      "kind": "body-contact-sheet",
+      "bytes": 2178117,
+      "sha256": "89fb6857f35d09c79a7248636b403efa71558570b6667a2f0b1389cff2b4a605",
+      "width": 1120,
+      "height": 3189
     },
     "families-34.png": {
       "kind": "family-gallery",
