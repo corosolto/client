@@ -21,9 +21,11 @@ const mutations = {
   'stop-ignorado': ['ctrl.pararEmote?.(); b._netEmoteAppliedTick = null;', 'b._netEmoteAppliedTick = null;'],
   'import-ressuscita': ['b._netEmoteLoading = false;', "b._netEmoteLoading = false; ctrl.emote?.('frevo', 0);"],
   'troca-sem-estado': ['const novo = b._netVisualCtrl !== ctrl;', 'const novo = false;'],
-  'intencao-ausente': ['emote: this.game._emoteAtual || null,', 'emote: null,'],
+  'intencao-ausente': ['emote: V9_EMOTES.has(this.game._emoteAtual) ? this.game._emoteAtual : null,', 'emote: null,'],
+  'emote-local-vaza': ['emote: V9_EMOTES.has(this.game._emoteAtual) ? this.game._emoteAtual : null,', 'emote: this.game._emoteAtual || null,'],
   'estado-antigo': ['if (estadoNovo) {', 'if (true) {'],
-  'pausa-para-emote': ['emote: game._emoteAtual || null,', 'emote: null,'],
+  'pausa-para-emote': ['emote: V9_EMOTES.has(game._emoteAtual) ? game._emoteAtual : null,', 'emote: null,'],
+  'pausa-local-vaza': ['emote: V9_EMOTES.has(game._emoteAtual) ? game._emoteAtual : null,', 'emote: game._emoteAtual || null,'],
 };
 assert(!mutant || mutations[mutant], 'mutante conhecido');
 let netUrl = new URL('../../public/js/netgame.js', import.meta.url).href;
@@ -184,12 +186,17 @@ try {
 
   const input = { ax: 0, az: 0, crouch: false, shift: false, jump: false };
   game._emoteAtual = 'samba'; mp.stepPlayer(game.player, input, 1 / 60);
+  game._emoteAtual = 'capoeira'; mp.stepPlayer(game.player, input, 1 / 60);
   game._emoteAtual = null; mp.stepPlayer(game.player, input, 1 / 60);
-  check('R3P13', inputs.at(-2)?.emote === 'samba' && inputs.at(-1)?.emote === null,
-    inputs.slice(-2).map(i => i.emote));
+  check('R3P13', inputs.at(-3)?.emote === 'samba' && inputs.at(-2)?.emote === null && inputs.at(-1)?.emote === null,
+    inputs.slice(-3).map(i => i.emote));
   game.paused = true; game._emoteAtual = 'samba'; mp._inputAt = 0;
   mp._pulsoDePausa();
-  check('R3P16', inputs.at(-1)?.emote === 'samba', 'heartbeat preserva a intenção do jogador pausado');
+  const sambaPausado = inputs.at(-1)?.emote;
+  game._emoteAtual = 'capoeira'; mp._inputAt = 0;
+  mp._pulsoDePausa();
+  check('R3P16', sambaPausado === 'samba' && inputs.at(-1)?.emote === null,
+    { v9: sambaPausado, captura: inputs.at(-1)?.emote });
   game.paused = false; game._emoteAtual = null;
 } finally { mp.dispose(); }
 for (const row of rows) console.log(`${row.id} ${row.pass ? 'PASSA' : 'FALHA'} ${JSON.stringify(row.observed)}`);

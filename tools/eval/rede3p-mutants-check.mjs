@@ -13,8 +13,10 @@ const targets = {
   'import-ressuscita': ['R3P4race'],
   'troca-sem-estado': ['R3P9', 'R3P11'],
   'intencao-ausente': ['R3P13'],
+  'emote-local-vaza': ['R3P13'],
   'estado-antigo': ['R3P14'],
   'pausa-para-emote': ['R3P16'],
+  'pausa-local-vaza': ['R3P16'],
 };
 const script = fileURLToPath(new URL('./rede3p-check.mjs', import.meta.url));
 function run(mutant = '') {
