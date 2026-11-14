@@ -7,7 +7,7 @@
 */
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
-import { TETO_PEGADA_M, tetoTexto } from './lib/grip-tolerancia.mjs';
+import { contratoSocketCanonico, TETO_PEGADA_M, tetoTexto } from './lib/grip-tolerancia.mjs';
 
 const MUTANT = process.argv.includes('--mutante=arma-deslocada');
 const evidencePath = 'tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-grip-evidence.json';
@@ -20,7 +20,7 @@ const check = (ok, message) => { console.log(`${ok ? '✓' : '✗'} ${message}`)
 check(evidence.weapon === 'm4', 'arma declarada é M4');
 check(evidence.characterSha256 === sha256(evidence.character), 'SHA do Câmera canônico confere');
 check(evidence.weaponSha256 === sha256(evidence.weaponFile), 'SHA da M4 canônica confere');
-check(evidence.socketContract?.maxHandDistanceMeters === TETO_PEGADA_M, `tolerância do recibo = teto canônico (${tetoTexto})`);
+check(contratoSocketCanonico(evidence.socketContract), `mãos, anchors e tolerância do recibo = contrato canônico (${tetoTexto})`);
 for (const [clip, pose] of Object.entries(evidence.foraDoContrato || {})) {
   const pior = Math.max(distance(pose.rightHand, pose.rightAnchor), distance(pose.leftHand, pose.leftAnchor));
   check(!evidence.poses[clip] && pior > TETO_PEGADA_M && !!pose.motivo,
