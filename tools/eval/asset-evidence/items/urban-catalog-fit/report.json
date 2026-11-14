@@ -7,14 +7,14 @@
   "sourceHashes": {
     "urbanCatalog": "47baca9a13940c67e51826031ff87742bd49f763aa62ee14985ff48193118743",
     "mintBatch": "061c6af4061e62540d7ec2ab072d609dea2fe24e9f9facc5696607390750b8eb",
-    "bodyCensus": "4f37f66a40f8c71614684605f1ca951b19d21fc1cd1c3d6210609ccd3ddc8f9b",
-    "rigidFactory": "b76add300328a8c450a392d50008942ff8e4230d9617230ba565ce93e13e8f7f",
-    "apparelFactory": "1389cb9a320860df7bf8f7fd8ff5bb5198bbfc04e0bb6b514421b3153877a5f4",
+    "bodyCensus": "c8751a6a138f1e864e51957de464594719daa7be9507654be3a606732493f10c",
+    "rigidFactory": "a6d654d010bae8c629180a3e0d0c9b78eba0fc4abed4435f6be9f78d339938a5",
+    "apparelFactory": "d98e66ae663cab9c8081d7fd3bf6261165b50523a3ba2c1561c54a39c2c38927",
     "eyewearManifest": "9d28f8f7e84e0b9bacc1dffabb71b5adc213601853e7ec5167cf39a223fecc32",
-    "eyewearRuntime": "389ef195aae7fc62409faa6ad802813f51e1755da1debd3264116d36f5eec0f0",
+    "eyewearRuntime": "69bb2b162cea02cce46fee1ba252764dc7028667e0232a3d445bed2f39459c4d",
     "faceLandmarks": "cf178868a1cc58449d710a4d7c2557be3eef15efd38440178ae674a08a0bee43",
     "scene": "1c1a06efd230ffb56ce93c36d9fbf826d8d0f8f580720abe57fc3ed896b2fa0a",
-    "captureTool": "2c140df3b8bb64b4b78cf0260e21ec0b9cc3f69f750fbab9a6a18a94bf74316a"
+    "captureTool": "f9e2995e4835087fdd613403dba9396e6df600da5625d64a8c4a47706c798f34"
   },
   "views": [
     "front",
@@ -24,11 +24,11 @@
     "catalogItems": 160,
     "safeConcepts": 147,
     "blockedPermissionNeeded": 13,
-    "bodiesObserved": 88,
-    "selectableBodies": 87,
+    "bodiesObserved": 101,
+    "selectableBodies": 100,
     "auxiliaryBodies": 1,
     "bodyFitCandidates": 0,
-    "bodyFitUnassessed": 87,
+    "bodyFitUnassessed": 100,
     "headwearDeferred": true,
     "geometryFamiliesObserved": 34,
     "certified": 0,
@@ -4316,7 +4316,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "2b15e377385aacb55c64d1c4922680afd7d2f7cda1dafcb4459ff7cd76b31b09",
+          "bodySha256": "c946867988c416e43930e9f60772e0b7de9bd6733f112f6d2b92f9cab3f30fd7",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -4342,7 +4342,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "2b15e377385aacb55c64d1c4922680afd7d2f7cda1dafcb4459ff7cd76b31b09",
+          "bodySha256": "c946867988c416e43930e9f60772e0b7de9bd6733f112f6d2b92f9cab3f30fd7",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -4362,7 +4362,7 @@
           "resolvedBones": {
             "Hips": "Hips"
           },
-          "bodySha256": "2b15e377385aacb55c64d1c4922680afd7d2f7cda1dafcb4459ff7cd76b31b09",
+          "bodySha256": "c946867988c416e43930e9f60772e0b7de9bd6733f112f6d2b92f9cab3f30fd7",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -4384,7 +4384,7 @@
             "LeftFoot": "LeftFoot",
             "RightFoot": "RightFoot"
           },
-          "bodySha256": "2b15e377385aacb55c64d1c4922680afd7d2f7cda1dafcb4459ff7cd76b31b09",
+          "bodySha256": "c946867988c416e43930e9f60772e0b7de9bd6733f112f6d2b92f9cab3f30fd7",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -4404,7 +4404,7 @@
           "resolvedBones": {
             "Spine02": "Spine02"
           },
-          "bodySha256": "2b15e377385aacb55c64d1c4922680afd7d2f7cda1dafcb4459ff7cd76b31b09",
+          "bodySha256": "c946867988c416e43930e9f60772e0b7de9bd6733f112f6d2b92f9cab3f30fd7",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -4424,7 +4424,7 @@
           "resolvedBones": {
             "Head": "Head"
           },
-          "bodySha256": "2b15e377385aacb55c64d1c4922680afd7d2f7cda1dafcb4459ff7cd76b31b09",
+          "bodySha256": "c946867988c416e43930e9f60772e0b7de9bd6733f112f6d2b92f9cab3f30fd7",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -4475,7 +4475,7 @@
         "certified": false
       },
       "path": "public/models/characters/caipora.glb",
-      "bodySha256": "2b15e377385aacb55c64d1c4922680afd7d2f7cda1dafcb4459ff7cd76b31b09",
+      "bodySha256": "c946867988c416e43930e9f60772e0b7de9bd6733f112f6d2b92f9cab3f30fd7",
       "censusStatus": "unknown",
       "evidence": {
         "sheet": "bodies-01.png",
@@ -4513,7 +4513,7 @@
           "family": "oversized-tee",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1_1",
-          "weightedVertices": 1608,
+          "weightedVertices": 1719,
           "positionCount": 8112,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 4,
@@ -4529,7 +4529,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+          "bodySha256": "148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b",
           "adapterId": "weighted-mesh-camera-roxa",
           "adapterReason": "multi-skinned-mesh:largest-required-weighted-vertex-set",
           "normalizeReadWeights": false
@@ -4539,7 +4539,7 @@
           "family": "shell-jacket",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1_1",
-          "weightedVertices": 1608,
+          "weightedVertices": 1719,
           "positionCount": 8112,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 4,
@@ -4555,7 +4555,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+          "bodySha256": "148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b",
           "adapterId": "weighted-mesh-camera-roxa",
           "adapterReason": "multi-skinned-mesh:largest-required-weighted-vertex-set",
           "normalizeReadWeights": false
@@ -4565,7 +4565,7 @@
           "family": "bermuda-shorts",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1_1",
-          "weightedVertices": 1135,
+          "weightedVertices": 884,
           "positionCount": 8112,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 4,
@@ -4575,7 +4575,7 @@
           "resolvedBones": {
             "Hips": "Hips"
           },
-          "bodySha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+          "bodySha256": "148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b",
           "adapterId": "weighted-mesh-camera-roxa",
           "adapterReason": "multi-skinned-mesh:largest-required-weighted-vertex-set",
           "normalizeReadWeights": false
@@ -4601,7 +4601,7 @@
             "LeftFoot": "LeftFoot",
             "RightFoot": "RightFoot"
           },
-          "bodySha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+          "bodySha256": "148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b",
           "adapterId": "weighted-mesh-camera-roxa",
           "adapterReason": "multi-skinned-mesh:largest-required-weighted-vertex-set",
           "normalizeReadWeights": false
@@ -4611,7 +4611,7 @@
           "family": "backpack-drypack",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1_1",
-          "weightedVertices": 718,
+          "weightedVertices": 626,
           "positionCount": 8112,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 4,
@@ -4621,7 +4621,7 @@
           "resolvedBones": {
             "Spine02": "Spine02"
           },
-          "bodySha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+          "bodySha256": "148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b",
           "adapterId": "weighted-mesh-camera-roxa",
           "adapterReason": "multi-skinned-mesh:largest-required-weighted-vertex-set",
           "normalizeReadWeights": false
@@ -4631,7 +4631,7 @@
           "family": "accessory-earring",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1_1",
-          "weightedVertices": 2860,
+          "weightedVertices": 2739,
           "positionCount": 8112,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 4,
@@ -4641,7 +4641,7 @@
           "resolvedBones": {
             "Head": "Head"
           },
-          "bodySha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+          "bodySha256": "148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b",
           "adapterId": "weighted-mesh-camera-roxa",
           "adapterReason": "multi-skinned-mesh:largest-required-weighted-vertex-set",
           "normalizeReadWeights": false
@@ -4670,14 +4670,14 @@
       "boundsFinite": true,
       "bounds": {
         "min": [
-          -0.49296421273729324,
+          -0.4929642328033487,
           -0.2135584182049418,
-          -0.502977606178009
+          -0.530545468041856
         ],
         "max": [
-          0.4929646411691682,
+          0.4929646494808006,
           1.76,
-          0.4929645672165598
+          0.49296456721655985
         ]
       },
       "noHit": true,
@@ -4686,13 +4686,13 @@
       "clipping": {
         "method": "conservative-body-vertices-inside-proxy-world-aabb",
         "sampledVertices": 2028,
-        "overlappingVertices": 1721,
-        "overlapPct": 84.862,
+        "overlappingVertices": 1726,
+        "overlapPct": 85.108,
         "classification": "potential-contact-review-required",
         "certified": false
       },
       "path": "public/models/characters/camera-roxa.glb",
-      "bodySha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+      "bodySha256": "148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b",
       "censusStatus": "unknown",
       "evidence": {
         "sheet": "bodies-01.png",
@@ -4963,7 +4963,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "44bc26b92f8f99b60fe70a6f1f5b5ff79ee19061d4801a3b792eb28a8684a3ff",
+          "bodySha256": "ae53ff9beded899f4845f3c39f491373a80a5694a69130fcff5c5ad0404e73be",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -4989,7 +4989,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "44bc26b92f8f99b60fe70a6f1f5b5ff79ee19061d4801a3b792eb28a8684a3ff",
+          "bodySha256": "ae53ff9beded899f4845f3c39f491373a80a5694a69130fcff5c5ad0404e73be",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -5013,7 +5013,7 @@
             "LeftLowerLeg": "LeftLeg",
             "RightLowerLeg": "RightLeg"
           },
-          "bodySha256": "44bc26b92f8f99b60fe70a6f1f5b5ff79ee19061d4801a3b792eb28a8684a3ff",
+          "bodySha256": "ae53ff9beded899f4845f3c39f491373a80a5694a69130fcff5c5ad0404e73be",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -5035,7 +5035,7 @@
             "LeftFoot": "LeftFoot",
             "RightFoot": "RightFoot"
           },
-          "bodySha256": "44bc26b92f8f99b60fe70a6f1f5b5ff79ee19061d4801a3b792eb28a8684a3ff",
+          "bodySha256": "ae53ff9beded899f4845f3c39f491373a80a5694a69130fcff5c5ad0404e73be",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -5055,7 +5055,7 @@
           "resolvedBones": {
             "Spine02": "Spine02"
           },
-          "bodySha256": "44bc26b92f8f99b60fe70a6f1f5b5ff79ee19061d4801a3b792eb28a8684a3ff",
+          "bodySha256": "ae53ff9beded899f4845f3c39f491373a80a5694a69130fcff5c5ad0404e73be",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -5075,7 +5075,7 @@
           "resolvedBones": {
             "Head": "Head"
           },
-          "bodySha256": "44bc26b92f8f99b60fe70a6f1f5b5ff79ee19061d4801a3b792eb28a8684a3ff",
+          "bodySha256": "ae53ff9beded899f4845f3c39f491373a80a5694a69130fcff5c5ad0404e73be",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -5104,12 +5104,12 @@
       "boundsFinite": true,
       "bounds": {
         "min": [
-          -1.0482679301422297,
+          -0.8685927639566109,
           -0.15311675521583695,
-          -1.0482679722499813
+          -0.7941689154086393
         ],
         "max": [
-          1.0482680282176091,
+          0.973844137561886,
           1.76,
           1.0482679861098574
         ]
@@ -5120,13 +5120,13 @@
       "clipping": {
         "method": "conservative-body-vertices-inside-proxy-world-aabb",
         "sampledVertices": 2137,
-        "overlappingVertices": 1497,
-        "overlapPct": 70.051,
+        "overlappingVertices": 1404,
+        "overlapPct": 65.7,
         "classification": "potential-contact-review-required",
         "certified": false
       },
       "path": "public/models/characters/canarinho.glb",
-      "bodySha256": "44bc26b92f8f99b60fe70a6f1f5b5ff79ee19061d4801a3b792eb28a8684a3ff",
+      "bodySha256": "ae53ff9beded899f4845f3c39f491373a80a5694a69130fcff5c5ad0404e73be",
       "censusStatus": "unknown",
       "evidence": {
         "sheet": "bodies-01.png",
@@ -8423,7 +8423,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "51bd7a1aaa6ffd13dcb24dfc03d54ebed77b4e1dc4bd0aaf58de6b1ae84cbbf0",
+          "bodySha256": "5a615784b38b71cd3b2557f8baa7440ad7b972ad6d8dc1f3dddd75a4cee9afe2",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -8449,7 +8449,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "51bd7a1aaa6ffd13dcb24dfc03d54ebed77b4e1dc4bd0aaf58de6b1ae84cbbf0",
+          "bodySha256": "5a615784b38b71cd3b2557f8baa7440ad7b972ad6d8dc1f3dddd75a4cee9afe2",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -8473,7 +8473,7 @@
             "LeftLowerLeg": "LeftLeg",
             "RightLowerLeg": "RightLeg"
           },
-          "bodySha256": "51bd7a1aaa6ffd13dcb24dfc03d54ebed77b4e1dc4bd0aaf58de6b1ae84cbbf0",
+          "bodySha256": "5a615784b38b71cd3b2557f8baa7440ad7b972ad6d8dc1f3dddd75a4cee9afe2",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -8499,7 +8499,7 @@
             "LeftFoot": "LeftFoot",
             "RightFoot": "RightFoot"
           },
-          "bodySha256": "51bd7a1aaa6ffd13dcb24dfc03d54ebed77b4e1dc4bd0aaf58de6b1ae84cbbf0",
+          "bodySha256": "5a615784b38b71cd3b2557f8baa7440ad7b972ad6d8dc1f3dddd75a4cee9afe2",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -8519,7 +8519,7 @@
           "resolvedBones": {
             "Spine02": "Spine02"
           },
-          "bodySha256": "51bd7a1aaa6ffd13dcb24dfc03d54ebed77b4e1dc4bd0aaf58de6b1ae84cbbf0",
+          "bodySha256": "5a615784b38b71cd3b2557f8baa7440ad7b972ad6d8dc1f3dddd75a4cee9afe2",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -8539,7 +8539,7 @@
           "resolvedBones": {
             "LeftHand": "LeftHand"
           },
-          "bodySha256": "51bd7a1aaa6ffd13dcb24dfc03d54ebed77b4e1dc4bd0aaf58de6b1ae84cbbf0",
+          "bodySha256": "5a615784b38b71cd3b2557f8baa7440ad7b972ad6d8dc1f3dddd75a4cee9afe2",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -8590,7 +8590,7 @@
         "certified": false
       },
       "path": "public/models/characters/esquerdomacho.glb",
-      "bodySha256": "51bd7a1aaa6ffd13dcb24dfc03d54ebed77b4e1dc4bd0aaf58de6b1ae84cbbf0",
+      "bodySha256": "5a615784b38b71cd3b2557f8baa7440ad7b972ad6d8dc1f3dddd75a4cee9afe2",
       "censusStatus": "unknown",
       "evidence": {
         "sheet": "bodies-02.png",
@@ -11019,7 +11019,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "98b41671c7b1ca47cffbd4177fd620045cd20ace5d7e6b266911ec24f8aa34d4",
+          "bodySha256": "d32764d5254aa221951d0ea37f013d2a32f07f925a5aeaec8907ee6ed032a129",
           "adapterId": "weights-lampiao",
           "adapterReason": "normalize-weight-sum-for-measurement-read",
           "normalizeReadWeights": true
@@ -11045,7 +11045,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "98b41671c7b1ca47cffbd4177fd620045cd20ace5d7e6b266911ec24f8aa34d4",
+          "bodySha256": "d32764d5254aa221951d0ea37f013d2a32f07f925a5aeaec8907ee6ed032a129",
           "adapterId": "weights-lampiao",
           "adapterReason": "normalize-weight-sum-for-measurement-read",
           "normalizeReadWeights": true
@@ -11069,7 +11069,7 @@
             "LeftLowerLeg": "LeftLeg",
             "RightLowerLeg": "RightLeg"
           },
-          "bodySha256": "98b41671c7b1ca47cffbd4177fd620045cd20ace5d7e6b266911ec24f8aa34d4",
+          "bodySha256": "d32764d5254aa221951d0ea37f013d2a32f07f925a5aeaec8907ee6ed032a129",
           "adapterId": "weights-lampiao",
           "adapterReason": "normalize-weight-sum-for-measurement-read",
           "normalizeReadWeights": true
@@ -11095,7 +11095,7 @@
             "LeftFoot": "LeftFoot",
             "RightFoot": "RightFoot"
           },
-          "bodySha256": "98b41671c7b1ca47cffbd4177fd620045cd20ace5d7e6b266911ec24f8aa34d4",
+          "bodySha256": "d32764d5254aa221951d0ea37f013d2a32f07f925a5aeaec8907ee6ed032a129",
           "adapterId": "weights-lampiao",
           "adapterReason": "normalize-weight-sum-for-measurement-read",
           "normalizeReadWeights": true
@@ -11115,7 +11115,7 @@
           "resolvedBones": {
             "RightHand": "RightHand"
           },
-          "bodySha256": "98b41671c7b1ca47cffbd4177fd620045cd20ace5d7e6b266911ec24f8aa34d4",
+          "bodySha256": "d32764d5254aa221951d0ea37f013d2a32f07f925a5aeaec8907ee6ed032a129",
           "adapterId": "weights-lampiao",
           "adapterReason": "normalize-weight-sum-for-measurement-read",
           "normalizeReadWeights": true
@@ -11135,7 +11135,7 @@
           "resolvedBones": {
             "Spine02": "Spine02"
           },
-          "bodySha256": "98b41671c7b1ca47cffbd4177fd620045cd20ace5d7e6b266911ec24f8aa34d4",
+          "bodySha256": "d32764d5254aa221951d0ea37f013d2a32f07f925a5aeaec8907ee6ed032a129",
           "adapterId": "weights-lampiao",
           "adapterReason": "normalize-weight-sum-for-measurement-read",
           "normalizeReadWeights": true
@@ -11186,7 +11186,7 @@
         "certified": false
       },
       "path": "public/models/characters/lampiao.glb",
-      "bodySha256": "98b41671c7b1ca47cffbd4177fd620045cd20ace5d7e6b266911ec24f8aa34d4",
+      "bodySha256": "d32764d5254aa221951d0ea37f013d2a32f07f925a5aeaec8907ee6ed032a129",
       "censusStatus": "incompatible",
       "evidence": {
         "sheet": "bodies-02.png",
@@ -15331,7 +15331,7 @@
           "family": "oversized-tee",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "BODY_PC_SKINNED_MESH",
-          "weightedVertices": 1972,
+          "weightedVertices": 2503,
           "positionCount": 7298,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 2,
@@ -15347,7 +15347,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+          "bodySha256": "ae201746977859d212aafe3f5f2b97e5152758af7421d0cad439ac00f1f7e400",
           "adapterId": "weighted-mesh-profeta-calcada",
           "adapterReason": "multi-skinned-mesh:largest-required-weighted-vertex-set",
           "normalizeReadWeights": false
@@ -15357,7 +15357,7 @@
           "family": "shell-jacket",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "BODY_PC_SKINNED_MESH",
-          "weightedVertices": 1972,
+          "weightedVertices": 2503,
           "positionCount": 7298,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 2,
@@ -15373,7 +15373,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+          "bodySha256": "ae201746977859d212aafe3f5f2b97e5152758af7421d0cad439ac00f1f7e400",
           "adapterId": "weighted-mesh-profeta-calcada",
           "adapterReason": "multi-skinned-mesh:largest-required-weighted-vertex-set",
           "normalizeReadWeights": false
@@ -15383,7 +15383,7 @@
           "family": "cargo-pants",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "BODY_PC_SKINNED_MESH",
-          "weightedVertices": 1660,
+          "weightedVertices": 2278,
           "positionCount": 7298,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 2,
@@ -15397,7 +15397,7 @@
             "LeftLowerLeg": "LeftLeg",
             "RightLowerLeg": "RightLeg"
           },
-          "bodySha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+          "bodySha256": "ae201746977859d212aafe3f5f2b97e5152758af7421d0cad439ac00f1f7e400",
           "adapterId": "weighted-mesh-profeta-calcada",
           "adapterReason": "multi-skinned-mesh:largest-required-weighted-vertex-set",
           "normalizeReadWeights": false
@@ -15419,7 +15419,7 @@
             "LeftFoot": "LeftFoot",
             "RightFoot": "RightFoot"
           },
-          "bodySha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+          "bodySha256": "ae201746977859d212aafe3f5f2b97e5152758af7421d0cad439ac00f1f7e400",
           "adapterId": "weighted-mesh-profeta-calcada",
           "adapterReason": "multi-skinned-mesh:largest-required-weighted-vertex-set",
           "normalizeReadWeights": false
@@ -15439,7 +15439,7 @@
           "resolvedBones": {
             "RightHand": "RightHand"
           },
-          "bodySha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+          "bodySha256": "ae201746977859d212aafe3f5f2b97e5152758af7421d0cad439ac00f1f7e400",
           "adapterId": "weighted-mesh-profeta-calcada",
           "adapterReason": "multi-skinned-mesh:largest-required-weighted-vertex-set",
           "normalizeReadWeights": false
@@ -15449,7 +15449,7 @@
           "family": "accessory-modular",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "BODY_PC_SKINNED_MESH",
-          "weightedVertices": 1339,
+          "weightedVertices": 1869,
           "positionCount": 7298,
           "eligibleMeshes": 2,
           "observedSkinnedMeshes": 2,
@@ -15459,7 +15459,7 @@
           "resolvedBones": {
             "Spine02": "Spine02"
           },
-          "bodySha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+          "bodySha256": "ae201746977859d212aafe3f5f2b97e5152758af7421d0cad439ac00f1f7e400",
           "adapterId": "weighted-mesh-profeta-calcada",
           "adapterReason": "multi-skinned-mesh:largest-required-weighted-vertex-set",
           "normalizeReadWeights": false
@@ -15488,14 +15488,14 @@
       "boundsFinite": true,
       "bounds": {
         "min": [
-          -0.6108682441230349,
+          -0.6108682503075862,
           -0.13135524101155865,
           -0.7326254641282361
         ],
         "max": [
-          0.5190049311955743,
+          0.5046319379205578,
           1.76,
-          0.5163437459809327
+          0.5161358035195301
         ]
       },
       "noHit": true,
@@ -15504,13 +15504,13 @@
       "clipping": {
         "method": "conservative-body-vertices-inside-proxy-world-aabb",
         "sampledVertices": 1825,
-        "overlappingVertices": 1661,
-        "overlapPct": 91.014,
+        "overlappingVertices": 1749,
+        "overlapPct": 95.836,
         "classification": "potential-contact-review-required",
         "certified": false
       },
       "path": "public/models/characters/profeta-calcada.glb",
-      "bodySha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+      "bodySha256": "ae201746977859d212aafe3f5f2b97e5152758af7421d0cad439ac00f1f7e400",
       "censusStatus": "unknown",
       "evidence": {
         "sheet": "bodies-03.png",
@@ -18160,7 +18160,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "b8596378f0ba96d6cdf54b625edf2b6e79b920025abad8a0acdc9ad562bde2dd",
+          "bodySha256": "f56419e19f335aaab04317059142de326208f3d71889a4f82c645f1dabfbd066",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -18186,7 +18186,7 @@
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "b8596378f0ba96d6cdf54b625edf2b6e79b920025abad8a0acdc9ad562bde2dd",
+          "bodySha256": "f56419e19f335aaab04317059142de326208f3d71889a4f82c645f1dabfbd066",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -18206,7 +18206,7 @@
           "resolvedBones": {
             "Hips": "Hips"
           },
-          "bodySha256": "b8596378f0ba96d6cdf54b625edf2b6e79b920025abad8a0acdc9ad562bde2dd",
+          "bodySha256": "f56419e19f335aaab04317059142de326208f3d71889a4f82c645f1dabfbd066",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -18232,7 +18232,7 @@
             "LeftFoot": "LeftFoot",
             "RightFoot": "RightFoot"
           },
-          "bodySha256": "b8596378f0ba96d6cdf54b625edf2b6e79b920025abad8a0acdc9ad562bde2dd",
+          "bodySha256": "f56419e19f335aaab04317059142de326208f3d71889a4f82c645f1dabfbd066",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -18252,7 +18252,7 @@
           "resolvedBones": {
             "Spine02": "Spine02"
           },
-          "bodySha256": "b8596378f0ba96d6cdf54b625edf2b6e79b920025abad8a0acdc9ad562bde2dd",
+          "bodySha256": "f56419e19f335aaab04317059142de326208f3d71889a4f82c645f1dabfbd066",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -18272,7 +18272,7 @@
           "resolvedBones": {
             "Spine02": "Spine02"
           },
-          "bodySha256": "b8596378f0ba96d6cdf54b625edf2b6e79b920025abad8a0acdc9ad562bde2dd",
+          "bodySha256": "f56419e19f335aaab04317059142de326208f3d71889a4f82c645f1dabfbd066",
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
@@ -18323,7 +18323,7 @@
         "certified": false
       },
       "path": "public/models/characters/zumbi.glb",
-      "bodySha256": "b8596378f0ba96d6cdf54b625edf2b6e79b920025abad8a0acdc9ad562bde2dd",
+      "bodySha256": "f56419e19f335aaab04317059142de326208f3d71889a4f82c645f1dabfbd066",
       "censusStatus": "unknown",
       "evidence": {
         "sheet": "bodies-04.png",
@@ -19199,7 +19199,7 @@
       }
     },
     {
-      "bodyId": "skin:janja",
+      "bodyId": "skin:canarinho-cyborg",
       "status": "study-only",
       "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
       "familiesRequested": [
@@ -19223,6 +19223,1951 @@
         {
           "slot": "tee",
           "family": "oversized-tee",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1650,
+          "positionCount": 7127,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "8f9ca417066d56152a1f3364d2b1b4d27687a2c5831c7283ad98f34c57efcd77",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "jacket",
+          "family": "shell-jacket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1650,
+          "positionCount": 7127,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "8f9ca417066d56152a1f3364d2b1b4d27687a2c5831c7283ad98f34c57efcd77",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "legs",
+          "family": "bermuda-shorts",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 495,
+          "positionCount": 7127,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Hips"
+          ],
+          "resolvedBones": {
+            "Hips": "Hips"
+          },
+          "bodySha256": "8f9ca417066d56152a1f3364d2b1b4d27687a2c5831c7283ad98f34c57efcd77",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "shoes",
+          "family": "chunky-runner",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1019,
+          "positionCount": 7127,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftFoot",
+            "RightFoot"
+          ],
+          "resolvedBones": {
+            "LeftFoot": "LeftFoot",
+            "RightFoot": "RightFoot"
+          },
+          "bodySha256": "8f9ca417066d56152a1f3364d2b1b4d27687a2c5831c7283ad98f34c57efcd77",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "backpack",
+          "family": "backpack-tote",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 516,
+          "positionCount": 7127,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftHand"
+          ],
+          "resolvedBones": {
+            "LeftHand": "LeftHand"
+          },
+          "bodySha256": "8f9ca417066d56152a1f3364d2b1b4d27687a2c5831c7283ad98f34c57efcd77",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-case",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 516,
+          "positionCount": 7127,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftHand"
+          ],
+          "resolvedBones": {
+            "LeftHand": "LeftHand"
+          },
+          "bodySha256": "8f9ca417066d56152a1f3364d2b1b4d27687a2c5831c7283ad98f34c57efcd77",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        }
+      ],
+      "cleanupBeforeLoad": {
+        "disposed": {
+          "models": 1,
+          "candidates": 6,
+          "geometries": 1,
+          "materials": 1,
+          "textures": 3
+        },
+        "totals": {
+          "models": 79,
+          "candidates": 468,
+          "geometries": 144,
+          "materials": 139,
+          "textures": 213
+        }
+      },
+      "fitStatus": "silhouette-study-not-body-fit",
+      "approved": false,
+      "certified": false,
+      "runtimeEnabled": false,
+      "boundsFinite": true,
+      "bounds": {
+        "min": [
+          -0.9750645071612297,
+          -0.2352447675557774,
+          -0.8691722785332983
+        ],
+        "max": [
+          1.1248186398054143,
+          1.7599999999999996,
+          1.2307108684333463
+        ]
+      },
+      "noHit": true,
+      "drawCalls": 25,
+      "triangles": 716,
+      "clipping": {
+        "method": "conservative-body-vertices-inside-proxy-world-aabb",
+        "sampledVertices": 2376,
+        "overlappingVertices": 1735,
+        "overlapPct": 73.022,
+        "classification": "potential-contact-review-required",
+        "certified": false
+      },
+      "path": "public/models/skins/canarinho-cyborg-8f9ca417066d.glb",
+      "bodySha256": "8f9ca417066d56152a1f3364d2b1b4d27687a2c5831c7283ad98f34c57efcd77",
+      "censusStatus": "unknown",
+      "evidence": {
+        "sheet": "bodies-04.png",
+        "tileIndex": 13,
+        "views": [
+          "front",
+          "threeQuarter"
+        ]
+      }
+    },
+    {
+      "bodyId": "skin:canarinho-drip",
+      "status": "study-only",
+      "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
+      "familiesRequested": [
+        "boxy-tee",
+        "shell-jacket",
+        "cargo-pants",
+        "boot",
+        "backpack-tote",
+        "accessory-chain"
+      ],
+      "familiesMounted": [
+        "boxy-tee",
+        "shell-jacket",
+        "cargo-pants",
+        "boot",
+        "backpack-tote",
+        "accessory-chain"
+      ],
+      "failures": [],
+      "selections": [
+        {
+          "slot": "tee",
+          "family": "boxy-tee",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 2767,
+          "positionCount": 8114,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "eb85ff91c6781fc062774858879457c7c86a1e488aa6ee6baaffed2257bdc2d1",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "jacket",
+          "family": "shell-jacket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 2767,
+          "positionCount": 8114,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "eb85ff91c6781fc062774858879457c7c86a1e488aa6ee6baaffed2257bdc2d1",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "legs",
+          "family": "cargo-pants",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1718,
+          "positionCount": 8114,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Hips",
+            "LeftLowerLeg",
+            "RightLowerLeg"
+          ],
+          "resolvedBones": {
+            "Hips": "Hips",
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg"
+          },
+          "bodySha256": "eb85ff91c6781fc062774858879457c7c86a1e488aa6ee6baaffed2257bdc2d1",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "shoes",
+          "family": "boot",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 2187,
+          "positionCount": 8114,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftLowerLeg",
+            "RightLowerLeg",
+            "LeftFoot",
+            "RightFoot"
+          ],
+          "resolvedBones": {
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg",
+            "LeftFoot": "LeftFoot",
+            "RightFoot": "RightFoot"
+          },
+          "bodySha256": "eb85ff91c6781fc062774858879457c7c86a1e488aa6ee6baaffed2257bdc2d1",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "backpack",
+          "family": "backpack-tote",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 258,
+          "positionCount": 8114,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftHand"
+          ],
+          "resolvedBones": {
+            "LeftHand": "LeftHand"
+          },
+          "bodySha256": "eb85ff91c6781fc062774858879457c7c86a1e488aa6ee6baaffed2257bdc2d1",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-chain",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1218,
+          "positionCount": 8114,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02"
+          },
+          "bodySha256": "eb85ff91c6781fc062774858879457c7c86a1e488aa6ee6baaffed2257bdc2d1",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        }
+      ],
+      "cleanupBeforeLoad": {
+        "disposed": {
+          "models": 1,
+          "candidates": 6,
+          "geometries": 1,
+          "materials": 1,
+          "textures": 3
+        },
+        "totals": {
+          "models": 80,
+          "candidates": 474,
+          "geometries": 145,
+          "materials": 140,
+          "textures": 216
+        }
+      },
+      "fitStatus": "silhouette-study-not-body-fit",
+      "approved": false,
+      "certified": false,
+      "runtimeEnabled": false,
+      "boundsFinite": true,
+      "bounds": {
+        "min": [
+          -0.8914299497270596,
+          -0.22677994621880931,
+          -0.7910727813505647
+        ],
+        "max": [
+          1.0333560271165623,
+          1.76,
+          1.1337131954930573
+        ]
+      },
+      "noHit": true,
+      "drawCalls": 25,
+      "triangles": 864,
+      "clipping": {
+        "method": "conservative-body-vertices-inside-proxy-world-aabb",
+        "sampledVertices": 2029,
+        "overlappingVertices": 1608,
+        "overlapPct": 79.251,
+        "classification": "potential-contact-review-required",
+        "certified": false
+      },
+      "path": "public/models/skins/canarinho-drip-eb85ff91c678.glb",
+      "bodySha256": "eb85ff91c6781fc062774858879457c7c86a1e488aa6ee6baaffed2257bdc2d1",
+      "censusStatus": "unknown",
+      "evidence": {
+        "sheet": "bodies-04.png",
+        "tileIndex": 14,
+        "views": [
+          "front",
+          "threeQuarter"
+        ]
+      }
+    },
+    {
+      "bodyId": "skin:canarinho-mandrake",
+      "status": "study-only",
+      "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
+      "familiesRequested": [
+        "oversized-tee",
+        "shell-jacket",
+        "cargo-pants",
+        "low-sneaker",
+        "backpack-duffel",
+        "accessory-chain"
+      ],
+      "familiesMounted": [
+        "oversized-tee",
+        "shell-jacket",
+        "cargo-pants",
+        "low-sneaker",
+        "backpack-duffel",
+        "accessory-chain"
+      ],
+      "failures": [],
+      "selections": [
+        {
+          "slot": "tee",
+          "family": "oversized-tee",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1460,
+          "positionCount": 6706,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "40cebcfdc48dbf8377a5920629388bcfcb4c49b8da24e16acb10f3bbd75da71d",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "jacket",
+          "family": "shell-jacket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1460,
+          "positionCount": 6706,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "40cebcfdc48dbf8377a5920629388bcfcb4c49b8da24e16acb10f3bbd75da71d",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "legs",
+          "family": "cargo-pants",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 928,
+          "positionCount": 6706,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Hips",
+            "LeftLowerLeg",
+            "RightLowerLeg"
+          ],
+          "resolvedBones": {
+            "Hips": "Hips",
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg"
+          },
+          "bodySha256": "40cebcfdc48dbf8377a5920629388bcfcb4c49b8da24e16acb10f3bbd75da71d",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "shoes",
+          "family": "low-sneaker",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 611,
+          "positionCount": 6706,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftFoot",
+            "RightFoot"
+          ],
+          "resolvedBones": {
+            "LeftFoot": "LeftFoot",
+            "RightFoot": "RightFoot"
+          },
+          "bodySha256": "40cebcfdc48dbf8377a5920629388bcfcb4c49b8da24e16acb10f3bbd75da71d",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "backpack",
+          "family": "backpack-duffel",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 495,
+          "positionCount": 6706,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "RightHand"
+          ],
+          "resolvedBones": {
+            "RightHand": "RightHand"
+          },
+          "bodySha256": "40cebcfdc48dbf8377a5920629388bcfcb4c49b8da24e16acb10f3bbd75da71d",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-chain",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 262,
+          "positionCount": 6706,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02"
+          },
+          "bodySha256": "40cebcfdc48dbf8377a5920629388bcfcb4c49b8da24e16acb10f3bbd75da71d",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        }
+      ],
+      "cleanupBeforeLoad": {
+        "disposed": {
+          "models": 1,
+          "candidates": 6,
+          "geometries": 1,
+          "materials": 1,
+          "textures": 3
+        },
+        "totals": {
+          "models": 81,
+          "candidates": 480,
+          "geometries": 146,
+          "materials": 141,
+          "textures": 219
+        }
+      },
+      "fitStatus": "silhouette-study-not-body-fit",
+      "approved": false,
+      "certified": false,
+      "runtimeEnabled": false,
+      "boundsFinite": true,
+      "bounds": {
+        "min": [
+          -0.8796701032181466,
+          -0.19514561884364823,
+          -0.7737490154128498
+        ],
+        "max": [
+          1.0294650244814645,
+          1.7599999999999998,
+          1.1353861122867617
+        ]
+      },
+      "noHit": true,
+      "drawCalls": 24,
+      "triangles": 1064,
+      "clipping": {
+        "method": "conservative-body-vertices-inside-proxy-world-aabb",
+        "sampledVertices": 2236,
+        "overlappingVertices": 1455,
+        "overlapPct": 65.072,
+        "classification": "potential-contact-review-required",
+        "certified": false
+      },
+      "path": "public/models/skins/canarinho-mandrake-40cebcfdc48d.glb",
+      "bodySha256": "40cebcfdc48dbf8377a5920629388bcfcb4c49b8da24e16acb10f3bbd75da71d",
+      "censusStatus": "unknown",
+      "evidence": {
+        "sheet": "bodies-04.png",
+        "tileIndex": 15,
+        "views": [
+          "front",
+          "threeQuarter"
+        ]
+      }
+    },
+    {
+      "bodyId": "skin:curupira-cyborg",
+      "status": "study-only",
+      "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
+      "familiesRequested": [
+        "boxy-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "chunky-runner",
+        "backpack-duffel",
+        "accessory-chain"
+      ],
+      "familiesMounted": [
+        "boxy-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "chunky-runner",
+        "backpack-duffel",
+        "accessory-chain"
+      ],
+      "failures": [],
+      "selections": [
+        {
+          "slot": "tee",
+          "family": "boxy-tee",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 776,
+          "positionCount": 3925,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "c8a973c7c01d30a0e925d14e77dc1f5dabe0480422426f020dedaa0da294d8bf",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "jacket",
+          "family": "shell-jacket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 776,
+          "positionCount": 3925,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "c8a973c7c01d30a0e925d14e77dc1f5dabe0480422426f020dedaa0da294d8bf",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "legs",
+          "family": "bermuda-shorts",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 376,
+          "positionCount": 3925,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Hips"
+          ],
+          "resolvedBones": {
+            "Hips": "Hips"
+          },
+          "bodySha256": "c8a973c7c01d30a0e925d14e77dc1f5dabe0480422426f020dedaa0da294d8bf",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "shoes",
+          "family": "chunky-runner",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 223,
+          "positionCount": 3925,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftFoot",
+            "RightFoot"
+          ],
+          "resolvedBones": {
+            "LeftFoot": "LeftFoot",
+            "RightFoot": "RightFoot"
+          },
+          "bodySha256": "c8a973c7c01d30a0e925d14e77dc1f5dabe0480422426f020dedaa0da294d8bf",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "backpack",
+          "family": "backpack-duffel",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 197,
+          "positionCount": 3925,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "RightHand"
+          ],
+          "resolvedBones": {
+            "RightHand": "RightHand"
+          },
+          "bodySha256": "c8a973c7c01d30a0e925d14e77dc1f5dabe0480422426f020dedaa0da294d8bf",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-chain",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 157,
+          "positionCount": 3925,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02"
+          },
+          "bodySha256": "c8a973c7c01d30a0e925d14e77dc1f5dabe0480422426f020dedaa0da294d8bf",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        }
+      ],
+      "cleanupBeforeLoad": {
+        "disposed": {
+          "models": 1,
+          "candidates": 6,
+          "geometries": 1,
+          "materials": 1,
+          "textures": 3
+        },
+        "totals": {
+          "models": 82,
+          "candidates": 486,
+          "geometries": 147,
+          "materials": 142,
+          "textures": 222
+        }
+      },
+      "fitStatus": "silhouette-study-not-body-fit",
+      "approved": false,
+      "certified": false,
+      "runtimeEnabled": false,
+      "boundsFinite": true,
+      "bounds": {
+        "min": [
+          -0.7115568747479246,
+          -0.025779994507707238,
+          -0.7115566384876161
+        ],
+        "max": [
+          0.7115566441802825,
+          1.76,
+          0.7115568804405913
+        ]
+      },
+      "noHit": true,
+      "drawCalls": 24,
+      "triangles": 1064,
+      "clipping": {
+        "method": "conservative-body-vertices-inside-proxy-world-aabb",
+        "sampledVertices": 1963,
+        "overlappingVertices": 1315,
+        "overlapPct": 66.989,
+        "classification": "potential-contact-review-required",
+        "certified": false
+      },
+      "path": "public/models/skins/curupira-cyborg-c8a973c7c01d.glb",
+      "bodySha256": "c8a973c7c01d30a0e925d14e77dc1f5dabe0480422426f020dedaa0da294d8bf",
+      "censusStatus": "unknown",
+      "evidence": {
+        "sheet": "bodies-04.png",
+        "tileIndex": 16,
+        "views": [
+          "front",
+          "threeQuarter"
+        ]
+      }
+    },
+    {
+      "bodyId": "skin:emo-cyborg",
+      "status": "study-only",
+      "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
+      "familiesRequested": [
+        "oversized-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "boot",
+        "backpack-duffel",
+        "accessory-chain"
+      ],
+      "familiesMounted": [
+        "oversized-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "boot",
+        "backpack-duffel",
+        "accessory-chain"
+      ],
+      "failures": [],
+      "selections": [
+        {
+          "slot": "tee",
+          "family": "oversized-tee",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 743,
+          "positionCount": 6841,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "5123caa94e5cb0f2d660d382d1d1a7746857be16e21ff51d13bbf63e3c2b69ff",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "jacket",
+          "family": "shell-jacket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 743,
+          "positionCount": 6841,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "5123caa94e5cb0f2d660d382d1d1a7746857be16e21ff51d13bbf63e3c2b69ff",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "legs",
+          "family": "bermuda-shorts",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 932,
+          "positionCount": 6841,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Hips"
+          ],
+          "resolvedBones": {
+            "Hips": "Hips"
+          },
+          "bodySha256": "5123caa94e5cb0f2d660d382d1d1a7746857be16e21ff51d13bbf63e3c2b69ff",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "shoes",
+          "family": "boot",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 818,
+          "positionCount": 6841,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftLowerLeg",
+            "RightLowerLeg",
+            "LeftFoot",
+            "RightFoot"
+          ],
+          "resolvedBones": {
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg",
+            "LeftFoot": "LeftFoot",
+            "RightFoot": "RightFoot"
+          },
+          "bodySha256": "5123caa94e5cb0f2d660d382d1d1a7746857be16e21ff51d13bbf63e3c2b69ff",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "backpack",
+          "family": "backpack-duffel",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 860,
+          "positionCount": 6841,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "RightHand"
+          ],
+          "resolvedBones": {
+            "RightHand": "RightHand"
+          },
+          "bodySha256": "5123caa94e5cb0f2d660d382d1d1a7746857be16e21ff51d13bbf63e3c2b69ff",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-chain",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 98,
+          "positionCount": 6841,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02"
+          },
+          "bodySha256": "5123caa94e5cb0f2d660d382d1d1a7746857be16e21ff51d13bbf63e3c2b69ff",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        }
+      ],
+      "cleanupBeforeLoad": {
+        "disposed": {
+          "models": 1,
+          "candidates": 6,
+          "geometries": 1,
+          "materials": 1,
+          "textures": 3
+        },
+        "totals": {
+          "models": 83,
+          "candidates": 492,
+          "geometries": 148,
+          "materials": 143,
+          "textures": 225
+        }
+      },
+      "fitStatus": "silhouette-study-not-body-fit",
+      "approved": false,
+      "certified": false,
+      "runtimeEnabled": false,
+      "boundsFinite": true,
+      "bounds": {
+        "min": [
+          -0.6819221088856283,
+          -0.17864174893369594,
+          -0.7083141549672662
+        ],
+        "max": [
+          0.6819221222603443,
+          1.76,
+          0.6819220844549249
+        ]
+      },
+      "noHit": true,
+      "drawCalls": 24,
+      "triangles": 1120,
+      "clipping": {
+        "method": "conservative-body-vertices-inside-proxy-world-aabb",
+        "sampledVertices": 2281,
+        "overlappingVertices": 1866,
+        "overlapPct": 81.806,
+        "classification": "potential-contact-review-required",
+        "certified": false
+      },
+      "path": "public/models/skins/emo-cyborg-5123caa94e5c.glb",
+      "bodySha256": "5123caa94e5cb0f2d660d382d1d1a7746857be16e21ff51d13bbf63e3c2b69ff",
+      "censusStatus": "unknown",
+      "evidence": {
+        "sheet": "bodies-04.png",
+        "tileIndex": 17,
+        "views": [
+          "front",
+          "threeQuarter"
+        ]
+      }
+    },
+    {
+      "bodyId": "skin:et-cyborg",
+      "status": "study-only",
+      "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
+      "familiesRequested": [
+        "boxy-tee",
+        "shell-jacket",
+        "cargo-pants",
+        "low-sneaker",
+        "backpack-rolltop",
+        "accessory-chain"
+      ],
+      "familiesMounted": [
+        "boxy-tee",
+        "shell-jacket",
+        "cargo-pants",
+        "low-sneaker",
+        "backpack-rolltop",
+        "accessory-chain"
+      ],
+      "failures": [],
+      "selections": [
+        {
+          "slot": "tee",
+          "family": "boxy-tee",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 500,
+          "positionCount": 3292,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "aaaaafd032155c143e99765f82b17c8d922f5d7b22db2f47321d2309489065ff",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "jacket",
+          "family": "shell-jacket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 500,
+          "positionCount": 3292,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "aaaaafd032155c143e99765f82b17c8d922f5d7b22db2f47321d2309489065ff",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "legs",
+          "family": "cargo-pants",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 511,
+          "positionCount": 3292,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Hips",
+            "LeftLowerLeg",
+            "RightLowerLeg"
+          ],
+          "resolvedBones": {
+            "Hips": "Hips",
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg"
+          },
+          "bodySha256": "aaaaafd032155c143e99765f82b17c8d922f5d7b22db2f47321d2309489065ff",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "shoes",
+          "family": "low-sneaker",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 136,
+          "positionCount": 3292,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftFoot",
+            "RightFoot"
+          ],
+          "resolvedBones": {
+            "LeftFoot": "LeftFoot",
+            "RightFoot": "RightFoot"
+          },
+          "bodySha256": "aaaaafd032155c143e99765f82b17c8d922f5d7b22db2f47321d2309489065ff",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "backpack",
+          "family": "backpack-rolltop",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 163,
+          "positionCount": 3292,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02"
+          },
+          "bodySha256": "aaaaafd032155c143e99765f82b17c8d922f5d7b22db2f47321d2309489065ff",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-chain",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 163,
+          "positionCount": 3292,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02"
+          },
+          "bodySha256": "aaaaafd032155c143e99765f82b17c8d922f5d7b22db2f47321d2309489065ff",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        }
+      ],
+      "cleanupBeforeLoad": {
+        "disposed": {
+          "models": 1,
+          "candidates": 6,
+          "geometries": 1,
+          "materials": 1,
+          "textures": 3
+        },
+        "totals": {
+          "models": 84,
+          "candidates": 498,
+          "geometries": 149,
+          "materials": 144,
+          "textures": 228
+        }
+      },
+      "fitStatus": "silhouette-study-not-body-fit",
+      "approved": false,
+      "certified": false,
+      "runtimeEnabled": false,
+      "boundsFinite": true,
+      "bounds": {
+        "min": [
+          -0.8049694322081443,
+          -0.11767277008461183,
+          -0.8049692378049654
+        ],
+        "max": [
+          0.8049690098314316,
+          1.76,
+          0.8049692042346106
+        ]
+      },
+      "noHit": true,
+      "drawCalls": 23,
+      "triangles": 820,
+      "clipping": {
+        "method": "conservative-body-vertices-inside-proxy-world-aabb",
+        "sampledVertices": 3292,
+        "overlappingVertices": 1305,
+        "overlapPct": 39.642,
+        "classification": "potential-contact-review-required",
+        "certified": false
+      },
+      "path": "public/models/skins/et-cyborg-aaaaafd03215.glb",
+      "bodySha256": "aaaaafd032155c143e99765f82b17c8d922f5d7b22db2f47321d2309489065ff",
+      "censusStatus": "unknown",
+      "evidence": {
+        "sheet": "bodies-04.png",
+        "tileIndex": 18,
+        "views": [
+          "front",
+          "threeQuarter"
+        ]
+      }
+    },
+    {
+      "bodyId": "skin:gotinha-cyborg",
+      "status": "study-only",
+      "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
+      "familiesRequested": [
+        "oversized-tee",
+        "shell-jacket",
+        "cargo-pants",
+        "chunky-runner",
+        "backpack-rolltop",
+        "accessory-bandana"
+      ],
+      "familiesMounted": [
+        "oversized-tee",
+        "shell-jacket",
+        "cargo-pants",
+        "chunky-runner",
+        "backpack-rolltop",
+        "accessory-bandana"
+      ],
+      "failures": [],
+      "selections": [
+        {
+          "slot": "tee",
+          "family": "oversized-tee",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 864,
+          "positionCount": 3335,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "d247e5db9c7371ff390860f0d36b395669b869e5a71d08a4e2b561cac6c9ffd1",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "jacket",
+          "family": "shell-jacket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 864,
+          "positionCount": 3335,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "d247e5db9c7371ff390860f0d36b395669b869e5a71d08a4e2b561cac6c9ffd1",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "legs",
+          "family": "cargo-pants",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 726,
+          "positionCount": 3335,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Hips",
+            "LeftLowerLeg",
+            "RightLowerLeg"
+          ],
+          "resolvedBones": {
+            "Hips": "Hips",
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg"
+          },
+          "bodySha256": "d247e5db9c7371ff390860f0d36b395669b869e5a71d08a4e2b561cac6c9ffd1",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "shoes",
+          "family": "chunky-runner",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 358,
+          "positionCount": 3335,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftFoot",
+            "RightFoot"
+          ],
+          "resolvedBones": {
+            "LeftFoot": "LeftFoot",
+            "RightFoot": "RightFoot"
+          },
+          "bodySha256": "d247e5db9c7371ff390860f0d36b395669b869e5a71d08a4e2b561cac6c9ffd1",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "backpack",
+          "family": "backpack-rolltop",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 209,
+          "positionCount": 3335,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02"
+          },
+          "bodySha256": "d247e5db9c7371ff390860f0d36b395669b869e5a71d08a4e2b561cac6c9ffd1",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-bandana",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 634,
+          "positionCount": 3335,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Head"
+          ],
+          "resolvedBones": {
+            "Head": "Head"
+          },
+          "bodySha256": "d247e5db9c7371ff390860f0d36b395669b869e5a71d08a4e2b561cac6c9ffd1",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        }
+      ],
+      "cleanupBeforeLoad": {
+        "disposed": {
+          "models": 1,
+          "candidates": 6,
+          "geometries": 1,
+          "materials": 1,
+          "textures": 3
+        },
+        "totals": {
+          "models": 85,
+          "candidates": 504,
+          "geometries": 150,
+          "materials": 145,
+          "textures": 231
+        }
+      },
+      "fitStatus": "silhouette-study-not-body-fit",
+      "approved": false,
+      "certified": false,
+      "runtimeEnabled": false,
+      "boundsFinite": true,
+      "bounds": {
+        "min": [
+          -0.7955869656287581,
+          -0.27824645478341264,
+          -0.7955870787222524
+        ],
+        "max": [
+          0.795587191148781,
+          1.7600000000000002,
+          0.7955870780552867
+        ]
+      },
+      "noHit": true,
+      "drawCalls": 25,
+      "triangles": 602,
+      "clipping": {
+        "method": "conservative-body-vertices-inside-proxy-world-aabb",
+        "sampledVertices": 3335,
+        "overlappingVertices": 2361,
+        "overlapPct": 70.795,
+        "classification": "potential-contact-review-required",
+        "certified": false
+      },
+      "path": "public/models/skins/gotinha-cyborg-d247e5db9c73.glb",
+      "bodySha256": "d247e5db9c7371ff390860f0d36b395669b869e5a71d08a4e2b561cac6c9ffd1",
+      "censusStatus": "unknown",
+      "evidence": {
+        "sheet": "bodies-04.png",
+        "tileIndex": 19,
+        "views": [
+          "front",
+          "threeQuarter"
+        ]
+      }
+    },
+    {
+      "bodyId": "skin:gotinha-drip",
+      "status": "study-only",
+      "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
+      "familiesRequested": [
+        "boxy-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "boot",
+        "backpack-rolltop",
+        "accessory-bandana"
+      ],
+      "familiesMounted": [
+        "boxy-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "boot",
+        "backpack-rolltop",
+        "accessory-bandana"
+      ],
+      "failures": [],
+      "selections": [
+        {
+          "slot": "tee",
+          "family": "boxy-tee",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 2123,
+          "positionCount": 7783,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "5bdbb59e106116ef6ea2c5de82b509ae5d6ea3fa4585395b4dd2536bb9abb748",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "jacket",
+          "family": "shell-jacket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 2123,
+          "positionCount": 7783,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "5bdbb59e106116ef6ea2c5de82b509ae5d6ea3fa4585395b4dd2536bb9abb748",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "legs",
+          "family": "bermuda-shorts",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 429,
+          "positionCount": 7783,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Hips"
+          ],
+          "resolvedBones": {
+            "Hips": "Hips"
+          },
+          "bodySha256": "5bdbb59e106116ef6ea2c5de82b509ae5d6ea3fa4585395b4dd2536bb9abb748",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "shoes",
+          "family": "boot",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 2189,
+          "positionCount": 7783,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftLowerLeg",
+            "RightLowerLeg",
+            "LeftFoot",
+            "RightFoot"
+          ],
+          "resolvedBones": {
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg",
+            "LeftFoot": "LeftFoot",
+            "RightFoot": "RightFoot"
+          },
+          "bodySha256": "5bdbb59e106116ef6ea2c5de82b509ae5d6ea3fa4585395b4dd2536bb9abb748",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "backpack",
+          "family": "backpack-rolltop",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1100,
+          "positionCount": 7783,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02"
+          },
+          "bodySha256": "5bdbb59e106116ef6ea2c5de82b509ae5d6ea3fa4585395b4dd2536bb9abb748",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-bandana",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1433,
+          "positionCount": 7783,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Head"
+          ],
+          "resolvedBones": {
+            "Head": "Head"
+          },
+          "bodySha256": "5bdbb59e106116ef6ea2c5de82b509ae5d6ea3fa4585395b4dd2536bb9abb748",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        }
+      ],
+      "cleanupBeforeLoad": {
+        "disposed": {
+          "models": 1,
+          "candidates": 6,
+          "geometries": 1,
+          "materials": 1,
+          "textures": 3
+        },
+        "totals": {
+          "models": 86,
+          "candidates": 510,
+          "geometries": 151,
+          "materials": 146,
+          "textures": 234
+        }
+      },
+      "fitStatus": "silhouette-study-not-body-fit",
+      "approved": false,
+      "certified": false,
+      "runtimeEnabled": false,
+      "boundsFinite": true,
+      "bounds": {
+        "min": [
+          -0.764727174073369,
+          -0.27435913396626144,
+          -0.7647270859764943
+        ],
+        "max": [
+          0.7647270243786156,
+          1.76,
+          0.7647271124754905
+        ]
+      },
+      "noHit": true,
+      "drawCalls": 23,
+      "triangles": 634,
+      "clipping": {
+        "method": "conservative-body-vertices-inside-proxy-world-aabb",
+        "sampledVertices": 1946,
+        "overlappingVertices": 1629,
+        "overlapPct": 83.71,
+        "classification": "potential-contact-review-required",
+        "certified": false
+      },
+      "path": "public/models/skins/gotinha-drip-5bdbb59e1061.glb",
+      "bodySha256": "5bdbb59e106116ef6ea2c5de82b509ae5d6ea3fa4585395b4dd2536bb9abb748",
+      "censusStatus": "unknown",
+      "evidence": {
+        "sheet": "bodies-04.png",
+        "tileIndex": 20,
+        "views": [
+          "front",
+          "threeQuarter"
+        ]
+      }
+    },
+    {
+      "bodyId": "skin:gotinha-mandrake",
+      "status": "study-only",
+      "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
+      "familiesRequested": [
+        "oversized-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "low-sneaker",
+        "backpack-triple-pocket",
+        "accessory-bandana"
+      ],
+      "familiesMounted": [
+        "oversized-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "low-sneaker",
+        "backpack-triple-pocket",
+        "accessory-bandana"
+      ],
+      "failures": [],
+      "selections": [
+        {
+          "slot": "tee",
+          "family": "oversized-tee",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 372,
+          "positionCount": 3501,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "97634ca0e20e07f688aa11ea37218fd6101a4dc5302bbef05a392c49fee36bbf",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "jacket",
+          "family": "shell-jacket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 372,
+          "positionCount": 3501,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "97634ca0e20e07f688aa11ea37218fd6101a4dc5302bbef05a392c49fee36bbf",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "legs",
+          "family": "bermuda-shorts",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 51,
+          "positionCount": 3501,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Hips"
+          ],
+          "resolvedBones": {
+            "Hips": "Hips"
+          },
+          "bodySha256": "97634ca0e20e07f688aa11ea37218fd6101a4dc5302bbef05a392c49fee36bbf",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "shoes",
+          "family": "low-sneaker",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 322,
+          "positionCount": 3501,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftFoot",
+            "RightFoot"
+          ],
+          "resolvedBones": {
+            "LeftFoot": "LeftFoot",
+            "RightFoot": "RightFoot"
+          },
+          "bodySha256": "97634ca0e20e07f688aa11ea37218fd6101a4dc5302bbef05a392c49fee36bbf",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "backpack",
+          "family": "backpack-triple-pocket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 142,
+          "positionCount": 3501,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02"
+          },
+          "bodySha256": "97634ca0e20e07f688aa11ea37218fd6101a4dc5302bbef05a392c49fee36bbf",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-bandana",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1639,
+          "positionCount": 3501,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Head"
+          ],
+          "resolvedBones": {
+            "Head": "Head"
+          },
+          "bodySha256": "97634ca0e20e07f688aa11ea37218fd6101a4dc5302bbef05a392c49fee36bbf",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        }
+      ],
+      "cleanupBeforeLoad": {
+        "disposed": {
+          "models": 1,
+          "candidates": 6,
+          "geometries": 1,
+          "materials": 1,
+          "textures": 3
+        },
+        "totals": {
+          "models": 87,
+          "candidates": 516,
+          "geometries": 152,
+          "materials": 147,
+          "textures": 237
+        }
+      },
+      "fitStatus": "silhouette-study-not-body-fit",
+      "approved": false,
+      "certified": false,
+      "runtimeEnabled": false,
+      "boundsFinite": true,
+      "bounds": {
+        "min": [
+          -0.8791926618707795,
+          -0.21202282349809667,
+          -0.8791927380442581
+        ],
+        "max": [
+          0.8791926277700298,
+          1.7600000000000002,
+          0.8791925515965513
+        ]
+      },
+      "noHit": true,
+      "drawCalls": 21,
+      "triangles": 342,
+      "clipping": {
+        "method": "conservative-body-vertices-inside-proxy-world-aabb",
+        "sampledVertices": 3501,
+        "overlappingVertices": 1755,
+        "overlapPct": 50.129,
+        "classification": "potential-contact-review-required",
+        "certified": false
+      },
+      "path": "public/models/skins/gotinha-mandrake-97634ca0e20e.glb",
+      "bodySha256": "97634ca0e20e07f688aa11ea37218fd6101a4dc5302bbef05a392c49fee36bbf",
+      "censusStatus": "unknown",
+      "evidence": {
+        "sheet": "bodies-04.png",
+        "tileIndex": 21,
+        "views": [
+          "front",
+          "threeQuarter"
+        ]
+      }
+    },
+    {
+      "bodyId": "skin:janja",
+      "status": "study-only",
+      "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
+      "familiesRequested": [
+        "boxy-tee",
+        "shell-jacket",
+        "cargo-pants",
+        "chunky-runner",
+        "backpack-triple-pocket",
+        "accessory-bandana"
+      ],
+      "familiesMounted": [
+        "boxy-tee",
+        "shell-jacket",
+        "cargo-pants",
+        "chunky-runner",
+        "backpack-triple-pocket",
+        "accessory-bandana"
+      ],
+      "failures": [],
+      "selections": [
+        {
+          "slot": "tee",
+          "family": "boxy-tee",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
           "weightedVertices": 1270,
@@ -19274,18 +21219,22 @@
         },
         {
           "slot": "legs",
-          "family": "bermuda-shorts",
+          "family": "cargo-pants",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 621,
+          "weightedVertices": 1356,
           "positionCount": 6602,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
-            "Hips"
+            "Hips",
+            "LeftLowerLeg",
+            "RightLowerLeg"
           ],
           "resolvedBones": {
-            "Hips": "Hips"
+            "Hips": "Hips",
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg"
           },
           "bodySha256": "a268fab50a32c5ac9929149da6d4e2cf8598caa723c58c1bd1b7430fa453dfb0",
           "adapterId": null,
@@ -19316,18 +21265,18 @@
         },
         {
           "slot": "backpack",
-          "family": "backpack-tote",
+          "family": "backpack-triple-pocket",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 359,
+          "weightedVertices": 766,
           "positionCount": 6602,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
-            "LeftHand"
+            "Spine02"
           ],
           "resolvedBones": {
-            "LeftHand": "LeftHand"
+            "Spine02": "Spine02"
           },
           "bodySha256": "a268fab50a32c5ac9929149da6d4e2cf8598caa723c58c1bd1b7430fa453dfb0",
           "adapterId": null,
@@ -19336,18 +21285,18 @@
         },
         {
           "slot": "accessory",
-          "family": "accessory-case",
+          "family": "accessory-bandana",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 359,
+          "weightedVertices": 2978,
           "positionCount": 6602,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
-            "LeftHand"
+            "Head"
           ],
           "resolvedBones": {
-            "LeftHand": "LeftHand"
+            "Head": "Head"
           },
           "bodySha256": "a268fab50a32c5ac9929149da6d4e2cf8598caa723c58c1bd1b7430fa453dfb0",
           "adapterId": null,
@@ -19364,11 +21313,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 79,
-          "candidates": 468,
-          "geometries": 144,
-          "materials": 139,
-          "textures": 213
+          "models": 88,
+          "candidates": 522,
+          "geometries": 153,
+          "materials": 148,
+          "textures": 240
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -19390,12 +21339,12 @@
       },
       "noHit": true,
       "drawCalls": 25,
-      "triangles": 716,
+      "triangles": 390,
       "clipping": {
         "method": "conservative-body-vertices-inside-proxy-world-aabb",
         "sampledVertices": 2201,
-        "overlappingVertices": 1474,
-        "overlapPct": 66.97,
+        "overlappingVertices": 1641,
+        "overlapPct": 74.557,
         "classification": "potential-contact-review-required",
         "certified": false
       },
@@ -19403,8 +21352,8 @@
       "bodySha256": "a268fab50a32c5ac9929149da6d4e2cf8598caa723c58c1bd1b7430fa453dfb0",
       "censusStatus": "unknown",
       "evidence": {
-        "sheet": "bodies-04.png",
-        "tileIndex": 13,
+        "sheet": "bodies-05.png",
+        "tileIndex": 0,
         "views": [
           "front",
           "threeQuarter"
@@ -19412,34 +21361,34 @@
       }
     },
     {
-      "bodyId": "skin:lula-cyborg",
+      "bodyId": "skin:lampiao-cyborg",
       "status": "study-only",
       "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
       "familiesRequested": [
-        "boxy-tee",
+        "oversized-tee",
         "shell-jacket",
         "cargo-pants",
         "boot",
-        "backpack-tote",
-        "accessory-chain"
+        "backpack-triple-pocket",
+        "accessory-bandana"
       ],
       "familiesMounted": [
-        "boxy-tee",
+        "oversized-tee",
         "shell-jacket",
         "cargo-pants",
         "boot",
-        "backpack-tote",
-        "accessory-chain"
+        "backpack-triple-pocket",
+        "accessory-bandana"
       ],
       "failures": [],
       "selections": [
         {
           "slot": "tee",
-          "family": "boxy-tee",
+          "family": "oversized-tee",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 1139,
-          "positionCount": 3414,
+          "weightedVertices": 1343,
+          "positionCount": 7259,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
@@ -19450,13 +21399,13 @@
           ],
           "resolvedBones": {
             "Spine02": "Spine02",
-            "Spine": "Spine02",
+            "Spine": "Spine01",
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "dee1c4685b95d8c742c55b58d4ec0bdc8239e4fe5e89b45d89619510f454e16e",
-          "adapterId": "spine02-lula-cyborg",
-          "adapterReason": "spine-region-is-weighted-to-spine02",
+          "bodySha256": "ed4f0edfc55e9128bf29309cf7bac56059a1a736eb8550ce6c26ae34e7a36fec",
+          "adapterId": null,
+          "adapterReason": null,
           "normalizeReadWeights": false
         },
         {
@@ -19464,8 +21413,8 @@
           "family": "shell-jacket",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 1139,
-          "positionCount": 3414,
+          "weightedVertices": 1343,
+          "positionCount": 7259,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
@@ -19476,13 +21425,13 @@
           ],
           "resolvedBones": {
             "Spine02": "Spine02",
-            "Spine": "Spine02",
+            "Spine": "Spine01",
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "dee1c4685b95d8c742c55b58d4ec0bdc8239e4fe5e89b45d89619510f454e16e",
-          "adapterId": "spine02-lula-cyborg",
-          "adapterReason": "spine-region-is-weighted-to-spine02",
+          "bodySha256": "ed4f0edfc55e9128bf29309cf7bac56059a1a736eb8550ce6c26ae34e7a36fec",
+          "adapterId": null,
+          "adapterReason": null,
           "normalizeReadWeights": false
         },
         {
@@ -19490,8 +21439,8 @@
           "family": "cargo-pants",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 969,
-          "positionCount": 3414,
+          "weightedVertices": 1538,
+          "positionCount": 7259,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
@@ -19504,9 +21453,9 @@
             "LeftLowerLeg": "LeftLeg",
             "RightLowerLeg": "RightLeg"
           },
-          "bodySha256": "dee1c4685b95d8c742c55b58d4ec0bdc8239e4fe5e89b45d89619510f454e16e",
-          "adapterId": "spine02-lula-cyborg",
-          "adapterReason": "spine-region-is-weighted-to-spine02",
+          "bodySha256": "ed4f0edfc55e9128bf29309cf7bac56059a1a736eb8550ce6c26ae34e7a36fec",
+          "adapterId": null,
+          "adapterReason": null,
           "normalizeReadWeights": false
         },
         {
@@ -19514,8 +21463,8 @@
           "family": "boot",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 613,
-          "positionCount": 3414,
+          "weightedVertices": 1807,
+          "positionCount": 7259,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
@@ -19530,37 +21479,443 @@
             "LeftFoot": "LeftFoot",
             "RightFoot": "RightFoot"
           },
-          "bodySha256": "dee1c4685b95d8c742c55b58d4ec0bdc8239e4fe5e89b45d89619510f454e16e",
+          "bodySha256": "ed4f0edfc55e9128bf29309cf7bac56059a1a736eb8550ce6c26ae34e7a36fec",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "backpack",
+          "family": "backpack-triple-pocket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 527,
+          "positionCount": 7259,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02"
+          },
+          "bodySha256": "ed4f0edfc55e9128bf29309cf7bac56059a1a736eb8550ce6c26ae34e7a36fec",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-bandana",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 2263,
+          "positionCount": 7259,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Head"
+          ],
+          "resolvedBones": {
+            "Head": "Head"
+          },
+          "bodySha256": "ed4f0edfc55e9128bf29309cf7bac56059a1a736eb8550ce6c26ae34e7a36fec",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        }
+      ],
+      "cleanupBeforeLoad": {
+        "disposed": {
+          "models": 1,
+          "candidates": 6,
+          "geometries": 1,
+          "materials": 1,
+          "textures": 3
+        },
+        "totals": {
+          "models": 89,
+          "candidates": 528,
+          "geometries": 154,
+          "materials": 149,
+          "textures": 243
+        }
+      },
+      "fitStatus": "silhouette-study-not-body-fit",
+      "approved": false,
+      "certified": false,
+      "runtimeEnabled": false,
+      "boundsFinite": true,
+      "bounds": {
+        "min": [
+          -0.7890815289466719,
+          -0.2139221836511463,
+          -0.7890814539292517
+        ],
+        "max": [
+          0.7890815171127619,
+          1.7600000000000002,
+          0.7890815921301823
+        ]
+      },
+      "noHit": true,
+      "drawCalls": 25,
+      "triangles": 446,
+      "clipping": {
+        "method": "conservative-body-vertices-inside-proxy-world-aabb",
+        "sampledVertices": 1815,
+        "overlappingVertices": 1380,
+        "overlapPct": 76.033,
+        "classification": "potential-contact-review-required",
+        "certified": false
+      },
+      "path": "public/models/skins/lampiao-cyborg-ed4f0edfc55e.glb",
+      "bodySha256": "ed4f0edfc55e9128bf29309cf7bac56059a1a736eb8550ce6c26ae34e7a36fec",
+      "censusStatus": "unknown",
+      "evidence": {
+        "sheet": "bodies-05.png",
+        "tileIndex": 1,
+        "views": [
+          "front",
+          "threeQuarter"
+        ]
+      }
+    },
+    {
+      "bodyId": "skin:lobisomem-cyborg",
+      "status": "study-only",
+      "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
+      "familiesRequested": [
+        "boxy-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "low-sneaker",
+        "backpack-sling",
+        "accessory-earring"
+      ],
+      "familiesMounted": [
+        "boxy-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "low-sneaker",
+        "backpack-sling",
+        "accessory-earring"
+      ],
+      "failures": [],
+      "selections": [
+        {
+          "slot": "tee",
+          "family": "boxy-tee",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 786,
+          "positionCount": 3606,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "d2f5f8e2808522c52c41d38cd3ad996c39db51ef10edbca954078be1a5fade81",
+          "adapterId": "weights-depth-lobisomem-cyborg",
+          "adapterReason": "normalize-weight-sum-headfront-measurement-and-preserve-body-local-depth-envelope",
+          "normalizeReadWeights": true
+        },
+        {
+          "slot": "jacket",
+          "family": "shell-jacket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 786,
+          "positionCount": 3606,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "d2f5f8e2808522c52c41d38cd3ad996c39db51ef10edbca954078be1a5fade81",
+          "adapterId": "weights-depth-lobisomem-cyborg",
+          "adapterReason": "normalize-weight-sum-headfront-measurement-and-preserve-body-local-depth-envelope",
+          "normalizeReadWeights": true
+        },
+        {
+          "slot": "legs",
+          "family": "bermuda-shorts",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 246,
+          "positionCount": 3606,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Hips"
+          ],
+          "resolvedBones": {
+            "Hips": "Hips"
+          },
+          "bodySha256": "d2f5f8e2808522c52c41d38cd3ad996c39db51ef10edbca954078be1a5fade81",
+          "adapterId": "weights-depth-lobisomem-cyborg",
+          "adapterReason": "normalize-weight-sum-headfront-measurement-and-preserve-body-local-depth-envelope",
+          "normalizeReadWeights": true
+        },
+        {
+          "slot": "shoes",
+          "family": "low-sneaker",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 355,
+          "positionCount": 3606,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftFoot",
+            "RightFoot"
+          ],
+          "resolvedBones": {
+            "LeftFoot": "LeftFoot",
+            "RightFoot": "RightFoot"
+          },
+          "bodySha256": "d2f5f8e2808522c52c41d38cd3ad996c39db51ef10edbca954078be1a5fade81",
+          "adapterId": "weights-depth-lobisomem-cyborg",
+          "adapterReason": "normalize-weight-sum-headfront-measurement-and-preserve-body-local-depth-envelope",
+          "normalizeReadWeights": true
+        },
+        {
+          "slot": "backpack",
+          "family": "backpack-sling",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 269,
+          "positionCount": 3606,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02"
+          },
+          "bodySha256": "d2f5f8e2808522c52c41d38cd3ad996c39db51ef10edbca954078be1a5fade81",
+          "adapterId": "weights-depth-lobisomem-cyborg",
+          "adapterReason": "normalize-weight-sum-headfront-measurement-and-preserve-body-local-depth-envelope",
+          "normalizeReadWeights": true
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-earring",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 617,
+          "positionCount": 3606,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Head"
+          ],
+          "resolvedBones": {
+            "Head": "headfront"
+          },
+          "bodySha256": "d2f5f8e2808522c52c41d38cd3ad996c39db51ef10edbca954078be1a5fade81",
+          "adapterId": "weights-depth-lobisomem-cyborg",
+          "adapterReason": "normalize-weight-sum-headfront-measurement-and-preserve-body-local-depth-envelope",
+          "normalizeReadWeights": true
+        }
+      ],
+      "cleanupBeforeLoad": {
+        "disposed": {
+          "models": 1,
+          "candidates": 6,
+          "geometries": 1,
+          "materials": 1,
+          "textures": 3
+        },
+        "totals": {
+          "models": 90,
+          "candidates": 534,
+          "geometries": 155,
+          "materials": 150,
+          "textures": 246
+        }
+      },
+      "fitStatus": "silhouette-study-not-body-fit",
+      "approved": false,
+      "certified": false,
+      "runtimeEnabled": false,
+      "boundsFinite": true,
+      "bounds": {
+        "min": [
+          -1.1295931763404903,
+          -0.12670408418188123,
+          -1.129593582312904
+        ],
+        "max": [
+          1.1295929285660828,
+          1.7600000000000002,
+          1.1295925225936694
+        ]
+      },
+      "noHit": true,
+      "drawCalls": 19,
+      "triangles": 896,
+      "clipping": {
+        "method": "conservative-body-vertices-inside-proxy-world-aabb",
+        "sampledVertices": 1803,
+        "overlappingVertices": 1297,
+        "overlapPct": 71.936,
+        "classification": "potential-contact-review-required",
+        "certified": false
+      },
+      "path": "public/models/skins/lobisomem-cyborg-d2f5f8e28085.glb",
+      "bodySha256": "d2f5f8e2808522c52c41d38cd3ad996c39db51ef10edbca954078be1a5fade81",
+      "censusStatus": "unknown",
+      "evidence": {
+        "sheet": "bodies-05.png",
+        "tileIndex": 2,
+        "views": [
+          "front",
+          "threeQuarter"
+        ]
+      }
+    },
+    {
+      "bodyId": "skin:lula-cyborg",
+      "status": "study-only",
+      "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
+      "familiesRequested": [
+        "oversized-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "chunky-runner",
+        "backpack-sling",
+        "accessory-earring"
+      ],
+      "familiesMounted": [
+        "oversized-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "chunky-runner",
+        "backpack-sling",
+        "accessory-earring"
+      ],
+      "failures": [],
+      "selections": [
+        {
+          "slot": "tee",
+          "family": "oversized-tee",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 934,
+          "positionCount": 3414,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine02",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119",
+          "adapterId": "spine02-lula-cyborg",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "jacket",
+          "family": "shell-jacket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 934,
+          "positionCount": 3414,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine02",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119",
+          "adapterId": "spine02-lula-cyborg",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "legs",
+          "family": "bermuda-shorts",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 594,
+          "positionCount": 3414,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Hips"
+          ],
+          "resolvedBones": {
+            "Hips": "Hips"
+          },
+          "bodySha256": "e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119",
+          "adapterId": "spine02-lula-cyborg",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "shoes",
+          "family": "chunky-runner",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 334,
+          "positionCount": 3414,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftFoot",
+            "RightFoot"
+          ],
+          "resolvedBones": {
+            "LeftFoot": "LeftFoot",
+            "RightFoot": "RightFoot"
+          },
+          "bodySha256": "e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119",
           "adapterId": "spine02-lula-cyborg",
           "adapterReason": "spine-region-is-weighted-to-spine02",
           "normalizeReadWeights": false
         },
         {
           "slot": "backpack",
-          "family": "backpack-tote",
+          "family": "backpack-sling",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 315,
-          "positionCount": 3414,
-          "eligibleMeshes": 1,
-          "observedSkinnedMeshes": 1,
-          "requiredBones": [
-            "LeftHand"
-          ],
-          "resolvedBones": {
-            "LeftHand": "LeftHand"
-          },
-          "bodySha256": "dee1c4685b95d8c742c55b58d4ec0bdc8239e4fe5e89b45d89619510f454e16e",
-          "adapterId": "spine02-lula-cyborg",
-          "adapterReason": "spine-region-is-weighted-to-spine02",
-          "normalizeReadWeights": false
-        },
-        {
-          "slot": "accessory",
-          "family": "accessory-chain",
-          "strategy": "largest-required-weighted-vertex-set",
-          "meshName": "char1",
-          "weightedVertices": 404,
+          "weightedVertices": 208,
           "positionCount": 3414,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
@@ -19570,7 +21925,27 @@
           "resolvedBones": {
             "Spine02": "Spine02"
           },
-          "bodySha256": "dee1c4685b95d8c742c55b58d4ec0bdc8239e4fe5e89b45d89619510f454e16e",
+          "bodySha256": "e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119",
+          "adapterId": "spine02-lula-cyborg",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-earring",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 512,
+          "positionCount": 3414,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Head"
+          ],
+          "resolvedBones": {
+            "Head": "Head"
+          },
+          "bodySha256": "e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119",
           "adapterId": "spine02-lula-cyborg",
           "adapterReason": "spine-region-is-weighted-to-spine02",
           "normalizeReadWeights": false
@@ -19585,11 +21960,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 80,
-          "candidates": 474,
-          "geometries": 145,
-          "materials": 140,
-          "textures": 216
+          "models": 91,
+          "candidates": 540,
+          "geometries": 156,
+          "materials": 151,
+          "textures": 249
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -19599,33 +21974,33 @@
       "boundsFinite": true,
       "bounds": {
         "min": [
-          -0.6429551241841995,
-          -0.21661755548181888,
-          -0.6649459201232428
+          -0.6429551281487711,
+          -0.24299274160798234,
+          -0.6626172342881896
         ],
         "max": [
-          0.6429551289769464,
+          0.64295513186172,
           1.7600000000000002,
-          0.6429551192443994
+          0.6429551213656405
         ]
       },
       "noHit": true,
-      "drawCalls": 25,
-      "triangles": 864,
+      "drawCalls": 21,
+      "triangles": 920,
       "clipping": {
         "method": "conservative-body-vertices-inside-proxy-world-aabb",
         "sampledVertices": 3414,
-        "overlappingVertices": 2990,
-        "overlapPct": 87.581,
+        "overlappingVertices": 2873,
+        "overlapPct": 84.153,
         "classification": "potential-contact-review-required",
         "certified": false
       },
-      "path": "public/models/skins/lula-cyborg-dee1c4685b95.glb",
-      "bodySha256": "dee1c4685b95d8c742c55b58d4ec0bdc8239e4fe5e89b45d89619510f454e16e",
+      "path": "public/models/skins/lula-cyborg-e94ce8f2be07.glb",
+      "bodySha256": "e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119",
       "censusStatus": "unknown",
       "evidence": {
-        "sheet": "bodies-04.png",
-        "tileIndex": 14,
+        "sheet": "bodies-05.png",
+        "tileIndex": 3,
         "views": [
           "front",
           "threeQuarter"
@@ -19637,29 +22012,29 @@
       "status": "study-only",
       "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
       "familiesRequested": [
-        "oversized-tee",
+        "boxy-tee",
         "shell-jacket",
         "cargo-pants",
-        "low-sneaker",
-        "backpack-duffel",
-        "accessory-chain"
+        "boot",
+        "backpack-sling",
+        "accessory-earring"
       ],
       "familiesMounted": [
-        "oversized-tee",
+        "boxy-tee",
         "shell-jacket",
         "cargo-pants",
-        "low-sneaker",
-        "backpack-duffel",
-        "accessory-chain"
+        "boot",
+        "backpack-sling",
+        "accessory-earring"
       ],
       "failures": [],
       "selections": [
         {
           "slot": "tee",
-          "family": "oversized-tee",
+          "family": "boxy-tee",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 537,
+          "weightedVertices": 187,
           "positionCount": 3504,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
@@ -19671,13 +22046,13 @@
           ],
           "resolvedBones": {
             "Spine02": "Spine02",
-            "Spine": "Spine01",
+            "Spine": "Spine02",
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "b7c49abc6b7612c6341bf16642d4c691c4c89f39d16e6136bf6f58ea2dabc3c9",
-          "adapterId": null,
-          "adapterReason": null,
+          "bodySha256": "881e87facd893855a2139824a489160014847c2506bdb712ae120c2f8727e0b1",
+          "adapterId": "spine02-lula-drip",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
           "normalizeReadWeights": false
         },
         {
@@ -19685,7 +22060,7 @@
           "family": "shell-jacket",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 537,
+          "weightedVertices": 187,
           "positionCount": 3504,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
@@ -19697,13 +22072,13 @@
           ],
           "resolvedBones": {
             "Spine02": "Spine02",
-            "Spine": "Spine01",
+            "Spine": "Spine02",
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "b7c49abc6b7612c6341bf16642d4c691c4c89f39d16e6136bf6f58ea2dabc3c9",
-          "adapterId": null,
-          "adapterReason": null,
+          "bodySha256": "881e87facd893855a2139824a489160014847c2506bdb712ae120c2f8727e0b1",
+          "adapterId": "spine02-lula-drip",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
           "normalizeReadWeights": false
         },
         {
@@ -19711,7 +22086,7 @@
           "family": "cargo-pants",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 646,
+          "weightedVertices": 918,
           "positionCount": 3504,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
@@ -19725,59 +22100,43 @@
             "LeftLowerLeg": "LeftLeg",
             "RightLowerLeg": "RightLeg"
           },
-          "bodySha256": "b7c49abc6b7612c6341bf16642d4c691c4c89f39d16e6136bf6f58ea2dabc3c9",
-          "adapterId": null,
-          "adapterReason": null,
+          "bodySha256": "881e87facd893855a2139824a489160014847c2506bdb712ae120c2f8727e0b1",
+          "adapterId": "spine02-lula-drip",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
           "normalizeReadWeights": false
         },
         {
           "slot": "shoes",
-          "family": "low-sneaker",
+          "family": "boot",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 469,
+          "weightedVertices": 704,
           "positionCount": 3504,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
+            "LeftLowerLeg",
+            "RightLowerLeg",
             "LeftFoot",
             "RightFoot"
           ],
           "resolvedBones": {
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg",
             "LeftFoot": "LeftFoot",
             "RightFoot": "RightFoot"
           },
-          "bodySha256": "b7c49abc6b7612c6341bf16642d4c691c4c89f39d16e6136bf6f58ea2dabc3c9",
-          "adapterId": null,
-          "adapterReason": null,
+          "bodySha256": "881e87facd893855a2139824a489160014847c2506bdb712ae120c2f8727e0b1",
+          "adapterId": "spine02-lula-drip",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
           "normalizeReadWeights": false
         },
         {
           "slot": "backpack",
-          "family": "backpack-duffel",
+          "family": "backpack-sling",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 355,
-          "positionCount": 3504,
-          "eligibleMeshes": 1,
-          "observedSkinnedMeshes": 1,
-          "requiredBones": [
-            "RightHand"
-          ],
-          "resolvedBones": {
-            "RightHand": "RightHand"
-          },
-          "bodySha256": "b7c49abc6b7612c6341bf16642d4c691c4c89f39d16e6136bf6f58ea2dabc3c9",
-          "adapterId": null,
-          "adapterReason": null,
-          "normalizeReadWeights": false
-        },
-        {
-          "slot": "accessory",
-          "family": "accessory-chain",
-          "strategy": "largest-required-weighted-vertex-set",
-          "meshName": "char1",
-          "weightedVertices": 235,
+          "weightedVertices": 102,
           "positionCount": 3504,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
@@ -19787,9 +22146,29 @@
           "resolvedBones": {
             "Spine02": "Spine02"
           },
-          "bodySha256": "b7c49abc6b7612c6341bf16642d4c691c4c89f39d16e6136bf6f58ea2dabc3c9",
-          "adapterId": null,
-          "adapterReason": null,
+          "bodySha256": "881e87facd893855a2139824a489160014847c2506bdb712ae120c2f8727e0b1",
+          "adapterId": "spine02-lula-drip",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-earring",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1110,
+          "positionCount": 3504,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Head"
+          ],
+          "resolvedBones": {
+            "Head": "Head"
+          },
+          "bodySha256": "881e87facd893855a2139824a489160014847c2506bdb712ae120c2f8727e0b1",
+          "adapterId": "spine02-lula-drip",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
           "normalizeReadWeights": false
         }
       ],
@@ -19802,11 +22181,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 81,
-          "candidates": 480,
-          "geometries": 146,
-          "materials": 141,
-          "textures": 219
+          "models": 92,
+          "candidates": 546,
+          "geometries": 157,
+          "materials": 152,
+          "textures": 252
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -19816,33 +22195,33 @@
       "boundsFinite": true,
       "bounds": {
         "min": [
-          -0.7641216129084392,
-          -0.22601960225498363,
-          -0.7574202959942082
+          -0.7574206197735192,
+          -0.28331315488500386,
+          -0.7574206828952704
         ],
         "max": [
-          0.7574206488003238,
+          0.7574207621210212,
           1.7599999999999996,
-          0.7574206989992702
+          0.7574206989992701
         ]
       },
       "noHit": true,
-      "drawCalls": 24,
-      "triangles": 1064,
+      "drawCalls": 23,
+      "triangles": 1000,
       "clipping": {
         "method": "conservative-body-vertices-inside-proxy-world-aabb",
         "sampledVertices": 3504,
-        "overlappingVertices": 2733,
-        "overlapPct": 77.997,
+        "overlappingVertices": 2966,
+        "overlapPct": 84.646,
         "classification": "potential-contact-review-required",
         "certified": false
       },
-      "path": "public/models/skins/lula-drip-b7c49abc6b76.glb",
-      "bodySha256": "b7c49abc6b7612c6341bf16642d4c691c4c89f39d16e6136bf6f58ea2dabc3c9",
+      "path": "public/models/skins/lula-drip-881e87facd89.glb",
+      "bodySha256": "881e87facd893855a2139824a489160014847c2506bdb712ae120c2f8727e0b1",
       "censusStatus": "unknown",
       "evidence": {
-        "sheet": "bodies-04.png",
-        "tileIndex": 15,
+        "sheet": "bodies-05.png",
+        "tileIndex": 4,
         "views": [
           "front",
           "threeQuarter"
@@ -19854,29 +22233,29 @@
       "status": "study-only",
       "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
       "familiesRequested": [
-        "boxy-tee",
+        "oversized-tee",
         "shell-jacket",
-        "bermuda-shorts",
-        "chunky-runner",
-        "backpack-duffel",
-        "accessory-chain"
+        "cargo-pants",
+        "low-sneaker",
+        "backpack-drypack",
+        "accessory-earring"
       ],
       "familiesMounted": [
-        "boxy-tee",
+        "oversized-tee",
         "shell-jacket",
-        "bermuda-shorts",
-        "chunky-runner",
-        "backpack-duffel",
-        "accessory-chain"
+        "cargo-pants",
+        "low-sneaker",
+        "backpack-drypack",
+        "accessory-earring"
       ],
       "failures": [],
       "selections": [
         {
           "slot": "tee",
-          "family": "boxy-tee",
+          "family": "oversized-tee",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 711,
+          "weightedVertices": 667,
           "positionCount": 6791,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
@@ -19888,13 +22267,13 @@
           ],
           "resolvedBones": {
             "Spine02": "Spine02",
-            "Spine": "Spine01",
+            "Spine": "Spine02",
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "d7014fbc5694121b7e9c659e9dc00f11c816897353f2b9cd2db77eb91bbe7862",
-          "adapterId": null,
-          "adapterReason": null,
+          "bodySha256": "4e58761e8ed5827ad7ef35432e57c20885c2490d70721d2c309497b1f7cf84dd",
+          "adapterId": "spine02-lula-mandrake",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
           "normalizeReadWeights": false
         },
         {
@@ -19902,7 +22281,7 @@
           "family": "shell-jacket",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 711,
+          "weightedVertices": 667,
           "positionCount": 6791,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
@@ -19914,38 +22293,42 @@
           ],
           "resolvedBones": {
             "Spine02": "Spine02",
-            "Spine": "Spine01",
+            "Spine": "Spine02",
             "LeftUpperArm": "LeftArm",
             "RightUpperArm": "RightArm"
           },
-          "bodySha256": "d7014fbc5694121b7e9c659e9dc00f11c816897353f2b9cd2db77eb91bbe7862",
-          "adapterId": null,
-          "adapterReason": null,
+          "bodySha256": "4e58761e8ed5827ad7ef35432e57c20885c2490d70721d2c309497b1f7cf84dd",
+          "adapterId": "spine02-lula-mandrake",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
           "normalizeReadWeights": false
         },
         {
           "slot": "legs",
-          "family": "bermuda-shorts",
+          "family": "cargo-pants",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 263,
+          "weightedVertices": 1481,
           "positionCount": 6791,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
-            "Hips"
+            "Hips",
+            "LeftLowerLeg",
+            "RightLowerLeg"
           ],
           "resolvedBones": {
-            "Hips": "Hips"
+            "Hips": "Hips",
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg"
           },
-          "bodySha256": "d7014fbc5694121b7e9c659e9dc00f11c816897353f2b9cd2db77eb91bbe7862",
-          "adapterId": null,
-          "adapterReason": null,
+          "bodySha256": "4e58761e8ed5827ad7ef35432e57c20885c2490d70721d2c309497b1f7cf84dd",
+          "adapterId": "spine02-lula-mandrake",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
           "normalizeReadWeights": false
         },
         {
           "slot": "shoes",
-          "family": "chunky-runner",
+          "family": "low-sneaker",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
           "weightedVertices": 951,
@@ -19960,37 +22343,17 @@
             "LeftFoot": "LeftFoot",
             "RightFoot": "RightFoot"
           },
-          "bodySha256": "d7014fbc5694121b7e9c659e9dc00f11c816897353f2b9cd2db77eb91bbe7862",
-          "adapterId": null,
-          "adapterReason": null,
+          "bodySha256": "4e58761e8ed5827ad7ef35432e57c20885c2490d70721d2c309497b1f7cf84dd",
+          "adapterId": "spine02-lula-mandrake",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
           "normalizeReadWeights": false
         },
         {
           "slot": "backpack",
-          "family": "backpack-duffel",
+          "family": "backpack-drypack",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 1113,
-          "positionCount": 6791,
-          "eligibleMeshes": 1,
-          "observedSkinnedMeshes": 1,
-          "requiredBones": [
-            "RightHand"
-          ],
-          "resolvedBones": {
-            "RightHand": "RightHand"
-          },
-          "bodySha256": "d7014fbc5694121b7e9c659e9dc00f11c816897353f2b9cd2db77eb91bbe7862",
-          "adapterId": null,
-          "adapterReason": null,
-          "normalizeReadWeights": false
-        },
-        {
-          "slot": "accessory",
-          "family": "accessory-chain",
-          "strategy": "largest-required-weighted-vertex-set",
-          "meshName": "char1",
-          "weightedVertices": 275,
+          "weightedVertices": 221,
           "positionCount": 6791,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
@@ -20000,9 +22363,29 @@
           "resolvedBones": {
             "Spine02": "Spine02"
           },
-          "bodySha256": "d7014fbc5694121b7e9c659e9dc00f11c816897353f2b9cd2db77eb91bbe7862",
-          "adapterId": null,
-          "adapterReason": null,
+          "bodySha256": "4e58761e8ed5827ad7ef35432e57c20885c2490d70721d2c309497b1f7cf84dd",
+          "adapterId": "spine02-lula-mandrake",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-earring",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1949,
+          "positionCount": 6791,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Head"
+          ],
+          "resolvedBones": {
+            "Head": "Head"
+          },
+          "bodySha256": "4e58761e8ed5827ad7ef35432e57c20885c2490d70721d2c309497b1f7cf84dd",
+          "adapterId": "spine02-lula-mandrake",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
           "normalizeReadWeights": false
         }
       ],
@@ -20015,11 +22398,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 82,
-          "candidates": 486,
-          "geometries": 147,
-          "materials": 142,
-          "textures": 222
+          "models": 93,
+          "candidates": 552,
+          "geometries": 158,
+          "materials": 153,
+          "textures": 255
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -20029,33 +22412,33 @@
       "boundsFinite": true,
       "bounds": {
         "min": [
-          -0.7744685057221524,
-          -0.2900125739791386,
-          -0.7810682342623361
+          -0.7744684401743592,
+          -0.21301381826716298,
+          -0.7744686195188649
         ],
         "max": [
-          0.7744688567770277,
+          0.7744686985306559,
           1.7599999999999998,
-          0.7744687429803152
+          0.7744685191861501
         ]
       },
       "noHit": true,
-      "drawCalls": 24,
-      "triangles": 1064,
+      "drawCalls": 22,
+      "triangles": 916,
       "clipping": {
         "method": "conservative-body-vertices-inside-proxy-world-aabb",
         "sampledVertices": 2264,
-        "overlappingVertices": 1611,
-        "overlapPct": 71.157,
+        "overlappingVertices": 1475,
+        "overlapPct": 65.15,
         "classification": "potential-contact-review-required",
         "certified": false
       },
-      "path": "public/models/skins/lula-mandrake-d7014fbc5694.glb",
-      "bodySha256": "d7014fbc5694121b7e9c659e9dc00f11c816897353f2b9cd2db77eb91bbe7862",
+      "path": "public/models/skins/lula-mandrake-4e58761e8ed5.glb",
+      "bodySha256": "4e58761e8ed5827ad7ef35432e57c20885c2490d70721d2c309497b1f7cf84dd",
       "censusStatus": "unknown",
       "evidence": {
-        "sheet": "bodies-04.png",
-        "tileIndex": 16,
+        "sheet": "bodies-05.png",
+        "tileIndex": 5,
         "views": [
           "front",
           "threeQuarter"
@@ -20067,26 +22450,26 @@
       "status": "study-only",
       "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
       "familiesRequested": [
-        "oversized-tee",
+        "boxy-tee",
         "shell-jacket",
         "bermuda-shorts",
-        "boot",
-        "backpack-duffel",
-        "accessory-chain"
+        "chunky-runner",
+        "backpack-drypack",
+        "accessory-earring"
       ],
       "familiesMounted": [
-        "oversized-tee",
+        "boxy-tee",
         "shell-jacket",
         "bermuda-shorts",
-        "boot",
-        "backpack-duffel",
-        "accessory-chain"
+        "chunky-runner",
+        "backpack-drypack",
+        "accessory-earring"
       ],
       "failures": [],
       "selections": [
         {
           "slot": "tee",
-          "family": "oversized-tee",
+          "family": "boxy-tee",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
           "weightedVertices": 819,
@@ -20158,22 +22541,18 @@
         },
         {
           "slot": "shoes",
-          "family": "boot",
+          "family": "chunky-runner",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 1791,
+          "weightedVertices": 1573,
           "positionCount": 6940,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
-            "LeftLowerLeg",
-            "RightLowerLeg",
             "LeftFoot",
             "RightFoot"
           ],
           "resolvedBones": {
-            "LeftLowerLeg": "LeftLeg",
-            "RightLowerLeg": "RightLeg",
             "LeftFoot": "LeftFoot",
             "RightFoot": "RightFoot"
           },
@@ -20184,27 +22563,7 @@
         },
         {
           "slot": "backpack",
-          "family": "backpack-duffel",
-          "strategy": "largest-required-weighted-vertex-set",
-          "meshName": "char1",
-          "weightedVertices": 658,
-          "positionCount": 6940,
-          "eligibleMeshes": 1,
-          "observedSkinnedMeshes": 1,
-          "requiredBones": [
-            "RightHand"
-          ],
-          "resolvedBones": {
-            "RightHand": "RightHand"
-          },
-          "bodySha256": "9a148cb258fba407fcc1881fe3b6b00edb1af90cc5a38dd59d1269a4dd1ef77c",
-          "adapterId": null,
-          "adapterReason": null,
-          "normalizeReadWeights": false
-        },
-        {
-          "slot": "accessory",
-          "family": "accessory-chain",
+          "family": "backpack-drypack",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
           "weightedVertices": 364,
@@ -20221,6 +22580,26 @@
           "adapterId": null,
           "adapterReason": null,
           "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-earring",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1969,
+          "positionCount": 6940,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Head"
+          ],
+          "resolvedBones": {
+            "Head": "Head"
+          },
+          "bodySha256": "9a148cb258fba407fcc1881fe3b6b00edb1af90cc5a38dd59d1269a4dd1ef77c",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
         }
       ],
       "cleanupBeforeLoad": {
@@ -20232,11 +22611,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 83,
-          "candidates": 492,
-          "geometries": 148,
-          "materials": 143,
-          "textures": 225
+          "models": 94,
+          "candidates": 558,
+          "geometries": 159,
+          "materials": 154,
+          "textures": 258
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -20247,8 +22626,8 @@
       "bounds": {
         "min": [
           -0.6600033743180308,
-          -0.23889073221684165,
-          -0.794830618745445
+          -0.2651797535074879,
+          -0.6600033882644937
         ],
         "max": [
           0.660003413654354,
@@ -20257,13 +22636,13 @@
         ]
       },
       "noHit": true,
-      "drawCalls": 24,
-      "triangles": 1120,
+      "drawCalls": 22,
+      "triangles": 916,
       "clipping": {
         "method": "conservative-body-vertices-inside-proxy-world-aabb",
         "sampledVertices": 2314,
-        "overlappingVertices": 1837,
-        "overlapPct": 79.386,
+        "overlappingVertices": 1627,
+        "overlapPct": 70.311,
         "classification": "potential-contact-review-required",
         "certified": false
       },
@@ -20271,8 +22650,442 @@
       "bodySha256": "9a148cb258fba407fcc1881fe3b6b00edb1af90cc5a38dd59d1269a4dd1ef77c",
       "censusStatus": "unknown",
       "evidence": {
-        "sheet": "bodies-04.png",
-        "tileIndex": 17,
+        "sheet": "bodies-05.png",
+        "tileIndex": 6,
+        "views": [
+          "front",
+          "threeQuarter"
+        ]
+      }
+    },
+    {
+      "bodyId": "skin:mandrake-cyborg",
+      "status": "study-only",
+      "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
+      "familiesRequested": [
+        "oversized-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "boot",
+        "backpack-drypack",
+        "accessory-bracelet"
+      ],
+      "familiesMounted": [
+        "oversized-tee",
+        "shell-jacket",
+        "bermuda-shorts",
+        "boot",
+        "backpack-drypack",
+        "accessory-bracelet"
+      ],
+      "failures": [],
+      "selections": [
+        {
+          "slot": "tee",
+          "family": "oversized-tee",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1179,
+          "positionCount": 6772,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "33840632c94df9a72d12976ba9e465ac87a29bed393bb752a2ae7f6046e39023",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "jacket",
+          "family": "shell-jacket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1179,
+          "positionCount": 6772,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "33840632c94df9a72d12976ba9e465ac87a29bed393bb752a2ae7f6046e39023",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "legs",
+          "family": "bermuda-shorts",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 124,
+          "positionCount": 6772,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Hips"
+          ],
+          "resolvedBones": {
+            "Hips": "Hips"
+          },
+          "bodySha256": "33840632c94df9a72d12976ba9e465ac87a29bed393bb752a2ae7f6046e39023",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "shoes",
+          "family": "boot",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1359,
+          "positionCount": 6772,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftLowerLeg",
+            "RightLowerLeg",
+            "LeftFoot",
+            "RightFoot"
+          ],
+          "resolvedBones": {
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg",
+            "LeftFoot": "LeftFoot",
+            "RightFoot": "RightFoot"
+          },
+          "bodySha256": "33840632c94df9a72d12976ba9e465ac87a29bed393bb752a2ae7f6046e39023",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "backpack",
+          "family": "backpack-drypack",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 78,
+          "positionCount": 6772,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02"
+          },
+          "bodySha256": "33840632c94df9a72d12976ba9e465ac87a29bed393bb752a2ae7f6046e39023",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-bracelet",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 709,
+          "positionCount": 6772,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftHand"
+          ],
+          "resolvedBones": {
+            "LeftHand": "LeftHand"
+          },
+          "bodySha256": "33840632c94df9a72d12976ba9e465ac87a29bed393bb752a2ae7f6046e39023",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        }
+      ],
+      "cleanupBeforeLoad": {
+        "disposed": {
+          "models": 1,
+          "candidates": 6,
+          "geometries": 1,
+          "materials": 1,
+          "textures": 3
+        },
+        "totals": {
+          "models": 95,
+          "candidates": 564,
+          "geometries": 160,
+          "materials": 155,
+          "textures": 261
+        }
+      },
+      "fitStatus": "silhouette-study-not-body-fit",
+      "approved": false,
+      "certified": false,
+      "runtimeEnabled": false,
+      "boundsFinite": true,
+      "bounds": {
+        "min": [
+          -0.7428081090899827,
+          -0.19532142563799976,
+          -0.7428081715110569
+        ],
+        "max": [
+          0.7428079769764742,
+          1.7599999999999998,
+          0.7428079145554002
+        ]
+      },
+      "noHit": true,
+      "drawCalls": 24,
+      "triangles": 1068,
+      "clipping": {
+        "method": "conservative-body-vertices-inside-proxy-world-aabb",
+        "sampledVertices": 2258,
+        "overlappingVertices": 1565,
+        "overlapPct": 69.309,
+        "classification": "potential-contact-review-required",
+        "certified": false
+      },
+      "path": "public/models/skins/mandrake-cyborg-33840632c94d.glb",
+      "bodySha256": "33840632c94df9a72d12976ba9e465ac87a29bed393bb752a2ae7f6046e39023",
+      "censusStatus": "unknown",
+      "evidence": {
+        "sheet": "bodies-05.png",
+        "tileIndex": 7,
+        "views": [
+          "front",
+          "threeQuarter"
+        ]
+      }
+    },
+    {
+      "bodyId": "skin:mariabonita-cyborg",
+      "status": "study-only",
+      "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
+      "familiesRequested": [
+        "boxy-tee",
+        "shell-jacket",
+        "cargo-pants",
+        "low-sneaker",
+        "backpack-modular",
+        "accessory-bracelet"
+      ],
+      "familiesMounted": [
+        "boxy-tee",
+        "shell-jacket",
+        "cargo-pants",
+        "low-sneaker",
+        "backpack-modular",
+        "accessory-bracelet"
+      ],
+      "failures": [],
+      "selections": [
+        {
+          "slot": "tee",
+          "family": "boxy-tee",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1856,
+          "positionCount": 7020,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "006a34d55dc00590f7c86df5c413db0f9c0bf8abfd900524b3977f3b0144565d",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "jacket",
+          "family": "shell-jacket",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1856,
+          "positionCount": 7020,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02",
+            "Spine",
+            "LeftUpperArm",
+            "RightUpperArm"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02",
+            "Spine": "Spine01",
+            "LeftUpperArm": "LeftArm",
+            "RightUpperArm": "RightArm"
+          },
+          "bodySha256": "006a34d55dc00590f7c86df5c413db0f9c0bf8abfd900524b3977f3b0144565d",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "legs",
+          "family": "cargo-pants",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1877,
+          "positionCount": 7020,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Hips",
+            "LeftLowerLeg",
+            "RightLowerLeg"
+          ],
+          "resolvedBones": {
+            "Hips": "Hips",
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg"
+          },
+          "bodySha256": "006a34d55dc00590f7c86df5c413db0f9c0bf8abfd900524b3977f3b0144565d",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "shoes",
+          "family": "low-sneaker",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 358,
+          "positionCount": 7020,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftFoot",
+            "RightFoot"
+          ],
+          "resolvedBones": {
+            "LeftFoot": "LeftFoot",
+            "RightFoot": "RightFoot"
+          },
+          "bodySha256": "006a34d55dc00590f7c86df5c413db0f9c0bf8abfd900524b3977f3b0144565d",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "backpack",
+          "family": "backpack-modular",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1065,
+          "positionCount": 7020,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "Spine02"
+          ],
+          "resolvedBones": {
+            "Spine02": "Spine02"
+          },
+          "bodySha256": "006a34d55dc00590f7c86df5c413db0f9c0bf8abfd900524b3977f3b0144565d",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-bracelet",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 274,
+          "positionCount": 7020,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "RightHand"
+          ],
+          "resolvedBones": {
+            "RightHand": "RightHand"
+          },
+          "bodySha256": "006a34d55dc00590f7c86df5c413db0f9c0bf8abfd900524b3977f3b0144565d",
+          "adapterId": null,
+          "adapterReason": null,
+          "normalizeReadWeights": false
+        }
+      ],
+      "cleanupBeforeLoad": {
+        "disposed": {
+          "models": 1,
+          "candidates": 6,
+          "geometries": 1,
+          "materials": 1,
+          "textures": 3
+        },
+        "totals": {
+          "models": 96,
+          "candidates": 570,
+          "geometries": 161,
+          "materials": 156,
+          "textures": 264
+        }
+      },
+      "fitStatus": "silhouette-study-not-body-fit",
+      "approved": false,
+      "certified": false,
+      "runtimeEnabled": false,
+      "boundsFinite": true,
+      "bounds": {
+        "min": [
+          -0.7963884919327971,
+          -0.16902716236239002,
+          -0.796388347610188
+        ],
+        "max": [
+          0.7963884403919735,
+          1.7599999999999998,
+          0.7963885847145828
+        ]
+      },
+      "noHit": true,
+      "drawCalls": 29,
+      "triangles": 1040,
+      "clipping": {
+        "method": "conservative-body-vertices-inside-proxy-world-aabb",
+        "sampledVertices": 2340,
+        "overlappingVertices": 1660,
+        "overlapPct": 70.94,
+        "classification": "potential-contact-review-required",
+        "certified": false
+      },
+      "path": "public/models/skins/mariabonita-cyborg-006a34d55dc0.glb",
+      "bodySha256": "006a34d55dc00590f7c86df5c413db0f9c0bf8abfd900524b3977f3b0144565d",
+      "censusStatus": "unknown",
+      "evidence": {
+        "sheet": "bodies-05.png",
+        "tileIndex": 8,
         "views": [
           "front",
           "threeQuarter"
@@ -20284,26 +23097,26 @@
       "status": "study-only",
       "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
       "familiesRequested": [
-        "boxy-tee",
+        "oversized-tee",
         "shell-jacket",
         "cargo-pants",
-        "low-sneaker",
-        "backpack-rolltop",
-        "accessory-chain"
+        "chunky-runner",
+        "backpack-modular",
+        "accessory-bracelet"
       ],
       "familiesMounted": [
-        "boxy-tee",
+        "oversized-tee",
         "shell-jacket",
         "cargo-pants",
-        "low-sneaker",
-        "backpack-rolltop",
-        "accessory-chain"
+        "chunky-runner",
+        "backpack-modular",
+        "accessory-bracelet"
       ],
       "failures": [],
       "selections": [
         {
           "slot": "tee",
-          "family": "boxy-tee",
+          "family": "oversized-tee",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
           "weightedVertices": 556,
@@ -20379,7 +23192,7 @@
         },
         {
           "slot": "shoes",
-          "family": "low-sneaker",
+          "family": "chunky-runner",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
           "weightedVertices": 679,
@@ -20401,7 +23214,7 @@
         },
         {
           "slot": "backpack",
-          "family": "backpack-rolltop",
+          "family": "backpack-modular",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
           "weightedVertices": 183,
@@ -20421,18 +23234,18 @@
         },
         {
           "slot": "accessory",
-          "family": "accessory-chain",
+          "family": "accessory-bracelet",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 183,
+          "weightedVertices": 774,
           "positionCount": 6622,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
-            "Spine02"
+            "LeftHand"
           ],
           "resolvedBones": {
-            "Spine02": "Spine02"
+            "LeftHand": "LeftHand"
           },
           "bodySha256": "15a1099a0f1b40aea38dc140ebbced1b8ee97d73ab99aab0dc2fd794787a36a0",
           "adapterId": null,
@@ -20449,11 +23262,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 84,
-          "candidates": 498,
-          "geometries": 149,
-          "materials": 144,
-          "textures": 228
+          "models": 97,
+          "candidates": 576,
+          "geometries": 162,
+          "materials": 157,
+          "textures": 267
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -20464,23 +23277,23 @@
       "bounds": {
         "min": [
           -0.4627328785900635,
-          -0.1438085577219816,
+          -0.21040117660144703,
           -0.4627329540543087
         ],
         "max": [
           0.4627329326110584,
           1.76,
-          0.4627328571468133
+          0.5501585231582252
         ]
       },
       "noHit": true,
-      "drawCalls": 23,
-      "triangles": 820,
+      "drawCalls": 31,
+      "triangles": 1064,
       "clipping": {
         "method": "conservative-body-vertices-inside-proxy-world-aabb",
         "sampledVertices": 2208,
-        "overlappingVertices": 989,
-        "overlapPct": 44.792,
+        "overlappingVertices": 1251,
+        "overlapPct": 56.658,
         "classification": "potential-contact-review-required",
         "certified": false
       },
@@ -20488,8 +23301,8 @@
       "bodySha256": "15a1099a0f1b40aea38dc140ebbced1b8ee97d73ab99aab0dc2fd794787a36a0",
       "censusStatus": "unknown",
       "evidence": {
-        "sheet": "bodies-04.png",
-        "tileIndex": 18,
+        "sheet": "bodies-05.png",
+        "tileIndex": 9,
         "views": [
           "front",
           "threeQuarter"
@@ -20501,26 +23314,26 @@
       "status": "study-only",
       "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
       "familiesRequested": [
-        "oversized-tee",
+        "boxy-tee",
         "shell-jacket",
-        "cargo-pants",
-        "chunky-runner",
-        "backpack-rolltop",
-        "accessory-bandana"
+        "bermuda-shorts",
+        "boot",
+        "backpack-modular",
+        "accessory-bracelet"
       ],
       "familiesMounted": [
-        "oversized-tee",
+        "boxy-tee",
         "shell-jacket",
-        "cargo-pants",
-        "chunky-runner",
-        "backpack-rolltop",
-        "accessory-bandana"
+        "bermuda-shorts",
+        "boot",
+        "backpack-modular",
+        "accessory-bracelet"
       ],
       "failures": [],
       "selections": [
         {
           "slot": "tee",
-          "family": "oversized-tee",
+          "family": "boxy-tee",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
           "weightedVertices": 755,
@@ -20572,22 +23385,18 @@
         },
         {
           "slot": "legs",
-          "family": "cargo-pants",
+          "family": "bermuda-shorts",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 1124,
+          "weightedVertices": 111,
           "positionCount": 7353,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
-            "Hips",
-            "LeftLowerLeg",
-            "RightLowerLeg"
+            "Hips"
           ],
           "resolvedBones": {
-            "Hips": "Hips",
-            "LeftLowerLeg": "LeftLeg",
-            "RightLowerLeg": "RightLeg"
+            "Hips": "Hips"
           },
           "bodySha256": "2a3fcdf222152784b69b0b22a4e2a91a689d41739d27a39eaa614ad1e2141ec5",
           "adapterId": null,
@@ -20596,18 +23405,22 @@
         },
         {
           "slot": "shoes",
-          "family": "chunky-runner",
+          "family": "boot",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 1095,
+          "weightedVertices": 1558,
           "positionCount": 7353,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
+            "LeftLowerLeg",
+            "RightLowerLeg",
             "LeftFoot",
             "RightFoot"
           ],
           "resolvedBones": {
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg",
             "LeftFoot": "LeftFoot",
             "RightFoot": "RightFoot"
           },
@@ -20618,7 +23431,7 @@
         },
         {
           "slot": "backpack",
-          "family": "backpack-rolltop",
+          "family": "backpack-modular",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
           "weightedVertices": 226,
@@ -20638,18 +23451,18 @@
         },
         {
           "slot": "accessory",
-          "family": "accessory-bandana",
+          "family": "accessory-bracelet",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 2201,
+          "weightedVertices": 890,
           "positionCount": 7353,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
-            "Head"
+            "RightHand"
           ],
           "resolvedBones": {
-            "Head": "Head"
+            "RightHand": "RightHand"
           },
           "bodySha256": "2a3fcdf222152784b69b0b22a4e2a91a689d41739d27a39eaa614ad1e2141ec5",
           "adapterId": null,
@@ -20666,11 +23479,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 85,
-          "candidates": 504,
-          "geometries": 150,
-          "materials": 145,
-          "textures": 231
+          "models": 98,
+          "candidates": 582,
+          "geometries": 163,
+          "materials": 158,
+          "textures": 270
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -20680,8 +23493,8 @@
       "boundsFinite": true,
       "bounds": {
         "min": [
-          -0.5138768920528537,
-          -0.2463067189030636,
+          -0.6137240126515083,
+          -0.2173027570763188,
           -0.513877013213627
         ],
         "max": [
@@ -20691,13 +23504,13 @@
         ]
       },
       "noHit": true,
-      "drawCalls": 25,
-      "triangles": 602,
+      "drawCalls": 29,
+      "triangles": 1096,
       "clipping": {
         "method": "conservative-body-vertices-inside-proxy-world-aabb",
         "sampledVertices": 1839,
-        "overlappingVertices": 1145,
-        "overlapPct": 62.262,
+        "overlappingVertices": 1099,
+        "overlapPct": 59.761,
         "classification": "potential-contact-review-required",
         "certified": false
       },
@@ -20705,8 +23518,8 @@
       "bodySha256": "2a3fcdf222152784b69b0b22a4e2a91a689d41739d27a39eaa614ad1e2141ec5",
       "censusStatus": "unknown",
       "evidence": {
-        "sheet": "bodies-04.png",
-        "tileIndex": 19,
+        "sheet": "bodies-05.png",
+        "tileIndex": 10,
         "views": [
           "front",
           "threeQuarter"
@@ -20718,26 +23531,26 @@
       "status": "study-only",
       "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
       "familiesRequested": [
-        "boxy-tee",
+        "oversized-tee",
         "shell-jacket",
         "bermuda-shorts",
-        "boot",
-        "backpack-rolltop",
-        "accessory-bandana"
+        "low-sneaker",
+        "backpack-tote",
+        "accessory-bracelet"
       ],
       "familiesMounted": [
-        "boxy-tee",
+        "oversized-tee",
         "shell-jacket",
         "bermuda-shorts",
-        "boot",
-        "backpack-rolltop",
-        "accessory-bandana"
+        "low-sneaker",
+        "backpack-tote",
+        "accessory-bracelet"
       ],
       "failures": [],
       "selections": [
         {
           "slot": "tee",
-          "family": "boxy-tee",
+          "family": "oversized-tee",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
           "weightedVertices": 876,
@@ -20809,22 +23622,18 @@
         },
         {
           "slot": "shoes",
-          "family": "boot",
+          "family": "low-sneaker",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 1572,
+          "weightedVertices": 1014,
           "positionCount": 7094,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
-            "LeftLowerLeg",
-            "RightLowerLeg",
             "LeftFoot",
             "RightFoot"
           ],
           "resolvedBones": {
-            "LeftLowerLeg": "LeftLeg",
-            "RightLowerLeg": "RightLeg",
             "LeftFoot": "LeftFoot",
             "RightFoot": "RightFoot"
           },
@@ -20835,18 +23644,18 @@
         },
         {
           "slot": "backpack",
-          "family": "backpack-rolltop",
+          "family": "backpack-tote",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 360,
+          "weightedVertices": 914,
           "positionCount": 7094,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
-            "Spine02"
+            "LeftHand"
           ],
           "resolvedBones": {
-            "Spine02": "Spine02"
+            "LeftHand": "LeftHand"
           },
           "bodySha256": "4db27d13f43fd0f3a06b0d564747e62722e848c1667af4e8fc362923e9716f1b",
           "adapterId": "spine02-senador-drip",
@@ -20855,18 +23664,18 @@
         },
         {
           "slot": "accessory",
-          "family": "accessory-bandana",
+          "family": "accessory-bracelet",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 1652,
+          "weightedVertices": 914,
           "positionCount": 7094,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
-            "Head"
+            "LeftHand"
           ],
           "resolvedBones": {
-            "Head": "Head"
+            "LeftHand": "LeftHand"
           },
           "bodySha256": "4db27d13f43fd0f3a06b0d564747e62722e848c1667af4e8fc362923e9716f1b",
           "adapterId": "spine02-senador-drip",
@@ -20883,11 +23692,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 86,
-          "candidates": 510,
-          "geometries": 151,
-          "materials": 146,
-          "textures": 234
+          "models": 99,
+          "candidates": 588,
+          "geometries": 164,
+          "materials": 159,
+          "textures": 273
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -20898,8 +23707,8 @@
       "bounds": {
         "min": [
           -0.6551322077380813,
-          -0.2343892794902493,
-          -0.6551322095364027
+          -0.18432590989510617,
+          -0.6697652708877132
         ],
         "max": [
           0.6551323667585042,
@@ -20908,13 +23717,13 @@
         ]
       },
       "noHit": true,
-      "drawCalls": 23,
-      "triangles": 634,
+      "drawCalls": 22,
+      "triangles": 1092,
       "clipping": {
         "method": "conservative-body-vertices-inside-proxy-world-aabb",
         "sampledVertices": 2365,
-        "overlappingVertices": 2019,
-        "overlapPct": 85.37,
+        "overlappingVertices": 1888,
+        "overlapPct": 79.831,
         "classification": "potential-contact-review-required",
         "certified": false
       },
@@ -20922,8 +23731,8 @@
       "bodySha256": "4db27d13f43fd0f3a06b0d564747e62722e848c1667af4e8fc362923e9716f1b",
       "censusStatus": "unknown",
       "evidence": {
-        "sheet": "bodies-04.png",
-        "tileIndex": 20,
+        "sheet": "bodies-05.png",
+        "tileIndex": 11,
         "views": [
           "front",
           "threeQuarter"
@@ -20935,26 +23744,26 @@
       "status": "study-only",
       "reason": "silhouette contact render only; exact per-body compatibility remains unassessed",
       "familiesRequested": [
-        "oversized-tee",
+        "boxy-tee",
         "shell-jacket",
-        "bermuda-shorts",
-        "low-sneaker",
-        "backpack-triple-pocket",
-        "accessory-bandana"
+        "cargo-pants",
+        "chunky-runner",
+        "backpack-tote",
+        "accessory-modular"
       ],
       "familiesMounted": [
-        "oversized-tee",
+        "boxy-tee",
         "shell-jacket",
-        "bermuda-shorts",
-        "low-sneaker",
-        "backpack-triple-pocket",
-        "accessory-bandana"
+        "cargo-pants",
+        "chunky-runner",
+        "backpack-tote",
+        "accessory-modular"
       ],
       "failures": [],
       "selections": [
         {
           "slot": "tee",
-          "family": "oversized-tee",
+          "family": "boxy-tee",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
           "weightedVertices": 898,
@@ -21006,18 +23815,22 @@
         },
         {
           "slot": "legs",
-          "family": "bermuda-shorts",
+          "family": "cargo-pants",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
-          "weightedVertices": 405,
+          "weightedVertices": 1155,
           "positionCount": 6958,
           "eligibleMeshes": 1,
           "observedSkinnedMeshes": 1,
           "requiredBones": [
-            "Hips"
+            "Hips",
+            "LeftLowerLeg",
+            "RightLowerLeg"
           ],
           "resolvedBones": {
-            "Hips": "Hips"
+            "Hips": "Hips",
+            "LeftLowerLeg": "LeftLeg",
+            "RightLowerLeg": "RightLeg"
           },
           "bodySha256": "43eb4d073d4a485b24c3916e0259049667f07440a88c4aac52f27888ed4b48e8",
           "adapterId": "spine02-zero-um-mandrake",
@@ -21026,7 +23839,7 @@
         },
         {
           "slot": "shoes",
-          "family": "low-sneaker",
+          "family": "chunky-runner",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
           "weightedVertices": 680,
@@ -21048,7 +23861,27 @@
         },
         {
           "slot": "backpack",
-          "family": "backpack-triple-pocket",
+          "family": "backpack-tote",
+          "strategy": "largest-required-weighted-vertex-set",
+          "meshName": "char1",
+          "weightedVertices": 1321,
+          "positionCount": 6958,
+          "eligibleMeshes": 1,
+          "observedSkinnedMeshes": 1,
+          "requiredBones": [
+            "LeftHand"
+          ],
+          "resolvedBones": {
+            "LeftHand": "LeftHand"
+          },
+          "bodySha256": "43eb4d073d4a485b24c3916e0259049667f07440a88c4aac52f27888ed4b48e8",
+          "adapterId": "spine02-zero-um-mandrake",
+          "adapterReason": "spine-region-is-weighted-to-spine02",
+          "normalizeReadWeights": false
+        },
+        {
+          "slot": "accessory",
+          "family": "accessory-modular",
           "strategy": "largest-required-weighted-vertex-set",
           "meshName": "char1",
           "weightedVertices": 460,
@@ -21065,26 +23898,6 @@
           "adapterId": "spine02-zero-um-mandrake",
           "adapterReason": "spine-region-is-weighted-to-spine02",
           "normalizeReadWeights": false
-        },
-        {
-          "slot": "accessory",
-          "family": "accessory-bandana",
-          "strategy": "largest-required-weighted-vertex-set",
-          "meshName": "char1",
-          "weightedVertices": 1973,
-          "positionCount": 6958,
-          "eligibleMeshes": 1,
-          "observedSkinnedMeshes": 1,
-          "requiredBones": [
-            "Head"
-          ],
-          "resolvedBones": {
-            "Head": "Head"
-          },
-          "bodySha256": "43eb4d073d4a485b24c3916e0259049667f07440a88c4aac52f27888ed4b48e8",
-          "adapterId": "spine02-zero-um-mandrake",
-          "adapterReason": "spine-region-is-weighted-to-spine02",
-          "normalizeReadWeights": false
         }
       ],
       "cleanupBeforeLoad": {
@@ -21096,11 +23909,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 87,
-          "candidates": 516,
-          "geometries": 152,
-          "materials": 147,
-          "textures": 237
+          "models": 100,
+          "candidates": 594,
+          "geometries": 165,
+          "materials": 160,
+          "textures": 276
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -21111,7 +23924,7 @@
       "bounds": {
         "min": [
           -0.645390519042697,
-          -0.23533976484485802,
+          -0.3339272741826587,
           -0.6453904669223359
         ],
         "max": [
@@ -21121,13 +23934,13 @@
         ]
       },
       "noHit": true,
-      "drawCalls": 21,
-      "triangles": 342,
+      "drawCalls": 28,
+      "triangles": 800,
       "clipping": {
         "method": "conservative-body-vertices-inside-proxy-world-aabb",
         "sampledVertices": 2320,
-        "overlappingVertices": 1651,
-        "overlapPct": 71.164,
+        "overlappingVertices": 1629,
+        "overlapPct": 70.216,
         "classification": "potential-contact-review-required",
         "certified": false
       },
@@ -21135,8 +23948,8 @@
       "bodySha256": "43eb4d073d4a485b24c3916e0259049667f07440a88c4aac52f27888ed4b48e8",
       "censusStatus": "unknown",
       "evidence": {
-        "sheet": "bodies-04.png",
-        "tileIndex": 21,
+        "sheet": "bodies-05.png",
+        "tileIndex": 12,
         "views": [
           "front",
           "threeQuarter"
@@ -21177,11 +23990,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 88,
-          "candidates": 522,
-          "geometries": 153,
-          "materials": 148,
-          "textures": 240
+          "models": 101,
+          "candidates": 600,
+          "geometries": 166,
+          "materials": 161,
+          "textures": 279
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -21250,11 +24063,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 89,
-          "candidates": 523,
-          "geometries": 154,
-          "materials": 150,
-          "textures": 243
+          "models": 102,
+          "candidates": 601,
+          "geometries": 167,
+          "materials": 163,
+          "textures": 282
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -21323,11 +24136,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 90,
-          "candidates": 524,
-          "geometries": 155,
-          "materials": 152,
-          "textures": 246
+          "models": 103,
+          "candidates": 602,
+          "geometries": 168,
+          "materials": 165,
+          "textures": 285
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -21396,11 +24209,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 91,
-          "candidates": 525,
-          "geometries": 156,
-          "materials": 154,
-          "textures": 249
+          "models": 104,
+          "candidates": 603,
+          "geometries": 169,
+          "materials": 167,
+          "textures": 288
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -21469,11 +24282,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 92,
-          "candidates": 526,
-          "geometries": 157,
-          "materials": 156,
-          "textures": 252
+          "models": 105,
+          "candidates": 604,
+          "geometries": 170,
+          "materials": 169,
+          "textures": 291
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -21542,11 +24355,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 93,
-          "candidates": 527,
-          "geometries": 158,
-          "materials": 158,
-          "textures": 255
+          "models": 106,
+          "candidates": 605,
+          "geometries": 171,
+          "materials": 171,
+          "textures": 294
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -21615,11 +24428,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 94,
-          "candidates": 528,
-          "geometries": 159,
-          "materials": 160,
-          "textures": 258
+          "models": 107,
+          "candidates": 606,
+          "geometries": 172,
+          "materials": 173,
+          "textures": 297
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -21688,11 +24501,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 95,
-          "candidates": 529,
-          "geometries": 160,
-          "materials": 162,
-          "textures": 261
+          "models": 108,
+          "candidates": 607,
+          "geometries": 173,
+          "materials": 175,
+          "textures": 300
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -21761,11 +24574,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 96,
-          "candidates": 530,
-          "geometries": 161,
-          "materials": 164,
-          "textures": 264
+          "models": 109,
+          "candidates": 608,
+          "geometries": 174,
+          "materials": 177,
+          "textures": 303
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -21834,11 +24647,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 97,
-          "candidates": 531,
-          "geometries": 162,
-          "materials": 166,
-          "textures": 267
+          "models": 110,
+          "candidates": 609,
+          "geometries": 175,
+          "materials": 179,
+          "textures": 306
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -21907,11 +24720,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 98,
-          "candidates": 532,
-          "geometries": 163,
-          "materials": 168,
-          "textures": 270
+          "models": 111,
+          "candidates": 610,
+          "geometries": 176,
+          "materials": 181,
+          "textures": 309
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -21980,11 +24793,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 99,
-          "candidates": 533,
-          "geometries": 164,
-          "materials": 170,
-          "textures": 273
+          "models": 112,
+          "candidates": 611,
+          "geometries": 177,
+          "materials": 183,
+          "textures": 312
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22053,11 +24866,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 100,
-          "candidates": 534,
-          "geometries": 165,
-          "materials": 172,
-          "textures": 276
+          "models": 113,
+          "candidates": 612,
+          "geometries": 178,
+          "materials": 185,
+          "textures": 315
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22126,11 +24939,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 101,
-          "candidates": 535,
-          "geometries": 166,
-          "materials": 174,
-          "textures": 279
+          "models": 114,
+          "candidates": 613,
+          "geometries": 179,
+          "materials": 187,
+          "textures": 318
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22199,11 +25012,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 102,
-          "candidates": 536,
-          "geometries": 167,
-          "materials": 176,
-          "textures": 282
+          "models": 115,
+          "candidates": 614,
+          "geometries": 180,
+          "materials": 189,
+          "textures": 321
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22272,11 +25085,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 103,
-          "candidates": 537,
-          "geometries": 168,
-          "materials": 178,
-          "textures": 285
+          "models": 116,
+          "candidates": 615,
+          "geometries": 181,
+          "materials": 191,
+          "textures": 324
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22351,11 +25164,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 104,
-          "candidates": 538,
-          "geometries": 169,
-          "materials": 180,
-          "textures": 288
+          "models": 117,
+          "candidates": 616,
+          "geometries": 182,
+          "materials": 193,
+          "textures": 327
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22430,11 +25243,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 105,
-          "candidates": 539,
-          "geometries": 170,
-          "materials": 182,
-          "textures": 291
+          "models": 118,
+          "candidates": 617,
+          "geometries": 183,
+          "materials": 195,
+          "textures": 330
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22507,11 +25320,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 106,
-          "candidates": 540,
-          "geometries": 171,
-          "materials": 184,
-          "textures": 294
+          "models": 119,
+          "candidates": 618,
+          "geometries": 184,
+          "materials": 197,
+          "textures": 333
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22582,11 +25395,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 107,
-          "candidates": 541,
-          "geometries": 172,
-          "materials": 186,
-          "textures": 297
+          "models": 120,
+          "candidates": 619,
+          "geometries": 185,
+          "materials": 199,
+          "textures": 336
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22638,11 +25451,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 108,
-          "candidates": 542,
-          "geometries": 173,
-          "materials": 188,
-          "textures": 300
+          "models": 121,
+          "candidates": 620,
+          "geometries": 186,
+          "materials": 201,
+          "textures": 339
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22696,11 +25509,11 @@
           "textures": 6
         },
         "totals": {
-          "models": 109,
-          "candidates": 542,
-          "geometries": 176,
-          "materials": 191,
-          "textures": 306
+          "models": 122,
+          "candidates": 620,
+          "geometries": 189,
+          "materials": 204,
+          "textures": 345
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22754,11 +25567,11 @@
           "textures": 6
         },
         "totals": {
-          "models": 110,
-          "candidates": 542,
-          "geometries": 179,
-          "materials": 194,
-          "textures": 312
+          "models": 123,
+          "candidates": 620,
+          "geometries": 192,
+          "materials": 207,
+          "textures": 351
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22812,11 +25625,11 @@
           "textures": 6
         },
         "totals": {
-          "models": 111,
-          "candidates": 542,
-          "geometries": 182,
-          "materials": 197,
-          "textures": 318
+          "models": 124,
+          "candidates": 620,
+          "geometries": 195,
+          "materials": 210,
+          "textures": 357
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22887,11 +25700,11 @@
           "textures": 6
         },
         "totals": {
-          "models": 112,
-          "candidates": 542,
-          "geometries": 185,
-          "materials": 200,
-          "textures": 324
+          "models": 125,
+          "candidates": 620,
+          "geometries": 198,
+          "materials": 213,
+          "textures": 363
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -22960,11 +25773,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 113,
-          "candidates": 543,
-          "geometries": 186,
-          "materials": 202,
-          "textures": 327
+          "models": 126,
+          "candidates": 621,
+          "geometries": 199,
+          "materials": 215,
+          "textures": 366
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -23033,11 +25846,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 114,
-          "candidates": 544,
-          "geometries": 187,
-          "materials": 204,
-          "textures": 330
+          "models": 127,
+          "candidates": 622,
+          "geometries": 200,
+          "materials": 217,
+          "textures": 369
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -23106,11 +25919,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 115,
-          "candidates": 545,
-          "geometries": 188,
-          "materials": 206,
-          "textures": 333
+          "models": 128,
+          "candidates": 623,
+          "geometries": 201,
+          "materials": 219,
+          "textures": 372
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -23179,11 +25992,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 116,
-          "candidates": 546,
-          "geometries": 189,
-          "materials": 208,
-          "textures": 336
+          "models": 129,
+          "candidates": 624,
+          "geometries": 202,
+          "materials": 221,
+          "textures": 375
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -23252,11 +26065,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 117,
-          "candidates": 547,
-          "geometries": 190,
-          "materials": 210,
-          "textures": 339
+          "models": 130,
+          "candidates": 625,
+          "geometries": 203,
+          "materials": 223,
+          "textures": 378
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -23325,11 +26138,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 118,
-          "candidates": 548,
-          "geometries": 191,
-          "materials": 212,
-          "textures": 342
+          "models": 131,
+          "candidates": 626,
+          "geometries": 204,
+          "materials": 225,
+          "textures": 381
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -23400,11 +26213,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 119,
-          "candidates": 549,
-          "geometries": 192,
-          "materials": 214,
-          "textures": 345
+          "models": 132,
+          "candidates": 627,
+          "geometries": 205,
+          "materials": 227,
+          "textures": 384
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -23479,11 +26292,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 120,
-          "candidates": 550,
-          "geometries": 193,
-          "materials": 216,
-          "textures": 348
+          "models": 133,
+          "candidates": 628,
+          "geometries": 206,
+          "materials": 229,
+          "textures": 387
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -23558,11 +26371,11 @@
           "textures": 3
         },
         "totals": {
-          "models": 121,
-          "candidates": 551,
-          "geometries": 194,
-          "materials": 218,
-          "textures": 351
+          "models": 134,
+          "candidates": 629,
+          "geometries": 207,
+          "materials": 231,
+          "textures": 390
         }
       },
       "fitStatus": "silhouette-study-not-body-fit",
@@ -23807,14 +26620,14 @@
       "textures": 3
     },
     "totals": {
-      "models": 122,
-      "candidates": 552,
-      "geometries": 195,
-      "materials": 220,
-      "textures": 354
+      "models": 135,
+      "candidates": 630,
+      "geometries": 208,
+      "materials": 233,
+      "textures": 393
     }
   },
-  "browserVersion": "142.0.7444.135",
+  "browserVersion": "157.0.8103.51",
   "budgets": {
     "maximumBodyDrawCalls": 32,
     "maximumBodyTriangles": 1396,

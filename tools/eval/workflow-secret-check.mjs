@@ -150,8 +150,11 @@ function falhasMetadata(texto) {
     }
     if (comandos.length === 1) {
       const overrides = [...normalizado.matchAll(/(?:^|[;\n]\s*)(?:export\s+)?GH_TOKEN\s*=/g)];
-      if (Object.hasOwn(env, 'GH_TOKEN') || overrides.length !== 1
-          || /\bgh api\b|\bgh workflow run\b|\bgh pr (?:edit|comment|review|merge)\b/.test(normalizado)) {
+      const apiLeituraPaginada = /gh api --paginate --slurp "repos\/\$REPO\/pulls\?state=open&per_page=100"/.test(normalizado)
+        && /\|\s*while read -r number;\s*do\s*gh pr view "\$number"/.test(normalizado);
+      const apiProibida = /\bgh api\b/.test(normalizado) && !apiLeituraPaginada;
+      if (Object.hasOwn(env, 'GH_TOKEN') || overrides.length !== 1 || apiProibida
+          || /\bgh workflow run\b|\bgh pr (?:edit|comment|review|merge)\b/.test(normalizado)) {
         locais.push(`job ${job} mistura escrita ou override extra no passo de leitura`);
       }
       leituras.push({ job, run: normalizado });
@@ -163,12 +166,13 @@ function falhasMetadata(texto) {
   });
   if (leituras.length !== 3) locais.push(`esperava 3 leituras de metadata, encontrou ${leituras.length}`);
   leituras.forEach(({ run }, i) => {
-    if (!/GH_TOKEN="\$\{\{ github\.token \}\}"\s+gh pr (?:view|list)/.test(run)) {
+    if (!/GH_TOKEN="\$\{\{ github\.token \}\}"[\s\S]*gh pr (?:view|list)/.test(run)) {
       locais.push(`leitura ${i + 1} não usa github.token`);
     }
     const comando = /\bgh pr (view|list)\b/.exec(run)?.[1];
     const campos = /--json\s+([A-Za-z,]+)/.exec(run)?.[1]?.split(',').sort();
-    const esperados = comando === 'list' ? camposList : camposView;
+    const sweepPaginado = /gh api --paginate --slurp "repos\/\$REPO\/pulls\?state=open&per_page=100"/.test(run);
+    const esperados = comando === 'list' || sweepPaginado ? camposList : camposView;
     if (!campos || campos.join(',') !== esperados.join(',')) {
       locais.push(`leitura ${i + 1} (${comando || '?'}) não pede o conjunto completo de metadata`);
     }

@@ -79,6 +79,21 @@ def _diff_digest(base_oid, head_oid):
         raise RuntimeError("git diff failed while hashing the complete patch")
     return digest.hexdigest()
 
+def _ancestry_facts(main_oid, head_oid, staging_oid):
+    head_commits = _git_lines("rev-list", f"{main_oid}..{head_oid}")
+    staging_commits = set(_git_lines("rev-list", f"{main_oid}..{staging_oid}"))
+    if any(not OID.fullmatch(commit) for commit in head_commits):
+        raise ValueError("Git returned a malformed head commit OID")
+    if any(not OID.fullmatch(commit) for commit in staging_commits):
+        raise ValueError("Git returned a malformed staging commit OID")
+    ancestry = subprocess.run([
+        "git", "merge-base", "--is-ancestor", main_oid, head_oid,
+    ], check=False)
+    if ancestry.returncode not in {0, 1}:
+        raise RuntimeError("git merge-base failed while checking main ancestry")
+    return len(head_commits), ancestry.returncode == 0, set(head_commits).isdisjoint(staging_commits)
+
+
 
 def _bool(value, field):
     if not isinstance(value, bool):
@@ -88,7 +103,8 @@ def _bool(value, field):
 
 def validate_attestation(attestation, pr, expected_repository, pr_number,
                          remote_base_oid, remote_staging_oid, remote_main_oid,
-                         diff_files=_diff_files, diff_digest=_diff_digest):
+                         diff_files=_diff_files, diff_digest=_diff_digest,
+                         ancestry_facts=_ancestry_facts):
     """Validate schema, current PR identity, and live base/staging/main refs.
 
     The remote OIDs are explicit so this function stays deterministic in selftests;
@@ -150,6 +166,9 @@ def validate_attestation(attestation, pr, expected_repository, pr_number,
     head_commit_count = attestation.get("head_commit_count")
     if type(head_commit_count) is not int or head_commit_count < 0:
         raise ValueError("head_commit_count must be a nonnegative integer")
+    measured_facts = ancestry_facts(main_oid, head_oid, staging_oid)
+    if (head_commit_count, main_is_ancestor, staging_disjoint) != measured_facts:
+        raise ValueError("attested ancestry facts do not match the Git commit graph")
     expected_hotfix_main_only = bool(
         base_ref == "main" and head_commit_count and main_is_ancestor and staging_disjoint
     )
@@ -163,7 +182,8 @@ def validate_attestation(attestation, pr, expected_repository, pr_number,
 
 
 def apply_attestation(payload, resolve_remote=_remote_oid,
-                      diff_files=_diff_files, diff_digest=_diff_digest):
+                      diff_files=_diff_files, diff_digest=_diff_digest,
+                      ancestry_facts=_ancestry_facts):
     attestation = payload.get("attestation")
     pr = payload.get("pr")
     if not isinstance(pr, dict):
@@ -173,7 +193,7 @@ def apply_attestation(payload, resolve_remote=_remote_oid,
     validate_attestation(
         attestation, pr, expected_repository, pr_number,
         resolve_remote(pr.get("baseRefName")), resolve_remote("staging"), resolve_remote("main"),
-        diff_files, diff_digest,
+        diff_files, diff_digest, ancestry_facts,
     )
     result = dict(pr)
     result.update({
@@ -224,19 +244,9 @@ def emit_attestation(payload):
     files = _diff_files(base_oid, head_oid)
     if official_batch and not files:
         raise ValueError("release batch diff is empty")
-    head_commits = _git_lines("rev-list", f"{main_oid}..{head_oid}")
-    staging_commits = set(_git_lines("rev-list", f"{main_oid}..{staging_oid}"))
-    if any(not OID.fullmatch(commit) for commit in head_commits):
-        raise ValueError("Git returned a malformed head commit OID")
-    if any(not OID.fullmatch(commit) for commit in staging_commits):
-        raise ValueError("Git returned a malformed staging commit OID")
-    ancestry = subprocess.run([
-        "git", "merge-base", "--is-ancestor", main_oid, head_oid,
-    ], check=False)
-    if ancestry.returncode not in {0, 1}:
-        raise RuntimeError("git merge-base failed while checking main ancestry")
-    main_is_ancestor = ancestry.returncode == 0
-    staging_disjoint = set(head_commits).isdisjoint(staging_commits)
+    head_commit_count, main_is_ancestor, staging_disjoint = _ancestry_facts(
+        main_oid, head_oid, staging_oid,
+    )
     attestation = {
         "schema_version": SCHEMA_VERSION,
         "expected_repository": expected_repository,
@@ -252,7 +262,7 @@ def emit_attestation(payload):
         "diff_files": files,
         "changed_files": len(files),
         "full_diff_verified": True,
-        "head_commit_count": len(head_commits),
+        "head_commit_count": head_commit_count,
         "main_is_ancestor": main_is_ancestor,
         "staging_disjoint": staging_disjoint,
         "hotfix_main_only": bool(
@@ -311,9 +321,15 @@ def selftest():
             raise ValueError("selftest diff digest recomputation used wrong OIDs")
         return "d" * 64
 
+    def expected_ancestry_facts(main_oid, head_oid, staging_oid):
+        if (main_oid, head_oid, staging_oid) != ("a" * 40, "b" * 40, "c" * 40):
+            raise ValueError("selftest ancestry recomputation used wrong OIDs")
+        return 1, True, True
+
     diff_kwargs = {
         "diff_files": expected_diff_files,
         "diff_digest": expected_diff_digest,
+        "ancestry_facts": expected_ancestry_facts,
     }
 
     def rejected(name, attestation, pr, base=None, staging=None, main=None):
@@ -355,6 +371,9 @@ def selftest():
         ("unsorted files", {"diff_files": ["z", "a"]}),
         ("unverified diff", {"full_diff_verified": False}),
         ("inconsistent ancestry", {"hotfix_main_only": False}),
+        ("forged commit count", {"head_commit_count": 2}),
+        ("forged main ancestry", {"main_is_ancestor": False}),
+        ("forged staging disjointness", {"staging_disjoint": False}),
         ("wrong repository", {"expected_repository": "fork/client"}),
     ):
         rejected(name, dict(attestation, **mutation), pr)
