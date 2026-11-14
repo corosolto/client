@@ -1176,10 +1176,10 @@
       "sourceKind": "character",
       "path": "public/models/characters/camera-roxa.glb",
       "bytes": 1172856,
-      "sourceSha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+      "sourceSha256": "148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b",
       "structureSha256": "a95b48489ba30bd2d8f544f1983e062191059ce76d4e2672054b371032629e36",
       "familyId": "rig-a95b48489ba3",
-      "profileId": "character:camera-roxa@8af17491600d",
+      "profileId": "character:camera-roxa@148997911e43",
       "skinCount": 1,
       "jointCount": 24,
       "jointNames": [
@@ -1249,7 +1249,7 @@
         "status": "pass",
         "bindFingerprintSha256": "a723183f7d0f58e4cc03cb1181e140200c3e90bfc833554cb19aee4076d2d8af",
         "geometryFingerprintSha256": "7a126e85fcf5d3ae7732516536fcf178a687246aac4856cc3acd2367223cfea0",
-        "weightsFingerprintSha256": "bf44c054eca071cee234d7c588c00dc172e10156495b7e6e74a20adf390d085e"
+        "weightsFingerprintSha256": "8d0b502c666ddd32097fcf8229a06e437a78280afa5afed7f5d734d7f42911f0"
       },
       "structuralStatus": "candidate",
       "issues": [],
@@ -2324,10 +2324,10 @@
       "sourceKind": "character",
       "path": "public/models/characters/doidinho-bairro.glb",
       "bytes": 982712,
-      "sourceSha256": "9d65fc624e894f23f1e029309dca0130e68a582bf70a172bfd09804fc53a6153",
+      "sourceSha256": "c92686566aeef715f5bc9b89f372c1f5bed3a5963f1abeeccb23be2c60a3cc4c",
       "structureSha256": "aa0b4ae0c501caff6de765bd7c3aa417abd509475f8cbd2cd22601cc4bff1276",
       "familyId": "rig-aa0b4ae0c501",
-      "profileId": "character:doidinho-bairro@9d65fc624e89",
+      "profileId": "character:doidinho-bairro@c92686566aee",
       "skinCount": 1,
       "jointCount": 28,
       "jointNames": [
@@ -2401,7 +2401,7 @@
         "status": "pass",
         "bindFingerprintSha256": "f93da7e4bab21fe5ad38392750d4b29e93c1c137a98e37a6852e723be53a4f38",
         "geometryFingerprintSha256": "38bf8f30ef295b50ed77ce94a7d6492328233381d711edcb5039475b86106009",
-        "weightsFingerprintSha256": "1be6b231ee8267e32b932cd115e7e53487168cdf93efc563df1966fc6f653fe8"
+        "weightsFingerprintSha256": "9401e463c30f28f4e3adb79d1caa55d002169fb74d7150bb499bbe6911231318"
       },
       "structuralStatus": "candidate",
       "issues": [],
@@ -5616,10 +5616,10 @@
       "sourceKind": "character",
       "path": "public/models/characters/profeta-calcada.glb",
       "bytes": 630628,
-      "sourceSha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+      "sourceSha256": "ae201746977859d212aafe3f5f2b97e5152758af7421d0cad439ac00f1f7e400",
       "structureSha256": "a95b48489ba30bd2d8f544f1983e062191059ce76d4e2672054b371032629e36",
       "familyId": "rig-a95b48489ba3",
-      "profileId": "character:profeta-calcada@09f5055d124c",
+      "profileId": "character:profeta-calcada@ae2017469778",
       "skinCount": 1,
       "jointCount": 24,
       "jointNames": [
@@ -5689,7 +5689,7 @@
         "status": "pass",
         "bindFingerprintSha256": "7cc203d1590c1ed2c83bee5a288e74ad22e57be726c5ad5d93b696a88ab3f480",
         "geometryFingerprintSha256": "e2b719f3271b6ced947a5f73eac9cb5a20ba6c855b9fc94c77af31f7b2022807",
-        "weightsFingerprintSha256": "3b1cb6e0c75dba8755bca1a479a7df00f2fe11a59ced671e1cfe9785830c5037"
+        "weightsFingerprintSha256": "06085507068197af6c8d92a07b31729155b7139f71eaced5a48fc20e597fe43d"
       },
       "structuralStatus": "candidate",
       "issues": [],
@@ -7132,12 +7132,12 @@
       "bodyId": "skin:bolsonaro-mandrake",
       "sourceKind": "skin",
       "baseCharacter": "capitao",
-      "path": "public/models/skins/bolsonaro-mandrake-bcd355b78b39.glb",
+      "path": "public/models/skins/bolsonaro-mandrake-0eb46ca7a3e3.glb",
       "bytes": 1211824,
-      "sourceSha256": "bcd355b78b3958e7df3d41f514e413373d6b0cf3dbbcf15cb57e23224056ecf7",
+      "sourceSha256": "0eb46ca7a3e33761320a7cd0ef49a9e6c44337f55e766909d0bab787d9c36deb",
       "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
       "familyId": "rig-dc96cfa99b23",
-      "profileId": "skin:bolsonaro-mandrake@bcd355b78b39",
+      "profileId": "skin:bolsonaro-mandrake@0eb46ca7a3e3",
       "skinCount": 1,
       "jointCount": 26,
       "jointNames": [
@@ -7209,7 +7209,7 @@
         "status": "pass",
         "bindFingerprintSha256": "fdb5698556b768c89bb56e46c0da0d6bf44b38e717639339a283993785275ad4",
         "geometryFingerprintSha256": "de168020c26bab69cb9b3939bcf6fcd220454230e229561fe16d41eeeda3e98f",
-        "weightsFingerprintSha256": "c6c8528c34501779605886feb1c95efd0826ea30108a9b2e4fc773a54e871a82"
+        "weightsFingerprintSha256": "1b1248e6f0290a63c33a7650aa37a6c74e4d8b666f83ef96f2b4c42e3f6da8d8"
       },
       "structuralStatus": "candidate",
       "issues": [],
