@@ -11,14 +11,14 @@
     "ordering": "UTF-16 path sort; no timestamps"
   },
   "summary": {
-    "bodies": 88,
+    "bodies": 101,
     "families": 9,
     "sourceCounts": {
       "character": 74,
-      "skin": 13,
+      "skin": 26,
       "auxiliary": 1
     },
-    "candidates": 84,
+    "candidates": 97,
     "incompatible": 4
   },
   "families": [
@@ -183,11 +183,24 @@
         "skin:bolsonaro-cyborg",
         "skin:bolsonaro-drip",
         "skin:bolsonaro-mandrake",
+        "skin:canarinho-cyborg",
+        "skin:canarinho-drip",
+        "skin:canarinho-mandrake",
+        "skin:curupira-cyborg",
+        "skin:emo-cyborg",
+        "skin:et-cyborg",
+        "skin:gotinha-cyborg",
+        "skin:gotinha-drip",
+        "skin:gotinha-mandrake",
         "skin:janja",
+        "skin:lampiao-cyborg",
+        "skin:lobisomem-cyborg",
         "skin:lula-cyborg",
         "skin:lula-drip",
         "skin:lula-mandrake",
         "skin:lula-na-regua",
+        "skin:mandrake-cyborg",
+        "skin:mariabonita-cyborg",
         "skin:michelle-bolsonaro",
         "skin:michelle-mandrake",
         "skin:senador-drip",
@@ -1086,10 +1099,10 @@
       "sourceKind": "character",
       "path": "public/models/characters/caipora.glb",
       "bytes": 6073544,
-      "sourceSha256": "2b15e377385aacb55c64d1c4922680afd7d2f7cda1dafcb4459ff7cd76b31b09",
+      "sourceSha256": "c946867988c416e43930e9f60772e0b7de9bd6733f112f6d2b92f9cab3f30fd7",
       "structureSha256": "c9ebfa9c881d992ea2e9424ae0eddaee8b179bf413e172ed5ef7b34bd65bc0ae",
       "familyId": "rig-c9ebfa9c881d",
-      "profileId": "character:caipora@2b15e377385a",
+      "profileId": "character:caipora@c946867988c4",
       "skinCount": 1,
       "jointCount": 26,
       "jointNames": [
@@ -1160,7 +1173,7 @@
       "bindInspection": {
         "status": "pass",
         "bindFingerprintSha256": "327a14a6e0d3956354690ac58cdbda1f6ba3d92db1c1a5205a174469b6a56881",
-        "geometryFingerprintSha256": "10da965974e830ffce1eb06371744f83e8bf141a77195b0ba39ae9dfa42b7efd",
+        "geometryFingerprintSha256": "631448922c219800d3a711c203170d94a7fc224d9eefd30a25dde4b705c5c9dd",
         "weightsFingerprintSha256": "d985c2f9627c69daca4c5ba5c0f4ab0fc2feff5ee93eb2edd3db328c966969c8"
       },
       "structuralStatus": "candidate",
@@ -1353,11 +1366,11 @@
       "bodyId": "character:canarinho",
       "sourceKind": "character",
       "path": "public/models/characters/canarinho.glb",
-      "bytes": 484960,
-      "sourceSha256": "44bc26b92f8f99b60fe70a6f1f5b5ff79ee19061d4801a3b792eb28a8684a3ff",
+      "bytes": 484964,
+      "sourceSha256": "ae53ff9beded899f4845f3c39f491373a80a5694a69130fcff5c5ad0404e73be",
       "structureSha256": "5875ed3e37b4b6c491e6810a88d8e48a9673781cacaba6c8924cfed0ae547e09",
       "familyId": "rig-5875ed3e37b4",
-      "profileId": "character:canarinho@44bc26b92f8f",
+      "profileId": "character:canarinho@ae53ff9beded",
       "skinCount": 1,
       "jointCount": 24,
       "jointNames": [
@@ -1426,7 +1439,7 @@
       "bindInspection": {
         "status": "pass",
         "bindFingerprintSha256": "50445616bceb54bcc4e72a2663814a557b68b1ce5d4335b1b26fee609383106d",
-        "geometryFingerprintSha256": "4d1b4173a26ce2ea6eedee06297763749f6110e0d211a2b302058f1f074962fe",
+        "geometryFingerprintSha256": "a2f1996c1342b5055555550a28f86db112490dbb9491997efc3d8f807ce36444",
         "weightsFingerprintSha256": "2d8bf70e0820704baa027d5bba6ce215bb685f19d07312bbb0ac1a9a5956505b"
       },
       "structuralStatus": "candidate",
@@ -2770,10 +2783,10 @@
       "sourceKind": "character",
       "path": "public/models/characters/esquerdomacho.glb",
       "bytes": 527996,
-      "sourceSha256": "51bd7a1aaa6ffd13dcb24dfc03d54ebed77b4e1dc4bd0aaf58de6b1ae84cbbf0",
+      "sourceSha256": "5a615784b38b71cd3b2557f8baa7440ad7b972ad6d8dc1f3dddd75a4cee9afe2",
       "structureSha256": "c9ebfa9c881d992ea2e9424ae0eddaee8b179bf413e172ed5ef7b34bd65bc0ae",
       "familyId": "rig-c9ebfa9c881d",
-      "profileId": "character:esquerdomacho@51bd7a1aaa6f",
+      "profileId": "character:esquerdomacho@5a615784b38b",
       "skinCount": 1,
       "jointCount": 26,
       "jointNames": [
@@ -2844,7 +2857,7 @@
       "bindInspection": {
         "status": "pass",
         "bindFingerprintSha256": "aa09e0bd83908362ab81edc221caa72e41631cd3bd9fe3980f8da1173543d2aa",
-        "geometryFingerprintSha256": "5678cd41a5e7f82a900fd40e9884e03c429e9595e9a133bbf16ebedb7772feba",
+        "geometryFingerprintSha256": "d18f1594d93062bbb4f51a3c0ca22c2b314395050f2a94c901328f97a481a8ad",
         "weightsFingerprintSha256": "b5d062525acb05165246d93a10947c0f48fd1ab25c3aded2a933cae182a442eb"
       },
       "structuralStatus": "candidate",
@@ -3836,10 +3849,10 @@
       "sourceKind": "character",
       "path": "public/models/characters/lampiao.glb",
       "bytes": 5191784,
-      "sourceSha256": "98b41671c7b1ca47cffbd4177fd620045cd20ace5d7e6b266911ec24f8aa34d4",
+      "sourceSha256": "d32764d5254aa221951d0ea37f013d2a32f07f925a5aeaec8907ee6ed032a129",
       "structureSha256": "c9ebfa9c881d992ea2e9424ae0eddaee8b179bf413e172ed5ef7b34bd65bc0ae",
       "familyId": "rig-c9ebfa9c881d",
-      "profileId": "character:lampiao@98b41671c7b1",
+      "profileId": "character:lampiao@d32764d5254a",
       "skinCount": 1,
       "jointCount": 26,
       "jointNames": [
@@ -6770,10 +6783,10 @@
       "sourceKind": "character",
       "path": "public/models/characters/zumbi.glb",
       "bytes": 4111480,
-      "sourceSha256": "b8596378f0ba96d6cdf54b625edf2b6e79b920025abad8a0acdc9ad562bde2dd",
+      "sourceSha256": "f56419e19f335aaab04317059142de326208f3d71889a4f82c645f1dabfbd066",
       "structureSha256": "c9ebfa9c881d992ea2e9424ae0eddaee8b179bf413e172ed5ef7b34bd65bc0ae",
       "familyId": "rig-c9ebfa9c881d",
-      "profileId": "character:zumbi@b8596378f0ba",
+      "profileId": "character:zumbi@f56419e19f33",
       "skinCount": 1,
       "jointCount": 26,
       "jointNames": [
@@ -6844,7 +6857,7 @@
       "bindInspection": {
         "status": "pass",
         "bindFingerprintSha256": "533c7549cd0dea0a96151046c272d346d19afe152439b7600ca3aa945a06be6a",
-        "geometryFingerprintSha256": "43830c25a56f5f2fde587ba85fee7f07332dbb0d5fa56eaaac4ea92024bcbcb1",
+        "geometryFingerprintSha256": "b9d20a4ea851cc7d408de1f5eeab682c8c044931d0a90e97f425545ef79fcce1",
         "weightsFingerprintSha256": "0fedde176a9a5dd45f72c7e8f265304e8e451890e2f81a24dcbcb469e577aa89"
       },
       "structuralStatus": "candidate",
@@ -7132,12 +7145,12 @@
       "bodyId": "skin:bolsonaro-mandrake",
       "sourceKind": "skin",
       "baseCharacter": "capitao",
-      "path": "public/models/skins/bolsonaro-mandrake-0eb46ca7a3e3.glb",
+      "path": "public/models/skins/bolsonaro-mandrake-bcd355b78b39.glb",
       "bytes": 1211824,
-      "sourceSha256": "0eb46ca7a3e33761320a7cd0ef49a9e6c44337f55e766909d0bab787d9c36deb",
+      "sourceSha256": "bcd355b78b3958e7df3d41f514e413373d6b0cf3dbbcf15cb57e23224056ecf7",
       "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
       "familyId": "rig-dc96cfa99b23",
-      "profileId": "skin:bolsonaro-mandrake@0eb46ca7a3e3",
+      "profileId": "skin:bolsonaro-mandrake@bcd355b78b39",
       "skinCount": 1,
       "jointCount": 26,
       "jointNames": [
@@ -7209,7 +7222,826 @@
         "status": "pass",
         "bindFingerprintSha256": "fdb5698556b768c89bb56e46c0da0d6bf44b38e717639339a283993785275ad4",
         "geometryFingerprintSha256": "de168020c26bab69cb9b3939bcf6fcd220454230e229561fe16d41eeeda3e98f",
-        "weightsFingerprintSha256": "1b1248e6f0290a63c33a7650aa37a6c74e4d8b666f83ef96f2b4c42e3f6da8d8"
+        "weightsFingerprintSha256": "c6c8528c34501779605886feb1c95efd0826ea30108a9b2e4fc773a54e871a82"
+      },
+      "structuralStatus": "candidate",
+      "issues": [],
+      "fitProfile": {
+        "status": "unknown",
+        "certifiedSlots": [],
+        "reason": "no body/slot fit has been authored or human-certified"
+      }
+    },
+    {
+      "bodyId": "skin:canarinho-cyborg",
+      "sourceKind": "skin",
+      "baseCharacter": "canarinho",
+      "path": "public/models/skins/canarinho-cyborg-8f9ca417066d.glb",
+      "bytes": 1130824,
+      "sourceSha256": "8f9ca417066d56152a1f3364d2b1b4d27687a2c5831c7283ad98f34c57efcd77",
+      "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
+      "familyId": "rig-dc96cfa99b23",
+      "profileId": "skin:canarinho-cyborg@8f9ca417066d",
+      "skinCount": 1,
+      "jointCount": 26,
+      "jointNames": [
+        "Hips",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Curl_R",
+        "Curl_L"
+      ],
+      "duplicateJointNames": [],
+      "roles": {
+        "hips": "Hips",
+        "chest": "Spine02",
+        "spine": "Spine",
+        "head": "Head",
+        "leftHand": "LeftHand",
+        "rightHand": "RightHand",
+        "leftFoot": "LeftFoot",
+        "rightFoot": "RightFoot"
+      },
+      "sockets": {
+        "back": {
+          "bone": "Spine02",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "head": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "face": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "piercing": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        }
+      },
+      "bindInspection": {
+        "status": "pass",
+        "bindFingerprintSha256": "015f82f1b9f03b48351a69f4ffa90ae260698e457364c0cf9bf9d28d8c5c761a",
+        "geometryFingerprintSha256": "adec98bbd1ae22ec1b0592d0249a231a8d0b2171dcf14aade0d6417f6de96688",
+        "weightsFingerprintSha256": "2f769d770a53cdcc125ba02c65bebaf05330c5e2c4cee824949f5f51c60aea86"
+      },
+      "structuralStatus": "candidate",
+      "issues": [],
+      "fitProfile": {
+        "status": "unknown",
+        "certifiedSlots": [],
+        "reason": "no body/slot fit has been authored or human-certified"
+      }
+    },
+    {
+      "bodyId": "skin:canarinho-drip",
+      "sourceKind": "skin",
+      "baseCharacter": "canarinho",
+      "path": "public/models/skins/canarinho-drip-eb85ff91c678.glb",
+      "bytes": 1150488,
+      "sourceSha256": "eb85ff91c6781fc062774858879457c7c86a1e488aa6ee6baaffed2257bdc2d1",
+      "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
+      "familyId": "rig-dc96cfa99b23",
+      "profileId": "skin:canarinho-drip@eb85ff91c678",
+      "skinCount": 1,
+      "jointCount": 26,
+      "jointNames": [
+        "Hips",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Curl_R",
+        "Curl_L"
+      ],
+      "duplicateJointNames": [],
+      "roles": {
+        "hips": "Hips",
+        "chest": "Spine02",
+        "spine": "Spine",
+        "head": "Head",
+        "leftHand": "LeftHand",
+        "rightHand": "RightHand",
+        "leftFoot": "LeftFoot",
+        "rightFoot": "RightFoot"
+      },
+      "sockets": {
+        "back": {
+          "bone": "Spine02",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "head": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "face": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "piercing": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        }
+      },
+      "bindInspection": {
+        "status": "pass",
+        "bindFingerprintSha256": "772b11154890d0f2d49df30a3309c0c003e76ab009bd0f85e94eafa66c0bde55",
+        "geometryFingerprintSha256": "241bb474d462e69a00820a4c3d46b3db0fcf4d5a7d268f9b73cae085714eb480",
+        "weightsFingerprintSha256": "c9f492bc7fa4528a8726a7ce7c71ea8bcc6dfc09dac7ed3762e59dbcf1c361cb"
+      },
+      "structuralStatus": "candidate",
+      "issues": [],
+      "fitProfile": {
+        "status": "unknown",
+        "certifiedSlots": [],
+        "reason": "no body/slot fit has been authored or human-certified"
+      }
+    },
+    {
+      "bodyId": "skin:canarinho-mandrake",
+      "sourceKind": "skin",
+      "baseCharacter": "canarinho",
+      "path": "public/models/skins/canarinho-mandrake-40cebcfdc48d.glb",
+      "bytes": 1046112,
+      "sourceSha256": "40cebcfdc48dbf8377a5920629388bcfcb4c49b8da24e16acb10f3bbd75da71d",
+      "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
+      "familyId": "rig-dc96cfa99b23",
+      "profileId": "skin:canarinho-mandrake@40cebcfdc48d",
+      "skinCount": 1,
+      "jointCount": 26,
+      "jointNames": [
+        "Hips",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Curl_R",
+        "Curl_L"
+      ],
+      "duplicateJointNames": [],
+      "roles": {
+        "hips": "Hips",
+        "chest": "Spine02",
+        "spine": "Spine",
+        "head": "Head",
+        "leftHand": "LeftHand",
+        "rightHand": "RightHand",
+        "leftFoot": "LeftFoot",
+        "rightFoot": "RightFoot"
+      },
+      "sockets": {
+        "back": {
+          "bone": "Spine02",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "head": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "face": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "piercing": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        }
+      },
+      "bindInspection": {
+        "status": "pass",
+        "bindFingerprintSha256": "b3b022267cdf57eb2dd4ddc34214e9f909ab7ca820b5435427ff6be2a2ee6718",
+        "geometryFingerprintSha256": "d276bd8524b3c2433ef41ec484d215205a46c1219a3221dac22354296551bd93",
+        "weightsFingerprintSha256": "e90770dbc5cf2f821baacbb67996097e87e2f4236d64734bff73fce5a59a0fd1"
+      },
+      "structuralStatus": "candidate",
+      "issues": [],
+      "fitProfile": {
+        "status": "unknown",
+        "certifiedSlots": [],
+        "reason": "no body/slot fit has been authored or human-certified"
+      }
+    },
+    {
+      "bodyId": "skin:curupira-cyborg",
+      "sourceKind": "skin",
+      "baseCharacter": "curupira",
+      "path": "public/models/skins/curupira-cyborg-c8a973c7c01d.glb",
+      "bytes": 783264,
+      "sourceSha256": "c8a973c7c01d30a0e925d14e77dc1f5dabe0480422426f020dedaa0da294d8bf",
+      "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
+      "familyId": "rig-dc96cfa99b23",
+      "profileId": "skin:curupira-cyborg@c8a973c7c01d",
+      "skinCount": 1,
+      "jointCount": 26,
+      "jointNames": [
+        "Hips",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Curl_R",
+        "Curl_L"
+      ],
+      "duplicateJointNames": [],
+      "roles": {
+        "hips": "Hips",
+        "chest": "Spine02",
+        "spine": "Spine",
+        "head": "Head",
+        "leftHand": "LeftHand",
+        "rightHand": "RightHand",
+        "leftFoot": "LeftFoot",
+        "rightFoot": "RightFoot"
+      },
+      "sockets": {
+        "back": {
+          "bone": "Spine02",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "head": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "face": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "piercing": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        }
+      },
+      "bindInspection": {
+        "status": "pass",
+        "bindFingerprintSha256": "eae0ae34a8b2c0135cdbbc9ad28af326d2d8940de1b7cdbca9243da43bbbfd04",
+        "geometryFingerprintSha256": "b4ab07f861c396ba613cc87c743e1d13e1e9d3b77547583ed6ef11c427eaf339",
+        "weightsFingerprintSha256": "7b453f82ca22558d25cd6eeeac691519ac3b11bc58c33719947374d7bd4ff109"
+      },
+      "structuralStatus": "candidate",
+      "issues": [],
+      "fitProfile": {
+        "status": "unknown",
+        "certifiedSlots": [],
+        "reason": "no body/slot fit has been authored or human-certified"
+      }
+    },
+    {
+      "bodyId": "skin:emo-cyborg",
+      "sourceKind": "skin",
+      "baseCharacter": "emo",
+      "path": "public/models/skins/emo-cyborg-5123caa94e5c.glb",
+      "bytes": 1034144,
+      "sourceSha256": "5123caa94e5cb0f2d660d382d1d1a7746857be16e21ff51d13bbf63e3c2b69ff",
+      "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
+      "familyId": "rig-dc96cfa99b23",
+      "profileId": "skin:emo-cyborg@5123caa94e5c",
+      "skinCount": 1,
+      "jointCount": 26,
+      "jointNames": [
+        "Hips",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Curl_R",
+        "Curl_L"
+      ],
+      "duplicateJointNames": [],
+      "roles": {
+        "hips": "Hips",
+        "chest": "Spine02",
+        "spine": "Spine",
+        "head": "Head",
+        "leftHand": "LeftHand",
+        "rightHand": "RightHand",
+        "leftFoot": "LeftFoot",
+        "rightFoot": "RightFoot"
+      },
+      "sockets": {
+        "back": {
+          "bone": "Spine02",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "head": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "face": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "piercing": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        }
+      },
+      "bindInspection": {
+        "status": "pass",
+        "bindFingerprintSha256": "696d93b93bd41b1999d55d5b063b5bb82e2b420adcd19236910d4660694e7b93",
+        "geometryFingerprintSha256": "37e9e2a33920f557e28cae5e6f232066877400a12aca78581a59bc455ae16071",
+        "weightsFingerprintSha256": "d731956a9506329947677475f160b3890086f6ba22d5b616e6b2031378cc5065"
+      },
+      "structuralStatus": "candidate",
+      "issues": [],
+      "fitProfile": {
+        "status": "unknown",
+        "certifiedSlots": [],
+        "reason": "no body/slot fit has been authored or human-certified"
+      }
+    },
+    {
+      "bodyId": "skin:et-cyborg",
+      "sourceKind": "skin",
+      "baseCharacter": "et",
+      "path": "public/models/skins/et-cyborg-aaaaafd03215.glb",
+      "bytes": 703560,
+      "sourceSha256": "aaaaafd032155c143e99765f82b17c8d922f5d7b22db2f47321d2309489065ff",
+      "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
+      "familyId": "rig-dc96cfa99b23",
+      "profileId": "skin:et-cyborg@aaaaafd03215",
+      "skinCount": 1,
+      "jointCount": 26,
+      "jointNames": [
+        "Hips",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Curl_R",
+        "Curl_L"
+      ],
+      "duplicateJointNames": [],
+      "roles": {
+        "hips": "Hips",
+        "chest": "Spine02",
+        "spine": "Spine",
+        "head": "Head",
+        "leftHand": "LeftHand",
+        "rightHand": "RightHand",
+        "leftFoot": "LeftFoot",
+        "rightFoot": "RightFoot"
+      },
+      "sockets": {
+        "back": {
+          "bone": "Spine02",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "head": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "face": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "piercing": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        }
+      },
+      "bindInspection": {
+        "status": "pass",
+        "bindFingerprintSha256": "a8b3d14d2581103b3193fe0c880d79042cda62cb3d20d63d5a4c8f9116e2d546",
+        "geometryFingerprintSha256": "7a02d2a546fcbfe8c209595b9b0f8d032bd0beca1a791be852878a73757711d9",
+        "weightsFingerprintSha256": "7c565bcaf932f3bf725d4da3021c9dc9f0347e8de9ac873463361187d36b7e16"
+      },
+      "structuralStatus": "candidate",
+      "issues": [],
+      "fitProfile": {
+        "status": "unknown",
+        "certifiedSlots": [],
+        "reason": "no body/slot fit has been authored or human-certified"
+      }
+    },
+    {
+      "bodyId": "skin:gotinha-cyborg",
+      "sourceKind": "skin",
+      "baseCharacter": "gotinha",
+      "path": "public/models/skins/gotinha-cyborg-d247e5db9c73.glb",
+      "bytes": 747720,
+      "sourceSha256": "d247e5db9c7371ff390860f0d36b395669b869e5a71d08a4e2b561cac6c9ffd1",
+      "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
+      "familyId": "rig-dc96cfa99b23",
+      "profileId": "skin:gotinha-cyborg@d247e5db9c73",
+      "skinCount": 1,
+      "jointCount": 26,
+      "jointNames": [
+        "Hips",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Curl_R",
+        "Curl_L"
+      ],
+      "duplicateJointNames": [],
+      "roles": {
+        "hips": "Hips",
+        "chest": "Spine02",
+        "spine": "Spine",
+        "head": "Head",
+        "leftHand": "LeftHand",
+        "rightHand": "RightHand",
+        "leftFoot": "LeftFoot",
+        "rightFoot": "RightFoot"
+      },
+      "sockets": {
+        "back": {
+          "bone": "Spine02",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "head": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "face": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "piercing": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        }
+      },
+      "bindInspection": {
+        "status": "pass",
+        "bindFingerprintSha256": "feaa04dbf0e425246cceff17690b58fc29366d7aca21fae84c1a6935d8cb7ead",
+        "geometryFingerprintSha256": "885966b8e65ccff1627d312f3bfed14bbbd17764493e7a629641f6ec3dc018af",
+        "weightsFingerprintSha256": "ff075f3b6b06e1f8b75be6f11536c753d680dd2d677a031ae2860490c3b01f85"
+      },
+      "structuralStatus": "candidate",
+      "issues": [],
+      "fitProfile": {
+        "status": "unknown",
+        "certifiedSlots": [],
+        "reason": "no body/slot fit has been authored or human-certified"
+      }
+    },
+    {
+      "bodyId": "skin:gotinha-drip",
+      "sourceKind": "skin",
+      "baseCharacter": "gotinha",
+      "path": "public/models/skins/gotinha-drip-5bdbb59e1061.glb",
+      "bytes": 1119900,
+      "sourceSha256": "5bdbb59e106116ef6ea2c5de82b509ae5d6ea3fa4585395b4dd2536bb9abb748",
+      "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
+      "familyId": "rig-dc96cfa99b23",
+      "profileId": "skin:gotinha-drip@5bdbb59e1061",
+      "skinCount": 1,
+      "jointCount": 26,
+      "jointNames": [
+        "Hips",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Curl_R",
+        "Curl_L"
+      ],
+      "duplicateJointNames": [],
+      "roles": {
+        "hips": "Hips",
+        "chest": "Spine02",
+        "spine": "Spine",
+        "head": "Head",
+        "leftHand": "LeftHand",
+        "rightHand": "RightHand",
+        "leftFoot": "LeftFoot",
+        "rightFoot": "RightFoot"
+      },
+      "sockets": {
+        "back": {
+          "bone": "Spine02",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "head": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "face": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "piercing": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        }
+      },
+      "bindInspection": {
+        "status": "pass",
+        "bindFingerprintSha256": "34860571aa9c3356ab12203870882829820e2c376e286a6c62a818f9dd58678b",
+        "geometryFingerprintSha256": "410fff0a4f6e14ad91ab36ca27b091221885f2986fb60b7f8cfd7f0b1b706596",
+        "weightsFingerprintSha256": "894c6c19dc855c3c44e03f996c08453a88d504406e6d37c0a4de5c7fda72455b"
+      },
+      "structuralStatus": "candidate",
+      "issues": [],
+      "fitProfile": {
+        "status": "unknown",
+        "certifiedSlots": [],
+        "reason": "no body/slot fit has been authored or human-certified"
+      }
+    },
+    {
+      "bodyId": "skin:gotinha-mandrake",
+      "sourceKind": "skin",
+      "baseCharacter": "gotinha",
+      "path": "public/models/skins/gotinha-mandrake-97634ca0e20e.glb",
+      "bytes": 763656,
+      "sourceSha256": "97634ca0e20e07f688aa11ea37218fd6101a4dc5302bbef05a392c49fee36bbf",
+      "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
+      "familyId": "rig-dc96cfa99b23",
+      "profileId": "skin:gotinha-mandrake@97634ca0e20e",
+      "skinCount": 1,
+      "jointCount": 26,
+      "jointNames": [
+        "Hips",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Curl_R",
+        "Curl_L"
+      ],
+      "duplicateJointNames": [],
+      "roles": {
+        "hips": "Hips",
+        "chest": "Spine02",
+        "spine": "Spine",
+        "head": "Head",
+        "leftHand": "LeftHand",
+        "rightHand": "RightHand",
+        "leftFoot": "LeftFoot",
+        "rightFoot": "RightFoot"
+      },
+      "sockets": {
+        "back": {
+          "bone": "Spine02",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "head": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "face": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "piercing": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        }
+      },
+      "bindInspection": {
+        "status": "pass",
+        "bindFingerprintSha256": "7752d4a2de3b4f824bb211418925aa87451d06e87e4c2a3f3150327c7dcf2fe2",
+        "geometryFingerprintSha256": "98227c9408c411ea1d73b8d0f7b1b5b2a076cdca81546f6928d77fcc6f4bdb5b",
+        "weightsFingerprintSha256": "8cd48e5a5ed844b32b19c72827cd2ef524427358f57f0718c8d170c5f34dbe16"
       },
       "structuralStatus": "candidate",
       "issues": [],
@@ -7301,6 +8133,188 @@
         "bindFingerprintSha256": "058816bd3cfbcb2f88c1ad302055609f66f065d4228442b811d1874aafeabe45",
         "geometryFingerprintSha256": "47def30c46c11ceed5c4c11bf57c346d7d0777f871317feb07778f6a66a67e41",
         "weightsFingerprintSha256": "754274f056acb9b43059c9db15ba4c3150905ca6ad1b9865bd06533f758361dd"
+      },
+      "structuralStatus": "candidate",
+      "issues": [],
+      "fitProfile": {
+        "status": "unknown",
+        "certifiedSlots": [],
+        "reason": "no body/slot fit has been authored or human-certified"
+      }
+    },
+    {
+      "bodyId": "skin:lampiao-cyborg",
+      "sourceKind": "skin",
+      "baseCharacter": "lampiao",
+      "path": "public/models/skins/lampiao-cyborg-ed4f0edfc55e.glb",
+      "bytes": 1084012,
+      "sourceSha256": "ed4f0edfc55e9128bf29309cf7bac56059a1a736eb8550ce6c26ae34e7a36fec",
+      "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
+      "familyId": "rig-dc96cfa99b23",
+      "profileId": "skin:lampiao-cyborg@ed4f0edfc55e",
+      "skinCount": 1,
+      "jointCount": 26,
+      "jointNames": [
+        "Hips",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Curl_R",
+        "Curl_L"
+      ],
+      "duplicateJointNames": [],
+      "roles": {
+        "hips": "Hips",
+        "chest": "Spine02",
+        "spine": "Spine",
+        "head": "Head",
+        "leftHand": "LeftHand",
+        "rightHand": "RightHand",
+        "leftFoot": "LeftFoot",
+        "rightFoot": "RightFoot"
+      },
+      "sockets": {
+        "back": {
+          "bone": "Spine02",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "head": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "face": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "piercing": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        }
+      },
+      "bindInspection": {
+        "status": "pass",
+        "bindFingerprintSha256": "f924b26c6340b5479ab3f044ffea9f92b818988842d7531140a97d013c395d80",
+        "geometryFingerprintSha256": "ca8db3dc42f44497e2e29a684acd11841edc351ab1afe29da94dd5729238673e",
+        "weightsFingerprintSha256": "29255a9c2ef3179c4157f9c69dd98505e173ba53b0f28951001e55d011501018"
+      },
+      "structuralStatus": "candidate",
+      "issues": [],
+      "fitProfile": {
+        "status": "unknown",
+        "certifiedSlots": [],
+        "reason": "no body/slot fit has been authored or human-certified"
+      }
+    },
+    {
+      "bodyId": "skin:lobisomem-cyborg",
+      "sourceKind": "skin",
+      "baseCharacter": "lobisomem",
+      "path": "public/models/skins/lobisomem-cyborg-d2f5f8e28085.glb",
+      "bytes": 789748,
+      "sourceSha256": "d2f5f8e2808522c52c41d38cd3ad996c39db51ef10edbca954078be1a5fade81",
+      "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
+      "familyId": "rig-dc96cfa99b23",
+      "profileId": "skin:lobisomem-cyborg@d2f5f8e28085",
+      "skinCount": 1,
+      "jointCount": 26,
+      "jointNames": [
+        "Hips",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Curl_R",
+        "Curl_L"
+      ],
+      "duplicateJointNames": [],
+      "roles": {
+        "hips": "Hips",
+        "chest": "Spine02",
+        "spine": "Spine",
+        "head": "Head",
+        "leftHand": "LeftHand",
+        "rightHand": "RightHand",
+        "leftFoot": "LeftFoot",
+        "rightFoot": "RightFoot"
+      },
+      "sockets": {
+        "back": {
+          "bone": "Spine02",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "head": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "face": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "piercing": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        }
+      },
+      "bindInspection": {
+        "status": "pass",
+        "bindFingerprintSha256": "4d531bff15c59b65ae29ccff2e28b728c5f9c06f8c5774997813ed3a3993cca5",
+        "geometryFingerprintSha256": "7d762d8a4f7272c2ec8769b8479715e431e65e64e0db7868ee972f039520ed33",
+        "weightsFingerprintSha256": "38be8e843f144f8152d2156cf7333510d7f552f28d71ebbbd5fa8a79d3b3f89d"
       },
       "structuralStatus": "candidate",
       "issues": [],
@@ -7665,6 +8679,188 @@
         "bindFingerprintSha256": "9f5614046cd866679bac1525597115719863c65244d1c2c1252df6805bcbd84f",
         "geometryFingerprintSha256": "13c86d2366d57ad8166f783d4961da82bc4ffb12a35fabd9ab79462836214dbe",
         "weightsFingerprintSha256": "82ff0bcfd8b539dfcc8e3e10b6d82e13de6dab88d9dec256bb68300c3b3c728e"
+      },
+      "structuralStatus": "candidate",
+      "issues": [],
+      "fitProfile": {
+        "status": "unknown",
+        "certifiedSlots": [],
+        "reason": "no body/slot fit has been authored or human-certified"
+      }
+    },
+    {
+      "bodyId": "skin:mandrake-cyborg",
+      "sourceKind": "skin",
+      "baseCharacter": "mandrake",
+      "path": "public/models/skins/mandrake-cyborg-33840632c94d.glb",
+      "bytes": 1049224,
+      "sourceSha256": "33840632c94df9a72d12976ba9e465ac87a29bed393bb752a2ae7f6046e39023",
+      "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
+      "familyId": "rig-dc96cfa99b23",
+      "profileId": "skin:mandrake-cyborg@33840632c94d",
+      "skinCount": 1,
+      "jointCount": 26,
+      "jointNames": [
+        "Hips",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Curl_R",
+        "Curl_L"
+      ],
+      "duplicateJointNames": [],
+      "roles": {
+        "hips": "Hips",
+        "chest": "Spine02",
+        "spine": "Spine",
+        "head": "Head",
+        "leftHand": "LeftHand",
+        "rightHand": "RightHand",
+        "leftFoot": "LeftFoot",
+        "rightFoot": "RightFoot"
+      },
+      "sockets": {
+        "back": {
+          "bone": "Spine02",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "head": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "face": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "piercing": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        }
+      },
+      "bindInspection": {
+        "status": "pass",
+        "bindFingerprintSha256": "4953de10ff73cbda2a220eec08b469a38c0ab475fb23ba5dcbc7a25091c7e0e3",
+        "geometryFingerprintSha256": "76128b912a59a34df8d4124e6fc05009053f7585289205f01d3d0201414f4ff5",
+        "weightsFingerprintSha256": "defdbef21800f860198cf6aa85ea4f58f5f8960120c9d6460747c5ba7d239d3f"
+      },
+      "structuralStatus": "candidate",
+      "issues": [],
+      "fitProfile": {
+        "status": "unknown",
+        "certifiedSlots": [],
+        "reason": "no body/slot fit has been authored or human-certified"
+      }
+    },
+    {
+      "bodyId": "skin:mariabonita-cyborg",
+      "sourceKind": "skin",
+      "baseCharacter": "mariabonita",
+      "path": "public/models/skins/mariabonita-cyborg-006a34d55dc0.glb",
+      "bytes": 1137464,
+      "sourceSha256": "006a34d55dc00590f7c86df5c413db0f9c0bf8abfd900524b3977f3b0144565d",
+      "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
+      "familyId": "rig-dc96cfa99b23",
+      "profileId": "skin:mariabonita-cyborg@006a34d55dc0",
+      "skinCount": 1,
+      "jointCount": 26,
+      "jointNames": [
+        "Hips",
+        "Spine02",
+        "Spine01",
+        "Spine",
+        "neck",
+        "Head",
+        "head_end",
+        "headfront",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "Curl_R",
+        "Curl_L"
+      ],
+      "duplicateJointNames": [],
+      "roles": {
+        "hips": "Hips",
+        "chest": "Spine02",
+        "spine": "Spine",
+        "head": "Head",
+        "leftHand": "LeftHand",
+        "rightHand": "RightHand",
+        "leftFoot": "LeftFoot",
+        "rightFoot": "RightFoot"
+      },
+      "sockets": {
+        "back": {
+          "bone": "Spine02",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "head": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "face": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        },
+        "piercing": {
+          "bone": "Head",
+          "certified": false,
+          "transform": null,
+          "reason": "body-specific transform not authored or human-certified"
+        }
+      },
+      "bindInspection": {
+        "status": "pass",
+        "bindFingerprintSha256": "93f4929b03fb02e5418f54be834c624602f256e26e057ec445d0c8500511149b",
+        "geometryFingerprintSha256": "164e42ae9423a4e4161121558292b32f9747628a4e47613c08e006e0a33ee53b",
+        "weightsFingerprintSha256": "94c9d5ec03002ff00e963ececcdd83e89491edc40fee2da13ef8b8339bb97857"
       },
       "structuralStatus": "candidate",
       "issues": [],

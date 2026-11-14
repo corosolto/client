@@ -106,10 +106,15 @@ idade_processo() {
   [[ "$dias" =~ ^[0-9]+$ && "$horas" =~ ^[0-9]+$ && "$minutos" =~ ^[0-9]+$ && "$segundos" =~ ^[0-9]+$ ]] || return 1
   printf '%s\n' $((10#$dias * 86400 + 10#$horas * 3600 + 10#$minutos * 60 + 10#$segundos))
 }
+identidade_trava() {
+  stat -f '%d:%i' "$1" 2>/dev/null || stat -c '%d:%i' "$1" 2>/dev/null
+}
+
 
 
 while :; do
   if [ -d "$trava" ]; then
+    identidade_observada=$(identidade_trava "$trava" || true)
     dono=$(cat "$trava/pid" 2>/dev/null)
     agora=$(date +%s)
     criado_dono=$(stat -f %m "$trava" 2>/dev/null || stat -c %Y "$trava" 2>/dev/null)
@@ -125,12 +130,16 @@ while :; do
         obsoleto=1
       fi
     fi
-    if [ "$obsoleto" = 1 ]; then rm -rf "$trava"; continue; fi
+    if [ "$obsoleto" = 1 ]; then
+      [ -n "$identidade_observada" ] && [ "$(identidade_trava "$trava" || true)" = "$identidade_observada" ] && rm -rf "$trava"
+      continue
+    fi
   elif ln "$candidato" "$trava" 2>/dev/null; then
     minha=1
     rm -f "$candidato"
     break
   else
+    identidade_observada=$(identidade_trava "$trava" || true)
     dono=$(head -n1 "$trava" 2>/dev/null)
     criado_dono=$(head -n2 "$trava" 2>/dev/null | tail -n1)
     assinatura_dono=$(tail -n1 "$trava" 2>/dev/null)
@@ -145,7 +154,10 @@ while :; do
     elif [ $((agora - criado_dono)) -ge 7200 ]; then
       obsoleto=1
     fi
-    if [ "$obsoleto" = 1 ]; then rm -f "$trava"; continue; fi
+    if [ "$obsoleto" = 1 ]; then
+      [ -n "$identidade_observada" ] && [ "$(identidade_trava "$trava" || true)" = "$identidade_observada" ] && rm -f "$trava"
+      continue
+    fi
   fi
   [ "$espera" -eq 0 ] && echo "pre-push: outro pre-push em andamento (pid ${dono:-?}); esperando a vez"
   if [ "$espera" -ge 2400 ]; then echo "pre-push: 40 min de espera; abortei sem executar portões concorrentes" >&2; exit 1; fi

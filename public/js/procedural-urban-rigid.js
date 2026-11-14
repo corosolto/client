@@ -71,7 +71,7 @@ function color(options, name, fallback) {
 }
 
 
-function measuredBounds(body, boneIndex, normalizeReadWeights) {
+function measuredBounds(body, boneIndex, normalizeReadWeights, measurementIndex = boneIndex) {
   const geometry = body.geometry;
   const position = geometry?.getAttribute('position');
   const skinIndex = geometry?.getAttribute('skinIndex');
@@ -89,7 +89,7 @@ function measuredBounds(body, boneIndex, normalizeReadWeights) {
       const value = skinWeight[CHANNELS[lane]](i);
       if (!Number.isFinite(value) || value < 0 || value > 1) return null;
       total += value;
-      if (skinIndex[CHANNELS[lane]](i) === boneIndex) weight += value;
+      if (skinIndex[CHANNELS[lane]](i) === measurementIndex) weight += value;
     }
     if (total <= 0 || (!normalizeReadWeights && (total < 0.99 || total > 1.01))) return null;
     if (normalizeReadWeights) weight /= total;
@@ -356,8 +356,10 @@ export function mountUrbanRigidCandidate(model, familyId, options = {}) {
   if (!selection) return null;
   const body = selection.body;
   const indices = body.skeleton.bones.map((bone, index) => bone.name === socketName ? index : -1).filter(index => index >= 0);
-  if (indices.length !== 1) return null;
-  const socketIndex = indices[0], bounds = measuredBounds(body, socketIndex, selection.normalizeReadWeights);
+  const resolvedSocket = selection.resolvedBones[socketName];
+  const measurementIndices = body.skeleton.bones.map((bone, index) => bone.name === resolvedSocket ? index : -1).filter(index => index >= 0);
+  if (indices.length !== 1 || measurementIndices.length !== 1) return null;
+  const socketIndex = indices[0], bounds = measuredBounds(body, socketIndex, selection.normalizeReadWeights, measurementIndices[0]);
   if (!bounds) return null;
   const group = new THREE.Group();
   group.name = `urban-rigid:${familyId}`;
