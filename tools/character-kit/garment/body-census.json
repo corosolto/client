@@ -1176,10 +1176,10 @@
       "sourceKind": "character",
       "path": "public/models/characters/camera-roxa.glb",
       "bytes": 1172856,
-      "sourceSha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+      "sourceSha256": "148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b",
       "structureSha256": "a95b48489ba30bd2d8f544f1983e062191059ce76d4e2672054b371032629e36",
       "familyId": "rig-a95b48489ba3",
-      "profileId": "character:camera-roxa@8af17491600d",
+      "profileId": "character:camera-roxa@148997911e43",
       "skinCount": 1,
       "jointCount": 24,
       "jointNames": [
@@ -1249,7 +1249,7 @@
         "status": "pass",
         "bindFingerprintSha256": "a723183f7d0f58e4cc03cb1181e140200c3e90bfc833554cb19aee4076d2d8af",
         "geometryFingerprintSha256": "7a126e85fcf5d3ae7732516536fcf178a687246aac4856cc3acd2367223cfea0",
-        "weightsFingerprintSha256": "bf44c054eca071cee234d7c588c00dc172e10156495b7e6e74a20adf390d085e"
+        "weightsFingerprintSha256": "8d0b502c666ddd32097fcf8229a06e437a78280afa5afed7f5d734d7f42911f0"
       },
       "structuralStatus": "candidate",
       "issues": [],
@@ -5616,10 +5616,10 @@
       "sourceKind": "character",
       "path": "public/models/characters/profeta-calcada.glb",
       "bytes": 630628,
-      "sourceSha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+      "sourceSha256": "ae201746977859d212aafe3f5f2b97e5152758af7421d0cad439ac00f1f7e400",
       "structureSha256": "a95b48489ba30bd2d8f544f1983e062191059ce76d4e2672054b371032629e36",
       "familyId": "rig-a95b48489ba3",
-      "profileId": "character:profeta-calcada@09f5055d124c",
+      "profileId": "character:profeta-calcada@ae2017469778",
       "skinCount": 1,
       "jointCount": 24,
       "jointNames": [
@@ -5689,7 +5689,7 @@
         "status": "pass",
         "bindFingerprintSha256": "7cc203d1590c1ed2c83bee5a288e74ad22e57be726c5ad5d93b696a88ab3f480",
         "geometryFingerprintSha256": "e2b719f3271b6ced947a5f73eac9cb5a20ba6c855b9fc94c77af31f7b2022807",
-        "weightsFingerprintSha256": "3b1cb6e0c75dba8755bca1a479a7df00f2fe11a59ced671e1cfe9785830c5037"
+        "weightsFingerprintSha256": "06085507068197af6c8d92a07b31729155b7139f71eaced5a48fc20e597fe43d"
       },
       "structuralStatus": "candidate",
       "issues": [],
@@ -7132,12 +7132,12 @@
       "bodyId": "skin:bolsonaro-mandrake",
       "sourceKind": "skin",
       "baseCharacter": "capitao",
-      "path": "public/models/skins/bolsonaro-mandrake-bcd355b78b39.glb",
+      "path": "public/models/skins/bolsonaro-mandrake-0eb46ca7a3e3.glb",
       "bytes": 1211824,
-      "sourceSha256": "bcd355b78b3958e7df3d41f514e413373d6b0cf3dbbcf15cb57e23224056ecf7",
+      "sourceSha256": "0eb46ca7a3e33761320a7cd0ef49a9e6c44337f55e766909d0bab787d9c36deb",
       "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
       "familyId": "rig-dc96cfa99b23",
-      "profileId": "skin:bolsonaro-mandrake@bcd355b78b39",
+      "profileId": "skin:bolsonaro-mandrake@0eb46ca7a3e3",
       "skinCount": 1,
       "jointCount": 26,
       "jointNames": [
@@ -7209,7 +7209,7 @@
         "status": "pass",
         "bindFingerprintSha256": "fdb5698556b768c89bb56e46c0da0d6bf44b38e717639339a283993785275ad4",
         "geometryFingerprintSha256": "de168020c26bab69cb9b3939bcf6fcd220454230e229561fe16d41eeeda3e98f",
-        "weightsFingerprintSha256": "c6c8528c34501779605886feb1c95efd0826ea30108a9b2e4fc773a54e871a82"
+        "weightsFingerprintSha256": "1b1248e6f0290a63c33a7650aa37a6c74e4d8b666f83ef96f2b4c42e3f6da8d8"
       },
       "structuralStatus": "candidate",
       "issues": [],
@@ -7314,12 +7314,12 @@
       "bodyId": "skin:lula-cyborg",
       "sourceKind": "skin",
       "baseCharacter": "barbudo",
-      "path": "public/models/skins/lula-cyborg-dee1c4685b95.glb",
+      "path": "public/models/skins/lula-cyborg-e94ce8f2be07.glb",
       "bytes": 914748,
-      "sourceSha256": "dee1c4685b95d8c742c55b58d4ec0bdc8239e4fe5e89b45d89619510f454e16e",
+      "sourceSha256": "e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119",
       "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
       "familyId": "rig-dc96cfa99b23",
-      "profileId": "skin:lula-cyborg@dee1c4685b95",
+      "profileId": "skin:lula-cyborg@e94ce8f2be07",
       "skinCount": 1,
       "jointCount": 26,
       "jointNames": [
@@ -7391,7 +7391,7 @@
         "status": "pass",
         "bindFingerprintSha256": "bdb85b83c7501ec01b4e1316ce20f19e8a677dcf11e8cb269e5877300b3e043c",
         "geometryFingerprintSha256": "5f512572d4e36995f8753e98aa8d73bc473b2c99e32aafad3f795328f9ace0de",
-        "weightsFingerprintSha256": "10a7d79fdcf3d4fd7bc11dcae50f1a34259e7d4a078f32c75b48768968a61961"
+        "weightsFingerprintSha256": "1c56f061ed4d1ff6b273a987547d0e3fd53d46284cf9311be41b0ec91ba0f7bd"
       },
       "structuralStatus": "candidate",
       "issues": [],
@@ -7405,12 +7405,12 @@
       "bodyId": "skin:lula-drip",
       "sourceKind": "skin",
       "baseCharacter": "barbudo",
-      "path": "public/models/skins/lula-drip-b7c49abc6b76.glb",
+      "path": "public/models/skins/lula-drip-881e87facd89.glb",
       "bytes": 874664,
-      "sourceSha256": "b7c49abc6b7612c6341bf16642d4c691c4c89f39d16e6136bf6f58ea2dabc3c9",
+      "sourceSha256": "881e87facd893855a2139824a489160014847c2506bdb712ae120c2f8727e0b1",
       "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
       "familyId": "rig-dc96cfa99b23",
-      "profileId": "skin:lula-drip@b7c49abc6b76",
+      "profileId": "skin:lula-drip@881e87facd89",
       "skinCount": 1,
       "jointCount": 26,
       "jointNames": [
@@ -7482,7 +7482,7 @@
         "status": "pass",
         "bindFingerprintSha256": "87fae74119d4dd0a75e8b60ff03205a0be960388acbaee2af004c4ab7ec8de8d",
         "geometryFingerprintSha256": "781a606c7dafdeae273dc9faa2203068b2d8b515a4a6397e00fcb9b703ab459b",
-        "weightsFingerprintSha256": "ca2c753182f059d7fb2e5a2d5589b5334691a18f65a353c2b1afa2b1cf1f8b3e"
+        "weightsFingerprintSha256": "7e201213952ddd5559859531cbe3d8c8f7f4657bb343e0f8708524def56b3774"
       },
       "structuralStatus": "candidate",
       "issues": [],
@@ -7496,12 +7496,12 @@
       "bodyId": "skin:lula-mandrake",
       "sourceKind": "skin",
       "baseCharacter": "barbudo",
-      "path": "public/models/skins/lula-mandrake-d7014fbc5694.glb",
+      "path": "public/models/skins/lula-mandrake-4e58761e8ed5.glb",
       "bytes": 1137388,
-      "sourceSha256": "d7014fbc5694121b7e9c659e9dc00f11c816897353f2b9cd2db77eb91bbe7862",
+      "sourceSha256": "4e58761e8ed5827ad7ef35432e57c20885c2490d70721d2c309497b1f7cf84dd",
       "structureSha256": "dc96cfa99b23de16e75740285f23abfde71e21110daea5500b8e5b24703acb26",
       "familyId": "rig-dc96cfa99b23",
-      "profileId": "skin:lula-mandrake@d7014fbc5694",
+      "profileId": "skin:lula-mandrake@4e58761e8ed5",
       "skinCount": 1,
       "jointCount": 26,
       "jointNames": [
@@ -7573,7 +7573,7 @@
         "status": "pass",
         "bindFingerprintSha256": "0aefff3b84d6a1f64514d1e332a33ee7a8bc0df99fb58183ac2c0c88a8182a1b",
         "geometryFingerprintSha256": "9a92d98cf691f9303cec55bacae3cc8b7d966a60b2901cdfe8f28f983502daea",
-        "weightsFingerprintSha256": "14320fe0a5e3c17078f255485836e4e7c857a1b11e3499596de27711377e9cae"
+        "weightsFingerprintSha256": "3293057630996cfe5506da15c18877fd5dad7d1397ad7bb6f08aefa1e896d7cf"
       },
       "structuralStatus": "candidate",
       "issues": [],

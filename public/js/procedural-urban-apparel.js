@@ -27,7 +27,7 @@ const BONE_ALIASES = Object.freeze({
 });
 const adapter = (id, reason, options = {}) => Object.freeze({ id, reason, ...options });
 export const URBAN_BODY_ADAPTERS = Object.freeze({
-  '09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471': adapter('weighted-mesh-profeta-calcada', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
+  'ae201746977859d212aafe3f5f2b97e5152758af7421d0cad439ac00f1f7e400': adapter('weighted-mesh-profeta-calcada', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
   '19c0eabefc93a6c0acda0f25631cb7b3ca7d69806ab17abba844be6e94a969a0': adapter('weighted-mesh-lenda-lanhouse', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
   '7468d7e4a693443a0d6597c24106c5e4c7756c7410c85f623173df9e1c87bce9': adapter('weighted-mesh-programador-virado', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
   '77d1d5d6c6f7cce58846797bea4db5ffe21160f22f1880a7f440b8b1fdccfb07': adapter('weighted-mesh-designer-ux', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
@@ -35,12 +35,12 @@ export const URBAN_BODY_ADAPTERS = Object.freeze({
     measureFrom: Object.freeze({ Spine: 'Spine02' }),
     measureFromByFamily: Object.freeze({ 'cargo-pants': Object.freeze({ Hips: 'Spine02' }) }),
   }),
-  '8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081': adapter('weighted-mesh-camera-roxa', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
+  '148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b': adapter('weighted-mesh-camera-roxa', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
   '9d65fc624e894f23f1e029309dca0130e68a582bf70a172bfd09804fc53a6153': adapter('weighted-mesh-doidinho-bairro', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
   'e5a31ca1d72b6a4cb3231757c6a9ad075c3713e8a32722a665f10b3a7f4a177b': adapter('weighted-mesh-motoca-cachorro-loko', 'multi-skinned-mesh:largest-required-weighted-vertex-set'),
   '7714dbb9ff324e0c1fac93de2e0ee2d2fb150c3576eba304840bcaa876ee955e': adapter('bounds-cuca', 'body-local-depth-envelope', { maximumDepth: 1.75 }),
   '6b3839025c194b1418c71c7ddb68a9a9afe59794d50d49c4409197edf6f0093d': adapter('bounds-lobisomem', 'body-local-width-envelope', { maximumWidth: 2.2 }),
-  'dee1c4685b95d8c742c55b58d4ec0bdc8239e4fe5e89b45d89619510f454e16e': adapter('spine02-lula-cyborg', 'spine-region-is-weighted-to-spine02', { measureFrom: Object.freeze({ Spine: 'Spine02' }) }),
+  'e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119': adapter('spine02-lula-cyborg', 'spine-region-is-weighted-to-spine02', { measureFrom: Object.freeze({ Spine: 'Spine02' }) }),
   '4db27d13f43fd0f3a06b0d564747e62722e848c1667af4e8fc362923e9716f1b': adapter('spine02-senador-drip', 'spine-region-is-weighted-to-spine02', { measureFrom: Object.freeze({ Spine: 'Spine02' }) }),
   '43eb4d073d4a485b24c3916e0259049667f07440a88c4aac52f27888ed4b48e8': adapter('spine02-zero-um-mandrake', 'spine-region-is-weighted-to-spine02', { measureFrom: Object.freeze({ Spine: 'Spine02' }) }),
   'acecd2a763dc417f6b132a2d555bffd2c6a5e7cf3b1a83a50ee24d938fce4b0f': adapter('roles-mst', 'duplicate-curl-joints-are-outside-required-fit-roles'),

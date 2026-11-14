@@ -1,0 +1,2107 @@
+{
+  "//": "Congelamento do censo de rig (tools/eval/rig-census.mjs --regen). Chave = id do GLB; sha256 trava em QUAIS bytes o teto foi medido. Regras: sha confere → medido <= teto*1.05 e teto <= medido*1.05; sha difere → tetos estritos E teto do id (só desce); GLB novo (id ausente) → só estritos, e entrar aqui é proibido. O diff contra a origin/main reprova valor que sobe, id novo e id removido com GLB presente. Não editar à mão: rode --regen.",
+  "versao": 1,
+  "toleranciaRuido": 1.05,
+  "tetos": {
+    "adjim": {
+      "tipo": "corpo",
+      "sha256": "5b76d9c11736520fb6095e23cccc1757ea78f2bbd0fcc6a81530ccbaa80bb6aa",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.383,
+          "backMaxEdge": 2.187,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.966,
+          "backMaxEdge": 2.827,
+          "maoL": 1.74,
+          "maoR": 1.492,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "aljuiz-toga-mandrake": {
+      "tipo": "skin",
+      "sha256": "e4bebe4f7c20655c1a111cff77a47ed3c2d342a499eeb93115fd2148391ec896",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 4.358,
+          "backMaxEdge": 2.536,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 7.826,
+          "backMaxEdge": 4.937,
+          "maoL": 3.452,
+          "maoR": 2.468,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "ancap": {
+      "tipo": "corpo",
+      "sha256": "bca604b0719fa36e0c23a8a762c79dce9af67aa553981a3084f4a31eca9a20c1",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.981,
+          "backMaxEdge": 1.861,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 8.392,
+          "backMaxEdge": 3.458,
+          "maoL": 1.905,
+          "maoR": 1.485,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01316
+      }
+    },
+    "bandeirante": {
+      "tipo": "corpo",
+      "sha256": "f968ddb07ab256a948c6815a2d13ca241e7de4b623bda238eb7cdbf434ca4885",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.901,
+          "backMaxEdge": 1.901,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.092,
+          "backMaxEdge": 2.564,
+          "maoL": 1.965,
+          "maoR": 1.602,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "barbudo": {
+      "tipo": "corpo",
+      "sha256": "2aaace3d7d18147693da0002f2f1e3477263cfd4eb8b74d2056869c3ae0f45f2",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 5.57,
+          "backMaxEdge": 2.414,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 11.242,
+          "backMaxEdge": 5.385,
+          "maoL": 3.264,
+          "maoR": 1.528,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "blackmetal": {
+      "tipo": "corpo",
+      "sha256": "af79de6acb490f964f7067cfb51e712ca744b46aa8bc218e0cb6063d9a28e3b3",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.669,
+          "backMaxEdge": 2.669,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.298,
+          "backMaxEdge": 3.298,
+          "maoL": 1.975,
+          "maoR": 1.425,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "bolsonaro-cyborg": {
+      "tipo": "skin",
+      "sha256": "1ca095b97b57f02d889c258cbd574633b0afb631dde2e50c31795ec63cd12394",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.026,
+          "backMaxEdge": 2.779,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 8.503,
+          "backMaxEdge": 3.537,
+          "maoL": 2.123,
+          "maoR": 1.478,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "bolsonaro-drip": {
+      "tipo": "skin",
+      "sha256": "d2544f0b5f9565ea98b501177e34d961dccdb281c8653672958c7ec843e094a5",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.353,
+          "backMaxEdge": 2.02,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 5.678,
+          "backMaxEdge": 3.037,
+          "maoL": 1.965,
+          "maoR": 2.202,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "bolsonaro-mandrake": {
+      "tipo": "skin",
+      "sha256": "bcd355b78b3958e7df3d41f514e413373d6b0cf3dbbcf15cb57e23224056ecf7",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 9.604,
+          "backMaxEdge": 2.765,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 12.648,
+          "backMaxEdge": 3.883,
+          "maoL": 2.03,
+          "maoR": 1.664,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "bombado": {
+      "tipo": "corpo",
+      "sha256": "d4b4196aa5ed298ebd30df46650f40c3d93f408271bbc422cfad1417ee140647",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.474,
+          "backMaxEdge": 2.474,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.616,
+          "backMaxEdge": 2.616,
+          "maoL": 1.691,
+          "maoR": 1.487,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01083
+      }
+    },
+    "bonzo": {
+      "tipo": "corpo",
+      "sha256": "65a00009271c63133f0f2120aa7da01f57abff0c64c3a165c41624ea89ce67ba",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.009,
+          "backMaxEdge": 1.724,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.792,
+          "backMaxEdge": 2.263,
+          "maoL": 1.751,
+          "maoR": 1.467,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "boto": {
+      "tipo": "corpo",
+      "sha256": "aa8d0937a4a32457cfc6c91d72c5ffc0e33d03fb5569c50a1e829eecd0de3094",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.015,
+          "backMaxEdge": 1.818,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.241,
+          "backMaxEdge": 1.991,
+          "maoL": 1.946,
+          "maoR": 1.531,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "cadequinha": {
+      "tipo": "corpo",
+      "sha256": "1d062d32cb525e32e27c56dd1dad68466b41983a591b53e42542d6046d81c2d3",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.006,
+          "backMaxEdge": 2.006,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.485,
+          "backMaxEdge": 2.119,
+          "maoL": 1.429,
+          "maoR": 1.352,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "caipora": {
+      "tipo": "corpo",
+      "sha256": "c946867988c416e43930e9f60772e0b7de9bd6733f112f6d2b92f9cab3f30fd7",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 5.968,
+          "backMaxEdge": 1.634,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 14.354,
+          "backMaxEdge": 1.587,
+          "maoL": 1.463,
+          "maoR": 1.347,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01387
+      }
+    },
+    "camera-roxa": {
+      "tipo": "corpo",
+      "sha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 6.014,
+          "backMaxEdge": 6.014,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 8.402,
+          "backMaxEdge": 8.402,
+          "maoL": 1.614,
+          "maoR": 1.59,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "caminhoneiro": {
+      "tipo": "corpo",
+      "sha256": "19df82a2ec7758f0c0a1c0743a65deb3fb275f9352b38c4f527f26cae1c13358",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.917,
+          "backMaxEdge": 1.753,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.622,
+          "backMaxEdge": 2.095,
+          "maoL": 1.749,
+          "maoR": 1.547,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01198
+      }
+    },
+    "canarinho": {
+      "tipo": "corpo",
+      "sha256": "ae53ff9beded899f4845f3c39f491373a80a5694a69130fcff5c5ad0404e73be",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.421,
+          "backMaxEdge": 2.255,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.675,
+          "backMaxEdge": 1.986,
+          "maoL": 2.675,
+          "maoR": 1.746,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "canarinho-cyborg": {
+      "tipo": "skin",
+      "sha256": "8f9ca417066d56152a1f3364d2b1b4d27687a2c5831c7283ad98f34c57efcd77",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.841,
+          "backMaxEdge": 1.714,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.989,
+          "backMaxEdge": 2.722,
+          "maoL": 1.615,
+          "maoR": 1.342,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "canarinho-drip": {
+      "tipo": "skin",
+      "sha256": "eb85ff91c6781fc062774858879457c7c86a1e488aa6ee6baaffed2257bdc2d1",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.417,
+          "backMaxEdge": 3.24,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 4.359,
+          "backMaxEdge": 4.359,
+          "maoL": 1.378,
+          "maoR": 1.362,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "canarinho-mandrake": {
+      "tipo": "skin",
+      "sha256": "40cebcfdc48dbf8377a5920629388bcfcb4c49b8da24e16acb10f3bbd75da71d",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.066,
+          "backMaxEdge": 2.156,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.527,
+          "backMaxEdge": 3.469,
+          "maoL": 1.618,
+          "maoR": 1.587,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "capitao": {
+      "tipo": "corpo",
+      "sha256": "433fc02554e818a7607caa3df8b1e859e086fe61965a1950b8a391cfdab8ba1d",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 4.174,
+          "backMaxEdge": 1.762,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 4.044,
+          "backMaxEdge": 2.76,
+          "maoL": 1.688,
+          "maoR": 1.361,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "chave": {
+      "tipo": "corpo",
+      "sha256": "10f1ccfcdbcaba830568707e618ac17b107993ac70d9e22f8504f2ed51cd3d48",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.832,
+          "backMaxEdge": 1.673,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.763,
+          "backMaxEdge": 1.852,
+          "maoL": 1.513,
+          "maoR": 1.565,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "clubber": {
+      "tipo": "corpo",
+      "sha256": "d22a08d12c24d568f72d271ca7a4f0f45bcda6f23264385664a69d768670bad3",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.007,
+          "backMaxEdge": 1.652,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.688,
+          "backMaxEdge": 2.013,
+          "maoL": 1.437,
+          "maoR": 1.428,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "coach": {
+      "tipo": "corpo",
+      "sha256": "66fed26352db3db08d54b4cfebc447fb9bed862e399babce8b219a473934fae9",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.209,
+          "backMaxEdge": 2.209,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.675,
+          "backMaxEdge": 2.675,
+          "maoL": 1.711,
+          "maoR": 1.47,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "criarj": {
+      "tipo": "corpo",
+      "sha256": "f9b56a080b5e307ec4b0b2a3718ecfe72e5e7bb79698d433107d9ffca590bef8",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.721,
+          "backMaxEdge": 1.721,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.775,
+          "backMaxEdge": 1.894,
+          "maoL": 1.706,
+          "maoR": 1.456,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "cuca": {
+      "tipo": "corpo",
+      "sha256": "7714dbb9ff324e0c1fac93de2e0ee2d2fb150c3576eba304840bcaa876ee955e",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 7.554,
+          "backMaxEdge": 7.401,
+          "maoL": 1.054,
+          "maoR": 1.044,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 12.444,
+          "backMaxEdge": 7.256,
+          "maoL": 3.488,
+          "maoR": 2.412,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01212
+      }
+    },
+    "curupira": {
+      "tipo": "corpo",
+      "sha256": "43e554c6aa08dee54f9e2d3e15bd88ab1d3a8ef1a20a8c91971b66ffbb198afc",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.905,
+          "backMaxEdge": 1.669,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.501,
+          "backMaxEdge": 1.9,
+          "maoL": 1.63,
+          "maoR": 1.418,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "curupira-cyborg": {
+      "tipo": "skin",
+      "sha256": "c8a973c7c01d30a0e925d14e77dc1f5dabe0480422426f020dedaa0da294d8bf",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.367,
+          "backMaxEdge": 2.172,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.424,
+          "backMaxEdge": 2.652,
+          "maoL": 1.566,
+          "maoR": 1.274,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.16634
+      }
+    },
+    "dama": {
+      "tipo": "corpo",
+      "sha256": "34a33e1f0f0a6c3d74721452efe88aeae7888813d61f0b0e737491e4553b47ec",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.46,
+          "backMaxEdge": 2.959,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 4.224,
+          "backMaxEdge": 3.258,
+          "maoL": 2.549,
+          "maoR": 2.109,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "deputado": {
+      "tipo": "corpo",
+      "sha256": "8b8915819fc086bcfc2c1e1a66d52a8d938594799707415fbf1516dfbf70d95a",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 4.977,
+          "backMaxEdge": 2.041,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 5.235,
+          "backMaxEdge": 2.849,
+          "maoL": 5.124,
+          "maoR": 1.899,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "designer-ux": {
+      "tipo": "corpo",
+      "sha256": "77d1d5d6c6f7cce58846797bea4db5ffe21160f22f1880a7f440b8b1fdccfb07",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.557,
+          "backMaxEdge": 2.557,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.721,
+          "backMaxEdge": 2.323,
+          "maoL": 1.138,
+          "maoR": 1.37,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "doidinho-bairro": {
+      "tipo": "corpo",
+      "sha256": "9d65fc624e894f23f1e029309dca0130e68a582bf70a172bfd09804fc53a6153",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 5.697,
+          "backMaxEdge": 3.253,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0.03883
+        },
+        "clips": {
+          "maxEdge": 6.653,
+          "backMaxEdge": 4.24,
+          "maoL": 1.78,
+          "maoR": 2.631,
+          "seamGapMax": 0.06235
+        },
+        "bindErro": 0
+      }
+    },
+    "dollynho": {
+      "tipo": "corpo",
+      "sha256": "15c579883e2918ef243de278a1216323d4fa323708f23dfd3c78aceedfe06549",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.476,
+          "backMaxEdge": 2.004,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.027,
+          "backMaxEdge": 1.911,
+          "maoL": 1.923,
+          "maoR": 1.346,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "doutora": {
+      "tipo": "corpo",
+      "sha256": "eaafe1c0a7e4d0963940555e56ea1a3f2688c8cffeaf1dd4d917e11b34a41efe",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.08,
+          "backMaxEdge": 1.815,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.071,
+          "backMaxEdge": 2.037,
+          "maoL": 1.497,
+          "maoR": 1.338,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01312
+      }
+    },
+    "emo": {
+      "tipo": "corpo",
+      "sha256": "00babbe22acbf528e4d1a7cd5e60461ed4f0ac1727a09f88fa21c84c5e858bda",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.946,
+          "backMaxEdge": 1.629,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.316,
+          "backMaxEdge": 1.807,
+          "maoL": 1.615,
+          "maoR": 1.419,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "emo-cyborg": {
+      "tipo": "skin",
+      "sha256": "5123caa94e5cb0f2d660d382d1d1a7746857be16e21ff51d13bbf63e3c2b69ff",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.732,
+          "backMaxEdge": 1.391,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.672,
+          "backMaxEdge": 1.625,
+          "maoL": 1.509,
+          "maoR": 1.426,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "esbirro": {
+      "tipo": "corpo",
+      "sha256": "574653fa2a5d2e5f96d40cfa2cad91d0eb1b100172347a76118649c47e8d79f1",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 5.429,
+          "backMaxEdge": 2.694,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 8.552,
+          "backMaxEdge": 4.642,
+          "maoL": 1.639,
+          "maoR": 1.521,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "esquerdomacho": {
+      "tipo": "corpo",
+      "sha256": "5a615784b38b71cd3b2557f8baa7440ad7b972ad6d8dc1f3dddd75a4cee9afe2",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.748,
+          "backMaxEdge": 3.748,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 9.432,
+          "backMaxEdge": 9.432,
+          "maoL": 1.795,
+          "maoR": 1.294,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01314
+      }
+    },
+    "et": {
+      "tipo": "corpo",
+      "sha256": "342a10adce06574055c9c169bedbb159e6170c1783f99140c145a3adc4b36cd2",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.668,
+          "backMaxEdge": 1.498,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.428,
+          "backMaxEdge": 1.675,
+          "maoL": 1.541,
+          "maoR": 1.433,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01198
+      }
+    },
+    "et-cyborg": {
+      "tipo": "skin",
+      "sha256": "aaaaafd032155c143e99765f82b17c8d922f5d7b22db2f47321d2309489065ff",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.588,
+          "backMaxEdge": 1.412,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.209,
+          "backMaxEdge": 1.755,
+          "maoL": 1.334,
+          "maoR": 1.59,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "farialimer": {
+      "tipo": "corpo",
+      "sha256": "b68b3fe3e4a1de08a712925543ed1dfdc35f70dfef58666c0c9da36b6be61b26",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.928,
+          "backMaxEdge": 1.753,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.215,
+          "backMaxEdge": 1.94,
+          "maoL": 1.547,
+          "maoR": 1.429,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01326
+      }
+    },
+    "fluxo": {
+      "tipo": "corpo",
+      "sha256": "644d6ae0dcf645b4cda6fe724e28f7125ef79ae4869073a7d13122cc83941cda",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.471,
+          "backMaxEdge": 1.963,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.116,
+          "backMaxEdge": 1.919,
+          "maoL": 1.481,
+          "maoR": 1.455,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "funkeiro": {
+      "tipo": "corpo",
+      "sha256": "067b5e31b48ae28f8e4b9eb4d0dafa9a5393e905e2d071a44a27931bba8184e5",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.201,
+          "backMaxEdge": 1.457,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.042,
+          "backMaxEdge": 1.877,
+          "maoL": 1.427,
+          "maoR": 1.385,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "funkraiz": {
+      "tipo": "corpo",
+      "sha256": "d21dd7157b429cdf090e12e7507065ba95a197076fb57624071100068533fede",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.121,
+          "backMaxEdge": 1.682,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.515,
+          "backMaxEdge": 1.757,
+          "maoL": 1.761,
+          "maoR": 1.496,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "gilbomes": {
+      "tipo": "corpo",
+      "sha256": "19b55ce55caeb7ce2ac67f1970590fcda9ddef51daabac122741a72fc3315266",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.165,
+          "backMaxEdge": 1.695,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.052,
+          "backMaxEdge": 2.802,
+          "maoL": 1.708,
+          "maoR": 1.453,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "gotinha": {
+      "tipo": "corpo",
+      "sha256": "941b812cad28ccac2cd25024292ad6f87efa1c2dcafecc694aa052209c603253",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.133,
+          "backMaxEdge": 1.896,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 5,
+          "backMaxEdge": 2.947,
+          "maoL": 1.891,
+          "maoR": 1.411,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.00793
+      }
+    },
+    "gotinha-cyborg": {
+      "tipo": "skin",
+      "sha256": "d247e5db9c7371ff390860f0d36b395669b869e5a71d08a4e2b561cac6c9ffd1",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.823,
+          "backMaxEdge": 1.725,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.895,
+          "backMaxEdge": 2.438,
+          "maoL": 1.583,
+          "maoR": 1.353,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "gotinha-drip": {
+      "tipo": "skin",
+      "sha256": "5bdbb59e106116ef6ea2c5de82b509ae5d6ea3fa4585395b4dd2536bb9abb748",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.233,
+          "backMaxEdge": 2.839,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.503,
+          "backMaxEdge": 3.452,
+          "maoL": 1.41,
+          "maoR": 1.254,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "gotinha-mandrake": {
+      "tipo": "skin",
+      "sha256": "97634ca0e20e07f688aa11ea37218fd6101a4dc5302bbef05a392c49fee36bbf",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.576,
+          "backMaxEdge": 2.443,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 4.531,
+          "backMaxEdge": 3.845,
+          "maoL": 1.672,
+          "maoR": 1.421,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "hipster": {
+      "tipo": "corpo",
+      "sha256": "e954d312d355379ee3a4dcf18c36e99862bbb096dbef4ca1a607564f5bd8f5d2",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.899,
+          "backMaxEdge": 1.8,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.209,
+          "backMaxEdge": 2.152,
+          "maoL": 1.537,
+          "maoR": 1.381,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01262
+      }
+    },
+    "janja": {
+      "tipo": "skin",
+      "sha256": "a268fab50a32c5ac9929149da6d4e2cf8598caa723c58c1bd1b7430fa453dfb0",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.575,
+          "backMaxEdge": 2.195,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.43,
+          "backMaxEdge": 3.43,
+          "maoL": 2.24,
+          "maoR": 1.493,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "jozo": {
+      "tipo": "corpo",
+      "sha256": "6e7609f191624759e4b2fffc6e545bc30e045ae2b2cdc482eacfb66771701913",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.136,
+          "backMaxEdge": 2.136,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.61,
+          "backMaxEdge": 2.007,
+          "maoL": 1.566,
+          "maoR": 1.777,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "juiz": {
+      "tipo": "corpo",
+      "sha256": "e4ea8299c825b2feab78eb79bff5f721deec5367c5f56c12a94df578b02f1264",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 6.465,
+          "backMaxEdge": 2.713,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 11.401,
+          "backMaxEdge": 3.666,
+          "maoL": 2.382,
+          "maoR": 1.611,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "julia-zanatta": {
+      "tipo": "corpo",
+      "sha256": "961ff061920733e7f9e6acad46fb96379529ee2078e93f3a9eb2b33aff8f7769",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.472,
+          "backMaxEdge": 2.482,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 6.633,
+          "backMaxEdge": 4.534,
+          "maoL": 1.562,
+          "maoR": 1.448,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "lampiao": {
+      "tipo": "corpo",
+      "sha256": "d32764d5254aa221951d0ea37f013d2a32f07f925a5aeaec8907ee6ed032a129",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 5.209,
+          "backMaxEdge": 5.209,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0.07224
+        },
+        "clips": {
+          "maxEdge": 4.442,
+          "backMaxEdge": 4.442,
+          "maoL": 1.716,
+          "maoR": 1.509,
+          "seamGapMax": 0.0709
+        },
+        "bindErro": 0.02859
+      }
+    },
+    "lampiao-cyborg": {
+      "tipo": "skin",
+      "sha256": "ed4f0edfc55e9128bf29309cf7bac56059a1a736eb8550ce6c26ae34e7a36fec",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.499,
+          "backMaxEdge": 1.729,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.889,
+          "backMaxEdge": 2.268,
+          "maoL": 1.373,
+          "maoR": 1.269,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "lenda-lanhouse": {
+      "tipo": "corpo",
+      "sha256": "19c0eabefc93a6c0acda0f25631cb7b3ca7d69806ab17abba844be6e94a969a0",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.342,
+          "backMaxEdge": 2.414,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 4.698,
+          "backMaxEdge": 3.538,
+          "maoL": 1.619,
+          "maoR": 1.37,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "lobisomem": {
+      "tipo": "corpo",
+      "sha256": "6b3839025c194b1418c71c7ddb68a9a9afe59794d50d49c4409197edf6f0093d",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.308,
+          "backMaxEdge": 2.308,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.272,
+          "backMaxEdge": 2.513,
+          "maoL": 1.619,
+          "maoR": 1.701,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01263
+      }
+    },
+    "lobisomem-cyborg": {
+      "tipo": "skin",
+      "sha256": "d2f5f8e2808522c52c41d38cd3ad996c39db51ef10edbca954078be1a5fade81",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.989,
+          "backMaxEdge": 3.423,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 4.371,
+          "backMaxEdge": 4.371,
+          "maoL": 1.472,
+          "maoR": 1.371,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "lula-cyborg": {
+      "tipo": "skin",
+      "sha256": "dee1c4685b95d8c742c55b58d4ec0bdc8239e4fe5e89b45d89619510f454e16e",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 4.109,
+          "backMaxEdge": 2.569,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 8.241,
+          "backMaxEdge": 8.241,
+          "maoL": 1.796,
+          "maoR": 1.586,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "lula-drip": {
+      "tipo": "skin",
+      "sha256": "b7c49abc6b7612c6341bf16642d4c691c4c89f39d16e6136bf6f58ea2dabc3c9",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 5.669,
+          "backMaxEdge": 2.744,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 8.473,
+          "backMaxEdge": 4.055,
+          "maoL": 1.819,
+          "maoR": 1.911,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "lula-mandrake": {
+      "tipo": "skin",
+      "sha256": "d7014fbc5694121b7e9c659e9dc00f11c816897353f2b9cd2db77eb91bbe7862",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 5.22,
+          "backMaxEdge": 2.136,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 8.279,
+          "backMaxEdge": 5.913,
+          "maoL": 2.307,
+          "maoR": 2.084,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "lula-na-regua": {
+      "tipo": "skin",
+      "sha256": "9a148cb258fba407fcc1881fe3b6b00edb1af90cc5a38dd59d1269a4dd1ef77c",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 5.816,
+          "backMaxEdge": 3.237,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 11.598,
+          "backMaxEdge": 5.511,
+          "maoL": 2.187,
+          "maoR": 1.53,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "mandrake": {
+      "tipo": "corpo",
+      "sha256": "69a63fdf46959b734e8b1973fcc489739c6ab466d2890bf7f6e6f3326bf0e7a2",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.201,
+          "backMaxEdge": 1.457,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.042,
+          "backMaxEdge": 1.877,
+          "maoL": 1.427,
+          "maoR": 1.385,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "mandrake-cyborg": {
+      "tipo": "skin",
+      "sha256": "33840632c94df9a72d12976ba9e465ac87a29bed393bb752a2ae7f6046e39023",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.569,
+          "backMaxEdge": 1.61,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.984,
+          "backMaxEdge": 2.148,
+          "maoL": 1.805,
+          "maoR": 1.685,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "mariabonita": {
+      "tipo": "corpo",
+      "sha256": "96aa7ef6278dce4d8b11a5d58ab8d9f0c6d0b835b9ab3ab530d5bd1bbeea0048",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 4.437,
+          "backMaxEdge": 4.437,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0.04782
+        },
+        "clips": {
+          "maxEdge": 4.573,
+          "backMaxEdge": 4.573,
+          "maoL": 1.587,
+          "maoR": 1.501,
+          "seamGapMax": 0.06472
+        },
+        "bindErro": 0.03797
+      }
+    },
+    "mariabonita-cyborg": {
+      "tipo": "skin",
+      "sha256": "006a34d55dc00590f7c86df5c413db0f9c0bf8abfd900524b3977f3b0144565d",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.473,
+          "backMaxEdge": 1.842,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.44,
+          "backMaxEdge": 3.218,
+          "maoL": 2.615,
+          "maoR": 1.258,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "marina-silva": {
+      "tipo": "corpo",
+      "sha256": "42dc11431db1633625d37f64fcff3ff53fb51deb6bf43eeec86c353026b15e56",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 5.387,
+          "backMaxEdge": 5.387,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 9.971,
+          "backMaxEdge": 9.971,
+          "maoL": 1.889,
+          "maoR": 1.703,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "metaleiro": {
+      "tipo": "corpo",
+      "sha256": "f424e96d8c2f6b4d00c4c16ddd3178bc1fa639312a7ecbafa442ab0817dc56fc",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.91,
+          "backMaxEdge": 1.61,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.809,
+          "backMaxEdge": 1.687,
+          "maoL": 1.726,
+          "maoR": 1.591,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "michelle-bolsonaro": {
+      "tipo": "skin",
+      "sha256": "15a1099a0f1b40aea38dc140ebbced1b8ee97d73ab99aab0dc2fd794787a36a0",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.79,
+          "backMaxEdge": 2.93,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.588,
+          "backMaxEdge": 3.176,
+          "maoL": 1.747,
+          "maoR": 1.709,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "michelle-mandrake": {
+      "tipo": "skin",
+      "sha256": "2a3fcdf222152784b69b0b22a4e2a91a689d41739d27a39eaa614ad1e2141ec5",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 5.91,
+          "backMaxEdge": 5.91,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 11.387,
+          "backMaxEdge": 11.387,
+          "maoL": 3.919,
+          "maoR": 1.755,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "microfonildo": {
+      "tipo": "corpo",
+      "sha256": "7e45cde94e8faf3afcd133832440af2a015b8aabc9cb711eb65dfcdfe057e609",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1,
+          "backMaxEdge": 1,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 1,
+          "backMaxEdge": 1,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "ministro": {
+      "tipo": "corpo",
+      "sha256": "129121e14a0f78ed89dd677e881280462cc3de468ad7edfa17937350098b2759",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 7.844,
+          "backMaxEdge": 2.86,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 16.284,
+          "backMaxEdge": 4.603,
+          "maoL": 2.393,
+          "maoR": 1.993,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "mistico": {
+      "tipo": "corpo",
+      "sha256": "0b8143aa3fe4b51db1fc0c9eba86583a964198fa1780397963e0d7d816d6ceb4",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.922,
+          "backMaxEdge": 1.806,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.334,
+          "backMaxEdge": 2.304,
+          "maoL": 1.439,
+          "maoR": 1.386,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01304
+      }
+    },
+    "motoca-cachorro-loko": {
+      "tipo": "corpo",
+      "sha256": "e5a31ca1d72b6a4cb3231757c6a9ad075c3713e8a32722a665f10b3a7f4a177b",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 6.938,
+          "backMaxEdge": 6.479,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0.07681
+        },
+        "clips": {
+          "maxEdge": 7.655,
+          "backMaxEdge": 7.375,
+          "maoL": 2.013,
+          "maoR": 1.708,
+          "seamGapMax": 0.10449
+        },
+        "bindErro": 0
+      }
+    },
+    "mst": {
+      "tipo": "corpo",
+      "sha256": "acecd2a763dc417f6b132a2d555bffd2c6a5e7cf3b1a83a50ee24d938fce4b0f",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.194,
+          "backMaxEdge": 2.194,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.044,
+          "backMaxEdge": 3.044,
+          "maoL": 1.675,
+          "maoR": 1.297,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01308
+      }
+    },
+    "oakley": {
+      "tipo": "corpo",
+      "sha256": "47fa5a289b043ae4698e707f45d2ce920fa33a98de11965dbd36de515ccd3618",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.842,
+          "backMaxEdge": 2.283,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 4.004,
+          "backMaxEdge": 1.89,
+          "maoL": 1.372,
+          "maoR": 1.38,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "ostentacao": {
+      "tipo": "corpo",
+      "sha256": "724bd52e02b1f5f8c571b21b33ad73f639ac9f433ba8bccefd2cedffdc986bcb",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.144,
+          "backMaxEdge": 1.656,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.097,
+          "backMaxEdge": 1.942,
+          "maoL": 2.097,
+          "maoR": 1.471,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "padata": {
+      "tipo": "corpo",
+      "sha256": "1ded075128059d3a49064b1d06cbae9dd8fee1dbb26844bf7583801c8648cfa7",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.482,
+          "backMaxEdge": 2.482,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.828,
+          "backMaxEdge": 2.828,
+          "maoL": 1.665,
+          "maoR": 1.547,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "padati": {
+      "tipo": "corpo",
+      "sha256": "a67fbfd22b553d8f0083e952baf12235bb14b06ee0069c77daad9dd0a82c8762",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 4.939,
+          "backMaxEdge": 4.939,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.882,
+          "backMaxEdge": 3.882,
+          "maoL": 1.646,
+          "maoR": 1.482,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "pagodeiro": {
+      "tipo": "corpo",
+      "sha256": "59f08630e844400b42bf542dee9069c3f3388ef760ee310f7e76004c1679b8b8",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.988,
+          "backMaxEdge": 1.555,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.4,
+          "backMaxEdge": 1.968,
+          "maoL": 1.519,
+          "maoR": 1.454,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "palhacomal": {
+      "tipo": "corpo",
+      "sha256": "eaacf1917ac2317318e2c2704d35fe6295f2eafc74837ee39acaa446b20f58f7",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.012,
+          "backMaxEdge": 1.788,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.168,
+          "backMaxEdge": 1.788,
+          "maoL": 1.527,
+          "maoR": 1.383,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "proerd": {
+      "tipo": "corpo",
+      "sha256": "004a55debd33f0af5d0d7d0de8110f8c52e21f4a5761b1cc3b4d26a97ca10ddd",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.836,
+          "backMaxEdge": 2.836,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.488,
+          "backMaxEdge": 2.488,
+          "maoL": 2.466,
+          "maoR": 1.629,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "professor": {
+      "tipo": "corpo",
+      "sha256": "ab008ee5a573f7279227cd71ccb36e6b5dd3a193246fbe4fa169ff42daf9a3fb",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 4.052,
+          "backMaxEdge": 1.907,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 8.73,
+          "backMaxEdge": 2.88,
+          "maoL": 1.809,
+          "maoR": 2.251,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "profeta-calcada": {
+      "tipo": "corpo",
+      "sha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 17.467,
+          "backMaxEdge": 11.173,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0.26473
+        },
+        "clips": {
+          "maxEdge": 46.024,
+          "backMaxEdge": 14.607,
+          "maoL": 1,
+          "maoR": 5.144,
+          "seamGapMax": 0.82867
+        },
+        "bindErro": 0
+      }
+    },
+    "programador-virado": {
+      "tipo": "corpo",
+      "sha256": "7468d7e4a693443a0d6597c24106c5e4c7756c7410c85f623173df9e1c87bce9",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 5.797,
+          "backMaxEdge": 4.635,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0.03496
+        },
+        "clips": {
+          "maxEdge": 6.723,
+          "backMaxEdge": 4.855,
+          "maoL": 5.47,
+          "maoR": 5.682,
+          "seamGapMax": 0.04957
+        },
+        "bindErro": 0
+      }
+    },
+    "punk": {
+      "tipo": "corpo",
+      "sha256": "3cb41807481b40578f41d0c9a4ccf556e96dfc95d1d4a2663feb86b9532326fa",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.991,
+          "backMaxEdge": 1.417,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.291,
+          "backMaxEdge": 1.787,
+          "maoL": 1.425,
+          "maoR": 1.464,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "rapper": {
+      "tipo": "corpo",
+      "sha256": "7a3e62ec70d65b36de629acf456f0c82692430c8523a6a34b86ec80f5e88428d",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.194,
+          "backMaxEdge": 1.59,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.053,
+          "backMaxEdge": 1.743,
+          "maoL": 1.832,
+          "maoR": 1.521,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "raul": {
+      "tipo": "corpo",
+      "sha256": "8e43002b8eec8dbf2f186b89f9d55edadb98574799d8b6372f8f917556da1a2a",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.094,
+          "backMaxEdge": 1.912,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.146,
+          "backMaxEdge": 1.95,
+          "maoL": 1.669,
+          "maoR": 1.546,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "reggae": {
+      "tipo": "corpo",
+      "sha256": "60a8839c6e657a2deb391551504c30a3e3cbfbc2221c608af63bc45173be91d3",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.062,
+          "backMaxEdge": 1.542,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 2.015,
+          "backMaxEdge": 1.734,
+          "maoL": 1.771,
+          "maoR": 1.47,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "saci": {
+      "tipo": "corpo",
+      "sha256": "10bd7ea91dae8e00fd306b10c8c4d4be1a28f3c3724d1cf4d13a63f5548cc562",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 1.776,
+          "backMaxEdge": 1.655,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.855,
+          "backMaxEdge": 1.896,
+          "maoL": 1.56,
+          "maoR": 1.396,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.00979
+      }
+    },
+    "senador": {
+      "tipo": "corpo",
+      "sha256": "73fdf646d7c1f3b4b2719dd96094761cb3e396fd3a638c26ee48a3043b8b6de8",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.519,
+          "backMaxEdge": 1.897,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.613,
+          "backMaxEdge": 2.736,
+          "maoL": 2.429,
+          "maoR": 1.944,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "senador-drip": {
+      "tipo": "skin",
+      "sha256": "4db27d13f43fd0f3a06b0d564747e62722e848c1667af4e8fc362923e9716f1b",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 4.33,
+          "backMaxEdge": 2.437,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 8.191,
+          "backMaxEdge": 3.488,
+          "maoL": 1.994,
+          "maoR": 1.509,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "sertanejo": {
+      "tipo": "corpo",
+      "sha256": "55aa94450dd09b595dde1c46f0b91fabfe30dca866e98c9a013f7380cb627207",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.958,
+          "backMaxEdge": 1.718,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 4.333,
+          "backMaxEdge": 2.089,
+          "maoL": 1.453,
+          "maoR": 1.331,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01181
+      }
+    },
+    "sindicato": {
+      "tipo": "corpo",
+      "sha256": "07fdc15280641f8e60748d0cb081b10cf81607b7626de0216c2280e7704db3c6",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.575,
+          "backMaxEdge": 2.006,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 4.485,
+          "backMaxEdge": 2.66,
+          "maoL": 1.737,
+          "maoR": 1.451,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01264
+      }
+    },
+    "skatista": {
+      "tipo": "corpo",
+      "sha256": "9bd3a0a8af9d7b175f85cf4ae71627bcac9a1fb0d5108dc3dd485bb0c2831fa6",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.232,
+          "backMaxEdge": 1.778,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.111,
+          "backMaxEdge": 2.219,
+          "maoL": 1.412,
+          "maoR": 1.502,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "titica": {
+      "tipo": "corpo",
+      "sha256": "264d99d9a04b92e169e59f8c7214d8c166666a15eb87e82b16a7925f098413e4",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.182,
+          "backMaxEdge": 2.182,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.515,
+          "backMaxEdge": 3.515,
+          "maoL": 1.766,
+          "maoR": 1.437,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "trapfunk": {
+      "tipo": "corpo",
+      "sha256": "7ed59f4903ff6be47dc51dfa6c44199d19afd4f21b5693e83eb84ab94c89470c",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 2.594,
+          "backMaxEdge": 2.231,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 3.119,
+          "backMaxEdge": 3.119,
+          "maoL": 1.751,
+          "maoR": 1.303,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "zero-um-mandrake": {
+      "tipo": "skin",
+      "sha256": "43eb4d073d4a485b24c3916e0259049667f07440a88c4aac52f27888ed4b48e8",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 4.074,
+          "backMaxEdge": 2.401,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 7.286,
+          "backMaxEdge": 4.892,
+          "maoL": 3.118,
+          "maoR": 1.828,
+          "seamGapMax": 0
+        },
+        "bindErro": 0
+      }
+    },
+    "zumbi": {
+      "tipo": "corpo",
+      "sha256": "f56419e19f335aaab04317059142de326208f3d71889a4f82c645f1dabfbd066",
+      "metricas": {
+        "sinteticas": {
+          "maxEdge": 3.499,
+          "backMaxEdge": 3.499,
+          "maoL": 1,
+          "maoR": 1,
+          "seamGapMax": 0
+        },
+        "clips": {
+          "maxEdge": 6.409,
+          "backMaxEdge": 3.814,
+          "maoL": 2.014,
+          "maoR": 1.49,
+          "seamGapMax": 0
+        },
+        "bindErro": 0.01545
+      }
+    }
+  }
+}

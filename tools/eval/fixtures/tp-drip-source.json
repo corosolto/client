@@ -41,7 +41,7 @@
   "baseline": {
     "head": "a8f246196e1c84cbe9ad223a06c071f6e547d0ad",
     "artifacts": [
-      ["public/data/gloves-manifest.json",193275,"a1c6ab728822ae5cba78f1d3c0b798ad33a9dd8a7dbc4a438874e16dcb44581f"],
+      ["public/data/gloves-manifest.json",193275,"a8baf8c613e558aa4dda25598952e7ac3a59939d73f8af17ecffc31951e923da"],
       ["public/models/gloves/1p/fpvm-hands-2c8f9a3dd5ca.glb",30944,"7a514762beacb1fd8311093872590092d75a223e68ea88c34547e995416597c8"],
       ["public/models/gloves/3p/ancap-1663d71b1cbb.glb",91236,"e69f202b67c6551c7067d56469769d5c0295fc68384e60c74e63768e5514bbda"],
       ["public/models/gloves/3p/bandeirante-a623e1c6baa2.glb",54032,"a8c7094cb877d5e1154882541034d2a8be0e2141c6d3ad1b510be1b8cab3c724"],
@@ -100,6 +100,6 @@
       ["public/models/gloves/3p/trapfunk-5bead824c62a.glb",54260,"0b12b9d09c024866c2bdcef3c47ba24893c5e765d5257750a88816364ba4d2e4"],
       ["public/models/gloves/3p/zumbi-533c7549cd0d.glb",93640,"7b72a87db8b19b24d86684a820a2e50c57e1dd4fa997e000c4b7a1879747e3f4"]
     ],
-    "selectionsSha256": "46e50972d116af45fd82c0d62b0e580643ac0b1a2b6f4ec902c7a171d8d1824e"
+    "selectionsSha256": "3a9e157c014ae45ea20bc1212ffc17ec1b5717ab810154a4fe480a1d57387188"
   }
 }

@@ -472,6 +472,8 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
@@ -509,6 +511,10 @@ jobs:
         run: npm run eval:escala
       - name: Loja, vídeos de hover das skins (VP9 + H.264 + poster, até 400 KB)
         run: npm run eval:treta-video
+      - name: Censo de rig, deformação de skin nunca piora (tetos congelados por sha + mutantes)
+        run: npm run eval:rig-census
+      - name: Pesos de skin, manga não segue a perna (tetos congelados + mutantes)
+        run: npm run eval:pesos-braco-perna
       - name: Orçamento de shader WebGL1
         run: npm run eval:shaderbudget
       - name: Sitemap pagina além do max-rows do PostgREST

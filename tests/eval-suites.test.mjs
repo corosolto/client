@@ -15,7 +15,7 @@ const BASELINE = {
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
 const NOVOS = {
-  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:prodcrash', 'eval:workflowguards']),
+  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:rig-census', 'eval:studiochar', 'eval:pesos-braco-perna', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:prodcrash', 'eval:workflowguards']),
   deploy: new Set(['eval:weapon-passe', 'eval:dispose', 'eval:workflowguards']),
 };
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
@@ -38,11 +38,13 @@ for (const [nome, baseline] of Object.entries(BASELINE)) {
   });
 }
 
-test('fast adds staging, Studio, season-pass and production-crash checks without deleting migrated steps', () => {
+test('fast adds staging, Studio, rig-census, skin weights, season-pass and production-crash checks without deleting migrated steps', () => {
   assert.ok(SUITES.fast.includes('eval:portalembed'));
   assert.ok(SUITES.fast.includes('eval:lixo'));
   assert.ok(SUITES.fast.includes('eval:envruntime'));
   assert.ok(SUITES.fast.includes('eval:servertraffic'));
+  assert.ok(SUITES.fast.includes('eval:rig-census'));
+  assert.ok(SUITES.fast.includes('eval:pesos-braco-perna'));
   assert.ok(SUITES.fast.includes('eval:shareorigin'));
 
   assert.ok(SUITES.fast.includes('eval:vm-enquadramento-placar'));
