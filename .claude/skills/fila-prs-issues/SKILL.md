@@ -224,7 +224,7 @@ o pre-push. Não alargue o escopo para aproveitar a lane.
 ```bash
 git commit -s -m "fix: descreva a correção" -m "Agent: NOME_DO_AGENTE" \
   || { echo "não foi possível criar o commit de correção" >&2; exit 1; }
-git push "$HEAD_REMOTE" BRANCH_ORIGINAL \
+git push "$HEAD_REMOTE" "$BRANCH_ORIGINAL" \
   || { echo "não foi possível publicar a correção" >&2; exit 1; }
 PUSHED_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid) \
   || { echo "não foi possível confirmar o head publicado" >&2; exit 1; }
@@ -284,7 +284,7 @@ UNRESOLVED=$(git diff --name-only --diff-filter=U) \
 [ -z "$UNRESOLVED" ] || { echo "ainda há conflitos não resolvidos" >&2; exit 1; }
 git commit -s -m "merge: atualiza BASE_CORRETA na lane" -m "Agent: NOME_DO_AGENTE" \
   || { echo "não foi possível criar o merge da base" >&2; exit 1; }
-git push "$HEAD_REMOTE" BRANCH_ORIGINAL \
+git push "$HEAD_REMOTE" "$BRANCH_ORIGINAL" \
   || { echo "não foi possível publicar a lane retargeted" >&2; exit 1; }
 PUSHED_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid) \
   || { echo "não foi possível confirmar o head retargeted" >&2; exit 1; }
