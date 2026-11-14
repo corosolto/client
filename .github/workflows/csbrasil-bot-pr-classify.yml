@@ -37,7 +37,7 @@ permissions:
 # seu (PR #348: 5 idênticos mesmo com dedupe). Serializa por PR: 1 run vivo.
 concurrency:
   group: pr-classify-${{ github.event.pull_request.number || inputs.pr_number }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.actor != 'csbrasil-BOT' }}
 
 jobs:
   # PORTÃO QUE NÃO PODE MEDIR NÃO VOTA (mesma regra do #402 para o portão de autoria em
