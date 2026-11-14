@@ -123,11 +123,19 @@ async function run(mutant) {
     const rows=[];
     const add=(id,c,t)=>measure(NetClient,TransporteWT,id,c,t).then(r=>rows.push(r));
     const connect=async x=>{const n=x.make();const r=await x.outcome(n.connect());return {n,r};};
-    const rejected=async x=>{const {n,r}=await connect(x);await flush();x.evidence.result=r;return !r.ok && n.meta===null && x.sockets[0].closeCalls.length>0 && x.timers.size===0;};
+    const rejected=async (x,erro='protocolo_incompativel',forcarTimeout=false)=>{
+      const pending=connect(x);
+      await flush();
+      if(forcarTimeout)for(const fn of [...x.timers.values()])fn();
+      const {n,r}=await pending;
+      await flush();
+      x.evidence.result=r;
+      return !r.ok&&r.error===erro&&n.meta===null&&x.sockets[0].closeCalls.length>0&&x.timers.size===0;
+    };
     await add('N1',{},async x=>{const {r}=await connect(x);return r.ok&&equal(x.sockets[0].protocols,SNAPSHOT_PROTOCOLS);});
     await add('N2',{wsProtocol:V8,wsVersion:8},async x=>{const {n,r}=await connect(x);return r.ok&&n.meta.protocolVersion===8&&n.connected&&x.timers.size===0;});
-    await add('N3',{wsProtocol:'coro-snapshot-v999'},rejected);
-    await add('N4',{wsProtocol:''},rejected);
+    await add('N3',{wsProtocol:'coro-snapshot-v999',noWelcome:true},x=>rejected(x,'subprotocolo_nao_negociado',true));
+    await add('N4',{wsProtocol:'',noWelcome:true},x=>rejected(x,'subprotocolo_nao_negociado',true));
     await add('N5',{},async x=>new URL(x.make(true).wtUrl).searchParams.get('sp')===V9);
     for(const [id,wtVersion] of [['N6',8],['N7','missing']])await add(id,{wtVersion},async x=>{const n=x.make();const r=await x.directWT(n);x.evidence.result=r;return !r.ok&&n.meta===null&&x.quics[0].closeCalls.length>0&&x.timers.size===0;});
     await add('N8',{},async x=>{const n=x.make();const r=await x.directWT(n);if(!r.ok)return false;let delivered=0;n.onPartida=()=>delivered++;x.quics[0].emit(metadata('partida',9,2));await flush();return n.meta.partida===2&&delivered===1&&x.timers.size===0;});
