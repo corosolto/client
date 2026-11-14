@@ -27,7 +27,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const MUTANTES = ['sem-concurrency', 'sem-cancel', 'grupo-global', 'classificador-autocancela', 'deploy-cancela', 'deploy-sem-concurrency'];
+const MUTANTES = ['sem-concurrency', 'sem-cancel', 'grupo-global', 'classificador-autocancela', 'classificador-inverte-operador', 'deploy-cancela', 'deploy-sem-concurrency'];
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 if (mutante && !MUTANTES.includes(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
 
@@ -63,6 +63,9 @@ function ler(arquivo) {
   if (mutante === 'classificador-autocancela' && arquivo === 'csbrasil-bot-pr-classify.yml') {
     fonte = fonte.replace(/^( {2}cancel-in-progress:).*$/m, '$1 true');
   }
+  if (mutante === 'classificador-inverte-operador' && arquivo === 'csbrasil-bot-pr-classify.yml') {
+    fonte = fonte.replace("github.actor != 'csbrasil-BOT'", "github.actor == 'csbrasil-BOT'");
+  }
   if (mutante === 'deploy-cancela' && arquivo === 'deploy-prod.yml') fonte = fonte.replace(/^( {2}cancel-in-progress:).*$/m, '$1 true');
   if (mutante === 'deploy-sem-concurrency' && arquivo === 'deploy-prod.yml') fonte = fonte.replace(/^concurrency:\s*\n(?: {2}\S[^\n]*\n?)+/m, '');
   return fonte;
@@ -79,7 +82,7 @@ for (const arquivo of POR_PR.filter((a) => existsSync(path.join(DIR, a)))) {
   if (!c.cancela || c.cancela === 'false') falhas.push(`WC1 ${arquivo} não cancela o run velho do mesmo PR (cancel-in-progress: ${c.cancela || 'ausente'})`);
 }
 const classifier = concorrencia(ler('csbrasil-bot-pr-classify.yml'));
-if (!/github\.actor/.test(classifier?.cancela || '') || !/csbrasil-BOT/.test(classifier?.cancela || '')) {
+if (!/github\.actor\s*!=\s*['"]csbrasil-BOT['"]/.test(classifier?.cancela || '')) {
   falhas.push('WC3 csbrasil-bot-pr-classify.yml deixa evento de label do próprio bot cancelar o run que publicou a label');
 }
 for (const arquivo of NUNCA_CANCELA.filter((a) => existsSync(path.join(DIR, a)))) {
