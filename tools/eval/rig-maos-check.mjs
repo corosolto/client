@@ -31,7 +31,8 @@
    Mutantes (--mutante=<nome>, têm que reprovar na cláusula certa):
      transplante-cru  AJUSTE_JUNTAS=0 no rig do sintético              → RM1
      ibm-velha        o rig-from-donor move a junta e esquece a IBM    → RM3
-     mao-deslocada    mst real com a junta LeftHand 22 cm fora da mão  → RM4 */
+    mao-deslocada    mst real com a junta LeftHand 22 cm fora da mão  → RM4
+    uma-mao-cega     igual ao anterior, sem arestas mensuráveis à direita → RM4 */
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -236,25 +237,18 @@ const MUTANTES = {
 };
 
 /* RM4 — ELENCO REAL: todo GLB de public/models/characters medido com o pack compartilhado.
-   As falhas legadas não ficam numa lista privada desta régua: entram no KNOWN-RED, com
-   issue/plano e teto medido. Assim o ratchet comum detecta dívida nova e a quitação
-   remove a entrada global, em vez de criar exceção silenciosa no gate de rig. */
-const KNOWN_RED = JSON.parse(readFileSync(join(ROOT, 'tools/eval/KNOWN-RED.json'), 'utf8')).dividas;
+   As falhas legadas e seus tetos ficam no KNOWN-RED, com issue/plano. Assim o ratchet
+   comum é a fonte única da dívida e a quitação remove a entrada global. */
+const KNOWN_RED_DOC = JSON.parse(readFileSync(join(ROOT, 'tools/eval/KNOWN-RED.json'), 'utf8'));
+const KNOWN_RED = KNOWN_RED_DOC.dividas;
 const RM4_LEGACY_ADVISORY = 'RIG_RM4_LEGACY_20261108';
-const ELENCO_RATCHET = Object.freeze({
-  barbudo: { id: RM4_LEGACY_ADVISORY, teto: 3.27 },
-  canarinho: { id: RM4_LEGACY_ADVISORY, teto: 2.64 },
-  cuca: { id: RM4_LEGACY_ADVISORY, teto: 3.49 },
-  dama: { id: RM4_LEGACY_ADVISORY, teto: 2.55 },
-  deputado: { id: RM4_LEGACY_ADVISORY, teto: 5.13 },
-  'profeta-calcada': { id: RM4_LEGACY_ADVISORY, teto: 5.15 },
-  'programador-virado': { id: RM4_LEGACY_ADVISORY, teto: 3.04 },
-});
+const ELENCO_RATCHET = Object.freeze(KNOWN_RED_DOC.tetos?.[RM4_LEGACY_ADVISORY] || {});
 
 
-/* Mutante mao-deslocada: o mst real com a junta LeftHand 10 cm acima e 20 cm à frente da
-   carne, IBM recalculada (rig coerente, junta fora da mão) — o defeito do piloto num GLB real. */
-async function maoDeslocada(origem, destino) {
+/* Mutantes de elenco: deslocam LeftHand no mst real como no defeito do piloto.
+   `uma-mao-cega` também remove as arestas mensuráveis da direita para provar que
+   uma mão sem geometria não pode esconder a reprovação da outra. */
+async function maoDeslocada(origem, destino, ocultarDireita = false) {
   const doc = await io.read(origem);
   const pai = grafo(doc), skin = doc.getRoot().listSkins()[0], juntas = skin.listJoints();
   const mundo = (n) => { const m = local({ t: n.getTranslation(), r: n.getRotation(), s: n.getScale() }); const p = pai.get(n); return p ? mundo(p).multiply(m) : m; };
@@ -264,6 +258,17 @@ async function maoDeslocada(origem, destino) {
   const ibm = skin.getInverseBindMatrices(), arr = ibm.getArray().slice();
   juntas.forEach((j, i) => { for (let n = j; n; n = pai.get(n)) if (n === mao) { arr.set(mundo(j).invert().elements, i * 16); break; } });
   ibm.setArray(arr);
+  if (ocultarDireita) {
+    const alvos = new Set(juntas.map((j, i) => (j.getName() === 'RightHand' || j.getName() === 'Curl_R' ? i : -1)).filter((i) => i >= 0));
+    const antebraco = juntas.findIndex((j) => j.getName() === 'RightForeArm');
+    for (const mesh of doc.getRoot().listMeshes()) for (const prim of mesh.listPrimitives()) {
+      const accessor = prim.getAttribute('JOINTS_0');
+      if (!accessor) continue;
+      const indices = accessor.getArray().slice();
+      for (let i = 0; i < indices.length; i++) if (alvos.has(indices[i])) indices[i] = antebraco;
+      accessor.setArray(indices);
+    }
+  }
   await io.write(destino, doc);
   return destino;
 }
@@ -274,8 +279,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const LIMITE = +opt('limite', 2.5);
   const clipes = opt('clipes', join(ROOT, 'public/models/anims/mixamo'));
   const mutante = opt('mutante', '');
-  if (mutante && !MUTANTES[mutante] && mutante !== 'mao-deslocada') throw new Error(`mutante desconhecido: ${mutante}`);
-  if (args.includes('--elenco') || mutante === 'mao-deslocada') {
+  if (mutante && !MUTANTES[mutante] && mutante !== 'mao-deslocada' && mutante !== 'uma-mao-cega') throw new Error(`mutante desconhecido: ${mutante}`);
+  if (args.includes('--elenco') || mutante === 'mao-deslocada' || mutante === 'uma-mao-cega') {
     const dir = join(ROOT, 'public/models/characters');
     const ids = readdirSync(dir).filter((f) => f.endsWith('.glb')).map((f) => f.replace(/\.glb$/, '')).sort();
     const caminhos = Object.fromEntries(ids.map((id) => [id, join(dir, `${id}.glb`)]));
@@ -283,17 +288,20 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const falhas = [], hoje = new Date().toISOString().slice(0, 10);
     if (!KNOWN_RED[RM4_LEGACY_ADVISORY]) throw new Error(`RM4: ${RM4_LEGACY_ADVISORY} precisa estar declarado em tools/eval/KNOWN-RED.json`);
     try {
-      if (mutante) caminhos.mst = await maoDeslocada(caminhos.mst, join(tmp, 'mst.glb'));
+      if (mutante) caminhos.mst = await maoDeslocada(caminhos.mst, join(tmp, 'mst.glb'), mutante === 'uma-mao-cega');
       for (const id of ids) {
         const r = await medirMaos(caminhos[id], { clipes });
-        const pior = Math.max(...r.map((l) => l.pior)), ratchet = ELENCO_RATCHET[id];
-        if (r.some((l) => !l.arestas)) console.log(`  não medido: ${id} sem aresta pesada na mão`);
-        else if (pior > LIMITE && (!ratchet || !KNOWN_RED[ratchet.id])) {
+        const medidos = r.filter((l) => l.arestas > 0);
+        const semMedir = r.filter((l) => !l.arestas);
+        if (semMedir.length) console.log(`  não medido: ${id} sem aresta pesada na mão ${semMedir.map((l) => l.lado).join('/')}`);
+        if (!medidos.length) continue;
+        const pior = Math.max(...medidos.map((l) => l.pior)), teto = ELENCO_RATCHET[id];
+        if (pior > LIMITE && (!Number.isFinite(teto) || !KNOWN_RED[RM4_LEGACY_ADVISORY])) {
           falhas.push(`RM4: ${id} estica a mão ${pior.toFixed(2)}× > ${LIMITE}×`);
-        } else if (ratchet && pior > ratchet.teto) {
-          falhas.push(`RM4: ${id} piorou: ${pior.toFixed(2)}× > teto ${ratchet.teto}× do ${ratchet.id}`);
-        } else if (ratchet && pior > LIMITE) {
-          console.log(`  dívida: ${id} ${pior.toFixed(2)}× ≤ teto ${ratchet.teto}× (${ratchet.id}, medida ${hoje})`);
+        } else if (Number.isFinite(teto) && pior > teto) {
+          falhas.push(`RM4: ${id} piorou: ${pior.toFixed(2)}× > teto ${teto}× do ${RM4_LEGACY_ADVISORY}`);
+        } else if (Number.isFinite(teto) && pior > LIMITE) {
+          console.log(`  dívida: ${id} ${pior.toFixed(2)}× ≤ teto ${teto}× (${RM4_LEGACY_ADVISORY}, medida ${hoje})`);
         }
       }
     } finally { if (tmp) rmSync(tmp, { recursive: true, force: true }); }
@@ -303,7 +311,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       process.exit(morde ? 0 : 1);
     }
     if (falhas.length) { for (const f of falhas) console.error(`  ✗ ${f}`); process.exit(1); }
-    const dividas = ids.filter((id) => ELENCO_RATCHET[id]);
+    const dividas = ids.filter((id) => Number.isFinite(ELENCO_RATCHET[id]));
     console.log(`rig-maos elenco: ${ids.length} GLB reais de public/models/characters medidos; ${ids.length - dividas.length} ≤ ${LIMITE}×, ${dividas.length} dívidas no KNOWN-RED dentro do teto.`);
     process.exit(0);
   }

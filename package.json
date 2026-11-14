@@ -805,7 +805,7 @@
     "eval:bot-crouch-geometry": "node tools/eval/bot-crouch-geometry-mutations.mjs",
     "eval:tphandownership": "node tools/eval/tp-hand-ownership-check.mjs",
     "eval:characterkit": "node --test tools/character-kit/*.test.mjs",
-    "eval:rigmaos": "node tools/eval/rig-maos-check.mjs --sintetico && node tools/eval/rig-maos-check.mjs --elenco && node tools/eval/rig-maos-check.mjs --mutante=transplante-cru && node tools/eval/rig-maos-check.mjs --mutante=ibm-velha && node tools/eval/rig-maos-check.mjs --mutante=mao-deslocada",
+    "eval:rigmaos": "node tools/eval/rig-maos-check.mjs --sintetico && node tools/eval/rig-maos-check.mjs --elenco && node tools/eval/rig-maos-check.mjs --mutante=transplante-cru && node tools/eval/rig-maos-check.mjs --mutante=ibm-velha && node tools/eval/rig-maos-check.mjs --mutante=mao-deslocada && node tools/eval/rig-maos-check.mjs --mutante=uma-mao-cega",
     "eval:studiochar": "node tools/eval/studio-character-check.mjs && node tools/eval/studio-character-check.mjs --mutantes",
     "eval:studiochar:browser": "sh tools/eval/with-browser-lock.sh node tools/eval/studio-character-browser.mjs",
     "eval:packpublish": "node tools/eval/publish-packs-check.mjs && node tools/eval/publish-packs-check.mjs --mutantes",
