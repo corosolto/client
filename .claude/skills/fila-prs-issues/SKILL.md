@@ -21,7 +21,7 @@ Não copie essas réguas para o resumo da rodada nem crie um fluxo paralelo para
 - Uma worktree e uma lane por PR; nunca misture achados de PRs diferentes.
 - Não toque, limpe ou use `git stash` num checkout sujo para abrir espaço.
 - Push normal somente na branch original do PR. Nunca push direto em `main` ou `staging`.
-- Nunca `--force`, `--force-with-lease`, `--no-verify` ou `PREPUSH=0`.
+- Nunca `--force`, `--force-with-lease`, `--no-verify` ou `PREPUSH=0` fora da exceção de `pr-ate-o-merge`: falha pré-existente comprovada em worktree virgem da base, A/B com log salvo e declaração no PR.
 - Todo commit usa `git commit -s` e trailer `Agent: <nome>`; o pre-push é obrigatório.
 - Sem bypass administrativo, merge com check pendente/vermelho ou review de outro SHA.
 - Merge de backend **não é deploy**. Merge em `staging` **não é produção**.
