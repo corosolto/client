@@ -131,6 +131,7 @@ test('parsers: import map, versão do stylesheet, scripts de módulo, VERSION', 
   assert.equal(extraiVersionJs("// x\nexport const VERSION = '2.0.0-alpha.221';"), '2.0.0-alpha.221');
   assert.equal(rankingLigadoDe('export const RANKING_ON = true;'), true);
   assert.equal(rankingLigadoDe("export const RANKING_ON = PUBLIC_ENV.RANKING_ON === 'true';"), null);
+  assert.equal(rankingLigadoDe("export const RANKING_ON = import.meta.env.RANKING_ON === 'true';"), null);
 });
 
 test('http: classificação de erro, percentil, content-range e detecção de HTML', () => {
