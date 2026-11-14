@@ -6,12 +6,13 @@ import { WEAPONS, supDeCod, anguloDeDisparo } from './game.js';
 import { frase } from './i18n.js';
 import { preloadEyewearAssets } from './eyewear.js';
 import { preloadCosmeticAssets } from './glbchars.js';
-import { emoteInfo } from './data/emote-catalog.js';
+import { emoteInfo, V9_EMOTE_IDS } from './data/emote-catalog.js';
 import { InterpolationClock, ensureEntityBuffer, pushEntitySample, sampleEntityBuffer } from './net-interpolation.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
 
 const PLAYER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const V9_EMOTES = new Set(V9_EMOTE_IDS);
 function rosterPlayerId(entity, row) {
   return !entity?.bot && PLAYER_ID.test(row?.pid || '') ? row.pid : '';
 }
@@ -193,7 +194,7 @@ class Netcode {
       shoot: !!this.game.mouseDown0, weapon: p.weapon,
       // INTENÇÃO de mirar (1 bit). Quem integra o `adsF` — e portanto a precisão — é o servidor.
       ads: !!p.scoped,
-      emote: this.game._emoteAtual || null,
+      emote: V9_EMOTES.has(this.game._emoteAtual) ? this.game._emoteAtual : null,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
       // duração DESTE passo (teto do laço do navegador): o servidor integra o comando por ela,
       // e não pelo tick dele — senão o ack compara poses de instantes diferentes (BUG-152).
@@ -338,7 +339,7 @@ class Netcode {
     this.net.sendInput({
       ax: 0, az: 0, crouch: false, shift: false, jump: false,
       yaw: p.yaw, pitch: p.pitch, shoot: false, weapon: p.weapon,
-      emote: game._emoteAtual || null,
+      emote: V9_EMOTES.has(game._emoteAtual) ? game._emoteAtual : null,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(), dtms: 1,
     });
     this._inputAt = now;
