@@ -52,6 +52,13 @@ export function avaliarResultado(run, suite, mutation = '') {
   } catch { return false; }
 }
 
+export function classificarFalhaMutante(run) {
+  if (run.error || run.signal) return 78;
+  if (run.status === 3) return 3;
+  if (run.status === 0 || run.status === 1) return 1;
+  return 78;
+}
+
 function main() {
   const args = process.argv.slice(2);
   if (args.length !== 1 || !Object.hasOwn(suites, args[0])) {
@@ -68,7 +75,7 @@ function main() {
     const variant = run(mutation);
     if (!avaliarResultado(variant, suite, mutation)) {
       console.error(`REPROVA ${name}/${mutation}: status=${variant.status}; exige RED1 com cláusulas exatas\n${(variant.stdout || '').slice(-3000)}\n${(variant.stderr || '').slice(-1000)}`);
-      process.exitCode = variant.error || variant.signal ? 78 : variant.status === 0 || variant.status === 1 ? 1 : 78; return;
+      process.exitCode = classificarFalhaMutante(variant); return;
     }
     console.log(`PASSA ${name}/${mutation}: RED1 exato`);
   }
