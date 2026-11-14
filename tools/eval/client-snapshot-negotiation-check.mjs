@@ -1,5 +1,5 @@
 // Negociação real do NetClient: v9 preferida, v8 continua utilizável e ack precisa casar;
-// N11–N13 cobrem o contrato transporte → codec (ArrayBuffer, decoder real, teto, canal inseguro).
+// N1–N22 cobrem fallback WT→WS, versões, tentativas tardias, timeout e fechamento.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -30,7 +30,7 @@ const specs = {
   'callback-before-close': { failed:['N21'], file:'net.js', edits:[
     ['tp.fechar(codigo, motivo);\n        if (accepted) this.onClose?.();', 'if (accepted) this.onClose?.();\n        tp.fechar(codigo, motivo);']] },
   'failover-notify': { failed:['N11'], file:'net.js', edits:[
-    ['this.tp = null; this.connected = false;\n        try { console.info', 'this.tp = null; this.connected = false; this.onClose?.();\n        try { console.info']] },
+    ["falhou?.fechar(1000, 'transport_fallback');\n        if (ticket) {", "falhou?.fechar(1000, 'transport_fallback');\n        this.onClose?.();\n        if (ticket) {"]] },
   'accepted-close-notify': { failed:['N22'], file:'net.js', edits:[
     ["assenta(reject, new Error('closed'));\n            if (accepted) this.onClose?.();", "assenta(reject, new Error('closed'));"]] },
 };
@@ -46,7 +46,7 @@ for (const a of process.argv.slice(2)) {
 if (Object.keys(process.env).some(k => k.startsWith('COROSOLTO_NEGOTIATION_'))) { console.error('Ambiente interno não aceito'); process.exit(2); }
 const sourceNames = ['net.js','nos-rede.js','transporte.js','netcodec.js'];
 let sourceBytes, sourcePins;
-const processDeadline = setTimeout(() => { console.error('INFRA: harness deadline60000ms; no semantic detection credit'); process.exit(3); }, 60000);
+const processDeadline = setTimeout(() => { console.error('INFRA: harness deadline60000ms; no semantic detection credit'); process.exit(78); }, 60000);
 const report = { schema:'client-snapshot-negotiation/1', scope:'real modules, browser boundaries faked; no backend/QUIC/browser/codec approval', runs:[] };
 function metadata(type, version, id=1) { return { type, ...(version === undefined ? {} : {protocolVersion:version}), yourEnt:id, yourTeam:'E', espectador:false, roster:[], partida:id }; }
 function frame(m) {

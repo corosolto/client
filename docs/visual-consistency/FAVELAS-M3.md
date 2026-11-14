@@ -120,9 +120,9 @@ crítico. Aqui só se fechou o contrato da régua e a superfície de tiro da tra
 - **Mutante `fisica` causal (P3-1 fechado)** — agora altera `hx` de um collider OBB
   **real do Córrego** (ry/hx finito, precondição obrigatória) — o R3 caía no fallback
   AABB do Campo (99 AABB, 0 OBB) e não provava o snapshot OBB. Sem OBB disponível:
-  exit 3 (infra), nunca cláusula falsa. RED em FV-M1 `colliders corrego divergiu`.
+  exit 78 (infra), nunca cláusula falsa. RED em FV-M1 `colliders corrego divergiu`.
 - **CLI estrita** — argumento desconhecido/duplicado/valor ausente → exit 2 antes do
-  boot; falha de build → exit 3 (infraestrutura), sem inventar cláusula FV-M1.
+  boot; falha de build → exit 78 (infraestrutura), sem inventar cláusula FV-M1.
 - **Validação** (probe do crítico R3 reutilizado, sem edição): nominal PASSA;
   anisotropia FALHA; NaN FALHA; controle com `rotation=π/6` + `center=(0.5,0.5)`
   continua PASSA (rotação é isometria — não move σ). Os 5 P2 do R2 seguem fechados:
@@ -178,7 +178,7 @@ tintas) intocadas. Fora das 4 guardas, nada muda: provado por snapshot estrito.
   `userData.guardaBorda`; o RED 0/4 anterior era resultado trivial, não físico); árvore
   R5 VERDE 4/4; os nove mutantes RED exit 1; CLI estrita: `--fonte` sem `=`,
   sufixo/duplicado/desconhecido, `--gravar` sem `--fonte` → exit 2 antes do build;
-  build falhando exit 3.
+  build falhando exit 78.
 - **FV-M1 migrou a fixture de perímetro (R9)** — o baseline anterior à R5 carregava as
   4 paredes inteiras; a migração R9 substituiu EXATAMENTE esses 4 registros pelos 40
   colliders de degrau do produto (banda `eGuarda` do campo-boundary-finish-check),
@@ -212,10 +212,10 @@ editar. Metadados completos (fonte antiga, SHAs, referência Campo `94df187a185c
 crítico R8, delta 4→40, escopo) no campo `meta` do baseline. O campo `fonte` continua
 apontando a origem antiga original. Validação: nominal exit 0 (5/5 VERDE) e os cinco
 mutantes RED exit 1 (`fisica`→FV-M1 Córrego, `esconder`, `verga`, `uv`, `occluder`) —
-mutante RED é reprovação da cláusula, nunca falha de infraestrutura (exit 3).
+mutante RED é reprovação da cláusula, nunca falha de infraestrutura (exit 78).
 Relatório: `audits/2026-10-31-visual-consistency/GLM-FAVELA-FIXTURE-MIGRATION-R1-RESULTADO.md`.
 
 
-Wrapper de entrega: `node tools/eval/visual-map-mutations.mjs campo|favela` exige nominal GREEN completo antes dos mutantes, mesmas cláusulas na mesma ordem, conjuntos RED exatos e status1 semântico. Mutante GREEN retorna1; status inesperado, erro, sinal ou timeout retorna3 e não prova detecção. Campo tem9 variantes e Favela5; o wrapper não escreve fonte nem baseline. As suites `materiais` e `uv` cobrem8 e4 variantes respectivamente, com JSON inteiro e contagens exatas.
+Wrapper de entrega: `node tools/eval/visual-map-mutations.mjs campo|favela` exige nominal GREEN completo antes dos mutantes, mesmas cláusulas na mesma ordem, conjuntos RED exatos e status1 semântico. Mutante GREEN retorna1; status inesperado, erro, sinal ou timeout retorna78 e não prova detecção. Campo tem9 variantes e Favela5; o wrapper não escreve fonte nem baseline. As suites `materiais` e `uv` cobrem8 e4 variantes respectivamente, com JSON inteiro e contagens exatas.
 
-Root R3 passou Campo9, Favela5 e UV4. Materiais só passou no R4, após separar os diagnósticos de boot (`console.log/info`) para stderr e restaurar ambos em finally. Crítico independente do wrapper R4 CLEAN: `CRITICO-MAP-MUTATION-WRAPPER-R4.md`, SHA256 `21a161d6d5c7f273474bd89713a7940bd9b5dd03028e75070b842f43c9041548`. A crítica inclui71 casos de API,10 de CLI, JSON adversarial e timeout ETIMEDOUT com status0 classificado como infra3. Este aceite é do contrato técnico, somado às capturas locais específicas descritas acima; não é prova de partidaMP nem desempenho móvel.
+Root R3 passou Campo9, Favela5 e UV4. Materiais só passou no R4, após separar os diagnósticos de boot (`console.log/info`) para stderr e restaurar ambos em finally. Crítico independente do wrapper R4 CLEAN: `CRITICO-MAP-MUTATION-WRAPPER-R4.md`, SHA256 `21a161d6d5c7f273474bd89713a7940bd9b5dd03028e75070b842f43c9041548`. A crítica inclui71 casos de API,10 de CLI, JSON adversarial e timeout ETIMEDOUT com status0 classificado como infra78. Este aceite é do contrato técnico, somado às capturas locais específicas descritas acima; não é prova de partidaMP nem desempenho móvel.

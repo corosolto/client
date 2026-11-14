@@ -17,7 +17,7 @@ test('alvo bloqueado por proxy é inconclusivo, não vermelho; sem rede é crít
   assert.equal(proxy[0].severidade, 'inconclusivo');
   const v = veredito(proxy, {});
   assert.equal(v.inconclusivo, true);
-  assert.equal(codigoDeSaida(v), 3);
+  assert.equal(codigoDeSaida(v), 78);
   const caido = explicar({ boot: { sonda: 'boot', alvo: 'https://x', html: { status: 0, erro: 'timeout', ms: 10000 } } });
   assert.equal(caido[0].severidade, 'critico');
   assert.equal(codigoDeSaida(veredito(caido, {})), 1);
@@ -131,6 +131,7 @@ test('parsers: import map, versão do stylesheet, scripts de módulo, VERSION', 
   assert.equal(extraiVersionJs("// x\nexport const VERSION = '2.0.0-alpha.221';"), '2.0.0-alpha.221');
   assert.equal(rankingLigadoDe('export const RANKING_ON = true;'), true);
   assert.equal(rankingLigadoDe("export const RANKING_ON = PUBLIC_ENV.RANKING_ON === 'true';"), null);
+  assert.equal(rankingLigadoDe("export const RANKING_ON = import.meta.env.RANKING_ON === 'true';"), null);
 });
 
 test('http: classificação de erro, percentil, content-range e detecção de HTML', () => {

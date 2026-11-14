@@ -350,10 +350,10 @@ async function main() {
   if (new Set(args).size !== args.length || args.some(a => !['--verificar-mutantes', '--mutante=' + MUTANTE].includes(a))
     || args.length > 1) { console.error('CLI inválida: use --verificar-mutantes OU --mutante=' + MUTANTE); return 2; }
   const nonce = process.env.PISCINA_BATCH_NONCE || randomUUID();
-  if (!/^[0-9a-f-]{36}$/.test(nonce)) { console.error('nonce de processo inválido'); return 3; }
+  if (!/^[0-9a-f-]{36}$/.test(nonce)) { console.error('nonce de processo inválido'); return 78; }
   if (!args.includes('--verificar-mutantes')) return worker(args.length ? MUTANTE : '', nonce);
   let sources;
-  try { sources = bindings(); } catch (e) { console.error('INFRA fonte: ' + e.message); return 3; }
+  try { sources = bindings(); } catch (e) { console.error('INFRA fonte: ' + e.message); return 78; }
   let baseline;
   for (const mutante of ['', MUTANTE]) {
     const requestNonce = randomUUID();
@@ -362,16 +362,16 @@ async function main() {
     const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), ...(mutante ? ['--mutante=' + mutante] : [])],
       { cwd: ROOT, env, encoding: 'utf8', timeout: 180000, maxBuffer: 8 * 1024 * 1024 });
     const verdict = avaliarFilho(r, { nonce: requestNonce, mutante, sources });
-    if (!verdict.ok) { console.error(verdict.kind + ': ' + verdict.reason); return verdict.kind === 'ContractViolation' ? 1 : 3; }
+    if (!verdict.ok) { console.error(verdict.kind + ': ' + verdict.reason); return verdict.kind === 'ContractViolation' ? 1 : 78; }
     if (!mutante) baseline = verdict.rec.batches;
-    else if (!iguais(baseline, verdict.rec.batches)) { console.error('INFRA populações divergentes'); return 3; }
+    else if (!iguais(baseline, verdict.rec.batches)) { console.error('INFRA populações divergentes'); return 78; }
     console.log('PASS piscina-batch ' + (mutante || 'nominal') + ': resultado próprio exato');
   }
   try { if (!iguais(sources, bindings())) throw Error('binding divergente'); }
-  catch (e) { console.error('INFRA fonte após filhos: ' + e.message); return 3; }
+  catch (e) { console.error('INFRA fonte após filhos: ' + e.message); return 78; }
   return 0;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try { process.exitCode = await main(); }
-  catch (e) { console.error('InfrastructureError: ' + e.message); process.exitCode = 3; }
+  catch (e) { console.error('InfrastructureError: ' + e.message); process.exitCode = 78; }
 }

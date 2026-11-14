@@ -57,5 +57,5 @@ try {
   process.exitCode = failures ? 1 : 0;
 } catch (error) {
   console.error(error.message);
-  process.exitCode = 3;
+  process.exitCode = 78;
 }

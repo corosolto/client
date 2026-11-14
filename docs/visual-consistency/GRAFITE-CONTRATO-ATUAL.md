@@ -49,7 +49,7 @@ evidência de GLB; a cena do browser é.
 sem aplicar mutante** — a decisão semântica do nominal chega ao main como RED (exit 1)
 mesmo que o cenário não tenha peça elegível para o mutador; pré-condição do mutador só é
 testada com nominal verde. Só então o mutador aplica o patch real de cena e a medição roda
-de novo com os mesmos predicados. UNKNOWN nominal é RED semântico (exit1). Erro de página ou protocolo é infraestrutura (exit3).
+de novo com os mesmos predicados. UNKNOWN nominal é RED semântico (exit1). Erro de página ou protocolo é infraestrutura (exit78).
 
 ## Cláusulas e mutantes
 
@@ -73,7 +73,7 @@ Peça manual = mesh de grafite **sem** `userData.pecas` (mesma chave que a medi�
 classificar `baked`/`manual`; `graffitiPecas` é o metadado do bake, outra coisa). Mutantes
 de material (`wireframe`, `canal-uv`) valem só nos mapas com peça **manual** confirmada no
 SURVEY6 (`sources.manual>0`): em peça assada eles contaminam a cláusula `divergente`
-(bake 0 ≠ `pecas`). Mutante que **aplica 0** é falha de infra (exit 3), não baseline. Em
+(bake 0 ≠ `pecas`). Mutante que **aplica 0** é falha de infra (exit 78), não baseline. Em
 todo mutante, as demais cláusulas precisam continuar verdes. Os dois mutantes de zona têm efeitos acoplados pelo próprio produto: a faixa navy da Piscina e TODAS as superfícies fora da casa B no Ferro são marcadas como `graffitiSupportExcluded` (`map_piscina.js` e `map_ferrovelho.js:2013`). A mesma peça viola a zona permitida e o suporte. O aceite exige exatamente uma peça em cada uma dessas duas cláusulas, com todas as demais em zero. Não há superfície grafitável fora da casa B; exigir suporte válido ali tornava a fixture impossível.
 
 ## Fail-closed de infraestrutura
@@ -88,17 +88,17 @@ todo mutante, as demais cláusulas precisam continuar verdes. Os dois mutantes d
   igual ao pedido; `actualMap` igual ao id; `nominalVerde`/`arteEsperada` booleanos;
   contadores inteiros ≥0 (no resumo final e no nominal); `invalidado`/`erros` bem tipados;
   resumo nominal completo. O main **recalcula** `predicadoVerde(nominal)` e recusa a
-  contradição com a flag (exit 3): o booleano ecoado nunca é a única fonte do aceite. Na
+  contradição com a flag (exit 78): o booleano ecoado nunca é a única fonte do aceite. Na
   rodada nominal, o resumo final também tem que passar o predicado exatamente. Resposta
-  vazia, parcial, divergente ou JSON inválido do filho é **infra (exit 3)** — nunca GREEN
+  vazia, parcial, divergente ou JSON inválido do filho é **infra (exit 78)** — nunca GREEN
   de subconjunto.
 - Todo código serializado que vai ao browser (`medirCuradoria`, `trackGraffitiCanvases`,
   mutador e o script Ego inteiro) é compilado **executável** por `vm.Script` antes do launch
-  (exit 3 se não parseia) — `node --check` do arquivo externo não vê string quebrada dentro.
+  (exit 78 se não parseia) — `node --check` do arquivo externo não vê string quebrada dentro.
 - CLI estrito: opção desconhecida/sem valor, opção duplicada e dois alvos posicionais dão
   exit 2; não existe parse leniente.
 - Um coletor único desde o `goto`: resposta ≥400, `loadingFailed`, `exceptionThrown` e
-  console `load failed` **invalidam a rodada** (exit 3, infra) mesmo com métrica completa —
+  console `load failed` **invalidam a rodada** (exit 78, infra) mesmo com métrica completa —
   erro de página nunca é veredito semântico. O coletor drena **também depois da última
   consulta/evaluate** do ciclo (R4 do censo), não só durante a carga.
 - Fim de carga = `MAPEVAL.ready` + **1,5 s de silêncio de rede** da BASE (ativos=0 sozinho
@@ -143,7 +143,7 @@ por mutante exigindo a cláusula-alvo e as demais verdes. Aprovação visual nã
 aqui: vale o que o Root medir no Ego.
 
 R3 (31/10), fechando os P2/P3 do crítico `CRITICO-CURATION-RUNTIME-R2.md`: validação
-estrita de protocolo no main (vazio/parcial/duplicado/mapa errado = exit 3, provado por
+estrita de protocolo no main (vazio/parcial/duplicado/mapa errado = exit 78, provado por
 contraprova com executável Ego fake), nominal vermelho encerra sem mutar (RED 1 chega ao
 main), cleanup transacional com flags e limpeza por chave independente, e `--out` guardando
 o raw integral + resumo por mapa. Verificação offline com adaptador CDP fake — **nenhum
@@ -151,8 +151,8 @@ browser real, mapa ou Ego foi aberto**; veja
 `audits/2026-10-31-visual-consistency/GLM-CURATION-RUNTIME-R3-RESULTADO.md`.
 
 R4 (31/10), fechando os 2 P2 + P3 de `CRITICO-CURATION-RUNTIME-R3.md`: coerência nominal
-recalculada no main (contradição flag×contadores = exit 3, nunca GREEN), contadores como
-inteiros ≥0, `invalidado`/`erros` tipados, JSON inválido do filho vira infra 3 (não crash
+recalculada no main (contradição flag×contadores = exit 78, nunca GREEN), contadores como
+inteiros ≥0, `invalidado`/`erros` tipados, JSON inválido do filho vira infra 78 (não crash
 exit 1), rollback de escrita parcial das prefs e falhas de limpeza agregadas ao erro causal.
 Verificação offline reexecutando todos os controles R2+R3 com fake-ego/adaptador privados —
 **nenhum browser real, mapa ou Ego foi aberto**; o processo GLM terminou por deadline. Root repetiu as provas privadas de R3; o crítico
@@ -163,11 +163,11 @@ R5 fecha os achados concretos de R4: antes de ler/escrever preferências, navega
 à mesma origem; em redirecionamento a prova falha. Cada chave tenta restaurar mesmo se
 a outra falhar. O produtor emite `erros: []` sempre; o main recusa erros de página
 independentemente de `invalidado`, valida amostras como strings e classifica shapes
-malformados como INFRA3. Novas provas offline e execução real ainda pendentes de Root.
+malformados como INFRA78. Novas provas offline e execução real ainda pendentes de Root.
 
 ### R6: encerramento real no Ego, anterior ao alias
 
-A execução R5 coletou14mapas/465peças com contadores zerados, mas terminou INFRA3 ao restaurar prefs: Ego não aceita argumento para evaluate de string. O callback agora é função real. Falha continua fechada; não aproveitar o exit3 como GREEN. Com --out, snapshot de preferências é persistido antes da escrita e stdout/stderr completo em erro; o encerramento compara também o recibo final com o snapshot. Diagnóstico Posto após fix retornou GREEN real. O censo14R6 terminou GREEN no Ego:14/14mapas,465peças, todos os contadores de erro zero; o recibo final de preferências foi igual ao snapshot. A recuperação da chave manual de QA usa a referência persistida bake14-R1-settings-before.json (manual=null), sem regravar outras preferências.
+A execução R5 coletou14mapas/465peças com contadores zerados, mas terminou INFRA78 ao restaurar prefs: Ego não aceita argumento para evaluate de string. O callback agora é função real. Falha continua fechada; não aproveitar o exit78 como GREEN. Com --out, snapshot de preferências é persistido antes da escrita e stdout/stderr completo em erro; o encerramento compara também o recibo final com o snapshot. Diagnóstico Posto após fix retornou GREEN real. O censo14R6 terminou GREEN no Ego:14/14mapas,465peças, todos os contadores de erro zero; o recibo final de preferências foi igual ao snapshot. A recuperação da chave manual de QA usa a referência persistida bake14-R1-settings-before.json (manual=null), sem regravar outras preferências.
 
 
 ### R7: mutantes reais e recibos persistentes
@@ -179,7 +179,7 @@ Com --out, prefs-before.json é salvo antes das escritas e prefs-after.json depo
 
 ### R9: motivos UNKNOWN completos
 
-O resumo transporta `unknownMotivos` integral, com contagens inteiras positivas cuja soma deve ser exatamente `unknown`, inclusive no nominal. A amostra truncada serve só para diagnóstico. Os mutantes de wireframe e canalUV só passam quando TODOS os UNKNOWN têm o motivo alvo; misturar outra falha reprova. Ausência ou incoerência do inventário é infra3. Censo e contraprovas reais após esta versão ainda estão em execução; os resultados R6/R10 acima pertencem à versão anterior do protocolo.
+O resumo transporta `unknownMotivos` integral, com contagens inteiras positivas cuja soma deve ser exatamente `unknown`, inclusive no nominal. A amostra truncada serve só para diagnóstico. Os mutantes de wireframe e canalUV só passam quando TODOS os UNKNOWN têm o motivo alvo; misturar outra falha reprova. Ausência ou incoerência do inventário é infra78. Censo e contraprovas reais após esta versão ainda estão em execução; os resultados R6/R10 acima pertencem à versão anterior do protocolo.
 
 ## Wireframe e ausência de medição
 

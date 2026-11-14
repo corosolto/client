@@ -14,6 +14,8 @@ syntax eval:portalembed eval:vm-presence eval:tpjumpownership eval:tplocalshot e
 eval:estados3p
 eval:emotes-mocap
 eval:rede3p
+eval:pesos-braco-perna
+eval:rigmaos
 eval:prodcrash
 eval:shareorigin
 eval:vm-enquadramento-placar

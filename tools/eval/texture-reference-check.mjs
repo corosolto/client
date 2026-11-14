@@ -29,10 +29,10 @@ const contagem = (fs) => fs.reduce((m, { id }) => (m[id] = (m[id] || 0) + 1, m),
 const mesmoConjunto = (a, b) => JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort());
 
 const { readFileSync, writeFileSync, unlinkSync } = await import('node:fs');
-// harness indisponível é infra 3, não crash 1 (crítico R5 P3-1)
+// harness indisponível é infra 78, não crash 1 (crítico R5 P3-1)
 let THREE;
 try { ({ THREE } = await import('./harness.mjs')); }
-catch (e) { console.error(`infra: import do harness falhou: ${e?.message ?? e}`); process.exit(3); }
+catch (e) { console.error(`infra: import do harness falhou: ${e?.message ?? e}`); process.exit(78); }
 
 // casa real da fileira B derivada pelo crítico R3: corpo 3×7.35×4, repeat 2.4×1.6,
 // ref 256² ⇒ tileV = 256×1.6/128 = 3.2 m ⇒ Vspan = 7.35/3.2 = 2.296875 (V efetivo 3.675)
@@ -163,13 +163,13 @@ try {
   nominal = validar(vaoReal);
 } catch (e) {
   console.error(`infra: preparação/validação nominal falhou: ${e?.message ?? e}`);
-  process.exit(3);
+  process.exit(78);
 }
 if (!MUT) {
   console.log(JSON.stringify({ mutante: null, veredito: nominal.length ? 'RED' : 'GREEN', falhas: nominal }));
   process.exit(nominal.length ? 1 : 0);
 }
-if (nominal.length) { console.error('nominal já RED — mutante não prova nada (infra)'); process.exit(3); }
+if (nominal.length) { console.error('nominal já RED — mutante não prova nada (infra)'); process.exit(78); }
 
 // -------- mutante: CÓPIA do vao.js, fonte real intocada --------
 const VAO_SRC = new URL('../../public/js/vao.js', import.meta.url).href.replace('file://', '');
@@ -184,7 +184,7 @@ const EDITS = {
 const CONTRA = {
   'uv-nao-finito': 'if (!TEXEL_ON || !geo || geo.userData.texelEscalada) return false;',
 };
-// build/import do experimento quebrado é infra 3 — não vira crash nem engole semântica
+// build/import do experimento quebrado é infra 78 — não vira crash nem engole semântica
 const rodarCopia = async (nome, edits) => {
   const tmp = new URL(`./.texref-${nome}.mjs`, import.meta.url).pathname;
   let saida;
@@ -211,17 +211,17 @@ try {
 } catch (e) {
   erroInfra = e;
 }
-if (erroInfra) { console.error(`infra: experimento do mutante ${MUT} falhou: ${erroInfra?.message ?? erroInfra}`); process.exit(3); }
+if (erroInfra) { console.error(`infra: experimento do mutante ${MUT} falhou: ${erroInfra?.message ?? erroInfra}`); process.exit(78); }
 if (!pos.length) { console.error(`mutante ${MUT} passou GREEN — régua cega`); process.exit(3); }
 const obtido = contagem(pos);
 if (!mesmoConjunto(obtido, MUTANTES[MUT])) {
   console.error(`mutante ${MUT} com conjunto de falhas ≠ alvo — esperado ${JSON.stringify(MUTANTES[MUT])}, obtido ${JSON.stringify(obtido)}`);
-  process.exit(3);
+  process.exit(78);
 }
 const obtidoContra = contagem(posContra);
 if (mesmoConjunto(obtidoContra, MUTANTES[MUT])) {
   console.error(`contraprova: mutante ${MUT} + defeito independente produziu o MESMO conjunto — gate aprovaria contaminação`);
-  process.exit(3);
+  process.exit(78);
 }
 console.log(JSON.stringify({ mutante: MUT, veredito: 'RED', esperado: MUTANTES[MUT], obtido, contra: { defeito: (CONTRA[MUT] ?? CONTRA_DEFEITO[MUT][0]).slice(0, 40), obtido: obtidoContra } }));
 process.exit(1); // RED por mutação detectada é o resultado NORMAL do mutante

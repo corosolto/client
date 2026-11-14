@@ -108,7 +108,7 @@ test('partial eager reference is INFRA and cannot give semantic credit',()=>{
 test('missing or stale trace, invalid clocks, missing starts and duplicateIDs fail closed',()=>{
   const valid=run({anxious:true});
   for(const mutate of [s=>delete s.trace,s=>s.trace.timeOrigin++,s=>s.current.timeOrigin++,s=>s.current.now=1,s=>s.trace.calls[0].time=NaN,s=>s.requests.pop(),s=>s.requests.push({...s.requests[0]}),s=>s.requests[0].inicio=NaN]) {
-    const sample=clone(valid);mutate(sample);assert.throws(()=>proof(sample),error=>error.code===3);
+    const sample=clone(valid);mutate(sample);assert.throws(()=>proof(sample),error=>error.code===78);
   }
   const missingIntent=clone(valid);missingIntent.trace.calls=[];assert.throws(()=>proof(missingIntent),/intenção\/início CDP divergentes/);
   assert.throws(()=>instrumentPosterIntent('missing'),/âncora/);
@@ -129,7 +129,7 @@ test('local modules outside financial window drain body proofs and chained start
 });
 test('missing, rejected or mismatching local proof is INFRA; no body error is excused',async()=>{
   const request={url:'http://fixture/js/pending.js'},common={requests:()=>[request],verified:()=>false,failure:()=> 'decoded SHA mismatch',barrier:async()=>{},timeoutMs:5};
-  await assert.rejects(awaitLocalModuleProof({...common,verification:()=>null}),error=>error.code===3&&/timeout/.test(error.message));
-  await assert.rejects(awaitLocalModuleProof({...common,verification:()=>Promise.resolve()}),error=>error.code===3&&/decoded SHA mismatch/.test(error.message));
-  await assert.rejects(awaitLocalModuleProof({...common,verification:()=>Promise.reject(Error('body truncated'))}),error=>error.code===3&&/body truncated/.test(error.message));
+  await assert.rejects(awaitLocalModuleProof({...common,verification:()=>null}),error=>error.code===78&&/timeout/.test(error.message));
+  await assert.rejects(awaitLocalModuleProof({...common,verification:()=>Promise.resolve()}),error=>error.code===78&&/decoded SHA mismatch/.test(error.message));
+  await assert.rejects(awaitLocalModuleProof({...common,verification:()=>Promise.reject(Error('body truncated'))}),error=>error.code===78&&/body truncated/.test(error.message));
 });
