@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "nota": "Tetos CONGELADOS de vértices de braço com peso de perna (conta do censo: braço = Arm|ForeArm|Hand > 0,3; vazado = UpLeg|Leg > 0,1). Medidos em 09/11/2026 sobre origin/main. Só podem BAIXAR: GLB fora desta lista tem teto 0. Ao reparar um GLB listado (tools/personagens/repesar-skin.mjs), apague a entrada.",
+  "tetos": {
+    "character:barbudo": {
+      "vazados": 33,
+      "bracos": 2138
+    },
+    "character:gotinha": {
+      "vazados": 13,
+      "bracos": 734
+    },
+    "character:ministro": {
+      "vazados": 32,
+      "bracos": 2127
+    },
+    "skin:aljuiz-toga-mandrake": {
+      "vazados": 91,
+      "bracos": 1904
+    },
+    "skin:bolsonaro-mandrake": {
+      "vazados": 17,
+      "bracos": 2628
+    },
+    "skin:lula-na-regua": {
+      "vazados": 23,
+      "bracos": 1835
+    },
+    "skin:michelle-mandrake": {
+      "vazados": 8,
+      "bracos": 2362
+    },
+    "skin:senador-drip": {
+      "vazados": 88,
+      "bracos": 2316
+    },
+    "skin:zero-um-mandrake": {
+      "vazados": 85,
+      "bracos": 2744
+    }
+  },
+  "reparados": {
+    "skin:lula-mandrake": {
+      "antes": 102,
+      "rasgoCm": {
+        "arms-up-90": 1,
+        "arms-forward-60": 1,
+        "step-left": 1,
+        "step-right": 1.16,
+        "head-turn-60": 1.13,
+        "idle": 1.14,
+        "walk": 1.28,
+        "run": 1.29,
+        "shoot": 1.1,
+        "death": 1.31,
+        "crouch": 1.11,
+        "crouchwalk": 1.23,
+        "jump": 1.1,
+        "idle1h": 1.19,
+        "walk1h": 1.41,
+        "walkfire": 1.37
+      },
+      "falhasPose": 0
+    },
+    "skin:lula-cyborg": {
+      "antes": 80,
+      "rasgoCm": {
+        "arms-up-90": 4.94,
+        "arms-forward-60": 2.63,
+        "step-left": 1,
+        "step-right": 3.68,
+        "head-turn-60": 1,
+        "idle": 7.26,
+        "walk": 6.47,
+        "run": 6.83,
+        "shoot": 7.8,
+        "death": 7.04,
+        "crouch": 6.71,
+        "crouchwalk": 5.38,
+        "jump": 7.56,
+        "idle1h": 5.41,
+        "walk1h": 6.13,
+        "walkfire": 7.71
+      },
+      "falhasPose": 77
+    },
+    "skin:lula-drip": {
+      "antes": 66,
+      "rasgoCm": {
+        "arms-up-90": 1,
+        "arms-forward-60": 1,
+        "step-left": 1.08,
+        "step-right": 1.06,
+        "head-turn-60": 1.28,
+        "idle": 2.06,
+        "walk": 1.32,
+        "run": 1.15,
+        "shoot": 1.22,
+        "death": 1.76,
+        "crouch": 1.16,
+        "crouchwalk": 1.15,
+        "jump": 1.2,
+        "idle1h": 1.24,
+        "walk1h": 1.24,
+        "walkfire": 1.25
+      },
+      "falhasPose": 12
+    }
+  },
+  "notaReparados": "Reparados: `antes` = vértices vazados na origem. `rasgoCm` = rasgo da ORIGEM por pose (maior distância em cm entre vértices de peças diferentes coladas a ≤ 1 cm no bind; tools/personagens/pose-skin.mjs) — o repeso não pode rasgar mais em pose nenhuma (o teto só baixa). `falhasPose` = falhas do pose test do repeso enviado, congeladas (origem: mandrake 122, cyborg 168, drip 109). Residual do lula-cyborg: v898/v903 (RightShoulder 0,59 + LeftShoulder 0,16 + Hips 0,13, peça colada pelo R11) esticam 3,69× > 3,5 nos clipes; sem colar o rasgo piora a origem em 6 poses (crouch 17,7 cm), colar=0,005 em 3."
+}
