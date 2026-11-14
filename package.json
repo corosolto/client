@@ -254,7 +254,7 @@
     "eval:charvoice": "node tools/eval/character-select-voice-check.mjs",
     "eval:mat": "node tools/eval/mat-check.mjs",
     "eval:seo": "node tools/eval/seo-check.mjs",
-    "eval:pwa-install": "node tools/eval/pwa-install-contract.mjs",
+    "eval:pwa-install": "node tools/eval/pwa-install-contract.mjs && node tools/eval/pwa-offline-contract.mjs",
     "eval:seo:mutate": "node tools/eval/seo-check.mjs --mutate",
     "check:seo": "npm run build && node tools/eval/seo-check.mjs && node tools/eval/canonical-host-check.mjs && node tools/eval/profile-views-display-check.mjs && node tools/eval/profile-socials-check.mjs && node tools/eval/profile-in-game-check.mjs",
     "eval:jsonld": "node tools/eval/jsonld-validate.mjs",

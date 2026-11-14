@@ -105,12 +105,12 @@ test('produtor grava por conteúdo e consumidor aceita qualquer match do prefixo
   assert.match(WORKFLOW_CONSUMIDOR, /actions\/cache\/restore@0057852bfaa89a56745cba8c7296529d2fc39830/);
   assert.match(WORKFLOW_CONSUMIDOR, /restore-keys:\s*\|\n\s+eval-durations-v1-\n/);
   assert.match(WORKFLOW_CONSUMIDOR, /cache-matched-key == ''/);
-  assert.doesNotMatch(WORKFLOW_CONSUMIDOR, /cache-hit != 'true'/);
 
   const inicio = WORKFLOW_CONSUMIDOR.indexOf('  contratos-visuais-personagens-camera:');
   const fim = WORKFLOW_CONSUMIDOR.indexOf('\n  contratos-visuais-ferro-balcao:', inicio);
   assert.ok(inicio >= 0 && fim > inicio);
   const job = WORKFLOW_CONSUMIDOR.slice(inicio, fim);
+  assert.doesNotMatch(job, /cache-hit != 'true'/);
   const restore = job.indexOf('Restore calibrated duration manifest');
   const shard = job.indexOf('--shard=${{ matrix.shard }}/3');
   assert.ok(restore >= 0 && shard > restore, 'cache precisa ser restaurado antes do passo shardado');

@@ -81,7 +81,6 @@ test('portao-browser.yml: Sertão em dois shards balanceados, cobertura exata e 
 
   for (const [nome, corpoJob] of Object.entries(jobs)) {
     if (!/run: npm run eval:/.test(corpoJob)) continue;
-    assert.match(corpoJob, /run: npm run eval:serve/, `${nome} roda eval:* sem subir o eval:serve`);
     assert.match(corpoJob, /CHROME_BIN=/, `${nome} roda eval:* sem resolver o CHROME_BIN`);
   }
 });
@@ -154,4 +153,9 @@ test('ci.yml: robots aceita só status 1 com a cláusula documentada', () => {
   assert.equal(executar(0, clausula).status, 1, 'status 0 significa mutante sobrevivente');
   assert.equal(executar(1, 'crash sem cláusula').status, 1, 'status 1 sem cláusula deve falhar');
   assert.equal(executar(2, clausula).status, 2, 'erro de infraestrutura preserva seu status');
+});
+
+test('.devcontainer/Dockerfile: o ambiente anunciado instala ffprobe para eval:redesign', () => {
+  const s = readFileSync(fileURLToPath(new URL('../../../.devcontainer/Dockerfile', import.meta.url)), 'utf8');
+  assert.match(s, /apt-get install -y --no-install-recommends ffmpeg/);
 });

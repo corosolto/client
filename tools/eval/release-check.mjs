@@ -163,14 +163,28 @@ const SO_PR = "if: github.event_name != 'push'";
 /* Igualdade EXATA, não "contém": `if: false && startsWith(...)` contém o startsWith e
    desliga a conferência de vez; sem o `event_name == 'push'` o job roda onde não deve. */
 const AUTORIA_SO_RELEASE = "if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(release):')";
+const AUTORIA_JOB_SO_RELEASE = "if: always() && github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(release):')";
 const validaGerados = () => {
-  const passo = (script) => new RegExp(`- name: [^\\n]+\\n\\s+(if: [^\\n]+)\\n\\s+run: npm run ${script}\\n`).exec(workflowCi)?.[1];
-  const autoria = /^  autoria-na-main:\n    (if: [^\n]+)$/m.exec(workflowCi)?.[1] || '';
+  const linhas = workflowCi.split('\n');
+  const passo = (script) => {
+    for (let i = 0; i < linhas.length - 1; i++) {
+      if (!linhas[i].trimStart().startsWith('- name:')) continue;
+      const condicao = linhas[i + 1]?.trim();
+      if (!condicao?.startsWith('if:')) continue;
+      for (let j = i + 2; j < linhas.length; j++) {
+        const atual = linhas[j].trim();
+        if (atual === `run: npm run ${script}`) return condicao;
+        if (atual.startsWith('run:') || atual.startsWith('- name:')) break;
+      }
+    }
+    return undefined;
+  };
+  const autoria = /^  autoria-na-main:\n(?:    [^\n]+\n)*?    (if: [^\n]+)$/m.exec(workflowCi)?.[1] || '';
   return passo('docs:check') === SO_PR
     && passo('arch:check') === SO_PR
     && passo('docs:check:release') === AUTORIA_SO_RELEASE
     && passo('arch:check:release') === AUTORIA_SO_RELEASE
-    && autoria === AUTORIA_SO_RELEASE
+    && autoria === AUTORIA_JOB_SO_RELEASE
     && /node tools\/gen-docs\.mjs --release\b/.test(workflowRelease)
     && /node tools\/gen-arch\.mjs --release\b/.test(workflowRelease);
 };

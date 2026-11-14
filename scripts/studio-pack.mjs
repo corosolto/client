@@ -2,9 +2,8 @@
 import Ajv from 'ajv/dist/2020.js';
 import { constants } from 'node:fs';
 import {
-  chmod,
-  copyFile,
   lstat,
+  link,
   mkdir,
   open,
   readFile,
@@ -13,7 +12,8 @@ import {
   rename,
   rm,
 } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,6 +26,23 @@ const INERT_ASSET_EXTENSIONS = new Set([
   '.pdf', '.png', '.region', '.spawn', '.toml', '.ttf', '.txt', '.wav',
   '.webm', '.webp', '.woff', '.woff2', '.xml', '.yaml', '.yml',
 ]);
+const PROCESS_STARTED_AT = new Date(Date.now() - process.uptime() * 1000).toISOString();
+const LOCK_HEARTBEAT_MS = 10_000;
+const LOCK_LEASE_MS = 120_000;
+
+function processStartedAt(pid) {
+  try {
+    const value = execFileSync('ps', ['-o', 'lstart=', '-p', String(pid)], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    const started = Date.parse(value);
+    return Number.isFinite(started) ? started : null;
+  } catch {
+    return null;
+  }
+}
+
 
 class PackError extends Error {
   constructor(code, message, options) {
@@ -139,12 +156,31 @@ function validateInventory(manifest) {
 
 async function readManifest(manifestPath) {
   await regularFile(manifestPath, 'Manifest');
-  const bytes = await readFile(manifestPath);
-  let manifest;
-  try { manifest = JSON.parse(bytes.toString('utf8')); } catch (error) {
-    fail('E_MANIFEST_JSON', `Manifest is not valid JSON: ${error.message}`);
+  const beforeIdentity = await lstat(manifestPath, { bigint: true });
+  let handle;
+  try {
+    handle = await open(manifestPath, constants.O_RDONLY | (constants.O_NOFOLLOW || 0));
+    const opened = await handle.stat({ bigint: true });
+    const canonical = await realpath(manifestPath);
+    const canonicalIdentity = await lstat(canonical, { bigint: true });
+    if (!opened.isFile() || opened.dev !== beforeIdentity.dev || opened.ino !== beforeIdentity.ino
+      || opened.dev !== canonicalIdentity.dev || opened.ino !== canonicalIdentity.ino) {
+      fail('E_RACE', `Manifest changed while being opened: ${manifestPath}`);
+    }
+    const bytes = await handle.readFile();
+    const after = await handle.stat({ bigint: true });
+    if (after.dev !== opened.dev || after.ino !== opened.ino || after.size !== opened.size
+      || after.mtimeNs !== opened.mtimeNs || after.ctimeNs !== opened.ctimeNs) {
+      fail('E_RACE', `Manifest changed while being read: ${manifestPath}`);
+    }
+    let manifest;
+    try { manifest = JSON.parse(bytes.toString('utf8')); } catch (error) {
+      fail('E_MANIFEST_JSON', `Manifest is not valid JSON: ${error.message}`);
+    }
+    return { bytes, manifest };
+  } finally {
+    if (handle) await handle.close().catch(() => {});
   }
-  return { bytes, manifest };
 }
 
 function executableMagic(bytes) {
@@ -183,7 +219,13 @@ async function verifyFile(root, entry) {
   try {
     handle = await open(absolute, constants.O_RDONLY | (constants.O_NOFOLLOW || 0));
     const opened = await handle.stat({ bigint: true });
-    if (!opened.isFile() || opened.dev !== beforeIdentity.dev || opened.ino !== beforeIdentity.ino) fail('E_RACE', `Pack file changed while being verified: ${entry.path}`);
+    const canonical = await realpath(absolute);
+    const canonicalIdentity = await lstat(canonical, { bigint: true });
+    if (!isContained(root, canonical)) fail('E_PATH', `Pack file resolves outside the package root: ${entry.path}`);
+    if (!opened.isFile() || opened.dev !== beforeIdentity.dev || opened.ino !== beforeIdentity.ino
+      || opened.dev !== canonicalIdentity.dev || opened.ino !== canonicalIdentity.ino) {
+      fail('E_RACE', `Pack file changed while being verified: ${entry.path}`);
+    }
     if (opened.mode & 0o111n) fail('E_EXECUTABLE', `Executable file mode is forbidden: ${entry.path}`);
     if (opened.size !== BigInt(entry.bytes)) fail('E_SIZE', `Opened byte size mismatch for ${entry.path}: expected ${entry.bytes}, received ${opened.size}`);
     const prefix = Buffer.alloc(Math.min(16, entry.bytes));
@@ -206,6 +248,74 @@ async function verifyFile(root, entry) {
     if (handle) await handle.close().catch(() => {});
   }
 }
+
+async function copyVerifiedFile(root, entry, destination, destinationRoot) {
+  const source = path.resolve(root, ...entry.path.split('/'));
+  let sourceHandle;
+  let destinationHandle;
+  try {
+    sourceHandle = await open(source, constants.O_RDONLY | (constants.O_NOFOLLOW || 0));
+    const opened = await sourceHandle.stat({ bigint: true });
+    const canonical = await realpath(source);
+    const canonicalIdentity = await lstat(canonical, { bigint: true });
+    if (!isContained(root, canonical)) fail('E_PATH', `Pack file resolves outside the package root: ${entry.path}`);
+    if (!opened.isFile() || opened.dev !== canonicalIdentity.dev || opened.ino !== canonicalIdentity.ino) {
+      fail('E_RACE', `Pack file changed before copying: ${entry.path}`);
+    }
+    if (opened.size !== BigInt(entry.bytes)) fail('E_SIZE', `Pack file size changed before copying: ${entry.path}`);
+    const destinationParent = path.dirname(destination);
+    const parentCanonical = await realpath(destinationParent);
+    const parentIdentity = await lstat(destinationParent, { bigint: true });
+    const canonicalParentIdentity = await lstat(parentCanonical, { bigint: true });
+    if (parentCanonical !== destinationRoot && !isContained(destinationRoot, parentCanonical)) {
+      fail('E_DESTINATION', `Destination parent escapes staging: ${entry.path}`);
+    }
+    if (parentIdentity.isSymbolicLink() || !parentIdentity.isDirectory()
+      || parentIdentity.dev !== canonicalParentIdentity.dev || parentIdentity.ino !== canonicalParentIdentity.ino) {
+      fail('E_RACE', `Destination parent changed before copying: ${entry.path}`);
+    }
+    destinationHandle = await open(
+      destination,
+      constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW || 0),
+      0o644,
+    );
+    const destinationOpened = await destinationHandle.stat({ bigint: true });
+    const destinationCanonical = await realpath(destination);
+    const destinationCanonicalIdentity = await lstat(destinationCanonical, { bigint: true });
+    if (!isContained(destinationRoot, destinationCanonical)
+      || destinationOpened.dev !== destinationCanonicalIdentity.dev || destinationOpened.ino !== destinationCanonicalIdentity.ino) {
+      fail('E_RACE', `Destination escaped staging while copying: ${entry.path}`);
+    }
+    const hash = createHash('sha256');
+    const buffer = Buffer.allocUnsafe(64 * 1024);
+    let position = 0;
+    while (true) {
+      const { bytesRead } = await sourceHandle.read(buffer, 0, buffer.length, position);
+      if (bytesRead === 0) break;
+      hash.update(buffer.subarray(0, bytesRead));
+      let offset = 0;
+      while (offset < bytesRead) {
+        const { bytesWritten } = await destinationHandle.write(buffer, offset, bytesRead - offset, position + offset);
+        if (bytesWritten === 0) fail('E_IO', `Zero-byte write while copying: ${entry.path}`);
+        offset += bytesWritten;
+      }
+      position += bytesRead;
+    }
+    const after = await sourceHandle.stat({ bigint: true });
+    if (after.dev !== opened.dev || after.ino !== opened.ino || after.size !== opened.size
+      || after.mtimeNs !== opened.mtimeNs || after.ctimeNs !== opened.ctimeNs) {
+      fail('E_RACE', `Pack file changed while being copied: ${entry.path}`);
+    }
+    if (position !== entry.bytes) fail('E_SIZE', `Copied byte size mismatch for ${entry.path}: expected ${entry.bytes}, received ${position}`);
+    const sha256 = hash.digest('hex');
+    if (sha256 !== entry.sha256) fail('E_HASH', `Pack file changed after verification: ${entry.path}`);
+    await destinationHandle.sync();
+  } finally {
+    if (destinationHandle) await destinationHandle.close().catch(() => {});
+    if (sourceHandle) await sourceHandle.close().catch(() => {});
+  }
+}
+
 
 async function verifyDeclaredTree(root, entries, manifestPath) {
   const expected = new Set(entries.map(entry => entry.path));
@@ -232,7 +342,7 @@ async function verifyDeclaredTree(root, entries, manifestPath) {
 export async function verifyPack({ manifestPath, packageRoot, schemaPath = DEFAULT_SCHEMA }) {
   const absoluteManifest = path.resolve(manifestPath);
   const root = await canonicalDirectory(path.resolve(packageRoot || path.dirname(absoluteManifest)), 'Package root');
-  const { bytes, manifest } = await readManifest(absoluteManifest);
+  const { bytes, manifest } = await readManifest(absoluteManifest, root);
   let schema;
   try { schema = JSON.parse(await readFile(schemaPath, 'utf8')); } catch (error) {
     fail('E_SCHEMA_IO', `Cannot read JSON Schema ${schemaPath}: ${error.message}`);
@@ -261,6 +371,7 @@ export async function verifyPack({ manifestPath, packageRoot, schemaPath = DEFAU
     manifest,
     entries,
     root,
+    manifestBytes: bytes,
   };
 }
 
@@ -279,6 +390,54 @@ async function ensureDirectory(parent, name) {
   return directory;
 }
 
+const sameIdentity = (left, right) => left.dev === right.dev && left.ino === right.ino;
+
+async function captureDirectoryIdentity(directory, label) {
+  const direct = await lstat(directory, { bigint: true });
+  if (direct.isSymbolicLink() || !direct.isDirectory()) fail('E_DESTINATION', `${label} is not a real directory: ${directory}`);
+  const canonical = await realpath(directory);
+  const resolved = await lstat(canonical, { bigint: true });
+  if (canonical !== path.resolve(directory) || !sameIdentity(direct, resolved)) {
+    fail('E_RACE', `${label} changed identity: ${directory}`);
+  }
+  return direct;
+}
+
+async function assertDirectoryIdentity(directory, expected, label) {
+  const current = await captureDirectoryIdentity(directory, label);
+  if (!sameIdentity(current, expected)) fail('E_RACE', `${label} was replaced during installation: ${directory}`);
+}
+
+async function reclaimStaleLock(lockPath, idDirectory, idIdentity) {
+  let before;
+  let handle;
+  try {
+    before = await lstat(lockPath, { bigint: true });
+    if (before.isSymbolicLink() || !before.isFile()) return false;
+    handle = await open(lockPath, constants.O_RDONLY | (constants.O_NOFOLLOW || 0));
+    const opened = await handle.stat({ bigint: true });
+    if (!sameIdentity(opened, before)) return false;
+    const [pidText, createdText] = (await handle.readFile('utf8')).trim().split('\n');
+    const pid = Number(pidText);
+    const created = Date.parse(createdText);
+    if (!Number.isSafeInteger(pid) || pid <= 0 || !Number.isFinite(created)) return false;
+    let alive = true;
+    try { process.kill(pid, 0); } catch (error) { alive = error.code !== 'ESRCH'; }
+    if (alive) {
+      const currentStart = processStartedAt(pid);
+      if (currentStart !== null && Math.abs(currentStart - created) < 5000) return false;
+      if (currentStart === null && Date.now() - Number(before.mtimeMs) < LOCK_LEASE_MS) return false;
+    }
+  } finally {
+    if (handle) await handle.close().catch(() => {});
+  }
+  await assertDirectoryIdentity(idDirectory, idIdentity, 'Pack ID directory');
+  const current = await lstat(lockPath, { bigint: true }).catch(() => null);
+  if (!current || !sameIdentity(current, before)) return false;
+  await rm(lockPath, { force: true });
+  return true;
+}
+
 export async function installPack({ manifestPath, packageRoot, installRoot, schemaPath = DEFAULT_SCHEMA }) {
   const source = await verifyPack({ manifestPath, packageRoot, schemaPath });
   const requestedRoot = path.resolve(installRoot);
@@ -288,48 +447,256 @@ export async function installPack({ manifestPath, packageRoot, installRoot, sche
   const idDirectory = await ensureDirectory(kindDirectory, source.id);
   const target = path.join(idDirectory, source.version);
   const staging = path.join(idDirectory, `.${source.version}.staging`);
-  if (!isContained(idDirectory, target) || !isContained(idDirectory, staging)) fail('E_DESTINATION', 'Install target escapes its parent');
+  const lockPath = path.join(idDirectory, `.${source.version}.install.lock`);
+  const reservationPath = path.join(target, '.installing.json');
+  if (![target, staging, lockPath].every(candidate => isContained(idDirectory, candidate))) {
+    fail('E_DESTINATION', 'Install target escapes its parent');
+  }
   const relativeTarget = path.posix.join(source.kind, source.id, source.version);
-  const targetExists = await lstat(target).catch(error => {
-    if (error.code !== 'ENOENT') throw error;
-    return null;
-  });
-  if (targetExists) {
-    if (targetExists.isSymbolicLink() || !targetExists.isDirectory()) {
-      fail('E_IMMUTABLE', `Existing install target is not a real directory: ${relativeTarget}`);
-    }
-    let installed;
-    try {
-      installed = await verifyPack({ manifestPath: path.join(target, 'manifest.json'), packageRoot: target, schemaPath });
-    } catch (error) {
-      fail('E_IMMUTABLE', `Existing install is not a valid immutable pack: ${relativeTarget}`, { cause: error });
-    }
-    if (installed.manifestSha256 !== source.manifestSha256) fail('E_IMMUTABLE', `A different release is already installed: ${relativeTarget}`);
-    return { ...source, operation: 'install', status: 'unchanged', installPath: relativeTarget };
-  }
-  if (await lstat(staging).catch(error => error.code === 'ENOENT' ? null : (() => { throw error; })())) {
-    fail('E_STAGING_EXISTS', `Stale staging directory requires manual inspection: ${staging}`);
-  }
-  let created = false;
-  let promoted = false;
+  const rootIdentity = await captureDirectoryIdentity(root, 'Install root');
+  const kindIdentity = await captureDirectoryIdentity(kindDirectory, 'Pack kind directory');
+  const idIdentity = await captureDirectoryIdentity(idDirectory, 'Pack ID directory');
+  const assertParents = async () => {
+    await assertDirectoryIdentity(root, rootIdentity, 'Install root');
+    await assertDirectoryIdentity(kindDirectory, kindIdentity, 'Pack kind directory');
+    await assertDirectoryIdentity(idDirectory, idIdentity, 'Pack ID directory');
+  };
+
+  let lockHandle;
+  let lockIdentity;
+  let lockCandidate;
+  let lockPublished = false;
+  let reclaimedStaleLock = false;
+  let lockHeartbeat;
+  const removeLockCandidate = async () => {
+    if (!lockCandidate || !lockIdentity) return;
+    await assertParents();
+    const current = await lstat(lockCandidate, { bigint: true }).catch(() => null);
+    if (current && sameIdentity(current, lockIdentity)) await rm(lockCandidate, { force: true });
+    lockCandidate = null;
+  };
   try {
-    await mkdir(staging, { mode: 0o755 });
-    created = true;
-    for (const entry of source.entries) {
-      const destination = path.join(staging, ...entry.path.split('/'));
-      await mkdir(path.dirname(destination), { recursive: true, mode: 0o755 });
-      await copyFile(path.join(source.root, ...entry.path.split('/')), destination, constants.COPYFILE_EXCL);
-      await chmod(destination, 0o644);
+    await assertParents();
+    lockCandidate = path.join(idDirectory, `.version.install-lock-${process.pid}-${randomUUID()}.tmp`);
+    lockHandle = await open(
+      lockCandidate,
+      constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW || 0),
+      0o600,
+    );
+    lockIdentity = await lockHandle.stat({ bigint: true });
+    await assertParents();
+    const candidateAtPath = await lstat(lockCandidate, { bigint: true });
+    if (!sameIdentity(candidateAtPath, lockIdentity)) {
+      fail('E_INSTALL_RACE', 'Install lock candidate changed during creation');
     }
-    await copyFile(path.resolve(manifestPath), path.join(staging, 'manifest.json'), constants.COPYFILE_EXCL);
-    await chmod(path.join(staging, 'manifest.json'), 0o644);
-    const staged = await verifyPack({ manifestPath: path.join(staging, 'manifest.json'), packageRoot: staging, schemaPath });
-    if (staged.manifestSha256 !== source.manifestSha256) fail('E_RACE', 'Manifest changed during installation');
-    await rename(staging, target);
-    promoted = true;
-    return { ...source, operation: 'install', status: 'installed', installPath: relativeTarget };
+    await lockHandle.writeFile(`${process.pid}\n${PROCESS_STARTED_AT}\n${source.manifestSha256}\n`);
+    await lockHandle.sync();
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await assertParents();
+      try {
+        const candidate = await lstat(lockCandidate, { bigint: true });
+        if (!sameIdentity(candidate, lockIdentity)) {
+          fail('E_INSTALL_RACE', 'Install lock candidate changed before publication');
+        }
+        await link(lockCandidate, lockPath);
+        const published = await lstat(lockPath, { bigint: true });
+        if (!sameIdentity(published, lockIdentity)) {
+          fail('E_INSTALL_RACE', 'Published install lock does not match its owner record');
+        }
+        lockPublished = true;
+        lockHeartbeat = setInterval(() => {
+          lockHandle?.utimes(new Date(), new Date()).catch(() => {});
+        }, LOCK_HEARTBEAT_MS);
+        lockHeartbeat.unref?.();
+        break;
+      } catch (error) {
+        if (error.code !== 'EEXIST') throw error;
+        if (attempt === 0 && await reclaimStaleLock(lockPath, idDirectory, idIdentity)) {
+          reclaimedStaleLock = true;
+          continue;
+        }
+        fail('E_INSTALL_BUSY', `Another install or non-reclaimable lock requires inspection: ${lockPath}`);
+      }
+    }
+    if (!lockPublished) fail('E_INSTALL_BUSY', `Could not acquire install lock: ${lockPath}`);
+    await removeLockCandidate();
+    await assertParents();
+
+    let targetExists = await lstat(target).catch(error => {
+      if (error.code !== 'ENOENT') throw error;
+      return null;
+    });
+    if (targetExists) {
+      if (targetExists.isSymbolicLink() || !targetExists.isDirectory()) {
+        fail('E_IMMUTABLE', `Existing install target is not a real directory: ${relativeTarget}`);
+      }
+      const targetIdentity = await captureDirectoryIdentity(target, 'Install target');
+      const markerExists = await lstat(reservationPath).catch(error => error.code === 'ENOENT' ? null : (() => { throw error; })());
+      const publishedManifest = await lstat(path.join(target, 'manifest.json')).catch(error => error.code === 'ENOENT' ? null : (() => { throw error; })());
+      const targetEntries = await readdir(target);
+      let recoveredInterrupted = false;
+      if (!markerExists && !publishedManifest && targetEntries.length === 0) {
+        await assertParents();
+        await assertDirectoryIdentity(target, targetIdentity, 'Install target');
+        await rm(target, { recursive: true, force: true });
+        targetExists = null;
+        recoveredInterrupted = true;
+      } else if (markerExists) {
+        let reservation;
+        try { ({ manifest: reservation } = await readManifest(reservationPath)); } catch (error) {
+          if (!publishedManifest && targetEntries.length === 1 && targetEntries[0] === '.installing.json') {
+            await assertParents();
+            await assertDirectoryIdentity(target, targetIdentity, 'Install target');
+            await rm(target, { recursive: true, force: true });
+            targetExists = null;
+            recoveredInterrupted = true;
+          } else {
+            fail('E_IMMUTABLE', `Install reservation is invalid: ${relativeTarget}`, { cause: error });
+          }
+        }
+        if (targetExists) {
+          if (reservation?.manifestSha256 !== source.manifestSha256 || reservation?.version !== source.version) {
+            fail('E_IMMUTABLE', `Install reservation belongs to a different release: ${relativeTarget}`);
+          }
+          await assertParents();
+          await assertDirectoryIdentity(target, targetIdentity, 'Install target');
+          if (publishedManifest) {
+            await rm(reservationPath, { force: true });
+          } else {
+            await rm(target, { recursive: true, force: true });
+            targetExists = null;
+          }
+          recoveredInterrupted = true;
+        }
+      }
+      if (recoveredInterrupted && await lstat(staging).catch(error => error.code === 'ENOENT' ? null : (() => { throw error; })())) {
+        await assertParents();
+        const staleStagingIdentity = await captureDirectoryIdentity(staging, 'Stale staging directory');
+        await assertDirectoryIdentity(staging, staleStagingIdentity, 'Stale staging directory');
+        await rm(staging, { recursive: true, force: true });
+      }
+      if (targetExists) {
+        let installed;
+        try {
+          installed = await verifyPack({ manifestPath: path.join(target, 'manifest.json'), packageRoot: target, schemaPath });
+        } catch (error) {
+          fail('E_IMMUTABLE', `Existing install is not a valid immutable pack: ${relativeTarget}`, { cause: error });
+        }
+        if (installed.manifestSha256 !== source.manifestSha256) fail('E_IMMUTABLE', `A different release is already installed: ${relativeTarget}`);
+        return { ...source, operation: 'install', status: 'unchanged', installPath: relativeTarget };
+      }
+    }
+
+    const staleStaging = await lstat(staging).catch(error => error.code === 'ENOENT' ? null : (() => { throw error; })());
+    if (staleStaging) {
+      if (!reclaimedStaleLock || staleStaging.isSymbolicLink() || !staleStaging.isDirectory()) {
+        fail('E_STAGING_EXISTS', `Stale staging directory requires manual inspection: ${staging}`);
+      }
+      await assertParents();
+      await rm(staging, { recursive: true, force: true });
+    }
+
+    let stagingCreated = false;
+    let stagingIdentity;
+    let targetCreated = false;
+    let targetPublished = false;
+    let targetIdentity;
+    try {
+      await assertParents();
+      await mkdir(staging, { mode: 0o755 });
+      stagingCreated = true;
+      stagingIdentity = await captureDirectoryIdentity(staging, 'Staging directory');
+      for (const entry of source.entries) {
+        await assertParents();
+        await assertDirectoryIdentity(staging, stagingIdentity, 'Staging directory');
+        const destination = path.join(staging, ...entry.path.split('/'));
+        await mkdir(path.dirname(destination), { recursive: true, mode: 0o755 });
+        await copyVerifiedFile(source.root, entry, destination, staging);
+      }
+      const stagedManifest = path.join(staging, 'manifest.json');
+      await assertDirectoryIdentity(staging, stagingIdentity, 'Staging directory');
+      const manifestHandle = await open(
+        stagedManifest,
+        constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW || 0),
+        0o644,
+      );
+      try {
+        await manifestHandle.writeFile(source.manifestBytes);
+        await manifestHandle.sync();
+      } finally {
+        await manifestHandle.close();
+      }
+      const staged = await verifyPack({ manifestPath: stagedManifest, packageRoot: staging, schemaPath });
+      if (staged.manifestSha256 !== source.manifestSha256) fail('E_RACE', 'Manifest changed during installation');
+
+      await assertParents();
+      await assertDirectoryIdentity(staging, stagingIdentity, 'Staging directory');
+      try {
+        await mkdir(target, { mode: 0o755 });
+      } catch (error) {
+        if (error.code === 'EEXIST') fail('E_IMMUTABLE', `Install target appeared during promotion: ${relativeTarget}`);
+        throw error;
+      }
+      targetCreated = true;
+      targetIdentity = await captureDirectoryIdentity(target, 'Install target');
+      const reservationHandle = await open(
+        reservationPath,
+        constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW || 0),
+        0o600,
+      );
+      try {
+        await reservationHandle.writeFile(`${JSON.stringify({ manifestSha256: source.manifestSha256, version: source.version })}\n`);
+        await reservationHandle.sync();
+      } finally {
+        await reservationHandle.close();
+      }
+
+      const topLevel = (await readdir(staging, { withFileTypes: true }))
+        .filter(entry => entry.name !== 'manifest.json')
+        .sort((left, right) => left.name < right.name ? -1 : left.name > right.name ? 1 : 0);
+      for (const entry of topLevel) {
+        await assertParents();
+        await assertDirectoryIdentity(staging, stagingIdentity, 'Staging directory');
+        await assertDirectoryIdentity(target, targetIdentity, 'Install target');
+        await rename(path.join(staging, entry.name), path.join(target, entry.name));
+        await assertDirectoryIdentity(target, targetIdentity, 'Install target');
+      }
+      for (const entry of source.entries) await verifyFile(target, entry);
+
+      const { bytes: manifestBytes } = await readManifest(stagedManifest);
+      const manifestSha256 = createHash('sha256').update(manifestBytes).digest('hex');
+      if (manifestSha256 !== source.manifestSha256) fail('E_RACE', 'Staged manifest changed before publication');
+      await assertParents();
+      await assertDirectoryIdentity(staging, stagingIdentity, 'Staging directory');
+      await assertDirectoryIdentity(target, targetIdentity, 'Install target');
+      await rename(stagedManifest, path.join(target, 'manifest.json'));
+      targetPublished = true;
+      await assertDirectoryIdentity(target, targetIdentity, 'Install target');
+      await rm(reservationPath, { force: true });
+      const installed = await verifyPack({ manifestPath: path.join(target, 'manifest.json'), packageRoot: target, schemaPath });
+      if (installed.manifestSha256 !== source.manifestSha256) fail('E_RACE', 'Installed manifest changed during publication');
+      return { ...source, operation: 'install', status: 'installed', installPath: relativeTarget };
+    } finally {
+      if (stagingCreated) {
+        await assertParents();
+        await assertDirectoryIdentity(staging, stagingIdentity, 'Staging directory');
+        await rm(staging, { recursive: true, force: true });
+      }
+      if (targetCreated && !targetPublished) {
+        await assertParents();
+        await assertDirectoryIdentity(target, targetIdentity, 'Install target');
+        await rm(target, { recursive: true, force: true });
+      }
+    }
   } finally {
-    if (created && !promoted) await rm(staging, { recursive: true, force: true });
+    clearInterval(lockHeartbeat);
+    if (lockHandle) await lockHandle.close().catch(() => {});
+    if (lockCandidate) await removeLockCandidate().catch(() => {});
+    if (lockPublished) {
+      await assertParents();
+      const current = await lstat(lockPath, { bigint: true }).catch(() => null);
+      if (current && sameIdentity(current, lockIdentity)) await rm(lockPath, { force: true });
+    }
   }
 }
 

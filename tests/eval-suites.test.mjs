@@ -38,17 +38,18 @@ for (const [nome, baseline] of Object.entries(BASELINE)) {
   });
 }
 
-test('staging adds portal, pass and production-crash checks without deleting migrated steps', () => {
+test('fast adds staging, Studio, season-pass and production-crash checks without deleting migrated steps', () => {
   assert.ok(SUITES.fast.includes('eval:portalembed'));
   assert.ok(SUITES.fast.includes('eval:lixo'));
   assert.ok(SUITES.fast.includes('eval:envruntime'));
   assert.ok(SUITES.fast.includes('eval:servertraffic'));
   assert.ok(SUITES.fast.includes('eval:shareorigin'));
-  assert.ok(SUITES.fast.includes('eval:prodcrash'));
+
   assert.ok(SUITES.fast.includes('eval:vm-enquadramento-placar'));
   assert.ok(SUITES.fast.includes('eval:pintura-fabrica'));
   assert.ok(SUITES.fast.includes('eval:passe'));
   assert.ok(SUITES.fast.includes('eval:packpublish'));
+  assert.ok(SUITES.fast.includes('eval:prodcrash'));
   assert.ok(SUITES.deploy.includes('eval:dispose'));
 });
 

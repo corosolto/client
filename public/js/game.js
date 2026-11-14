@@ -10192,11 +10192,12 @@ export class Game {
     for (const t of this._texLocais || []) t.dispose();
     this._texLocais = null;
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
-    /* Partículas de pouso são donas do material; o puff permanece compartilhado. A textura
-       (uTex) nasce via _texLocal e já caiu no laço de _texLocais acima: descartá-la aqui
-       de novo dava dispose duplo (eval:landing-impact exige exatamente 1). */
+    // Partículas de pouso são donas do material; a textura já pertence a _texLocais.
+    const puffFx = this.puffFx;
+    puffFx?.points?.material?.dispose();
+    this.puffFx = null;
     for (const fx of this._landingFxSystems || []) {
-      if (fx === this.puffFx) continue;
+      if (fx === puffFx) continue;
       fx.points?.material?.dispose();
     }
     this._landingFxSystems = [];

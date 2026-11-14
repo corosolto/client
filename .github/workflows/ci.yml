@@ -26,11 +26,51 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Instalação e build acontecem uma vez por tentativa. A cache é exclusiva deste
+  # run (nenhum código de outro run/PR entra no ambiente) e o dist vai por artefato.
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - name: Cache das dependências deste run
+        id: deps-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: node_modules
+          key: pr-fast-node-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.run_id }}
+      - name: Dependências (npm ci)
+        if: steps.deps-cache.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Astro build
+        env:
+          API_PROXY_SECRET: SENTINEL_ci_api_proxy
+          SUPABASE_URL: SENTINEL_ci_supabase_url
+          SUPABASE_SERVICE_ROLE_KEY: SENTINEL_ci_supabase_key
+          X_PIXEL_TOKEN: SENTINEL_ci_x_pixel
+        run: npm run build
+      - name: Publica o dist compartilhado
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr-fast-dist-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            dist
+            .vercel/output
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
   # O contexto obrigatório `build` sai de UM job só (DG4), e esse job é o AGREGADOR abaixo.
   # As invariantes custavam 6,5 a 9 min de um job de 9 a 12 min, em série com todo o
   # resto; agora rodam em shards paralelos por família e por grupo de mapas. Nenhum passo saiu.
   reguas-e-site:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     # Fila nuclear. Mapas/site foram para job paralelo depois do run 42016661426
     # ser cortado em 35m18s dentro de Flávio, sem veredito vermelho.
     timeout-minutes: 35
@@ -39,10 +79,9 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Python CI scripts syntax
         run: python3 -m py_compile scripts/ci/*.py
       - name: Bash scripts syntax
@@ -192,6 +231,8 @@ jobs:
     permissions:
       actions: read
       contents: read
+    needs: setup
+    if: always()
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -202,7 +243,9 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
+      - name: Dependências e dist compartilhados
+        id: deps
+        uses: ./.github/actions/setup-ci-environment
       - name: Restore calibrated duration manifest
         id: duration-cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
@@ -235,9 +278,6 @@ jobs:
             fi
           done
           node tools/eval/calibrate-durations.mjs
-      - name: Dependências (npm ci)
-        id: deps
-        run: npm ci
       - name: Contratos visuais de personagens e câmera (shard ${{ matrix.shard }}/3)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:shot-final-pose eval:authored-locomotion eval:character-normal-quality eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:death-camera-consistency eval:knife-skin-markings --shard=${{ matrix.shard }}/3 --json-out=tools/eval/out/contratos-visuais-personagens-camera-shard-${{ matrix.shard }}.json
@@ -251,16 +291,17 @@ jobs:
 
   contratos-visuais-ferro-balcao:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Contrato visual de ferro e balcão
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:ferro-balcao --json-out=tools/eval/out/contratos-visuais-ferro-balcao.json
@@ -274,16 +315,17 @@ jobs:
 
   contratos-visuais-mapas-materiais:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Contratos visuais de mapas e materiais
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:map-material-finish --json-out=tools/eval/out/contratos-visuais-mapas-materiais.json
@@ -297,16 +339,17 @@ jobs:
 
   contratos-visuais-visual-map:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Contratos visuais de geometria e UV
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:visual-map-contracts --json-out=tools/eval/out/contratos-visuais-visual-map.json
@@ -320,16 +363,17 @@ jobs:
 
   contratos-visuais-campo-uv:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Contrato visual de campo UV
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:campo-uv --json-out=tools/eval/out/contratos-visuais-campo-uv.json
@@ -343,16 +387,17 @@ jobs:
 
   contratos-visuais-gameplay-grafite:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Shim local de Three para os contratos de grafite
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node --input-type=module -e "await import('./tools/eval/three-node.mjs')"
@@ -369,16 +414,17 @@ jobs:
 
   economia-ak-hud:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: TRETA$ da partida segue o CS e não toca a carteira do menu
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:economia
@@ -405,22 +451,25 @@ jobs:
 
   soundscape:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Loops de áudio de todos os mapas usam src carregável
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:soundscape-contract
 
   mapas-e-site:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     # Fila dividida do antigo reguas-e-site: mesmo passo, nenhum dispensado.
     timeout-minutes: 35
     steps:
@@ -428,10 +477,9 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Pichação colada na parede e sem vazar pela quina da frente
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:pichacao-parede
@@ -511,13 +559,6 @@ jobs:
       - name: Skills de terceiros conferem com o lock
         run: npm run verify:skills
 
-      - name: Astro build
-        env:
-          API_PROXY_SECRET: SENTINEL_ci_api_proxy
-          SUPABASE_URL: SENTINEL_ci_supabase_url
-          SUPABASE_SERVICE_ROLE_KEY: SENTINEL_ci_supabase_key
-          X_PIXEL_TOKEN: SENTINEL_ci_x_pixel
-        run: npm run build
       - name: Build não inlina segredo (varre os artefatos com as sentinelas)
         env:
           API_PROXY_SECRET: SENTINEL_ci_api_proxy
@@ -583,16 +624,17 @@ jobs:
 
   operacao-flavio-core:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Operação Flávio, núcleo e veredito estático
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:operacao-flavio-core eval:operacao-reset eval:operacao-duration eval:operacao-clock eval:operacao-boarding eval:character-owned eval:objective-codec-contract eval:operacao-npc --json-out=tools/eval/out/operacao-flavio-core.json
@@ -606,16 +648,17 @@ jobs:
 
   operacao-flavio-collider-1:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Operação Flávio, collider 1
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:operacao-flavio-collider-1 --json-out=tools/eval/out/operacao-flavio-collider-1.json
@@ -629,16 +672,17 @@ jobs:
 
   operacao-flavio-collider-2:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Operação Flávio, collider 2
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:operacao-flavio-collider-2 --json-out=tools/eval/out/operacao-flavio-collider-2.json
@@ -652,16 +696,17 @@ jobs:
 
   operacao-flavio-collider-3:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Operação Flávio, collider 3
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:operacao-flavio-collider-3 --json-out=tools/eval/out/operacao-flavio-collider-3.json
@@ -675,16 +720,17 @@ jobs:
 
   operacao-flavio-collider-4:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Operação Flávio, collider 4
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:operacao-flavio-collider-4 --json-out=tools/eval/out/operacao-flavio-collider-4.json
@@ -698,16 +744,17 @@ jobs:
 
   operacao-flavio-menu:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Operação Flávio, menu e anúncios
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:operacao-flavio-menu eval:mode-announcements eval:ctflabels eval:tpreloadpaired --json-out=tools/eval/out/operacao-flavio-menu.json
@@ -721,16 +768,17 @@ jobs:
 
   operacao-flavio-online:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Operação Flávio, online e objetivo
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:operacao-online --json-out=tools/eval/out/operacao-online.json
@@ -744,16 +792,17 @@ jobs:
 
   operacao-flavio-integracao:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Operação Flávio, integração, recuperação e pressão
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:operacao-flavio-integracao --json-out=tools/eval/out/operacao-flavio-integracao.json
@@ -767,16 +816,17 @@ jobs:
 
   operacao-flavio-comportamento:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Operação Flávio, comportamento e simulação
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:operacao-flavio-comportamento eval:bots-perf --json-out=tools/eval/out/operacao-flavio-comportamento.json
@@ -790,16 +840,17 @@ jobs:
 
   operacao-flavio-escolta:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Operação Flávio, escolta, VIP e pickups
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:operacao-flavio-escolta --json-out=tools/eval/out/operacao-flavio-escolta.json
@@ -813,16 +864,17 @@ jobs:
 
   equipamento-tp-corpo:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Corpo em processos CPU reais
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:tp-identity --json-out=tools/eval/out/equipamento-corpo.json
@@ -836,16 +888,17 @@ jobs:
 
   equipamento-tp-origem:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Drip, luvas e cosméticos em processos CPU reais
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:tp-drip-source eval:tp-glove-origin eval:tp-cosmetic-source --json-out=tools/eval/out/equipamento-origem.json
@@ -861,14 +914,17 @@ jobs:
   # processos: o produtor e todos os consumidores ficam no mesmo shard.
   invariantes-fonte:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - name: Dependências e dist compartilhados
+        id: deps
+        uses: ./.github/actions/setup-ci-environment
       - name: Seletores e invariantes de fonte
         env:
           INVARIANTES_FAMILIA: fonte
@@ -886,14 +942,17 @@ jobs:
 
   invariantes-vm:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - name: Dependências e dist compartilhados
+        id: deps
+        uses: ./.github/actions/setup-ci-environment
       # O auditor de VM escreve o JSON consumido pelas invariantes; a ordem é contrato.
       - name: Enquadramento do viewmodel por arma (26 armas, GLB real)
         run: node tools/eval/vm-mint-audit.mjs
@@ -935,6 +994,8 @@ jobs:
 
   invariantes-bots:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -945,8 +1006,9 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - name: Dependências e dist compartilhados
+        id: deps
+        uses: ./.github/actions/setup-ci-environment
       - name: Invariantes de bots (${{ matrix.familia }})
         env:
           INVARIANTES_FAMILIA: ${{ matrix.familia }}
@@ -971,14 +1033,17 @@ jobs:
 
   invariantes-chars-mat:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - name: Dependências e dist compartilhados
+        id: deps
+        uses: ./.github/actions/setup-ci-environment
       - name: Packs Studio fixados (R2, SHA conferido) para o CHR medir o corpo real
         uses: ./.github/actions/studio-packs
       - name: Invariantes de personagens, materiais e pickups
@@ -996,6 +1061,8 @@ jobs:
 
   invariantes-mapas:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -1006,8 +1073,9 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - name: Dependências e dist compartilhados
+        id: deps
+        uses: ./.github/actions/setup-ci-environment
       - name: Invariantes de mapas (${{ matrix.familia }})
         env:
           INVARIANTES_FAMILIA: ${{ matrix.familia }}
@@ -1034,16 +1102,17 @@ jobs:
   # ordem interna, semente ou CLI mudou — só trocou o dono do passo.
   mantle:
     runs-on: ubuntu-latest
+    needs: setup
+    if: always()
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Dependências (npm ci)
+      - name: Dependências e dist compartilhados
         id: deps
-        run: npm ci
+        uses: ./.github/actions/setup-ci-environment
       - name: Validar fluidez, território e rede do mantle
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:movimento-fluidez eval:mantle-fluidez mut:mantle eval:mantle-network eval:landing-impact --json-out=tools/eval/out/mantle.json
@@ -1059,7 +1128,7 @@ jobs:
         run: npm run eval:lookbinding
 
   build:
-    needs: [reguas-e-site, mapas-e-site, invariantes-fonte, invariantes-vm, invariantes-bots, invariantes-chars-mat, invariantes-mapas, mantle, equipamento-tp-corpo, equipamento-tp-origem, contratos-visuais-personagens-camera, contratos-visuais-ferro-balcao, contratos-visuais-mapas-materiais, contratos-visuais-visual-map, contratos-visuais-campo-uv, contratos-visuais-gameplay-grafite, economia-ak-hud, soundscape, operacao-flavio-core, operacao-flavio-collider-1, operacao-flavio-collider-2, operacao-flavio-collider-3, operacao-flavio-collider-4, operacao-flavio-menu, operacao-flavio-online, operacao-flavio-integracao, operacao-flavio-comportamento, operacao-flavio-escolta]
+    needs: [setup, reguas-e-site, mapas-e-site, invariantes-fonte, invariantes-vm, invariantes-bots, invariantes-chars-mat, invariantes-mapas, mantle, equipamento-tp-corpo, equipamento-tp-origem, contratos-visuais-personagens-camera, contratos-visuais-ferro-balcao, contratos-visuais-mapas-materiais, contratos-visuais-visual-map, contratos-visuais-campo-uv, contratos-visuais-gameplay-grafite, economia-ak-hud, soundscape, operacao-flavio-core, operacao-flavio-collider-1, operacao-flavio-collider-2, operacao-flavio-collider-3, operacao-flavio-collider-4, operacao-flavio-menu, operacao-flavio-online, operacao-flavio-integracao, operacao-flavio-comportamento, operacao-flavio-escolta]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -1083,7 +1152,8 @@ jobs:
   # concurrency, então um cancela o outro (medido: os runs de branch dos alpha.85-.87
   # saíram `cancelled`). Exigir só a branch deixaria a autoria sem conferência nenhuma.
   autoria-na-main:
-    if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(release):')
+    needs: setup
+    if: always() && github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(release):')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -1093,8 +1163,9 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - name: Dependências e dist compartilhados
+        id: deps
+        uses: ./.github/actions/setup-ci-environment
       - name: Bloco de autoria em dia (derivável só depois do merge)
         run: npm run docs:check:autoria
 

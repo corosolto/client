@@ -6,7 +6,10 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers \
 WORKDIR /tmp/coro-solto-deps
 COPY package.json package-lock.json ./
 
-RUN NPM_VERSION="$(node -p "require('./package.json').packageManager.split('@')[1]")" \
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ffmpeg \
+ && rm -rf /var/lib/apt/lists/* \
+ && NPM_VERSION="$(node -p "require('./package.json').packageManager.split('@')[1]")" \
  && npm install --global --no-audit --no-fund "npm@${NPM_VERSION}" \
  && PW_VERSION="$(node -p "require('./package-lock.json').packages['node_modules/playwright'].version")" \
  && npm install --global --no-audit --no-fund "playwright@${PW_VERSION}" \

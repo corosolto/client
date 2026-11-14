@@ -2,9 +2,9 @@
 """Mede as 6 métricas do look Quake 4/UT/Halo na máscara do viewmodel.
 
 A máscara vem do diff (arma visível) × (vm.root escondido) capturado pelo
-vm-quake-capture.mjs — isola o VM exato (arma + braços FP), sem máscara manual.
+aposentados/vm-quake-capture.mjs — isola o VM exato (arma + braços FP), sem máscara manual.
 
-Uso: python3 tools/eval/vm_quake_measure.py <dir> [arma1,arma2,...] [tanBarrel]
+Uso: python3 tools/eval/aposentados/vm_quake_measure.py <dir> [arma1,arma2,...] [tanBarrel]
 Saída: uma linha por arma com as 6 medidas + PASS/FAIL contra os alvos:
   borda esquerda 0,55-0,62 W | borda direita >= 1,0 (cortada) | área de SILHUETA 4-10%
   (a régua original de 13-18% do brief era arma+mãos; o caminho Mint é SÓ-ARMA por

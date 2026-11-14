@@ -71,40 +71,29 @@ jobs:
         run: python3 scripts/ci/ensure_labels.py pronto-pra-merge
       - name: Fetch PR status
         if: env.pular != '1'
-        run: gh pr view "$PR_NUMBER" --json isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,files,changedFiles,baseRefName,headRefName,headRefOid,headRepository > /tmp/automerge.json
-      - name: Verify complete release batch diff
+        run: gh pr view "$PR_NUMBER" --json title,body,assignees,isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,latestReviews,reviewRequests,files,changedFiles,baseRefName,baseRefOid,headRefName,headRefOid,headRepository > /tmp/automerge.json
+      - name: Attest complete Git evidence
         if: env.pular != '1'
         run: |
+          python3 scripts/ci/pr_attestation.py --selftest
           python3 - <<'PY'
-          import json, os, subprocess
-          path = '/tmp/automerge.json'
-          pr = json.load(open(path))
-          labels = {label.get('name') for label in pr.get('labels') or []}
-          candidate = (
-              'release' in labels
-              and pr.get('baseRefName') == 'main'
-              and pr.get('headRefName') == 'staging'
-              and (pr.get('headRepository') or {}).get('nameWithOwner') == os.environ['GITHUB_REPOSITORY']
-          )
-          if not candidate:
-              raise SystemExit(0)
-          subprocess.run([
-              'git', 'fetch', 'origin', 'main:refs/remotes/origin/main',
-              'staging:refs/remotes/origin/staging',
-          ], check=True)
-          remote_head = subprocess.check_output(['git', 'rev-parse', 'origin/staging'], text=True).strip()
-          if remote_head != pr.get('headRefOid'):
-              raise RuntimeError('release batch head moved before full-diff verification')
-          files = subprocess.check_output([
-              'git', 'diff', '--name-only', 'origin/main...origin/staging',
-          ], text=True).splitlines()
-          if not files:
-              raise RuntimeError('release batch diff is empty')
-          pr['files'] = [{'path': path} for path in files]
-          pr['changedFiles'] = len(files)
-          pr['full_diff_verified'] = True
-          open(path, 'w').write(json.dumps(pr))
+          import json, os
+          payload = {
+              'pr': json.load(open('/tmp/automerge.json')),
+              'pr_number': int(os.environ['PR_NUMBER']),
+              'expected_repository': os.environ['GITHUB_REPOSITORY'],
+          }
+          open('/tmp/automerge-attestation-input.json', 'w').write(json.dumps(payload))
           PY
+          python3 scripts/ci/pr_attestation.py --emit < /tmp/automerge-attestation-input.json > /tmp/automerge-attestation.json
+          python3 - <<'PY'
+          import json
+          payload = json.load(open('/tmp/automerge-attestation-input.json'))
+          payload['attestation'] = json.load(open('/tmp/automerge-attestation.json'))
+          open('/tmp/automerge-attestation-input.json', 'w').write(json.dumps(payload))
+          PY
+          python3 scripts/ci/pr_attestation.py --apply < /tmp/automerge-attestation-input.json > /tmp/automerge-attested.json
+          mv /tmp/automerge-attested.json /tmp/automerge.json
       - name: Check eligibility
         if: env.pular != '1'
         # O autoteste roda ANTES da decisão: este script mescla sem humano no
@@ -119,6 +108,41 @@ jobs:
         run: |
           python3 scripts/ci/automerge_merge.py --selftest
           python3 scripts/ci/automerge_merge.py
+      - name: Record evaluated state for sweep debounce
+        if: env.pular != '1'
+        continue-on-error: true
+        run: |
+          python3 scripts/ci/bot_sweep.py --selftest
+          python3 - <<'PY'
+          import json, os, subprocess
+          from scripts.ci.bot_sweep import BOT_AUTHORS, PREFIX, encode_state
+          repo = os.environ['GITHUB_REPOSITORY']
+          number = os.environ['PR_NUMBER']
+          body = encode_state('automerge', json.load(open('/tmp/automerge.json')))
+          pages = json.loads(subprocess.check_output([
+              'gh', 'api', '--paginate', '--slurp',
+              f'repos/{repo}/issues/{number}/comments?per_page=100',
+          ], text=True))
+          comments = [comment for page in pages for comment in page]
+          mine = [
+              comment for comment in comments
+              if (comment.get('user') or {}).get('login', '').lower() in BOT_AUTHORS
+              and PREFIX + 'automerge:' in (comment.get('body') or '')
+          ]
+          for extra in mine[1:]:
+              subprocess.run([
+                  'gh', 'api', '-X', 'DELETE', f"repos/{repo}/issues/comments/{extra['id']}",
+              ], check=False)
+          if mine:
+              subprocess.run([
+                  'gh', 'api', '-X', 'PATCH', f"repos/{repo}/issues/comments/{mine[0]['id']}",
+                  '--input', '-',
+              ], input=json.dumps({'body': body}), text=True, check=True)
+          else:
+              subprocess.run([
+                  'gh', 'api', '-X', 'POST', f'repos/{repo}/issues/{number}/comments', '--input', '-',
+              ], input=json.dumps({'body': body}), text=True, check=True)
+          PY
 
   sweep:
     if: github.event_name == 'schedule'
@@ -137,11 +161,44 @@ jobs:
             echo "pular=1" >> "$GITHUB_ENV"
             echo "::warning title=Bot inerte::CSBRASIL_BOT_TOKEN nao configurado — o sweep de automerge esta pulando."
           fi
-      - name: Reevaluate every open safe or release PR
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        if: env.pular != '1'
+        with:
+          sparse-checkout: scripts/ci
+      - name: Reevaluate changed open safe or release PRs
         if: env.pular != '1'
         run: |
-          for pr in $(gh pr list --repo "$REPO" --state open --limit 100 --json number,labels \
-                        --jq '.[] | select(any(.labels[]; .name == "safe-automerge" or .name == "release")) | .number'); do
-            gh workflow run csbrasil-bot-automerge.yml --repo "$REPO" -f pr_number="$pr" \
-              || echo "::warning::could not reevaluate PR #$pr"
-          done
+          python3 scripts/ci/bot_sweep.py --selftest
+          gh pr list --repo "$REPO" --state open --limit 100 \
+            --json number,title,body,isDraft,baseRefName,baseRefOid,mergeStateStatus,assignees,labels,headRefName,headRefOid,headRepository,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
+            > /tmp/automerge-sweep.json
+          python3 - <<'PY'
+          import json, os, subprocess
+          from scripts.ci.bot_sweep import should_dispatch
+          repo = os.environ['REPO']
+          candidates = [
+              pr for pr in json.load(open('/tmp/automerge-sweep.json'))
+              if {'safe-automerge', 'release'}.intersection(
+                  label.get('name') for label in pr.get('labels') or []
+              )
+          ]
+          for pr in candidates:
+              number = pr['number']
+              try:
+                  pages = json.loads(subprocess.check_output([
+                      'gh', 'api', '--paginate', '--slurp',
+                      f'repos/{repo}/issues/{number}/comments?per_page=100',
+                  ], text=True))
+                  comments = [comment for page in pages for comment in page]
+              except subprocess.CalledProcessError:
+                  comments = []  # Sem estado legível, reavalia em vez de suprimir.
+              if not should_dispatch(pr, comments, 'automerge'):
+                  print(f'PR #{number}: unchanged base/head/labels/rollup/reviews; skipping automerge')
+                  continue
+              result = subprocess.run([
+                  'gh', 'workflow', 'run', 'csbrasil-bot-automerge.yml',
+                  '--repo', repo, '-f', f'pr_number={number}',
+              ], check=False)
+              if result.returncode:
+                  print(f'::warning::could not reevaluate PR #{number}')
+          PY

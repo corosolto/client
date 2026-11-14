@@ -5,6 +5,7 @@ import {
   appendFileSync,
   cpSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
@@ -13,6 +14,7 @@ import {
   rmSync,
   statSync,
   symlinkSync,
+  utimesSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -23,11 +25,12 @@ import test from 'node:test';
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const CLI = path.join(ROOT, 'scripts/studio-pack.mjs');
 const FIXTURE = path.join(ROOT, 'tests/fixtures/studio-pack/valid');
-const run = args => spawnSync(process.execPath, [CLI, ...args], {
+const run = (args, options = {}) => spawnSync(process.execPath, [CLI, ...args], {
   cwd: ROOT,
   encoding: 'utf8',
   timeout: 15000,
   maxBuffer: 1024 * 1024,
+  env: options.env ?? process.env,
 });
 const readManifest = directory => JSON.parse(readFileSync(path.join(directory, 'manifest.json'), 'utf8'));
 const writeManifest = (directory, manifest) => writeFileSync(path.join(directory, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
@@ -85,6 +88,15 @@ test('verify accepts the real valid fixture with deterministic machine output', 
   assert.match(report.manifestSha256, /^[a-f0-9]{64}$/);
 });
 
+test('an explicit package root accepts a sibling manifest', t => {
+  const fixture = makePack(t);
+  const siblingManifest = path.join(fixture.directory, 'manifest.json');
+  renameSync(fixture.manifest, siblingManifest);
+  const result = run(['verify', siblingManifest, '--package-root', fixture.pack, '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).status, 'verified');
+});
+
 test('install is byte-deterministic, idempotent and independently verifiable', t => {
   const first = makePack(t);
   const second = makePack(t);
@@ -105,6 +117,65 @@ test('install is byte-deterministic, idempotent and independently verifiable', t
   const targetManifest = path.join(first.installRoot, 'map/contract-fixture/0.1.0/manifest.json');
   const verified = run(['verify', targetManifest]);
   assert.equal(verified.status, 0, verified.stderr);
+});
+
+test('a dead install lock and its partial reservation are reclaimed safely', t => {
+  const fixture = makePack(t);
+  const manifestSha256 = createHash('sha256').update(readFileSync(fixture.manifest)).digest('hex');
+  const idDirectory = path.join(fixture.installRoot, 'map/contract-fixture');
+  const target = path.join(idDirectory, '0.1.0');
+  const staging = path.join(idDirectory, '.0.1.0.staging');
+  const lock = path.join(idDirectory, '.0.1.0.install.lock');
+  mkdirSync(target, { recursive: true });
+  mkdirSync(staging);
+  writeFileSync(path.join(target, '.installing.json'), `${JSON.stringify({ manifestSha256, version: '0.1.0' })}\n`);
+  writeFileSync(path.join(target, 'partial.fixture'), 'partial\n');
+  writeFileSync(path.join(staging, 'partial.fixture'), 'partial\n');
+  writeFileSync(lock, `99999999\n2000-01-01T00:00:00.000Z\n${manifestSha256}\n`);
+  const result = run(['install', fixture.manifest, '--install-root', fixture.installRoot, '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).status, 'installed');
+  assert.equal(existsSync(path.join(target, '.installing.json')), false);
+  assert.equal(existsSync(lock), false);
+  assert.equal(existsSync(staging), false);
+});
+
+test('an empty target left before reservation creation is reclaimed', t => {
+  const fixture = makePack(t);
+  const target = path.join(fixture.installRoot, 'map/contract-fixture/0.1.0');
+  mkdirSync(target, { recursive: true });
+  const result = run(['install', fixture.manifest, '--install-root', fixture.installRoot, '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).status, 'installed');
+  assert.equal(existsSync(path.join(target, 'manifest.json')), true);
+});
+
+test('an old lock with its original live owner is never reclaimed', t => {
+  const fixture = makePack(t);
+  const manifestSha256 = createHash('sha256').update(readFileSync(fixture.manifest)).digest('hex');
+  const idDirectory = path.join(fixture.installRoot, 'map/contract-fixture');
+  const lock = path.join(idDirectory, '.0.1.0.install.lock');
+  const processStartedAt = new Date(Date.now() - process.uptime() * 1000).toISOString();
+  mkdirSync(idDirectory, { recursive: true });
+  writeFileSync(lock, `${process.pid}\n${processStartedAt}\n${manifestSha256}\n`);
+  const result = run(['install', fixture.manifest, '--install-root', fixture.installRoot]);
+  expectFailure(result, 'E_INSTALL_BUSY');
+  assert.equal(existsSync(lock), true);
+});
+
+test('a dead owner lock is reclaimed after its PID is reused without process inspection', t => {
+  const fixture = makePack(t);
+  const manifestSha256 = createHash('sha256').update(readFileSync(fixture.manifest)).digest('hex');
+  const idDirectory = path.join(fixture.installRoot, 'map/contract-fixture');
+  const lock = path.join(idDirectory, '.0.1.0.install.lock');
+  mkdirSync(idDirectory, { recursive: true });
+  writeFileSync(lock, `${process.pid}\n2000-01-01T00:00:00.000Z\n${manifestSha256}\n`);
+  utimesSync(lock, new Date('2000-01-01T00:00:00.000Z'), new Date('2000-01-01T00:00:00.000Z'));
+  const result = run(['install', fixture.manifest, '--install-root', fixture.installRoot, '--json'], {
+    env: { ...process.env, PATH: '' },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).status, 'installed');
 });
 
 test('a bad payload hash is rejected without creating an install', t => {
