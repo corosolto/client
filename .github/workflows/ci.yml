@@ -112,6 +112,8 @@ jobs:
         run: node tools/eval/runner.mjs eval:netcodecbin eval:rede3p
       - name: Contrato de famílias e marcas do áudio
         run: npm run eval:audiomarcas
+      - name: Studio pack verification and immutable install
+        run: npm run eval:studiopack
       - name: Dependências e reconstrução do fundo do menu
         run: |
           npm run eval:menuprops
@@ -159,6 +161,8 @@ jobs:
         run: npm run eval:character-preview-media
       - name: Retrato hero só para personagem com arquivo (#1231, com mutantes)
         run: npm run eval:retratohero
+      - name: Rig por transplante encaixa cotovelo e punho, mão sem lâmina (com mutantes)
+        run: npm run eval:rigmaos
       - name: Personagem do Studio por release fixada, verificação fail-closed, /packs/ e origem R2 (com mutantes)
         if: always()
         run: npm run eval:studiochar
@@ -511,6 +515,8 @@ jobs:
         run: npm run eval:escala
       - name: Loja, vídeos de hover das skins (VP9 + H.264 + poster, até 400 KB)
         run: npm run eval:treta-video
+      - name: Pesos de skin, manga não segue a perna (tetos congelados + mutantes)
+        run: npm run eval:pesos-braco-perna
       - name: Orçamento de shader WebGL1
         run: npm run eval:shaderbudget
       - name: Sitemap pagina além do max-rows do PostgREST

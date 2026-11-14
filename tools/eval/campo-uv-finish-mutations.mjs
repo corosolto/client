@@ -3,6 +3,7 @@
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { classificarFalhaMutante } from './visual-map-mutations.mjs';
 
 const ids = ['CU-1', 'CU-2', 'CU-3', 'CU-4', 'CU-5', 'CU-6', 'CU-7', 'CU-8'];
 const PROTO_RE = /^(CU-[1-8]) (PASSA|FALHA) — /;
@@ -160,7 +161,7 @@ if (INVOCADO) {
     const recusa = (r, alvo, rotulo) => {
       console.error(`CAMPO-UV wrapper recusou ${rotulo}: status=${r.status}, alvo=${alvo.join(',') || 'nenhum'}`);
       console.error(((r.stdout || '') + '\n' + (r.stderr || '')).slice(-2400));
-      process.exit(r.error || r.signal || [2, 3, 4].includes(r.status) ? 3 : 1);
+      process.exit(classificarFalhaMutante(r));
     };
     let executados = 0, nas = 0;
     let shaQuery2 = null;

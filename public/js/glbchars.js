@@ -379,7 +379,10 @@ function emotesPack() {
       _emoteRef = repousoEsqueleto(g.scene);
       for (const c of g.animations) _emoteClips[c.name] = c;
       return _emoteClips;
-    }).catch(() => _emoteClips);
+    }).catch((error) => {
+      console.error('[glbchars] falha ao carregar models/anims/emotes-mocap.glb', error);
+      throw error;
+    });
   }
   return _emotesP;
 }
@@ -1552,7 +1555,7 @@ class CharController {
       // O pack chega depois: só retoma se o MESMO emote ainda está pedido (parar ou
       // morrer durante o download não ressuscita a dança).
       if (this._emoteId && this._emoteClipeInfo?.id === this._emoteId) this._tocarEmoteClipe();
-    });
+    }).catch((error) => { this._emotePackError = error; });
   }
 
   _tocarEmoteClipe() {

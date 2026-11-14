@@ -70,7 +70,7 @@ const body = (id = 'capitao', weapon = 'ak', mod = G) => {
   b.ctrl.aimPitch = 0;
   return b;
 };
-const pedidosPack = () => requests.filter((u) => u.includes('emotes-mocap.glb')).length;
+const pedidosPack = (arquivo = 'emotes-mocap.glb') => requests.filter((u) => u.includes(arquivo)).length;
 const quat = (b, osso) => b.ctrl.corpo.get(osso).getWorldQuaternion(new THREE.Quaternion());
 const posMundo = (b, osso) => b.ctrl.corpo.get(osso).getWorldPosition(new THREE.Vector3());
 const acao = (b, id) => b.ctrl.actions[`emote_${id}`];
@@ -266,17 +266,30 @@ check('EMM9-ressincronia', () => {
   assert.ok(Math.abs(acao(remoto, 'capoeira').time - (3.0 + 1 / 60)) < 0.02, `fase ${acao(remoto, 'capoeira').time}`);
 });
 
-/* EMM10 — pack ausente: o emote segue com a coreografia de reserva, sem exceção. */
+/* EMM10 — pack ausente: a falha original fica observável no controlador e no log,
+   enquanto o emote segue com a coreografia de reserva. */
 if (!mutant) {
   const { G: M } = await carregaRuntime({ glbchars: (s) => once(s, "assetUrl('models/anims/emotes-mocap.glb')", "assetUrl('models/anims/emotes-ausente.glb')") });
   await M.preloadCharacterAssets(['capitao']);
   const m = body('capitao', 'ak', M), c = body('capitao', 'ak', M);
-  step(m, 20); step(c, 20);
-  m.ctrl.emote('capoeira');
-  for (let i = 0; i < 20; i++) await new Promise((r) => setTimeout(r, 10));
-  step(m, 40); step(c, 40);
+  const ausentesAntes = pedidosPack('emotes-ausente.glb');
+  const errosPack = [], consoleError = console.error;
+  console.error = (...args) => errosPack.push(args.map((value) => value instanceof Error ? value.message : String(value)).join(' '));
+  try {
+    step(m, 20); step(c, 20);
+    m.ctrl.emote('capoeira');
+    for (let i = 0; i < 20; i++) await new Promise((r) => setTimeout(r, 10));
+    step(m, 40); step(c, 40);
+  } finally {
+    console.error = consoleError;
+  }
   check('EMM10-pack-ausente', () => {
     assert.ok(!m.ctrl._emoteClipeAtivo && m.ctrl.emoteAtual() === 'capoeira');
+    assert.match(m.ctrl._emotePackError?.message || '', /404 .*emotes-ausente\.glb/);
+    const logsPack = errosPack.filter((line) => line.includes('falha ao carregar models/anims/emotes-mocap.glb')
+      && /404 .*emotes-ausente\.glb/.test(line));
+    assert.equal(pedidosPack('emotes-ausente.glb') - ausentesAntes, 1, 'pack ausente deve ser pedido uma vez');
+    assert.equal(logsPack.length, 1, JSON.stringify(errosPack));
     const ang = quat(m, 'LeftArm').angleTo(quat(c, 'LeftArm')) + quat(m, 'RightArm').angleTo(quat(c, 'RightArm'));
     assert.ok(ang > 0.1, `reserva parada: ${ang.toFixed(3)} rad`);
   });

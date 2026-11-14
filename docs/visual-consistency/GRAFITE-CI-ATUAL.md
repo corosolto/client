@@ -47,7 +47,7 @@ A ligação em package/workflows é preparada separadamente no checkout QA e exi
   produto). `wireframe` exige motivos exatos `wireframe`+`nao-medido` iguais somando
   `unknown`; `canal-uv` exige só `uv-canal`. Aprovação nominal exige `unknown===0` sempre.
 - **Fail-closed de infra**: coletor de eventos **antes de qualquer navegação** (resposta
-  ≥400 da BASE, `requestfailed`, `pageerror`, console `load failed` → exit 3 mesmo com
+  ≥400 da BASE, `requestfailed`, `pageerror`, console `load failed` → exit 78 mesmo com
   métrica completa; no Playwright os eventos são push — não há drenada manual, mas o
   coletor nasce junto com a página). Fim de carga = `MAPEVAL.ready` + **1,5 s de silêncio
   de rede** da BASE; `__mapId` tem que bater com o pedido. Métrica pesada agendada na
@@ -56,7 +56,7 @@ A ligação em package/workflows é preparada separadamente no checkout QA e exi
 - **Protocolo estrito do veredito**: cobertura exata por plano (sem ausência/duplicação/
   mapa extra), shapes validados (`validarResumo`: contadores inteiros ≥0, `unknownMotivos`
   coerentes com a soma, `nominalVerde` recalculado por `predicadoVerde` contra a flag
-  ecoada) — violação é exit 3, nunca GREEN de subconjunto.
+  ecoada) — violação é exit 78, nunca GREEN de subconjunto.
 - **Prefs isoladas**: contexto efêmero por execução; `quality=med`/`manual` gravados num
   storage que morre com o `context.close()` (finally) — não há restauração a dever, ao
   contrário do ego que restaura chaves do TaskSpace do Root.
@@ -80,7 +80,7 @@ Três regras de controle vivem duplicadas em
 3. `MUTANTES_ZONA` (par causal outside+unsupported) — checada contra a tabela extraída.
 
 Controles de paridade: `--prova` (19 cláusulas de aceite + 10 contraprovas de protocolo),
-`--self-test` (CLI/uso/2/infra-3 acima), e a bateria `--mutantes` real no Chromium, que
+`--self-test` (CLI/uso/2/infra-78 acima), e a bateria `--mutantes` real no Chromium, que
 exige nominal 14/14 GREEN antes de qualquer mutante.
 
 ## Estado vigente: identidade editorial pós-alias
@@ -106,7 +106,7 @@ proíbe launch aqui). Execução real no Chromium do CI é pendência do Root, j
 ligação no `portao-browser` (mesmo padrão `eval:serve` + `CHROME_BIN` do `eval:grafite`).
 
 ## Root R3
-A barreira verifica erros/protocolo ANTES de qualquer mutador, tanto na bateria inicial como em cada recarga de variante; infra3 prevalece sobre RED1. --json resolve o ancestral real e recusa symlink para public/tools antes do mkdir/launch; escrita também valida resultado integral. Mac usa backend padrão como boot; Linux mantém SwiftShader. O poll espera o job pesado até135s sem atraso fixo de45s (o atraso do Ego é limite do SDK pessoal, não contrato da medição).
+A barreira verifica erros/protocolo ANTES de qualquer mutador, tanto na bateria inicial como em cada recarga de variante; infra78 prevalece sobre RED1. --json resolve o ancestral real e recusa symlink para public/tools antes do mkdir/launch; escrita também valida resultado integral. Mac usa backend padrão como boot; Linux mantém SwiftShader. O poll espera o job pesado até135s sem atraso fixo de45s (o atraso do Ego é limite do SDK pessoal, não contrato da medição).
 
 
 ## Validação de transporte CI e fixtures físicas

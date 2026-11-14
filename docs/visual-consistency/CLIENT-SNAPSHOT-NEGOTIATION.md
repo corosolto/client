@@ -71,32 +71,24 @@ limites hostis, seis mutantes v9 e dois controles v8. O mutante
 catálogo e precisa reprovar exatamente R8. O antigo teste que exigia
 oferta exclusiva v8 foi removido: contradizia o transporte de produção.
 
-`eval:client-snapshot-negotiation` importa NetClient e TransporteWS reais e
-exercita treze casos: v9, fallback v8, ack divergente, partida divergente com
-mensagem tardia, v7 recusada, seleção ausente, timeout, seleção desconhecida,
-recusa de welcome sem notificação e fechamento antes de welcome sem notificação
-(N1–N10), mais o contrato transporte → codec que antes era regex no
-`netcodec-check`: snapshot binário como ArrayBuffer pelo `decodeSnapshot` real
-(N11), frame acima de `MAX_SNAPSHOT_BYTES` fechado com 1009 antes do decoder
-(N12) e input pelo canal `enviarInseguro` (N13).
-O WebSocket falso só seleciona protocolo oferecido pelo cliente, exceto em N8, que
-simula servidor hostil, e entrega frame binário como Blob salvo se o transporte
-pedir ArrayBuffer, como o navegador. Os doze mutantes exigem nominal verde e failset exato:
+`eval:client-snapshot-negotiation` importa NetClient, TransporteWT e TransporteWS reais e
+exercita 22 casos: v9, fallback v8, seleção ausente ou desconhecida, welcome/partida com
+versão divergente, mensagens tardias, timeout, fechamento antes e depois do welcome, e
+fallback WT→WS com isolamento da tentativa anterior. Os dez mutantes exigem nominal verde
+e failset exato:
 
 | Mutante | Casos reprovados |
 | --- | --- |
-| `welcome-version` | N3, N5, N9 |
-| `partida-version` | N4 |
-| `attempt-guard` | N4, N9 |
-| `ws-selection` | N8 |
-| `oferta-so-v9` | N2 |
-| `early-close-notify` | N10, N9 |
-| `callback-before-close` | N4 |
-| `sem-decoder` | N11 |
-| `sem-arraybuffer` | N11 |
-| `sem-teto` | N12 |
-| `input-confiavel` | N13 |
-| `sem-canal-inseguro` | N13 |
+| `legacy-offer` | N1, N11 |
+| `welcome-version` | N6, N7, N12, N15, N16 |
+| `partida-version` | N9, N10, N17, N18, N21 |
+| `legacy-wt-request` | N5, N11 |
+| `attempt-guard` | N9, N10, N12, N17, N18, N21 |
+| `ws-selection` | N3, N4 |
+| `early-close-notify` | N20 |
+| `callback-before-close` | N21 |
+| `failover-notify` | N11 |
+| `accepted-close-notify` | N22 |
 
 Esse mesmo gate executa `eval:client-ticket-fallback` (também acessível sozinho).
 A régua usa NetClient, TransporteWT e TransporteWS reais, com APIs de navegador e

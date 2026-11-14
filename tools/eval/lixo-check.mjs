@@ -68,7 +68,7 @@ export const ALLOW_RAIZ = new Set([
 ]);
 export const ALLOW_DIRS = new Set([
   '.agents', '.claude', '.codex', '.devcontainer', '.githooks', '.github',
-  'content', 'docs', 'plans', 'progress', 'prompts', 'public', 'references', 'scripts', 'src', 'tests', 'tools',
+  'content', 'docs', 'plans', 'progress', 'prompts', 'public', 'references', 'schemas', 'scripts', 'src', 'tests', 'tools',
 ]);
 
 export const RE_DOC_HISTORICO = /(CONTINUATION|HANDOFF|STATUS|RELATORIO|PLANO)|\d{4}-?\d{2}-?\d{2}|R\d{3,4}/;

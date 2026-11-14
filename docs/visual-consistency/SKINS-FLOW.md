@@ -52,13 +52,13 @@ nominal; `--mutante=f1|f3|f4-earlyall|f4-missingawait` e/ou
 `--probe=f3-entrega|throw-f4`). Formato imposto pelo `CRITICO-SKINS-FLOW-R1.md` (3 P2):
 **nominal real verde primeiro via o MESMO CLI** — qualquer modo mutante/probe faz
 `spawnSync(process.execPath, [o próprio script])` sem args e exige status 0; nominal não
-verde (ou signal) ⇒ exit 3, e a variante nem roda. Mutante edita a fonte REAL em memória
+verde (ou signal) ⇒ exit 78, e a variante nem roda. Mutante edita a fonte REAL em memória
 e os MESMOS predicados decidem — nunca o predicado muda de lado. Placar do mutante tem
 que ser EXATAMENTE o esperado (falha certa + demais cláusulas verdes); **exceção em
 cláusula é infra, não detecção**: TODO catch de seção registra num array `infra` separado
-(não preenche `falhou`) e o main recusa com exit 3 ANTES de comparar o conjunto exato —
+(não preenche `falhou`) e o main recusa com exit 78 ANTES de comparar o conjunto exato —
 a raiz literal nunca é decidida por semântica de exceção. CLI desconhecida ⇒ exit 2;
-erro de infra (âncora não-única, fonte sumida, nominal não-verde) ⇒ exit 3.
+erro de infra (âncora não-única, fonte sumida, nominal não-verde) ⇒ exit 78.
 
 Instrumento: o gate sobe o `game.js` real numa cópia em memória do módulo (arquivo
 temporário criado/removido em `node_modules/.skinflow-*`, imports relativos reescritos
@@ -98,7 +98,7 @@ Probes (não são mutantes do placar; provam independência e a semântica de in
 | Probe | O que faz | Deve sair |
 |---|---|---|
 | `f3-entrega` | remove APENAS o `weaponSkinId: skinTP` do call real de `buildCharacterModel` (`_tpArmaSkin` preservado) | reprovar exatamente F3d e F3e (mesmo call site serve faca e AK); F3a/F3b verdes |
-| `throw-f4` | roda o bloco real de boot do main e injeta `throw` no meio do calc da seção F4; combinável com `--mutante=f4-missingawait` | exit 3 (infra) — a exceção nunca vira DETECTADO, mesmo com o mutante presente |
+| `throw-f4` | roda o bloco real de boot do main e injeta `throw` no meio do calc da seção F4; combinável com `--mutante=f4-missingawait` | exit 78 (infra) — a exceção nunca vira DETECTADO, mesmo com o mutante presente |
 
 **Limites declarados:** o marcador `new Game` do F4c é o nascimento logo após o bloco
 extraído — os guardas `lancamentoPerdeu` entre a barreira e o `new Game` real ficam fora

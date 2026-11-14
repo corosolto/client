@@ -341,7 +341,7 @@ function main() {
     parseSerializados({ measure, instrument, mutador: MUTADOR, egoScript: construirScriptEgo(input) });
   } catch (e) {
     console.error('RED-INFRA: código serializado não parseia como executável: ' + e.message);
-    process.exit(3);
+    process.exit(78);
   }
 
   const run = spawnSync(process.env.EGO_BROWSER_BIN || 'ego-browser', ['nodejs'], {
@@ -353,10 +353,10 @@ function main() {
     console.error(output.slice(0, 1500));
     console.error(output.slice(-1500));
     console.error('RED-INFRA: execução Ego falhou antes do veredito');
-    process.exit(3);
+    process.exit(78);
   }
   // Protocolo estrito (P2-1): resposta vazia/parcial/duplicada/inesperada NUNCA é GREEN.
-  const infra = (msg) => { console.error('RED-INFRA: ' + msg); process.exit(3); };
+  const infra = (msg) => { console.error('RED-INFRA: ' + msg); process.exit(78); };
   let mapas;
   try { ({ mapas } = JSON.parse(line.slice('BROWSER_CHECK_RESULT='.length))); }
   catch (e) { infra('payload do filho não é JSON válido: ' + e.message); }
@@ -399,7 +399,7 @@ function main() {
   }
   const semanticas = [];
   for (const r of mapas) {
-    if (r.invalidado || r.erros.length) { console.error(`RED-INFRA ${r.id}: erros de página recolhidos — ${r.erros.join(' | ')}`); process.exit(3); }
+    if (r.invalidado || r.erros.length) { console.error(`RED-INFRA ${r.id}: erros de página recolhidos — ${r.erros.join(' | ')}`); process.exit(78); }
     if (!r.nominalVerde) { semanticas.push(`${r.id}(nominal): dup=${r.nominal.duplicates} fora=${r.nominal.outside} sem-suporte=${r.nominal.unsupported} unknown=${r.nominal.unknown} divergente=${r.nominal.divergent} zero=${r.nominal.overlayPieces === 0 && r.nominal.arteEsperada}`); continue; }
     if (!r.mutante) { if (!predicadoVerde(r)) semanticas.push(`${r.id}(nominal): resumo final fora do contrato`); continue; }
     const esperado = MUTANTES[r.mutante].clausula;

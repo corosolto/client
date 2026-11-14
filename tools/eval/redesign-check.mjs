@@ -125,7 +125,7 @@ if (GRADE_MUTANTES.has(MUTANTE) && process.env.CSBR_REDESIGN_GRADE_CHILD !== '1'
     encoding: 'utf8', env: { ...process.env, CSBR_REDESIGN_GRADE_CHILD: child ? '1' : '' }, maxBuffer: 4 * 1024 * 1024,
   });
   const linhas = (r) => [...(r.stdout || '').matchAll(/^([✓✗]) ([A-Z]+[0-9]+) ·/gm)].map((m) => ({ id: m[2], verde: m[1] === '✓' }));
-  const infra = (msg) => { console.error('INFRA UIR13: ' + msg); process.exit(3); };
+  const infra = (msg) => { console.error('INFRA UIR13: ' + msg); process.exit(78); };
   const nominal = rodar([]), antes = linhas(nominal);
   if (nominal.error || nominal.signal || nominal.status !== 0 || !antes.some((r) => r.id === 'UIR13')
       || antes.some((r) => !r.verde) || new Set(antes.map((r) => r.id)).size !== antes.length)
