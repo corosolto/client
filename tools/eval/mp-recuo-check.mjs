@@ -83,7 +83,7 @@ async function roda({ yaw = 0, humano = false, vf = 0, vl = 0, giro = 0 }, semPa
   const recebido = { lat: 0, spd: 0 };
   { const up = m.ctrl.update.bind(m.ctrl); m.ctrl.update = (...a) => { recebido.spd = a[3] || 0; recebido.lat = a[5] || 0; return up(...a); }; }
   let clock = 100000;
-  const nc = makeNetcode({}, { meta: { snapshotHz: 20 }, startPing() {}, stopPing() {}, onSlot: null, onPersonagem: null });
+  const nc = makeNetcode({ camera: { position: new THREE.Vector3() } }, { meta: { snapshotHz: 20 }, startPing() {}, stopPing() {}, onSlot: null, onPersonagem: null });
   clearInterval(nc._nsTimer);
   if (MUT === 'yawinstante') nc.__mutYawInstante = true;
   nc._now = () => clock;

@@ -94,15 +94,28 @@ async function abrir() {
     if (depois === antes) throw new Error(`mutante ${MUT} não aplicou em ${r.request().url()}`);
     await r.fulfill({ response: res, body: depois });
   });
-  if (MUT === 'pega-morta') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('solveCCDIK(this.ikL.chain, this.ikL.end, _ikTgt, { iterations: 12, endOffset: this.ikL.endOffset });', 'void _ikTgt;'));
-  if (MUT === 'torso-mudo') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('_deltaMundo(torso.spines[0], cosY, 0, -sinY, k * 0.20);', 'void k; void cosY; void sinY;'));
-  if (MUT === 'lean-morto') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace(') * 0.12;', ') * 0;'));
-  if (MUT === 'flinch-mudo') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('this._flinchDur = 0.18;', 'this._flinchDur = 0;'));
-  if (MUT === 'agachado-estatua') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('{ this._fireDur = 0.12; this._fireT = 0; return; }', '{ return; }'));
-  if (MUT === 'ar-correndo') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('} else if (this._ar && this.actions.jump) {', '} else if (false) {'));
-  if (MUT === 'quadril-colado') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('const teto = 0.61;', 'const teto = 0;'));
-  if (MUT === 'reload-sem-clipe') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('this._reloadClip = this._playUpper(', 'this._reloadClip = false && this._playUpper('));
-  if (MUT === 'hit-sem-clipe') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('this._hitClip = this._playUpper(', 'this._hitClip = false && this._playUpper('));
+  const mutaGlb = (t) => {
+    if (MUT === 'pega-morta') return t.replace('solveCCDIK(this.ikL.chain, this.ikL.end, _ikTgt, { iterations: 12, endOffset: this.ikL.endOffset });', 'void _ikTgt;');
+    if (MUT === 'torso-mudo') return t.replace('_deltaMundo(torso.spines[0], cosY, 0, -sinY, k * 0.20);', 'void k; void cosY; void sinY;');
+    if (MUT === 'lean-morto') return t.replace(') * 0.12;', ') * 0;');
+    if (MUT === 'flinch-mudo') return t.replace('this._flinchDur = 0.18;', 'this._flinchDur = 0;');
+    if (MUT === 'agachado-estatua') return t.replace('{ this._fireDur = 0.12; this._fireT = 0; return; }', '{ return; }');
+    if (MUT === 'ar-correndo') return t.replace('} else if (this._ar && this.actions.jump) {', '} else if (false) {');
+    if (MUT === 'quadril-colado') return t.replace('const teto = 0.61;', 'const teto = 0;');
+    if (MUT === 'reload-sem-clipe') return t.replace('this._reloadClip = this._playUpper(', 'this._reloadClip = false && this._playUpper(');
+    if (MUT === 'hit-sem-clipe') return t.replace('this._hitClip = this._playUpper(', 'this._hitClip = false && this._playUpper(');
+    return t;
+  };
+  if (['pega-morta', 'torso-mudo', 'lean-morto', 'flinch-mudo', 'agachado-estatua', 'ar-correndo', 'quadril-colado', 'reload-sem-clipe', 'hit-sem-clipe'].includes(MUT)) {
+    await reescreve(/\/js\/glbchars\.js(?:\?|$)/, mutaGlb);
+  }
+  await page.route(/\/js\/glbchars-sempack-eval\.js(?:\?|$)/, async (r) => {
+    const res = await fetch(`${BASE}/js/glbchars.js`);
+    const antes = await res.text();
+    const depois = mutaGlb(antes).replace("assetUrl('models/anims/extras.glb')", "assetUrl('models/anims/extras-ausente.glb')");
+    if (depois === antes) throw new Error('variante sem pack não foi aplicada');
+    await r.fulfill({ status: res.status, headers: { 'content-type': 'text/javascript' }, body: depois });
+  });
   if (MUT === 'lod-cego') await reescreve(/\/js\/game\.js/, (t) => t.replace('const passo = distCam > 45 ? 0.1 : (distCam > 25 ? 0.05 : 0);', 'const passo = 0;'));
   if (MUT === 'reload-mudo') await reescreve(/\/js\/game\.js/, (t) => t.split('b.mesh?.ctrl?.reload?.(Wb.reload || 2.4); ').join('').split(' b.mesh?.ctrl?.reload?.(Wb.reload || 2.4);').join(''));
   // Diagnóstico de boot somente na falha; limites do teste permanecem os mesmos.
@@ -185,15 +198,15 @@ async function abrir() {
 /* ---- AN1–AN3: até 8 bots; cada cláusula usa um rig que consiga exercê-la ----
    Dois caminhos medidos em corpos separados, nunca misturados por flag:
    · produção (pack extras.glb carregado): AN12 recarga com reload_rifle, AN13 hit_*;
-   · fallback procedural (o MESMO glbchars.js importado como outra instância de módulo,
-     ?sempack=1, cujo pack nunca chega dentro do laço síncrono): AN1, AN2 e AN6.
+   · fallback procedural (o MESMO glbchars.js servido como variante de teste,
+     com extras.glb apontado para um ativo inexistente): AN1, AN2 e AN6.
      A cláusula exige que esse corpo não tenha tocado clipe nenhum. */
 const { page, fechar } = await abrir();
 const m = await page.evaluate(async () => {
   const g = window.__game;
   const T = await import('/vendor/three.module.js');
   const { buildCharacterModel } = await import('/js/glbchars.js');
-  const S = await import('/js/glbchars.js?sempack=1');
+  const S = await import('/js/glbchars-sempack-eval.js');
   const V = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
   const cand = (g.bots || []).filter(x => x.mesh?.ctrl?.ikL && x.mesh?.ctrl?.torso?.spines?.length && x.alive).slice(0, 8);
   if (!cand.length) return { erro: 'sem bot com arma de 2 mãos' };
