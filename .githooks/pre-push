@@ -24,23 +24,51 @@ set -uo pipefail
 # lock legado morto fica intacto e não pode bloquear pushes novos.
 if [ "${CSBRASIL_PREPUSH_LOCKED:-0}" != 1 ]; then
   legado=/tmp/csbrasil-prepush.lock
+  idade_processo() {
+    local pid="$1" decorrido dias=0 horas minutos segundos
+    decorrido=$(ps -p "$pid" -o etime= 2>/dev/null | tr -d ' ')
+    [ -n "$decorrido" ] || return 1
+    case "$decorrido" in
+      *-*) dias=${decorrido%%-*}; decorrido=${decorrido#*-} ;;
+    esac
+    IFS=: read -r horas minutos segundos <<< "$decorrido"
+    if [ -z "${segundos:-}" ]; then segundos=$minutos; minutos=$horas; horas=0; fi
+    [[ "$dias" =~ ^[0-9]+$ && "$horas" =~ ^[0-9]+$ && "$minutos" =~ ^[0-9]+$ && "$segundos" =~ ^[0-9]+$ ]] || return 1
+    printf '%s\n' $((10#$dias * 86400 + 10#$horas * 3600 + 10#$minutos * 60 + 10#$segundos))
+  }
+
   dono_legado=
   assinatura_legada=
+  legado_ativo=0
   if [ -d "$legado" ]; then
     dono_legado=$(cat "$legado/pid" 2>/dev/null)
+    criado_legado=$(stat -f %m "$legado" 2>/dev/null || stat -c %Y "$legado" 2>/dev/null)
+    idade_dono=$(idade_processo "$dono_legado" 2>/dev/null || true)
+    if [[ "$dono_legado" =~ ^[0-9]+$ && "$criado_legado" =~ ^[0-9]+$ && "$idade_dono" =~ ^[0-9]+$ ]] \
+        && kill -0 "$dono_legado" 2>/dev/null \
+        && [ $((idade_dono + 2)) -ge $(($(date +%s) - criado_legado)) ]; then
+      legado_ativo=1
+      assinatura_legada=$(ps -p "$dono_legado" -o lstart= 2>/dev/null)
+    fi
   elif [ -f "$legado" ]; then
     dono_legado=$(head -n1 "$legado" 2>/dev/null)
     assinatura_legada=$(tail -n1 "$legado" 2>/dev/null)
+    if [[ "$dono_legado" =~ ^[0-9]+$ ]] && kill -0 "$dono_legado" 2>/dev/null \
+        && [ "$(ps -p "$dono_legado" -o lstart= 2>/dev/null)" = "$assinatura_legada" ]; then
+      legado_ativo=1
+    fi
   fi
-  if [[ "$dono_legado" =~ ^[0-9]+$ ]] && kill -0 "$dono_legado" 2>/dev/null \
-      && { [ -z "$assinatura_legada" ] || [ "$(ps -p "$dono_legado" -o lstart= 2>/dev/null)" = "$assinatura_legada" ]; }; then
+  if [ "$legado_ativo" = 1 ]; then
     echo "pre-push: lock legado ainda ativo (pid $dono_legado); esperando a migração"
     espera_legada=0
-    while kill -0 "$dono_legado" 2>/dev/null && [ "$espera_legada" -lt 2400 ]; do
+    while kill -0 "$dono_legado" 2>/dev/null \
+        && [ "$(ps -p "$dono_legado" -o lstart= 2>/dev/null)" = "$assinatura_legada" ] \
+        && [ "$espera_legada" -lt 2400 ]; do
       sleep 10
       espera_legada=$((espera_legada + 10))
     done
-    if kill -0 "$dono_legado" 2>/dev/null; then
+    if kill -0 "$dono_legado" 2>/dev/null \
+        && [ "$(ps -p "$dono_legado" -o lstart= 2>/dev/null)" = "$assinatura_legada" ]; then
       echo "pre-push: lock legado ativo por 40 min; abortei sem rodar portões concorrentes" >&2
       exit 1
     fi
