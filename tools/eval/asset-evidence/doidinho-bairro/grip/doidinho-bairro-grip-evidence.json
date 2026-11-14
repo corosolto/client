@@ -3,7 +3,7 @@
   "characterSha256": "9d65fc624e894f23f1e029309dca0130e68a582bf70a172bfd09804fc53a6153",
   "weapon": "p90",
   "weaponFile": "public/models/weapons/p90.glb",
-  "weaponSha256": "ffa8c0396cf834fd25064e28b98c56d48414151c7c5e68e4c911eddd96929fe4",
+  "weaponSha256": "6fda87809ab60e1fea7a1e7bf5ebc5355e6ee70d595f7c4610ed88e847560aa2",
   "animations": {
     "walk": {
       "file": "public/models/anims/doidinho-bairro/walk.glb",
