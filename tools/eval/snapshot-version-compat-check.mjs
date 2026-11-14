@@ -6,6 +6,7 @@ const sourceUrl=new URL('../../public/js/netcodec.js',import.meta.url);
 let source=fs.readFileSync(sourceUrl,'utf8');
 const mutant=process.argv.find(arg=>arg.startsWith('--mutante='))?.slice(10)||null;
 const mutations={
+ 'namespace-antigo':["['coro-snapshot-v9', 'coro-snapshot-v8', 'coro-snapshot-v7'","['coro-snapshot-v9', 'coro-snapshot-v7'"],
  'objective-no-v7':['if (version >= 8) w.json(snapshot.objective);','if (version >= 7) w.json(snapshot.objective);'],
  'sem-mantle':['      if (version >= 7) {\n        const mantle = Number.isFinite(ent.mantleF) ? Math.max(0, Math.min(1, ent.mantleF)) : null;\n        w.u8(mantle == null ? 0 : 1 + Math.round(mantle * 254));\n      }',''],
  'limite-v7':["if (ents.length > (version >= 8 ? 80 : MAX_ENTITIES))", "if (ents.length > (version >= 7 ? 80 : MAX_ENTITIES))"],
@@ -38,6 +39,12 @@ for(const version of [2,3,4,5,6,7])check('published v'+version+' preserves exact
   assert.deepEqual(current.decodeSnapshot(oldFrame),published.decodeSnapshot(oldFrame),'new client decodes published server');
   assert.deepEqual(published.decodeSnapshot(newFrame),current.decodeSnapshot(newFrame),'published client decodes new server');
  }
+});
+check('v9 and the objective extension keep distinct preferred namespaces',()=>{
+ assert.deepEqual(current.SNAPSHOT_PROTOCOLS,['coro-snapshot-v9','coro-snapshot-v8',...published.SNAPSHOT_PROTOCOLS]);
+ assert.equal(current.CLIENT_SNAPSHOT_PROTOCOL,'coro-snapshot-v9');
+ assert.equal(current.encodeSnapshot(snapshot([]),9)[4],9);
+ assert.equal(current.encodeSnapshot(snapshot([]),8)[4],8);
 });
 check('v8 preserves objective uint32 NPC third team eighty bodies and mantle simultaneously',()=>{
  const ents=Array.from({length:80},(_,i)=>entity(i+65536,i===79?'J':i%2?'B':'E',i%3/2));
