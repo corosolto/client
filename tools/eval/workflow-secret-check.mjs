@@ -114,8 +114,45 @@ for (let [nome, texto] of fontes) {
   }
 }
 
+/* ---- WSEC3: metadata usa token de leitura com escopos de checks/statuses ---- */
+function falhasMetadata(texto) {
+  const locais = [];
+  let workflow;
+  try {
+    workflow = parseWorkflow(texto, 'csbrasil-bot-pr-classify.yml');
+  } catch (error) {
+    return [`YAML inválido: ${error.message}`];
+  }
+  const permissoes = workflow.permissions || {};
+  if (permissoes.checks !== 'read') locais.push('token do repositório sem checks: read');
+  if (permissoes.statuses !== 'read') locais.push('token do repositório sem statuses: read');
+  const leituras = Object.values(jobsDe(workflow)).flatMap((job) => passosDe(job))
+    .map(runDe)
+    .filter((run) => /gh pr (?:view|list)/.test(run) && /statusCheckRollup/.test(run));
+  if (leituras.length !== 3) locais.push(`esperava 3 leituras de metadata completa, encontrou ${leituras.length}`);
+  leituras.forEach((run, i) => {
+    if (!/GH_TOKEN="\$\{\{ github\.token \}\}"\s+gh pr (?:view|list)/.test(run)) {
+      locais.push(`leitura ${i + 1} não usa github.token`);
+    }
+  });
+  return locais;
+}
+{
+  const texto = readFileSync(join(DIR, 'csbrasil-bot-pr-classify.yml'), 'utf8');
+  falhasMetadata(texto).forEach((falha) => falhas.push(`WSEC3 ${falha}`));
+  const mutantes = {
+    'sem-checks-read': texto.replace('  checks: read\n', ''),
+    'sem-statuses-read': texto.replace('  statuses: read\n', ''),
+    'metadata-volta-ao-pat': texto.replace('GH_TOKEN="${{ github.token }}" gh pr view', 'gh pr view'),
+  };
+  for (const [nome, mutado] of Object.entries(mutantes)) {
+    if (!falhasMetadata(mutado).length) falhas.push(`WSEC3 mutante ${nome} não foi detectado`);
+  }
+}
+
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m WSEC1 nenhum portão reprova PR de fork por secret que aquele gatilho não pode ter (${arquivos.length} workflows)`);
+if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m WSEC3 metadata completa usa github.token com checks/statuses read; 3/3 mutantes detectados');
 if (MUT && !falhas.length) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);
   falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso (MC1)
