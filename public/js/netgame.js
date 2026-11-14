@@ -6,8 +6,8 @@ import { WEAPONS, supDeCod, anguloDeDisparo } from './game.js';
 import { frase } from './i18n.js';
 import { preloadEyewearAssets } from './eyewear.js';
 import { preloadCosmeticAssets } from './glbchars.js';
-import { InterpolationClock, ensureEntityBuffer, pushEntitySample, sampleEntityBuffer } from './net-interpolation.js';
 import { emoteInfo } from './data/emote-catalog.js';
+import { InterpolationClock, ensureEntityBuffer, pushEntitySample, sampleEntityBuffer } from './net-interpolation.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
 

@@ -4,113 +4,190 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
-import { encodeSnapshot, MAX_SNAPSHOT_BYTES } from '../../public/js/netcodec.js';
-const root=fileURLToPath(new URL('../../',import.meta.url));
-const selected=(process.argv.find(a=>a.startsWith('--mutante='))||'').slice(10);
-const guard='m.protocolVersion < 8 || m.protocolVersion !== snapshotVersionForProtocol(tp.protocolo)';
-const mutations={
-  'welcome-version': [`if (m.type === 'welcome') {\n          if (${guard})`,`if (m.type === 'welcome') {\n          if (false)`,['N3','N5','N9']],
-  'partida-version': [`} else if (m.type === 'partida') {\n          if (${guard})`,`} else if (m.type === 'partida') {\n          if (false)`,['N4']],
-  'attempt-guard': ['const ativo = () => !ended && this.tp === tp;','const ativo = () => true;',['N4','N9']],
-  'ws-selection': ['if (!SNAPSHOT_PROTOCOLS.includes(this.ws.protocol)) {', 'if (false) {', ['N8']],
-  'oferta-so-v9': ['new WebSocket(this.url, SNAPSHOT_PROTOCOLS)', 'new WebSocket(this.url, [CLIENT_SNAPSHOT_PROTOCOL])', ['N2']],
-  'early-close-notify': ['if (accepted) this.onClose?.();', 'this.onClose?.();', ['N10','N9']],
-  'callback-before-close': ['tp.fechar(codigo, motivo);\n        if (accepted) this.onClose?.();', 'if (accepted) this.onClose?.();\n        tp.fechar(codigo, motivo);', ['N4']],
-  'sem-decoder': ['m = binary ? decodeSnapshot(dados) : JSON.parse(dados);', 'm = JSON.parse(dados);', ['N11']],
-  'sem-arraybuffer': ["this.ws.binaryType = 'arraybuffer';", '', ['N11']],
-  'sem-teto': ['if (binario && bytes > MAX_SNAPSHOT_BYTES)', 'if (false)', ['N12']],
-  'input-confiavel': ["this.tp.enviarInseguro(JSON.stringify({ type: 'input'", "this.tp.enviar(JSON.stringify({ type: 'input'", ['N13']],
-  'sem-canal-inseguro': ['enviarInseguro(dados) { return this.enviar(dados); }', '', ['N13']],
+import { createHash } from 'node:crypto';
+import { CLIENT_SNAPSHOT_PROTOCOL, SNAPSHOT_PROTOCOLS } from '../../public/js/netcodec.js';
+const V9 = CLIENT_SNAPSHOT_PROTOCOL;
+const V8 = 'coro-snapshot-v8';
+const IDS = ['N1','N2','N3','N4','N5','N6','N7','N8','N9','N10','N11','N12','N13','N14','N15','N16','N17','N18','N19','N20','N21','N22'];
+const sha = b => createHash('sha256').update(b).digest('hex');
+const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+const flush = () => new Promise(resolve => setImmediate(resolve));
+const specs = {
+  'legacy-offer': { failed:['N1','N11'], file:'transporte.js', edits:[
+    ['new WebSocket(this.url, SNAPSHOT_PROTOCOLS)','new WebSocket(this.url, [CLIENT_SNAPSHOT_PROTOCOL])']] },
+  'ws-selection': { failed:['N3','N4'], file:'transporte.js', edits:[
+    ['if (!SNAPSHOT_PROTOCOLS.includes(this.ws.protocol))', 'if (false && !SNAPSHOT_PROTOCOLS.includes(this.ws.protocol))']] },
+  'welcome-version': { failed:['N6','N7','N12','N15','N16'], file:'net.js', edits:[
+    ["if (m.type === 'welcome') {\n          if (m.protocolVersion < 8 || m.protocolVersion !== snapshotVersionForProtocol(tp.protocolo))", "if (m.type === 'welcome') {\n          if (false && (m.protocolVersion < 8 || m.protocolVersion !== snapshotVersionForProtocol(tp.protocolo)))"]] },
+  'partida-version': { failed:['N9','N10','N17','N18','N21'], file:'net.js', edits:[
+    ["} else if (m.type === 'partida') {\n          if (m.protocolVersion < 8 || m.protocolVersion !== snapshotVersionForProtocol(tp.protocolo))", "} else if (m.type === 'partida') {\n          if (false && (m.protocolVersion < 8 || m.protocolVersion !== snapshotVersionForProtocol(tp.protocolo)))"]] },
+  'legacy-wt-request': { failed:['N5','N11'], file:'net.js', edits:[
+    ['encodeURIComponent(CLIENT_SNAPSHOT_PROTOCOL)', "encodeURIComponent('coro-snapshot-v7')"]] },
+  'attempt-guard': { failed:['N9','N10','N12','N17','N18','N21'], file:'net.js', edits:[
+    ['const ativo = () => !ended && this.tp === tp;', 'const ativo = () => true;']] },
+  'early-close-notify': { failed:['N20'], file:'net.js', edits:[
+    ["assenta(reject, new Error('closed'));\n            if (accepted) this.onClose?.();", "assenta(reject, new Error('closed'));\n            this.onClose?.();"]] },
+  'callback-before-close': { failed:['N21'], file:'net.js', edits:[
+    ['tp.fechar(codigo, motivo);\n        if (accepted) this.onClose?.();', 'if (accepted) this.onClose?.();\n        tp.fechar(codigo, motivo);']] },
+  'failover-notify': { failed:['N11'], file:'net.js', edits:[
+    ['this.tp = null; this.connected = false;\n        try { console.info', 'this.tp = null; this.connected = false; this.onClose?.();\n        try { console.info']] },
+  'accepted-close-notify': { failed:['N22'], file:'net.js', edits:[
+    ["assenta(reject, new Error('closed'));\n            if (accepted) this.onClose?.();", "assenta(reject, new Error('closed'));"]] },
 };
-if(selected&&!mutations[selected])throw Error('mutante desconhecido: '+selected);
-const TRANSPORTE=new Set(['ws-selection','oferta-so-v9','sem-arraybuffer','sem-teto','sem-canal-inseguro']);
-const flush=()=>new Promise(r=>setImmediate(r));
-const SNAPSHOT={type:'snapshot',room:'livre',tick:4242,t:12.5,state:'live',owner:null,players:2,spectators:0,livre:{E:4,B:4},timeLeft:90,roundNum:1,scoreE:0,scoreB:0,roundKillsE:0,roundKillsB:0,
-  ents:[0,1].map(i=>({id:10+i,name:`J${i}`,team:i?'B':'E',bot:i,x:i,y:0,z:-i,yaw:0,pitch:0,hp:100,alive:true,weapon:'ak',fire:0,fireN:0,voice:0,voiceN:0,k:0,d:0,respawnIn:0}))};
-const saved=globalThis.WebSocket;
-const metadata=(type,protocolVersion,id=1)=>({type,protocolVersion,yourEnt:id,yourTeam:'E',espectador:false,events:1});
-async function measure(NetClient){
-  const rows=[];
-  // Servidor honesto só seleciona protocolo oferecido; `hostil` (N8) seleciona mesmo sem oferta.
-  async function scenario(id,protocol,version,action,hostil=false){
-    let ws;
-    globalThis.WebSocket=class {
-      constructor(url,offered){this.protocol=hostil||offered.includes(protocol)?protocol:'';this.offered=offered;this.readyState=0;this.closes=0;this.binaryType='blob';this.sent=[];ws=this;
-        queueMicrotask(()=>{this.readyState=1;this.onopen?.();this.connectedAfterOpen=client.connected;if(version==='close')this.close();else if(this.readyState===1&&version!==null)this.emit(metadata('welcome',version));});}
-      emit(m){this.onmessage?.({data:JSON.stringify(m)});}
-      // Como o navegador: frame binário vira Blob, a menos que o transporte peça ArrayBuffer.
-      emitBinary(bytes){const buf=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);this.onmessage?.({data:this.binaryType==='arraybuffer'?buf:new Blob([buf])});}
-      send(d){this.sent.push(d);}
-      close(code,reason){this.closes++;this.closeCode=code;this.closeReason=reason;this.readyState=3;queueMicrotask(()=>this.onclose?.());}
-    };
-    const client=new NetClient('ws://boundary/ws');let notifications=0;
-    client.onClose=()=>notifications++;
-    const result=await client.connect(30).then(()=>true,()=>false);
-    try{rows.push({id,ok:await action(client,ws,result,()=>notifications)});}finally{client.close();await flush();}
-  }
-  await scenario('N1','coro-snapshot-v9',9,(n,w,ok)=>ok&&n.connected&&n.meta.protocolVersion===9&&w.offered[0]==='coro-snapshot-v9');
-  await scenario('N2','coro-snapshot-v8',8,(n,w,ok)=>ok&&n.connected&&n.meta.protocolVersion===8&&w.offered.includes('coro-snapshot-v8'));
-  await scenario('N3','coro-snapshot-v9',8,(n,w,ok)=>!ok&&!n.connected&&w.closes>0);
-  await scenario('N4','coro-snapshot-v9',9,async(n,w,ok)=>{
-    if(!ok)return false;
-    const old=n.meta;let delivered=0,closed=0,closedBeforeSocket=false;n.onPartida=()=>delivered++;n.onClose=()=>{closed++;closedBeforeSocket ||= w.closes===0;};
-    w.emit(metadata('partida',8,2));w.emit(metadata('partida',9,3));await flush();
-    return n.meta===old&&delivered===0&&!n.connected&&w.closes===1&&closed===1&&!closedBeforeSocket;
-  });
-  await scenario('N5','coro-snapshot-v7',7,(n,w,ok)=>!ok&&!n.connected&&w.closes>0);
-  await scenario('N6','',9,(n,w,ok)=>!ok&&!n.connected&&w.closes>0);
-  await scenario('N7','coro-snapshot-v9',null,(n,w,ok)=>!ok&&!n.connected&&w.closes>0);
-  await scenario('N8','coro-snapshot-v99',null,(n,w,ok)=>!ok&&!n.connected&&w.closes>0&&w.connectedAfterOpen===false,true);
-  await scenario('N9','coro-snapshot-v9',8,(n,w,ok,notifications)=>!ok&&!n.connected&&notifications()===0);
-  await scenario('N10','coro-snapshot-v9','close',(n,w,ok,notifications)=>!ok&&!n.connected&&w.closes>0&&notifications()===0);
-  // Contrato transporte → codec (antes regex no netcodec-check): snapshot binário chega como
-  // ArrayBuffer e passa pelo decodeSnapshot real; frame acima do teto fecha 1009 antes do decoder;
-  // input sai pelo canal que tolera perda (o que vira datagrama no WebTransport).
-  await scenario('N11','coro-snapshot-v9',9,async(n,w,ok)=>{
-    if(!ok)return false;
-    w.emitBinary(encodeSnapshot(SNAPSHOT,9));await flush();
-    return n.connected&&n.snap?.tick===SNAPSHOT.tick&&n.snap.ents.length===SNAPSHOT.ents.length&&w.closes===0;
-  });
-  await scenario('N12','coro-snapshot-v9',9,async(n,w,ok)=>{
-    if(!ok)return false;
-    w.emitBinary(new Uint8Array(MAX_SNAPSHOT_BYTES+1));await flush();
-    return !n.connected&&n.snap==null&&w.closes===1&&w.closeCode===1009&&w.closeReason==='snapshot_too_large';
-  });
-  await scenario('N13','coro-snapshot-v9',9,async(n,w,ok)=>{
-    if(!ok)return false;
-    let inseguro=0;const original=n.tp.enviarInseguro;
-    if(typeof original!=='function')return false;
-    n.tp.enviarInseguro=function(d){inseguro++;return original.call(this,d);};
-    const seq=n.sendInput({f:1});
-    return seq===1&&inseguro===1&&w.sent.length===1&&JSON.parse(w.sent[0]).type==='input';
-  });
-  return rows.filter(r=>!r.ok).map(r=>r.id).sort();
+class Infra extends Error {}
+function replaceOne(s,a,b) { if (a === b || s.split(a).length !== 2) throw new Infra('anchor_count:' + a.slice(0,90)); return s.replace(a,b); }
+let root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..'), selected = '', jsonFile = '';
+for (const a of process.argv.slice(2)) {
+  if (a.startsWith('--root=') && path.isAbsolute(a.slice(7))) root = a.slice(7);
+  else if (a.startsWith('--mutante=') && !selected && Object.hasOwn(specs,a.slice(10))) selected = a.slice(10);
+  else if (a.startsWith('--json=') && !jsonFile && path.isAbsolute(a.slice(7))) jsonFile = a.slice(7);
+  else { console.error('CLI inválida'); process.exit(2); }
 }
-async function run(mutant){
-  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'rede3p-negotiation-'));
-  try{
-    let source=fs.readFileSync(path.join(root,'public/js/net.js'),'utf8');
-    let transport=fs.readFileSync(path.join(root,'public/js/transporte.js'),'utf8');
-    if(mutant){
-      const [a,b]=mutations[mutant],isTransport=TRANSPORTE.has(mutant);
-      let target=isTransport?transport:source;
-      const count=mutant==='early-close-notify'?2:1;
-      if(target.split(a).length!==count+1)throw Error('INFRA: âncora ausente/ambígua: '+mutant);
-      target=target.replaceAll(a,b);
-      if(isTransport)transport=target;else source=target;
+if (Object.keys(process.env).some(k => k.startsWith('COROSOLTO_NEGOTIATION_'))) { console.error('Ambiente interno não aceito'); process.exit(2); }
+const sourceNames = ['net.js','nos-rede.js','transporte.js','netcodec.js'];
+let sourceBytes, sourcePins;
+const processDeadline = setTimeout(() => { console.error('INFRA: harness deadline60000ms; no semantic detection credit'); process.exit(3); }, 60000);
+const report = { schema:'client-snapshot-negotiation/1', scope:'real modules, browser boundaries faked; no backend/QUIC/browser/codec approval', runs:[] };
+function metadata(type, version, id=1) { return { type, ...(version === undefined ? {} : {protocolVersion:version}), yourEnt:id, yourTeam:'E', espectador:false, roster:[], partida:id }; }
+function frame(m) {
+  const b = new TextEncoder().encode(JSON.stringify(m)), out = new Uint8Array(b.length+5);
+  new DataView(out.buffer).setUint32(0,b.length+1); out[4]=0; out.set(b,5); return out;
+}
+async function measure(NetClient, TransporteWT, id, conf, test) {
+  const names = ['WebSocket','WebTransport','setTimeout','clearTimeout','location'];
+  const saved = Object.fromEntries(names.map(k => [k,Object.getOwnPropertyDescriptor(globalThis,k)]));
+  const savedInfo=console.info, savedWarn=console.warn;
+  const timers=new Map(), sockets=[], quics=[], clients=[]; let timerId=0, closes=0;
+  const wsVersion = conf.wsVersion === 'missing' ? undefined : conf.wsVersion ?? 9;
+  const wtVersion = conf.wtVersion === 'missing' ? undefined : conf.wtVersion ?? 9;
+  class FakeWS {
+    constructor(url,protocols) {
+      this.url=url; this.protocols=protocols; this.protocol=conf.wsProtocol ?? V9; this.readyState=0; this.closeCalls=[]; sockets.push(this);
+      queueMicrotask(() => { this.readyState=1; this.onopen?.(); if (this.readyState===1 && !conf.noWelcome) this.emit(metadata('welcome',wsVersion)); });
     }
-    transport=transport.replace(/from '\.\/([^']+)'/g,(_m,file)=>`from '${pathToFileURL(path.join(root,'public/js',file)).href}'`);
-    const transportFile=path.join(temp,'transporte.mjs');fs.writeFileSync(transportFile,transport);
-    source=source.replace(/from '\.\/([^']+)'/g,(_m,file)=>`from '${pathToFileURL(file==='transporte.js'?transportFile:path.join(root,'public/js',file)).href}'`);
-    const file=path.join(temp,'net.mjs');fs.writeFileSync(file,source);
-    const {NetClient}=await import(pathToFileURL(file).href);
-    return await measure(NetClient);
-  }finally{fs.rmSync(temp,{recursive:true});}
+    emit(m) { this.onmessage?.({data:JSON.stringify(m)}); }
+    send() {}
+    close(code,reason) { this.closeCalls.push([code,reason]); if(this.readyState===3)return; this.readyState=3; queueMicrotask(()=>this.onclose?.()); }
+  }
+  class FakeWT {
+    constructor(url) {
+      this.url=url; this.closeCalls=[]; quics.push(this);
+      this.closed=new Promise(r=>{this.resolveClosed=r;});
+      let reliable, datagram;
+      this.readable=new ReadableStream({start:c=>{reliable=c;}}); this.reliable=reliable;
+      this.datagrams={readable:new ReadableStream({start:c=>{datagram=c;}}),writable:new WritableStream({write(){}})};
+      this.datagram=datagram;
+      const stream={readable:this.readable,writable:new WritableStream({write(){}})};
+      this.incomingBidirectionalStreams=new ReadableStream({start(c){c.enqueue(stream);c.close();}});
+      this.ready=conf.wtFailure ? Promise.reject(new Error('wt_boundary_failure')) : Promise.resolve();
+      if (!conf.wtFailure && !conf.noWelcome) queueMicrotask(()=>this.emit(metadata('welcome',wtVersion)));
+    }
+    emit(m) { this.reliable.enqueue(frame(m)); }
+    // Deliberately delayed closed/readers model queued callbacks after close request.
+    close(code) { this.closeCalls.push(code); }
+    finish() { this.resolveClosed(); try{this.reliable.close();}catch{} try{this.datagram.close();}catch{} }
+  }
+  try {
+    Object.defineProperty(globalThis,'WebSocket',{configurable:true,writable:true,value:FakeWS});
+    Object.defineProperty(globalThis,'WebTransport',{configurable:true,writable:true,value:FakeWT});
+    Object.defineProperty(globalThis,'setTimeout',{configurable:true,writable:true,value:(fn)=>{const n=++timerId;timers.set(n,fn);return n;}});
+    Object.defineProperty(globalThis,'clearTimeout',{configurable:true,writable:true,value:n=>timers.delete(n)});
+    Object.defineProperty(globalThis,'location',{configurable:true,writable:true,value:{search:''}});
+    console.info=()=>{}; console.warn=()=>{};
+    const make = (wt=false) => {const n=new NetClient('ws://boundary/ws',wt ? {wt:'https://boundary/wt'} : {}); n.onClose=()=>closes++; clients.push(n);return n;};
+    const outcome = p => p.then(value=>({ok:true,value}),error=>({ok:false,error:String(error?.message||error)}));
+    const directWT = n => outcome(n._conectar(8000,()=>new TransporteWT('https://boundary/wt?sp='+V9)));
+    const evidence={};
+    const ok=await test({make,outcome,directWT,sockets,quics,timers,evidence,getCloses:()=>closes,resetCloses:()=>{closes=0;}});
+    if(typeof ok!=='boolean')throw new Infra(id+': nonboolean oracle');
+    return {id,ok,evidence,remainingTimers:timers.size};
+  } finally {
+    for(const n of clients) {try{n.close();}catch{}}
+    for(const w of quics)w.finish();
+    await flush();
+    for(const k of names) {if(saved[k])Object.defineProperty(globalThis,k,saved[k]);else delete globalThis[k];}
+    console.info=savedInfo;console.warn=savedWarn;
+  }
 }
-try{
-  const nominal=await run('');if(nominal.length)throw Error('nominal vermelho: '+nominal);
-  const failed=selected?await run(selected):[],expected=selected?mutations[selected][2]:[];
-  const pass=JSON.stringify(failed)===JSON.stringify(expected);
-  console.log(JSON.stringify({status:pass?(selected?'DETECTED':'GREEN'):'RED',cases:13,mutant:selected,failed,expected}));
-  process.exitCode=pass?0:1;
-}finally{globalThis.WebSocket=saved;}
+async function run(mutant) {
+  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'client-negotiation-'));
+  try {
+    const sources={...sourceBytes};
+    if(mutant)for(const [a,b] of specs[mutant].edits)sources[specs[mutant].file]=replaceOne(sources[specs[mutant].file],a,b);
+    const absolute = (s,isNet) => s.replace(/from '\.\/([^']+)'/g,(_m,f)=>`from '${isNet && f==='transporte.js' ? pathToFileURL(path.join(temp,'transporte.mjs')).href : pathToFileURL(path.join(root,'public/js',f)).href}'`);
+    fs.writeFileSync(path.join(temp,'transporte.mjs'),absolute(sources['transporte.js'],false));
+    fs.writeFileSync(path.join(temp,'net.mjs'),absolute(sources['net.js'],true));
+    let NetClient,TransporteWT;
+    try {({NetClient}=await import(pathToFileURL(path.join(temp,'net.mjs')).href));({TransporteWT}=await import(pathToFileURL(path.join(temp,'transporte.mjs')).href));}
+    catch(e){throw new Infra('module_import:'+String(e));}
+    const rows=[];
+    const add=(id,c,t)=>measure(NetClient,TransporteWT,id,c,t).then(r=>rows.push(r));
+    const connect=async x=>{const n=x.make();const r=await x.outcome(n.connect());return {n,r};};
+    const rejected=async (x,erro='protocolo_incompativel',forcarTimeout=false)=>{
+      const pending=connect(x);
+      await flush();
+      if(forcarTimeout)for(const fn of [...x.timers.values()])fn();
+      const {n,r}=await pending;
+      await flush();
+      x.evidence.result=r;
+      return !r.ok&&r.error===erro&&n.meta===null&&x.sockets[0].closeCalls.length>0&&x.timers.size===0;
+    };
+    await add('N1',{},async x=>{const {r}=await connect(x);return r.ok&&equal(x.sockets[0].protocols,SNAPSHOT_PROTOCOLS);});
+    await add('N2',{wsProtocol:V8,wsVersion:8},async x=>{const {n,r}=await connect(x);return r.ok&&n.meta.protocolVersion===8&&n.connected&&x.timers.size===0;});
+    await add('N3',{wsProtocol:'coro-snapshot-v999',noWelcome:true},x=>rejected(x,'subprotocolo_nao_negociado',true));
+    await add('N4',{wsProtocol:'',noWelcome:true},x=>rejected(x,'subprotocolo_nao_negociado',true));
+    await add('N5',{},async x=>new URL(x.make(true).wtUrl).searchParams.get('sp')===V9);
+    for(const [id,wtVersion] of [['N6',8],['N7','missing']])await add(id,{wtVersion},async x=>{const n=x.make();const r=await x.directWT(n);x.evidence.result=r;return !r.ok&&n.meta===null&&x.quics[0].closeCalls.length>0&&x.timers.size===0;});
+    await add('N8',{},async x=>{const n=x.make();const r=await x.directWT(n);if(!r.ok)return false;let delivered=0;n.onPartida=()=>delivered++;x.quics[0].emit(metadata('partida',9,2));await flush();return n.meta.partida===2&&delivered===1&&x.timers.size===0;});
+    async function regression(x,wt,version){
+      const n=x.make();const r=wt?await x.directWT(n):await x.outcome(n.connect());if(!r.ok)return false;
+      const old=n.meta;let delivered=0;n.onPartida=()=>delivered++;x.resetCloses();
+      const emit=m=>wt?x.quics[0].emit(m):x.sockets[0].emit(m);
+      emit(metadata('partida',version,2));emit(metadata('partida',9,3));await flush();
+      return n.meta===old&&delivered===0&&!n.connected&&x.getCloses()===1&&x.timers.size===0;
+    }
+    await add('N9',{},x=>regression(x,false,8));
+    await add('N10',{},x=>regression(x,false,undefined));
+    await add('N11',{wtFailure:true},async x=>{const n=x.make(true);const r=await x.outcome(n.connect());return r.ok&&n.tp.ws===x.sockets[0]&&equal(x.sockets[0].protocols,SNAPSHOT_PROTOCOLS)&&x.sockets[0].protocol===V9&&new URL(x.quics[0].url).searchParams.get('sp')===V9&&x.quics[0].closeCalls.length>0&&x.getCloses()===0&&x.timers.size===0;});
+    await add('N12',{wtVersion:8},async x=>{const n=x.make(true);const r=await x.outcome(n.connect());if(!r.ok||x.sockets.length!==1)return false;const old=n.meta;x.resetCloses();x.quics[0].emit(metadata('welcome',9,99));x.quics[0].emit(metadata('partida',9,99));x.quics[0].resolveClosed();await flush();return n.meta===old&&n.connected&&n.tp.ws===x.sockets[0]&&x.sockets[0].closeCalls.length===0&&x.getCloses()===0;});
+    await add('N13',{},async x=>{const n=x.make();let closes=0;const tp={protocolo:V8,abrir(h){h.aberto();h.mensagem(JSON.stringify(metadata('welcome',8)),false,0);},fechar(){closes++;}};const r=await x.outcome(n._conectar(8000,()=>tp));x.evidence.result=r;return r.ok&&n.meta.protocolVersion===8&&closes===0&&x.timers.size===0;});
+    await add('N14',{},async x=>{const n=x.make();const r=await x.outcome(n._conectar(8000,()=>{throw new Error('factory_boundary');}));return !r.ok&&r.error==='factory_boundary'&&x.timers.size===0;});
+    await add('N15',{wsVersion:8},rejected);
+    await add('N16',{wsVersion:'missing'},rejected);
+    await add('N17',{},x=>regression(x,true,8));
+    await add('N18',{},x=>regression(x,true,undefined));
+    await add('N19',{noWelcome:true},async x=>{const n=x.make();let settled=false;const p=x.outcome(n._conectar(8000,()=>new TransporteWT('https://boundary/wt?sp='+V9))).then(r=>{settled=true;return r;});await flush();const pending=!settled&&x.timers.size===1;for(const [timer,fn] of [...x.timers]){x.timers.delete(timer);fn();}const r=await p;return pending&&!r.ok&&r.error==='timeout'&&x.timers.size===0&&x.quics[0].closeCalls.length===1;});
+    await add('N20',{},async x=>{const n=x.make();const tp={abrir(h){h.aberto();h.fechado();},fechar(){}};const r=await x.outcome(n._conectar(8000,()=>tp));return !r.ok&&r.error==='closed'&&x.getCloses()===0&&x.timers.size===0;});
+    await add('N21',{},async x=>{
+      const {n,r}=await connect(x);if(!r.ok)return false;
+      const old=n.meta, previous=n.onClose;let caught='',calls=0;
+      n.onClose=()=>{if(++calls===1)throw new Error('controlled_onclose');};
+      try {
+        try{x.sockets[0].emit(metadata('partida',8,2));}catch(e){caught=e.message;}
+        await flush();x.evidence.caught=caught;x.evidence.calls=calls;
+        return caught==='controlled_onclose'&&calls===1&&x.sockets[0].closeCalls.length===1&&!n.connected&&n.meta===old&&x.timers.size===0;
+      } finally {n.onClose=previous;}
+    });
+    await add('N22',{},async x=>{
+      const {n,r}=await connect(x);if(!r.ok)return false;
+      x.resetCloses();x.sockets[0].close(1012,'fixture_close');await flush();
+      return x.getCloses()===1&&!n.connected&&x.timers.size===0;
+    });
+    if(!equal(rows.map(r=>r.id),IDS)||rows.some(r=>typeof r.ok!=='boolean'))throw new Infra('row_protocol');
+    const current=sourceNames.map(f=>sha(fs.readFileSync(path.join(root,'public/js',f))));
+    if(!equal(current,sourcePins.map(p=>p.sha256)))throw new Infra('source_drift');
+    return {mutant,rows,failed:rows.filter(r=>!r.ok).map(r=>r.id),sourcePins};
+  } finally {fs.rmSync(temp,{recursive:true,force:true});}
+}
+try {
+  sourceBytes=Object.fromEntries(sourceNames.map(f=>[f,fs.readFileSync(path.join(root,'public/js',f),'utf8')]));
+  sourcePins=sourceNames.map(f=>({file:f,sha256:sha(sourceBytes[f]),bytes:Buffer.byteLength(sourceBytes[f])}));
+  const nominal=await run('');report.runs.push(nominal);
+  if(nominal.failed.length){report.status=selected?'INFRA':'RED';report.failed=nominal.failed;if(selected)report.error='nominal_red_no_mutation_credit';}
+  else if(selected){const mutated=await run(selected);report.runs.push(mutated);report.failed=mutated.failed;report.expected=specs[selected].failed;report.status=equal([...mutated.failed].sort(),[...report.expected].sort())?'DETECTED':'RED';}
+  else report.status='GREEN';
+} catch(e) {report.status='INFRA';report.error=String(e?.stack||e);}
+try {if(jsonFile)fs.writeFileSync(jsonFile,JSON.stringify(report,null,2)+'\n');} catch(e){report.status='INFRA';report.error='receipt_write:'+String(e);}
+console.log(JSON.stringify({status:report.status,failed:report.failed||[],expected:report.expected,error:report.error}));
+clearTimeout(processDeadline);
+process.exitCode=report.status==='INFRA'?3:['GREEN','DETECTED'].includes(report.status)?0:1;

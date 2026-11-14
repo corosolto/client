@@ -71,6 +71,7 @@ const LEGACY_VOICE_ALLOWLIST = Object.freeze({
 });
 // Eventos de fala dentro da partida; `select` fica fora (frase longa da tela de seleção).
 const INGAME_VOICE_EVENTS = Object.freeze(['kill', 'radio', 'round']);
+const SFX_ONLY_VOICE_IDS = Object.freeze(['lobisomem']);
 
 export class Sfx {
   constructor() {
@@ -151,7 +152,20 @@ export class Sfx {
     const pool = this.pack?.voice?.[team];
     if (!Array.isArray(pool)) return [];
     const allowlist = LEGACY_VOICE_ALLOWLIST[team];
-    return allowlist ? pool.filter((file) => allowlist.has(file)) : pool;
+    const curado = allowlist ? pool.filter((file) => allowlist.has(file)) : pool;
+    const sfx = this._sfxOnlyFiles();
+    return sfx.size ? curado.filter((file) => !sfx.has(file)) : curado;
+  }
+  // Takes de quem NÃO fala (Lobisomem: rosnados) ficam só com o dono — nunca são bordão
+  // emprestado a outro personagem da facção pelo pool genérico.
+  _sfxOnlyFiles() {
+    const out = new Set();
+    for (const id of SFX_ONLY_VOICE_IDS) {
+      const own = this.pack?.characterVoice?.[id];
+      if (!own || typeof own !== 'object') continue;
+      for (const event of INGAME_VOICE_EVENTS) for (const file of own[event] || []) out.add(file);
+    }
+    return out;
   }
 
   // team voice line (kill celebration / random), throttled
@@ -333,8 +347,30 @@ export class Sfx {
         this.duckBus.connect(this.master);
         if (this.reverbOn) this._buildReverb();
       }
-      if (this.ctx.state === 'suspended') this.ctx.resume();
+      this._resume();
     } catch { this.disabled = true; }
+  }
+  /* Fora de gesto do usuário o `resume()` rejeita em silêncio e o ctx fica `suspended` até o
+     próximo som — num deep-link (`?sala=`) o primeiro som chega sem clique e o jogo abre mudo. */
+  _resume() {
+    if (!this.ctx || this.ctx.state !== 'suspended') return null;
+    try { const p = this.ctx.resume(); p?.catch?.(() => {}); return p || null; } catch { return null; }
+  }
+  // Destrava no primeiro gesto que chegar (pointerdown/keydown em captura), e some sozinho.
+  unlockOnGesture(target = document) {
+    if (this._unlockBound || !target?.addEventListener) return;
+    const solta = () => {
+      for (const ev of ['pointerdown', 'keydown']) target.removeEventListener(ev, tenta, true);
+      this._unlockBound = false;
+    };
+    const tenta = () => {
+      this.ensure();
+      if (!this.ctx || this.disabled || this.ctx.state === 'running') { solta(); return; }
+      const p = this._resume();
+      if (p?.then) p.then(() => { if (this.ctx.state === 'running') solta(); }, () => {});
+    };
+    this._unlockBound = true;
+    for (const ev of ['pointerdown', 'keydown']) target.addEventListener(ev, tenta, true);
   }
   // Reverb leve opcional (opt-in): IR sintético curto (~0.45s, decay exponencial, estéreo
   // descorrelacionado) num send bus. Mix baixo por voz — "espaço" sem eco de banheiro.

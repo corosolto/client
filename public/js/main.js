@@ -270,6 +270,7 @@ const textures = initTextures();
 const sfx = new Sfx(); sfx.vol = settings.vol;
 sfx.speechEnabled = settings.speech !== false;
 sfx.reverbOn = new URLSearchParams(location.search).get('reverb') === '1';   // reverb leve opt-in (default off)
+sfx.unlockOnGesture(document);   // deep-link (`?sala=`) entra sem clique: o 1º gesto destrava o ctx
 // sidechain da música do menu: cliques/SFX abaixam a trilha por ~150-250ms e ela volta suave
 sfx.onDuck = (amt, hold) => {
   const m = menuMusic;
@@ -2004,7 +2005,7 @@ function sendMatchEvent(result) {
     anonId: getAnonId(),
     sessionId: getSessionId(), eventId: _matchEventId, version: versaoComOrigem(VERSION),
     ...telemetryGameContext, ...sinaisDeBuild(),
-    map: currentMap, mode: modoTelemetria(g),
+    map: currentMap, mode: modoTelemetria(g), weaponMode: settings.wpnMode || 'all',
     character: currentChar, team: g.arena ? g.player.team : g.playerTeam,
     faction: g.playerFaction || currentFaction,
     result: result || 'quit',
@@ -2159,6 +2160,7 @@ async function startGame(team, charId, enemyFaction, online = false) {
 async function _startGame(meuLancamento, team, charId, enemyFaction, online = false, introAbort) {
   const sessao = online ? mpSessao : null;
   const metaMp = sessao?.net?.meta || {};
+  pingPresencaConta();   // posse navegador→conta + last_active desde o 1º segundo de jogo
   const salaMp = sessao?.sala || {};
   // Trocar de vaga/espectador na MESMA partida online remonta o jogo, mas não é partida nova.
   const continuaPartida = online && telemetryGameContext.gameType === 'multiplayer'
@@ -2514,7 +2516,16 @@ function quitToMenu() {
   show('main-menu');
 }
 
+/* ---------------- presença da CONTA (sessão social) ---------------- */
+/* O jogo envia no login e no início da partida. O pulso único de 30 s continua em
+   community.js, carregado também quando o painel está oculto. */
+function pingPresencaConta() {
+  if (!contaNick || testMode) return;
+  void api('/api/social', { action: 'presence', uid: getAnonId() });
+}
+
 /* ---------------- heartbeat (presença/mapa) ---------------- */
+
 setInterval(async () => {
   if (!game || !registeredNick || testMode || heartbeatOff) return;
   const res = await api('/api/heartbeat', { uid: getAnonId(), nick: registeredNick, token: getToken() });
@@ -5761,7 +5772,7 @@ contagem.evento('game_loaded');
 const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location.href)?.perfil);
   void initAccountEntry({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onSession:auth=>{contaNick=auth?.profile?.nick || '';if(auth?.profile){nickEl.value=auth.profile.nick;nickEl.readOnly=true;}else{nickEl.value=localStorage.getItem(NICK_KEY) || '';nickEl.readOnly=false;}syncPlayState();},onReady:ready=>initLoginPrompt({...ready,skip:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),track:_loginPromptTrack})});
   // Logar com a aba RANKING aberta tira o convite de nick na hora, sem refazer a lista.
-  document.addEventListener('cs-account-change',(e)=>{contaNick=e.detail?.profile?.nick || '';const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);});
+  document.addEventListener('cs-account-change',(e)=>{const nick=e.detail?.profile?.nick || '';const mudou=Boolean(nick && nick!==contaNick);contaNick=nick;const convite=$('hub-rank-profile');if(convite)convite.hidden=Boolean(registeredNick || contaNick);if(mudou)pingPresencaConta();});
   tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
   document.addEventListener('cs-treta-inventory-change',refreshMenuEquipment);
   /* Passe Sessão da Treta: o GET com conta também registra o login do dia no servidor. Conta trocada
