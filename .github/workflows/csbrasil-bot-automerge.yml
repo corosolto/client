@@ -170,7 +170,7 @@ jobs:
         run: |
           python3 scripts/ci/bot_sweep.py --selftest
           gh api --paginate --slurp "repos/$REPO/pulls?state=open&per_page=100" \
-            | jq -r 'add | .[].number' \
+            | jq -r 'add // [] | .[].number' \
             | while read -r number; do
                 gh pr view "$number" --repo "$REPO" \
                   --json number,title,body,isDraft,baseRefName,baseRefOid,mergeStateStatus,assignees,labels,headRefName,headRefOid,headRepository,statusCheckRollup,latestReviews,reviewRequests,reviewDecision
