@@ -8,7 +8,7 @@ import { isDeepStrictEqual as equal } from 'node:util';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const FIXTURE = 'tools/eval/fixtures/tp-drip-source.json';
-const FIXTURE_SHA = '3f9b0fef5909b75d97414d0c0246b5863e2353fd65be403fd95c96e114a8e5a0';
+const FIXTURE_SHA = '505d171f0b3a877b19cd9541661a7fad27e4346064aff499bf2743cc58604688';
 const SELECTION = 'tools/character-kit/gloves/cosmetic-selections.json';
 const MESH = 'public/models/gloves/3p/bolsonaro-drip-a938a2d09481.glb';
 const SIDES = ['left', 'right'];

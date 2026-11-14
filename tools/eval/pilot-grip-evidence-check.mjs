@@ -6,6 +6,7 @@
 */
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
+import { TETO_PEGADA_M, tetoTexto } from './lib/grip-tolerancia.mjs';
 
 const mutation = process.argv.includes('--mutante=arma-deslocada');
 const lendaMutation = process.argv.includes('--mutante=lenda-arma-deslocada');
@@ -30,6 +31,7 @@ for (const id of ids) {
   const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'));
   check(receipt.characterSha256 === sha256(receipt.character), `${id} SHA personagem`, receipt.characterSha256);
   check(receipt.weaponSha256 === sha256(receipt.weaponFile), `${id} SHA arma ${receipt.weapon}`, receipt.weaponSha256);
+  check(receipt.socketContract?.maxHandDistanceMeters === TETO_PEGADA_M, `${id} tolerância do recibo`, `${receipt.socketContract?.maxHandDistanceMeters} m = ${tetoTexto}`);
   const requiredPoses = id === 'motoca-cachorro-loko' ? ['idle', 'walk', 'crouch'] : ['walk', 'crouch'];
   check(requiredPoses.every((clip) => receipt.poses[clip]), `${id} estados de pegada`, requiredPoses.join('/'));
   for (const [clip, pose] of Object.entries(receipt.poses)) {
@@ -42,8 +44,8 @@ for (const id of ids) {
       || (microMutation && id === 'microfonildo')) && clip === 'walk' ? pose.mutant : pose;
     const right = distance(pose.rightHand, anchors.rightAnchor);
     const left = distance(pose.leftHand, anchors.leftAnchor);
-    check(right <= .03, `${id}/${clip} mão de gatilho`, `${right.toFixed(3)} m <= 0,030 m`);
-    check(left <= .03, `${id}/${clip} mão de apoio`, `${left.toFixed(3)} m <= 0,030 m`);
+    check(right <= TETO_PEGADA_M, `${id}/${clip} mão de gatilho`, `${right.toFixed(3)} m <= ${tetoTexto}`);
+    check(left <= TETO_PEGADA_M, `${id}/${clip} mão de apoio`, `${left.toFixed(3)} m <= ${tetoTexto}`);
     check(existsSync(pose.render), `${id}/${clip} figura`, pose.render);
   }
   check(existsSync(receipt.poses.walk.gripRender), `${id} 3/4 limpo`, receipt.poses.walk.gripRender);

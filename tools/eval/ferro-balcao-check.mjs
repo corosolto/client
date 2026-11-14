@@ -61,7 +61,7 @@ if (!cli.probe) {
     scenario(`mutante ${m}/${q}`, ['--modo=' + modo, `--qualidade=${q}`, `--mutante=${m}`], false);
   }
   for (const m of PRE_BOOT) for (const q of ['med', 'low']) scenario(`mutante ${m}/${q}`, ['--modo=model', `--qualidade=${q}`, `--mutante=${m}`], false);
-  scenario('fantasma (mutação não aplicada deve ser denunciada)', ['--modo=model', '--mutante=escala', '--fantasma'], false, 3);
+  scenario('fantasma (mutação não aplicada deve ser denunciada)', ['--modo=model', '--mutante=escala', '--fantasma'], false, 78);
   scenario('mutante desconhecido exit 2', ['--modo=model', '--mutante=xyz'], false, 2);
   scenario('typo de opção exit 2 (--qualidadelow)', ['--probe', '--qualidadelow'], false, 2);
   scenario('valor ausente exit 2 (--modo sem =valor)', ['--probe', '--modo'], false, 2);
