@@ -16,6 +16,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -24,27 +27,29 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - name: Build Cloudflare
-        run: npm run build:cf
       - name: Confere conta Cloudflare
-        env:
-          ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          CF_WORKERS_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
         run: |
           set -euo pipefail
-          if [ -z "$ACCOUNT_ID" ]; then
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
             echo "::error::Configure CLOUDFLARE_ACCOUNT_ID em Actions Variables"
             exit 1
           fi
-          if [ -z "$CF_WORKERS_TOKEN" ]; then
-            echo "::error::Configure CF_WORKERS_TOKEN com Workers Scripts:Edit em Actions Secrets"
+          if [ -z "$CF_API_TOKEN" ]; then
+            echo "::error::Configure CF_WORKERS_TOKEN com Workers Scripts:Edit e R2 em Actions Secrets"
             exit 1
           fi
+      - run: npm ci
+      # Pacote de áudio privado (cópia do Blob da Vercel no R2): mesma URL/sha de produção, em
+      # Actions Variables. Sem a variável o build cai no pacote público, e o D2 da verificação
+      # abaixo continua comparando o que foi publicado com o que este build gerou.
+      - name: Build Cloudflare
+        env:
+          AUDIO_PACK_URL: ${{ vars.AUDIO_PACK_URL }}
+          AUDIO_PACK_SHA256: ${{ vars.AUDIO_PACK_SHA256 }}
+          CS_BUILD_SHA: ${{ github.sha }}
+        run: npm run build:cf
       - name: Publica csb-staging
         env:
-          CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           SUBDOMAIN: ${{ vars.CF_WORKERS_SUBDOMAIN }}
         run: |
           set -euo pipefail
@@ -54,14 +59,9 @@ jobs:
           echo "STAGING_URL=$URL" >> "$GITHUB_ENV"
           echo "### Cloudflare staging" >> "$GITHUB_STEP_SUMMARY"
           echo "URL: $URL" >> "$GITHUB_STEP_SUMMARY"
-      - name: Confere staging vivo
+      - name: Verifica o deploy (build, áudio e viewmodels)
+        env:
+          CS_BUILD_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --location --max-time 30 "$STAGING_URL/" >/dev/null
-          STATUS=$(curl --silent --show-error --location --max-time 30 -o /dev/null -w '%{http_code}' "$STAGING_URL/")
-          [ "$STATUS" = 200 ]
-          echo "curl /: HTTP $STATUS" >> "$GITHUB_STEP_SUMMARY"
-          echo "Segredos de runtime ausentes não bloqueiam este deploy; o app degrada para suas respostas sem configuração."
-      - name: Documenta segredos ainda não instalados
-        run: |
-          echo "::warning::O dono deve instalar no csb-staging: API_PROXY_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e X_PIXEL_TOKEN"
+          node tools/cf/verifica-deploy.mjs --base="$STAGING_URL" --sha="$CS_BUILD_SHA" | tee -a "$GITHUB_STEP_SUMMARY"

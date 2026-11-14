@@ -62,6 +62,8 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Build Cloudflare sem segredos
+        env:
+          CS_BUILD_SHA: ${{ github.event.pull_request.head.sha }}
         run: npm run build:cf
       - name: Guarda apenas os assets compilados
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
