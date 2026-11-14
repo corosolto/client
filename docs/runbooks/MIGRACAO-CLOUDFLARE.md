@@ -45,10 +45,10 @@ campanhas e funil; "olhar rápido" vai ser Umami (self-host no Workers + D1) ou 
 | 0. Cortes na Vercel | preview só quando o site muda (`vercel-ignore.sh` para `VERCEL_ENV=preview`), packs em cache de build, `console.*` por requisição fora | fatura do ciclo seguinte: Build < 60 h, Observability < 1 M eventos | PR #1258 aberto (branch `chore/vercel-custos-fase0`); ver "Fase 0: o que ficou" |
 | 1. Spike | `@astrojs/cloudflare` no lugar de `@astrojs/vercel`; `wrangler.toml`; `_headers`/`_redirects` **gerados** de `vercel.json` por script (uma fonte, régua de paridade); `middleware.js` → middleware do Astro lendo `cf-connecting-ip`; `buildCommand` reproduzido no build do Workers | deploy em `*.workers.dev` com mesmos status/headers que produção em: `/`, `/en`, `/api/geo-lang`, `/api/og/pagina.png`, `/u/<perfil>`, `/mapa`, `/sala/x`, `/sitemap.xml`, `/api/health` (proxy); `check:seo`, `canonical-host-check`, `game-pages-check`, `site-smoke` rodando contra esse host | feito (PR do spike, ver seção "Fase 1: resultado do spike"); `site-smoke` fica para a fase 2 (precisa de preview por PR) |
 | 2. Preview por PR | `cf-preview.yml` filtra PRs que tocam o site, compila com `ADAPTER=cloudflare`, publica `wrangler versions upload` e atualiza o comentário sticky; `smoke-web.yml` coleta `smoke-cf` opcional | PR gera URL `*.workers.dev`, comentário é atualizado sem duplicata e o smoke registra paridade | feito (fase 2b: configurar `CF_API_TOKEN` com Workers Scripts:Edit e a variável `CLOUDFLARE_ACCOUNT_ID`) |
-| 3. Staging em paralelo | `staging.corosolto.com.br` no Workers; `prod-watch` e `smoke:prod` nos dois hosts por 1 semana; diff automático de headers/CSP/rotas | zero divergência | pendente |
-| 4. Virada | CNAME `www` → Workers (DNS já é Cloudflare; reversível em 1 min); Vercel fica 30 dias como rollback; rotacionar `API_PROXY_SECRET` e `SUPABASE_SERVICE_ROLE_KEY` na virada (site e backend no mesmo deploy) | `BASE=https://www.corosolto.com.br npm run smoke:prod` verde; MP e OAuth ok | pendente |
-| 5. Analytics | Umami (Workers + D1) ou Plausible; `@vercel/analytics` sai do `Layout.astro` | eventos no painel | pendente |
-| 6. Desligar | cancelar Vercel; remover `@astrojs/vercel`, `@vercel/functions`, `vercel.json`, `VERCEL_*` dos workflows; `vercel-env-security-check` vira `cf-env-security-check` | repo sem `vercel` fora do CHANGELOG | pendente |
+| 3. Staging em paralelo | `staging.corosolto.com.br` no Workers; `prod-watch` e `smoke:prod` nos dois hosts por 1 semana; diff automático de headers/CSP/rotas | zero divergência | feito em 14/11 (ver "Fases 3–4: produção no Workers"): Custom Domain, segredos, áudio privado e viewmodels do R2, verificação de conteúdo por deploy |
+| 4. Virada | Worker Route por host na frente da Vercel (DNS não muda; `tools/cf/virada.sh desliga` volta em segundos); Vercel fica 30 dias como rollback; rotação de `API_PROXY_SECRET` e `SUPABASE_SERVICE_ROLE_KEY` é do dono (exige deploy do backend) | `BASE=https://www.corosolto.com.br npm run smoke:prod` verde; MP e OAuth ok | ver "Fases 3–4" e a tabela de status |
+| 5. Analytics | Cloudflare: o `analytics-sync` do backend já coleta a zona pelo GraphQL (conta tráfego servido pelo Worker); a fonte `vercel` vira `not_configured` quando o `VERCEL_TOKEN` sair do Secret Manager | dados da fonte `cloudflare` seguindo depois da virada | pendente (depende da virada) |
+| 6. Desligar | remover `@astrojs/vercel`, `@vercel/functions`, `middleware.js`, `vercel.json` como fonte, `VERCEL_*` dos workflows; desconectar a integração Git e apagar o projeto `csbrasil` da Vercel depois dos 30 dias | repo sem `vercel` fora do CHANGELOG | pendente |
 
 ## Fase 0: o que ficou (e como conferir)
 
@@ -188,6 +188,47 @@ publicada foi `https://6fc811a7-csb-preview.rubenmarcus-dev.workers.dev`; `curl 
 `HTTP 200`. O comentário sticky foi atualizado com `<!-- cf-preview -->`.
 PRs de fork não publicam preview Cloudflare, pois não recebem segredos no evento `pull_request`.
 
+## Fases 3–4: produção no Workers (14/11/2026)
+
+O que a paridade de headers não via: o `cf-staging-paridade` passou 10 rodadas "sem divergência" com o
+staging servindo o pacote de áudio **público** (manifesto com 1062 folhas contra 1973 da produção), sem
+nenhum dos 63 viewmodels e com `window.__CS_BUILD.sha` vazio. Status e headers iguais, conteúdo outro.
+Por isso cada deploy agora roda `tools/cf/verifica-deploy.mjs` contra o host publicado:
+D1 `/` grava o commit do build, D2 `/audio/manifest.json` publicado é byte a byte o do build, D3 os 63
+viewmodels respondem 200 com tamanho e ETag (sha256) do manifesto.
+
+- **Blob → R2.** O store `csbrasil-audio-private` (74 arquivos, 1,44 GB) foi copiado para o bucket
+  privado `corosolto-private` com os mesmos caminhos (`vercel blob get` com o OIDC do projeto,
+  conferência de tamanho, `wrangler r2 object put`). O Blob segue intacto até o desligamento.
+- **Áudio.** Produção usa `audio-pack-v9b.zip` (sha256 `7858aa89…`; conferido: o build com ele gera o
+  `audio/manifest.json` byte a byte igual ao da produção na Vercel). `fetch-audio.sh` aceita
+  `AUDIO_PACK_URL=r2://corosolto-private/audio-pack-v9b.zip` e baixa pelo `wrangler r2 object get` com o
+  token do deploy (`CF_WORKERS_TOKEN`, que já tem R2). URL e sha ficam em Actions Variables
+  (`AUDIO_PACK_URL`, `AUDIO_PACK_SHA256`), não em segredo. Preview de PR continua com o pacote público;
+  por isso `audio:check` só roda no `build:cf` quando há `AUDIO_PACK_SHA256`.
+- **Viewmodel.** Não entra mais no build do Workers: o Worker serve `/private-assets/viewmodels/<caminho>`
+  do binding R2 `PRIVADO` pela chave do manifesto versionado (`viewmodels/sha256/<sha><ext>`, a mesma do
+  Blob), com ETag/304 e HEAD (`src/cf/borda.mjs`). Caminho fora do manifesto, objeto ausente ou de tamanho
+  errado cai no 404 do Astro e o jogo usa o legado, como na Vercel sem o arquivo. Preview não tem o
+  binding (código de PR não lê o bucket privado).
+- **Cache.** `s-maxage` vira TTL do `caches.default` (`/api/og`, `/mapa`) e sai do `cache-control` do
+  navegador junto com `stale-while-revalidate`, como a Vercel fazia; viewmodel `immutable` também é
+  guardado. O cache do Workers só vale em domínio próprio (no `workers.dev` todo hit renderiza).
+- **SHA.** `CS_BUILD_SHA` (workflows) > `VERCEL_GIT_COMMIT_SHA` > `GITHUB_SHA`.
+- **Staging.** Custom Domain `staging.corosolto.com.br` no `csb-staging`; segredos `API_PROXY_SECRET`,
+  `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` instalados a partir do Secret Manager do backend
+  (`api-proxy-secret`, `supabase-url`, `supabase-service-role-key`). As envs da Vercel são *sensitive*:
+  `vercel env pull` devolve placeholder, não o valor. `X_PIXEL_TOKEN` não existe fora da Vercel; staging
+  fica sem (não manda conversão ao X) e produção depende do dono gravar o token de novo.
+- **Produção.** `wrangler.prod.toml` (Worker `csb-prod`, mesmo build, binding `PRIVADO`) e
+  `cf-prod-deploy.yml`: publica no push `chore(release):` da main (o mesmo commit que a Vercel builda)
+  e por `workflow_dispatch` com tag. Publicar não muda tráfego.
+- **Virada.** `tools/cf/virada.sh liga|desliga|status`: Worker Routes `www.corosolto.com.br/*`,
+  `www.csbrasil.online/*` e `csbrasil.online/*` apontando para o `csb-prod`. O DNS continua proxied para a
+  Vercel; a rota intercepta antes da origem, e `desliga` devolve o tráfego à Vercel em segundos. O 308
+  `csbrasil.online` → `www.csbrasil.online`, que era config de domínio da Vercel, mora no Worker.
+  `corosolto.com.br` e `corosol.to` já redirecionam por regra da Cloudflare, sem Vercel.
+
 ## Segredos: destino na Cloudflare
 
 | Hoje (Vercel) | Depois | Como |
@@ -233,3 +274,4 @@ npm run cf:paridade -- --alvo https://<worker>.workers.dev
 | 2026-11-09 | limpeza-lote2 | lote 2 removeu 9 `tools/eval` órfãos e 59 geradores raiz sem chamadores; arquivou históricos e pastas privadas fora do repo; ajustou os consumidores de `plans/` e `references/` | L2 aguarda PR e merge; arquivos `tools/blender/**` e `tools/fabrica/**` seguem intactos por decisão do dono |
 | 2026-11-09 | — | links compartilháveis do jogo e do site passam a usar `https://corosol.to`; canonical, `og:url`, hreflang, sitemap e JSON-LD permanecem em `www`; régua `eval:shareorigin` com mutantes entra na suite fast | abrir PR para `staging`, acompanhar pr-fast e confirmar a prova de convite no navegador |
 | 2026-11-10 | vercel-sem-preview | preview 100% Cloudflare: branch de PR nunca mais builda na Vercel (`vercel-ignore.sh` sai 0; régua com mutantes `preview-pr-builda`/`staging-pulado`/`release-pulado`); `preview-build.yml` só por `workflow_dispatch` (input `pr_number`), `preview-deploy.yml` segue em `workflow_run` como emergência; PRV1 proíbe reativar o disparo automático; bot não promete URL Vercel | merge e observar fatura: Build CPU Minutes ≈ builds de release (~3/semana) + staging/main/lote; conferir no painel que PR novo gera "Ignored Build Step" e staging segue buildando |
+| 2026-11-14 | cf-fase3 | fases 3–4 prontas: Blob copiado para R2 `corosolto-private`; áudio privado por `r2://` (manifesto byte a byte igual ao da produção); viewmodel servido do R2 pelo Worker; `caches.default` por `s-maxage`; `staging.corosolto.com.br` com segredos do Secret Manager; `verifica-deploy` por deploy (staging 63/63 viewmodels, D1–D3 verdes); `csb-prod` + `cf-prod-deploy.yml`; `tools/cf/virada.sh` | merge em staging, depois promover para main; `cf-prod-deploy` publica o `csb-prod`; `virada.sh liga` + `smoke:prod`; dono grava `X_PIXEL_TOKEN` no `csb-prod` |
