@@ -29,7 +29,7 @@ const run = (name, codecPath, expected) => {
   });
   const output = child.stdout || '';
   const actual = [...output.matchAll(/^not ok \d+ - (.+)$/gm)].map(match => match[1]).sort();
-  const infra = child.error || child.signal || child.stderr || !/^# tests 32$/m.test(output);
+  const infra = child.error || child.signal || child.stderr || !/^# tests 31$/m.test(output);
   const pass = !infra && child.status === (expected.length ? 1 : 0)
     && JSON.stringify(actual) === JSON.stringify([...expected].sort());
   console.log(JSON.stringify({ name, pass, exit: child.status, infra: !!infra, failed: actual }));
@@ -47,6 +47,7 @@ try {
       fs.writeFileSync(path.join(temp, 'package.json'), '{"type":"module"}');
       fs.mkdirSync(path.join(temp, 'data'));
       fs.copyFileSync(path.join(root, 'public/js/data/weapons.js'), path.join(temp, 'data/weapons.js'));
+      fs.copyFileSync(path.join(root, 'public/js/data/emote-catalog.js'), path.join(temp, 'data/emote-catalog.js'));
       const file = path.join(temp, 'netcodec.js');
       fs.writeFileSync(file, source);
       run(name, file, expected);
