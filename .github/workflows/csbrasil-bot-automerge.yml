@@ -169,9 +169,7 @@ jobs:
         if: env.pular != '1'
         run: |
           python3 scripts/ci/bot_sweep.py --selftest
-          gh pr list --repo "$REPO" --state open --limit 100 \
-            --json number,title,body,isDraft,baseRefName,baseRefOid,mergeStateStatus,assignees,labels,headRefName,headRefOid,headRepository,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
-            > /tmp/automerge-sweep.json
+          python3 scripts/ci/bot_sweep.py --list-open "$REPO" > /tmp/automerge-sweep.json
           python3 - <<'PY'
           import json, os, subprocess
           from scripts.ci.bot_sweep import should_dispatch

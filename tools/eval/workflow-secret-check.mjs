@@ -143,18 +143,24 @@ function falhasMetadata(texto) {
   const leituras = [];
   passos.forEach(({ job, run, env }) => {
     const normalizado = run.replace(/\\\n\s*/g, ' ');
-    const comandos = [...normalizado.matchAll(/\bgh pr (view|list)\b/g)];
+    const comandos = [...normalizado.matchAll(
+      /\bgh pr (view|list)\b|python3 scripts\/ci\/bot_sweep\.py --list-open\b/g,
+    )];
     if (comandos.length > 1) {
       locais.push(`job ${job} mistura ${comandos.length} leituras de metadata no mesmo passo`);
       return;
     }
     if (comandos.length === 1) {
+      const helper = comandos[0][1] ? null : 'bot_sweep';
       const overrides = [...normalizado.matchAll(/(?:^|[;\n]\s*)(?:export\s+)?GH_TOKEN\s*=/g)];
-      if (Object.hasOwn(env, 'GH_TOKEN') || overrides.length !== 1
-          || /\bgh api\b|\bgh workflow run\b|\bgh pr (?:edit|comment|review|merge)\b/.test(normalizado)) {
+      const tokenRead = /GH_TOKEN="\$\{\{ github\.token \}\}"/.test(normalizado);
+      const hasWrite = /\bgh api\b|\bgh workflow run\b|\bgh pr (?:edit|comment|review|merge)\b/.test(normalizado);
+      if (helper
+        ? (!tokenRead || overrides.length !== 1 || hasWrite)
+        : (Object.hasOwn(env, 'GH_TOKEN') || overrides.length !== 1 || hasWrite)) {
         locais.push(`job ${job} mistura escrita ou override extra no passo de leitura`);
       }
-      leituras.push({ job, run: normalizado });
+      leituras.push({ job, run: normalizado, comando: helper || comandos[0][1] });
       return;
     }
     if (Object.hasOwn(env, 'GH_TOKEN') || /(?:^|\s)(?:export\s+)?GH_TOKEN\s*=/.test(run)) {
@@ -162,11 +168,11 @@ function falhasMetadata(texto) {
     }
   });
   if (leituras.length !== 3) locais.push(`esperava 3 leituras de metadata, encontrou ${leituras.length}`);
-  leituras.forEach(({ run }, i) => {
-    if (!/GH_TOKEN="\$\{\{ github\.token \}\}"\s+gh pr (?:view|list)/.test(run)) {
+  leituras.forEach(({ run, comando }, i) => {
+    if (!/GH_TOKEN="\$\{\{ github\.token \}\}"/.test(run)) {
       locais.push(`leitura ${i + 1} não usa github.token`);
     }
-    const comando = /\bgh pr (view|list)\b/.exec(run)?.[1];
+    if (comando === 'bot_sweep') return;
     const campos = /--json\s+([A-Za-z,]+)/.exec(run)?.[1]?.split(',').sort();
     const esperados = comando === 'list' ? camposList : camposView;
     if (!campos || campos.join(',') !== esperados.join(',')) {
