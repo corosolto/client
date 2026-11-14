@@ -235,9 +235,10 @@ procedural de reserva/nenhuma dança até existir um protocolo novo. `ctrl.emote
 elapsed)` já aceita fase remota e reaplicar o mesmo emote só corrige deriva maior que
 0,25 s, sem reiniciar clipe nem rampa; essa capacidade fica pronta para a próxima versão.
 
-**Risco de rollout.** O decoder v9 original de #1266 rejeita id maior que o catálogo
-conhecido. Por isso acrescentar 9–16 ao mesmo wire não é compatível, mesmo mantendo a
-ordem. Um protocolo futuro precisa negociar esses IDs com cliente e backend antes de
+**Risco de rollout.** O decoder v9 atual converte qualquer byte fora de `V9_EMOTE_IDS`
+em `null` e preserva o restante do snapshot. O decoder já publicado em #1266 rejeitava
+esse byte, então a tolerância nova é só defesa: o encoder v9 continua proibido de emitir
+9–16. Um protocolo futuro precisa negociar esses IDs com cliente e backend antes de
 publicá-los; mudar apenas o catálogo não libera replicação.
 
 **Desbloqueio.** O campo `desbloqueio` (`'base'` | `'passe'`) existe para o passe de
