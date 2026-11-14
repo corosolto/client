@@ -126,13 +126,32 @@ function falhasMetadata(texto) {
   const permissoes = workflow.permissions || {};
   if (permissoes.checks !== 'read') locais.push('token do repositório sem checks: read');
   if (permissoes.statuses !== 'read') locais.push('token do repositório sem statuses: read');
-  const leituras = Object.values(jobsDe(workflow)).flatMap((job) => passosDe(job))
-    .map(runDe)
-    .filter((run) => /gh pr (?:view|list)/.test(run) && /statusCheckRollup/.test(run));
-  if (leituras.length !== 3) locais.push(`esperava 3 leituras de metadata completa, encontrou ${leituras.length}`);
-  leituras.forEach((run, i) => {
+  const camposView = 'title,body,labels,files,additions,deletions,changedFiles,baseRefName,baseRefOid,mergeStateStatus,headRefName,headRefOid,headRepository,author,assignees,statusCheckRollup,latestReviews,reviewRequests,reviewDecision'.split(',').sort();
+  const camposList = 'number,title,body,isDraft,baseRefName,baseRefOid,mergeStateStatus,assignees,labels,headRefName,headRefOid,headRepository,statusCheckRollup,latestReviews,reviewRequests,reviewDecision'.split(',').sort();
+  const jobs = jobsDe(workflow);
+  for (const id of ['classify', 'sweep']) {
+    if (jobs[id]?.env?.GH_TOKEN !== '${{ secrets.CSBRASIL_BOT_TOKEN }}') {
+      locais.push(`job ${id} não herda o PAT do bot para escritas`);
+    }
+  }
+  const passos = Object.entries(jobs).flatMap(([job, definicao]) =>
+    passosDe(definicao).map((passo) => ({ job, run: runDe(passo) })));
+  const leituras = passos.filter(({ run }) => /gh pr (?:view|list)/.test(run));
+  if (leituras.length !== 3) locais.push(`esperava 3 leituras de metadata, encontrou ${leituras.length}`);
+  leituras.forEach(({ run }, i) => {
     if (!/GH_TOKEN="\$\{\{ github\.token \}\}"\s+gh pr (?:view|list)/.test(run)) {
       locais.push(`leitura ${i + 1} não usa github.token`);
+    }
+    const comando = /\bgh pr (view|list)\b/.exec(run)?.[1];
+    const campos = /--json\s+([A-Za-z,]+)/.exec(run)?.[1]?.split(',').sort();
+    const esperados = comando === 'list' ? camposList : camposView;
+    if (!campos || campos.join(',') !== esperados.join(',')) {
+      locais.push(`leitura ${i + 1} (${comando || '?'}) não pede o conjunto completo de metadata`);
+    }
+  });
+  passos.filter(({ run }) => !/gh pr (?:view|list)/.test(run)).forEach(({ job, run }) => {
+    if (/GH_TOKEN="\$\{\{ github\.token \}\}"/.test(run)) {
+      locais.push(`job ${job} troca o PAT pelo github.token fora de uma leitura`);
     }
   });
   return locais;
@@ -144,6 +163,8 @@ function falhasMetadata(texto) {
     'sem-checks-read': texto.replace('  checks: read\n', ''),
     'sem-statuses-read': texto.replace('  statuses: read\n', ''),
     'metadata-volta-ao-pat': texto.replace('GH_TOKEN="${{ github.token }}" gh pr view', 'gh pr view'),
+    'metadata-incompleta': texto.replace(',reviewDecision > /tmp/pr.json', ' > /tmp/pr.json'),
+    'escrita-com-token-do-repo': texto.replace('run: python3 scripts/ci/ensure_labels.py', 'run: GH_TOKEN="${{ github.token }}" python3 scripts/ci/ensure_labels.py'),
   };
   for (const [nome, mutado] of Object.entries(mutantes)) {
     if (!falhasMetadata(mutado).length) falhas.push(`WSEC3 mutante ${nome} não foi detectado`);
@@ -152,7 +173,7 @@ function falhasMetadata(texto) {
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m WSEC1 nenhum portão reprova PR de fork por secret que aquele gatilho não pode ter (${arquivos.length} workflows)`);
-if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m WSEC3 metadata completa usa github.token com checks/statuses read; 3/3 mutantes detectados');
+if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m WSEC3 metadata completa usa github.token com checks/statuses read; escritas preservam o PAT; 5/5 mutantes detectados');
 if (MUT && !falhas.length) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);
   falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso (MC1)
