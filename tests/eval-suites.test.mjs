@@ -15,7 +15,7 @@ const BASELINE = {
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
 const NOVOS = {
-  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:rigmaos', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:prodcrash', 'eval:workflowguards']),
+  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:pesos-braco-perna', 'eval:rigmaos', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:prodcrash', 'eval:workflowguards']),
   deploy: new Set(['eval:weapon-passe', 'eval:dispose', 'eval:workflowguards']),
 };
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
@@ -43,6 +43,7 @@ test('fast adds staging, Studio, rig, season-pass and production-crash checks wi
   assert.ok(SUITES.fast.includes('eval:lixo'));
   assert.ok(SUITES.fast.includes('eval:envruntime'));
   assert.ok(SUITES.fast.includes('eval:servertraffic'));
+  assert.ok(SUITES.fast.includes('eval:pesos-braco-perna'));
   assert.ok(SUITES.fast.includes('eval:rigmaos'));
   assert.ok(SUITES.fast.includes('eval:shareorigin'));
 
