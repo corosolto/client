@@ -167,7 +167,7 @@ async function main() {
   console.log(nominal.linhas.join('\n'));
   if (nominal.erros.length) {
     console.error(`x NOMINAL infra: exceção de cenário não é cláusula (${nominal.erros.map((e) => e.cenario).join(',')})`);
-    process.exit(3);
+    process.exit(78);
   }
   if (nominal.falhas.length) {
     console.error(`x NOMINAL vermelho (${nominal.falhas.join(',')}) — instrumento quebrado, variante não é detecção`);
@@ -180,7 +180,7 @@ async function main() {
     console.log(`baseline ${SHA}: falhas=${res.falhas.join(',') || '-'}`);
     if (res.erros.length) {
       console.error(`x BASELINE infra: exceção de cenário não é cláusula (${res.erros.map((e) => e.cenario).join(',')})`);
-      process.exit(3);
+      process.exit(78);
     }
     if (!clausulasExatamente(res.falhas, ALVO_VARIANTE)) {
       console.error(`x BASELINE tem que acender exatamente ${ALVO_VARIANTE.join(',')} — régua cega ou cláusula extra`);
@@ -195,7 +195,7 @@ async function main() {
     console.log(`mutante reintroduz: falhas=${res.falhas.join(',') || '-'}`);
     if (res.erros.length) {
       console.error(`x MUTANTE infra: exceção de cenário não é cláusula (${res.erros.map((e) => e.cenario).join(',')})`);
-      process.exit(3);
+      process.exit(78);
     }
     if (!clausulasExatamente(res.falhas, ALVO_VARIANTE)) {
       console.error(`x MUTANTE tem que acender exatamente ${ALVO_VARIANTE.join(',')} — cega ou cláusula extra (ex. NF2/NF4/NF5)`);

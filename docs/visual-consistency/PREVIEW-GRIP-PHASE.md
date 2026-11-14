@@ -69,7 +69,7 @@ ruim do mesmo rig. Este gate **não aprova** essa aparência; remover o teto sem
   A palma continua skinnada, sem substituir métricas ou amostras por valores prontos.
 
 O verificador exige o conjunto exato de casos e cláusulas. Nominal verde sai 0; nominal
- válido vermelho sai 1; uso inválido sai 2; infraestrutura sai 3. Uma contraprova sai 0
+ válido vermelho sai 1; uso inválido sai 2; infraestrutura sai 78. Uma contraprova sai 0
 somente quando o nominal passa e sua regressão exata é medida. O JSON é a saída completa
 em stdout; temporários são exclusivos por execução e removidos ao terminar. O gate de
 lobby no browser mantém os onze casos completos incluindo skins, e a aprovação visual

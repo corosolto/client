@@ -3,105 +3,11 @@
  "gerado": "2026-09-23",
  "placar": "0525a3c8517685fc",
  "dividas": {
-  "carregador": {
-   "famas": {
-    "valor": "1 falha(s)",
-    "dono": "vm-fix-mags (peça do carregador presa ao osso da mão nos clipes reload_*)",
-    "medido": "mão vazia: vazia 38% — mão de apoio na tela e o carregador a 0.85 palma dela, fora do quadro. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)"
-   },
-   "tavor": {
-    "valor": "1 falha(s)",
-    "dono": "vm-fix-l3l5 fila (Blender: recarga do tavor; pente fora do quadro com a mão na tela)",
-    "medido": "mão vazia: vazia 38% — mão de apoio na tela e o carregador a 0.89 palma dela, fora do quadro. Conserto: prender a peça ao osso da mão no clipe reload_* (vm-fix-mags); não é config.",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "pose/IK (mag-na-mao) ou Blender (clipe de recarga)"
-   },
-   "pistol": {
-    "valor": "1 falha(s) (intermitente)",
-    "dono": "vm-reguas (régua instável: a amostra da recarga tática 57% não é determinística com o relógio segurado)",
-    "medido": "recarrega com objeto no meio do ar: tatica 57% — 0.88 palma da mão, deslocado 1.58 do encaixe (teto 0,7). Verde nos dois placares e em 2 de 3 re-medidas isoladas; produto e frame da PT-38 aprovada, sem mudança",
-    "aspectos": [
-     "3x2"
-    ],
-    "fila": "régua (R1)",
-    "nota": "intermitente: não é defeito do produto; conserto é na régua"
-   }
-  },
-  "maos": {
-   "tavor": {
-    "valor": "0.30",
-    "dono": "vm-fix-grips (pose da mão de apoio no produto K)",
-    "medido": "mão de apoio não encosta / fica no ar: dedos da mão de apoio a 0.30 palma da malha da arma (palma 0.60); teto 0.2. Conserto: pose da mão de apoio no produto (vm-fix-grips); não é config.",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "Blender/clipe (B1): pegada por grip-support revertida — o idle novo muda o tubo da manga na recarga (crítico A/B vm/w3-pose: PIOROU 2x)"
-   }
-  },
   "mira": {
-   "famas": {
-    "valor": "64 px",
-    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
-    "medido": "mira fora da cruz a 64 px — massa a 64 px da cruz (-8, -63); teto 30 px; eixo no ADS -5° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT ",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "config (ads.linhaDeMira/off por arma)"
-   },
    "lmg": {
     "valor": "31 px",
     "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
     "medido": "mira fora da cruz a 31 px — massa a 31 px da cruz (+31, -3); teto 30 px; eixo no ADS +7° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT ",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "config (ads.linhaDeMira/off por arma)"
-   },
-   "m4": {
-    "valor": "43 px",
-    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
-    "medido": "mira fora da cruz a 43 px — massa a 43 px da cruz (+5, -43); teto 30 px; eixo no ADS +1° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT ",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "config (ads.linhaDeMira/off por arma)"
-   },
-   "p90": {
-    "valor": "71 px",
-    "dono": "vm-reguas/vm-fix-mags (ADS da p90 com o produto #634)",
-    "medido": "mira fora da cruz a 71 px — aro a 71 px da cruz (-29, +65); teto 30 px; eixo no ADS +4° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.108 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT n",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "config (ads.linhaDeMira/off por arma)"
-   },
-   "scar": {
-    "valor": "99 px",
-    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
-    "medido": "mira fora da cruz a 99 px; ângulo esquisito no ADS: arma tombada +29° da vertical — massa a 99 px da cruz (+36, -92); teto 30 px; eixo no ADS +29° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.of",
-    "aspectos": [
-     "16x9",
-     "3x2"
-    ],
-    "fila": "config (ads.linhaDeMira/off por arma)"
-   },
-   "tavor": {
-    "valor": "41 px",
-    "dono": "vm-fix-grips (ads.linhaDeMira/resíduo de ADS) ou socket SOCKET_MINT_SIGHT (vm-fix-mesh)",
-    "medido": "mira fora da cruz a 41 px — massa a 41 px da cruz (+1, -41); teto 30 px; eixo no ADS -9° da vertical (teto ±12°) · socket sight (o que o AD1 lê) 0.000 NDC. Conserto: ads.off/rotDeg da arma (vmconfig) ou o socket SOCKET_MINT_SIGHT ",
     "aspectos": [
      "16x9",
      "3x2"

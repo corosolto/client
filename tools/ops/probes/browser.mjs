@@ -28,6 +28,13 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const CHROME_MAC = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const THIRD_PARTY_BOOT_NOISE = /<script\b[^>]*>(?:(?!<\/script>)[\s\S])*?(?:static\.ads-twitter\.com\/uwt\.js|X_PIXEL_ID)(?:(?!<\/script>)[\s\S])*?<\/script>\s*/gi;
+
+export function stripThirdPartyBootNoise(body) {
+  let stripped = 0;
+  const output = String(body).replace(THIRD_PARTY_BOOT_NOISE, () => { stripped++; return ''; });
+  return { body: output, stripped };
+}
 
 /* GPU ou SwiftShader? Medido em 06/09/2026 contra a produção, no Mac do dono: SwiftShader
    dá main_ready 21 s e FPS p50 3 (mede o renderizador por software); com GPU, 2,5 s e 108.
@@ -68,7 +75,7 @@ export async function carregaPlaywright() {
 
 export async function sondaNavegador(base, { partida = false, timeoutMs = 45_000, gpu = null, amostraFpsMs = 8000 } = {}) {
   const modo = modoGpu({ gpu });
-  const r = { sonda: 'navegador', alvo: base, headless: true, gpu: modo.gpu, gpuMotivo: modo.motivo, executavel: executavelChrome() || 'chromium do Playwright', indisponivel: false, motivo: null, mainLoaded: null, mainReady: null, btnJogar: null, webgl2: null, webgl1: null, readyMs: null, pageErrors: [], consoleErros: [], requestsFalhas: [], escritasBloqueadas: [], ops: null, partida: null, versaoHtml: null };
+  const r = { sonda: 'navegador', alvo: base, headless: true, gpu: modo.gpu, gpuMotivo: modo.motivo, executavel: executavelChrome() || 'chromium do Playwright', indisponivel: false, motivo: null, mainLoaded: null, mainReady: null, btnJogar: null, webgl2: null, webgl1: null, readyMs: null, pageErrors: [], consoleErros: [], requestsFalhas: [], escritasBloqueadas: [], ops: null, partida: null, versaoHtml: null, ruidoTerceirosRemovido: 0 };
   const pw = await carregaPlaywright();
   if (!pw.chromium) { r.indisponivel = true; r.motivo = `Playwright não encontrado (${(pw.tentativas || []).join(' · ')})`; return r; }
   let browser;
@@ -88,8 +95,14 @@ export async function sondaNavegador(base, { partida = false, timeoutMs = 45_000
       // navegador de diagnóstico consente com a medição (privacy-runtime.js); escritas seguem stubadas acima
       try { localStorage.setItem('cs_privacy', JSON.stringify({ version: 'corosolto-analytics-v1', analytics: true, updatedAt: new Date(0).toISOString() })); } catch {}
     });
-    await page.route('**/*', (rota) => {
+    await page.route('**/*', async (rota) => {
       const m = rota.request().method();
+      if (m === 'GET' && rota.request().resourceType() === 'document' && new URL(rota.request().url()).origin === new URL(base).origin) {
+        const resposta = await rota.fetch();
+        const filtrado = stripThirdPartyBootNoise(await resposta.text());
+        r.ruidoTerceirosRemovido += filtrado.stripped;
+        return rota.fulfill({ response: resposta, body: filtrado.body });
+      }
       if (m === 'GET' || m === 'HEAD' || m === 'OPTIONS') return rota.continue();
       r.escritasBloqueadas.push(`${m} ${caminho(rota.request().url())}`);
       return rota.fulfill({ status: 204, body: '' });
