@@ -19,9 +19,34 @@ set -uo pipefail
 
 # O lock é do kernel, não um arquivo de posse apagado por observação. Assim não
 # existe janela entre conferir o dono e remover uma trava que já foi substituída.
-# `flock` cobre Linux/CI; `lockf` é a primitiva equivalente do macOS.
+# O caminho v2 não colide com um diretório stale criado pelo protocolo antigo.
+# Durante a migração, um dono antigo ainda vivo termina antes de o v2 prosseguir;
+# lock legado morto fica intacto e não pode bloquear pushes novos.
 if [ "${CSBRASIL_PREPUSH_LOCKED:-0}" != 1 ]; then
-  trava=/tmp/csbrasil-prepush.lock
+  legado=/tmp/csbrasil-prepush.lock
+  dono_legado=
+  assinatura_legada=
+  if [ -d "$legado" ]; then
+    dono_legado=$(cat "$legado/pid" 2>/dev/null)
+  elif [ -f "$legado" ]; then
+    dono_legado=$(head -n1 "$legado" 2>/dev/null)
+    assinatura_legada=$(tail -n1 "$legado" 2>/dev/null)
+  fi
+  if [[ "$dono_legado" =~ ^[0-9]+$ ]] && kill -0 "$dono_legado" 2>/dev/null \
+      && { [ -z "$assinatura_legada" ] || [ "$(ps -p "$dono_legado" -o lstart= 2>/dev/null)" = "$assinatura_legada" ]; }; then
+    echo "pre-push: lock legado ainda ativo (pid $dono_legado); esperando a migração"
+    espera_legada=0
+    while kill -0 "$dono_legado" 2>/dev/null && [ "$espera_legada" -lt 2400 ]; do
+      sleep 10
+      espera_legada=$((espera_legada + 10))
+    done
+    if kill -0 "$dono_legado" 2>/dev/null; then
+      echo "pre-push: lock legado ativo por 40 min; abortei sem rodar portões concorrentes" >&2
+      exit 1
+    fi
+  fi
+
+  trava=/tmp/csbrasil-prepush-v2.lock
   if command -v flock >/dev/null 2>&1; then
     exec flock -w 2400 "$trava" env CSBRASIL_PREPUSH_LOCKED=1 "$0" "$@"
   elif command -v lockf >/dev/null 2>&1; then
