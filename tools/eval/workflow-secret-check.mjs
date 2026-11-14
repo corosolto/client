@@ -173,6 +173,10 @@ function falhasMetadata(texto) {
     const campos = /--json\s+([A-Za-z,]+)/.exec(run)?.[1]?.split(',').sort();
     const sweepPaginado = /gh api --paginate --slurp "repos\/\$REPO\/pulls\?state=open&per_page=100"/.test(run);
     const esperados = comando === 'list' || sweepPaginado ? camposList : camposView;
+    if (sweepPaginado
+        && !/\(\s*export GH_TOKEN="\$\{\{ github\.token \}\}"[\s\S]*gh pr view "\$number"[\s\S]*\)\s*python3/.test(run)) {
+      locais.push('sweep não limita github.token à leitura; escritas perderiam o PAT');
+    }
     if (!campos || campos.join(',') !== esperados.join(',')) {
       locais.push(`leitura ${i + 1} (${comando || '?'}) não pede o conjunto completo de metadata`);
     }
@@ -191,6 +195,7 @@ function falhasMetadata(texto) {
     'escrita-com-token-do-repo': texto.replace('run: python3 scripts/ci/ensure_labels.py', 'run: GH_TOKEN="${{ github.token }}" python3 scripts/ci/ensure_labels.py'),
     'escrita-com-env-do-repo': texto.replace('      - name: Ensure labels exist\n', '      - name: Ensure labels exist\n        env:\n          GH_TOKEN: ${{ github.token }}\n'),
     'leitura-com-escrita-do-repo': texto.replace(' > /tmp/pr.json', ' > /tmp/pr.json; GH_TOKEN="${{ github.token }}" gh api -X POST repos/x/issues/1/labels -f labels[]=x'),
+    'token-leitura-vaza': texto.replace('\n          )\n          python3', '\n          python3'),
   };
   for (const [nome, mutado] of Object.entries(mutantes)) {
     if (!falhasMetadata(mutado).length) falhas.push(`WSEC3 mutante ${nome} não foi detectado`);
@@ -199,7 +204,7 @@ function falhasMetadata(texto) {
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m WSEC1 nenhum portão reprova PR de fork por secret que aquele gatilho não pode ter (${arquivos.length} workflows)`);
-if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m WSEC3 metadata completa usa github.token com checks/statuses read; escritas preservam o PAT; 8/8 mutantes detectados');
+if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m WSEC3 metadata completa usa github.token com checks/statuses read; escritas preservam o PAT; 9/9 mutantes detectados');
 if (MUT && !falhas.length) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);
   falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso (MC1)
