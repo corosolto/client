@@ -61,6 +61,13 @@ for (const id of ['escadao','mansao','penitenciaria','corrego','amazonia']) {
     if (process.argv.includes('--self-test')) {
       medirCorrego('repeat-diverge');
       console.log('Mutante morto: '+id);
+      const cego = spawnSync(process.execPath, [corregoCLI, '--mutante=cego'], {
+        encoding:'utf8', cwd:fileURLToPath(new URL('../../', import.meta.url)),
+        ...corregoBudget, shell:false, killSignal:'SIGKILL',
+      });
+      assert.equal(cego.error, undefined, 'Córrego: mutante cego falhou ao executar');
+      assert.equal(cego.signal, null, 'Córrego: mutante cego terminou por sinal');
+      assert.equal(cego.status, 78, `Córrego: gate cego precisa sair 78, veio ${cego.status}`);
     }
     continue;
   }
