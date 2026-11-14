@@ -193,6 +193,8 @@ registro. Passo a passo em `docs/docs/construtor-de-mapas.md`. Relevo em camadas
 > menos: o **total** continuou 5, então nenhuma contagem acusou. Mapa entrou ou
 > saiu → `src/data/jogo.ts` no mesmo PR, e rode `npm run check:seo`.
 
+For an immutable Studio pack, use the [local verification, installation and future runtime promotion contract](docs/studio-pack-integration.md). Local installation never enables a map or substitutes for runtime evidence.
+
 ### Mexer no site
 
 - Nome, host e descrições saem de `src/lib/site.ts`. **Não escreva o nome do
