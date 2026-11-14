@@ -1,5 +1,5 @@
 // Negociação real do NetClient: v9 preferida, v8 continua utilizável e ack precisa casar;
-// N11–N13 cobrem o contrato transporte → codec (ArrayBuffer, decoder real, teto, canal inseguro).
+// N1–N22 cobrem fallback WT→WS, versões, tentativas tardias, timeout e fechamento.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -30,7 +30,7 @@ const specs = {
   'callback-before-close': { failed:['N21'], file:'net.js', edits:[
     ['tp.fechar(codigo, motivo);\n        if (accepted) this.onClose?.();', 'if (accepted) this.onClose?.();\n        tp.fechar(codigo, motivo);']] },
   'failover-notify': { failed:['N11'], file:'net.js', edits:[
-    ['this.tp = null; this.connected = false;\n        try { console.info', 'this.tp = null; this.connected = false; this.onClose?.();\n        try { console.info']] },
+    ["falhou?.fechar(1000, 'transport_fallback');\n        if (ticket) {", "falhou?.fechar(1000, 'transport_fallback');\n        this.onClose?.();\n        if (ticket) {"]] },
   'accepted-close-notify': { failed:['N22'], file:'net.js', edits:[
     ["assenta(reject, new Error('closed'));\n            if (accepted) this.onClose?.();", "assenta(reject, new Error('closed'));"]] },
 };
