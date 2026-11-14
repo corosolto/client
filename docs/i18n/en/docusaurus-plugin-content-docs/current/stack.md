@@ -122,11 +122,13 @@ hypothetical one:
 | Service | What it generates | Script | Key |
 |---|---|---|---|
 | **mint.gg** (Mint MCP) | rigged characters, packs, animation | MCP tools; `mint-assets.json` records the result | owner account via MCP |
-| **Tripo3D** | 3D props from text | `tools/gen-asset.mjs --provider tripo` | `TRIPO_API_KEY` |
-| **Meshy** | 3D props and rigging | `tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
-| **OpenRouter** | 2D art | `tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
+| **Tripo3D** | 3D props from text | `../studio/tools/gen-asset.mjs --provider tripo` | `TRIPO_API_KEY` |
+| **Meshy** | 3D props and rigging | `../studio/tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
+| **OpenRouter** | 2D art | `../studio/tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
 
 `mint-assets.json` records **165 assets** generated through Mint (59 `mint-model` · 35 `mint-asset-pack` · 5 `mint-text-to-3d` · 9 `mint-chat` · 4 `local-derivative` · 1 `openrouter-image-concept` · 4 `replicate-gen` · 3 `mint-asset-pack-item` · 10 `mint-humanoid-model` · 1 `mint-model-batch` · 4 `sketchfab-model` · 30 `polyhaven-model`).
+
+The `../studio/tools/gen-asset.mjs` and `../studio/tools/gen-image.mjs` generation scripts live in **[Coro Solto Studio](https://github.com/corosolto/studio)**, a separate public repository; the paths are relative to a client checkout next to it. Editable source assets and licensed packs remain private in `corosolto/studio-assets`, with no corresponding paths in the public repository.
 
 API keys live in the gitignored root `.env`; generation is offline and the game runs without them.
 
@@ -157,13 +159,13 @@ the asset becomes a binary with no provenance sitting in the repository.
 
 ### 3D props: Tripo3D and Meshy {#props-3d}
 
-`tools/gen-asset.mjs` generates a prop from text, downloads the GLB and writes it **already optimized** into
+`../studio/tools/gen-asset.mjs` generates a prop from text, downloads the GLB and writes it **already optimized** into
 `public/models/props/`:
 
 ```bash
-node tools/gen-asset.mjs --prompt "caixa de som de baile" --id caixa_som
-node tools/gen-asset.mjs --provider meshy --prompt "carro tunado" --id carro_tunado
-node tools/gen-asset.mjs --resume <task_id> --id caixa_som   # task already paid for
+node ../studio/tools/gen-asset.mjs --prompt "caixa de som de baile" --id caixa_som
+node ../studio/tools/gen-asset.mjs --provider meshy --prompt "carro tunado" --id carro_tunado
+node ../studio/tools/gen-asset.mjs --resume <task_id> --id caixa_som   # task already paid for
 ```
 
 Tripo is the default; Meshy is the alternative. `--face-limit` (default 12000), `--raw-only` to
@@ -175,7 +177,7 @@ comes from GLB are **props**.
 
 ### 2D art: OpenRouter {#art-2d-openrouter}
 
-`tools/gen-image.mjs` is the 2D sibling: it generates faction posters, wallpapers and splash art from text
+`../studio/tools/gen-image.mjs` is the 2D sibling: it generates faction posters, wallpapers and splash art from text
 (+ reference images), and delivers the file **already framed and compressed** for the box
 the screen will draw it in.
 
