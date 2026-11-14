@@ -21,10 +21,8 @@ export const indiceViewmodels = (manifesto) => new Map(manifesto.files.map((f) =
 
 export const chaveR2Viewmodel = (entrada) => `${PREFIXO_R2_VM}${entrada.sha256}${entrada.path.slice(entrada.path.lastIndexOf('.'))}`;
 
-/* Viewmodel autorado (arte privada) servido do R2 em vez de entrar no build: o build do Workers
-   não precisa de credencial nem carrega 160 MB por deploy. Só caminhos do manifesto versionado
-   são lidos; o resto (e bucket sem o objeto) devolve null e cai no Astro, que responde 404 como
-   a Vercel fazia sem o arquivo, e o jogo usa o viewmodel legado. */
+// Viewmodel privado servido do R2 pelo manifesto versionado; fora dele devolve null e cai no 404
+// do Astro, e o jogo usa o legado (docs/runbooks/MIGRACAO-CLOUDFLARE.md, "Fases 3–4").
 export async function viewmodelDoBucket(request, bucket, indice) {
   if (!bucket || (request.method !== 'GET' && request.method !== 'HEAD')) return null;
   const { pathname } = new URL(request.url);

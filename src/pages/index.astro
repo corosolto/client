@@ -58,9 +58,8 @@ const initialGuide = rota?.estado?.guia || '';
 const pageUrl = abs(rota ? (rota.canonical || rota.caminho) : '/');
 const selfUrl = abs(rota ? rota.caminho : '/');
 const V = pkg.version;
-// Commit do deploy; o multiplayer grava o build do navegador com ele. CS_BUILD_SHA vem dos
-// workflows do Cloudflare (no pull_request_target o GITHUB_SHA é o da base, não o do PR);
-// VERCEL_GIT_COMMIT_SHA segue valendo enquanto a Vercel builda.
+// Commit do deploy (o multiplayer grava o build do navegador). CS_BUILD_SHA vem dos workflows do
+// Cloudflare: no pull_request_target o GITHUB_SHA é o da base.
 const SHA_CANDIDATO = import.meta.env.CS_BUILD_SHA || import.meta.env.VERCEL_GIT_COMMIT_SHA || import.meta.env.GITHUB_SHA || '';
 const GIT_SHA = /^[a-f0-9]{40}$/.test(SHA_CANDIDATO) ? SHA_CANDIDATO : '';
 declare const __MANIFESTO_JS__: {
