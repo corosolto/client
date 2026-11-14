@@ -18,7 +18,7 @@ try {
   var ctx = { THREE, world };
 } catch (e) {
   console.error(`ERRO-INFRA: mapa não subiu (${MAPA}): ${e && e.message}`);
-  process.exit(3);
+  process.exit(78);
 }
 const { THREE, world } = ctx;
 

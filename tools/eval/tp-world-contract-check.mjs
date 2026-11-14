@@ -29,7 +29,7 @@ let THREE, CHARACTERS, GLTFLoader;
 try {
   ({ THREE, CHARACTERS } = await import('./harness.mjs'));
   ({ GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js'));
-} catch (e) { console.error(`infra na preparação do harness: ${e.message}`); process.exit(3); }
+} catch (e) { console.error(`infra na preparação do harness: ${e.message}`); process.exit(78); }
 Object.defineProperty(globalThis, 'fetch', { configurable: true, writable: true, value: localFetch });
 GLTFLoader.prototype.load = function (url, done, progress, fail) {
   const file = path.resolve('public', url.split('?')[0]);
@@ -54,7 +54,7 @@ let srcHandik, srcGlb;
 try {
   srcHandik = fs.readFileSync(path.join(ROOT, 'public/js/handik.js'), 'utf8');
   srcGlb = fs.readFileSync(path.join(ROOT, 'public/js/glbchars.js'), 'utf8');
-} catch (e) { console.error(`infra na leitura dos fontes: ${e.message}`); process.exit(3); }
+} catch (e) { console.error(`infra na leitura dos fontes: ${e.message}`); process.exit(78); }
 const TMP = [];
 function tmpMod(nome, base, trocas) {
   let t = base;
@@ -264,14 +264,14 @@ try {
 const nominal = await rodarVariante('');
 const { ERRO: ERRO_N, VERM: VERM_N } = classificar(nominal);
 imprimirs('nominal', nominal);
-if (ERRO_N.length) { console.error(`infra no nominal (${ERRO_N.length}) — NÃO conta como detectado`); process.exit(3); }
+if (ERRO_N.length) { console.error(`infra no nominal (${ERRO_N.length}) — NÃO conta como detectado`); process.exit(78); }
 if (VERM_N.length) { console.error(`nominal reprovado em ${VERM_N.length} cláusula(s) antes de qualquer mutante`); process.exit(1); }
 if (!MUT) { console.log(`✓ TP-WORLD: ${nominal.length} cláusulas verdes.`); process.exit(0); }
 
 const mutante = await rodarVariante(MUT);
 const { ERRO: ERRO_M, VERM: VERM_M } = classificar(mutante);
 imprimirs(`mutante ${MUT}`, mutante);
-if (ERRO_M.length) { console.error(`infra no mutante (${ERRO_M.length}) — NÃO conta como detectado`); process.exit(3); }
+if (ERRO_M.length) { console.error(`infra no mutante (${ERRO_M.length}) — NÃO conta como detectado`); process.exit(78); }
 const obtido = VERM_M.map((c) => c.id).sort();
 const esperado = [...EXPECTADO[MUT]].sort();
 const faltando = esperado.filter((id) => !obtido.includes(id));
@@ -284,5 +284,5 @@ console.log(`✓ mutante ${MUT} pego no conjunto exato: ${obtido.length} cláusu
 process.exit(0);
 } catch (e) {
   console.error(`infra na execução (${e.message}) — NÃO conta como detectado`);
-  process.exit(3);
+  process.exit(78);
 }

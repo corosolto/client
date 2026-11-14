@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "kind": "map",
+  "id": "contract-fixture",
+  "version": "0.1.0",
+  "source": {
+    "revision": "fixture-contract-v1",
+    "provenance": [
+      "Client-only schema and install fixture; not a Studio release or a Lajes asset."
+    ]
+  },
+  "geometry": ["geometry/alley.fixture"],
+  "textures": ["textures/alley.fixture"],
+  "lods": {
+    "low": ["lods/low/alley.fixture"]
+  },
+  "collision": ["collision/alley.fixture"],
+  "navigation": ["navigation/alley.fixture"],
+  "spawns": ["spawns/alley.fixture"],
+  "regions": ["regions/alley.fixture"],
+  "previews": ["previews/alley.fixture"],
+  "evidence": ["evidence/alley.fixture"],
+  "files": [
+    {
+      "path": "collision/alley.fixture",
+      "sha256": "ceeb7b52442e25144443492e96d5387e8b9fceb3f889d488f30e0208a09e32e1",
+      "bytes": 57
+    },
+    {
+      "path": "evidence/alley.fixture",
+      "sha256": "4d82d157f47fddd836079e261904c7527ceda771466ca703c11c51f585c56a1a",
+      "bytes": 56
+    },
+    {
+      "path": "geometry/alley.fixture",
+      "sha256": "cc7197f7b122a1f70e2679e5924ba2c143288ba8730f7ac3b012f814b4466534",
+      "bytes": 56
+    },
+    {
+      "path": "lods/low/alley.fixture",
+      "sha256": "68ff38b701a7daf2bc44cb525be419321cc88c56907e3caec519ad65e6c11139",
+      "bytes": 55
+    },
+    {
+      "path": "navigation/alley.fixture",
+      "sha256": "2b9c6ddaba7748d77260f4490ba8a5af07f66f192c26425a74b7156d4cf31f4a",
+      "bytes": 58
+    },
+    {
+      "path": "previews/alley.fixture",
+      "sha256": "3c0a0b361783238ed4774f30de79959c6729022e4c6a83d1f53dc5fdeb1d767a",
+      "bytes": 55
+    },
+    {
+      "path": "regions/alley.fixture",
+      "sha256": "2567e3a3b494a73a2136c3265488a510a748e965d5d081415a25ef06b62cbe00",
+      "bytes": 54
+    },
+    {
+      "path": "spawns/alley.fixture",
+      "sha256": "3327f16fb5bffe7fc969ef6e6e25c5e404b585e6774b2175befa94343fa17527",
+      "bytes": 53
+    },
+    {
+      "path": "textures/alley.fixture",
+      "sha256": "812bbdc8c44f99193fb5a7b04102e954c5739fe628dcafff57389a5ffc003089",
+      "bytes": 55
+    }
+  ]
+}

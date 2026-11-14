@@ -45,7 +45,7 @@ for (const a of process.argv.slice(2)) {
 if (Object.keys(process.env).some(k => k.startsWith('COROSOLTO_NEGOTIATION_'))) { console.error('Ambiente interno não aceito'); process.exit(2); }
 const sourceNames = ['net.js','nos-rede.js','transporte.js','netcodec.js'];
 let sourceBytes, sourcePins;
-const processDeadline = setTimeout(() => { console.error('INFRA: harness deadline60000ms; no semantic detection credit'); process.exit(3); }, 60000);
+const processDeadline = setTimeout(() => { console.error('INFRA: harness deadline60000ms; no semantic detection credit'); process.exit(78); }, 60000);
 const report = { schema:'client-snapshot-negotiation/1', scope:'real modules, browser boundaries faked; no backend/QUIC/browser/codec approval', runs:[] };
 function metadata(type, version, id=1) { return { type, ...(version === undefined ? {} : {protocolVersion:version}), yourEnt:id, yourTeam:'E', espectador:false, roster:[], partida:id }; }
 function frame(m) {

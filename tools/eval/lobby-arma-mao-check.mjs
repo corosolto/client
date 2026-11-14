@@ -76,7 +76,7 @@ if (servidor) {
     try { pronto = (await fetch(BASE)).ok; } catch { /* subindo */ }
     if (!pronto) await new Promise((r) => setTimeout(r, 500));
   }
-  if (!pronto || morreu !== null) { console.error(`infra: servidor próprio não subiu em ${BASE} (saída ${morreu})`); process.exit(3); }
+  if (!pronto || morreu !== null) { console.error(`infra: servidor próprio não subiu em ${BASE} (saída ${morreu})`); process.exit(78); }
 }
 const JSON_OUT = process.argv.includes('--json');
 
@@ -114,7 +114,7 @@ try {
   });
 } catch (e) {
   console.error(`infra: browser não subiu (${e.message})`);
-  process.exit(3);
+  process.exit(78);
 }
 const page = await browser.newPage({ viewport: { width: 320, height: 320 } });
 page.on('pageerror', (e) => console.error('[pageerror]', e.message));

@@ -23,8 +23,8 @@
      node tools/eval/corrego-ponte-check.mjs --mutante=<nome>
      node tools/eval/corrego-ponte-check.mjs --json
 
-   Sai 1 se qualquer cláusula reprovar, ou se um mutante NÃO acender cláusula
-   nenhuma (mutante cego é portão cego — lei 3).
+   Sai 1 se qualquer cláusula reprovar, 3 se um mutante NÃO acender a cláusula
+   esperada (régua cega — lei 3) e 78 se o experimento não puder ser medido.
    ============================================================================ */
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';

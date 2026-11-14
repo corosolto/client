@@ -1,5 +1,5 @@
 // Régua F2 knife: 1P via _accept real (knife-fp) e 3P via weaponModel real (knife-tp).
-// Exit: 0 GREEN · 1 RED (mutante) · 2 USO incorreto · 3 infra/import.
+// Exit: 0 GREEN · 1 RED (mutante) · 2 USO incorreto · 78 infra/import.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -21,7 +21,7 @@ for (const arg of process.argv.slice(2)) {
   onlyArgs.push(value);
 }
 
-// Fronteira de execução guardada: import de arquivo do repo falha como INFRA 3, não exit 1.
+// Fronteira de execução guardada: import de arquivo do repo falha como INFRA 78, não exit 1.
 let THREE; let GLTFLoader; let WEAPON_SKINS; let GOLDEN_VER; let footprintFullyCovered; let ownVmResource;
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -510,7 +510,7 @@ const exitRed = (label, failures) => {
 
 process.on('uncaughtException', (error) => {
   console.error('INFRA knife-skin-markings: exceção não tratada', error);
-  process.exit(3);
+  process.exit(78);
 });
 
 try {
@@ -576,7 +576,7 @@ try {
   }
   console.log('baseline nominal GREEN: 4 casos attached, footprint independente, rig intacto, 30 poses finitas, cross-context recusado');
 
-  // Mutantes: conjunto EXATO de cláusulas RED (sem sobra, sem falta); exceção = infra 3.
+  // Mutantes: conjunto EXATO de cláusulas RED (sem sobra, sem falta); exceção = infra 78.
   const CASE_CLAUSE_IDS = (tag) => ['attached', 'roles-exact', 'count', 'aspect', 'parent', 'footprint'].map((c) => `${tag}:${c}`);
   const FULL = CASES.flatMap((c) => [...CASE_CLAUSE_IDS(`${c.id}#fp`), ...CASE_CLAUSE_IDS(`${c.id}#tp`)]);
   const APPLY_ANCHOR = '  placements.forEach(({ item, spec, placement }) => addKnifePair(model, skinId, item.role, item.texture, frame, placement, context, spec));';
@@ -659,5 +659,5 @@ try {
   process.exit(0);
 } catch (error) {
   console.error('INFRA knife-skin-markings:', error);
-  process.exit(3);
+  process.exit(78);
 }

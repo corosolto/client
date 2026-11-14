@@ -73,6 +73,6 @@ reprova, não "pega").
 
 Exits: 0 nominal verde / mutante pego no conjunto exato · 1 nominal vermelho
 ou conjunto fora do exato · 2 CLI inválida (duplicada, sufixo, desconhecida,
-argumento extra) · 3 infraestrutura, nunca "detectado" — inclusive falha de
+argumento extra) · 78 infraestrutura, nunca "detectado" — inclusive falha de
 import de harness/fonte fora dos try e promessa lançada no orquestrador
-(fronteiras de preparação cobertas por catch externo com exit 3).
+(fronteiras de preparação cobertas por catch externo com exit 78).

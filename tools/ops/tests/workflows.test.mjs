@@ -19,6 +19,8 @@ test('ops-diag.yml: agendado e manual, navegador, artifact, issue em vermelho, f
   assert.match(s, /node tools\/ops\/diagnose\.mjs --browser --partida --sem-gpu --out=artifacts\/ops\/ci/);
   assert.match(s, /upload-artifact@[0-9a-f]{40}/); assert.match(s, /path: artifacts\/ops\/ci\//);
   assert.match(s, /codigo == '1'[\s\S]*gh issue (create|comment)/); assert.match(s, /codigo == '0'[\s\S]*gh issue close/);
+  assert.match(s, /codigo == '78'[\s\S]*ops-diag inconclusivo/);
+  assert.doesNotMatch(s, /codigo == '3'/, 'inconclusivo não pode mais ocupar o código de régua cega');
   const t = Number(/timeout-minutes: (\d+)/.exec(s)?.[1]); assert.ok(t > 0 && t <= 30, `timeout ${t}`);
   assert.doesNotMatch(s, /pull_request/, 'gatilho cego de fork não pode ligar a diagnose (eval:wfsecret)');
   assert.match(s, /issues: write/);

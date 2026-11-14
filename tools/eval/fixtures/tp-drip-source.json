@@ -41,7 +41,7 @@
   "baseline": {
     "head": "a8f246196e1c84cbe9ad223a06c071f6e547d0ad",
     "artifacts": [
-      ["public/data/gloves-manifest.json",193275,"a8baf8c613e558aa4dda25598952e7ac3a59939d73f8af17ecffc31951e923da"],
+      ["public/data/gloves-manifest.json",193275,"c0e3d59b8d5287adbbeb44d67279fbd59f5d6acf0ccce658cb2412ba5c5f8513"],
       ["public/models/gloves/1p/fpvm-hands-2c8f9a3dd5ca.glb",30944,"7a514762beacb1fd8311093872590092d75a223e68ea88c34547e995416597c8"],
       ["public/models/gloves/3p/ancap-1663d71b1cbb.glb",91236,"e69f202b67c6551c7067d56469769d5c0295fc68384e60c74e63768e5514bbda"],
       ["public/models/gloves/3p/bandeirante-a623e1c6baa2.glb",54032,"a8c7094cb877d5e1154882541034d2a8be0e2141c6d3ad1b510be1b8cab3c724"],

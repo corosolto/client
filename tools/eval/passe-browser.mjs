@@ -222,7 +222,7 @@ async function medir(mutante = '') {
     await page.waitForTimeout(1200);
     await entrarNoLobby(page, false);
     const repetiu = await page.evaluate(() => !!document.getElementById('passe-anuncio')?.open);
-    add('PB1', anuncio.aberto && anuncio.cta === 'VER O PASSE' && /sessao-da-treta-s1\.svg/.test(anuncio.arte) && !repetiu,
+    add('PB1', anuncio.aberto && anuncio.cta === 'VER O PASSE' && /sessao-da-treta-s1\.webp/.test(anuncio.arte) && !repetiu,
       `anúncio ${anuncio.aberto ? 'abriu' : 'NÃO ABRIU'} (CTA "${anuncio.cta}", arte ${anuncio.arte || 'sem carregar'}); ao recarregar ${repetiu ? 'REPETIU' : 'não repetiu'}`);
     add('PB0@desktop', !erros.length, erros.length ? `erros de página: ${erros.join(' | ')}` : 'sem erro de página');
     await ctx.close();
