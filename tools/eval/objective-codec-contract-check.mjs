@@ -13,7 +13,8 @@ if (mutant) {
   assert.notEqual(source, before, 'mutação precisa aplicar');
   console.log('Mutação aplicada: '+mutant);
 }
-source = source.replace("'./data/weapons.js'", JSON.stringify(new URL('./data/weapons.js', url).href));
+source = source.replace(/from\s+(['"])(\.\/[^'"]+)\1/g,
+  (_match, _quote, spec) => 'from ' + JSON.stringify(new URL(spec, url).href));
 const { encodeSnapshot, decodeSnapshot } = await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 
 
