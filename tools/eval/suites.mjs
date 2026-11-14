@@ -19,6 +19,7 @@ eval:weapon-passe
 eval:passe
 eval:fora-do-ar
 eval:packpublish
+eval:cfborda
 `);
 
 const DEPLOY = lista(`

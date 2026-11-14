@@ -15,7 +15,7 @@ const BASELINE = {
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
 const NOVOS = {
-  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:prodcrash']),
+  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:cfborda', 'eval:prodcrash']),
   deploy: new Set(['eval:weapon-passe', 'eval:dispose']),
 };
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
@@ -49,6 +49,7 @@ test('staging adds portal, pass and production-crash checks without deleting mig
   assert.ok(SUITES.fast.includes('eval:pintura-fabrica'));
   assert.ok(SUITES.fast.includes('eval:passe'));
   assert.ok(SUITES.fast.includes('eval:packpublish'));
+  assert.ok(SUITES.fast.includes('eval:cfborda'));
   assert.ok(SUITES.deploy.includes('eval:dispose'));
 });
 
