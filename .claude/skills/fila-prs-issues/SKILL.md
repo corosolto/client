@@ -83,6 +83,8 @@ e para o head. O remote da base precisa apontar explicitamente para o repositór
 ```bash
 REVIEWED_HEAD=$(gh pr view NUMERO -R corosolto/REPO --json headRefOid --jq .headRefOid) \
   || { echo "não foi possível ler o head do PR" >&2; exit 1; }
+BRANCH_ORIGINAL=$(gh pr view NUMERO -R corosolto/REPO --json headRefName --jq .headRefName) \
+  || { echo "não foi possível ler a branch original do PR" >&2; exit 1; }
 BASE_BRANCH=$(gh pr view NUMERO -R corosolto/REPO --json baseRefName --jq .baseRefName) \
   || { echo "não foi possível ler a base do PR" >&2; exit 1; }
 PR_BODY=$(gh pr view NUMERO -R corosolto/REPO --json body --jq .body) \
@@ -127,7 +129,7 @@ git fetch "$BASE_REMOTE" \
   || { echo "não foi possível atualizar a base" >&2; exit 1; }
 REVIEWED_BASE=$(git rev-parse "$BASE_REMOTE/$BASE_BRANCH") \
   || { echo "não foi possível capturar o SHA da base revisada" >&2; exit 1; }
-git fetch "$HEAD_REMOTE" BRANCH \
+git fetch "$HEAD_REMOTE" "$BRANCH_ORIGINAL" \
   || { echo "não foi possível atualizar o head" >&2; exit 1; }
 if ! PR_MESSAGES=$(git log --format='%H %s%n%b' "$BASE_REMOTE/$BASE_BRANCH..$REVIEWED_HEAD"); then
   echo "não foi possível ler o histórico do PR" >&2
@@ -139,7 +141,7 @@ if [ "$BASE_BRANCH" = "$DEFAULT_BRANCH" ] && grep -Eiq "$CLOSING_RE" <<<"$PR_BOD
   exit 1
 fi
 if grep -Eiq "$CLOSING_RE" <<<"$PR_MESSAGES"; then
-  echo "commit fecha issue automaticamente; neutralize o histórico antes do merge" >&2
+  echo "commit fecha issue automaticamente; decisão refazer: abra outra branch/PR sem esse histórico" >&2
   exit 1
 fi
 ```
@@ -149,11 +151,11 @@ Se já existir worktree limpa para a branch, reutilize-a somente quando seu `HEA
 
 ```bash
 # Branch local já existente:
-git worktree add /tmp/corosolto-REPO-pr-NUMERO BRANCH \
+git worktree add /tmp/corosolto-REPO-pr-NUMERO "$BRANCH_ORIGINAL" \
   || { echo "não foi possível criar a worktree da branch local" >&2; exit 1; }
 
 # Branch que existe apenas no remoto:
-git worktree add --track -b BRANCH /tmp/corosolto-REPO-pr-NUMERO "$HEAD_REMOTE"/BRANCH \
+git worktree add --track -b "$BRANCH_ORIGINAL" /tmp/corosolto-REPO-pr-NUMERO "$HEAD_REMOTE/$BRANCH_ORIGINAL" \
   || { echo "não foi possível criar a worktree da branch remota" >&2; exit 1; }
 
 test "$(git -C /tmp/corosolto-REPO-pr-NUMERO rev-parse HEAD)" = "$REVIEWED_HEAD" \
@@ -168,7 +170,7 @@ Para PR de fork, o `HEAD_REMOTE` já foi selecionado antes da worktree. Depois d
 empurre para o mesmo owner/branch:
 
 ```bash
-git push "$HEAD_REMOTE" BRANCH \
+git push "$HEAD_REMOTE" "$BRANCH_ORIGINAL" \
   || { echo "não foi possível publicar a branch no fork" >&2; exit 1; }
 ```
 
@@ -259,9 +261,9 @@ e labels compatíveis com `docs/quality-gates.md`.
 | **merge agora** | dependências integradas, head atual verde e revisado, política permite |
 | **corrigir** | check vermelho, achado válido ou verificação insuficiente |
 | **retarget** | base errada, PR empilhado cuja base mudou ou branch precisa seguir a integração |
+| **refazer** | commit contém closing keyword; solicite outra branch/PR sem esse histórico, sem force-push |
 | **humano** | gameplay/render/HUD/mapa/personagem/backend ou outra superfície que a política reserva |
 | **fechar/substituir** | sucessor ou consolidação comprovada; registre o destino antes de fechar |
-
 Para retarget, use `gh pr edit NUMERO -R corosolto/REPO --base BASE_CORRETA` e trate o resultado
 como head/contexto novo: checks, dependências e review precisam ser revalidados. Em branch já
 publicada, atualize a base com merge normal e o mesmo sign-off/trailer, nunca rebase seguido de
@@ -352,6 +354,24 @@ inferência. Antes do comando, leia os labels e `docs/quality-gates.md`: `crash-
 outra classe reservada ao humano viram decisão **humano**, mesmo depois da verificação.
 
 ```bash
+ISSUE_REF=OWNER_ISSUE/REPO_ISSUE#NUMERO_ISSUE
+PR_REF=OWNER_PR/REPO_PR#PR
+if [[ "$ISSUE_REF" =~ ^([^/]+)/([^#]+)#([0-9]+)$ ]]; then
+  OWNER_ISSUE="${BASH_REMATCH[1]}"
+  REPO_ISSUE="${BASH_REMATCH[2]}"
+  NUMERO_ISSUE="${BASH_REMATCH[3]}"
+else
+  echo "referência de issue inválida: $ISSUE_REF" >&2
+  exit 1
+fi
+if [[ "$PR_REF" =~ ^([^/]+)/([^#]+)#([0-9]+)$ ]]; then
+  OWNER_PR="${BASH_REMATCH[1]}"
+  REPO_PR="${BASH_REMATCH[2]}"
+  PR="${BASH_REMATCH[3]}"
+else
+  echo "referência de PR inválida: $PR_REF" >&2
+  exit 1
+fi
 if ! ISSUE_LABELS=$(gh issue view NUMERO_ISSUE -R OWNER_ISSUE/REPO_ISSUE \
   --json labels --jq '.labels[].name'); then
   echo "não foi possível confirmar os labels da issue" >&2
