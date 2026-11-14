@@ -1,7 +1,7 @@
 // Cenários de regressão do viewmodel (rodada look Quake 4): ADS, muzzle flash, reload,
 // look-down. O _vmMuzzleExt (origem do flash/tracer) e o adsPt (centralização da alça)
 // derivam do MESMO transform do _vmFrame — se a arma se move e o flash não, quebrou.
-// Uso: node tools/eval/vm-quake-scen.mjs <outDir> [arma] [W,H] [extraQS]
+// Uso: node tools/eval/aposentados/vm-quake-scen.mjs <outDir> [arma] [W,H] [extraQS]
 import { execSync } from 'node:child_process';
 import { mkdirSync, rmSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';

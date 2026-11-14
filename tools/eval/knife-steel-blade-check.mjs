@@ -5,7 +5,7 @@
 // do atlas original no UV de cada vértice. Mutantes (precisam reprovar): `lamina-envelopada` (a
 // máscara some e a skin embrulha a lâmina), `marcas-no-cabo` (marcas medidas no cabo, onde o
 // polegar tapava 20-27% do letreiro em 10/11/2026), `letreiro-branco` (letreiro sem gravação).
-// Exit: 0 GREEN · 1 RED · 2 USO incorreto · 3 infra/import.
+// Exit: 0 GREEN · 1 RED · 2 USO incorreto · 78 infra/import.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -205,7 +205,7 @@ function evaluateKnife(root, skinId, context, atlas) {
   return { checks: Object.fromEntries(Object.entries(checks).map(([id, ok]) => [`${skinId}#${context}:${id}`, ok])), detail };
 }
 
-process.on('uncaughtException', (error) => { console.error('INFRA knife-steel-blade:', error); process.exit(3); });
+process.on('uncaughtException', (error) => { console.error('INFRA knife-steel-blade:', error); process.exit(78); });
 try {
   THREE = await import('../../public/vendor/three.module.js');
   ({ GLTFLoader } = await import('../../public/vendor/addons/loaders/GLTFLoader.js'));
@@ -216,7 +216,7 @@ try {
   sharp = (await import('sharp')).default;
 } catch (error) {
   console.error('INFRA knife-steel-blade: import', error);
-  process.exit(3);
+  process.exit(78);
 }
 
 const knives = Object.values(WEAPON_SKINS).filter((s) => s.passe && s.targetWeapons.includes('knife')).map((s) => s.id);

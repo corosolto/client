@@ -325,7 +325,7 @@ for (const arma of ALVO) {
   if (r.inputInvalid) {
     await nav.close();
     console.error('VMH INPUT INVALIDO — nenhuma asserção ou mutante recebe crédito');
-    process.exit(3);
+    process.exit(78);
   }
   if (FOTOS) {
     const dir = FOTOS;

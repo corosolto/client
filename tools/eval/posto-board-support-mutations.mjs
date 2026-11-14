@@ -2,6 +2,7 @@
 // Status de sonda cega/infra nunca conta como reprovação medida.
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { classificarFalhaMutante } from './visual-map-mutations.mjs';
 
 const ids = ['SUP1', 'SUP2', 'SUP3', 'SUP4', 'SUP5', 'SUP6'];
 const casos = [
@@ -45,7 +46,7 @@ if (argv[0] === '--self-test') {
     if (!aceitar(r, esperado)) {
       console.error(`POSTO-SUPPORT wrapper recusou ${mutante || 'nominal'}: status=${r.status}, alvo=${esperado.join(',') || 'nenhum'}`);
       console.error(((r.stdout || '') + '\n' + (r.stderr || '')).slice(-2400));
-      process.exit(r.error || r.signal || [2, 3, 4].includes(r.status) ? 3 : 1);
+      process.exit(classificarFalhaMutante(r));
     }
     console.log(`POSTO-SUPPORT ${mutante || 'nominal'}: conjunto ${esperado.join(',') || 'GREEN'} confirmado`);
   }

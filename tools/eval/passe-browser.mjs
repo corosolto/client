@@ -16,6 +16,7 @@
      PB9 bot travado: o ＋ do personagem travado recusa escalar como bot, com o mesmo aviso da escolha.
      PB10 ordem dos anúncios: no 1º acesso o anúncio da Operação Flávio abre antes; ao fechá-lo o do
          passe abre na mesma visita (e fica marcado como visto).
+     PB11 auto: a partida automática suprime o anúncio, mas ainda faz GET /api/passe e revela a aba.
    Uso (servidor próprio; um navegador por vez):
      node tools/eval/serve.mjs 9431 &
      BASE=http://127.0.0.1:9431 tools/eval/with-browser-lock.sh node tools/eval/passe-browser.mjs [--mutantes]
@@ -67,7 +68,7 @@ const MUTANTES = {
 const INJETA_PERSONAGEM = (t) => t.replace('export const CHARACTERS = [',
   "export const CHARACTERS = [\n  { id: 'capitao-caveira', team: 'E', name: 'Capitão Caveira', passe: { season: 'sessao-da-treta-s1', level: 1 },\n    blurb: 'Personagem do passe (régua).', pal: { skin: 0xe8b98a, shirt: 0x222222, pants: 0x222222, hair: 0x111111, boots: 0x111111 } },");
 
-async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mutante = '', personagem = null, anuncioVisto = false, recusaMedicao = false, atrasoMs = 0, flavio = false, posterQuebrado = '' }) {
+async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mutante = '', personagem = null, anuncioVisto = false, recusaMedicao = false, atrasoMs = 0, flavio = false, posterQuebrado = '', auto = false }) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: toque, isMobile: toque, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   page.setDefaultTimeout(15000);
@@ -87,8 +88,10 @@ async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mu
   /* posterQuebrado: o pôster desta skin responde 404, a recompensa tem de voltar ao ícone */
   if (posterQuebrado) await page.route(`**/img/weapon-skins/${posterQuebrado}.webp`, (r) => r.fulfill({ status: 404, contentType: 'text/plain', body: 'not found' }));
   const posts = [], eventos = [];   // resgates e funil do painel, separados
+  let gets = 0;
   await page.route('**/api/passe', async (r) => {
     const req = r.request();
+    if (req.method() === 'GET') gets++;
     if (req.method() === 'POST') { const corpo = req.postData() || ''; if (/"action":"analytics"/.test(corpo)) eventos.push(JSON.parse(corpo).event); else posts.push(corpo); }
     if (atrasoMs && req.method() === 'GET') await new Promise((ok) => setTimeout(ok, atrasoMs));
     const { status, body } = mock.handle(req.method(), req.postData() || '');
@@ -116,11 +119,11 @@ async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mu
       await r.fulfill({ response: res, body: depois });
     });
   }
-  await page.goto(`${BASE}/?lang=pt`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await page.goto(`${BASE}/?lang=pt${auto ? '&auto=E,gotinha' : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.waitForFunction(() => !document.getElementById('splash-enter')?.classList.contains('hidden'), null, { timeout: 90000 }).catch(() => {});
   await page.waitForTimeout(1200);
   await entrarNoLobby(page, flavio ? 'flavio' : !anuncioVisto);
-  return { page, ctx, posts, eventos, erros };
+  return { page, ctx, posts, eventos, erros, gets };
 }
 
 /* Sai do splash e espera o status do passe (aba PASSE visível). O anúncio sai depois que o lobby
@@ -219,7 +222,7 @@ async function medir(mutante = '') {
     await page.waitForTimeout(1200);
     await entrarNoLobby(page, false);
     const repetiu = await page.evaluate(() => !!document.getElementById('passe-anuncio')?.open);
-    add('PB1', anuncio.aberto && anuncio.cta === 'VER O PASSE' && /sessao-da-treta-s1\.svg/.test(anuncio.arte) && !repetiu,
+    add('PB1', anuncio.aberto && anuncio.cta === 'VER O PASSE' && /sessao-da-treta-s1\.webp/.test(anuncio.arte) && !repetiu,
       `anúncio ${anuncio.aberto ? 'abriu' : 'NÃO ABRIU'} (CTA "${anuncio.cta}", arte ${anuncio.arte || 'sem carregar'}); ao recarregar ${repetiu ? 'REPETIU' : 'não repetiu'}`);
     add('PB0@desktop', !erros.length, erros.length ? `erros de página: ${erros.join(' | ')}` : 'sem erro de página');
     await ctx.close();
@@ -345,6 +348,18 @@ async function medir(mutante = '') {
     add('PB10', antes.flavio && !antes.passe && antes.abertos === 1 && depois.passe && !depois.flavio && depois.abertos === 1 && depois.cta === 'ENTRAR E JOGAR O PASSE' && depois.visto === 'sessao-da-treta-s1/1',
       `1º acesso: Flávio ${antes.flavio ? 'abriu' : 'NÃO ABRIU'}, passe ${antes.passe ? 'EMPILHADO' : 'na fila'} (${antes.abertos} diálogo(s)); fechado o Flávio${convite ? ' e o convite de login' : ''}, passe ${depois.passe ? `abriu "${depois.cta}" sozinho (${depois.abertos} diálogo)` : 'NÃO ABRIU (desistiu)'}, visto=${depois.visto}`);
     add('PB0@flavio', !erros.length, erros.length ? `erros de página: ${erros.join(' | ')}` : 'sem erro de página');
+    await ctx.close();
+  }
+  /* Sessão G: auto inicia a partida sem anúncio, mas ainda precisa descobrir o passe. */
+  if (!mutante) {
+    const mock = mockNoAr({ autenticado: true, xp: 2350, claimed: [] });
+    const { page, ctx, erros, gets } = await abrir({ mock, mutante, auto: true, anuncioVisto: true });
+    const estado = await page.evaluate(() => ({
+      aba: !!document.querySelector('[data-tp-aba="passe"]:not([hidden])'),
+      anuncio: !!document.getElementById('passe-anuncio')?.open,
+    }));
+    add('PB11', gets > 0 && estado.aba && !estado.anuncio && !erros.length,
+      `auto: ${gets} GET /api/passe, aba ${estado.aba ? 'visível' : 'oculta'}, anúncio ${estado.anuncio ? 'ABERTO' : 'suprimido'}${erros.length ? `, erros=${erros.join(' | ')}` : ''}`);
     await ctx.close();
   }
   return r;

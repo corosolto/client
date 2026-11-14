@@ -77,7 +77,7 @@ async function sobe() {
 
 let W;
 try { W = (await sobe()).W; } catch (e) {
-  console.error(`infraestrutura: build não subiu — ${String(e?.message || e)}`); process.exit(3);
+  console.error(`infraestrutura: build não subiu — ${String(e?.message || e)}`); process.exit(78);
 }
 
 /* fonte pré-R5 não tem etiqueta: reconhece as 4 paredes reais por shape/bbox (fina na
@@ -126,12 +126,12 @@ if (MUTANTE === 'inteira') {
   const i = W.occluders.indexOf(m); if (i >= 0) W.occluders.splice(i, 1);
   const b = new THREE.Box3().setFromObject(m);
   const k = W.colliders.findIndex((c) => q(c.minX) === q(b.min.x) && q(c.maxX) === q(b.max.x) && q(c.minY) === q(b.min.y) && q(c.maxZ) === q(b.max.z));
-  if (k < 0) { console.error('infraestrutura: collider do trecho não achado'); process.exit(3); }
+  if (k < 0) { console.error('infraestrutura: collider do trecho não achado'); process.exit(78); }
   W.colliders.splice(k, 1);
 } else if (MUTANTE === 'colisao') {
   // colisão gigante invisível: collider da banda sobe 8 m sem malha correspondente
   const c = W.colliders.find((c) => eGuarda((c.minX + c.maxX) / 2, (c.minZ + c.maxZ) / 2, c.maxX - c.minX, c.maxZ - c.minZ));
-  if (!c) { console.error('infraestrutura: nenhum collider na banda do perímetro'); process.exit(3); }
+  if (!c) { console.error('infraestrutura: nenhum collider na banda do perímetro'); process.exit(78); }
   c.maxY += 8;
 } else if (MUTANTE === 'material') {
   // material compartilhado invisível: todas as guardas somem do desenho, colliders ficam
@@ -142,21 +142,21 @@ if (MUTANTE === 'inteira') {
 } else if (MUTANTE === 'orfao') {
   // collider órfão na banda: cópia de guarda sul com expansão invisível de 0,19 m para dentro
   const m = guardas.find((g) => g.userData.guardaBorda === 'z' && g.position.z > 0);
-  if (!m) { console.error('infraestrutura: nenhuma guarda sul'); process.exit(3); }
+  if (!m) { console.error('infraestrutura: nenhuma guarda sul'); process.exit(78); }
   const b = new THREE.Box3().setFromObject(m);
   W.colliders.push({ minX: b.min.x, maxX: b.max.x, minY: b.min.y, maxY: b.max.y, minZ: b.min.z - 0.19, maxZ: b.max.z });
 } else if (MUTANTE === 'obb') {
   // campos OBB num collider interior: AABB idêntico, física rotacionada aparece
   const c = W.colliders.find((c) => !eGuarda((c.minX + c.maxX) / 2, (c.minZ + c.maxZ) / 2, c.maxX - c.minX, c.maxZ - c.minZ));
-  if (!c) { console.error('infraestrutura: nenhum collider interior'); process.exit(3); }
+  if (!c) { console.error('infraestrutura: nenhum collider interior'); process.exit(78); }
   Object.assign(c, { ry: 0.7, cx: (c.minX + c.maxX) / 2, cz: (c.minZ + c.maxZ) / 2, hx: 0.25, hz: 1, cos: Math.cos(0.7), sin: Math.sin(0.7) });
 } else if (MUTANTE === 'pickup') {
   // identidade de pickup trocada (AK→AWP): posição intacta, arma muda
-  if (!W.pickups?.length) { console.error('infraestrutura: sem pickups'); process.exit(3); }
+  if (!W.pickups?.length) { console.error('infraestrutura: sem pickups'); process.exit(78); }
   W.pickups[0].kind = 'awp'; W.pickups[0].weapon = 'awp';
 } else if (MUTANTE === 'camblocker') {
   // camBlocker esticado: câmera para onde não deveria
-  if (!W.camBlockers?.length) { console.error('infraestrutura: sem camBlockers'); process.exit(3); }
+  if (!W.camBlockers?.length) { console.error('infraestrutura: sem camBlockers'); process.exit(78); }
   W.camBlockers[0].max.x += 10;
 }
 
@@ -313,7 +313,7 @@ try {
   const w2 = (await sobe()).W, w3 = (await sobe()).W;
   deterministico = JSON.stringify(snapshot(w2)) === JSON.stringify(snapshot(w3));
 }
-catch (e) { console.error(`infraestrutura: builds de determinismo não subiram — ${String(e?.message || e)}`); process.exit(3); }
+catch (e) { console.error(`infraestrutura: builds de determinismo não subiram — ${String(e?.message || e)}`); process.exit(78); }
 
 if (GRAVAR) {
   const sha = createHash('sha256').update(readFileSync(`${FONTE}/map_campomorro.js`)).digest('hex');

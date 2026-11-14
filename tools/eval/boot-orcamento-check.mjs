@@ -63,7 +63,7 @@ function instrumentaCausaSplash(corpo) {
 
 const PUBLIC_ROOT=new URL('../../public/',import.meta.url);
 let SNAPSHOT;
-try {SNAPSHOT=snapshotPublicJs(PUBLIC_ROOT);}catch(e){console.error('INFRA3 snapshot: '+e.message);process.exit(3);}
+try {SNAPSHOT=snapshotPublicJs(PUBLIC_ROOT);}catch(e){console.error('INFRA78 snapshot: '+e.message);process.exit(78);}
 const RUN_ID=randomUUID();
 let browser;
 try {
@@ -73,7 +73,7 @@ try {
   const softwareGLArgs=process.platform==='darwin'?[]:['--use-angle=swiftshader','--enable-unsafe-swiftshader'];
   browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     args:[...softwareGLArgs,'--headless=new','--mute-audio','--disable-dev-shm-usage']});
-} catch(e) {console.error(`INFRA3 browser indisponível: ${e.message}`);process.exit(3);}
+} catch(e) {console.error(`INFRA78 browser indisponível: ${e.message}`);process.exit(78);}
 
 async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   assertSnapshotLive(SNAPSHOT);
@@ -357,7 +357,7 @@ try {
   if (aceitaMutante(MUTANTE,falhas)) {console.log(`mutante ${MUTANTE} capturado exatamente: ${falhas.join(',')}`);saida=0;}
   else console.error(`RED controle causal ${MUTANTE}: conjunto inesperado ${JSON.stringify(falhas)}`);
  }
-} catch(e) {console.error(`INFRA3 sem veredito: ${e.message}`);saida=3;}
+} catch(e) {console.error(`INFRA78 sem veredito: ${e.message}`);saida=78;}
 finally {await browser.close().catch(()=>{});}
-try{assertSnapshotLive(SNAPSHOT);}catch(e){console.error('INFRA3 snapshot final: '+e.message);saida=3;}
+try{assertSnapshotLive(SNAPSHOT);}catch(e){console.error('INFRA78 snapshot final: '+e.message);saida=78;}
 process.exit(saida);

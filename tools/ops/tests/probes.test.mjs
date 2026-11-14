@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { sondaPartidas } from '../probes/match.mjs';
 import { servidorEstaticoDePublic, coerenciaDoGrafo } from '../probes/boot.mjs';
-import { modoGpu, executavelChrome } from '../probes/browser.mjs';
+import { modoGpu, executavelChrome, stripThirdPartyBootNoise } from '../probes/browser.mjs';
 import { RAIZ_PADRAO } from '../lib/repo.mjs';
 
 test('partidas: cwd inexistente (com espaço e acento) vira `fatal`, não exceção sem dono', { timeout: 20_000 }, async () => {
@@ -46,4 +46,17 @@ test('navegador: GPU automática só no macOS com Chrome; flags mandam; CI Linux
   assert.equal(executavelChrome({ plataforma: 'darwin', chromeBin: undefined, existe: chrome }), '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
   assert.equal(executavelChrome({ plataforma: 'linux', chromeBin: '/x/chrome', existe: () => true }), '/x/chrome');
   assert.equal(executavelChrome({ plataforma: 'linux', chromeBin: undefined, existe: () => true }), undefined, 'sem CHROME_BIN fora do Mac usa o Chromium do Playwright');
+});
+
+test('navegador: remove só o script do pixel, sem atravessar scripts ou metadados', () => {
+  const html = '<script type="module" src="/js/main.js"></script>'
+    + '<meta name="twitter:image" content="https://cdn.example/static.ads-twitter.com/uwt.js-og.jpg">'
+    + '<script type="importmap">{"imports":{}}</script>'
+    + "<script>const X_PIXEL_ID='teste';const u=document.createElement('script');u.src='https://static.ads-twitter.com/uwt.js';</script>";
+  const filtrado = stripThirdPartyBootNoise(html);
+  assert.equal(filtrado.stripped, 1);
+  assert.match(filtrado.body, /src="\/js\/main\.js"/);
+  assert.match(filtrado.body, /twitter:image/);
+  assert.match(filtrado.body, /type="importmap"/);
+  assert.doesNotMatch(filtrado.body, /const X_PIXEL_ID/);
 });

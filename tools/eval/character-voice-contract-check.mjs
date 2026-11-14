@@ -14,7 +14,7 @@ const file = (path) => existsSync(path) ? readFileSync(path, 'utf8') : '';
 const audio = file('public/js/audio.js');
 const game = file('public/js/game.js');
 const main = file('public/js/main.js');
-const manifest = file('tools/gen-audio-manifest.mjs');
+const installer = file('tools/audio/fab-game-local.mjs');
 const generator = file('tools/gen-character-voices.mjs');
 const sourcePath = 'content/voice-lines.json';
 const data = existsSync(sourcePath) ? JSON.parse(file(sourcePath)) : { characters: {} };
@@ -120,7 +120,10 @@ for (const [index, path] of [
 ].entries()) {
   const original = file(path);
   if (!original) {
-    failures.push(`${path}: fonte editorial ausente`);
+    // specs/ e plans/ ficam fora do git por decisão do dono (.gitignore); fora da máquina dele
+    // a cláusula não é medida — e um mutante que depende dela não pode passar por ausência.
+    if (MUT_SPEC_STIGMA && index === 0) failures.push(`${path}: fonte editorial ausente — mutante não medido`);
+    else console.log(`  NOTA ${path}: fonte editorial fora deste checkout; cláusula não medida`);
     continue;
   }
   const text = MUT_SPEC_STIGMA && index === 0 ? `${original}\nEu avisei ontem amanhã!\n` : original;
@@ -133,7 +136,7 @@ const clauses = [
   ['VOICE2 seleção dispara voz do personagem', /characterVoice\(c\.id,\s*'select'/.test(main)],
   ['VOICE3 kill usa attacker.def.id', /characterVoice\(attacker\.def\?\.id,\s*'kill'/.test(game)],
   ['VOICE4 rádio usa playerCharId e b.def.id', /characterVoice\(this\.playerCharId,\s*'radio'/.test(game) && /characterVoice\(b\.def\?\.id,\s*'radio'/.test(game)],
-  ['VOICE5 manifest varre characters/', /characterVoice/.test(manifest) && /audio[^\n]*characters|characters[^\n]*audio/i.test(manifest)],
+  ['VOICE5 instalador varre characters/<id>/<evento>/ do staging aprovado', /characters\/\$\{id\}\/\$\{event\}\//.test(installer) && /characterVoice: selectedCharacterVoices/.test(installer)],
   ['VOICE6 gerador tem dry-run e não sobrescreve sem force', /--dry-run/.test(generator) && /--force/.test(generator)],
 ];
 globalThis.location ||= { search: '' };

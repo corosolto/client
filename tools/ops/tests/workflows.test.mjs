@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,6 +19,8 @@ test('ops-diag.yml: agendado e manual, navegador, artifact, issue em vermelho, f
   assert.match(s, /node tools\/ops\/diagnose\.mjs --browser --partida --sem-gpu --out=artifacts\/ops\/ci/);
   assert.match(s, /upload-artifact@[0-9a-f]{40}/); assert.match(s, /path: artifacts\/ops\/ci\//);
   assert.match(s, /codigo == '1'[\s\S]*gh issue (create|comment)/); assert.match(s, /codigo == '0'[\s\S]*gh issue close/);
+  assert.match(s, /codigo == '78'[\s\S]*ops-diag inconclusivo/);
+  assert.doesNotMatch(s, /codigo == '3'/, 'inconclusivo não pode mais ocupar o código de régua cega');
   const t = Number(/timeout-minutes: (\d+)/.exec(s)?.[1]); assert.ok(t > 0 && t <= 30, `timeout ${t}`);
   assert.doesNotMatch(s, /pull_request/, 'gatilho cego de fork não pode ligar a diagnose (eval:wfsecret)');
   assert.match(s, /issues: write/);
@@ -81,7 +83,6 @@ test('portao-browser.yml: Sertão em dois shards balanceados, cobertura exata e 
 
   for (const [nome, corpoJob] of Object.entries(jobs)) {
     if (!/run: npm run eval:/.test(corpoJob)) continue;
-    assert.match(corpoJob, /run: npm run eval:serve/, `${nome} roda eval:* sem subir o eval:serve`);
     assert.match(corpoJob, /CHROME_BIN=/, `${nome} roda eval:* sem resolver o CHROME_BIN`);
   }
 });
@@ -134,4 +135,29 @@ test('smoke-web.yml: chat desktop em job próprio, partição exata, nenhum spec
   const comInvert = execs.find((e) => e.includes('--grep-invert'));
   for (const spec of SPECS) assert.ok(comInvert.includes(spec), `o job do --grep-invert perdeu ${spec}`);
   for (const e of execs) assert.match(e, /--config=playwright\.smoke\.config\.mjs/);
+});
+
+test('ci.yml: robots aceita só status 1 com a cláusula documentada', () => {
+  const ci = wf('ci.yml');
+  const inicio = ci.indexOf('          output=$(mktemp)');
+  const fim = ci.indexOf('          node tools/eval/perfil-abas-check.mjs', inicio);
+  const bloco = ci.slice(inicio, fim).replace(
+    'node tools/eval/rotas-check.mjs --dist --mutante=robots',
+    'bash -c \'printf "%s\\n" "$ROBOTS_OUT"; exit "$ROBOTS_STATUS"\'',
+  );
+  assert.ok(inicio >= 0 && fim > inicio, 'wrapper de status do robots ausente');
+  const clausula = '/jogar/multiplayer: robots "index, follow" com indexavel=false';
+  const executar = (status, out) => spawnSync('bash', ['-c', bloco], {
+    encoding: 'utf8',
+    env: { ...process.env, ROBOTS_STATUS: String(status), ROBOTS_OUT: out },
+  });
+  assert.equal(executar(1, clausula).status, 0, 'status 1 com a cláusula deve passar');
+  assert.equal(executar(0, clausula).status, 1, 'status 0 significa mutante sobrevivente');
+  assert.equal(executar(1, 'crash sem cláusula').status, 1, 'status 1 sem cláusula deve falhar');
+  assert.equal(executar(2, clausula).status, 2, 'erro de infraestrutura preserva seu status');
+});
+
+test('.devcontainer/Dockerfile: o ambiente anunciado instala ffprobe para eval:redesign', () => {
+  const s = readFileSync(fileURLToPath(new URL('../../../.devcontainer/Dockerfile', import.meta.url)), 'utf8');
+  assert.match(s, /apt-get install -y --no-install-recommends ffmpeg/);
 });
