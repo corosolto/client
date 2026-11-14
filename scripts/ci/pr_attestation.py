@@ -266,7 +266,7 @@ def emit_attestation(payload):
         "main_is_ancestor": main_is_ancestor,
         "staging_disjoint": staging_disjoint,
         "hotfix_main_only": bool(
-            base_name == "main" and head_commits and main_is_ancestor and staging_disjoint
+            base_name == "main" and head_commit_count > 0 and main_is_ancestor and staging_disjoint
         ),
     }
     # Reuse the exact consumer validation, including live remote revalidation.
