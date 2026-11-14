@@ -31,9 +31,10 @@
    Mutantes (--mutante=<nome>, têm que reprovar na cláusula certa):
      transplante-cru  AJUSTE_JUNTAS=0 no rig do sintético              → RM1
      ibm-velha        o rig-from-donor move a junta e esquece a IBM    → RM3
-    mao-deslocada     mst real com a junta LeftHand 22 cm fora da mão  → RM4
-    uma-mao-cega      igual ao anterior, sem arestas mensuráveis à direita → RM4
-    sem-mao-mensuravel remove as arestas das duas mãos → status explícito de não medido */
+    mao-deslocada      mst real com a junta LeftHand 22 cm fora da mão  → RM4
+    uma-mao-cega       igual ao anterior, sem arestas mensuráveis à direita → RM4
+    sem-mao-mensuravel remove as arestas das duas mãos → status explícito de não medido
+    teto-congelado     melhora quita a dívida e regressão posterior reprova → RM4 */
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -245,6 +246,15 @@ const KNOWN_RED = KNOWN_RED_DOC.dividas;
 const RM4_LEGACY_ADVISORY = 'RIG_RM4_LEGACY_20261108';
 const ELENCO_RATCHET = Object.freeze(KNOWN_RED_DOC.tetos?.[RM4_LEGACY_ADVISORY] || {});
 
+const RATCHET_EPS = 0.0001;
+function falhaRatchet(id, pior, teto, limite) {
+  if (!Number.isFinite(teto)) return pior > limite ? `RM4: ${id} estica a mão ${pior.toFixed(4)}× > ${limite}×` : null;
+  if (pior <= limite) return `RM4: ${id} quitou a dívida (${pior.toFixed(4)}× ≤ ${limite}×); remova o teto de ${RM4_LEGACY_ADVISORY}`;
+  if (pior > teto + RATCHET_EPS) return `RM4: ${id} piorou: ${pior.toFixed(4)}× > teto ${teto}× do ${RM4_LEGACY_ADVISORY}`;
+  if (pior < teto - RATCHET_EPS) return `RM4: ${id} melhorou para ${pior.toFixed(4)}×; atualize o teto ${teto}× do ${RM4_LEGACY_ADVISORY}`;
+  return null;
+}
+
 
 /* Mutantes de elenco: deslocam LeftHand no mst real como no defeito do piloto.
    `uma-mao-cega` também remove as arestas mensuráveis da direita para provar que
@@ -281,16 +291,26 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const LIMITE = +opt('limite', 2.5);
   const clipes = opt('clipes', join(ROOT, 'public/models/anims/mixamo'));
   const mutante = opt('mutante', '');
-  if (mutante && !MUTANTES[mutante] && !['mao-deslocada', 'uma-mao-cega', 'sem-mao-mensuravel'].includes(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
-  if (args.includes('--elenco') || ['mao-deslocada', 'uma-mao-cega', 'sem-mao-mensuravel'].includes(mutante)) {
+  if (mutante && !MUTANTES[mutante] && !['mao-deslocada', 'uma-mao-cega', 'sem-mao-mensuravel', 'teto-congelado'].includes(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
+  if (args.includes('--elenco') || ['mao-deslocada', 'uma-mao-cega', 'sem-mao-mensuravel', 'teto-congelado'].includes(mutante)) {
     const dir = join(ROOT, 'public/models/characters');
     const ids = readdirSync(dir).filter((f) => f.endsWith('.glb')).map((f) => f.replace(/\.glb$/, '')).sort();
     const caminhos = Object.fromEntries(ids.map((id) => [id, join(dir, `${id}.glb`)]));
-    const tmp = mutante ? mkdtempSync(join(tmpdir(), 'rig-maos-elenco-')) : null;
+    const mutantesModelo = ['mao-deslocada', 'uma-mao-cega', 'sem-mao-mensuravel'];
+    const tmp = mutantesModelo.includes(mutante) ? mkdtempSync(join(tmpdir(), 'rig-maos-elenco-')) : null;
     const falhas = [], naoMensuraveis = [], hoje = new Date().toISOString().slice(0, 10);
+    if (mutante === 'teto-congelado') {
+      const quitacao = falhaRatchet('legado', 2.4, 3.27, LIMITE);
+      const regressao = falhaRatchet('legado', 3.2, undefined, LIMITE);
+      const morde = quitacao?.includes('quitou a dívida') && regressao?.includes('estica a mão');
+      console.log(morde
+        ? 'mutante teto-congelado reprovado: melhora quita a exceção e regressão posterior fica sem teto'
+        : `MUTAÇÃO PASSOU — teto-congelado (${quitacao || 'quitação aceita'} | ${regressao || 'regressão aceita'})`);
+      process.exit(morde ? 0 : 1);
+    }
     if (!KNOWN_RED[RM4_LEGACY_ADVISORY]) throw new Error(`RM4: ${RM4_LEGACY_ADVISORY} precisa estar declarado em tools/eval/KNOWN-RED.json`);
     try {
-      if (mutante) caminhos.mst = await maoDeslocada(caminhos.mst, join(tmp, 'mst.glb'), mutante === 'uma-mao-cega' ? 'Right' : mutante === 'sem-mao-mensuravel' ? 'ambas' : '');
+      if (mutantesModelo.includes(mutante)) caminhos.mst = await maoDeslocada(caminhos.mst, join(tmp, 'mst.glb'), mutante === 'uma-mao-cega' ? 'Right' : mutante === 'sem-mao-mensuravel' ? 'ambas' : '');
       for (const id of ids) {
         const r = await medirMaos(caminhos[id], { clipes });
         const medidos = r.filter((l) => l.arestas > 0);
@@ -298,12 +318,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         if (semMedir.length) console.log(`  não medido: ${id} sem aresta pesada na mão ${semMedir.map((l) => l.lado).join('/')}`);
         if (!medidos.length) { naoMensuraveis.push(id); continue; }
         const pior = Math.max(...medidos.map((l) => l.pior)), teto = ELENCO_RATCHET[id];
-        if (pior > LIMITE && (!Number.isFinite(teto) || !KNOWN_RED[RM4_LEGACY_ADVISORY])) {
-          falhas.push(`RM4: ${id} estica a mão ${pior.toFixed(2)}× > ${LIMITE}×`);
-        } else if (Number.isFinite(teto) && pior > teto) {
-          falhas.push(`RM4: ${id} piorou: ${pior.toFixed(2)}× > teto ${teto}× do ${RM4_LEGACY_ADVISORY}`);
+        const falha = falhaRatchet(id, pior, teto, LIMITE);
+        if (falha) {
+          falhas.push(falha);
         } else if (Number.isFinite(teto) && pior > LIMITE) {
-          console.log(`  dívida: ${id} ${pior.toFixed(2)}× ≤ teto ${teto}× (${RM4_LEGACY_ADVISORY}, medida ${hoje})`);
+          console.log(`  dívida: ${id} ${pior.toFixed(4)}× ≈ teto ${teto}× (${RM4_LEGACY_ADVISORY}, medida ${hoje})`);
         }
       }
     } finally { if (tmp) rmSync(tmp, { recursive: true, force: true }); }
