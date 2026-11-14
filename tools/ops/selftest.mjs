@@ -216,8 +216,9 @@ for (const { cenario, esperado, sondas, achados } of rodados) {
   const a = achados.find((x) => x.id === id);
   if (!a) ruim(`MUTAÇÃO '${cenario}' não acendeu '${id}' — portão cego. Achados: ${achados.map((x) => x.id).join(', ') || 'nenhum'}`);
   else if (a.severidade !== sev) ruim(`'${cenario}' acendeu '${id}' como ${a.severidade}, esperado ${sev}`);
+  else if (sev === 'inconclusivo' && codigoDeSaida(veredito(achados, sondas)) !== 78) ruim(`'${cenario}' inconclusivo deve sair 78 (não mediu), não régua cega`);
   else if (!a.causa || !a.evidencia || !a.impacto || !a.proximo) ruim(`'${cenario}' acendeu '${id}' sem causa/evidência/impacto/próximo passo completos`);
-  else ok(`'${cenario}' → ${id} [${sev}]`);
+  else ok(`'${cenario}' → ${id} [${sev}]${sev === 'inconclusivo' ? ' · exit 78' : ''}`);
 }
 
 /* diagnose.mjs de ponta a ponta (flags → sondas → veredito → relatório → código de saída) contra a

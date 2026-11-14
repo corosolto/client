@@ -129,6 +129,19 @@ gate seu pular com 78, a leitura é "não medi": rode `npm ci` e rode de novo. O
 mecanismo mora em `tools/eval/sonda-filho.mjs`, e o porquê de SKIP ter código
 próprio em vez de virar 0 ou 1 está em `docs/docs/sonda-processos.md`.
 
+Ao introduzir ou consumir estes veredictos em `tools/eval/` e `tools/ops/`, use a
+mesma convenção:
+
+| exit | significado |
+|---:|---|
+| 0 | mediu e passou |
+| 1 | mediu e reprovou (inclusive falha real de mapa) |
+| 3 | régua cega: o mutante sobreviveu e o falso-verde foi detectado |
+| 78 | não mediu: infra/skip, alvo inconclusivo ou mutante que não aplicou |
+
+Nunca use 3 para infra ou mutante não aplicado. O 78 separa experimento que não
+começou de instrumento que mediu e se provou cego.
+
 ## As duas zonas
 
 | | `public/` — o JOGO | `src/` — o SITE |

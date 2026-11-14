@@ -78,7 +78,7 @@ try {
   cenas.corrego = await sobe('corrego');
 } catch (e) {
   console.error(`infraestrutura: build não sobiu — ${String(e?.message || e)}`);
-  process.exit(3);
+  process.exit(78);
 }
 
 const atual = { campomorro: snapshot('campomorro', cenas.campomorro.W), corrego: snapshot('corrego', cenas.corrego.W) };
@@ -89,7 +89,7 @@ const deterministico = JSON.stringify(atual) === JSON.stringify(segunda);
 /* mutantes: mudam geometria/collider/lista REAIS em memória; matrixWorld re-bake antes de medir */
 if (MUTANTE === 'fisica') {
   const alvo = cenas.corrego.W.colliders.find((c) => c.ry !== undefined && Number.isFinite(c.hx));
-  if (!alvo) { console.error('infraestrutura: mutante fisica exige collider OBB (ry/hx finito) no Córrego'); process.exit(3); }
+  if (!alvo) { console.error('infraestrutura: mutante fisica exige collider OBB (ry/hx finito) no Córrego'); process.exit(78); }
   alvo.hx *= 0.25;
   atual.corrego = snapshot('corrego', cenas.corrego.W);
 } else if (MUTANTE === 'verga') {

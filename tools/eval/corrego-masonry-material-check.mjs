@@ -1,5 +1,5 @@
 // Samplers finitos e matrizes efetivas PBR: docs/visual-consistency/CORREGO-MATERIAL.md.
-// CLI: 0 GREEN, 1 RED semântico, 2 uso, 3 infra.
+// CLI: 0 GREEN, 1 RED semântico, 2 uso, 78 infra.
 const argv = process.argv.slice(2);
 const uso = (msg) => { console.error(`uso: ${msg}`); process.exit(2); };
 const flags = {};
@@ -11,7 +11,7 @@ for (const a of argv) {
 const MUT = flags.mutante ?? '';
 if (flags.mutante !== undefined && !flags.mutante) uso('--mutante vazio');
 // CONJUNTO EXATO: multiset de IDs de falha idêntico ao alvo — defeito
-// independente junto do mutante reprova (infra 3), nominal RED também.
+// independente junto do mutante reprova (infra 78), nominal RED também.
 const MUTANTES = {
   'procedural-faixas': { 'muro-fontes-pbr': 8 },
   'normal-srgb': { 'muro-normal-srgb': 8 },
@@ -28,7 +28,7 @@ if (MUT && FISICA) uso('--mutante e --fisica são exclusivos');
 const contagem = (fs) => fs.reduce((m, { id }) => (m[id] = (m[id] || 0) + 1, m), {});
 const mesmoConjunto = (a, b) => JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort());
 
-// preparação fora de catch é crash 1 — aqui falha de import/leitura/build é infra 3
+// preparação fora de catch é crash 1 — aqui falha de import/leitura/build é infra 78
 let THREE, W, createHash, src, muros, cru;
 try {
   const { readFileSync } = await import('node:fs');
@@ -59,7 +59,7 @@ try {
   ({ muros, cru } = coletar());
 } catch (e) {
   console.error(`infra: preparação (import/leitura/bootGame/coleta) falhou: ${e?.message ?? e}`);
-  process.exit(3);
+  process.exit(78);
 }
 
 // -------- validador puro: MESMO contrato para nominal e mutante --------
@@ -165,14 +165,14 @@ export function validarMateriais({ muros, cru }, fontes) {
 
 let nominal;
 try { nominal = validarMateriais({ muros, cru }, src); }
-catch (e) { console.error(`infra: validação nominal falhou: ${e?.message ?? e}`); process.exit(3); }
+catch (e) { console.error(`infra: validação nominal falhou: ${e?.message ?? e}`); process.exit(78); }
 if (!MUT && !FISICA) {
   console.log(JSON.stringify({ mutante: null, veredito: nominal.length ? 'RED' : 'GREEN', falhas: nominal, muros: muros.length, cru: cru.length }));
   process.exit(nominal.length ? 1 : 0);
 }
 // -------- nominal primeiro, ANTES de qualquer mutação --------
 if (MUT) {
-  if (nominal.length) { console.error('nominal já RED — mutante não prova nada (infra)'); process.exit(3); }
+  if (nominal.length) { console.error('nominal já RED — mutante não prova nada (infra)'); process.exit(78); }
   let aplicou = false;
   if (MUT === 'procedural-faixas') {
     for (const m of muros) { m.map.name = 'masonry_bands'; aplicou = true; }
@@ -192,14 +192,14 @@ if (MUT) {
   } else if (MUT === 'raw-double-tint') {
     cru[0].color.set(0xc98a63); aplicou = true;
   }
-  if (!aplicou) { console.error(`mutação ${MUT} não alterou o mundo — mutante fantasma`); process.exit(3); }
+  if (!aplicou) { console.error(`mutação ${MUT} não alterou o mundo — mutante fantasma`); process.exit(78); }
   // mesma instância coletada: mutantes são in-place, re-coletar perde o mapa trocado
   const pos = validarMateriais({ muros, cru }, src);
   if (!pos.length) { console.error(`mutante ${MUT} passou GREEN — régua cega`); process.exit(3); }
   const obtido = contagem(pos);
   if (!mesmoConjunto(obtido, MUTANTES[MUT])) {
     console.error(`mutante ${MUT} com conjunto de falhas ≠ alvo — esperado ${JSON.stringify(MUTANTES[MUT])}, obtido ${JSON.stringify(obtido)}`);
-    process.exit(3);
+    process.exit(78);
   }
   console.log(JSON.stringify({ mutante: MUT, veredito: 'RED', esperado: MUTANTES[MUT], obtido, falhas: pos }));
   process.exit(1); // RED por mutação detectada é o resultado NORMAL do mutante

@@ -39,7 +39,7 @@ export function veredito(achados, sondas = {}, opcoes = {}) {
 }
 
 export function codigoDeSaida(v) {
-  if (v.inconclusivo) return 3;
+  if (v.inconclusivo) return 78;
   return v.tecnicamenteVerde ? 0 : 1;
 }
 

@@ -250,7 +250,7 @@ async function main() {
     return { bytes: sourceBytes.length, sha256: sha(sourceBytes) };
   });
   console.log(JSON.stringify({ schema: 'tp-drip-source-result/1', scope: 'factory-memory/source-bytes; no Game, render, fit or art approval', rows }));
-  return rows.some(row => row.status === 'RED') ? 1 : rows.some(row => row.status === 'NOT_MEASURED') ? 3 : 0;
+  return rows.some(row => row.status === 'RED') ? 1 : rows.some(row => row.status === 'NOT_MEASURED') ? 78 : 0;
 }
 try { process.exitCode = await main(); }
-catch (error) { console.error(JSON.stringify({ schema: 'tp-drip-source-result/1', status: 'INFRA', error: String(error.stack || error), rows })); process.exitCode = 3; }
+catch (error) { console.error(JSON.stringify({ schema: 'tp-drip-source-result/1', status: 'INFRA', error: String(error.stack || error), rows })); process.exitCode = 78; }

@@ -33,7 +33,7 @@ async function worker(fixture, mutant) {
   const deadline = setTimeout(() => {
     console.error('origin worker deadline');
     try { if (tmp) fs.rmSync(tmp, { recursive: true, force: true }); }
-    finally { process.exit(3); }
+    finally { process.exit(78); }
   }, 45000);
   try {
     const input = JSON.parse(fs.readFileSync(0, 'utf8'));
