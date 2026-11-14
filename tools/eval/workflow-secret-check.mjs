@@ -135,8 +135,27 @@ function falhasMetadata(texto) {
     }
   }
   const passos = Object.entries(jobs).flatMap(([job, definicao]) =>
-    passosDe(definicao).map((passo) => ({ job, run: runDe(passo) })));
-  const leituras = passos.filter(({ run }) => /gh pr (?:view|list)/.test(run));
+    passosDe(definicao).map((passo) => ({
+      job,
+      run: runDe(passo),
+      env: passo?.env || {},
+    })));
+  const leituras = [];
+  passos.forEach(({ job, run, env }) => {
+    const normalizado = run.replace(/\\\n\s*/g, ' ');
+    const comandos = [...normalizado.matchAll(/\bgh pr (view|list)\b/g)];
+    if (comandos.length > 1) {
+      locais.push(`job ${job} mistura ${comandos.length} leituras de metadata no mesmo passo`);
+      return;
+    }
+    if (comandos.length === 1) {
+      leituras.push({ job, run: normalizado });
+      return;
+    }
+    if (Object.hasOwn(env, 'GH_TOKEN') || /(?:^|\s)(?:export\s+)?GH_TOKEN\s*=/.test(run)) {
+      locais.push(`job ${job} sobrescreve o PAT fora de uma leitura`);
+    }
+  });
   if (leituras.length !== 3) locais.push(`esperava 3 leituras de metadata, encontrou ${leituras.length}`);
   leituras.forEach(({ run }, i) => {
     if (!/GH_TOKEN="\$\{\{ github\.token \}\}"\s+gh pr (?:view|list)/.test(run)) {
@@ -149,11 +168,6 @@ function falhasMetadata(texto) {
       locais.push(`leitura ${i + 1} (${comando || '?'}) não pede o conjunto completo de metadata`);
     }
   });
-  passos.filter(({ run }) => !/gh pr (?:view|list)/.test(run)).forEach(({ job, run }) => {
-    if (/GH_TOKEN="\$\{\{ github\.token \}\}"/.test(run)) {
-      locais.push(`job ${job} troca o PAT pelo github.token fora de uma leitura`);
-    }
-  });
   return locais;
 }
 {
@@ -164,7 +178,9 @@ function falhasMetadata(texto) {
     'sem-statuses-read': texto.replace('  statuses: read\n', ''),
     'metadata-volta-ao-pat': texto.replace('GH_TOKEN="${{ github.token }}" gh pr view', 'gh pr view'),
     'metadata-incompleta': texto.replace(',reviewDecision > /tmp/pr.json', ' > /tmp/pr.json'),
+    'metadata-dupla': texto.replace(' > /tmp/pr.json', ' > /tmp/pr.json; gh pr view "$PR_NUMBER" --json title > /tmp/pr.json'),
     'escrita-com-token-do-repo': texto.replace('run: python3 scripts/ci/ensure_labels.py', 'run: GH_TOKEN="${{ github.token }}" python3 scripts/ci/ensure_labels.py'),
+    'escrita-com-env-do-repo': texto.replace('      - name: Ensure labels exist\n', '      - name: Ensure labels exist\n        env:\n          GH_TOKEN: ${{ github.token }}\n'),
   };
   for (const [nome, mutado] of Object.entries(mutantes)) {
     if (!falhasMetadata(mutado).length) falhas.push(`WSEC3 mutante ${nome} não foi detectado`);
@@ -173,7 +189,7 @@ function falhasMetadata(texto) {
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m WSEC1 nenhum portão reprova PR de fork por secret que aquele gatilho não pode ter (${arquivos.length} workflows)`);
-if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m WSEC3 metadata completa usa github.token com checks/statuses read; escritas preservam o PAT; 5/5 mutantes detectados');
+if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m WSEC3 metadata completa usa github.token com checks/statuses read; escritas preservam o PAT; 7/7 mutantes detectados');
 if (MUT && !falhas.length) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);
   falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso (MC1)
