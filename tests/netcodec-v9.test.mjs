@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 const codec = await import(process.env.CODEC_UNDER_TEST || '../public/js/netcodec.js');
-const { EMOTE_IDS } = await import('../public/js/data/emote-catalog.js');
+const { EMOTE_IDS, V9_EMOTE_IDS } = await import('../public/js/data/emote-catalog.js');
 const ids = ['passinho','samba','ginga','frevo','forro','quadradinho','sarrada','salve'];
 const entity = (id, extra = {}) => ({id,name:`P${id}`,team:'E',bot:id % 2,alive:true,
   x:1,y:0,z:2,yaw:0,pitch:0,hp:100,weapon:'ak',k:0,d:0,respawnIn:0,...extra});
@@ -61,8 +61,8 @@ test('R8 emote id from a newer catalog decodes as no emote without dropping the 
   // Sem reboque: o byte de emote da entidade 2 é o penúltimo da codificação até ela.
   const at=codec.encodeSnapshot(snapshot(ents.slice(0,2)),9).length-2;
   const base=codec.decodeSnapshot(wire);
-  // IDs acrescentados depois deste catálogo (ex.: 9–16) e o máximo do u8.
-  for(const id of [EMOTE_IDS.length+1,255]){
+  // IDs posteriores ao contrato congelado da v9 e o máximo do u8.
+  for(const id of [V9_EMOTE_IDS.length+1,255]){
     const bytes=Uint8Array.from(wire);bytes[at]=id;
     const out=codec.decodeSnapshot(bytes);
     assert.equal(out.ents.length,3,`id ${id}`);
@@ -70,4 +70,14 @@ test('R8 emote id from a newer catalog decodes as no emote without dropping the 
     assert.deepEqual([out.ents[0],out.ents[2]],[base.ents[0],base.ents[2]],`id ${id}`);
     assert.deepEqual({...out,ents:null},{...base,ents:null},`id ${id}`);
   }
+});
+test('R9 v9 never emits catalog ids that older v9 clients reject', () => {
+  assert.deepEqual(V9_EMOTE_IDS, ids);
+  assert.deepEqual(EMOTE_IDS.slice(8), ['capoeira','meia_lua','bencao','uprock','freeze','continencia','marra','comemoracao']);
+  for (const emote of EMOTE_IDS.slice(8)) {
+    assert.throws(() => codec.encodeSnapshot(snapshot([entity(1, { emote })]), 9), /emote/, emote);
+  }
+  const wire = codec.encodeSnapshot(snapshot(ids.map((emote, i) => entity(i + 1, { emote }))), 9);
+  const out = codec.decodeSnapshot(wire);
+  assert.deepEqual(out.ents.map((ent) => ent.emote), ids);
 });

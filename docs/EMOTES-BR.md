@@ -227,20 +227,18 @@ os laços seguem até o jogador sair. Em LOD≥2 o clipe não toca: o corpo fica
 a coreografia de reserva. Ao voltar para perto, o clipe retoma na fase certa. A reserva
 procedural também cobre o download do pack e uma falha dele.
 
-**Rede.** Os ids 9–16 foram **acrescentados** depois dos 8 da v9 (`public/js/data/
-emote-catalog.js`, contrato de #1266). A réplica remota precisa de duas coisas: #1266 no
-cliente e o nó com `CLIENT_REF` num commit que já tenha estes ids, porque o servidor
-valida pelo mesmo catálogo. Antes disso, o nó trata id desconhecido como "parar" e os
-outros jogadores não veem a dança de captura. `ctrl.emote(id, elapsed)` aceita a fase da
-rede, e reaplicar o mesmo emote só corrige uma deriva maior que 0,25 s, sem reiniciar
-clipe nem rampa.
+**Rede.** A v9 fica congelada nos 8 emotes procedurais de #1266. Os ids 9–16 existem
+somente no catálogo local: `V9_EMOTE_IDS` limita encoder e decoder ao contrato publicado,
+e o encoder rejeita uma dança de captura em snapshot v9. Assim uma aba antiga nunca
+recebe um byte que reinterpretaria ou rejeitaria, e os outros jogadores veem a dança
+procedural de reserva/nenhuma dança até existir um protocolo novo. `ctrl.emote(id,
+elapsed)` já aceita fase remota e reaplicar o mesmo emote só corrige deriva maior que
+0,25 s, sem reiniciar clipe nem rampa; essa capacidade fica pronta para a próxima versão.
 
-**Risco de rollout.** O decoder v9 de #1266 rejeita id maior que o tamanho do catálogo
-(`RangeError('emote')`, tratado como snapshot inválido). Uma aba aberta com o catálogo de
-8 ids que receber o id 9–16 de um nó atualizado perde o snapshot. Antes de o nó publicar
-esses ids, uma de duas coisas precisa existir: o nó manda 0 para as conexões cujo cliente
-não conhece o id, ou os ids sobem numa versão de protocolo nova. A decisão é do dono e do
-backend. Este PR não publica nada sozinho.
+**Risco de rollout.** O decoder v9 original de #1266 rejeita id maior que o catálogo
+conhecido. Por isso acrescentar 9–16 ao mesmo wire não é compatível, mesmo mantendo a
+ordem. Um protocolo futuro precisa negociar esses IDs com cliente e backend antes de
+publicá-los; mudar apenas o catálogo não libera replicação.
 
 **Desbloqueio.** O campo `desbloqueio` (`'base'` | `'passe'`) existe para o passe de
 temporada travar depois. Hoje nada é travado; a roda só marca **PASSE**. Ficam na base

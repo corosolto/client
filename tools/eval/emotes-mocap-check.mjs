@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /* Emotes de captura (capoeira, breakdance, gestos): pack único lazy, clipe de corpo
    inteiro retargetado por corpo, arma guardada, cancelamento, laço × uma vez, LOD,
-   ressincronização de rede, fallback procedural e ids binários só acrescentados. Roda
-   GLB/AnimationMixer reais em Node (tools/eval/lib/glbchars-node.mjs). O roster inteiro
-   (99 corpos e skins) é o eval:emotes-roster.
+   ressincronização de rede, fallback procedural e contrato v9 congelado nos oito IDs
+   procedurais. Roda GLB/AnimationMixer reais em Node (tools/eval/lib/glbchars-node.mjs).
+   O roster inteiro (99 corpos e skins) é o eval:emotes-roster.
    Cada mutante reintroduz um defeito visível e precisa reprovar a cláusula correspondente:
      emote-mocap-mudo        o clipe nunca toca (só a reserva procedural)  -> EMM3/EMM4/EMM7/EMM9
      arma-visivel-no-emote   a arma fica na mão durante o emote de clipe  -> EMM5
@@ -34,8 +34,8 @@ if (process.argv.includes('--self-test')) {
   process.exit(0);
 }
 
-/* Contrato de rede: 1–8 fixados pela v9 (#1266, tests/netcodec-v9.test.mjs); 9–16 são
-   os emotes de captura, só acrescentados. Mudar esta lista é quebrar quem já joga. */
+/* Contrato de rede: 1–8 fixados pela v9 (#1266, tests/netcodec-v9.test.mjs). Os emotes
+   de captura ficam no catálogo local e só podem entrar na rede sob um protocolo novo. */
 const IDS_V9 = ['passinho', 'samba', 'ginga', 'frevo', 'forro', 'quadradinho', 'sarrada', 'salve'];
 const IDS_CAPTURA = ['capoeira', 'meia_lua', 'bencao', 'uprock', 'freeze', 'continencia', 'marra', 'comemoracao'];
 const NOMES = ['Ginga', 'Meia-lua de frente', 'Bênção', 'Uprock', 'Freeze', 'Continência', 'Marra', 'Comemoração'];
@@ -92,12 +92,11 @@ const results = [];
 const medidas = {};
 const check = (id, fn) => { try { fn(); results.push({ id, ok: true }); } catch (e) { results.push({ id, ok: false, erro: e.message }); } };
 
-/* EMM0 — ids binários: os 8 da v9 intocados, captura acrescentada na ordem fixada. */
-check('EMM0-ids-acrescentados', () => {
-  assert.deepEqual(E.EMOTE_IDS.slice(0, 8), IDS_V9, 'ids 1–8 da v9 mudaram');
-  assert.deepEqual(E.EMOTE_IDS.slice(8), IDS_CAPTURA, 'emotes de captura fora da posição fixada (9–16)');
-  const index = new Map(E.EMOTE_IDS.map((id, i) => [id, i + 1]));
-  for (const [i, id] of IDS_CAPTURA.entries()) assert.equal(index.get(id), 9 + i, id);
+/* EMM0 — ids binários: os oito da v9 permanecem congelados; captura fica fora da v9. */
+check('EMM0-ids-congelados', () => {
+  assert.deepEqual(E.V9_EMOTE_IDS, IDS_V9, 'ids 1–8 da v9 mudaram');
+  assert.deepEqual(E.EMOTE_IDS.slice(8), IDS_CAPTURA, 'catálogo local de captura mudou');
+  assert.ok(IDS_CAPTURA.every((id) => !E.V9_EMOTE_IDS.includes(id)), 'captura vazou para o contrato v9');
 });
 check('EMM0b-catalogo', () => {
   const captura = E.EMOTES.filter((e) => e.clipe);
@@ -283,14 +282,19 @@ if (!mutant) {
   });
 }
 
-/* EMM11 — call sites: partida e DANÇAR do lobby entregam `clipe` ao driver (sem ele o
-   emote cai na reserva procedural); roda com o anel de captura (Shift+1-8). */
+/* EMM11 — o descriptor real e compartilhado entrega o clipe exato, e partida/lobby
+   instalam esse mesmo objeto em vez de reconstruírem versões divergentes. */
 const gameSource = fs.readFileSync(path.join(root, 'public/js/game.js'), 'utf8');
 const mainReal = fs.readFileSync(path.join(root, 'public/js/main.js'), 'utf8');
-const mainSource = mutant === 'lobby-sem-clipe' ? once(mainReal, ', clipe: m.emoteClipe });', ' });') : mainReal;
+const mainSource = mutant === 'lobby-sem-clipe'
+  ? once(mainReal, 'setEmoteDriver(m.EMOTE_DRIVER);', 'setEmoteDriver({ pose: m.poseEmote, duracao: m.emoteDuracao, laco: m.emoteLaco });')
+  : mainReal;
 check('EMM11-callsites', () => {
-  assert.ok(gameSource.includes('clipe: mod.emoteClipe'), 'game.js: driver da partida sem clipe');
-  assert.ok(mainSource.includes('clipe: m.emoteClipe'), 'main.js: driver do lobby sem clipe');
+  const esperado = E.emoteInfo('capoeira');
+  assert.equal(E.EMOTE_DRIVER.clipe('capoeira'), esperado, 'driver não devolveu o registro exato do clipe');
+  assert.deepEqual(Object.keys(E.EMOTE_DRIVER).sort(), ['clipe', 'duracao', 'laco', 'pose']);
+  assert.ok(gameSource.includes('setEmoteDriver(mod.EMOTE_DRIVER);'), 'partida não instala o descriptor real');
+  assert.ok(mainSource.includes('setEmoteDriver(m.EMOTE_DRIVER);'), 'lobby não instala o descriptor real');
   assert.ok(gameSource.includes('this._emoteAnel(e.shiftKey)'));
   assert.ok(!/import[^;]*emotes\.js/.test(fs.readFileSync(path.join(root, 'public/js/glbchars.js'), 'utf8')), 'glbchars importou emotes.js');
 });

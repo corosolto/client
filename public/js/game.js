@@ -2700,7 +2700,7 @@ export class Game {
     if (this._emoteMod) return this._emoteMod;
     if (this._emoteLoading) return this._emoteLoading;
     this._emoteLoading = import('./emotes.js').then((mod) => {
-      setEmoteDriver({ pose: mod.poseEmote, duracao: mod.emoteDuracao, laco: mod.emoteLaco, clipe: mod.emoteClipe });
+      setEmoteDriver(mod.EMOTE_DRIVER);
       this._emoteMod = mod;
       return mod;
     }).catch(() => null).finally(() => { this._emoteLoading = null; });

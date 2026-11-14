@@ -1,5 +1,5 @@
 import { WEAPONS } from './data/weapons.js';
-import { EMOTE_IDS } from './data/emote-catalog.js';
+import { V9_EMOTE_IDS } from './data/emote-catalog.js';
 
 export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v9', 'coro-snapshot-v8', 'coro-snapshot-v7', 'coro-snapshot-v6', 'coro-snapshot-v5', 'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
 const PROTOCOL_VERSIONS = new Map(SNAPSHOT_PROTOCOLS.map(protocol => [protocol, Number(protocol.match(/-v(\d+)$/)[1])]));
@@ -13,7 +13,7 @@ const MAX_CTF_POINTS = 16;
 const MAX_STRING_BYTES = 64;
 const WEAPON_IDS = Object.freeze(Object.keys(WEAPONS));
 const WEAPON_INDEX = new Map(WEAPON_IDS.map((id, i) => [id, i]));
-const EMOTE_INDEX = new Map(EMOTE_IDS.map((id, i) => [id, i + 1]));
+const EMOTE_INDEX = new Map(V9_EMOTE_IDS.map((id, i) => [id, i + 1]));
 const qTenths = value => Math.max(0, Math.min(255, Math.round((Number(value) || 0) * 10)));
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', { fatal: true });
@@ -309,9 +309,9 @@ export function decodeSnapshot(data) {
       const reloadIn = version >= 9 ? r.u8() / 10 : 0;
       const emoteId = version >= 9 ? r.u8() : 0;
       const emoteTenths = version >= 9 ? r.u8() : 0;
-      // Compatibilidade adiante: o catálogo só cresce no fim. ID acima do catálogo local
-      // (nó com catálogo mais novo) vira "sem emote" nesta entidade; o snapshot segue.
-      const emote = EMOTE_IDS[emoteId - 1] ?? null;
+      // A v9 congelou oito IDs. Valores posteriores pertencem a outra revisão do
+      // catálogo e viram "sem emote"; nunca reinterpretar o mesmo byte dentro da v9.
+      const emote = V9_EMOTE_IDS[emoteId - 1] ?? null;
       const emoteElapsed = emote ? emoteTenths / 10 : 0;
       if (weaponId !== 255 && !WEAPON_IDS[weaponId]) throw new RangeError('weapon');
       const vt = voiceByte & 3;
