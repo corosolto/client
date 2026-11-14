@@ -1,5 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
+import { estadoPt } from '../../playwright.smoke.config.mjs';
 
 /* SMOKE DO CHAT DE SALA (#686, docs/chat-de-sala.md §11). Página real, jogo real em
    single player e um `net` falso montado dentro da página: o que se mede é o painel
@@ -365,14 +366,17 @@ test.describe('chat de sala', () => {
     test.describe.configure({ mode: 'serial' });
     let page;
     const errosDePagina = [];
+    let idioma = 'pt';
     test.beforeAll(async ({ browser }, testInfo) => {
-      page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+      // página própria fora do fixture: repete o cs_lang=pt do playwright.smoke.config.mjs
+      page = await browser.newPage({ viewport: { width: 1600, height: 900 }, storageState: estadoPt });
       page.setDefaultTimeout(20_000);
       page.setDefaultNavigationTimeout(60_000);
       await desacelerar(page);
       page.on('pageerror', (e) => errosDePagina.push(String(e)));
       await aplicarMutante(page, testInfo);
       await bootarPartida(page);
+      idioma = (await page.locator('#hud-chat-sala').innerText()).includes('SALA') ? 'pt' : 'en';
     });
     test.afterEach(async ({}, testInfo) => {
       if (testInfo.status !== testInfo.expectedStatus) await retratarFalha(page, testInfo);
@@ -388,8 +392,8 @@ test.describe('chat de sala', () => {
       expect(await page.evaluate(() => document.getElementById('chat-sala').hidden)).toBe(false);
       expect(await chatAberto(page)).toBe(false);
       await expect(page.locator('#hud-atalho-chat')).toBeVisible();
-      await expect(page.locator('#hud-chat-sala')).toHaveText('Y SALA');
-      await expect(page.locator('#hud-chat-time')).toHaveText('U TIME');
+      await expect(page.locator('#hud-chat-sala')).toHaveText(idioma === 'pt' ? 'Y SALA' : 'Y ROOM');
+      await expect(page.locator('#hud-chat-time')).toHaveText(idioma === 'pt' ? 'U TIME' : 'U TEAM');
     });
 
     test('botões da HUD: clique abre o canal do rótulo, digitar não vaza pro jogo', async () => {
@@ -442,13 +446,13 @@ test.describe('chat de sala', () => {
       const xss = page.locator('#chat-log .chat-linha[data-id="3"]');
       await expect(xss.locator('img')).toHaveCount(0);
       await expect(xss.locator('bdi.chat-txt')).toHaveText(XSS);
-      await expect(xss.locator('bdi.chat-quem')).toHaveText('Anônimo #GHI');
+      await expect(xss.locator('bdi.chat-quem')).toHaveText(idioma === 'pt' ? 'Anônimo #GHI' : 'Anonymous #GHI');
       await expect(xss.locator('bdi[dir="auto"]')).toHaveCount(2);
       const rtl = page.locator('#chat-log .chat-linha[data-id="4"]');
       await expect(rtl.locator('bdi.chat-txt')).toHaveText(RTL);
       await expect(rtl.locator('bdi.chat-txt')).toHaveAttribute('dir', 'auto');
       await expect(page.locator('#chat-log .chat-linha[data-id="2"] bdi.chat-quem')).toHaveText(/^Rubao \S$/);
-      await expect(page.locator('#chat-log .chat-linha[data-id="5"] .chat-tag')).toHaveText('TIME');
+      await expect(page.locator('#chat-log .chat-linha[data-id="5"] .chat-tag')).toHaveText(idioma === 'pt' ? 'TIME' : 'TEAM');
       const texto = await page.locator('#chat-log').textContent();
       expect(texto).not.toContain('ALFA');
       expect(texto).not.toContain('SmokeBot');
@@ -496,7 +500,7 @@ test.describe('chat de sala', () => {
       await page.locator('#chat-entrada').fill('  oi   galera  ');
       await page.keyboard.press('Enter');
       expect(await page.evaluate(() => window.__chatNet.enviados.length), 'sem o aceite das regras nada sai pelo net').toBe(0);
-      await expect(page.locator('#chat-aviso')).toContainText(/regras/i);
+      await expect(page.locator('#chat-aviso')).toContainText(idioma === 'pt' ? /regras/i : /rules/i);
       await expect(page.locator('#chat-regras-aceite')).toBeFocused();
       expect(await chatAberto(page)).toBe(true);
       await page.locator('#chat-regras-aceite').check();
@@ -513,7 +517,7 @@ test.describe('chat de sala', () => {
       expect(s.ativo).not.toBe('chat-entrada');
       const propria = page.locator('#chat-log .chat-linha.propria');
       await expect(propria).toHaveCount(1);
-      await expect(propria.locator('bdi.chat-quem')).toHaveText('Anônimo #K3F');
+      await expect(propria.locator('bdi.chat-quem')).toHaveText(idioma === 'pt' ? 'Anônimo #K3F' : 'Anonymous #K3F');
       await expect(propria.locator('bdi.chat-txt')).toHaveText('oi galera');
       await expect(page.locator('#chat-entrada')).toHaveValue('');
     });
@@ -582,12 +586,12 @@ test.describe('chat de sala', () => {
       await page.locator('#chat-entrada').fill('   ');
       await page.keyboard.press('Enter');
       expect(await page.evaluate(() => window.__chatNet.enviados.length)).toBe(3);
-      await expect(page.locator('#chat-aviso')).toHaveText(/vazia/i);
+      await expect(page.locator('#chat-aviso')).toHaveText(idioma === 'pt' ? /vazia/i : /empty/i);
       await page.locator('#chat-entrada').fill('a'.repeat(161));
       await expect(page.locator('#chat-contador')).toHaveClass(/estourou/);
       await page.keyboard.press('Enter');
       expect(await page.evaluate(() => window.__chatNet.enviados.length)).toBe(3);
-      await expect(page.locator('#chat-aviso')).toHaveText(/longa/i);
+      await expect(page.locator('#chat-aviso')).toHaveText(idioma === 'pt' ? /longa/i : /long/i);
       await page.locator('#chat-entrada').fill('');
       await page.keyboard.press('Escape');
     });
@@ -626,7 +630,7 @@ test.describe('chat de sala', () => {
 
     test('a própria linha não abre ações; denúncia sai sem texto livre e oferece bloquear', async () => {
       await teclaChat(page, 'y');
-      await agirEVerAviso(page, /sua/i, () => page.locator('#chat-log .chat-linha.propria').first().click());
+      await agirEVerAviso(page, idioma === 'pt' ? /sua/i : /your/i, () => page.locator('#chat-log .chat-linha.propria').first().click());
       await expect(page.locator('#chat-acoes')).toBeHidden();
       await page.locator('#chat-log .chat-linha[data-id="3"]').click();
       await page.locator('#chat-denunciar').click();
@@ -635,10 +639,10 @@ test.describe('chat de sala', () => {
       await expect(page.locator('#chat-motivos textarea, #chat-motivos input[type="text"]')).toHaveCount(0);
       // o aviso de retenção (§9) aparece junto dos motivos, antes de enviar
       await expect(page.locator('#chat-motivos-aviso')).toBeVisible();
-      await expect(page.locator('#chat-motivos-aviso')).toHaveText(/90 dias/);
+      await expect(page.locator('#chat-motivos-aviso')).toHaveText(idioma === 'pt' ? /90 dias/ : /90 days/);
       await figura(page, 'denuncia-aviso');
       await page.locator('#chat-motivos input[value="spam"]').check();
-      await agirEVerAviso(page, /recebida/i, () => page.locator('#chat-motivos-enviar').click());
+      await agirEVerAviso(page, idioma === 'pt' ? /recebida/i : /received/i, () => page.locator('#chat-motivos-enviar').click());
       expect(await page.evaluate(() => window.__chatNet.denuncias)).toEqual([{ id: 3, motivo: 'spam' }]);
       await expect(page.locator('#chat-bloquear-tambem')).toBeVisible();
       await page.locator('#chat-bloquear-tambem').click();
@@ -654,7 +658,7 @@ test.describe('chat de sala', () => {
       await page.locator('#chat-log .chat-linha[data-id="4"]').click();
       await page.locator('#chat-denunciar').click();
       await page.locator('#chat-motivos input[value="ofensa"]').check();
-      await agirEVerAviso(page, /recebida/i, () => page.locator('#chat-motivos-enviar').click());
+      await agirEVerAviso(page, idioma === 'pt' ? /recebida/i : /received/i, () => page.locator('#chat-motivos-enviar').click());
       expect(await page.evaluate(() => document.activeElement?.classList.contains('chat-linha'))).toBe(true);
       await page.keyboard.press('Escape');
       expect(await chatAberto(page)).toBe(false);
@@ -681,7 +685,7 @@ test.describe('chat de sala', () => {
       await expect(page.locator('#chat-log')).toHaveAttribute('aria-live', 'off');
       await entregar(page, { type: 'chat', id: 60, t: 60, ch: 'sala', aud: 'todos', h: 'PQR', esp: 0, time: 'E', txt: 'escondida' });
       await expect(page.locator('#chat-nao-lidas')).toBeVisible();
-      await expect(page.locator('#chat-nao-lidas')).toHaveText('1 nova');
+      await expect(page.locator('#chat-nao-lidas')).toHaveText(idioma === 'pt' ? '1 nova' : '1 new');
       await expect(page.locator('#chat-log .chat-linha[data-id="60"]')).toBeHidden();
       await page.locator('#chat-ocultar').click();
       await expect(page.locator('#chat-nao-lidas')).toBeHidden();
@@ -692,13 +696,13 @@ test.describe('chat de sala', () => {
     test('U abre no canal time; espectador só tem sala', async () => {
       await teclaChat(page, 'u');
       expect(await page.evaluate(() => window.__chat.canal())).toBe('time');
-      await expect(page.locator('#chat-canal')).toHaveText('TIME');
+      await expect(page.locator('#chat-canal')).toHaveText(idioma === 'pt' ? 'TIME' : 'TEAM');
       await page.keyboard.press('Escape');
       await page.evaluate(() => { window.__chatNet.espectador = true; window.__chat.aoMudarSlot({ espectador: true }); });
       // O atalho U já foi cobrado acima. A regra de espectador é verificada pelo painel
       // para evitar a virada de round entre esperar live e enviar a tecla em CI lento.
       expect(await page.evaluate(() => window.__chat.abrir('time'))).toBe(true);
-      await expect(page.locator('#chat-aviso')).toHaveText(/sala/i);
+      await expect(page.locator('#chat-aviso')).toHaveText(idioma === 'pt' ? /sala/i : /room/i);
       expect(await page.evaluate(() => window.__chat.canal())).toBe('sala');
       await expect(page.locator('#chat-canal')).toBeDisabled();
       await page.keyboard.press('Escape');

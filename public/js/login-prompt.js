@@ -36,6 +36,14 @@ export function isEmbedded() {
 export function inMatch() {
   return !!document.getElementById('main-menu')?.classList.contains('hidden');
 }
+/* Abre o convite agora, a pedido do jogador (CTA do passe). Sem convite montado (provedores fora,
+   ?embed, conta autenticada sem nick ou e-mail), segue o passo de entrada completo do hub. */
+export function abrirLoginPrompt(motivo='passe') {
+  const pedido={motivo,aberto:false};
+  document.dispatchEvent(new CustomEvent('cs-login-prompt-open',{detail:pedido}));
+  if(!pedido.aberto)document.getElementById('hub-account-login')?.click();
+  return pedido.aberto;
+}
 /* Decisão pura: cada guarda é uma linha para o mutante da régua conseguir apagá-la. */
 export function loginPromptDue({auth,config,ended,embedded,playing,accountBusy,seen,record,now=Date.now()}) {
   if(!ended)return false;
@@ -86,14 +94,14 @@ export function initLoginPrompt({auth=null,config=null,accountBusy=()=>false,ski
   const list=document.getElementById('login-prompt-providers'),status=document.getElementById('login-prompt-status');
   const title=document.getElementById('login-prompt-title'),kicker=dialog.querySelector('header small'),treta=document.getElementById('login-prompt-treta');
   const plain={title:title?.textContent,kicker:kicker?.textContent};
-  let previousFocus=null,recovery=null,ended=false,owed=false,mode='singleplayer',campaign=null,pitched=false;
+  let previousFocus=null,guestLink=true,ended=false,owed=false,mode='singleplayer',campaign=null,pitched=false,pedido=null;
   // Fim da decisão pós-partida (mostrou e fechou, ou não era a vez): a apresentação da loja vem depois.
   const settle=()=>{if(!owed)return;owed=false;document.dispatchEvent(new CustomEvent('cs-pos-partida',{detail:{treta:pitched}}));pitched=false;};
   const drawTreta=()=>{
-    const pitch=mode==='returning'?signupPitch(campaign):tretaPitch(campaign,mode);
+    const pitch=pedido?null:mode==='returning'?signupPitch(campaign):tretaPitch(campaign,mode);
     pitched=!!pitch;
-    if(title)title.textContent=pitch?(mode==='returning'?`${money(campaign.signup_bonus)} para começar`:'Jogar logado rende T$'):plain.title;
-    if(kicker)kicker.textContent=pitch?(mode==='returning'?'SEU NICK · SUA CONTA':'FIM DE PARTIDA · SUA CONTA'):plain.kicker;
+    if(title)title.textContent=pedido==='passe'?'Entre para jogar o passe':pitch?(mode==='returning'?`${money(campaign.signup_bonus)} para começar`:'Jogar logado rende T$'):plain.title;
+    if(kicker)kicker.textContent=pedido==='passe'?'SESSÃO DA TRETA · SUA CONTA':pitch?(mode==='returning'?'SEU NICK · SUA CONTA':'FIM DE PARTIDA · SUA CONTA'):plain.kicker;
     if(!treta)return;
     treta.hidden=!pitch;
     if(!pitch)return;
@@ -104,24 +112,31 @@ export function initLoginPrompt({auth=null,config=null,accountBusy=()=>false,ski
   };
   const hide=reason=>{
     if(!dialog.open)return;
-    if(reason){writeRecord({dismissedAt:Date.now(),matches:0});emit(track,'login_prompt_dismissed',{reason});}
+    // Fechar um convite que o próprio jogador pediu (passe) não conta como recusa do pós-partida.
+    if(reason && !pedido){writeRecord({dismissedAt:Date.now(),matches:0});emit(track,'login_prompt_dismissed',{reason});}
     dialog.close();previousFocus?.focus?.();
+  };
+  const loginAttempts=new Map();
+  const attempt=fn=>{
+    if(loginAttempts.has(fn))return loginAttempts.get(fn);
+    const pending=(async()=>{try{await fn(guestLink);}catch(e){
+      if(e.message==='guest_invalid'){
+        guestLink=false;status.textContent='Preparando sua entrada…';
+        try{await fn(false);}catch(error){status.textContent=accountError(error);}
+      }else status.textContent=accountError(e);
+    }})();
+    loginAttempts.set(fn,pending);
+    return pending.finally(()=>{loginAttempts.delete(fn);});
   };
   const button=(cls,label,provider,fn)=>{
     const b=document.createElement('button');b.type='button';b.className=cls;b.dataset.provider=provider;
     if(PROVIDER_ICONS[provider]){const i=document.createElement('span');i.className='account-provider-icon';i.innerHTML=PROVIDER_ICONS[provider];b.append(i);}
     b.append(document.createTextNode(label));
-    b.onclick=async()=>{b.disabled=true;emit(track,'login_prompt_provider_click',{provider});try{await fn(true);}catch(e){
-      status.textContent=accountError(e);b.disabled=false;
-      if(e.message==='guest_invalid'){
-        if(!recovery){recovery=document.createElement('button');recovery.type='button';recovery.className='account-button';recovery.textContent='Entrar sem vincular o convidado';list.append(recovery);}
-        recovery.onclick=async()=>{recovery.disabled=true;try{await fn(false);}catch(error){status.textContent=accountError(error);recovery.disabled=false;}};
-      }
-    }};
+    b.onclick=async()=>{b.disabled=true;emit(track,'login_prompt_provider_click',{provider});try{await attempt(fn);}finally{b.disabled=false;}};
     return b;
   };
   const draw=()=>{
-    list.replaceChildren();recovery=null;status.textContent='';
+    list.replaceChildren();status.textContent='';
     for(const [id,name] of PROVIDERS) {
       const provider=providerId(id,config);
       if(!config.providers?.includes(provider))continue;
@@ -152,7 +167,19 @@ export function initLoginPrompt({auth=null,config=null,accountBusy=()=>false,ski
   document.getElementById('login-prompt-guest').onclick=()=>hide('guest');
   dialog.addEventListener('cancel',e=>{e.preventDefault();hide('esc');});
   dialog.addEventListener('click',e=>{if(e.target===dialog)hide('backdrop');});
-  dialog.addEventListener('close',settle);
+  dialog.addEventListener('close',()=>{pedido=null;settle();});
+  /* Pedido explícito (abrirLoginPrompt): fora da regra pós-partida, mas sem empilhar nem abrir em partida.
+     Conta já autenticada sem nick ou e-mail não é caso de login: quem pediu cai no passo de entrada completo. */
+  document.addEventListener('cs-login-prompt-open',e=>{
+    if(auth?.authenticated || isEmbedded() || dialog.open || inMatch() || document.querySelector('dialog[open]'))return;
+    if(!config?.providers?.length && !config?.email)return;
+    pedido=e.detail?.motivo==='passe'?'passe':'conta';
+    draw();drawTreta();previousFocus=document.activeElement;
+    dialog.showModal();
+    list.querySelector('button')?.focus();
+    e.detail.aberto=true;
+    emit(track,'login_prompt_shown',{origem:pedido});
+  });
   document.addEventListener('cs-match-end',e=>{
     ended=true;mode=e.detail?.mode==='multiplayer'?'multiplayer':'singleplayer';
     socialApi('/api/treta').then(out=>{campaign=out?.campaign || null;if(dialog.open)drawTreta();}).catch(()=>{});

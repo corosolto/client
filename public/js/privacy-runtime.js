@@ -1,8 +1,5 @@
-/* Medição opcional: LIGADA por padrão (interesse legítimo, decisão do dono em 09/11/2026),
-   com recusa explícita e persistente em `cs_privacy`. Só a recusa gravada desliga; sem escolha,
-   JSON corrompido ou versão antiga valem como padrão. O identificador que viaja é o `cs_anon`
-   (UUID local, sem IP e sem e-mail); `set(false)` apaga o resto do armazenamento opcional.
-   Réguas: tools/eval/privacy-choice-check.mjs e tools/eval/privacy-ops-check.mjs. */
+/* Medição LIGADA por padrão (dono, 09/11/2026): só recusa gravada em `cs_privacy` desliga;
+   storage corrompido/antigo vale como padrão. Réguas: privacy-choice-check, privacy-ops-check. */
 (function () {
   if (window.__csPrivacy) return;
   const VERSION='corosolto-analytics-v1',KEY='cs_privacy';

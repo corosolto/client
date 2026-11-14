@@ -57,6 +57,19 @@ const STATES = listaDe('STATES');
 const OPT_STATES = listaDe('OPT_STATES');
 if (!STATES.length) { console.error('não achei STATES em', GLBCHARS); process.exit(1); }
 
+function nomesDoPack(arquivo) {
+  if (!fs.existsSync(arquivo)) return [];
+  const glb = fs.readFileSync(arquivo);
+  if (glb.length < 20 || glb.toString('ascii', 0, 4) !== 'glTF') throw new Error(`${arquivo}: GLB inválido`);
+  const tam = glb.readUInt32LE(12);
+  if (glb.toString('ascii', 16, 20) !== 'JSON' || 20 + tam > glb.length) throw new Error(`${arquivo}: chunk JSON ausente`);
+  return (JSON.parse(glb.toString('utf8', 20, 20 + tam)).animations || []).map((a) => a.name).filter(Boolean).sort();
+}
+const EXTRAS_GLB = path.join(ANIMS, 'extras.glb');
+const extrasNoPack = nomesDoPack(EXTRAS_GLB);
+const extras = [...extrasNoPack];
+if (MUT === 'extras-fantasma') extras.push('estado_inexistente');
+
 const dirs = fs.readdirSync(ANIMS).filter((f) => fs.statSync(path.join(ANIMS, f)).isDirectory()).sort();
 const clipes = {};
 for (const d of dirs) {
@@ -86,7 +99,7 @@ for (const [id, sts] of Object.entries(clipes)) {
   }
 }
 
-const idx = { estados: STATES, opcionais: OPT_STATES, clipes, refs };
+const idx = { estados: STATES, opcionais: OPT_STATES, extras, clipes, refs };
 const texto = JSON.stringify(idx, null, 1) + '\n';
 
 /* ── CLÁUSULAS ────────────────────────────────────────────────────────────────────── */
@@ -99,6 +112,9 @@ if (CHECK) {
 }
 
 // A2 — tudo que o manifesto promete existe no disco.
+if (!extras.length) falhas.push('A2 extras.glb ausente ou sem clipes — rode `node tools/build-extras-pack.mjs --library=<biblioteca>/index.json`');
+const extrasFantasmas = extras.filter((s) => !extrasNoPack.includes(s));
+if (extrasFantasmas.length) falhas.push(`A2 manifesto promete extras fora do GLB: ${extrasFantasmas.join(', ')}`);
 for (const [id, sts] of Object.entries(clipes)) {
   for (const s of sts) {
     if (!fs.existsSync(path.join(ANIMS, id, `${s}.glb`))) falhas.push(`A2 ${id}/${s}.glb no manifesto e NÃO no disco`);
@@ -120,6 +136,7 @@ for (const [id, sts] of Object.entries(clipes)) {
   } catch { /* fora de um repo git: cláusula não se aplica */ }
   if (versionados && versionados.size) {
     const fora = [];
+    if (!versionados.has(`${ANIMS}/extras.glb`)) fora.push('extras.glb');
     for (const [id, sts] of Object.entries(clipes)) {
       for (const s of sts) if (!versionados.has(`${ANIMS}/${id}/${s}.glb`)) fora.push(`${id}/${s}`);
     }

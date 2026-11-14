@@ -14,6 +14,29 @@
   "walk1h",
   "walkfire"
  ],
+ "extras": [
+  "defeat",
+  "draw_rifle",
+  "grenade_throw",
+  "hit_back",
+  "hit_front",
+  "hit_head",
+  "hit_left",
+  "hit_right",
+  "holster_rifle",
+  "knife_idle",
+  "knife_stab",
+  "reload_pistol",
+  "reload_rifle",
+  "run_back",
+  "strafe_left",
+  "strafe_left_pistol",
+  "strafe_right",
+  "strafe_right_pistol",
+  "victory",
+  "walk_back",
+  "walk_back_pistol"
+ ],
  "clipes": {
   "adjim": [
    "idle",

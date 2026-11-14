@@ -1,198 +1,248 @@
 {
- "gerado": "2026-11-09T17:27:06.129Z",
- "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
- "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
+ "gerado": "2026-11-13T23:39:29.238Z",
+ "fonte": "tools/eval/char_probe.json (C3.faixaPorPose[0], o pé mais baixo do ciclo; bind = C3.porPose) — via tools/gen-foot-offsets.mjs",
+ "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -(pé mais baixo do ciclo).",
  "tolerancia": 0.01,
  "teto": 0.08,
  "offsets": {
   "esquerdomacho": {
-   "run": -0.0343
+   "crouchwalk": 0.0182
+  },
+  "sindicato": {
+   "run": 0.0188
   },
   "mst": {
-   "idle": -0.0242
+   "idle": -0.0235
   },
   "doutora": {
-   "idle": -0.0109,
-   "run": -0.0153
+   "idle": -0.0101,
+   "run": 0.0133
+  },
+  "mistico": {
+   "run": 0.0155
   },
   "caminhoneiro": {
-   "run": 0.0101,
-   "shoot": 0.0114
+   "walk": 0.0143,
+   "run": 0.0372,
+   "shoot": 0.0115,
+   "crouchwalk": 0.0216
   },
   "sertanejo": {
-   "crouch": 0.0415
+   "run": 0.0203,
+   "crouch": 0.0416,
+   "crouchwalk": 0.0648
+  },
+  "coach": {
+   "run": 0.0129
+  },
+  "gotinha": {
+   "run": 0.0171,
+   "crouchwalk": 0.0151
+  },
+  "farialimer": {
+   "run": 0.01
   },
   "bombado": {
-   "run": -0.012
+   "run": 0.0151
   },
   "hipster": {
-   "run": -0.034
+   "run": 0.0118
   },
   "dollynho": {
-   "walk": -0.0169,
-   "run": -0.025
+   "run": 0.0149
   },
   "et": {
-   "idle": -0.0129,
-   "run": -0.0341
+   "idle": -0.0124
   },
   "ancap": {
-   "idle": 0.0529,
+   "idle": 0.0538,
    "crouch": 0.1403
   },
   "canarinho": {
-   "walk": -0.0146
+   "run": 0.0138
   },
   "proerd": {
-   "idle": -0.0104,
-   "crouch": -0.1929
+   "run": 0.0231,
+   "crouchwalk": 0.0134
+  },
+  "bonzo": {
+   "run": 0.0135
   },
   "palhacomal": {
-   "run": -0.0165,
-   "crouch": -0.0251
+   "walk": 0.0124,
+   "run": 0.0117,
+   "crouch": -0.0228,
+   "crouchwalk": 0.0123
+  },
+  "jozo": {
+   "run": 0.0179
   },
   "adjim": {
-   "walk": -0.0525
+   "walk": 0.0467,
+   "run": 0.0227,
+   "crouchwalk": 0.0317
   },
-  "esbirro": {
-   "walk": -0.0369
+  "titica": {
+   "run": 0.0122
   },
   "padati": {
-   "walk": -0.0137
+   "run": 0.0282
   },
   "padata": {
-   "idle": -0.0111,
-   "run": -0.018
+   "idle": -0.0104,
+   "run": 0.0154
+  },
+  "cadequinha": {
+   "run": 0.0198
   },
   "emo": {
-   "run": -0.0341
+   "run": 0.0105
   },
   "blackmetal": {
-   "walk": -0.012
+   "run": 0.017,
+   "crouchwalk": 0.0108
   },
   "metaleiro": {
-   "run": -0.0219
-  },
-  "punk": {
-   "walk": -0.011,
-   "run": -0.031
+   "run": 0.0107
   },
   "skatista": {
-   "run": -0.0381
+   "run": 0.0137
   },
   "clubber": {
-   "run": -0.0403
+   "run": 0.0119
   },
   "rapper": {
-   "walk": -0.0143
+   "run": 0.0264
+  },
+  "reggae": {
+   "run": 0.015
+  },
+  "pagodeiro": {
+   "run": 0.014
   },
   "mandrake": {
-   "idle": -0.0169,
-   "walk": -0.0113,
-   "run": -0.0319
+   "idle": -0.0167,
+   "run": 0.0107
+  },
+  "raul": {
+   "run": 0.0135
+  },
+  "oakley": {
+   "run": 0.014,
+   "crouchwalk": 0.0446
   },
   "criarj": {
-   "run": -0.0186
+   "run": 0.0135
+  },
+  "chave": {
+   "run": 0.0123
   },
   "funkraiz": {
-   "idle": -0.0103,
-   "run": -0.0137
+   "run": 0.0125
   },
   "fluxo": {
-   "run": -0.0447
+   "run": 0.0118,
+   "crouchwalk": 0.0383
   },
   "ostentacao": {
-   "run": -0.023
-  },
-  "lobisomem": {
-   "walk": -0.0176,
-   "run": -0.0608
+   "run": 0.0102
   },
   "mariabonita": {
-   "run": -0.0391
+   "run": 0.0114
   },
   "lampiao": {
-   "walk": -0.0137
+   "run": 0.0132
   },
   "bandeirante": {
-   "walk": -0.0107
-  },
-  "boto": {
-   "run": -0.0206
+   "run": 0.013
   },
   "zumbi": {
-   "walk": -0.0123,
-   "run": -0.0408
+   "run": 0.01
   },
   "curupira": {
-   "walk": -0.0115,
-   "run": -0.0254
+   "run": 0.0105
   },
   "saci": {
-   "walk": -0.0116
-  },
-  "caipora": {
-   "walk": -0.0129
+   "run": 0.0113
   },
   "barbudo": {
-   "idle": -0.0292,
-   "walk": -0.0114,
-   "run": 0.0166,
-   "shoot": 0.017
+   "idle": -0.0279,
+   "walk": 0.0168,
+   "run": 0.0186,
+   "shoot": 0.017,
+   "crouchwalk": 0.019
   },
   "capitao": {
-   "idle": -0.018,
-   "run": -0.0341
+   "idle": -0.0173,
+   "run": 0.0109
   },
   "dama": {
-   "run": -0.0451
+   "run": 0.0115,
+   "crouchwalk": 0.0172
   },
   "professor": {
-   "idle": -0.021,
-   "run": -0.0497
+   "idle": -0.0203
   },
   "senador": {
-   "run": -0.0168
+   "run": 0.0102
   },
   "ministro": {
-   "idle": -0.0136,
-   "walk": -0.0141,
-   "run": -0.042,
-   "shoot": 0.0243
+   "idle": -0.0123,
+   "walk": 0.0182,
+   "run": 0.0282,
+   "shoot": 0.0245,
+   "crouchwalk": 0.017
   },
   "deputado": {
-   "idle": -0.0174,
-   "run": -0.0394
+   "idle": -0.0167
   },
   "juiz": {
-   "idle": -0.0247
-  },
-  "julia-zanatta": {
-   "run": -0.042
+   "idle": -0.0239,
+   "run": 0.0116
   },
   "marina-silva": {
-   "walk": 0.0263,
-   "run": -0.0253
+   "walk": 0.0344,
+   "run": 0.0224,
+   "crouchwalk": 0.0111
   }
  },
  "suspeitos": [
   {
    "id": "esbirro",
+   "pose": "crouchwalk",
+   "desvio": -0.1976,
+   "amplitude": 0.2183
+  },
+  {
+   "id": "proerd",
+   "pose": "crouch",
+   "desvio": 0.178,
+   "amplitude": 0.0201
+  },
+  {
+   "id": "ancap",
+   "pose": "crouchwalk",
+   "desvio": -0.151,
+   "amplitude": 0.072
+  },
+  {
+   "id": "esbirro",
    "pose": "run",
-   "desvio": -0.1342,
-   "amplitude": 0.0977
+   "desvio": -0.1369,
+   "amplitude": 0.108
   },
   {
    "id": "ancap",
    "pose": "walk",
-   "desvio": -0.1308,
-   "amplitude": 0.0791
+   "desvio": -0.1301,
+   "amplitude": 0.0879
   },
   {
    "id": "ancap",
    "pose": "run",
-   "desvio": -0.1086,
-   "amplitude": 0.0863
+   "desvio": -0.1107,
+   "amplitude": 0.09
   }
- ]
+ ],
+ "excecoes": []
 }

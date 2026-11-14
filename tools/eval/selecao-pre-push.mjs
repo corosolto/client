@@ -37,16 +37,16 @@ export function validarMapaWorkflows(mapa) {
 validarMapaWorkflows(REGUAS_WORKFLOW);
 
 const REGRAS = [
-  ['core', /^(?:docs\/|[^/]+\.md$|tools\/gen-(?:docs|arch)\.mjs$|scripts\/(?:checa-coautoria-ia\.sh|install-git-hooks\.mjs)$)/],
+  ['core', /^(?:docs\/|(?:\.agents|\.claude|plans|launch-media)\/|(?:[^/]+\/)*[^/]+\.md$|tools\/gen-(?:docs|arch)\.mjs$|scripts\/(?:checa-coautoria-ia\.sh|install-git-hooks\.mjs|ci\/[^/]+\.py)$)/],
   ['maps', /(?:^|\/)(?:map[^/]*|maps\.js|maps\/|lajes[^/]*|sertao[^/]*|amazonia[^/]*|escadao[^/]*|corrego[^/]*|parque[^/]*|penitenciaria[^/]*|velho-oeste[^/]*|campo[^/]*|piscina[^/]*|ferro[^/]*|upa[^/]*|skylife[^/]*)/],
   ['ui', /^(?:src\/(?:components|pages|layouts|styles)\/|public\/(?:css\/|[^/]+\.(?:css|html)$)|tests\/(?:ui|menu|boot)|tools\/eval\/(?:ui-|screen-query|ranking|convida|placar|community|login|roster|chat|lobby)|public\/js\/(?:ui-|splash|screenquery|chat|login|profile|ranking|convida|placar|community|clans|account|treta-|mode-announcements|brasoes|compartilhar|rotas|nick))/],
   ['audio', /(?:^|\/)(?:audio[^/]*|soundscape[^/]*|menu-music[^/]*|.*ambience[^/]*)(?:\/|\.|$)/],
   ['browser', /(?:browser|playwright|portao-browser)/],
-  ['network', /^(?:tools\/eval\/(?:net|transport|online|apis|geo-proxy|edge-cache|telemetry|telemetria|mp-)|tests\/net|public\/js\/(?:apibase|transporte|nos|contagem|player-unique|privacy|client-id|economia-partida|compra-partida))/],
-  ['vm', /^(?:tools\/viewmodels\/|tools\/eval\/(?:vm|tp-|authored|weapon|recoil|ballistics|firing|character|meshopt|glb-peso|normal-only|skin-profile|death-camera|ads1p|posto|preview-grip|knife-skin)|public\/js\/(?:vm|authoredvm|fparms|fpsrig|meleevm|recoil|weapons|weapon|glove|handik|look))/],
+  ['network', /^(?:tools\/eval\/(?:net|transport|online|apis|geo-proxy|edge-cache|telemetry|telemetria|mp-|server-traffic)|tests\/net|src\/lib\/server-traffic\.mjs$|src\/middleware\.ts$|^middleware\.js$|public\/js\/(?:apibase|transporte|nos|contagem|player-unique|privacy|client-id|economia-partida|compra-partida))/],
+  ['vm', /^(?:tools\/viewmodels\/|tools\/eval\/(?:lib\/vm-enquadramento|vm|tp-|authored|weapon|recoil|ballistics|firing|character|meshopt|glb-peso|normal-only|skin-profile|death-camera|ads1p|posto|preview-grip|knife-skin)|tools\/fabrica\/fabrica-candidates(?:\.json)?$|public\/models\/viewmodels\/coro(?:\/|$)|public\/js\/(?:vm|authoredvm|fparms|fpsrig|meleevm|recoil|weapons|weapon|glove|handik|look))/],
 ];
 
-const transversal = (arquivo) => /^(?:package-lock\.json|yarn\.lock|\.github\/|\.githooks\/|tools\/eval\/(?:runner|suites|selecao-pre-push)|public\/js\/(?:(?:game|main)\.js|(?:boot|net)(?:[^/]*\.js|\/)))/.test(arquivo);
+const transversal = (arquivo) => /^(?:package-lock\.json|yarn\.lock|\.github\/|\.githooks\/|tools\/eval\/(?:runner|suites|selecao-pre-push)|tests\/eval-suites\.test\.mjs|public\/js\/(?:(?:game|main)\.js|(?:boot|net)(?:[^/]*\.js|\/)))/.test(arquivo);
 
 function fallback(motivo, regras = []) {
   return {
@@ -164,6 +164,19 @@ function nomesDoDiff(base, head) {
   return git(['diff', '--name-only', '--no-renames', `${base}...${head}`]).split('\n').filter(Boolean);
 }
 
+/* Branch nova aberta de staging comparada com main arrasta o staging inteiro para o diff
+   (09/11: 691 arquivos, fallback completo). Entre main e staging, fica a base mais perto de HEAD. */
+function baseDeIntegracao(sha, remoto) {
+  let melhor = '';
+  for (const ref of [`${remoto}/main`, `${remoto}/staging`]) {
+    let candidata = '';
+    try { candidata = git(['merge-base', sha, ref]).trim(); } catch { continue; }
+    if (!candidata) continue;
+    if (!melhor || spawnSync('git', ['merge-base', '--is-ancestor', melhor, candidata]).status === 0) melhor = candidata;
+  }
+  return melhor;
+}
+
 function carregarBlobsPackage(blobs, base, head) {
   if (!blobs) return;
   const par = {
@@ -183,7 +196,7 @@ export function arquivosDoPush(env = process.env, blobs) {
   const arquivos = new Set();
   const linhas = entrada.split('\n').filter((linha) => linha.trim());
   if (!linhas.length) {
-    const base = `${remoto}/main`;
+    const base = baseDeIntegracao('HEAD', remoto) || `${remoto}/main`;
     const nomes = nomesDoDiff(base, 'HEAD');
     if (nomes.includes('package.json')) carregarBlobsPackage(blobs, base, 'HEAD');
     return nomes;
@@ -194,8 +207,8 @@ export function arquivosDoPush(env = process.env, blobs) {
     if (!localSha || localSha === ZERO) continue;
     let base = remoteSha;
     if (!base || base === ZERO) {
-      base = git(['merge-base', localSha, `${remoto}/main`]).trim();
-      if (!base) throw new Error(`sem merge-base entre ${localSha} e ${remoto}/main (${remoteRef || 'ref nova'})`);
+      base = baseDeIntegracao(localSha, remoto);
+      if (!base) throw new Error(`sem merge-base entre ${localSha} e ${remoto}/main ou ${remoto}/staging (${remoteRef || 'ref nova'})`);
     }
     const nomes = nomesDoDiff(base, localSha);
     if (nomes.includes('package.json')) carregarBlobsPackage(blobs, base, localSha);

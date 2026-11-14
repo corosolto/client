@@ -5,6 +5,7 @@ import {existsSync,readFileSync,readdirSync,realpathSync,statSync} from 'node:fs
 import {fileURLToPath} from 'node:url';
 import {gzipSync,gunzipSync,brotliDecompressSync,inflateSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
+import {criarPasseMock} from './passe-mock.mjs';
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const isText=t=>/^(text\/|application\/(?:javascript|json|xml)|image\/svg\+xml)/i.test(t);
 function decodeWire(body,encoding='') {
@@ -54,6 +55,7 @@ export async function startBootOrigin({BASE,API_BASE,publicRoot,snapshot=snapsho
  if(!['http:','https:'].includes(upstream.protocol)||upstream.username||upstream.password)throw Error('BASE pública HTTP(S) sem credenciais exigida');
  const apiOrigin=publicApiOrigin(API_BASE===undefined?upstream.origin:API_BASE);
  const modules=new Map(),requests=[],byId=new Map(),active=new Set(),sockets=new Set(),profileDenials=[];let closing=false,nextId=0;
+ const passeMock=criarPasseMock({autenticado:false});
  if(snapshot.fingerprint!==sha(Buffer.from(JSON.stringify(snapshot.entries))))throw Error('snapshot inconsistente');
  for(const {rel,body:original} of snapshot.entries) {
   const body=transformJs(rel,original);if(typeof body!=='string')throw Error('transformJs não retornou texto');
@@ -105,6 +107,11 @@ export async function startBootOrigin({BASE,API_BASE,publicRoot,snapshot=snapsho
     for await(const chunk of req){size+=chunk.length;if(size>1024)throw Error('heartbeat acima de 1KiB');chunks.push(chunk);}
     requestBody=Buffer.concat(chunks);let parsed;try{parsed=JSON.parse(requestBody.toString('utf8'));}catch{res.writeHead(400);res.end('JSON inválido');return;}
     if(!parsed||Object.keys(parsed).length!==2||!Object.hasOwn(parsed,'action')||!Object.hasOwn(parsed,'version')||parsed.action!=='invite-health'||parsed.version!==expectedVersion||JSON.stringify(parsed)!==requestBody.toString('utf8')){res.writeHead(400);res.end('heartbeat fora do snapshot');return;}
+   }
+   if(pathname==='/api/passe'&&!query) {
+    const {status,body}=passeMock.handle('GET',''),decoded=Buffer.from(JSON.stringify(body));
+    record(res,{path:req.url,method:'GET',kind:'local-passe-mock',status,payloadBytes:decoded.length,decodedBytes:decoded.length,sha256:sha(decoded),encoding:''});
+    res.writeHead(status,{'content-type':'application/json','cache-control':'no-store'});res.end(decoded);return;
    }
    const publicApi=(['/api/geo-lang','/api/online','/api/map-plays','/api/treta'].includes(pathname)&&!query)||(pathname==='/api/social-auth'&&['','?action=providers'].includes(query))||(pathname==='/api/social-avatar'&&/^\?id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(query))||(pathname==='/api/social'&&query==='?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all');
    // Autorização own-profile precede getWire; sem callback ou sem identidade própria, mantém 403.

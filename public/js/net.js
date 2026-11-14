@@ -1,30 +1,17 @@
 /* TRANSPORTE DE REDE. WebSocket puro atrás de uma interface pequena (trocável por
-   WebTransport). Daqui só sai INPUT. Nós por região e ping: docs/MULTIPLAYER.md. */
+   WebTransport). Daqui só sai INPUT. Nós, salas e paridade: nos-rede.js. */
 
 /* NÓS OFICIAIS. Cada um é um processo do servidor numa região. Acrescentar região é
    acrescentar uma linha aqui e subir a VM com o mesmo script de deploy. */
 // Registro de nós em nos.js: a página de convite do site lê a MESMA lista.
 export { NOS, parseConvite, linkDeConvite, httpDoNo, NO_RE, ordenarNos, FAIXA_PING_MS, melhorNoParaJogar, TETO_COMPANHIA_MS } from './nos.js';
 import { NOS } from './nos.js';
-import { decodeSnapshot, MAX_SNAPSHOT_BYTES, CLIENT_SNAPSHOT_PROTOCOL } from './netcodec.js';
+import { decodeSnapshot, MAX_SNAPSHOT_BYTES, CLIENT_SNAPSHOT_PROTOCOL, snapshotVersionForProtocol } from './netcodec.js';
 import { TransporteWS, TransporteWT } from './transporte.js';
 import { MedidorDeTaxa } from './netrate.js';
+import { versaoCompativel } from './nos-rede.js';
 import * as versao from './version.js';
 const { VERSION } = versao;
-// ausente em árvore anterior ao fingerprint: degrada para comparar VERSION
-const SIM_HASH = versao.SIM_HASH || null;
-
-/* PARIDADE DE SIMULAÇÃO (incidente da frota, KNOWN-BUGS): protocolo igual não é jogo
-   igual. O nó diz no `welcome` que versão simula; `?mpversao=0` libera no local.
-
-   Quando os DOIS lados trazem `SIM_HASH` (scripts/sim-hash.mjs), compara-se o código que o
-   nó simula, não o rótulo: release de menu ou chat muda VERSION e não muda a física, e não
-   pode deixar todo mundo fora do multiplayer até o nó ser reimplantado. Sem hash de um dos
-   lados, vale a regra antiga de versão idêntica. */
-export const versaoCompativel = (doNo, nossa = VERSION, simNo = null, nossoSim = SIM_HASH) => {
-  if (simNo && nossoSim) return simNo === nossoSim;
-  return !doNo || doNo === nossa;
-};
 
 /* CHAT DE SALA (docs/chat-de-sala.md §6): frames que chegam antes de existir painel ficam
    em `_chatFila`; o teto é o `filaClienteMax` da tabela, cobrado por eval:chat (CC7). */
@@ -63,95 +50,9 @@ export async function transitionSlot(m, meta, current, validChar, remount) {
   return next;
 }
 
-// URLs de lobby e jogo a partir do menu/URL: '1' = local, 'host:porta', ou 'wss://...'
-export function mpUrls(v) {
-  const host = (typeof location !== 'undefined' && location.hostname) || 'localhost';
-  if (/^wss?:\/\//.test(v)) {
-    const wsBase = v.replace(/\/ws.*$/, '');
-    return { http: wsBase.replace(/^ws/, 'http'), ws: wsBase + '/ws' };
-  }
-  const hp = v === '1' ? `${host}:8787` : v;
-  return { http: `http://${hp}`, ws: `ws://${hp}/ws` };
-}
-
-const j = async (url, opt) => {
-  const r = await fetch(url, { cache: 'no-store', ...opt });
-  if (!r.ok) throw new Error(`http_${r.status}`);
-  return r.json();
-};
-export const listRooms = (httpBase) => j(`${httpBase}/rooms`).then((x) => x.rooms || []);
-// Uma sala pelo código do convite. 404 vira null: sala que acabou não é erro, é sala que acabou.
-export const salaPorConvite = (httpBase, codigo) =>
-  j(`${httpBase}/sala/${encodeURIComponent(codigo)}`).then((x) => x.sala).catch(() => null);
-export const listMaps = (httpBase) => j(`${httpBase}/maps`).then((x) => x.maps || []);
-export const health = (httpBase) => j(`${httpBase}/health`);
-export const createRoom = (httpBase, cfg, ticket = '') => j(`${httpBase}/rooms`, {
-  method: 'POST', headers: { 'content-type': 'application/json', ...(ticket ? { authorization: `Bearer ${ticket}` } : {}) }, body: JSON.stringify(cfg),
-});
-
-/* Sonda TODOS os nós em paralelo e devolve cada um com ping e lotação. É a coluna de ping do
-   server browser — sem ela o jogador não tem como saber que o nó da Europa é o dele. Nó que
-   não responde volta com ping null e NÃO some da lista: sumir esconde a queda do servidor. */
-// Prazo que só anda quando o navegador dá a vez: thread travada não pode consumi-lo.
-// `setTimeout` mede relógio de parede e derrubava a sonda inteira no boot — BUG-169.
-const PASSO_MS = 100;
-export function prazoAcordado(ms, aoEstourar) {
-  let resta = ms, antes = performance.now();
-  const id = setInterval(() => {
-    const agora = performance.now(), dt = agora - antes;
-    antes = agora;
-    // tique muito mais longo que o passo é tempo CONGELADO: cobra-se o passo, não o relógio
-    resta -= Math.min(dt, PASSO_MS * 2);
-    if (resta <= 0) { clearInterval(id); aoEstourar(); }
-  }, PASSO_MS);
-  return () => clearInterval(id);
-}
-
-// Ping de REDE via PerformanceObserver: o relógio do JS soma a thread ocupada no boot e o
-// buffer da Resource Timing já está cheio (250) quando o menu sonda (Madri 20 ms → 212 ms, 13/10).
-function observaRede(url) {
-  let duracao = null, obs = null;
-  try {
-    obs = new PerformanceObserver((lista) => {
-      for (const e of lista.getEntries()) if (e.name === url && e.duration > 0) duracao = e.duration;
-    });
-    obs.observe({ type: 'resource' });
-  } catch { obs = null; }
-  return async (t0) => {
-    const fim = performance.now();
-    for (let i = 0; obs && duracao == null && i < 2; i++) await new Promise((r) => setTimeout(r, 20));
-    obs?.disconnect();
-    return duracao ?? fim - t0;
-  };
-}
-
-export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 2) {
-  return Promise.all(nos.map(async (no) => {
-    const { http } = mpUrls(no.url);
-    const ctrl = new AbortController();
-    const cancelaPrazo = prazoAcordado(timeoutMs, () => ctrl.abort());
-    // Amostra que chegou não se apaga: a 1ª paga DNS+TLS e, se estourava o prazo da 2ª, o nó
-    // que RESPONDEU aparecia fora do ar — os três juntos, em rede lenta (BUG-166).
-    let h = null, ping = 0;
-    try {
-      const n = Math.max(1, Math.min(3, amostras | 0));
-      for (let i = 0; i < n; i++) {
-        const fecha = observaRede(`${http}/health`);
-        const t0 = performance.now();
-        const r = await j(`${http}/health`, { signal: ctrl.signal });
-        h = r; ping = await fecha(t0);   // a última que chegou é a mais quente
-      }
-    } catch { /* a amostra que faltou não apaga a que veio */ }
-    finally { cancelaPrazo(); }
-    if (!h) return { ...no, http, ping: null, online: false, jogadores: 0, salas: 0 };
-    /* `salaConvite`: o nó guarda sala privada SEM senha só para quem tem o código (backend#62).
-       Nó sem o campo listaria essa sala aberta, então o JOGAR COM AMIGOS não a cria nele. */
-    return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0, salaConvite: h.salaConvite === true, soloVerified: h.soloVerified === true, horde: h.horde || null, nodeMode: h.nodeMode, roomCreation: h.roomCreation };
-  }));
-}
 
 export class NetClient {
-  constructor(url, { nome = null, room = null, codigo = null, pw = '', team = 'auto', ticket = '', wt = '', wtHashes = null, csha = '' } = {}) {
+  constructor(url, { nome = null, room = null, codigo = null, pw = '', team = 'auto', ticket = '', refreshTicket = null, wt = '', wtHashes = null, csha = '' } = {}) {
     // `sp` leva o subprotocolo para o gateway: quem escolhe a versão do snapshot é quem
     // vai decodificá-la, e no caminho WebTransport não existe handshake para negociar
     // `pronto=1`: este cliente avisa quando montou o mapa novo (o nó segura o round 1, com teto)
@@ -159,6 +60,7 @@ export class NetClient {
     this.url = `${url}${url.includes('?') ? '&' : '?'}${qs}`;
     this.wtUrl = wt ? `${wt}${wt.includes('?') ? '&' : '?'}${qs}&sp=${encodeURIComponent(CLIENT_SNAPSHOT_PROTOCOL)}` : '';
     this.wtHashes = wtHashes;
+    this._refreshTicket = refreshTicket;
     this.tp = null;
     this.connected = false;
     // `ws` continua legível (overlay de rede, réguas, sonda): é o socket de VERDADE, mas
@@ -217,11 +119,24 @@ export class NetClient {
      depois que o canário provar, e até lá quem pede é `?wt=`. Prazo curto e queda em
      SILÊNCIO — um gateway fora do ar não pode virar "o jogo não abre". */
   async connect(timeoutMs = 8000) {
-    if (this.wtUrl && typeof WebTransport === 'function') {
+    const ticket = new URL(this.url).searchParams.get('ticket') || '';
+    // Sem emissor, usa WS direto: uma tentativa WT pode consumir o nonce mesmo sem welcome.
+    if (this.wtUrl && typeof WebTransport === 'function' && (!ticket || typeof this._refreshTicket === 'function')) {
       try {
         return await this._conectar(timeoutMs, () => new TransporteWT(this.wtUrl, { hashes: this.wtHashes }));
       } catch (e) {
+        const falhou = this.tp;
         this.tp = null; this.connected = false;
+        falhou?.fechar(1000, 'transport_fallback');
+        if (ticket) {
+          // O nó antigo consome o ticket antes de a ponte descobrir a incompatibilidade.
+          // O emissor garante nonce novo; o cliente mantém o ticket opaco.
+          const novoTicket = await this._refreshTicket();
+          if (typeof novoTicket !== 'string' || !novoTicket.trim() || novoTicket === ticket) throw new Error('ticket_refresh_invalid');
+          const url = new URL(this.url);
+          url.searchParams.set('ticket', novoTicket);
+          this.url = url.href;
+        }
         try { console.info('[net] WebTransport falhou, caindo para WebSocket:', e?.message || e); } catch { /* console mudo */ }
       }
     }
@@ -247,7 +162,7 @@ export class NetClient {
         try { m = binary ? decodeSnapshot(dados) : JSON.parse(dados); }
         catch { if (binary) falha(new Error('snapshot_invalid'), 1002, 'snapshot_invalid'); return; }
         if (m.type === 'welcome') {
-          if (m.protocolVersion !== 8) { falha(new Error('protocolo_incompativel')); return; }
+          if (m.protocolVersion < 8 || m.protocolVersion !== snapshotVersionForProtocol(tp.protocolo)) { falha(new Error('protocolo_incompativel')); return; }
           // Versão diferente do nó não tira ninguém da partida (decisão do dono, 13/10);
           // ?mpversao=1 volta a recusar, para diagnóstico.
           this.versaoDiferente = versaoCompativel(m.clientVersion, VERSION, m.simHash)
@@ -268,11 +183,15 @@ export class NetClient {
           const rtt = performance.now() - m.t;
           if (Number.isFinite(rtt) && rtt >= 0 && rtt <= 60000) {
             this.stats.ping = rtt;
-            this._rttSamples.push(+rtt.toFixed(1));
-            if (this._rttSamples.length > 32) this._rttSamples.shift();
+            // Mesma regra do gap: aba oculta = ping inflado pelo throttle do navegador,
+            // não pela rede. stats.ping atualiza (informativo), a AMOSTRA não entra.
+            if (!(typeof document !== 'undefined' && document.hidden)) {
+              this._rttSamples.push(+rtt.toFixed(1));
+              if (this._rttSamples.length > 32) this._rttSamples.shift();
+            }
           }
         } else if (m.type === 'partida') {
-          if (m.protocolVersion !== 8) { falha(new Error('protocolo_incompativel')); return; }
+          if (m.protocolVersion < 8 || m.protocolVersion !== snapshotVersionForProtocol(tp.protocolo)) { falha(new Error('protocolo_incompativel')); return; }
           // o servidor girou o mapa: meta NOVA (roster, ids, mapa, facções) + o seu slot (BUG-112)
           this.meta = m; this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
           this.snap = null; this.prev = null;   // snapshots do jogo velho não servem para o novo
@@ -313,8 +232,12 @@ export class NetClient {
           if (this._lastSnapT) {
             const gap = now - this._lastSnapT;
             this.stats.gapMax = Math.max(gap, this.stats.gapMax * 0.92);
-            this._gapSamples.push(+gap.toFixed(1));
-            if (this._gapSamples.length > 512) this._gapSamples.shift();
+            // Aba oculta não é experiência de jogo: o navegador suspende o event loop e
+            // os gaps viram segundos (falso "atenção" mobile que polui o p95). Congela.
+            if (!(typeof document !== 'undefined' && document.hidden)) {
+              this._gapSamples.push(+gap.toFixed(1));
+              if (this._gapSamples.length > 512) this._gapSamples.shift();
+            }
           }
           this._lastSnapT = now;
           // `m.t` é o relógio DO SERVIDOR (netcodec, f64 s): `now` é quando o render

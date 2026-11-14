@@ -175,7 +175,7 @@ if(root) {
       c.append(el('h3','Armas que mais usa'),top.length?list:empty('As armas aparecem a partir das partidas multiplayer confirmadas pelo servidor.'));
     }
     const notice=el('p',profileNotice?.id===p.id?profileNotice.text:'','social-inline-status');notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');
-    const buttons=el('div','','social-actions');buttons.append(button('COPIAR LINK',async()=>navigator.clipboard.writeText(`${root.dataset.site}${p.url}`)));
+    const buttons=el('div','','social-actions');buttons.append(button('COPIAR LINK',async()=>{const {origemCompartilhamento}=await import('./compartilhar.js');return navigator.clipboard.writeText(`${origemCompartilhamento()}${p.url}`);}));
     // /u/<perfil> já é o hub: o perfil público é esta tela, sem botão para "abrir o perfil público".
     if(p.visibility==='public'){
       // Import na hora do clique: a régua do backend roda este arquivo num vm sem módulos.

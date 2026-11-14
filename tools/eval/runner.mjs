@@ -28,6 +28,8 @@
      node tools/eval/runner.mjs --suite=fast
      node tools/eval/runner.mjs --suite=core --jobs=2
      node tools/eval/runner.mjs --suite=core --json-out=/tmp/core.json
+     node tools/eval/runner.mjs --suite=fast --shard=1/4
+     node tools/eval/runner.mjs --suite=fast --shard=off  (ignora o manifesto)
      node tools/eval/runner.mjs --npm syntax audio:check      (padrão: são scripts npm)
    ============================================================================ */
 import { spawn, spawnSync } from 'node:child_process';
@@ -35,10 +37,13 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { SUITES, passosDaSuite } from './suites.mjs';
 import { SAIDA_SKIP, causaNaoMedivel } from './sonda-filho.mjs';
+import { carregarDuracoes, selecionarShard } from './lib/duration-shards.mjs';
 
 const passos = [];
 const suites = [];
 let jobs = 1;
+let shard = null;
+let caminhoDuracoes = 'tools/eval/out/durations.json';
 let jsonOut = 'tools/eval/out/runner-latest.json';
 try {
   for (const arg of process.argv.slice(2)) {
@@ -52,6 +57,20 @@ try {
       if (valor !== '1' && valor !== '2') throw new Error('--jobs deve ser 1 ou 2');
       jobs = Number(valor);
     } else if (arg === '--jobs') throw new Error('use --jobs=1 ou --jobs=2');
+    else if (arg.startsWith('--shard=')) {
+      const valor = arg.slice('--shard='.length);
+      if (valor === 'off') { shard = null; continue; }
+      const casamento = /^([1-9]\d*)\/([1-9]\d*)$/.exec(valor);
+      if (!casamento) throw new Error('--shard deve ser i/n ou off');
+      shard = { indice: Number(casamento[1]), total: Number(casamento[2]) };
+      if (!Number.isSafeInteger(shard.indice) || !Number.isSafeInteger(shard.total)) {
+        throw new Error('--shard exige inteiros seguros');
+      }
+    } else if (arg === '--shard') throw new Error('use --shard=i/n ou --shard=off');
+    else if (arg.startsWith('--durations=')) {
+      caminhoDuracoes = arg.slice('--durations='.length);
+      if (!caminhoDuracoes) throw new Error('--durations exige um caminho');
+    } else if (arg === '--durations') throw new Error('use --durations=<caminho>');
     else if (arg.startsWith('--json-out=')) {
       jsonOut = arg.slice('--json-out='.length);
       if (!jsonOut) throw new Error('--json-out exige um caminho');
@@ -70,8 +89,19 @@ try {
   process.exit(2);
 }
 if (!passos.length) {
-  console.error('uso: node tools/eval/runner.mjs [--suite=<nome>] [--jobs=1|2] [--json-out=<caminho>] [<script npm> …]');
+  console.error('uso: node tools/eval/runner.mjs [--suite=<nome>] [--jobs=1|2] [--shard=i/n|off] [--durations=<caminho>] [--json-out=<caminho>] [<script npm> …]');
   process.exit(2);
+}
+if (shard) {
+  try {
+    const duracoes = carregarDuracoes(caminhoDuracoes);
+    const selecionados = selecionarShard(passos, duracoes, shard.indice, shard.total);
+    passos.splice(0, passos.length, ...selecionados);
+    console.log(`  shard ${shard.indice}/${shard.total}: ${passos.length} passos (${caminhoDuracoes})`);
+  } catch (erro) {
+    console.error(`runner: ${erro.message}; use --shard=off para execução completa sem manifesto`);
+    process.exit(2);
+  }
 }
 
 const VERM = '\x1b[31m', VERDE = '\x1b[32m', AMAR = '\x1b[33m', CINZA = '\x1b[90m', OFF = '\x1b[0m';
