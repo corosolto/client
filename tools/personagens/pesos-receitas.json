@@ -28,13 +28,6 @@
         "ombroR1": 2.5
       }
     },
-    "bolsonaro-mandrake": {
-      "origemSha256": "bcd355b78b3958e7df3d41f514e413373d6b0cf3dbbcf15cb57e23224056ecf7",
-      "parametros": {
-        "anel": 3,
-        "mistura": 0.12
-      }
-    },
     "profeta-calcada": {
       "origemSha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
       "parametros": {
@@ -42,12 +35,6 @@
         "costura": 0.3,
         "sovaco": 3,
         "virilha": 3
-      }
-    },
-    "doidinho-bairro": {
-      "origemSha256": "9d65fc624e894f23f1e029309dca0130e68a582bf70a172bfd09804fc53a6153",
-      "parametros": {
-        "preencher": 30
       }
     },
     "camera-roxa": {

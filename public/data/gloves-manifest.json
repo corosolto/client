@@ -5088,16 +5088,16 @@
       "perspective": "3p",
       "source": {
         "path": "public/models/characters/doidinho-bairro.glb",
-        "sha256": "c92686566aeef715f5bc9b89f372c1f5bed3a5963f1abeeccb23be2c60a3cc4c"
+        "sha256": "9d65fc624e894f23f1e029309dca0130e68a582bf70a172bfd09804fc53a6153"
       },
       "status": "unknown",
       "reasonCode": "selection-not-robust",
-      "reason": "ambiguous hand components left=10 right=10",
+      "reason": "ambiguous hand components left=11 right=10",
       "details": {},
       "fingerprints": {
         "skeletonFamilySha256": "f93da7e4bab21fe5ad38392750d4b29e93c1c137a98e37a6852e723be53a4f38",
         "geometrySha256": "38bf8f30ef295b50ed77ce94a7d6492328233381d711edcb5039475b86106009",
-        "weightsSha256": "9401e463c30f28f4e3adb79d1caa55d002169fb74d7150bb499bbe6911231318"
+        "weightsSha256": "1be6b231ee8267e32b932cd115e7e53487168cdf93efc563df1966fc6f653fe8"
       }
     },
     {

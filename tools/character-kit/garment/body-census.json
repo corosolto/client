@@ -2324,10 +2324,10 @@
       "sourceKind": "character",
       "path": "public/models/characters/doidinho-bairro.glb",
       "bytes": 982712,
-      "sourceSha256": "c92686566aeef715f5bc9b89f372c1f5bed3a5963f1abeeccb23be2c60a3cc4c",
+      "sourceSha256": "9d65fc624e894f23f1e029309dca0130e68a582bf70a172bfd09804fc53a6153",
       "structureSha256": "aa0b4ae0c501caff6de765bd7c3aa417abd509475f8cbd2cd22601cc4bff1276",
       "familyId": "rig-aa0b4ae0c501",
-      "profileId": "character:doidinho-bairro@c92686566aee",
+      "profileId": "character:doidinho-bairro@9d65fc624e89",
       "skinCount": 1,
       "jointCount": 28,
       "jointNames": [
@@ -2401,7 +2401,7 @@
         "status": "pass",
         "bindFingerprintSha256": "f93da7e4bab21fe5ad38392750d4b29e93c1c137a98e37a6852e723be53a4f38",
         "geometryFingerprintSha256": "38bf8f30ef295b50ed77ce94a7d6492328233381d711edcb5039475b86106009",
-        "weightsFingerprintSha256": "9401e463c30f28f4e3adb79d1caa55d002169fb74d7150bb499bbe6911231318"
+        "weightsFingerprintSha256": "1be6b231ee8267e32b932cd115e7e53487168cdf93efc563df1966fc6f653fe8"
       },
       "structuralStatus": "candidate",
       "issues": [],

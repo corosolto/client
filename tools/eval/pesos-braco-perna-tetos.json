@@ -18,6 +18,10 @@
       "vazados": 91,
       "bracos": 1904
     },
+    "skin:bolsonaro-mandrake": {
+      "vazados": 17,
+      "bracos": 2628
+    },
     "skin:lula-na-regua": {
       "vazados": 23,
       "bracos": 1835
@@ -101,29 +105,7 @@
         "walkfire": 1.25
       },
       "falhasPose": 12
-    },
-    "skin:bolsonaro-mandrake": {
-      "antes": 17,
-      "rasgoCm": {
-        "arms-up-90": 1,
-        "arms-forward-60": 1,
-        "step-left": 1,
-        "step-right": 1,
-        "head-turn-60": 1.06,
-        "idle": 1.15,
-        "walk": 1.09,
-        "run": 1.44,
-        "shoot": 1.41,
-        "death": 1.4,
-        "crouch": 1.42,
-        "crouchwalk": 1.34,
-        "jump": 1.44,
-        "idle1h": 1.08,
-        "walk1h": 1.09,
-        "walkfire": 1.46
-      },
-      "falhasPose": 0
     }
   },
-  "notaReparados": "Reparados: `antes` = vértices vazados na origem. `rasgoCm` = rasgo da ORIGEM por pose (maior distância em cm entre vértices de peças diferentes coladas a ≤ 1 cm no bind; tools/personagens/pose-skin.mjs) — o repeso não pode rasgar mais em pose nenhuma (o teto só baixa). `falhasPose` = falhas do pose test do repeso enviado, congeladas (origem: mandrake 122, cyborg 168, drip 109). Residual do lula-cyborg: v898/v903 (RightShoulder 0,59 + LeftShoulder 0,16 + Hips 0,13, peça colada pelo R11) esticam 3,69× > 3,5 nos clipes; sem colar o rasgo piora a origem em 6 poses (crouch 17,7 cm), colar=0,005 em 3. bolsonaro-mandrake (roster): teto de rasgo = origem, exceto head-turn-60 (1,02 → 1,06 cm) e walk (1,06 → 1,09 cm), congelados no enviado: +0,4 mm residual; com colar=0,01 o rasgo volta à origem mas o pose test vai de 0 a 89 falhas (origem 97)."
+  "notaReparados": "Reparados: `antes` = vértices vazados na origem. `rasgoCm` = rasgo da ORIGEM por pose (maior distância em cm entre vértices de peças diferentes coladas a ≤ 1 cm no bind; tools/personagens/pose-skin.mjs) — o repeso não pode rasgar mais em pose nenhuma (o teto só baixa). `falhasPose` = falhas do pose test do repeso enviado, congeladas (origem: mandrake 122, cyborg 168, drip 109). Residual do lula-cyborg: v898/v903 (RightShoulder 0,59 + LeftShoulder 0,16 + Hips 0,13, peça colada pelo R11) esticam 3,69× > 3,5 nos clipes; sem colar o rasgo piora a origem em 6 poses (crouch 17,7 cm), colar=0,005 em 3."
 }
