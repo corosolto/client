@@ -28,7 +28,7 @@ if (auto) {
     const r = spawnSync(process.execPath, [script, ...common, `--mutante=${m}`], { encoding: 'utf8', maxBuffer: 32768 });
     let result; try { result = JSON.parse(r.stdout); } catch { console.error(`mutante ${m}: resposta inválida`); process.exit(78); }
     if (r.error || r.status !== 0 || result.status !== 'RED' || !(result.failedCases > 0)) {
-      console.error(`mutante ${m} sobreviveu: exit=${r.status}, status=${result.status}`); process.exit(1);
+      console.error(`mutante ${m} sobreviveu: exit=${r.status}, status=${result.status}`); process.exit(3);
     }
     console.log(`✓ ${m}: ${result.failedCases} caso(s) RED`);
   }

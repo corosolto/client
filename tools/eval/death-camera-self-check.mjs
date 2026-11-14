@@ -84,8 +84,8 @@ if (MUT) {
     varRun = spawnSync(process.execPath, [SELF, `--game-module=${tmp}`], { encoding: 'utf8' });
   } finally { rmSync(tmp, { force: true }); }
   if (varRun.status === 2 || varRun.status === 78) { console.error(`INFRA DC2 VARIANTE exit=${varRun.status}`); process.exit(78); }
-  if (varRun.status === 0) { console.error(`MUTANTE ${MUT} SOBREVIVEU: nenhuma cláusula vermelha`); process.exit(1); }
-  // RED semântico só existe com exit 1; qualquer outro status é infra, nunca detecção.
+  if (varRun.status === 0) { console.error(`MUTANTE ${MUT} SOBREVIVEU: nenhuma cláusula vermelha`); process.exit(3); }
+  // RED semântico só existe com exit 1; sobrevivente cego sai 3; qualquer outro status é infra.
   if (varRun.status !== 1) { console.error(`INFRA DC2 VARIANTE-STATUS exit=${varRun.status}`); process.exit(78); }
   const obtidas = parseFalhas(varRun.stdout || '');
   const esperadas = MUTANTES[MUT].falhas;

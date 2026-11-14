@@ -58,11 +58,11 @@ não é escondido por recuperação posterior: é FALHA.
 **Estados e saídas.** CLI estrita: só `--game-module=<caminho>` e `--mutante=<id>`;
 vazio, desconhecido, duplicado, posicional ou forma com espaço → usage + exit 2.
 Módulo ausente/sem `Game`/exceção de boot → `INFRA DC2` + exit 78. RED semântico
-somente com exit 1. Não existe tolerância `KNOWN_RED`: com `--mutante`, o nominal
-roda primeiro pelo MESMO CLI em subprocesso e tem que estar GREEN (exit 0); erro,
-sinal, nominal-RED ou **qualquer status de variante que não seja 0/1/2/78** →
-`INFRA DC2` exit 78 (R4, P2-3: antes, status inesperado com os 4 IDs esperados no
-stdout era aceito como DETECTADO; agora exige `status===1` para RED semântico).
+somente com exit 1; mutante que deixa todas as cláusulas verdes prova uma régua cega
+e sai3. Não existe tolerância `KNOWN_RED`: com `--mutante`, o nominal roda primeiro
+pelo MESMO CLI em subprocesso e tem que estar GREEN (exit 0); erro, sinal, nominal-RED
+ou qualquer status de variante fora de 0/1/2/3/78 → `INFRA DC2` exit 78. A detecção
+continua exigindo `status===1` e o conjunto exato de cláusulas RED.
 
 **Mutantes reais (R3/R4).** Cópia temporária do módulo em
 `public/js/.dc2-mutante-<pid>.js` (mesmo diretório: imports relativos), executada

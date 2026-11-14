@@ -70,8 +70,8 @@ let g;
 try {
   g = bootGame('arena_json', { textures, ctf: true, bots: 4, seed: 12345 });
 } catch (e) {
-  console.log(`BOOT VERMELHA · B1 bootGame lançou: ${e.message}`);
-  process.exit(1);
+  console.log(`INFRA78 · B1 bootGame lançou antes da medição: ${e.message}`);
+  process.exit(78);
 }
 
 // B1 contrato de world
