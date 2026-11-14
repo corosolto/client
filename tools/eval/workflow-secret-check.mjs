@@ -149,6 +149,11 @@ function falhasMetadata(texto) {
       return;
     }
     if (comandos.length === 1) {
+      const overrides = [...normalizado.matchAll(/(?:^|[;\n]\s*)(?:export\s+)?GH_TOKEN\s*=/g)];
+      if (Object.hasOwn(env, 'GH_TOKEN') || overrides.length !== 1
+          || /\bgh api\b|\bgh workflow run\b|\bgh pr (?:edit|comment|review|merge)\b/.test(normalizado)) {
+        locais.push(`job ${job} mistura escrita ou override extra no passo de leitura`);
+      }
       leituras.push({ job, run: normalizado });
       return;
     }
@@ -181,6 +186,7 @@ function falhasMetadata(texto) {
     'metadata-dupla': texto.replace(' > /tmp/pr.json', ' > /tmp/pr.json; gh pr view "$PR_NUMBER" --json title > /tmp/pr.json'),
     'escrita-com-token-do-repo': texto.replace('run: python3 scripts/ci/ensure_labels.py', 'run: GH_TOKEN="${{ github.token }}" python3 scripts/ci/ensure_labels.py'),
     'escrita-com-env-do-repo': texto.replace('      - name: Ensure labels exist\n', '      - name: Ensure labels exist\n        env:\n          GH_TOKEN: ${{ github.token }}\n'),
+    'leitura-com-escrita-do-repo': texto.replace(' > /tmp/pr.json', ' > /tmp/pr.json; GH_TOKEN="${{ github.token }}" gh api -X POST repos/x/issues/1/labels -f labels[]=x'),
   };
   for (const [nome, mutado] of Object.entries(mutantes)) {
     if (!falhasMetadata(mutado).length) falhas.push(`WSEC3 mutante ${nome} não foi detectado`);
@@ -189,7 +195,7 @@ function falhasMetadata(texto) {
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m WSEC1 nenhum portão reprova PR de fork por secret que aquele gatilho não pode ter (${arquivos.length} workflows)`);
-if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m WSEC3 metadata completa usa github.token com checks/statuses read; escritas preservam o PAT; 7/7 mutantes detectados');
+if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m WSEC3 metadata completa usa github.token com checks/statuses read; escritas preservam o PAT; 8/8 mutantes detectados');
 if (MUT && !falhas.length) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);
   falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso (MC1)
