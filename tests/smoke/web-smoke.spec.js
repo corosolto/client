@@ -166,7 +166,7 @@ test('queda do nó mostra estado de reconexão e permite entrar de novo', async 
     if (host !== 'fixture.invalid') return rota.abort();
     return rota.fulfill({ json: { regiao: 'url', players: 1, rooms: 1, salaConvite: true, soloVerified: true } });
   });
-  await page.route('http://fixture.invalid/rooms', (rota) => rota.fulfill({ json: { rooms: [{
+  await page.route('https://fixture.invalid/rooms', (rota) => rota.fulfill({ json: { rooms: [{
     id: 'smoke', name: 'SALA SMOKE', map: 'praca_poderes', mapId: 'praca_poderes', mode: 'rounds',
     oficial: true, private: false, players: 1, max: 10, livre: { E: 4, B: 5 }, convite: 'BR-SMOKE',
   }] } }));
@@ -205,7 +205,7 @@ test('queda do nó mostra estado de reconexão e permite entrar de novo', async 
     window.__mpSmokeForceFail = false;
   }, MUTANTE === 'sem-aviso-reconexao');
 
-  await page.goto(`${base}/?debug=1&nav=1&home=legacy&ui=legacy&mp=fixture.invalid`);
+  await page.goto(`${base}/?debug=1&nav=1&home=legacy&ui=legacy&mp=${encodeURIComponent('wss://fixture.invalid')}`);
   await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
   await page.keyboard.press('Enter');
   await expect(page.locator('#boot-splash')).toHaveCount(0);
