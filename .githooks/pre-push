@@ -42,7 +42,8 @@ if [ "${CSBRASIL_PREPUSH_LOCKED:-0}" != 1 ]; then
   legado_ativo=0
   if [ -d "$legado" ]; then
     dono_legado=$(cat "$legado/pid" 2>/dev/null)
-    criado_legado=$(stat -f %m "$legado" 2>/dev/null || stat -c %Y "$legado" 2>/dev/null)
+    criado_legado=$(stat -f %m "$legado" 2>/dev/null || true)
+    [[ "$criado_legado" =~ ^[0-9]+$ ]] || criado_legado=$(stat -c %Y "$legado" 2>/dev/null || true)
     idade_dono=$(idade_processo "$dono_legado" 2>/dev/null || true)
     if [[ "$dono_legado" =~ ^[0-9]+$ && "$criado_legado" =~ ^[0-9]+$ && "$idade_dono" =~ ^[0-9]+$ ]] \
         && kill -0 "$dono_legado" 2>/dev/null \
