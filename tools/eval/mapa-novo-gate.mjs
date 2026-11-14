@@ -490,7 +490,7 @@ function jogabilidade() {
   }
   if (MUT === 'corpo-dentro') {
     const alvo = Object.keys(por)[0];
-    if (!alvo) throw new Error('MUTANTE NAO APLICOU: map_check.json sem mapas');
+    if (!alvo) { console.error('MUTANTE NAO APLICOU: map_check.json sem mapas'); process.exit(78); }
     por[alvo] = { ...por[alvo], dentro: 3, piorPenetracao: 1.384 };
   }
   return { por };
@@ -519,7 +519,7 @@ function cobertura(idsReais) {
   if (MUT === 'registro-fora-de-forma') {
     const antes = src;
     src = src.replace(/^ {2}(?=[a-z][a-z0-9_]*\s*:\s*\{)/gm, '    ');
-    if (src === antes) throw new Error('MUTANTE NAO APLICOU: registro-fora-de-forma não reindentou maps.js');
+    if (src === antes) { console.error('MUTANTE NAO APLICOU: registro-fora-de-forma não reindentou maps.js'); process.exit(78); }
   }
   const bloco = src.slice(src.indexOf('export const MAPS'), src.indexOf('\n};', src.indexOf('export const MAPS')));
   const parseados = [...bloco.matchAll(/^\s{2}([a-z][a-z0-9_]*)\s*:\s*\{/gm)].map((m) => m[1]);
@@ -540,7 +540,7 @@ function cobertura(idsReais) {
     if (MUT === 'bateria-fixa' && nome === 'gl-shots.mjs') {
       const antes = s;
       s = s.replace(/public\/js\/maps\.js/g, 'public/js/<registro-removido-pelo-mutante>');
-      if (s === antes) throw new Error('MUTANTE NAO APLICOU: bateria-fixa não achou a leitura do registro no gl-shots.mjs');
+      if (s === antes) { console.error('MUTANTE NAO APLICOU: bateria-fixa não achou a leitura do registro no gl-shots.mjs'); process.exit(78); }
     }
     const derivada = /public\/js\/maps\.js/.test(s) || /from '\.\/harness\.mjs'/.test(s) && /\bMAPS\b/.test(s);
     const citados = idsReais.filter((id) => new RegExp(`['"\`]?\\b${id}\\b`).test(s));
@@ -577,7 +577,7 @@ for (const id of ALVOS) {
 /* MUTANTE que mexe no mundo tem que ter APLICADO em algum mapa. */
 if (['grade-perfeita', 'teto-baixo', 'tudo-chapado'].includes(MUT)) {
   const tot = linhas.reduce((a, l) => a + (l.tocadosMut || 0), 0);
-  if (!tot) { console.error(`✗ MUTANTE NAO APLICOU: ${MUT} não tocou em nada.`); process.exit(3); }
+  if (!tot) { console.error(`✗ MUTANTE NAO APLICOU: ${MUT} não tocou em nada.`); process.exit(78); }
 }
 
 /* --------------------------- as cláusulas --------------------------- */

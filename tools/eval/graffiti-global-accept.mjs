@@ -50,5 +50,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const dir = path.resolve(args[0].slice(7));
     const resultado = avaliarGrafiteGlobal(MAPAS.map(id => JSON.parse(readFileSync(path.join(dir, id + '.json'), 'utf8'))));
     console.log(JSON.stringify(resultado)); process.exitCode = resultado.verde ? 0 : 1;
-  } catch (e) { console.error('INFRA: ' + e.message); process.exitCode = 3; }
+  } catch (e) { console.error('INFRA: ' + e.message); process.exitCode = 78; }
 }

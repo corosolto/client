@@ -20,15 +20,15 @@ if (new Set(args).size !== args.length || mutationArgs.length > 1 || (auto && mu
 if (auto) {
   const script = fileURLToPath(import.meta.url), common = proposal ? ['--proposta-sem-yaw'] : [];
   const nominal = spawnSync(process.execPath, [script, ...common], { encoding: 'utf8', maxBuffer: 32768 });
-  let clean; try { clean = JSON.parse(nominal.stdout); } catch { console.error('nominal sem resposta válida'); process.exit(3); }
+  let clean; try { clean = JSON.parse(nominal.stdout); } catch { console.error('nominal sem resposta válida'); process.exit(78); }
   if (nominal.status !== 0 || clean.status !== 'GREEN' || clean.failedCases !== 0 || !(clean.cases > 0)) {
     console.error('autoteste exige nominal GREEN antes dos mutantes'); process.exit(1);
   }
   for (const m of MUTANTS) {
     const r = spawnSync(process.execPath, [script, ...common, `--mutante=${m}`], { encoding: 'utf8', maxBuffer: 32768 });
-    let result; try { result = JSON.parse(r.stdout); } catch { console.error(`mutante ${m}: resposta inválida`); process.exit(3); }
+    let result; try { result = JSON.parse(r.stdout); } catch { console.error(`mutante ${m}: resposta inválida`); process.exit(78); }
     if (r.error || r.status !== 0 || result.status !== 'RED' || !(result.failedCases > 0)) {
-      console.error(`mutante ${m} sobreviveu: exit=${r.status}, status=${result.status}`); process.exit(1);
+      console.error(`mutante ${m} sobreviveu: exit=${r.status}, status=${result.status}`); process.exit(3);
     }
     console.log(`✓ ${m}: ${result.failedCases} caso(s) RED`);
   }
@@ -36,8 +36,8 @@ if (auto) {
   const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'head-pose-infra-'));
   let infra; try { infra = spawnSync(process.execPath, [script], { cwd: empty, encoding: 'utf8' }); }
   finally { fs.rmSync(empty, { recursive: true, force: true }); }
-  if (bad.status !== 2 || infra.status !== 3) { console.error('CLI/infra não fecharam: ' + bad.status + '/' + infra.status); process.exit(1); }
-  console.log('✓ CLI desconhecida exit2; produto ausente exit3'); process.exit(0);
+  if (bad.status !== 2 || infra.status !== 78) { console.error('CLI/infra não fecharam: ' + bad.status + '/' + infra.status); process.exit(1); }
+  console.log('✓ CLI desconhecida exit2; produto ausente exit78'); process.exit(0);
 }
 const temps = [];
 process.on('exit', () => { for (const f of temps) fs.rmSync(f, { recursive: true, force: true }); });
@@ -256,4 +256,4 @@ try {
       ({name,effect,improvement,preError,preImprovement,localEffect,recoveryError})),
     failedCases:failures.length,failures:failures.slice(0,3)},null,2));
   process.exitCode=mutant?(failures.length?0:1):(failures.length?1:0);
-}catch(e){console.error(`head-pose infra: ${e.stack}`);process.exitCode=3;}
+}catch(e){console.error(`head-pose infra: ${e.stack}`);process.exitCode=78;}

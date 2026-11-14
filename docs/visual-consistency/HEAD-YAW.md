@@ -52,10 +52,10 @@ Nominal RED sai1. `--autoteste` primeiro exige nominal GREEN e só então prova 
 os seis mutantes falham: `yaw80` (delta removido antes do mixer),
 `yaw-acumulativo`, `proxy-antes-pose`, `sem-pitch`, `sem-emote` e `pitch-fora-guarda`. O proxy antecipado
 produz witness com erro e rotação do Neck/Head no mesmo frame. Cada mutante morto
-imprime RED com exit0; sobrevivente sai1. CLI inválida, inclusive mutante vazio ou
-desconhecido, sai2. Falta de fonte/clipe, erro de import ou adaptação temporária
-ambígua sai3; infra não conta como mutante detectado. O autoteste também exercita
-argumento desconhecido e execução sem produto num diretório temporário vazio.
+imprime RED com exit0; sobrevivente prova régua cega e sai3. CLI inválida, inclusive
+mutante vazio ou desconhecido, sai2. Falta de fonte/clipe, erro de import ou adaptação
+temporária ambígua sai78; infra não conta como mutante detectado. O autoteste também
+exercita argumento desconhecido e execução sem produto num diretório temporário vazio.
 
 ## Checkpoint histórico preparado antes da retirada do yaw
 

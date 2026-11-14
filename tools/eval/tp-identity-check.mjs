@@ -55,7 +55,7 @@ async function worker(fixture, mutant) {
   const disposed = new Set();
   let releaseGlove = () => {};
   const check = (id, ok, detail) => out.rows.push({ id, ok: Boolean(ok), detail });
-  const deadline = setTimeout(() => { console.error('TP fixture deadline'); process.exit(3); }, 45000);
+  const deadline = setTimeout(() => { console.error('TP fixture deadline'); process.exit(78); }, 45000);
   const errorOriginal = console.error, unexpected = [];
   try {
     out.sources = sources();

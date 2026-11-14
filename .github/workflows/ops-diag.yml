@@ -13,7 +13,7 @@
 # SwiftShader e o relatório marca — a régua fps-baixo só vale com GPU.
 #
 # EM VERMELHO (saída 1: CRÍTICO ou ALTO): abre UMA issue `ops-diag` com o relatório, ou
-# comenta na que já está aberta. Verde (0) fecha a issue aberta. Inconclusivo (3: rede
+# comenta na que já está aberta. Verde (0) fecha a issue aberta. Inconclusivo (78: rede
 # do runner) fica só no log — não é verde nem vermelho.
 name: ops-diag
 on:
@@ -86,5 +86,5 @@ jobs:
           [ -z "$n" ] || gh issue close "$n" --comment "Rodada ${{ github.run_id }} voltou a verde: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: inconclusivo (rede do runner) fica no log
-        if: steps.diag.outputs.codigo == '3'
+        if: steps.diag.outputs.codigo == '78'
         run: echo "::warning::ops-diag inconclusivo — alvo inalcançável do runner ou régua que não terminou; ver o artifact"

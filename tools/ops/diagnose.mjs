@@ -35,7 +35,7 @@
           --out=<dir> (padrão artifacts/ops/<data>) --sem-coerencia
           --aceitar-sem-trafego --gpu|--sem-gpu (padrão: GPU no macOS com Chrome) --sem-arquivo
 
-   SAÍDA: 0 tecnicamente verde · 1 vermelho · 3 inconclusivo (alvo inalcançável)
+   SAÍDA: 0 tecnicamente verde · 1 vermelho · 78 inconclusivo (não mediu)
    A prova de que morde: `node tools/ops/selftest.mjs` (mutantes por sintoma).
    ============================================================================ */
 import { mkdirSync, writeFileSync } from 'node:fs';

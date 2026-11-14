@@ -29,7 +29,7 @@ const CASOS = [
   ['mst', 'ak'], ['coach', 'scar'], ['doutora', 'm4'], ['esquerdomacho', 'pistol'],
   ['sertanejo', 'revolver38'], ['gotinha', 'mp5'], ['dollynho', 'p90'], ['canarinho', 'deagle'],
 ];
-const infra = (m) => { console.error(`infra: ${m}`); process.exit(3); };
+const infra = (m) => { console.error(`infra: ${m}`); process.exit(78); };
 if (MUT) {
   const nominal = spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--json'],
     { encoding: 'utf8', timeout: 120000, maxBuffer: 4 * 1024 * 1024 });
@@ -78,7 +78,7 @@ const workDir = fs.mkdtempSync(path.join(tmpdir(), 'preview-grip-phase-'));
 const depDir = path.join(workDir, 'deps');
 fs.mkdirSync(depDir);
 process.on('exit', () => fs.rmSync(workDir, { recursive: true, force: true }));
-for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => process.exit(3));
+for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => process.exit(78));
 const depCache = new Map();
 function depURL(rel, fromDir) {
   const abs = path.resolve(fromDir, rel);

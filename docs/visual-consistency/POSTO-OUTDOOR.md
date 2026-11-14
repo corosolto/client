@@ -49,7 +49,7 @@ com nominal GREEN, cada um na cláusula alvo (demais verdes): `sem-apoio` (SUP2+
 `perna-rgb` — `material.visible=false` numa perna (SUP2), `papel-fora` — `position.z+=100`
 (SUP4), `papel-fino` — `scale.x=0.1` (SUP5). São as 4 contraprovas do crítico + as originais.
 
-CLI estrita validada antes do boot (arg inválida → exit 2); infra quebra → exit 3, sem veredito.
+CLI estrita validada antes do boot (arg inválida → exit 2); infra quebra → exit 78, sem veredito.
 
 ## Verificação executada
 
@@ -75,4 +75,4 @@ Aprovação **visual** não foi dada por Node: Root/crítico repetem com foto.
 
 ## Aceitação causal no CI
 
-O wrapper exige nominal6/6 e cada mutante com conjunto exato de cláusulas reprovadas, além do status1. Mutante sem cláusula acesa sai4 (sonda cega), nunca1 como uma reprovação medida. O wrapper recusa4, infra3, CLI2, saída incompleta e status1 com seis PASSA. A visual permanece o recorte das duas fotos reais; não equivale à aprovação de release.
+O wrapper exige nominal6/6 e cada mutante com conjunto exato de cláusulas reprovadas, além do status1. Mutante sem cláusula acesa sai4 (sonda cega), nunca1 como uma reprovação medida. O wrapper recusa4, infra78, CLI2, saída incompleta e status1 com seis PASSA. A visual permanece o recorte das duas fotos reais; não equivale à aprovação de release.

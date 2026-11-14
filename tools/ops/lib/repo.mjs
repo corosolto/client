@@ -28,7 +28,7 @@ export function versaoDoVersionJs(raiz = RAIZ_PADRAO) {
 export function rankingLigadoDe(src) {
   const literal = /export\s+const\s+RANKING_ON(?:\s*:\s*boolean)?\s*=\s*(true|false)\b/.exec(src);
   if (literal) return literal[1] === 'true';
-  if (/export\s+const\s+RANKING_ON\s*=\s*PUBLIC_ENV\.RANKING_ON\s*===\s*['"]true['"]/.test(src)) return null;
+  if (/export\s+const\s+RANKING_ON(?:\s*:\s*boolean)?\s*=\s*(?:PUBLIC_ENV|import\.meta\.env)\.RANKING_ON\s*===\s*['"]true['"]/.test(src)) return null;
   throw new Error('src/lib/site.ts sem `RANKING_ON` literal ou variável pública legível');
 }
 

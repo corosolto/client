@@ -4752,7 +4752,7 @@ export class Game {
       this._abortarArmaNaMorte();   // recarga e arremesso morrem com o jogador (GRM3/GRM4)
       this._unequipNade();
       this._resetKillSequence();
-      this.el.respawn.classList.remove('hidden');
+      this.el.respawn?.classList.remove('hidden');
       this.sfx.death(ent.def?.id);
     } else {
       ent.target = null; ent.deadT = 0;
@@ -7401,7 +7401,8 @@ export class Game {
     if (!p.alive) {
       const left = p.respawnAt - this.time;
       // VIP jogador da Operação Flávio não renasce (respawnAt = Infinity): sem "Infinity" na tela.
-      this.el.respawnCount.textContent = Number.isFinite(left) ? Math.max(0, left).toFixed(1) : '—';
+      const respawnCount = this.el.respawnCount || (this.el.respawnCount = document.getElementById('respawn-count'));
+      if (respawnCount) respawnCount.textContent = Number.isFinite(left) ? Math.max(0, left).toFixed(1) : '—';
       this._deathFeedback(dt);
       this._tpDeath(dt);   // corpo TP cai (item: "boneco não caía morto")
       /* Online o _respawnPlayer é no-op (revive vem do snapshot): seguir morto mantém a
@@ -8175,7 +8176,7 @@ export class Game {
     }
     if (this._compra && ![p.primary, p.secondary, 'knife'].includes(p.weapon)) this._switchWeapon(p.secondary || 'pistol');
     this.camera.rotation.z = 0;
-    this.el.respawn.classList.add('hidden');
+    this.el.respawn?.classList.add('hidden');
     this.sfx.respawn();
     this._checkArenaWin();
   }
@@ -10175,7 +10176,7 @@ export class Game {
     this.el.emoteWheel?.classList.add('hidden'); this.emoteOpen = false;
     this.el.mkBanner.classList.remove('show');
     this.el.scope.classList.remove('on');
-    this.el.respawn.classList.add('hidden');
+    this.el.respawn?.classList.add('hidden');
     this.el.reloadNote.classList.add('hidden');
     this.el.banner.classList.add('hidden');
     this.el.lockHint.classList.add('hidden');

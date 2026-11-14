@@ -31,7 +31,7 @@ Cada mutante executa primeiro o nominal completo e depois a matriz mutada.
 As alterações e os conjuntos exatos esperados estão em
 `tools/eval/fixtures/tp-glove-origin-mutations.mjs`. O pai exige recibo único com
 nonce, fonte, fábrica, aplicação, IDs e booleanos válidos, além de coerência entre
-status e exit. Erro de CLI sai2; infraestrutura sai3 sem crédito; falha semântica
+status e exit. Erro de CLI sai2; infraestrutura sai78 sem crédito; falha semântica
 sai1; nominal completo verde ou mutação detectada sai0. A cópia mutada é privada
 e removida ao terminar. `--json=/caminho/absoluto` salva o recibo integral.
 

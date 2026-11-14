@@ -82,7 +82,7 @@ real de MP, GPU, materiais/pixels ou custo por frame.
 
 Nominal verde vem antes de cada mutante. A cópia mutada vive em diretório único
 gitignored, removido no finally; produto no disco não é alterado. Falha de âncora,
-asset, processo, recibo ou fonte divergente é infra3, sem crédito de detecção.
+asset, processo, recibo ou fonte divergente é infra78, sem crédito de detecção.
 glove-first-part, glove-partial-bind, glove-request-join e glove-material-leak
 usam glbchars real em cópia única: preload e Game importam o mesmo URL/cache
 mutado. Game, main e glbchars são vinculados antes e depois.

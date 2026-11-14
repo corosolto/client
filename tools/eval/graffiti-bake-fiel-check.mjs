@@ -37,7 +37,7 @@ if (EGO_TASK_SPACE !== null && (!Number.isSafeInteger(EGO_TASK_SPACE) || EGO_TAS
 
 const GERADOR = join(ROOT, 'tools', 'gen-graffiti-layout.mjs');
 const MSG_CANCELAMENTO = new RegExp(`${MAPA}: \\d+ entrada\\(s\\) faltando na cena; bake cancelado, layout anterior preservado:`);
-// Diagnóstico fatal no filho é infra (exit 3), nunca evidência semântica, mesmo com exit 0 e checkpoint presente.
+// Diagnóstico fatal no filho é infra (exit 78), nunca evidência semântica, mesmo com exit 0 e checkpoint presente.
 const FATAL = /SyntaxError|TypeError|ReferenceError|ERR_MODULE_NOT_FOUND|ERR_UNKNOWN_FILE_EXTENSION|ENOBUFS|ETIMEDOUT|ECONNREFUSED|setup/i;
 const HEX16 = /^[0-9a-f]{16}$/, HEX64 = /^[0-9a-f]{64}$/;
 // Prazo absoluto por assa: alocação <=10s + trabalho 150s + stop <=2.8s + cleanup <=10s < helper 180s.
@@ -277,7 +277,7 @@ try {
 
 if (infraErro) {
   console.log(JSON.stringify({ mutant: MUT || null, cases: MUT ? 1 : 2, failed: [], error: infraErro }));
-  process.exitCode = 3;
+  process.exitCode = 78;
 } else {
   for (const f of falhas) console.log(`  ✗ ${f.clause}: ${f.message}`);
   if (MUT && !falhas.length) console.log('  ✗ mutante engole-falta sobreviveu (G2 ainda cancela) — helper semântico deve recusar');
