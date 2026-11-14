@@ -15,16 +15,21 @@
    O QUE ESTA RÉGUA COBRA (partida viva; AN1–AN3 tentam até 8 bots, porque o
    primeiro vivo pode ter rig menos alcançável, e a cláusula precisa é do
    CONTRATO, não de um rig sorteado):
-     AN1  na janela de recarga a mão esquerda vai ao PENTE (CCD no mesmo
-          solver da mão de apoio) e VOLTA quando a janela fecha;
-     AN2  o tronco mergulha na recarga: a CABEÇA desce e volta (métrica na
-          cabeça — offsets entre vértebras são milimétricos);
+     AN1  FALLBACK PROCEDURAL (sem pack extras): na janela de recarga a mão
+          esquerda vai ao PENTE (CCD no mesmo solver da mão de apoio) e VOLTA
+          quando a janela fecha; o corpo medido não toca clipe nenhum;
+     AN2  FALLBACK PROCEDURAL: o tronco mergulha na recarga: a CABEÇA desce e
+          volta (métrica na cabeça — offsets entre vértebras são milimétricos);
      AN3  lateral inclina o corpo (cabeça desloca no eixo da direita), some
           sem lateral, e corpo morto não inclina;
      AN4  a fiação existe no jogo: recarga do jogador em 3ª pessoa E a do bot
           chamam ctrl.reload;
      AN5  o manifesto de animações declara os 8 clipes base para todos e o
-          fallback de opcionais é REGISTRADO (hoje: ue2), não acidente.
+          fallback de opcionais é REGISTRADO (hoje: ue2), não acidente;
+     AN6  FALLBACK PROCEDURAL: levar tiro move a cabeça e ela volta;
+     AN12 PRODUÇÃO (pack carregado): a recarga toca reload_*, reloadK fica 0, a
+          mão esquerda sai ≥ 8 cm, tudo volta ao controle quando a janela fecha;
+     AN13 PRODUÇÃO: levar tiro toca hit_*, a cabeça move ≥ 3 cm e volta.
 
    MUTANTES (reescrevem o arquivo servido; o disco não é tocado):
      --mutante=pega-morta        tira o CCD do pente          -> AN1
@@ -32,6 +37,8 @@
      --mutante=lean-morto        zera o alvo de inclinação    -> AN3
      --mutante=reload-mudo       desliga a fiação dos bots    -> AN4
      --mutante=opcional-fantasma planta char sem clipe base   -> AN5
+     --mutante=reload-sem-clipe  recarga nunca toca o clipe    -> AN12
+     --mutante=hit-sem-clipe     hit nunca toca o clipe        -> AN13
 
    Uso: BASE=http://127.0.0.1:9321 node tools/eval/tp-anim3p-check.mjs
    ============================================================================ */
@@ -44,7 +51,8 @@ const PORTA = process.env.PORTA || '9326';
 const BASE = BASE_EXTERNA || `http://127.0.0.1:${PORTA}`;
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const ESPERADO = { 'pega-morta': ['AN1'], 'torso-mudo': ['AN1', 'AN2'], 'lean-morto': ['AN3'], 'reload-mudo': ['AN4'], 'opcional-fantasma': ['AN5'],
-  'flinch-mudo': ['AN6'], 'agachado-estatua': ['AN7'], 'ar-correndo': ['AN8', 'AN9'], 'quadril-colado': ['AN9'], 'lod-cego': ['AN10'] };
+  'flinch-mudo': ['AN6'], 'agachado-estatua': ['AN7'], 'ar-correndo': ['AN8', 'AN9'], 'quadril-colado': ['AN9'], 'lod-cego': ['AN10'],
+  'reload-sem-clipe': ['AN12'], 'hit-sem-clipe': ['AN13'] };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 if (!MUT) execFileSync(process.execPath, [fileURLToPath(new URL('./tp-reload-paired-check.mjs', import.meta.url)), '--self-test'], { stdio: 'inherit' });
 
@@ -93,6 +101,8 @@ async function abrir() {
   if (MUT === 'agachado-estatua') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('{ this._fireDur = 0.12; this._fireT = 0; return; }', '{ return; }'));
   if (MUT === 'ar-correndo') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('} else if (this._ar && this.actions.jump) {', '} else if (false) {'));
   if (MUT === 'quadril-colado') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('const teto = 0.61;', 'const teto = 0;'));
+  if (MUT === 'reload-sem-clipe') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('this._reloadClip = this._playUpper(', 'this._reloadClip = false && this._playUpper('));
+  if (MUT === 'hit-sem-clipe') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('this._hitClip = this._playUpper(', 'this._hitClip = false && this._playUpper('));
   if (MUT === 'lod-cego') await reescreve(/\/js\/game\.js/, (t) => t.replace('const passo = distCam > 45 ? 0.1 : (distCam > 25 ? 0.05 : 0);', 'const passo = 0;'));
   if (MUT === 'reload-mudo') await reescreve(/\/js\/game\.js/, (t) => t.split('b.mesh?.ctrl?.reload?.(Wb.reload || 2.4); ').join('').split(' b.mesh?.ctrl?.reload?.(Wb.reload || 2.4);').join(''));
   // Diagnóstico de boot somente na falha; limites do teste permanecem os mesmos.
@@ -172,50 +182,101 @@ async function abrir() {
   return { page, fechar: () => ctx.close() };
 }
 
-/* ---- AN1–AN3: até 8 bots; cada cláusula usa um rig que consiga exercê-la ---- */
+/* ---- AN1–AN3: até 8 bots; cada cláusula usa um rig que consiga exercê-la ----
+   Dois caminhos medidos em corpos separados, nunca misturados por flag:
+   · produção (pack extras.glb carregado): AN12 recarga com reload_rifle, AN13 hit_*;
+   · fallback procedural (o MESMO glbchars.js importado como outra instância de módulo,
+     ?sempack=1, cujo pack nunca chega dentro do laço síncrono): AN1, AN2 e AN6.
+     A cláusula exige que esse corpo não tenha tocado clipe nenhum. */
 const { page, fechar } = await abrir();
 const m = await page.evaluate(async () => {
   const g = window.__game;
   const T = await import('/vendor/three.module.js');
   const { buildCharacterModel } = await import('/js/glbchars.js');
+  const S = await import('/js/glbchars.js?sempack=1');
   const V = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
   const cand = (g.bots || []).filter(x => x.mesh?.ctrl?.ikL && x.mesh?.ctrl?.torso?.spines?.length && x.alive).slice(0, 8);
+  if (!cand.length) return { erro: 'sem bot com arma de 2 mãos' };
+  await S.preloadCharacterAssets([...new Set(cand.map(b => b.def.id))], { weapons: [...new Set(cand.map(b => b.weapon))] });
+  const carga = buildCharacterModel(cand[0].def, { weaponId: cand[0].weapon }).ctrl;
+  carga._requestExtras();
+  for (let i = 0; i < 300 && !carga.actions.reload_rifle; i++) await new Promise(r => setTimeout(r, 10));
+  if (!carga.actions.reload_rifle) return { erro: 'pack extras.glb não registrou reload_rifle' };
   const medidos = [];
   for (const b of cand) {
     // Corpos reais gêmeos isolam a recarga do tiro/lean anterior do bot vivo.
-    const medido = buildCharacterModel(b.def, { weaponId: b.weapon });
-    const controle = buildCharacterModel(b.def, { weaponId: b.weapon });
-    if (!medido || !controle) throw new Error(`sem par de controle para ${b.def.id}`);
-    for (const corpo of [medido, controle]) {
-      corpo.group.position.copy(b.mesh.group.position);
-      corpo.group.quaternion.copy(b.mesh.group.quaternion);
-      corpo.ctrl.lod = b.mesh.ctrl.lod;
-      corpo.ctrl.aimPitch = b.mesh.ctrl.aimPitch;
-    }
-    const ctrl = medido.ctrl, grupo = medido.group, torso = ctrl.torso;
-    let cabeca = null; grupo.traverse(o => { if (!cabeca && o.isBone && /head/i.test(o.name)) cabeca = o; });
-    const maoEsq = torso.lHand || ctrl.ikL.end;
-    const roda = (n, lat = 0) => { for (let i = 0; i < n; i++) ctrl.update(1 / 60, 0, false, 0, false, lat); };
-    const rodaControle = (n) => { for (let i = 0; i < n; i++) controle.ctrl.update(1 / 60, 0, false, 0, false, 0); };
-    const pos = (osso) => { grupo.updateMatrixWorld(true); return osso.getWorldPosition(V()); };
-    const direita = () => { const y = grupo.rotation.y; return V(Math.cos(y), 0, -Math.sin(y)); };
-    const frente = () => { const y = grupo.rotation.y; return V(-Math.sin(y), 0, -Math.cos(y)); };
-    roda(120); rodaControle(120);
-    const base = { mao: pos(maoEsq), cabeca: pos(cabeca) };
-    ctrl.reload(1.2); roda(36); rodaControle(36);
-    const magAlvo = torso.gun.localToWorld(torso.magLocal.clone());
-    const meio = { mao: pos(maoEsq), cabeca: pos(cabeca), k: ctrl.reloadK };
-    roda(90); rodaControle(90);
-    const fim = { mao: pos(maoEsq), cabeca: pos(cabeca), dur: ctrl._reloadDur };
-    controle.group.updateMatrixWorld(true);
-    const maoControle = (controle.ctrl.torso.lHand || controle.ctrl.ikL.end).getWorldPosition(V());
+    const monta = (build) => {
+      const medido = build(b.def, { weaponId: b.weapon });
+      const controle = build(b.def, { weaponId: b.weapon });
+      if (!medido || !controle) throw new Error(`sem par de controle para ${b.def.id}`);
+      for (const corpo of [medido, controle]) {
+        corpo.group.position.copy(b.mesh.group.position);
+        corpo.group.quaternion.copy(b.mesh.group.quaternion);
+        corpo.ctrl.lod = b.mesh.ctrl.lod;
+        corpo.ctrl.aimPitch = b.mesh.ctrl.aimPitch;
+      }
+      const ctrl = medido.ctrl, grupo = medido.group, torso = ctrl.torso;
+      let cabeca = null; grupo.traverse(o => { if (!cabeca && o.isBone && /head/i.test(o.name)) cabeca = o; });
+      const pos = (osso) => { grupo.updateMatrixWorld(true); return osso.getWorldPosition(V()); };
+      return {
+        medido, controle, ctrl, grupo, torso, cabeca, maoEsq: torso.lHand || ctrl.ikL.end, pos,
+        roda: (n, lat = 0) => { for (let i = 0; i < n; i++) ctrl.update(1 / 60, 0, false, 0, false, lat); },
+        rodaControle: (n) => { for (let i = 0; i < n; i++) controle.ctrl.update(1 / 60, 0, false, 0, false, 0); },
+        maoControle: () => { controle.group.updateMatrixWorld(true); return (controle.ctrl.torso.lHand || controle.ctrl.ikL.end).getWorldPosition(V()); },
+        frente: () => { const y = grupo.rotation.y; return V(-Math.sin(y), 0, -Math.cos(y)); },
+        direita: () => { const y = grupo.rotation.y; return V(Math.cos(y), 0, -Math.sin(y)); },
+      };
+    };
+    // Fallback procedural (sem pack): recarga com CCD ao pente e mergulho; flinch procedural.
+    const P = monta(S.buildCharacterModel);
+    P.roda(120); P.rodaControle(120);
+    const pBase = { mao: P.pos(P.maoEsq), cabeca: P.pos(P.cabeca) };
+    let pClipe = 0; const pConta = () => { if (P.ctrl._upperName || P.ctrl._reloadClip || P.ctrl._hitClip) pClipe++; };
+    P.ctrl.reload(1.2); for (let i = 0; i < 36; i++) { P.roda(1); pConta(); } P.rodaControle(36);
+    const magAlvo = P.torso.gun.localToWorld(P.torso.magLocal.clone());
+    const pMeio = { mao: P.pos(P.maoEsq), cabeca: P.pos(P.cabeca), k: P.ctrl.reloadK };
+    for (let i = 0; i < 90; i++) { P.roda(1); pConta(); } P.rodaControle(90);
+    const pFim = { mao: P.pos(P.maoEsq), cabeca: P.pos(P.cabeca), dur: P.ctrl._reloadDur };
+    const pMaoControle = P.maoControle();
+    P.roda(30);
+    const pAntesFlinch = P.pos(P.cabeca);
+    P.ctrl.flinch({ x: 1, z: 0 }, 1); for (let i = 0; i < 6; i++) { P.roda(1); pConta(); }
+    const an6 = { picoCm: pAntesFlinch.distanceTo(P.pos(P.cabeca)) * 100 };
+    P.roda(45); an6.voltaCm = pAntesFlinch.distanceTo(P.pos(P.cabeca)) * 100; an6.quadrosComClipe = pClipe;
+    const an1 = { foiCm: pBase.mao.distanceTo(pMeio.mao) * 100, aoPenteCm: pMeio.mao.distanceTo(magAlvo) * 100, basePenteCm: pBase.mao.distanceTo(magAlvo) * 100, voltouCm: pFim.mao.distanceTo(pMaoControle) * 100, derivaIdleCm: pMaoControle.distanceTo(pBase.mao) * 100, kMeio: pMeio.k, durFim: pFim.dur, quadrosComClipe: pClipe };
+    const an2 = { quedaCm: (pBase.cabeca.y - pMeio.cabeca.y) * 100, frenteCm: Math.abs((pMeio.cabeca.clone().sub(pBase.cabeca)).dot(P.frente())) * 100, voltaCm: Math.abs((pFim.cabeca.clone().sub(pBase.cabeca)).dot(P.frente())) * 100, quadrosComClipe: pClipe };
+    P.ctrl.mixer.stopAllAction(); P.controle.ctrl.mixer.stopAllAction();
+
+    // Produção perto da câmera (pack carregado, LOD 0: os extras só existem em LOD<2).
+    const R = monta(buildCharacterModel);
+    R.ctrl.lod = 0; R.controle.ctrl.lod = 0;
+    R.roda(120); R.rodaControle(120);
+    const rBase = { mao: R.pos(R.maoEsq), cabeca: R.pos(R.cabeca) };
+    R.ctrl.reload(1.2); R.roda(36); R.rodaControle(36);
+    const rMeio = { mao: R.pos(R.maoEsq), cabeca: R.pos(R.cabeca), clipe: R.ctrl._upperName, reloadClip: R.ctrl._reloadClip, k: R.ctrl.reloadK };
+    R.roda(90); R.rodaControle(90);
+    const rFim = { mao: R.pos(R.maoEsq), cabeca: R.pos(R.cabeca), dur: R.ctrl._reloadDur, clipe: R.ctrl._upperName };
+    const an12 = { clipe: rMeio.clipe, reloadClip: rMeio.reloadClip, kMeio: rMeio.k, maoFoiCm: rBase.mao.distanceTo(rMeio.mao) * 100, cabecaFoiCm: rBase.cabeca.distanceTo(rMeio.cabeca) * 100,
+      maoVoltouCm: rFim.mao.distanceTo(R.maoControle()) * 100, cabecaVoltouCm: Math.abs((rFim.cabeca.clone().sub(rBase.cabeca)).dot(R.frente())) * 100, durFim: rFim.dur, clipeFim: rFim.clipe };
+    R.roda(30);
+    const rAntesFlinch = R.pos(R.cabeca);
+    R.ctrl.flinch({ x: 1, z: 0 }, 1); R.roda(6);
+    const an13 = { clipe: R.ctrl._upperName, hitClip: R.ctrl._hitClip, picoCm: rAntesFlinch.distanceTo(R.pos(R.cabeca)) * 100 };
+    R.roda(45); an13.voltaCm = rAntesFlinch.distanceTo(R.pos(R.cabeca)) * 100; an13.clipeFim = R.ctrl._upperName;
+    R.ctrl.mixer.stopAllAction(); R.controle.ctrl.mixer.stopAllAction();
+
+    // Corpo no LOD do bot vivo: mesma sequência de antes (recarga e tiro sem flag forçada),
+    // agora só como contexto de AN3, AN8, AN9 e AN11.
+    const C = monta(buildCharacterModel);
+    const { ctrl, grupo, torso, cabeca, pos, roda } = C;
+    roda(120);
+    const base = { cabeca: pos(cabeca) };
+    ctrl.reload(1.2); roda(126);
     roda(60, 3.5); const cabecaLean = pos(cabeca); const leanK = ctrl.leanK;
     roda(60, 0); const cabecaVolta = pos(cabeca);
     roda(30);
-    const antesFlinch = pos(cabeca);
     ctrl.flinch({ x: 1, z: 0 }, 1); roda(6);
-    const an6 = { picoCm: antesFlinch.distanceTo(pos(cabeca)) * 100 };
-    roda(45); an6.voltaCm = antesFlinch.distanceTo(pos(cabeca)) * 100;
+    roda(45);
     ctrl.setCrouch(true); roda(12);
     ctrl.setMantle(0.5); roda(1);
     const an11 = { estado: ctrl.curName, tempo: ctrl.actions.jump?.time || 0 };
@@ -248,28 +309,29 @@ const m = await page.evaluate(async () => {
       an9.bounded = ['antes', 'giro', 'retorno'].every((k) => finito(an9[k].yawLag) && finito(an9[k]._yawAtraso));
     } else { an9.lagImediato = NaN; an9.lagDepois = NaN; an9.semHips = true; }
     ctrl.die(); roda(90, 0); const morto0 = pos(cabeca); roda(30, 3.5); const mortoCom = pos(cabeca);
-    const an1 = { foiCm: base.mao.distanceTo(meio.mao) * 100, aoPenteCm: meio.mao.distanceTo(magAlvo) * 100, basePenteCm: base.mao.distanceTo(magAlvo) * 100, voltouCm: fim.mao.distanceTo(maoControle) * 100, derivaIdleCm: maoControle.distanceTo(base.mao) * 100, kMeio: meio.k, durFim: fim.dur };
-    const an2 = { quedaCm: (base.cabeca.y - meio.cabeca.y) * 100, frenteCm: Math.abs((meio.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100, voltaCm: Math.abs((fim.cabeca.clone().sub(base.cabeca)).dot(frente())) * 100 };
-    const an3 = { leanK, deslocCm: Math.abs((cabecaLean.clone().sub(base.cabeca)).dot(direita())) * 100, voltaCm: Math.abs((cabecaVolta.clone().sub(base.cabeca)).dot(direita())) * 100, mortoDeslocCm: Math.abs((mortoCom.clone().sub(morto0)).dot(direita())) * 100 };
-    medidos.push({ charId: ctrl.charId, an1, an2, an3, an6, an8, an9, an11 });
-    ctrl.mixer.stopAllAction(); controle.ctrl.mixer.stopAllAction();
+    const an3 = { leanK, deslocCm: Math.abs((cabecaLean.clone().sub(base.cabeca)).dot(C.direita())) * 100, voltaCm: Math.abs((cabecaVolta.clone().sub(base.cabeca)).dot(C.direita())) * 100, mortoDeslocCm: Math.abs((mortoCom.clone().sub(morto0)).dot(C.direita())) * 100 };
+    medidos.push({ charId: ctrl.charId, an1, an2, an3, an6, an8, an9, an11, an12, an13 });
+    ctrl.mixer.stopAllAction(); C.controle.ctrl.mixer.stopAllAction();
   }
   if (!medidos.length) return { erro: 'sem bot com arma de 2 mãos' };
   const escolhe = (pred) => medidos.find(pred) || medidos[0];
-  const m1 = escolhe((x) => x.an1.foiCm >= 8 && x.an1.aoPenteCm <= x.an1.basePenteCm - 10
+  const m1 = escolhe((x) => x.an1.quadrosComClipe === 0 && x.an1.foiCm >= 8 && x.an1.aoPenteCm <= x.an1.basePenteCm - 10
     && x.an1.voltouCm <= 2 && x.an1.kMeio > 0.9 && x.an1.durFim === 0);
-  const m2 = escolhe((x) => x.an2.frenteCm >= 5 && x.an2.voltaCm <= 1.5);
+  const m2 = escolhe((x) => x.an2.quadrosComClipe === 0 && x.an2.frenteCm >= 5 && x.an2.voltaCm <= 1.5);
   const m3 = escolhe((x) => x.an3.leanK > 0.07 && x.an3.deslocCm >= 4
     && x.an3.voltaCm <= 1.5 && x.an3.mortoDeslocCm <= 0.5);
-  const m6 = escolhe((x) => x.an6.picoCm >= 3 && x.an6.voltaCm <= 1.5);
+  const m6 = escolhe((x) => x.an6.quadrosComClipe === 0 && x.an6.picoCm >= 3 && x.an6.voltaCm <= 1.5);
   const m8 = escolhe((x) => x.an8.noAr === 'jump' && x.an8.noPouso === 'crouch');
   const m9 = escolhe((x) => x.an9.lagImediato >= 0.25 && x.an9.lagDepois <= 0.08);
   const m11 = escolhe((x) => x.an11 && x.an11.estado === 'jump' && x.an11.tempo > 0);
+  const m12 = escolhe((x) => /^reload_(rifle|pistol)$/.test(x.an12.clipe || '') && x.an12.reloadClip && x.an12.kMeio === 0 && x.an12.maoFoiCm >= 8
+    && x.an12.cabecaFoiCm >= 2 && x.an12.maoVoltouCm <= 2 && x.an12.cabecaVoltouCm <= 1.5 && x.an12.durFim === 0 && x.an12.clipeFim === null);
+  const m13 = escolhe((x) => /^hit_/.test(x.an13.clipe || '') && x.an13.hitClip && x.an13.picoCm >= 3 && x.an13.voltaCm <= 1.5 && x.an13.clipeFim === null);
   return {
     charId: m1.charId,
     an1: m1.an1, an2: m2.an2, an3: m3.an3,
     an6: m6.an6, an8: m8.an8, an9: m9.an9,
-    an11: m11.an11,
+    an11: m11.an11, an12: { charId: m12.charId, ...m12.an12 }, an13: { charId: m13.charId, ...m13.an13 },
   };
 });
 // AN7 compara dois controladores reais no mesmo tempo: só A dispara. O delta do
@@ -357,14 +419,18 @@ const r = [];
 const cobra = (id, ok, msg) => r.push({ id, ok: !!ok, msg });
 
 if (m.erro) {
-  cobra('AN1', false, `AN1 · ${m.erro}`);
-  cobra('AN2', false, `AN2 · ${m.erro}`);
-  cobra('AN3', false, `AN3 · ${m.erro}`);
+  for (const id of ['AN1', 'AN2', 'AN3', 'AN12', 'AN13']) cobra(id, false, `${id} · ${m.erro}`);
 } else {
-  cobra('AN1', m.an1.foiCm >= 8 && m.an1.aoPenteCm <= m.an1.basePenteCm - 10 && m.an1.voltouCm <= 2 && m.an1.kMeio > 0.9 && m.an1.durFim === 0,
-    `AN1 · ${m.charId}: mão esquerda foi ${m.an1.foiCm.toFixed(1)} cm, de ${m.an1.basePenteCm.toFixed(1)} cm do pente a ${m.an1.aoPenteCm.toFixed(1)} cm, e voltou a ${m.an1.voltouCm.toFixed(2)} cm do controle sem recarga (idle ${m.an1.derivaIdleCm.toFixed(2)} cm)`);
-  cobra('AN2', m.an2.frenteCm >= 5 && m.an2.voltaCm <= 1.5,
-    `AN2 · o mergulho levou a cabeça ${m.an2.frenteCm.toFixed(1)} cm à frente (e ${m.an2.quedaCm.toFixed(1)} cm abaixo) no pico, e ela voltou a ${m.an2.voltaCm.toFixed(2)} cm da posição original`);
+  cobra('AN1', m.an1.quadrosComClipe === 0 && m.an1.foiCm >= 8 && m.an1.aoPenteCm <= m.an1.basePenteCm - 10 && m.an1.voltouCm <= 2 && m.an1.kMeio > 0.9 && m.an1.durFim === 0,
+    `AN1 · fallback procedural (sem pack) · ${m.charId}: mão esquerda foi ${m.an1.foiCm.toFixed(1)} cm, de ${m.an1.basePenteCm.toFixed(1)} cm do pente a ${m.an1.aoPenteCm.toFixed(1)} cm, e voltou a ${m.an1.voltouCm.toFixed(2)} cm do controle sem recarga (idle ${m.an1.derivaIdleCm.toFixed(2)} cm); ${m.an1.quadrosComClipe} quadro(s) com clipe`);
+  cobra('AN2', m.an2.quadrosComClipe === 0 && m.an2.frenteCm >= 5 && m.an2.voltaCm <= 1.5,
+    `AN2 · fallback procedural (sem pack) · o mergulho levou a cabeça ${m.an2.frenteCm.toFixed(1)} cm à frente (e ${m.an2.quedaCm.toFixed(1)} cm abaixo) no pico, e ela voltou a ${m.an2.voltaCm.toFixed(2)} cm da posição original`);
+  const r12 = m.an12, r13 = m.an13;
+  cobra('AN12', /^reload_(rifle|pistol)$/.test(r12.clipe || '') && r12.reloadClip && r12.kMeio === 0 && r12.maoFoiCm >= 8
+    && r12.cabecaFoiCm >= 2 && r12.maoVoltouCm <= 2 && r12.cabecaVoltouCm <= 1.5 && r12.durFim === 0 && r12.clipeFim === null,
+    `AN12 · produção (pack) · ${r12.charId}: no meio toca ${r12.clipe} (reloadK ${r12.kMeio}), mão esquerda foi ${r12.maoFoiCm.toFixed(1)} cm e cabeça ${r12.cabecaFoiCm.toFixed(1)} cm; no fim ${r12.clipeFim ?? 'sem clipe'}, mão a ${r12.maoVoltouCm.toFixed(2)} cm do controle, cabeça a ${r12.cabecaVoltouCm.toFixed(2)} cm`);
+  cobra('AN13', /^hit_/.test(r13.clipe || '') && r13.hitClip && r13.picoCm >= 3 && r13.voltaCm <= 1.5 && r13.clipeFim === null,
+    `AN13 · produção (pack) · ${r13.charId}: levar tiro tocou ${r13.clipe ?? 'nenhum clipe'}, a cabeça moveu ${r13.picoCm.toFixed(1)} cm e voltou a ${r13.voltaCm.toFixed(2)} cm`);
   cobra('AN3', m.an3.leanK > 0.07 && m.an3.deslocCm >= 4 && m.an3.voltaCm <= 1.5 && m.an3.mortoDeslocCm <= 0.5,
     `AN3 · lateral 3,5 m/s: cabeça deslocou ${m.an3.deslocCm.toFixed(1)} cm (leanK ${m.an3.leanK.toFixed(3)}), voltou a ${m.an3.voltaCm.toFixed(2)} cm sem lateral; morto deslocou ${m.an3.mortoDeslocCm.toFixed(2)} cm`);
 }
@@ -374,8 +440,8 @@ if (an7.infra) {
   process.exit(2);
 }
 if (!m.erro) {
-  cobra('AN6', m.an6.picoCm >= 3 && m.an6.voltaCm <= 1.5,
-    `AN6 · levar tiro moveu a cabeça ${m.an6.picoCm.toFixed(1)} cm no eixo do disparo e ela voltou a ${m.an6.voltaCm.toFixed(2)} cm`);
+  cobra('AN6', m.an6.quadrosComClipe === 0 && m.an6.picoCm >= 3 && m.an6.voltaCm <= 1.5,
+    `AN6 · fallback procedural (sem pack) · levar tiro moveu a cabeça ${m.an6.picoCm.toFixed(1)} cm no eixo do disparo e ela voltou a ${m.an6.voltaCm.toFixed(2)} cm`);
   cobra('AN7', an7.recuoCm >= 0.5 && /crouch/.test(an7.estadoA || '') && /crouch/.test(an7.estadoB || ''),
     `AN7 · ${an7.charId}/${an7.weaponId} t=${an7.tempo.toFixed(3)}: recuo causal ${an7.recuoCm.toFixed(2)} cm; controle ${an7.controleCm.toFixed(2)} cm (A ${an7.estadoA}, B ${an7.estadoB})`);
   cobra('AN8', m.an8.noAr === 'jump' && m.an8.noPouso === 'crouch',
