@@ -31,8 +31,9 @@
    Mutantes (--mutante=<nome>, têm que reprovar na cláusula certa):
      transplante-cru  AJUSTE_JUNTAS=0 no rig do sintético              → RM1
      ibm-velha        o rig-from-donor move a junta e esquece a IBM    → RM3
-    mao-deslocada    mst real com a junta LeftHand 22 cm fora da mão  → RM4
-    uma-mao-cega     igual ao anterior, sem arestas mensuráveis à direita → RM4 */
+    mao-deslocada     mst real com a junta LeftHand 22 cm fora da mão  → RM4
+    uma-mao-cega      igual ao anterior, sem arestas mensuráveis à direita → RM4
+    sem-mao-mensuravel remove as arestas das duas mãos → status explícito de não medido */
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -247,8 +248,9 @@ const ELENCO_RATCHET = Object.freeze(KNOWN_RED_DOC.tetos?.[RM4_LEGACY_ADVISORY] 
 
 /* Mutantes de elenco: deslocam LeftHand no mst real como no defeito do piloto.
    `uma-mao-cega` também remove as arestas mensuráveis da direita para provar que
-   uma mão sem geometria não pode esconder a reprovação da outra. */
-async function maoDeslocada(origem, destino, ocultarDireita = false) {
+   uma mão sem geometria não pode esconder a reprovação da outra. `sem-mao-mensuravel`
+   remove ambas para provar que o resultado é reportado separadamente, nunca como verde. */
+async function maoDeslocada(origem, destino, ocultar = '') {
   const doc = await io.read(origem);
   const pai = grafo(doc), skin = doc.getRoot().listSkins()[0], juntas = skin.listJoints();
   const mundo = (n) => { const m = local({ t: n.getTranslation(), r: n.getRotation(), s: n.getScale() }); const p = pai.get(n); return p ? mundo(p).multiply(m) : m; };
@@ -258,9 +260,9 @@ async function maoDeslocada(origem, destino, ocultarDireita = false) {
   const ibm = skin.getInverseBindMatrices(), arr = ibm.getArray().slice();
   juntas.forEach((j, i) => { for (let n = j; n; n = pai.get(n)) if (n === mao) { arr.set(mundo(j).invert().elements, i * 16); break; } });
   ibm.setArray(arr);
-  if (ocultarDireita) {
-    const alvos = new Set(juntas.map((j, i) => (j.getName() === 'RightHand' || j.getName() === 'Curl_R' ? i : -1)).filter((i) => i >= 0));
-    const antebraco = juntas.findIndex((j) => j.getName() === 'RightForeArm');
+  for (const lado of ocultar === 'ambas' ? ['Left', 'Right'] : ocultar ? [ocultar] : []) {
+    const alvos = new Set(juntas.map((j, i) => (j.getName() === `${lado}Hand` || j.getName() === `Curl_${lado[0]}` ? i : -1)).filter((i) => i >= 0));
+    const antebraco = juntas.findIndex((j) => j.getName() === `${lado}ForeArm`);
     for (const mesh of doc.getRoot().listMeshes()) for (const prim of mesh.listPrimitives()) {
       const accessor = prim.getAttribute('JOINTS_0');
       if (!accessor) continue;
@@ -279,22 +281,22 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const LIMITE = +opt('limite', 2.5);
   const clipes = opt('clipes', join(ROOT, 'public/models/anims/mixamo'));
   const mutante = opt('mutante', '');
-  if (mutante && !MUTANTES[mutante] && mutante !== 'mao-deslocada' && mutante !== 'uma-mao-cega') throw new Error(`mutante desconhecido: ${mutante}`);
-  if (args.includes('--elenco') || mutante === 'mao-deslocada' || mutante === 'uma-mao-cega') {
+  if (mutante && !MUTANTES[mutante] && !['mao-deslocada', 'uma-mao-cega', 'sem-mao-mensuravel'].includes(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
+  if (args.includes('--elenco') || ['mao-deslocada', 'uma-mao-cega', 'sem-mao-mensuravel'].includes(mutante)) {
     const dir = join(ROOT, 'public/models/characters');
     const ids = readdirSync(dir).filter((f) => f.endsWith('.glb')).map((f) => f.replace(/\.glb$/, '')).sort();
     const caminhos = Object.fromEntries(ids.map((id) => [id, join(dir, `${id}.glb`)]));
     const tmp = mutante ? mkdtempSync(join(tmpdir(), 'rig-maos-elenco-')) : null;
-    const falhas = [], hoje = new Date().toISOString().slice(0, 10);
+    const falhas = [], naoMensuraveis = [], hoje = new Date().toISOString().slice(0, 10);
     if (!KNOWN_RED[RM4_LEGACY_ADVISORY]) throw new Error(`RM4: ${RM4_LEGACY_ADVISORY} precisa estar declarado em tools/eval/KNOWN-RED.json`);
     try {
-      if (mutante) caminhos.mst = await maoDeslocada(caminhos.mst, join(tmp, 'mst.glb'), mutante === 'uma-mao-cega');
+      if (mutante) caminhos.mst = await maoDeslocada(caminhos.mst, join(tmp, 'mst.glb'), mutante === 'uma-mao-cega' ? 'Right' : mutante === 'sem-mao-mensuravel' ? 'ambas' : '');
       for (const id of ids) {
         const r = await medirMaos(caminhos[id], { clipes });
         const medidos = r.filter((l) => l.arestas > 0);
         const semMedir = r.filter((l) => !l.arestas);
         if (semMedir.length) console.log(`  não medido: ${id} sem aresta pesada na mão ${semMedir.map((l) => l.lado).join('/')}`);
-        if (!medidos.length) continue;
+        if (!medidos.length) { naoMensuraveis.push(id); continue; }
         const pior = Math.max(...medidos.map((l) => l.pior)), teto = ELENCO_RATCHET[id];
         if (pior > LIMITE && (!Number.isFinite(teto) || !KNOWN_RED[RM4_LEGACY_ADVISORY])) {
           falhas.push(`RM4: ${id} estica a mão ${pior.toFixed(2)}× > ${LIMITE}×`);
@@ -306,13 +308,18 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       }
     } finally { if (tmp) rmSync(tmp, { recursive: true, force: true }); }
     if (mutante) {
-      const morde = falhas.length > 0 && falhas.every((f) => f.startsWith('RM4: mst'));
-      console.log(morde ? `mutante ${mutante} reprovado como devia: ${falhas[0]}` : `MUTAÇÃO PASSOU — ${mutante} (${falhas.join(' | ') || 'nenhuma falha'})`);
+      const semMao = mutante === 'sem-mao-mensuravel';
+      const morde = semMao
+        ? falhas.length === 0 && naoMensuraveis.includes('mst')
+        : falhas.length > 0 && falhas.every((f) => f.startsWith('RM4: mst'));
+      console.log(morde
+        ? semMao ? 'mutante sem-mao-mensuravel reportado como não mensurável, sem contá-lo como aprovado' : `mutante ${mutante} reprovado como devia: ${falhas[0]}`
+        : `MUTAÇÃO PASSOU — ${mutante} (${falhas.join(' | ') || 'nenhuma falha'})`);
       process.exit(morde ? 0 : 1);
     }
     if (falhas.length) { for (const f of falhas) console.error(`  ✗ ${f}`); process.exit(1); }
-    const dividas = ids.filter((id) => Number.isFinite(ELENCO_RATCHET[id]));
-    console.log(`rig-maos elenco: ${ids.length} GLB reais de public/models/characters medidos; ${ids.length - dividas.length} ≤ ${LIMITE}×, ${dividas.length} dívidas no KNOWN-RED dentro do teto.`);
+    const dividas = ids.filter((id) => Number.isFinite(ELENCO_RATCHET[id]) && !naoMensuraveis.includes(id));
+    console.log(`rig-maos elenco: ${ids.length} GLB reais; ${ids.length - dividas.length - naoMensuraveis.length} ≤ ${LIMITE}×, ${dividas.length} dívidas no KNOWN-RED dentro do teto, ${naoMensuraveis.length} não mensuráveis (não contados como aprovados).`);
     process.exit(0);
   }
   if (args.includes('--sintetico') || mutante) {
