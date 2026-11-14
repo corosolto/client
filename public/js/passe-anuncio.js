@@ -3,7 +3,7 @@
 import { tr } from './i18n.js';
 import { passeEstado, passeAnuncioDevido, marcarAnuncio, registrarEventoPasse } from './passe.js';
 
-export const PASSE_ARTE = '/img/passe/sessao-da-treta-s1.svg';
+export const PASSE_ARTE = '/img/passe/sessao-da-treta-s1.webp';
 
 const embutido = () => {
   try { return new URLSearchParams(location.search).get('embed') === '1' || document.documentElement.dataset.embedded === 'true'; } catch { return false; }
@@ -26,12 +26,12 @@ export function anunciarPasse({ abrirPasse = () => {}, entrar = () => {} } = {})
   dialog.setAttribute('aria-labelledby', 'passe-anuncio-titulo');
   dialog.setAttribute('aria-describedby', 'passe-anuncio-texto');
   const arte = no('img', 'tp-passe-anuncio__arte');
-  arte.src = PASSE_ARTE; arte.alt = tr('Sessão da Treta, temporada 1: o passe grátis da facção Fora do Ar'); arte.decoding = 'async';
+  arte.src = PASSE_ARTE; arte.alt = tr('Creepypasta, passe grátis: Capitão Caveira, Teletreco Sinal Fraco, Boneca da Cristaleira e Clóvis Fora do Ar'); arte.decoding = 'async';
   const corpo = no('div', 'tp-passe-anuncio__corpo');
   const titulo = no('h2', 'tp-disp tp-passe-anuncio__titulo');
   titulo.id = 'passe-anuncio-titulo';
-  titulo.appendChild(no('span', 'tp-ital', tr('SESSÃO DA TRETA')));
-  const textoP = no('p', 'tp-passe-anuncio__texto', tr('Passe grátis com 15 níveis: 30 personagens da facção Fora do Ar, skins de arma, T$ e bônus de XP. Jogue partidas e cumpra missões para subir de nível.'));
+  titulo.appendChild(no('span', 'tp-ital', tr('CREEPYPASTA')));
+  const textoP = no('p', 'tp-passe-anuncio__texto', tr('Passe grátis Creepypasta com 15 níveis: 30 personagens da facção Fora do Ar, skins de arma, T$ e bônus de XP. Jogue partidas e cumpra missões para subir de nível.'));
   textoP.id = 'passe-anuncio-texto';
   const nota = no('p', 'tp-passe-anuncio__nota', tr(status.authenticated ? 'Seu progresso já está contando.' : 'Para ganhar XP e resgatar as recompensas, entre na sua conta.'));
   const acoes = no('div', 'tp-passe-anuncio__acoes');
