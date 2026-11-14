@@ -3,8 +3,8 @@
 // mesmo yaw) — o diff dos dois isola a máscara EXATA do viewmodel (arma + braços FP),
 // sem máscara manual e sem o truque de girar o yaw. Também lê a rotação do grupo do VM
 // de cada arma e REPROVA se pitch/yaw saírem de 0 (regra dura: cano paralelo à mira).
-// Uso: node tools/eval/vm-quake-capture.mjs <outDir> [armas] [W,H] [extraQS]
-//   ex: node tools/eval/vm-quake-capture.mjs /tmp/vmq/a svd,ak 1200,800 'vmfov=88&vmzmul=0.92'
+// Uso: node tools/eval/aposentados/vm-quake-capture.mjs <outDir> [armas] [W,H] [extraQS]
+//   ex: node tools/eval/aposentados/vm-quake-capture.mjs /tmp/vmq/a svd,ak 1200,800 'vmfov=88&vmzmul=0.92'
 import { execSync } from 'node:child_process';
 import { mkdirSync, rmSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';

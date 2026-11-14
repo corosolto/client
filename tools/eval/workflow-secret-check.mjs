@@ -31,6 +31,7 @@
    ============================================================================ */
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { gatilhosDe, ifDe, jobsDe, parseWorkflow, passosDe, runDe } from './workflow-yaml.mjs';
 
 const DIR = '.github/workflows';
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
@@ -44,20 +45,13 @@ const CEGOS = ['pull_request', 'pull_request_review', 'pull_request_review_comme
 const arquivos = readdirSync(DIR).filter((f) => f.endsWith('.yml') || f.endsWith('.yaml'));
 const falhas = [];
 
-/* Corpo de cada job por indentação (id com 2 espaços dentro de `jobs:`). */
-function jobsDe(texto) {
-  const out = {};
-  let dentro = false;
-  let atual = null;
-  for (const linha of texto.split('\n')) {
-    if (/^jobs:\s*$/.test(linha)) { dentro = true; continue; }
-    if (!dentro) continue;
-    if (/^\S/.test(linha)) { dentro = false; continue; }
-    const id = /^ {2}([A-Za-z0-9_-]+):\s*$/.exec(linha);
-    if (id) { atual = id[1]; out[atual] = ''; continue; }
-    if (atual) out[atual] += `${linha}\n`;
+function estrutura(nome, texto, clausula) {
+  try {
+    return parseWorkflow(texto, nome);
+  } catch (error) {
+    falhas.push(`${clausula} ${error.message}`);
+    return null;
   }
-  return out;
 }
 
 const fontes = arquivos.map((nome) => [nome, readFileSync(join(DIR, nome), 'utf8')]);
@@ -72,25 +66,23 @@ for (let [nome, texto] of fontes) {
     texto = texto.replace(/    if: >-\n(      github\.event_name[^\n]*\n)+/, '');
   }
 
-  /* O bloco `on:` vai até a primeira chave de topo seguinte (coluna zero). Ler o
-     arquivo inteiro daria falso positivo com `pull_request` citado em comentário
-     dentro de um step. */
-  const mOn = texto.match(/^on:\n([\s\S]*?)(?=^\S)/m);
-  if (!mOn) continue;
-  const bloco = mOn[1];
-  const cegos = CEGOS.filter((g) => new RegExp(`^\\s{2}${g}:`, 'm').test(bloco));
+  const workflow = estrutura(nome, texto, 'WSEC1');
+  if (!workflow) continue;
+  const cegos = CEGOS.filter((gatilho) => gatilhosDe(workflow).includes(gatilho));
   if (!cegos.length) continue;
 
   /* Por JOB, não por arquivo: o `if:` de defesa tem de estar no job que tem a guarda.
      Lido no arquivo inteiro, o `if:` de OUTRO job (o sweep do classify) cobria o job sem
      defesa, e os dois mutantes desta régua ficavam verdes calados. */
-  for (const [job, corpo] of Object.entries(jobsDe(texto))) {
-    /* Guarda de secret = o job aborta quando a variável de secret está vazia. */
+  for (const [job, definicao] of Object.entries(jobsDe(workflow))) {
+    /* Guarda de secret = o job aborta quando a variável de secret está vazia. O
+       recorte shell continua conservador; o YAML só determina em qual job ele roda. */
+    const corpo = passosDe(definicao).map(runDe).join('\n');
     const temGuard = /-z "\$GH_TOKEN"|-z "\$\{?[A-Z_]*TOKEN/.test(corpo) && /exit 1/.test(corpo);
     if (!temGuard) continue;
     /* A defesa aceita: um `if:` DE JOB que amarre o event_name ou compare o repo da
        head com o repositório - as duas formas de dizer "aqui eu tenho secret". */
-    const ifJob = /^ {4}if:([^\n]*\n(?: {6,}[^\n]*\n)*)/m.exec(corpo)?.[1] || '';
+    const ifJob = ifDe(definicao);
     if (!/github\.event_name\s*==|head\.repo\.full_name\s*==/.test(ifJob)) {
       falhas.push(`WSEC1 ${nome} · job \`${job}\`: guard de secret + gatilho cego (${cegos.join(', ')}) sem \`if:\` de job que exclua o caso de fork`);
     }
@@ -103,20 +95,21 @@ for (let [nome, texto] of fontes) {
   if (MUT === 'guarda-em-job') am = am.replace(/^jobs:\n/m, 'jobs:\n  bot-token:\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - run: echo token\n');
   if (MUT === 'passo-fura-guarda') am = am.replace(/(- name: Fetch PR status\n)\s+if: env\.pular != '1'\n/, '$1');
   if (MUT === 'guarda-muda') am = am.replace(/::warning title=Bot inerte::/, '');
-  const jobs = jobsDe(am);
+  const workflow = estrutura('csbrasil-bot-automerge.yml', am, 'WSEC2');
+  const jobs = jobsDe(workflow);
   const ids = Object.keys(jobs);
   const esperados = ['automerge', 'sweep'];
   if (ids.length !== esperados.length || esperados.some((id) => !ids.includes(id))) {
     falhas.push(`WSEC2 csbrasil-bot-automerge.yml tem os jobs [${ids.join(', ')}] — esperados [${esperados.join(', ')}], cada um com guarda em passo`);
   }
   for (const id of esperados) {
-    const passos = (jobs[id] || '').split(/\n {6}- /).slice(1);
-    const guarda = passos[0] || '';
+    const passos = passosDe(jobs[id]);
+    const guarda = runDe(passos[0]);
     if (!/-z "\$GH_TOKEN"/.test(guarda) || !/pular=1[^\n]*GITHUB_ENV/.test(guarda)) falhas.push(`WSEC2 o primeiro passo de ${id} não é a guarda do token (\`-z "$GH_TOKEN"\` → \`pular=1\` no GITHUB_ENV)`);
     if (!/::warning title=Bot inerte::/.test(guarda)) falhas.push(`WSEC2 a guarda de ${id} não avisa (\`::warning title=Bot inerte::\`) — bot inerte em silêncio`);
     if (/exit 1/.test(guarda)) falhas.push(`WSEC2 a guarda de ${id} reprova: sem PAT o job pula, não pinta o PR de vermelho`);
-    passos.slice(1).forEach((p, i) => {
-      if (!/^\s*if: env\.pular != '1'/m.test(p)) falhas.push(`WSEC2 o passo ${i + 2} de ${id} (${(/name: ([^\n]+)/.exec(p) || /uses: ([^\n@]+)/.exec(p) || [, '?'])[1]}) roda mesmo sem o token`);
+    passos.slice(1).forEach((passo, i) => {
+      if (ifDe(passo).trim() !== "env.pular != '1'") falhas.push(`WSEC2 o passo ${i + 2} de ${id} (${passo.name || passo.uses?.split('@')[0] || '?'}) roda mesmo sem o token`);
     });
   }
 }

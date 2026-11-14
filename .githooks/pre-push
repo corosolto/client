@@ -74,6 +74,85 @@ if [ -f package.json ] && [ -f public/js/version.js ]; then
   [ -n "$pj" ] && [ "$pj" != "$vj" ] && falhas+=("package.json ($pj) != version.js ($vj)")
 fi
 
+# UM PRE-PUSH POR MÁQUINA. O arquivo candidato já contém PID, idade e identidade do
+# processo antes de `ln` publicar o hard link atomicamente; outro hook nunca observa
+# um lock sem dono. A identidade do `ps` distingue PID reutilizado, e a idade máxima
+# recupera um processo vivo mas travado. Diretórios antigos são aceitos na migração.
+trava=/tmp/csbrasil-prepush.lock
+candidato="${trava}.$$.$RANDOM"
+assinatura=$(ps -p $$ -o lstart= 2>/dev/null)
+criado=$(date +%s)
+printf '%s\n%s\n%s\n' "$$" "$criado" "$assinatura" > "$candidato"
+espera=0; minha=0
+
+limpa_trava() {
+  rm -f "$candidato"
+  if [ "$minha" = 1 ] && [ -f "$trava" ]; then
+    dono_atual=$(head -n1 "$trava" 2>/dev/null)
+    assinatura_atual=$(tail -n1 "$trava" 2>/dev/null)
+    [ "$dono_atual" = "$$" ] && [ "$assinatura_atual" = "$assinatura" ] && rm -f "$trava"
+  fi
+}
+trap limpa_trava EXIT
+idade_processo() {
+  local pid="$1" decorrido dias=0 horas minutos segundos
+  decorrido=$(ps -p "$pid" -o etime= 2>/dev/null | tr -d ' ')
+  [ -n "$decorrido" ] || return 1
+  case "$decorrido" in
+    *-*) dias=${decorrido%%-*}; decorrido=${decorrido#*-} ;;
+  esac
+  IFS=: read -r horas minutos segundos <<< "$decorrido"
+  if [ -z "${segundos:-}" ]; then segundos=$minutos; minutos=$horas; horas=0; fi
+  [[ "$dias" =~ ^[0-9]+$ && "$horas" =~ ^[0-9]+$ && "$minutos" =~ ^[0-9]+$ && "$segundos" =~ ^[0-9]+$ ]] || return 1
+  printf '%s\n' $((10#$dias * 86400 + 10#$horas * 3600 + 10#$minutos * 60 + 10#$segundos))
+}
+
+
+while :; do
+  if [ -d "$trava" ]; then
+    dono=$(cat "$trava/pid" 2>/dev/null)
+    agora=$(date +%s)
+    criado_dono=$(stat -f %m "$trava" 2>/dev/null || stat -c %Y "$trava" 2>/dev/null)
+    obsoleto=0
+    if ! [[ "$dono" =~ ^[0-9]+$ && "$criado_dono" =~ ^[0-9]+$ ]]; then
+      obsoleto=1
+    elif ! kill -0 "$dono" 2>/dev/null; then
+      obsoleto=1
+    else
+      idade_lock=$((agora - criado_dono))
+      idade_dono=$(idade_processo "$dono" || true)
+      if [ "$idade_lock" -ge 7200 ] || { [ -n "$idade_dono" ] && [ $((idade_dono + 2)) -lt "$idade_lock" ]; }; then
+        obsoleto=1
+      fi
+    fi
+    if [ "$obsoleto" = 1 ]; then rm -rf "$trava"; continue; fi
+  elif ln "$candidato" "$trava" 2>/dev/null; then
+    minha=1
+    rm -f "$candidato"
+    break
+  else
+    dono=$(head -n1 "$trava" 2>/dev/null)
+    criado_dono=$(head -n2 "$trava" 2>/dev/null | tail -n1)
+    assinatura_dono=$(tail -n1 "$trava" 2>/dev/null)
+    agora=$(date +%s)
+    obsoleto=0
+    if ! [[ "$dono" =~ ^[0-9]+$ && "$criado_dono" =~ ^[0-9]+$ ]]; then
+      obsoleto=1
+    elif ! kill -0 "$dono" 2>/dev/null; then
+      obsoleto=1
+    elif [ "$(ps -p "$dono" -o lstart= 2>/dev/null)" != "$assinatura_dono" ]; then
+      obsoleto=1
+    elif [ $((agora - criado_dono)) -ge 7200 ]; then
+      obsoleto=1
+    fi
+    if [ "$obsoleto" = 1 ]; then rm -f "$trava"; continue; fi
+  fi
+  [ "$espera" -eq 0 ] && echo "pre-push: outro pre-push em andamento (pid ${dono:-?}); esperando a vez"
+  if [ "$espera" -ge 2400 ]; then echo "pre-push: 40 min de espera; abortei sem executar portões concorrentes" >&2; exit 1; fi
+  sleep 10
+  espera=$((espera + 10))
+done
+
 for portao in eval:mapcontrato check:prepush; do
   if ! PREPUSH_REMOTE="$remoto" PREPUSH_REFS="$entrada" npm run "$portao" --silent >/tmp/prepush-$$.log 2>&1; then
     # O motivo tem de ser a linha que REPROVOU. O padrão anterior incluía `error`

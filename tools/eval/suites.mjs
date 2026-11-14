@@ -16,6 +16,7 @@ eval:shareorigin
 eval:vm-enquadramento-placar
 eval:pintura-fabrica
 eval:weapon-passe
+eval:workflowguards
 eval:passe
 eval:fora-do-ar
 eval:packpublish
@@ -23,11 +24,12 @@ eval:packpublish
 
 const DEPLOY = lista(`
 syntax eval:vm-presence eval:bootorcamento eval:tpjumpownership eval:tplocalshot eval:tpbackpedal eval:tphandownership eval:characterkit eval:penetration-geometry eval:bot-shot-direction eval:shared-shot eval:bot-pellets eval:duel-metrics eval:bot-crouch-geometry eval:weapon-profiles eval:weapon-matrix eval:recoil-contract eval:firing-cadence eval:ballistics-falloff eval:ranking-home-status eval:mp-tracer-origin eval:bot-combat-loop eval:modgraph eval:error-console eval:edgecache eval:webgl eval:webglguard eval:shaderlog eval:shaderbudget eval:prune eval:vmlabhud eval:vminspect eval:redesign eval:charvoice eval:audiofurollback eval:screenquery arch:check docs:check media:check eval:assetfetch eval:vercelbuild menuwalls:check anims:check anims:merge:check travessao:check eval:medianet eval:posters eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:mutantes-anunciados eval:wfsecret eval:wflocal eval:wftimeout eval:comentario eval:fixture eval:preload eval:apis eval:social-boot-guest eval:geoproxy eval:nosgemeos eval:sonda eval:docsautoria eval:contagens-pr eval:replaycam eval:miticos-lobisomem eval:chao eval:killstreak eval:vm-serving-config eval:mapasparados eval:piscina-trim eval:pos-cena eval:brasao-versao eval:check-sem-escrita eval:pos-alvo eval:ibl-vm eval:wfconcurrency eval:wfcheckout eval:clans-sessao eval:treta-eyewear eval:treta-equip-route eval:portaogatilho eval:headshot-hitbox eval:character-normal-quality eval:grafite-curation eval:map-material-finish eval:ferro-balcao eval:match-pickups eval:net-flash-disable eval:transport-stream eval:normal-only-fit-equivalence eval:tp-world-contract eval:skin-profile-flow eval:tp-identity eval:tp-cosmetic-source eval:tp-drip-source eval:tp-glove-origin eval:death-camera-consistency eval:visual-map-contracts eval:authored-locomotion eval:posto-board-support eval:flashbang mut:flashbang eval:movimento-fluidez eval:ads1p-public eval:preview-grip-phase eval:knife-skin-markings eval:campo-uv eval:grafite-atual:prova eval:sondafilho eval:shot-final-pose eval:javaporcos-client-room eval:operacao-flavio:browser-gate eval:vm-troca-sem-legado eval:ui-v3:lobby-flavio:gate
-eval:weapon-passe eval:dispose
+eval:weapon-passe eval:dispose eval:workflowguards
 `);
 
 const CORE = lista(`
 syntax eval:modgraph eval:error-console arch:check docs:check media:check menuwalls:check anims:check anims:merge:check travessao:check eval:medianet eval:posters eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:mutantes-anunciados eval:wfsecret eval:wflocal eval:wftimeout eval:comentario eval:fixture eval:sonda eval:docsautoria eval:contagens-pr eval:check-sem-escrita eval:wfconcurrency eval:wfcheckout eval:portaogatilho eval:sondafilho
+eval:workflowguards
 `);
 
 const BROWSER = unicos([...FAST, ...DEPLOY].filter((p) => /browser|troca-sem-legado/.test(p)
