@@ -813,11 +813,12 @@ const DICT = {
   // tp:fim-ajustes
 
   // tp:passe (tp/passe.js, passe-anuncio.js e a trava do seletor em main.js)
-  'PASSE': 'PASS', 'SESSÃO DA TRETA': 'SESSÃO DA TRETA', 'PASSE GRÁTIS · TEMPORADA 1 · FORA DO AR': 'FREE PASS · SEASON 1 · FORA DO AR',
+  'PASSE': 'PASS', 'SESSÃO DA TRETA': 'SESSÃO DA TRETA', 'CREEPYPASTA': 'CREEPYPASTA',
+  'PASSE GRÁTIS · TEMPORADA 1 · FORA DO AR': 'FREE PASS · SEASON 1 · FORA DO AR',
   'TEMPORADA 1 · PASSE GRÁTIS': 'SEASON 1 · FREE PASS', 'Fechar o passe': 'Close the pass',
-  'Sessão da Treta, temporada 1: o passe grátis da facção Fora do Ar': 'Sessão da Treta, season 1: the free pass of the Fora do Ar faction',
-  'Passe grátis com 15 níveis: 30 personagens da facção Fora do Ar, skins de arma, T$ e bônus de XP. Jogue partidas e cumpra missões para subir de nível.':
-    'Free pass with 15 levels: 30 characters from the Fora do Ar faction, weapon skins, T$ and XP boosts. Play matches and complete missions to level up.',
+  'Creepypasta, passe grátis: Capitão Caveira, Teletreco Sinal Fraco, Boneca da Cristaleira e Clóvis Fora do Ar': 'Creepypasta, free pass: Capitão Caveira, Teletreco Sinal Fraco, Boneca da Cristaleira, and Clóvis Fora do Ar',
+  'Passe grátis Creepypasta com 15 níveis: 30 personagens da facção Fora do Ar, skins de arma, T$ e bônus de XP. Jogue partidas e cumpra missões para subir de nível.':
+    'Creepypasta free pass with 15 levels: 30 characters from the Fora do Ar faction, weapon skins, T$, and XP boosts. Play matches and complete missions to level up.',
   'Seu progresso já está contando.': 'Your progress is already counting.',
   'Para ganhar XP e resgatar as recompensas, entre na sua conta.': 'Sign in to earn XP and claim the rewards.',
   'VER O PASSE': 'SEE THE PASS', 'ENTRAR E JOGAR O PASSE': 'SIGN IN AND PLAY THE PASS', 'ENTRAR PARA JOGAR': 'SIGN IN TO PLAY',

@@ -80,8 +80,8 @@ function selfTest() {
   // Status: mapa nominal vermelho é semântico(1); mutante que aplica 0 é infra(3).
   const rVermelho = { id: MAPAS[0], mutante: '', nominalVerde: false, duplicates: 1 };
   check('nominal vermelho é semântico', !avaliar(rVermelho, MUTANTES).verde);
-  const classifica = (aplicou) => aplicou ? 'segue' : 'infra3';
-  check('mutante que aplica 0 é infra3', classifica(0) === 'infra3');
+  const classifica = (aplicou) => aplicou ? 'segue' : 'infra78';
+  check('mutante que aplica 0 é infra78', classifica(0) === 'infra78');
   console.log(falhas ? `SELF-TEST VERMELHO — ${falhas} verificação(ões)` : 'SELF-TEST VERDE — sem navegador, sem BASE');
   return falhas === 0;
 }
@@ -268,19 +268,19 @@ async function main() {
   for (const { plano, itens } of porPlano) {
     if (itens.length !== plano.mapas.length) {
       console.error(`RED-INFRA: cobertura divergente em '${plano.mutante || 'nominal'}': pedidos ${plano.mapas.length}, recebidos ${itens.length}`);
-      process.exit(3);
+      process.exit(78);
     }
     const vistos = new Set();
     for (const r of itens) {
       const viol = validarResumo(r, { pedidos: plano.mapas, mutante: plano.mutante });
-      if (viol.length) { console.error('RED-INFRA ' + r.id + ': ' + viol.join(' | ')); process.exit(3); }
-      if (vistos.has(r.id)) { console.error(`RED-INFRA: mapa duplicado na resposta: ${r.id}`); process.exit(3); }
+      if (viol.length) { console.error('RED-INFRA ' + r.id + ': ' + viol.join(' | ')); process.exit(78); }
+      if (vistos.has(r.id)) { console.error(`RED-INFRA: mapa duplicado na resposta: ${r.id}`); process.exit(78); }
       vistos.add(r.id);
     }
   }
   const semanticas = [];
   for (const r of resultados) {
-    if (r.invalidado || r.erros.length) { console.error(`RED-INFRA ${r.id}: erros de página recolhidos — ${r.erros.join(' | ')}`); process.exit(3); }
+    if (r.invalidado || r.erros.length) { console.error(`RED-INFRA ${r.id}: erros de página recolhidos — ${r.erros.join(' | ')}`); process.exit(78); }
     const v = avaliar(r, MUTANTES);
     if (!v.verde) semanticas.push(v.motivo + ': dup=' + r.duplicates + ' fora=' + r.outside + ' sem-suporte=' + r.unsupported
       + ' unknown=' + r.unknown + '[' + (r.unknownAmostra || []).join(';') + '] divergente=' + r.divergent);

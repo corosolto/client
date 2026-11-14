@@ -14,7 +14,7 @@ desempenho e partida, sem tocar em gameplay. Como rodar, como ler e como recuper
 | `probes/ranking.mjs` | flag `RANKING_ON` × `/api/leaderboard` × `/ranking` |
 | `probes/assets.mjs` | amostra de assets no edge (Range GET + prova de cabeçalho) e na árvore |
 | `probes/match.mjs` + `match-worker.mjs` | partida sintética: `Game` real em node, todo mapa × modo |
-| `probes/browser.mjs` | opcional: Chromium via Playwright — o main.js AVALIA? + snapshot do `ops.js`; GPU automática no macOS com Chrome, SwiftShader no CI (marcado) |
+| `probes/browser.mjs` | opcional: Chromium via Playwright — o main.js AVALIA? + snapshot do `ops.js`; remove o mesmo pixel de anúncio que o proxy de boot, sem medir CSP de terceiro como falha do jogo; GPU automática no macOS com Chrome, SwiftShader no CI (marcado) |
 | `lib/explain.mjs` | sintoma → causa provável, evidência, impacto, próximo passo (função pura) |
 | `lib/report.mjs` | veredito (tecnicamente verde × pronto para lançamento) e relatório curto |
 | `lib/http.mjs`, `lib/repo.mjs` | sonda HTTP classificada; leitura da árvore por regex/manifesto |

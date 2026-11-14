@@ -28,12 +28,12 @@ function main(args) {
       timeout: 180000, maxBuffer: 8 * 1024 * 1024 });
   if (JSON.stringify(sources) !== JSON.stringify(bindings())) {
     console.error('InfrastructureError: fontes mudaram durante a medição');
-    return 3;
+    return 78;
   }
   const verdict = traduzirResultado(result, { nonce, mutante: MUTANTE, sources });
   if (!verdict.ok) {
     console.error(verdict.kind + ': ' + verdict.reason);
-    return verdict.kind === 'ContractViolation' ? 1 : 3;
+    return verdict.kind === 'ContractViolation' ? 1 : 78;
   }
   console.log('Mutação aplicada: ' + MUTANTE);
   console.log(JSON.stringify(verdict.report));
@@ -42,5 +42,5 @@ function main(args) {
 
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   try { process.exitCode = main(process.argv.slice(2)); }
-  catch (error) { console.error('InfrastructureError: ' + String(error.message).slice(0, 500)); process.exitCode = 3; }
+  catch (error) { console.error('InfrastructureError: ' + String(error.message).slice(0, 500)); process.exitCode = 78; }
 }

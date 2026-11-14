@@ -61,7 +61,7 @@ if (!cli.probe) {
     scenario(`mutante ${m}/${q}`, ['--modo=' + modo, `--qualidade=${q}`, `--mutante=${m}`], false);
   }
   for (const m of PRE_BOOT) for (const q of ['med', 'low']) scenario(`mutante ${m}/${q}`, ['--modo=model', `--qualidade=${q}`, `--mutante=${m}`], false);
-  scenario('fantasma (mutação não aplicada deve ser denunciada)', ['--modo=model', '--mutante=escala', '--fantasma'], false, 3);
+  scenario('fantasma (mutação não aplicada deve ser denunciada)', ['--modo=model', '--mutante=escala', '--fantasma'], false, 78);
   scenario('mutante desconhecido exit 2', ['--modo=model', '--mutante=xyz'], false, 2);
   scenario('typo de opção exit 2 (--qualidadelow)', ['--probe', '--qualidadelow'], false, 2);
   scenario('valor ausente exit 2 (--modo sem =valor)', ['--probe', '--modo'], false, 2);
@@ -188,8 +188,8 @@ const applyMutant = () => {
 };
 applyMutant();
 group = W.root.children.find((o) => o.userData?.propId === 'ferro_balcao');   // switch-ignorado cria o grupo DEPOIS
-if (fantasma) { console.error(`mutação ${mutante} NÃO APLICOU (fantasma) — aceitação não pode ser medida`); process.exit(3); }
-if (mutante && !applied) { console.error(`mutação ${mutante} não alterou o mundo — mutante não aplicou`); process.exit(3); }
+if (fantasma) { console.error(`mutação ${mutante} NÃO APLICOU (fantasma) — aceitação não pode ser medida`); process.exit(78); }
+if (mutante && !applied) { console.error(`mutação ${mutante} não alterou o mundo — mutante não aplicou`); process.exit(78); }
 if (mutante === 'prop-ausente') applied = !group;
 
 // -------- acceptance: o MESMO contrato mede baseline e mutantes --------

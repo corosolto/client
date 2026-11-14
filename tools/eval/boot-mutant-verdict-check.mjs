@@ -102,7 +102,7 @@ for (const [name, MUTANTE, exemplos, medeFalha, esperado] of [
   ['cartaz exige ORC2', 'cartaz-ansioso', [okCand(), refAnsiosa, cand({ posterProof: cheia })], false, 0],
   ['READY inválido recusa cartaz', 'cartaz-ansioso', [okCand(), refAnsiosa, cand({ causa: 'failsafe', posterProof: cheia })], false, 1],
   ['ORC1 pode acompanhar a falha esperada', 'cartaz-ansioso', [okCand(), refAnsiosa, cand({ bytes: 99_000_000, posterProof: cheia })], false, 0],
-  ['crash não é detecção', 'cartaz-ansioso', [okCand(), refAnsiosa, okCand()], true, 3],
+  ['crash não é detecção', 'cartaz-ansioso', [okCand(), refAnsiosa, okCand()], true, 78],
   ['nominal rejeita ORC2 faltante', '', [cand({ posterProof: cheia }), refAnsiosa, okCand()], false, 1],
   ['nominal rejeita ORC3 faltante', '', [cand({ posterProof: lazyOk, primeiraFauna: 100 }), refAnsiosa, okCand()], false, 1],
 ]) {

@@ -35,6 +35,8 @@ docs/
                           propósito: quem declara é o LICENSE, e a tabela de superfícies
                           é gerada no CONTRIBUTING.md
   seguranca.md            fronteira de segurança do backend (/api/*, supabase)
+  studio-pack-integration.md  Offline pack verification/install and the exact future
+                          runtime promotion contract (English)
   chat-de-sala.md         contrato v1 do chat de sala: identidade, limites, abuso (#686)
   onboarding.md           setup mínimo pra contribuir
   quality-gates.md        labels, merge policy e crash triage (o processo do PR)

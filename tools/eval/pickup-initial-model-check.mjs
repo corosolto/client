@@ -31,13 +31,13 @@ if (modo === 'autoteste') {
   const roda = (a) => spawnSync(process.execPath, [fileURLToPath(import.meta.url), ...a], { encoding: 'utf8', maxBuffer: 1 << 20, timeout: 30000 });
   const nom = roda([]);
   let j;
-  try { j = JSON.parse(nom.stdout.trim().split('\n').pop()); } catch { console.error('nominal: saída inválida'); process.exit(3); }
+  try { j = JSON.parse(nom.stdout.trim().split('\n').pop()); } catch { console.error('nominal: saída inválida'); process.exit(78); }
   if (nom.error || nom.status !== 0 || j.status !== 'GREEN') {
     console.error(`nominal não está verde: exit=${nom.status}, status=${j.status}`); process.exit(1);
   }
   const mut = roda(['--mutante=sem-refresh']);
   let jm;
-  try { jm = JSON.parse(mut.stdout.trim().split('\n').pop()); } catch { console.error('mutante: saída inválida'); process.exit(3); }
+  try { jm = JSON.parse(mut.stdout.trim().split('\n').pop()); } catch { console.error('mutante: saída inválida'); process.exit(78); }
   if (mut.error || mut.status !== 1 || jm.status !== 'RED' || JSON.stringify(jm.falhas) !== '["PIM2","PIM4"]') {
     console.error(`mutante sem-refresh não acendeu PIM2: exit=${mut.status}, status=${jm.status}, falhas=${jm.falhas}`); process.exit(1);
   }
@@ -54,7 +54,7 @@ try {
   h = await import('./harness.mjs');
   ({ GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js'));
   weapons = await import(pathToFileURL(path.join(ROOT, 'public/js/weapons.js')).href);
-} catch (e) { console.error(`infra na preparação do harness: ${e.message}`); process.exit(3); }
+} catch (e) { console.error(`infra na preparação do harness: ${e.message}`); process.exit(78); }
 GLTFLoader.prototype.load = function (url, done, progress, fail) {
   const l = new GLTFLoader();
   l.register(() => ({
@@ -76,23 +76,23 @@ try {
   if (ausentes.length) {
     // cache ausente NÃO é verde: sem GLB real a medição não mede o produto
     console.error(`infra: GLB de arma não carregou (${ausentes.join(',')}) — verifique identidade do GLTFLoader no shim`);
-    process.exit(3);
+    process.exit(78);
   }
-} catch (e) { console.error(`infra no preload das armas: ${e.message}`); process.exit(3); }
+} catch (e) { console.error(`infra no preload das armas: ${e.message}`); process.exit(78); }
 
 /* ── fonte do produto (mutável em memória; o do disco é intocado) ── */
 let src;
 try { src = fs.readFileSync(path.join(ROOT, 'public/js/game.js'), 'utf8'); }
-catch (e) { console.error(`infra na leitura do game.js: ${e.message}`); process.exit(3); }
+catch (e) { console.error(`infra na leitura do game.js: ${e.message}`); process.exit(78); }
 if (modo === 'mutante') {
-  if (src.split(ANCORA).length !== 2) { console.error('mutante: chamada do constructor não é âncora única'); process.exit(3); }
+  if (src.split(ANCORA).length !== 2) { console.error('mutante: chamada do constructor não é âncora única'); process.exit(78); }
   src = src.replace(ANCORA, '');
 }
 const { gameClasseDe } = await import(pathToFileURL(path.join(ROOT, 'tools/eval/match-pickup-mode-check.mjs')).href);
 console.info = () => {};
 let Game;
 try { Game = await gameClasseDe(src, `pickup-init-${modo}`); }
-catch (e) { console.error(`infra na classe variante: ${e.message}`); process.exit(3); }
+catch (e) { console.error(`infra na classe variante: ${e.message}`); process.exit(78); }
 
 h.MAPS[MAPA] = { name: 'invasao_javaporcos (stub da régua)', build: h.MAPS[MAPA_COMUM].build };
 

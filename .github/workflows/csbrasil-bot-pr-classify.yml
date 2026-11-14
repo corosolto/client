@@ -27,6 +27,8 @@ on:
 
 permissions:
   contents: read
+  checks: read
+  statuses: read
   pull-requests: write
   issues: write
 
@@ -35,7 +37,7 @@ permissions:
 # seu (PR #348: 5 idênticos mesmo com dedupe). Serializa por PR: 1 run vivo.
 concurrency:
   group: pr-classify-${{ github.event.pull_request.number || inputs.pr_number }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.actor != 'csbrasil-BOT' }}
 
 jobs:
   # PORTÃO QUE NÃO PODE MEDIR NÃO VOTA (mesma regra do #402 para o portão de autoria em
@@ -77,7 +79,7 @@ jobs:
       - name: Ensure labels exist
         run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-estragacodigo-resolution estragacodigo-resolved bugfix hotfix release release-batch release-hotfix needs-hotfix-review
       - name: Fetch PR metadata
-        run: gh pr view "$PR_NUMBER" --json title,body,labels,files,additions,deletions,changedFiles,baseRefName,baseRefOid,mergeStateStatus,headRefName,headRefOid,headRepository,author,assignees,statusCheckRollup,latestReviews,reviewRequests,reviewDecision > /tmp/pr.json
+        run: GH_TOKEN="${{ github.token }}" gh pr view "$PR_NUMBER" --json title,body,labels,files,additions,deletions,changedFiles,baseRefName,baseRefOid,mergeStateStatus,headRefName,headRefOid,headRepository,author,assignees,statusCheckRollup,latestReviews,reviewRequests,reviewDecision > /tmp/pr.json
       - name: Route PR and set assignee
         run: |
           python3 - <<'PY'
@@ -130,7 +132,7 @@ jobs:
                              input=json.dumps({'assignees': [route['add_assignee']]}), text=True, check=True)
           PY
       - name: Refresh PR metadata after routing
-        run: gh pr view "$PR_NUMBER" --json title,body,labels,files,additions,deletions,changedFiles,baseRefName,baseRefOid,mergeStateStatus,headRefName,headRefOid,headRepository,author,assignees,statusCheckRollup,latestReviews,reviewRequests,reviewDecision > /tmp/pr.json
+        run: GH_TOKEN="${{ github.token }}" gh pr view "$PR_NUMBER" --json title,body,labels,files,additions,deletions,changedFiles,baseRefName,baseRefOid,mergeStateStatus,headRefName,headRefOid,headRepository,author,assignees,statusCheckRollup,latestReviews,reviewRequests,reviewDecision > /tmp/pr.json
       - name: Attest complete Git evidence
         run: |
           python3 scripts/ci/release_policy.py --selftest
@@ -325,7 +327,7 @@ jobs:
       - name: Dispara classify só quando algum insumo de decisão mudou
         run: |
           python3 scripts/ci/bot_sweep.py --selftest
-          gh pr list --repo "$REPO" --state open --limit 100 \
+          GH_TOKEN="${{ github.token }}" gh pr list --repo "$REPO" --state open --limit 100 \
             --json number,title,body,isDraft,baseRefName,baseRefOid,mergeStateStatus,assignees,labels,headRefName,headRefOid,headRepository,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
             > /tmp/classify-sweep.json
           python3 - <<'PY'
