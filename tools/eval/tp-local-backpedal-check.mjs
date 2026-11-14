@@ -1,5 +1,7 @@
 // Backpedal local: Game deve encaminhar o sentido ao controlador real (bots/netremote: −0.25).
-// CPU com GLBs reais e textura branca; não mede contato, arte, mapas ou oito direções.
+// CPU com GLBs reais e textura branca; não mede contato, arte nem mapas. Com o pack extras
+// carregado, o clipe DOMINANTE (curName) tem de ser o autoral (strafe_*, *_back); o fallback
+// legado sem pack roda em linhas separadas (modo sem-pack), nunca como alternativa aceita.
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -10,7 +12,7 @@ const root = process.cwd();
 const option = name => process.argv.find(a => a.startsWith(name + '='))?.slice(name.length + 1);
 const preview = process.argv.includes('--candidate-preview');
 const mutant = option('--mutante') || '';
-assert.ok(['', 'no-back', 'wrong-sign', 'player'].includes(mutant), 'mutante desconhecido');
+assert.ok(['', 'no-back', 'wrong-sign', 'player', 'sem-strafe', 'lado-invertido'].includes(mutant), 'mutante desconhecido');
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const loadedInputs = {};
 function read(file) {
@@ -47,6 +49,9 @@ const G = await import(pathToFileURL(path.join(root, 'public/js/glbchars.js')));
 const prodCall = 'tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, back, lateral);';
 const noBackCall = 'tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, false, lateral);';
 const wrongSignCall = 'tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, !back, lateral);';
+const noStrafeCall = 'tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, back, 0);';
+const mirrorCall = 'tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, back, -lateral);';
+const EXTRAS_LOCO = ['run_back', 'walk_back', 'walk_back_pistol', 'strafe_left', 'strafe_right', 'strafe_left_pistol', 'strafe_right_pistol'];
 const actual = Game.prototype._updatePlayerTP;
 function replaceOnce(source, from, to) {
   assert.equal(source.split(from).length, 2, 'patch/mutante não aplicou exatamente uma vez');
@@ -63,6 +68,8 @@ let selected = actual;
 if (preview) selected = hasFix ? actual : compile(replaceOnce(originalText, noBackCall, prodCall));
 if (mutant === 'no-back') selected = compile(replaceOnce(selected.toString(), prodCall, noBackCall));
 if (mutant === 'wrong-sign') selected = compile(replaceOnce(selected.toString(), prodCall, wrongSignCall));
+if (mutant === 'sem-strafe') selected = compile(replaceOnce(selected.toString(), prodCall, noStrafeCall));
+if (mutant === 'lado-invertido') selected = compile(replaceOnce(selected.toString(), prodCall, mirrorCall));
 if (mutant === 'player') selected = compile(replaceOnce(selected.toString(), 'const tp = this.playerTP, p = this.player;', 'const tp = this.playerTP, p = this.player; p.pos.x += 0.001;'));
 if (mutant) console.log(`Mutação aplicada: ${mutant}`);
 const dt = 1 / 60;
@@ -80,9 +87,11 @@ const cases = [
   {name: 'movement-boundary-idle', yaw: 0, vel: [0, 0, .6], back: true, idle: true},
   {name: 'movement-boundary-walk', yaw: 0, vel: [0, 0, .600001], back: true},
 ];
-function fixture(id, weapon, c) {
+function fixture(id, weapon, c, semPack) {
   const built = G.buildCharacterModel(CHARACTERS.find(d => d.id === id), {weaponId: weapon});
   assert.ok(built?.ctrl?.actions.walk && built.ctrl.actions.run, 'GLB/clipes não carregaram');
+  if (semPack) {for (const k of EXTRAS_LOCO) delete built.ctrl.actions[k]; built.ctrl._requestExtras = () => {};}
+  else assert.ok(built.ctrl.actions.strafe_right && built.ctrl.actions.run_back, 'pack extras não registrou strafe/recuo');
   const player = {pos: new THREE.Vector3(), vel: new THREE.Vector3(...(c.vel || [0, 0, 0])), yaw: c.yaw, pitch: .1, crouchF: 0, scoped: false, grounded: true, weapon};
   const game = {_ensurePlayerTP() {}, _updatePlayerTPCamera: Game.prototype._updatePlayerTPCamera, playerTP: built, player, _tpEul: new THREE.Euler(), _tpFwd: new THREE.Vector3(), _tpRight: new THREE.Vector3(), _tpOrbitPitch: .2, _tpOrbitYaw: .4, _eyeWorld: new THREE.Vector3(), camView: 'third', camera: new THREE.PerspectiveCamera(70, 1.5, .08, 400), world: {groundHeightAt: () => 0}, sfx: {jump() {}, land() {}}, _collide() {}, _acceptInput: () => true, time: 0,
     // A câmera de 3ª pessoa sonda oclusão do boom com o Raycaster do construtor real (game.js);
@@ -104,19 +113,23 @@ function step(state, c, method) {
   assert.equal(JSON.stringify(p), before, 'TP alterou player/physics');
   built.group.updateMatrixWorld(true);
   const ctrl = built.ctrl, action = ctrl.cur;
-  const clip = Object.keys(ctrl.actions).find(k => ctrl.actions[k] === action);
+  const clip = Object.keys(ctrl.actions).find(k => ctrl.actions[k] === action), dominant = ctrl.curName;
   const actions = Object.fromEntries(Object.entries(ctrl.actions).map(([name, a]) => [name, {time: a.time, rate: a.getEffectiveTimeScale(), weight: a.getEffectiveWeight(), enabled: a.enabled, running: a.isRunning()}]));
   const bones = [];
   ctrl.model.traverse(o => {if (o.isBone && /(Leg|Foot)/.test(o.name)) bones.push([o.name, ...o.quaternion.toArray()]);});
   assert.ok(bones.length, 'nenhum osso Leg/Foot medido');
-  return {sp, clip, time: action.time, rate: action.getEffectiveTimeScale(), duration: action.getClip().duration, actions, bones,
+  return {sp, clip, dominant, time: action.time, rate: action.getEffectiveTimeScale(), duration: action.getClip().duration, actions, bones,
     authority: {player: JSON.parse(before), camera: {position: g.camera.position.toArray(), quaternion: g.camera.quaternion.toArray()}, eye: g._eyeWorld.toArray(), aim: g._tpAimPoint.toArray(), bodyRoot: built.group.matrixWorld.toArray()}};
 }
 const rows = [], clips = {}, clipDetails = {}, failureTypes = new Set();
 for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinha', 'pistol']]) {
   await G.preloadCharacterAssets([id], {weapons: [weapon]});
-  for (const c of cases) {
-    const tested = fixture(id, weapon, c), reference = fixture(id, weapon, c);
+  // O pack é lazy: carrega antes dos casos para nenhuma linha medir sem ele por acaso de ordem.
+  const carga = G.buildCharacterModel(CHARACTERS.find(d => d.id === id), {weaponId: weapon}).ctrl;
+  carga._requestExtras();
+  for (let i = 0; i < 200 && !carga.actions.strafe_right; i++) await new Promise(r => setTimeout(r, 10));
+  for (const semPack of [false, true]) for (const c of cases) {
+    const tested = fixture(id, weapon, c, semPack), reference = fixture(id, weapon, c, semPack);
     if (!clips[id]) {
       clipDetails[id] = Object.fromEntries(Object.entries(tested.built.ctrl.actions).map(([name, action]) => {
         const clip = action.getClip();
@@ -138,9 +151,13 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
         }
         if (frame >= 30) {
           const ctrl = tested.built.ctrl;
-          const expected = c.idle ? (ctrl.oneHanded && ctrl.actions.idle1h ? 'idle1h' : 'idle') : c.back ? (ctrl.oneHanded && ctrl.actions.walk1h ? 'walk1h' : 'walk') : 'run';
-          check(() => assert.equal(a.clip, expected, 'clip ativo incorreto'));
-          if (!c.idle) check(() => assert.equal(Math.sign(a.rate), c.back ? -1 : 1, 'sentido real do mixer incorreto'));
+          const backName = ctrl._loco === 'run' ? 'run_back' : (ctrl.oneHanded && ctrl.actions.walk_back_pistol ? 'walk_back_pistol' : 'walk_back');
+          const lado = /left/.test(c.name) ? 'strafe_left' : /right|quarter/.test(c.name) ? 'strafe_right' : null;
+          const ladoNome = lado && ctrl.oneHanded && ctrl.actions[`${lado}_pistol`] ? `${lado}_pistol` : lado;
+          const legado = c.back ? (ctrl.oneHanded && ctrl.actions.walk1h ? 'walk1h' : 'walk') : 'run';
+          const expected = c.idle ? (ctrl.oneHanded && ctrl.actions.idle1h ? 'idle1h' : 'idle') : semPack ? legado : ladoNome || (c.back ? backName : 'run');
+          check(() => assert.equal(a.dominant, expected, `clip ativo incorreto: ${a.dominant} em vez de ${expected}`));
+          if (!c.idle) check(() => assert.equal(Math.sign(a.actions[a.dominant].rate), semPack && c.back ? -1 : 1, 'sentido real do mixer incorreto'));
           check(() => assert.equal(tested.args[4], c.back, 'back incorreto'));
           check(() => assert.equal(tested.args[2], false, 'hasTarget alterado'));
           check(() => assert.equal(tested.args[3], a.sp, 'speed alterado'));
@@ -150,10 +167,11 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
       if (!c.idle) {
         assert.notDeepEqual(samples[0].bones, samples[1].bones, 'pose real não avançou');
         const a = samples[1], b = samples[2], time = ((a.time + (b.frame - a.frame) * dt * a.rate) % a.duration + a.duration) % a.duration;
-        assert.ok(Math.abs(time - b.time) < 1e-9, 'trajetória temporal difere do rate assinado');
+        const blended = Object.entries(a.actions).some(([name, action]) => name.startsWith('strafe_') && action.weight > 0);
+        if (!blended) assert.ok(Math.abs(time - b.time) < 1e-9, 'trajetória temporal difere do rate assinado');
       }
     } catch (e) {failureTypes.add(e.name); errors.push(e.message);}
-    rows.push({id, weapon, case: c.name, pass: !errors.length, errors, authorityFrames, negativeFrames, samples});
+    rows.push({id, weapon, case: semPack ? `${c.name} sem-pack` : c.name, pass: !errors.length, errors, authorityFrames, negativeFrames, samples});
   }
 }
 for (const [file, sha] of Object.entries(loadedInputs)) assert.equal(digest(fs.readFileSync(path.join(root, file))), sha, 'asset mudou durante gate');

@@ -187,13 +187,16 @@ export function classificar(novos, { mencoes, assets }) {
       const rel = p.slice('public/'.length);
       const stem = base.replace(/\.[^.]+$/, '');
       const c = assets();
+      // Clipe por estado é pedido pelo índice models/anims/index.json (`"<id>": [... "<estado>"]`), stem curto como "run".
+      const clipe = rel.match(/^models\/anims\/([a-z0-9-]+)\/([a-z0-9]+)\.glb$/);
+      const noIndice = clipe && new RegExp(`"${clipe[1]}": \\[[^\\]]*"${clipe[2]}"`).test(c);
       /* Arte de resultado: game.js/main.js montam `/img/resultado/${id}-${pose}.webp`; pedida
          quando o id do personagem está no corpus e o molde da URL também. */
       const resultado = /^img\/resultado\/(.{4,})-(?:vitoria|derrota)\.webp$/.exec(rel);
       /* Atlas de mão do viewmodel: vmhands.js monta `/models/viewmodels/coro/hands/${layout}/${papel}-${estilo}.webp`
          (e `-height`); pedido quando o id do estilo está no corpus e o molde da URL também. */
       const maos = /^models\/viewmodels\/coro\/hands\/[^/]+\/(?:cloth|glove|skin|combined)-(.{4,}?)(?:-height)?\.webp$/.exec(rel);
-      const pedido = c.includes(rel) || c.includes(base) || (stem.length >= 4 && c.includes(stem))
+      const pedido = noIndice || c.includes(rel) || c.includes(base) || (stem.length >= 4 && c.includes(stem))
         || Boolean(resultado && c.includes(`'${resultado[1]}'`) && c.includes('/img/resultado/${'))
         || Boolean(maos && c.includes(`'${maos[1]}'`) && c.includes('/models/viewmodels/coro/hands/${'));
       if (!pedido) falhas.LX5.push(p);

@@ -89,22 +89,9 @@ const R = (v) => Math.round(v * 1e4) / 1e4;
 const CAP = 0.08;
 const AMP_TOL = 0.02;   // ≤ 2 cm de variação no clipe = desvio constante (os da classe (b) medem ≤ 5 mm)
 
-/* EXCEÇÕES MEDIDAS — classe (c) que a tabela da staging compensava (11/11, PR #1302).
-   Com a amostragem rala (5 quadros em 0…0,8 s) estas linhas passavam pelo teto e ganhavam
-   offset; com o clipe inteiro elas são raiz oscilando (suspeitos). Sem offset o pé AFUNDA no
-   apoio mais do que o offset antigo o fazia flutuar no balanço — medido no jogo (Chrome +
-   /packs/, faixa da sola em 4 s de ciclo, staging → sem offset):
-     caminhoneiro/walk  -0,047..0,080 → -0,096..0,031     caminhoneiro/run -0,007..0,087 → -0,081..0,013
-     barbudo/walk       -0,016..0,126 → -0,084..0,058     esbirro/walk     -0,152..0,052 → -0,214..-0,010
-     palhacomal/walk    -0,043..0,061 → -0,090..0,014     padati/run       -0,015..0,087 → -0,086..0,015
-     padati/walk        (o jogo toca walk1h nele; mantida pelo mesmo motivo)
-   Por decisão do dono, estas linhas ficam com o valor que a staging tem até o clipe novo
-   (#1279, estados assados) — só valem enquanto a linha for suspeito; fora disso o gerador
-   para com erro, para a exceção não envelhecer calada. */
-const EXCECOES = {
-  'caminhoneiro/walk': 0.0495, 'caminhoneiro/run': 0.0738, 'barbudo/walk': 0.068,
-  'esbirro/walk': 0.0614, 'palhacomal/walk': 0.0469, 'padati/walk': 0.0436, 'padati/run': 0.0717,
-};
+/* Exceções temporárias da staging foram pagas pelos clipes por corpo de #1279. O fail-closed
+   abaixo permanece: se uma exceção futura deixar de ser suspeita, a geração exige remoção. */
+const EXCECOES = {};
 const excecoesUsadas = new Set();
 
 const tabela = {};

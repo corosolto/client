@@ -2226,8 +2226,9 @@ export class Game {
       }   // N: 1ª → 3ª → ombro · Shift+N: troca o ombro
       if (e.code === 'KeyT' && !e.repeat) { this._emoteToggle(); return; }   // roda de dança
       if (this.emoteOpen) {
+        // 1-8: danças procedurais (anel de dentro) · Shift+1-8: emotes de captura (anel de fora)
         const n = /^Digit([1-8])$/.exec(e.code);
-        if (n) { this._emotePick(this._emoteMod?.EMOTES?.[+n[1] - 1]?.id); return; }
+        if (n) { this._emotePick(this._emoteAnel(e.shiftKey)?.[+n[1] - 1]?.id); return; }
         if (e.code === 'Escape') { this._emoteClose(); return; }
       }
       // slot memory: 1 = last primary held, 2 = last sidearm held (not a hardcoded reset)
@@ -2697,28 +2698,37 @@ export class Game {
   }
   async _emoteMods() {
     if (this._emoteMod) return this._emoteMod;
-    try {
-      const mod = await import('./emotes.js');
-      setEmoteDriver({ pose: mod.poseEmote, duracao: mod.emoteDuracao, laco: mod.emoteLaco });
+    if (this._emoteLoading) return this._emoteLoading;
+    this._emoteLoading = import('./emotes.js').then((mod) => {
+      setEmoteDriver(mod.EMOTE_DRIVER);
       this._emoteMod = mod;
       return mod;
-    } catch { return null; }
+    }).catch(() => null).finally(() => { this._emoteLoading = null; });
+    return this._emoteLoading;
+  }
+  /* Dois anéis: dentro os 8 procedurais (1-8), fora os de captura (Shift+1-8). A posição
+     no catálogo é o id de rede; a roda só agrupa. */
+  _emoteAnel(captura) {
+    const lista = this._emoteMod?.EMOTES || [];
+    return lista.filter((e) => !!e.clipe === !!captura);
   }
   _emoteUi(mod) {
     const m = this.el.emoteWheel;
     if (!m) return;
     if (!this.emoteOpen) { m.classList.add('hidden'); return; }
-    const itens = mod.EMOTES;
-    const raio = 118;
-    m.innerHTML = '<div class="emote-miolo">DANÇA<small>T fecha · 1-8</small></div>'
-      + itens.map((e, i) => {
-        const ang = (i / itens.length) * Math.PI * 2 - Math.PI / 2;
-        const x = Math.cos(ang) * raio, y = Math.sin(ang) * raio;
-        const ativo = this._emoteAtual === e.id ? ' ativo' : '';
-        return `<button type="button" class="emote-fatia${ativo}" data-emote="${e.id}" title="${e.origem}"`
-          + ` style="transform:translate(-50%,-50%) translate(${x.toFixed(0)}px,${y.toFixed(0)}px)">`
-          + `<b>${i + 1}</b>${e.nome}</button>`;
-      }).join('');
+    const fatia = (e, i, total, raio, tecla, classe, giro = 0) => {
+      const ang = ((i + giro) / total) * Math.PI * 2 - Math.PI / 2;
+      const x = Math.cos(ang) * raio, y = Math.sin(ang) * raio;
+      const ativo = this._emoteAtual === e.id ? ' ativo' : '';
+      const passe = mod.emoteDesbloqueio?.(e.id) === 'passe' ? '<i>PASSE</i>' : '';
+      return `<button type="button" class="emote-fatia${classe}${ativo}" data-emote="${e.id}" title="${e.origem}"`
+        + ` style="transform:translate(-50%,-50%) translate(${x.toFixed(0)}px,${y.toFixed(0)}px)">`
+        + `<b>${tecla}${i + 1}</b>${e.nome}${passe}</button>`;
+    };
+    const dentro = mod.EMOTES.filter((e) => !e.clipe), fora = mod.EMOTES.filter((e) => e.clipe);
+    m.innerHTML = '<div class="emote-miolo">DANÇA<small>T fecha · 1-8 · ⇧1-8</small></div>'
+      + dentro.map((e, i) => fatia(e, i, dentro.length, 118, '', '')).join('')
+      + fora.map((e, i) => fatia(e, i, fora.length, 222, '⇧', ' captura', 0.5)).join('');
     m.classList.remove('hidden');
     for (const b of m.querySelectorAll('.emote-fatia')) {
       b.onclick = () => this._emotePick(b.dataset.emote);
@@ -3209,6 +3219,7 @@ export class Game {
     else this.vm.rig.startDraw();
     this.el.weaponName.textContent = WEAPONS[this.player.weapon].name;
     const slots = { E: 1, B: 0 };
+    this.playerTP?.ctrl?.revive?.();
     for (const b of this.bots) {
       if (b._objectiveNpc) continue;
       const botSpawn = place(b, b.team, slots[b.team]++);
@@ -3279,6 +3290,10 @@ export class Game {
     }
     if (lead >= tgt) this.timeLeft = 0;   // update() enxerga timeLeft<=0 e chama _endRound
   }
+  _cerimoniaCorpos(winner) {
+    for (const b of this.bots) if (b.alive) b.mesh?.ctrl?.ceremony?.(!!winner && winner === b.team);
+    if (this.player.alive) this.playerTP?.ctrl?.ceremony?.(!!winner && winner === this.playerTeam);
+  }
   _endRound(forcedWinner = null) {
     const p = this.roundKills.E, b = this.roundKills.B;
     let winner = forcedWinner;
@@ -3294,6 +3309,7 @@ export class Game {
     if (winner && winner !== 'draw') this.roundsWon[winner] = (this.roundsWon[winner] || 0) + 1;
     this._compra?.aoFimDaRodada(winner);
     this.state = 'roundEnd';
+    this._cerimoniaCorpos?.(winner);
     const objectiveResult = this.objective?.roundResult?.(winner);
     this.stateUntil = this.time + (objectiveResult?.duration || 4);
     this.player.scoped = false; this.el.scope.classList.remove('on');
@@ -4660,7 +4676,7 @@ export class Game {
     if (ent.hp > 0 && attacker && attacker.pos) {
       const _fx = ent.pos.x - attacker.pos.x, _fz = ent.pos.z - attacker.pos.z;
       const _ctrl = ent.isPlayer ? this.playerTP?.ctrl : ent.mesh?.ctrl;
-      _ctrl?.flinch?.({ x: _fx, z: _fz }, dmg / 100);
+      _ctrl?.flinch?.({ x: _fx, z: _fz }, dmg / 100, head);
     }
     if (ent.isPlayer && ent.hp > 0) this._stackTrace(attacker);
     if (ent.isPlayer) {
@@ -5635,6 +5651,7 @@ export class Game {
     if ((p[ammoKey] | 0) <= 0 && p.nade === kind) { p.nade = null; this.vm.authored?.releaseUtility(); }
     this._cancelReload();   // recarregando e jogou granada: a recarga cai (mesma regra do porte)
     const ANIM_ARREMESSO = 1.05;
+    this.playerTP?.ctrl?.grenade?.(ANIM_ARREMESSO);
     const animou = Boolean(this.vm.authored?.throwUtility(kind, ANIM_ARREMESSO, release));
     /* Sem pacote pago (mobile/legado) a granada sai no ato e não há animação para proteger:
        a janela é só a do arremesso que existe. */
@@ -6167,6 +6184,7 @@ export class Game {
     this.roundsWon[team] = (this.roundsWon[team] || 0) + 1;
     this.world.onGoal?.();
     this.state = 'roundEnd'; this.stateUntil = this.time + 4;
+    this._cerimoniaCorpos?.(team);
     this.player.scoped = false; this.el.scope.classList.remove('on');
     this.radioOpen = null; this._radioUi();
     this._ensureDolly();
@@ -6995,6 +7013,7 @@ export class Game {
     tp.group.visible = (this.camView === 'third');
     this.scene.add(tp.group);
     this.playerTP = tp;
+    if (weaponChanged) tp.ctrl?.draw?.();
     this._tpGloveId = gloveId;
     this._tpGloveReady = gloveReady;
     this._tpGloveKey = tp.gloveHandle?.key || null;
@@ -8338,6 +8357,7 @@ export class Game {
     next.group.traverse((o) => { o.userData.botOwner = bot; });
     this.scene.add(next.group);
     bot.mesh = next;
+    if (oldGroup) next.ctrl?.draw?.();
     bot._meshWeapon = weapon;
     return true;
   }
@@ -9480,7 +9500,8 @@ export class Game {
         const distCam = Math.hypot(b.pos.x - this.camera.position.x, b.pos.z - this.camera.position.z);
         const passo = distCam > 45 ? 0.1 : (distCam > 25 ? 0.05 : 0);
         b.mesh.ctrl.lod = distCam > 45 ? 2 : (distCam > 25 ? 1 : 0);
-        const lat = (mx * Math.cos(b.yaw) - mz * Math.sin(b.yaw)) / dtSafe;
+        // Lateral > 0 = direita do corpo (−X local), o sinal do jogador local e do remoto do MP.
+        const lat = (mz * Math.sin(b.yaw) - mx * Math.cos(b.yaw)) / dtSafe;
         if (passo === 0) b.mesh.ctrl.update(dt, mv, !!b.target, spd, fwd < -0.25, lat);
         else {
           b._animAcc = (b._animAcc || 0) + dt;

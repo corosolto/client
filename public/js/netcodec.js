@@ -1,17 +1,20 @@
 import { WEAPONS } from './data/weapons.js';
+import { V9_EMOTE_IDS } from './data/emote-catalog.js';
 
-export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v8', 'coro-snapshot-v7', 'coro-snapshot-v6', 'coro-snapshot-v5', 'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
+export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v9', 'coro-snapshot-v8', 'coro-snapshot-v7', 'coro-snapshot-v6', 'coro-snapshot-v5', 'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
 const PROTOCOL_VERSIONS = new Map(SNAPSHOT_PROTOCOLS.map(protocol => [protocol, Number(protocol.match(/-v(\d+)$/)[1])]));
 export function snapshotVersionForProtocol(protocol) { return PROTOCOL_VERSIONS.get(protocol) ?? null; }
-export const CLIENT_SNAPSHOT_PROTOCOL = 'coro-snapshot-v8';
+export const CLIENT_SNAPSHOT_PROTOCOL = 'coro-snapshot-v9';
 export const MAX_SNAPSHOT_BYTES = 32768;
-const CURRENT_VERSION = 8;
+const CURRENT_VERSION = 9;
 const KIND_SNAPSHOT = 1;
 const MAX_ENTITIES = 64;
 const MAX_CTF_POINTS = 16;
 const MAX_STRING_BYTES = 64;
 const WEAPON_IDS = Object.freeze(Object.keys(WEAPONS));
 const WEAPON_INDEX = new Map(WEAPON_IDS.map((id, i) => [id, i]));
+const EMOTE_INDEX = new Map(V9_EMOTE_IDS.map((id, i) => [id, i + 1]));
+const qTenths = value => Math.max(0, Math.min(255, Math.round((Number(value) || 0) * 10)));
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', { fatal: true });
 
@@ -217,7 +220,7 @@ export function encodeSnapshot(snapshot, version = 7) {
       /* v5: posição do vizinho quantizada, `fire` e `voice` viram CONTADOR (bandeira de um
          snapshot só some quando o pacote se perde), e o bloco privado saiu daqui. */
       w.u32(integer(ent.id, 0xffffffff, 'entity_id')); w.str(ent.name);
-      w.u8((ent.team === 'J' ? 16 : ent.team === 'B' ? 1 : 0) | (ent.bot ? 2 : 0) | (ent.alive ? 4 : 0));
+      w.u8((ent.team === 'J' ? 16 : ent.team === 'B' ? 1 : 0) | (ent.bot ? 2 : 0) | (ent.alive ? 4 : 0) | (version >= 9 && ent.crouch ? 8 : 0));
       w.u16(q16(ent.x, POS_MIN, POS_MAX)); w.u16(q16(ent.y, ALT_MIN, ALT_MAX)); w.u16(q16(ent.z, POS_MIN, POS_MAX));
       w.u16(qAng(ent.yaw > Math.PI || ent.yaw < -Math.PI ? Math.atan2(Math.sin(ent.yaw), Math.cos(ent.yaw)) : ent.yaw, Math.PI));
       w.u16(qAng(ent.pitch || 0, Math.PI / 2));
@@ -232,6 +235,14 @@ export function encodeSnapshot(snapshot, version = 7) {
       w.u16(integer(ent.k, 65535, 'kills')); w.u16(integer(ent.d, 65535, 'deaths'));
       w.u8(Math.max(0, Math.min(255, Math.round((Number(ent.respawnIn) || 0) * 10))));
       w.str(ent.killedBy);
+      // v9: recarga pública de humanos E bots; emote persistente para quem entra no meio.
+      if (version >= 9) {
+        const emoteId = ent.emote == null ? 0 : EMOTE_INDEX.get(ent.emote);
+        if (emoteId == null) throw new RangeError('emote');
+        w.u8(qTenths(ent.reloadIn));
+        w.u8(emoteId);
+        w.u8(emoteId ? qTenths(ent.emoteElapsed) : 0);
+      }
       continue;
     }
     w.u32(integer(ent.id, 0xffffffff, 'entity_id')); w.str(ent.name);
@@ -295,6 +306,13 @@ export function decodeSnapshot(data) {
       const mantleByte = version >= 7 ? r.u8() : 0;
       const hp = r.u8(), weaponId = r.u8(), fireN = r.u8(), voiceByte = r.u8();
       const k = r.u16(), d = r.u16(), respawnIn = r.u8() / 10, killedBy = r.str();
+      const reloadIn = version >= 9 ? r.u8() / 10 : 0;
+      const emoteId = version >= 9 ? r.u8() : 0;
+      const emoteTenths = version >= 9 ? r.u8() : 0;
+      // A v9 congelou oito IDs. Valores posteriores pertencem a outra revisão do
+      // catálogo e viram "sem emote"; nunca reinterpretar o mesmo byte dentro da v9.
+      const emote = V9_EMOTE_IDS[emoteId - 1] ?? null;
+      const emoteElapsed = emote ? emoteTenths / 10 : 0;
       if (weaponId !== 255 && !WEAPON_IDS[weaponId]) throw new RangeError('weapon');
       const vt = voiceByte & 3;
       snapshot.ents.push({
@@ -304,6 +322,7 @@ export function decodeSnapshot(data) {
         fireN, voice: vt === 1 ? 'radio' : vt === 2 ? 'voice' : 0, voiceN: voiceByte >> 2,
         k, d, respawnIn, ...(mantleByte ? { mantleF: (mantleByte - 1) / 254 } : {}),
         ...(killedBy ? { killedBy } : {}),
+        ...(version >= 9 ? { crouch: !!(flags & 8), reloadIn, emote, emoteElapsed } : {}),
       });
       continue;
     }

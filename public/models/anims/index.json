@@ -14,6 +14,29 @@
   "walk1h",
   "walkfire"
  ],
+ "extras": [
+  "defeat",
+  "draw_rifle",
+  "grenade_throw",
+  "hit_back",
+  "hit_front",
+  "hit_head",
+  "hit_left",
+  "hit_right",
+  "holster_rifle",
+  "knife_idle",
+  "knife_stab",
+  "reload_pistol",
+  "reload_rifle",
+  "run_back",
+  "strafe_left",
+  "strafe_left_pistol",
+  "strafe_right",
+  "strafe_right_pistol",
+  "victory",
+  "walk_back",
+  "walk_back_pistol"
+ ],
  "clipes": {
   "adjim": [
    "idle",
@@ -249,6 +272,19 @@
    "walk1h",
    "walkfire"
   ],
+  "cuca": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "curupira": [
    "idle",
    "walk",
@@ -432,6 +468,19 @@
    "walkfire"
   ],
   "funkraiz": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "gilbomes": [
    "idle",
    "walk",
    "run",
@@ -974,5 +1023,414 @@
    "walk1h",
    "walkfire"
   ]
+ },
+ "refs": {
+  "adjim": {
+   "run": 3.9624
+  },
+  "bandeirante": {
+   "walk": 1.5803,
+   "run": 3.9509,
+   "crouchwalk": 1.6773,
+   "walk1h": 2.187
+  },
+  "barbudo": {
+   "walk": 1.4218,
+   "run": 3.5545,
+   "crouchwalk": 1.509,
+   "walk1h": 1.9676
+  },
+  "blackmetal": {
+   "walk": 1.7363,
+   "run": 4.3408,
+   "crouchwalk": 1.8428,
+   "walk1h": 2.4028
+  },
+  "bombado": {
+   "walk": 1.4578,
+   "run": 3.6446,
+   "crouchwalk": 1.5473,
+   "walk1h": 2.0174
+  },
+  "bonzo": {
+   "walk": 1.6462,
+   "run": 4.1155,
+   "crouchwalk": 1.7472,
+   "walk1h": 2.2781
+  },
+  "boto": {
+   "walk": 1.6967,
+   "run": 4.242,
+   "crouchwalk": 1.8008,
+   "walk1h": 2.3481
+  },
+  "cadequinha": {
+   "walk": 1.5897,
+   "run": 3.9743,
+   "crouchwalk": 1.6872,
+   "walk1h": 2.2
+  },
+  "caipora": {
+   "walk": 1.7276
+  },
+  "camera-roxa": {
+   "walk": 1.59,
+   "run": 3.975,
+   "crouchwalk": 1.6875,
+   "walk1h": 2.2003
+  },
+  "caminhoneiro": {
+   "walk": 1.322,
+   "run": 3.3051,
+   "crouchwalk": 1.4031,
+   "walk1h": 1.8295
+  },
+  "canarinho": {
+   "walk": 1.2895,
+   "run": 3.2239,
+   "crouchwalk": 1.3686,
+   "walk1h": 1.7846
+  },
+  "capitao": {
+   "walk": 1.899,
+   "run": 4.7475,
+   "walk1h": 2.6279
+  },
+  "chave": {
+   "walk": 1.6236,
+   "run": 4.0592,
+   "crouchwalk": 1.7233,
+   "walk1h": 2.2469
+  },
+  "clubber": {
+   "walk": 1.7324,
+   "run": 4.3311,
+   "crouchwalk": 1.8387,
+   "walk1h": 2.3974
+  },
+  "coach": {
+   "walk": 1.6576,
+   "run": 4.144,
+   "crouchwalk": 1.7593,
+   "walk1h": 2.2939
+  },
+  "criarj": {
+   "walk": 1.6597,
+   "run": 4.1495,
+   "crouchwalk": 1.7616,
+   "walk1h": 2.2969
+  },
+  "curupira": {
+   "walk": 1.3241,
+   "run": 3.3104,
+   "crouchwalk": 1.4054,
+   "walk1h": 1.8325
+  },
+  "dama": {
+   "walk": 1.6441,
+   "run": 4.1104,
+   "crouchwalk": 1.745,
+   "walk1h": 2.2753
+  },
+  "deputado": {
+   "walk": 1.6808,
+   "run": 4.202,
+   "crouchwalk": 1.7839,
+   "walk1h": 2.326
+  },
+  "designer-ux": {
+   "walk": 1.6112,
+   "run": 4.028,
+   "crouchwalk": 1.71,
+   "walk1h": 2.2297
+  },
+  "doidinho-bairro": {
+   "walk": 1.6636,
+   "run": 4.159,
+   "crouchwalk": 1.7656,
+   "walk1h": 2.3022
+  },
+  "dollynho": {
+   "walk": 1.4634,
+   "run": 3.6587,
+   "crouchwalk": 1.5532,
+   "walk1h": 2.0252
+  },
+  "doutora": {
+   "walk": 1.5807,
+   "run": 3.9519,
+   "crouchwalk": 1.6777,
+   "walk1h": 2.1875
+  },
+  "emo": {
+   "walk": 1.7275,
+   "run": 4.3189,
+   "crouchwalk": 1.8335,
+   "walk1h": 2.3907
+  },
+  "esbirro": {
+   "walk": 1.6003,
+   "walk1h": 2.2147
+  },
+  "esquerdomacho": {
+   "walk": 1.5939,
+   "run": 3.985
+  },
+  "et": {
+   "walk": 1.5178,
+   "run": 3.7946,
+   "crouchwalk": 1.6109,
+   "walk1h": 2.1004
+  },
+  "farialimer": {
+   "walk": 1.6234,
+   "run": 4.0587,
+   "crouchwalk": 1.723,
+   "walk1h": 2.2466
+  },
+  "fluxo": {
+   "walk": 1.6702,
+   "run": 4.1757,
+   "walk1h": 2.3114
+  },
+  "funkeiro": {
+   "walk": 1.5553,
+   "run": 3.8883,
+   "crouchwalk": 1.6507,
+   "walk1h": 2.1523
+  },
+  "funkraiz": {
+   "walk": 1.5662,
+   "run": 3.9157,
+   "crouchwalk": 1.6623,
+   "walk1h": 2.1675
+  },
+  "gilbomes": {
+   "walk": 1.3581,
+   "run": 3.3953,
+   "crouchwalk": 1.4414,
+   "walk1h": 1.8794
+  },
+  "gotinha": {
+   "walk": 1.0793,
+   "run": 2.6982,
+   "crouchwalk": 1.1455,
+   "walk1h": 1.4936
+  },
+  "hipster": {
+   "walk": 1.6035,
+   "run": 4.0087,
+   "crouchwalk": 1.7018,
+   "walk1h": 2.219
+  },
+  "jozo": {
+   "walk": 1.5279,
+   "run": 3.8197,
+   "crouchwalk": 1.6216,
+   "walk1h": 2.1144
+  },
+  "juiz": {
+   "walk": 1.7432,
+   "run": 4.358,
+   "crouchwalk": 1.8501,
+   "walk1h": 2.4123
+  },
+  "julia-zanatta": {
+   "walk": 1.6906,
+   "run": 4.2267,
+   "crouchwalk": 1.7944,
+   "walk1h": 2.3396
+  },
+  "lampiao": {
+   "walk": 1.6281,
+   "run": 4.0704,
+   "crouchwalk": 1.728,
+   "walk1h": 2.2531
+  },
+  "lenda-lanhouse": {
+   "walk": 1.7027,
+   "run": 4.257,
+   "crouchwalk": 1.8072,
+   "walk1h": 2.3564
+  },
+  "lobisomem": {
+   "walk": 2.0689,
+   "run": 5.1724,
+   "crouchwalk": 2.1958,
+   "walk1h": 2.8631
+  },
+  "mandrake": {
+   "walk": 1.5553,
+   "run": 3.8883,
+   "crouchwalk": 1.6507,
+   "walk1h": 2.1523
+  },
+  "mariabonita": {
+   "run": 4.2508,
+   "walk1h": 2.353
+  },
+  "marina-silva": {
+   "crouchwalk": 1.8035,
+   "walk1h": 2.3516
+  },
+  "metaleiro": {
+   "walk": 1.6474,
+   "run": 4.1187,
+   "crouchwalk": 1.7485,
+   "walk1h": 2.2799
+  },
+  "microfonildo": {
+   "run": 4.257,
+   "walk1h": 2.3564
+  },
+  "ministro": {
+   "walk": 1.7344,
+   "run": 4.3362,
+   "walk1h": 2.4003
+  },
+  "mistico": {
+   "walk": 1.5192,
+   "run": 3.7981,
+   "crouchwalk": 1.6124,
+   "walk1h": 2.1024
+  },
+  "motoca-cachorro-loko": {
+   "walk": 1.6332,
+   "run": 4.0832,
+   "crouchwalk": 1.7334,
+   "walk1h": 2.2602
+  },
+  "mst": {
+   "walk": 1.5305,
+   "run": 3.8262,
+   "crouchwalk": 1.6244,
+   "walk1h": 2.118
+  },
+  "oakley": {
+   "walk": 1.5168,
+   "run": 3.7921,
+   "walk1h": 2.0991
+  },
+  "ostentacao": {
+   "walk": 1.696,
+   "run": 4.2401,
+   "crouchwalk": 1.8001,
+   "walk1h": 2.3471
+  },
+  "padata": {
+   "walk": 1.601,
+   "run": 4.0026,
+   "crouchwalk": 1.6992,
+   "walk1h": 2.2156
+  },
+  "padati": {
+   "walk": 1.5517,
+   "run": 3.8793,
+   "crouchwalk": 1.6469,
+   "walk1h": 2.1473
+  },
+  "pagodeiro": {
+   "walk": 1.5268,
+   "run": 3.817,
+   "crouchwalk": 1.6204,
+   "walk1h": 2.1129
+  },
+  "palhacomal": {
+   "walk": 1.6383,
+   "run": 4.096,
+   "crouchwalk": 1.7389,
+   "walk1h": 2.2673
+  },
+  "proerd": {
+   "walk": 1.407,
+   "run": 3.5176,
+   "crouchwalk": 1.4933,
+   "walk1h": 1.9471
+  },
+  "professor": {
+   "walk": 1.8693,
+   "run": 4.6732,
+   "crouchwalk": 1.9839,
+   "walk1h": 2.5868
+  },
+  "profeta-calcada": {
+   "walk": 1.8244,
+   "crouchwalk": 1.9363,
+   "walk1h": 2.5247
+  },
+  "programador-virado": {
+   "walk": 1.6408,
+   "run": 4.1022,
+   "crouchwalk": 1.7415
+  },
+  "punk": {
+   "walk": 1.5264,
+   "run": 3.8162,
+   "crouchwalk": 1.6201,
+   "walk1h": 2.1124
+  },
+  "rapper": {
+   "walk": 1.4605,
+   "run": 3.6513,
+   "crouchwalk": 1.5501,
+   "walk1h": 2.0211
+  },
+  "raul": {
+   "walk": 1.5024,
+   "run": 3.7561,
+   "crouchwalk": 1.5946,
+   "walk1h": 2.0792
+  },
+  "reggae": {
+   "walk": 1.4873,
+   "run": 3.7184,
+   "crouchwalk": 1.5786,
+   "walk1h": 2.0583
+  },
+  "saci": {
+   "walk": 1.2778,
+   "run": 3.1945,
+   "crouchwalk": 1.3562,
+   "walk1h": 1.7683
+  },
+  "senador": {
+   "walk": 1.7756,
+   "run": 4.439,
+   "crouchwalk": 1.8845,
+   "walk1h": 2.4572
+  },
+  "sertanejo": {
+   "walk": 1.4702,
+   "run": 3.6757
+  },
+  "sindicato": {
+   "walk": 1.4069,
+   "run": 3.5174,
+   "crouchwalk": 1.4933,
+   "walk1h": 1.947
+  },
+  "skatista": {
+   "walk": 1.7394,
+   "run": 4.3485,
+   "crouchwalk": 1.8461,
+   "walk1h": 2.4071
+  },
+  "titica": {
+   "walk": 1.5016,
+   "run": 3.7541,
+   "crouchwalk": 1.5937,
+   "walk1h": 2.0781
+  },
+  "trapfunk": {
+   "walk": 1.7444,
+   "run": 4.361,
+   "crouchwalk": 1.8514,
+   "walk1h": 2.414
+  },
+  "zumbi": {
+   "walk": 1.9108,
+   "run": 4.7772,
+   "walk1h": 2.6444
+  }
  }
 }

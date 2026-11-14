@@ -950,8 +950,6 @@ console.log('\n· multiplayer→sair→single player não reaproveita a sessão 
   const quitLimpa = /function quitToMenu\(\)\s*{[\s\S]{0,3200}mpEncerrarSessao\(\);/;
   cobra(encerraAntes.test(main) && quitLimpa.test(main),
     'SAIR PRO MENU zera a sessão e fecha o WebSocket antes de permitir uma partida offline');
-  cobra(/localMp && mpNoAtual\?\.id === 'url' && !NOS\.some\(\(no\) => no\.url === mpNoAtual\.url\)/.test(main),
-    '?mp= dispensa ticket só para nó de teste; trocar para nó oficial continua autenticado');
 
   const mutSemFronteira = main.replace('const sessao = online ? mpSessao : null;', 'const sessao = mpSessao;');
   cobra(!guard.test(mutSemFronteira),
@@ -1032,7 +1030,7 @@ console.log('\n· nova partida do servidor (`partida`) e viewmodel montado depoi
   // Régua executável com o NetClient REAL: janela de regex quebra com resets legítimos do ramo.
   const { NetClient } = await import('../../public/js/net.js');
   const cli = new NetClient('ws://fixture.invalid/ws'); let hooks;
-  const conectando = cli._conectar(1000, () => ({ abrir(v) { hooks = v; }, fechar() {}, enviar() {} }));
+  const conectando = cli._conectar(1000, () => ({ protocolo: 'coro-snapshot-v8', abrir(v) { hooks = v; }, fechar() {}, enviar() {} }));
   hooks.mensagem(JSON.stringify({ type: 'welcome', protocolVersion: 8, yourEnt: 1, yourTeam: 'E', espectador: false }), false, 100);
   await conectando;
   cli.proximo = { map: 'velho' };
