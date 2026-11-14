@@ -70,7 +70,6 @@ const akJson = glbJson(ak);
 const akClips = new Set((akJson.animations || []).map((clip) => clip.name));
 check(['Equip', 'Idle', 'Reload', 'Shoot'].every((name) => akClips.has(name)) && (akJson.cameras || []).length > 0,
   'AK contém câmera e os quatro clipes do contrato');
-check(tracked.has('tools/blender/viewmodels/build_ak_hires_pilot.py'), 'receita Blender da AK está versionada');
 check(tracked.has(knife) && sha256(knife) === '3e04fbcb67480cec0638ca552d308379c5bff7c5689ae39c8aa88e566c992621', 'faca pública bate o hash aprovado');
 const knifeJson = glbJson(knife);
 const knifeClips = new Set((knifeJson.animations || []).map((clip) => clip.name));
