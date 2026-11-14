@@ -1,5 +1,5 @@
-/* Issue #1352: a morte não pode derrubar o loop quando o filho do HUD não foi ligado no _dom.
-   Usa o Game real e exige recuperação quando o nó aparece, respawn e mutação do acesso direto. */
+/* Issue #1352: a morte não pode derrubar o loop quando o HUD de respawn não foi ligado no _dom.
+   Usa o Game real e exige recuperação do contador quando o nó aparece, respawn e mutação do acesso direto. */
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
@@ -57,8 +57,12 @@ const H = await import('./harness.mjs');
 const { Game } = await import(pathToFileURL(gameFile));
 const originalGet = document.getElementById;
 const originalCount = originalGet('respawn-count');
-let available = false;
-document.getElementById = (id) => id === 'respawn-count' && !available ? null : originalGet(id);
+let countAvailable = false;
+document.getElementById = (id) => {
+  if (id === 'respawn-overlay') return null;
+  if (id === 'respawn-count' && !countAvailable) return null;
+  return originalGet(id);
+};
 try {
   const def = H.CHARACTERS.find((character) => character.id === H.PCHAR) || H.CHARACTERS[0];
   game = new Game({
@@ -71,28 +75,43 @@ try {
   game.killsToWin = Infinity;
   game.start ? game.start() : game._startRound();
 
-  game.player.alive = false;
-  game.player.respawnAt = game.time + 2;
-
   let firstError = null;
-  try { game._updatePlayer(1 / 60); } catch (error) { firstError = error; }
-  check('AUSENTE-NAO-DERRUBA', !firstError && game.el.respawnCount === null, {
-    nuloNoDom: game.el.respawnCount === null,
+  try { game._kill(game.player, null); } catch (error) { firstError = error; }
+  check('OVERLAY-AUSENTE-NAO-DERRUBA-MORTE', !firstError && game.el.respawn === null && !game.player.alive, {
+    overlayNulo: game.el.respawn === null,
+    alive: game.player.alive,
     erro: String(firstError || ''),
   });
-  if (firstError) throw firstError;
 
-  available = true;
+  let countError = null;
+  try { game._updatePlayer(1 / 60); } catch (error) { countError = error; }
+  check('AUSENTE-NAO-DERRUBA', !countError && game.el.respawnCount === null, {
+    nuloNoDom: game.el.respawnCount === null,
+    erro: String(countError || ''),
+  });
+
+  if (!game.player.respawnAt) game.player.respawnAt = game.time + 2;
+  if (firstError) throw firstError;
+  if (countError) throw countError;
+
+  countAvailable = true;
   game.time += 0.5;
+  const expectedCount = Math.max(0, game.player.respawnAt - game.time).toFixed(1);
   game._updatePlayer(1 / 60);
-  check('REBIND-ATUALIZA', game.el.respawnCount === originalCount && originalCount.textContent === '1.5', {
+  check('REBIND-ATUALIZA', game.el.respawnCount === originalCount && originalCount.textContent === expectedCount, {
     ligado: game.el.respawnCount === originalCount,
+    esperado: expectedCount,
     texto: originalCount.textContent,
   });
 
   game.time = game.player.respawnAt;
   game._updatePlayer(1 / 60);
   check('RESPAWN-CONTINUA', game.player.alive, { alive: game.player.alive });
+
+  let disposeError = null;
+  try { game.dispose(); } catch (error) { disposeError = error; }
+  check('OVERLAY-AUSENTE-NAO-DERRUBA-DESCARTE', !disposeError, { erro: String(disposeError || '') });
+  game = null;
 } catch (error) {
   if (!rows.some((row) => !row.pass)) check('INFRA', false, { erro: String(error && error.stack || error) });
 } finally {
