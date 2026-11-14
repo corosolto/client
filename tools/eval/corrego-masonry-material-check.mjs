@@ -21,6 +21,7 @@ const MUTANTES = {
   'offset-diverge': { 'muro-sampler-transform': 1 },
   'rough-srgb': { 'cru-rough-srgb': 1 },
   'raw-double-tint': { 'cru-tint': 1 },
+  'cego': {},
 };
 if (MUT && !Object.hasOwn(MUTANTES, MUT)) uso(`mutante desconhecido: ${MUT} (válidos: ${Object.keys(MUTANTES).join(', ')})`);
 const FISICA = !!flags.fisica;
@@ -191,11 +192,13 @@ if (MUT) {
     for (const m of cru) { m.roughnessMap.colorSpace = THREE.SRGBColorSpace; aplicou = true; }
   } else if (MUT === 'raw-double-tint') {
     cru[0].color.set(0xc98a63); aplicou = true;
+  } else if (MUT === 'cego') {
+    cru[0].name += '-mutante-cego'; aplicou = true;
   }
   if (!aplicou) { console.error(`mutação ${MUT} não alterou o mundo — mutante fantasma`); process.exit(78); }
   // mesma instância coletada: mutantes são in-place, re-coletar perde o mapa trocado
   const pos = validarMateriais({ muros, cru }, src);
-  if (!pos.length) { console.error(`mutante ${MUT} passou GREEN — régua cega`); process.exit(3); }
+  if (!pos.length) { console.error(`mutante ${MUT} passou GREEN — régua cega`); process.exit(78); }
   const obtido = contagem(pos);
   if (!mesmoConjunto(obtido, MUTANTES[MUT])) {
     console.error(`mutante ${MUT} com conjunto de falhas ≠ alvo — esperado ${JSON.stringify(MUTANTES[MUT])}, obtido ${JSON.stringify(obtido)}`);
