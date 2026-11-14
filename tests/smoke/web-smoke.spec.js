@@ -151,6 +151,9 @@ test('menu, ranking, map, teams, character and initial hud boot', async ({ page 
 
 test('queda do nó mostra estado de reconexão e permite entrar de novo', async ({ page }, testInfo) => {
   const base = process.env.BASE_URL || 'http://127.0.0.1:4321';
+  const fixtureSecure = new URL(base).protocol === 'https:';
+  const fixtureHttp = `${fixtureSecure ? 'https' : 'http'}://fixture.invalid`;
+  const fixtureMp = fixtureSecure ? 'wss://fixture.invalid' : 'fixture.invalid';
   if (MUTANTE === 'sem-aviso-reconexao') {
     testInfo.annotations.push({ type: 'mutação', description: 'sem-aviso-reconexao — esconde o aviso depois do onClose; a régua DEVE reprovar' });
     await page.route('**/js/main.js*', async (rota) => {
@@ -166,7 +169,7 @@ test('queda do nó mostra estado de reconexão e permite entrar de novo', async 
     if (host !== 'fixture.invalid') return rota.abort();
     return rota.fulfill({ json: { regiao: 'url', players: 1, rooms: 1, salaConvite: true, soloVerified: true } });
   });
-  await page.route('https://fixture.invalid/rooms', (rota) => rota.fulfill({ json: { rooms: [{
+  await page.route(`${fixtureHttp}/rooms`, (rota) => rota.fulfill({ json: { rooms: [{
     id: 'smoke', name: 'SALA SMOKE', map: 'praca_poderes', mapId: 'praca_poderes', mode: 'rounds',
     oficial: true, private: false, players: 1, max: 10, livre: { E: 4, B: 5 }, convite: 'BR-SMOKE',
   }] } }));
@@ -205,7 +208,7 @@ test('queda do nó mostra estado de reconexão e permite entrar de novo', async 
     window.__mpSmokeForceFail = false;
   }, MUTANTE === 'sem-aviso-reconexao');
 
-  await page.goto(`${base}/?debug=1&nav=1&home=legacy&ui=legacy&mp=${encodeURIComponent('wss://fixture.invalid')}`);
+  await page.goto(`${base}/?debug=1&nav=1&home=legacy&ui=legacy&mp=${encodeURIComponent(fixtureMp)}`);
   await expect(page.locator('#splash-enter')).toBeVisible({ timeout: 25_000 });
   await page.keyboard.press('Enter');
   await expect(page.locator('#boot-splash')).toHaveCount(0);
