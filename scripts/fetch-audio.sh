@@ -15,7 +15,7 @@ cd "$(dirname "$0")/.."
 # (decisão do dono: nenhum título legível em URL/zip). Fecha o BUG-19
 # (produção servia o pack de julho e todo som novo dava 404).
 URL="${AUDIO_PACK_URL:-https://github.com/corosolto/client/releases/download/audio-pack-v9/audio-pack.zip}"
-DEST="public/audio"
+DEST="${AUDIO_DEST:-public/audio}"
 AUTH_ARGS=()
 PACOTE_PRIVADO=0
 
@@ -63,7 +63,7 @@ if [ "$PREFETCH_R2" != 1 ] && [ -f "$DEST/manifest.json" ] && [ "${VERCEL:-}" !=
   exit 0
 fi
 mkdir -p "$DEST"
-CACHE_DIR="node_modules/.cache/csb-packs"
+CACHE_DIR="${AUDIO_CACHE_DIR:-node_modules/.cache/csb-packs}"
 if [ "${VERCEL:-}" = "1" ] || [ "$PREFETCH_R2" = 1 ]; then mkdir -p "$CACHE_DIR"; fi
 # Chave = sha256 de (digest + URL inteira): URL longa não trunca nem colide com outra de prefixo igual.
 CACHE_ZIP="$CACHE_DIR/audio-$(printf '%s' "${AUDIO_PACK_SHA256:-}${URL}" | shasum -a 256 | cut -d' ' -f1).zip"
@@ -88,7 +88,9 @@ else
   if [ -d "$CACHE_DIR" ]; then cp /tmp/csbrasil-audio.zip "$CACHE_ZIP"; fi
 fi
 if [ "$PREFETCH_R2" = 1 ]; then
-  echo "Pacote privado preparado no cache: $CACHE_ZIP"
+  unzip -o -q /tmp/csbrasil-audio.zip -d "$DEST/"
+  [ -f "$DEST/manifest.json" ] || { echo "Pacote privado sem manifest.json" >&2; exit 1; }
+  echo "Pacote privado preparado no cache e extraído em $DEST: $CACHE_ZIP"
   exit 0
 fi
 unzip -o -q /tmp/csbrasil-audio.zip -d "$DEST/"

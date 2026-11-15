@@ -7,7 +7,7 @@
          null (cai no 404 do Astro) para caminho fora do manifesto, objeto ausente ou tamanho errado
      B4  csbrasil.online (apex) responde 308 para o www preservando caminho e query
      B5  a chave no R2 é a mesma do Blob (scripts/vm-assets.mjs blobPathOf) para todo o manifesto
-   Mutantes (cada um tem de reprovar): sem-strip, vm-sem-etag, apex-301. */
+   Mutantes (cada um tem de reprovar): sem-strip, vm-sem-etag, apex-301, apex-sem-worker-first. */
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -18,17 +18,21 @@ import { blobPathOf } from '../../scripts/vm-assets.mjs';
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
 const MUTANTE = process.argv.find((a) => a.startsWith('--mutante='))?.slice(10) || '';
 const MUTACOES = {
-  'sem-strip': ["if (/^stale-while-revalidate=/i.test(diretiva)) continue;", ''],
-  'vm-sem-etag': ["const headers = new Headers({ 'content-type': entrada.contentType, etag });", "const headers = new Headers({ 'content-type': entrada.contentType });"],
-  'apex-301': ['alvo.toString(), 308)', 'alvo.toString(), 301)'],
+  'sem-strip': ['src/cf/borda.mjs', "if (/^stale-while-revalidate=/i.test(diretiva)) continue;", ''],
+  'vm-sem-etag': ['src/cf/borda.mjs', "const headers = new Headers({ 'content-type': entrada.contentType, etag });", "const headers = new Headers({ 'content-type': entrada.contentType });"],
+  'apex-301': ['src/cf/borda.mjs', 'alvo.toString(), 308)', 'alvo.toString(), 301)'],
+  'apex-sem-worker-first': ['wrangler.prod.toml', 'run_worker_first = true', 'run_worker_first = ["/", "/index.html"]'],
 };
 if (MUTANTE && !MUTACOES[MUTANTE]) { console.error(`mutante desconhecido: ${MUTANTE}`); process.exit(2); }
 
 let fonte = readFileSync(path.join(ROOT, 'src/cf/borda.mjs'), 'utf8');
+let wrangler = readFileSync(path.join(ROOT, 'wrangler.prod.toml'), 'utf8');
 if (MUTANTE) {
-  const [de, para] = MUTACOES[MUTANTE];
-  if (!fonte.includes(de)) { console.error(`mutante ${MUTANTE} não encontrou o trecho`); process.exit(2); }
-  fonte = fonte.replace(de, para);
+  const [arquivo, de, para] = MUTACOES[MUTANTE];
+  const alvo = arquivo === 'src/cf/borda.mjs' ? fonte : wrangler;
+  if (!alvo.includes(de)) { console.error(`mutante ${MUTANTE} não encontrou o trecho em ${arquivo}`); process.exit(2); }
+  if (arquivo === 'src/cf/borda.mjs') fonte = fonte.replace(de, para);
+  else wrangler = wrangler.replace(de, para);
 }
 const arquivo = path.join(mkdtempSync(path.join(tmpdir(), 'cf-borda-')), 'borda.mjs');
 writeFileSync(arquivo, fonte);
@@ -87,6 +91,7 @@ for (const [caso, req, b] of [
 // B4
 const apex = borda.redirectDeHost(new URL('https://csbrasil.online/jogar/multiplayer?partida=1'));
 check(apex?.status === 308 && apex.headers.get('location') === 'https://www.csbrasil.online/jogar/multiplayer?partida=1', 'B4', `apex: ${apex?.status} ${apex?.headers.get('location')}`);
+check(/run_worker_first\s*=\s*true/.test(wrangler), 'B4', 'apex precisa passar toda rota estática pelo redirect do Worker');
 check(borda.redirectDeHost(new URL('https://www.corosolto.com.br/')) === null, 'B4', 'www não redireciona');
 
 // B5

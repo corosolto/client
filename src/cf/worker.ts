@@ -17,7 +17,11 @@ const CACHE_PADRAO = 'public, max-age=0, must-revalidate';
 const CC_CLIENTE = 'x-csb-cc';
 
 type R2Objeto = { size: number; body?: ReadableStream };
-type Env = { PRIVADO?: { get(chave: string): Promise<R2Objeto | null>; head(chave: string): Promise<R2Objeto | null> } };
+type Assets = { fetch(request: Request): Promise<Response> };
+type Env = {
+  ASSETS?: Assets;
+  PRIVADO?: { get(chave: string): Promise<R2Objeto | null>; head(chave: string): Promise<R2Objeto | null> };
+};
 // lib.dom não conhece `caches.default` (extensão do workerd) e o projeto não carrega @cloudflare/workers-types.
 const cacheDaBorda = caches as CacheStorage & { default: Cache };
 type Ctx = { waitUntil(p: Promise<unknown>): void };
@@ -37,6 +41,11 @@ const doCache = (guardada: Response) => {
   saida.headers.delete(CC_CLIENTE);
   return saida;
 };
+const respostaDoSite = async (request: Request, env: Env, ctx: Ctx) => {
+  const asset = env.ASSETS ? await env.ASSETS.fetch(request) : null;
+  return asset && asset.status !== 404 ? asset : astro.fetch(request, env, ctx);
+};
+
 
 export default {
   async fetch(request: Request, env: Env, ctx: Ctx): Promise<Response> {
@@ -51,7 +60,7 @@ export default {
     const redirect = redirectPara(REDIRECTS, url);
     const resposta = redirect
       ? Response.redirect(new URL(redirect.destino, url).toString(), redirect.status)
-      : (await viewmodelDoBucket(request, env.PRIVADO, VIEWMODELS)) ?? (await astro.fetch(request, env, ctx));
+      : (await viewmodelDoBucket(request, env.PRIVADO, VIEWMODELS)) ?? (await respostaDoSite(request, env, ctx));
     // `set`, não `append`: o asset binding já aplicou `_headers`; repetir a chave é idempotente.
     const saida = new Response(resposta.body, resposta);
     for (const [chave, valor] of headersPara(HEADERS, url.pathname)) saida.headers.set(chave, valor);
