@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
-const validos = new Set(['', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato', 'prod-sem-preview-url', 'prod-promove-por-tag']);
+const validos = new Set(['', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato', 'prod-sem-preview-url', 'prod-promove-por-tag', 'preview-sem-provisionamento']);
 if (!validos.has(mutante)) {
-  console.error('uso: cf-deploy-ref-check [--mutante=staging-dispatch-arbitrario|prod-dispatch-arbitrario|prod-sem-candidato|prod-sem-preview-url|prod-promove-por-tag]');
+  console.error('uso: cf-deploy-ref-check [--mutante=staging-dispatch-arbitrario|prod-dispatch-arbitrario|prod-sem-candidato|prod-sem-preview-url|prod-promove-por-tag|preview-sem-provisionamento]');
   process.exit(2);
 }
 
@@ -11,6 +11,8 @@ let staging = readFileSync('.github/workflows/cf-staging-deploy.yml', 'utf8');
 let producao = readFileSync('.github/workflows/cf-prod-deploy.yml', 'utf8');
 let stagingConfig = readFileSync('wrangler.staging.toml', 'utf8');
 let producaoConfig = readFileSync('wrangler.prod.toml', 'utf8');
+let preview = readFileSync('.github/workflows/cf-preview-deploy.yml', 'utf8');
+let previewConfig = readFileSync('wrangler.preview.toml', 'utf8');
 if (mutante === 'staging-dispatch-arbitrario') {
   staging = staging.replace('    branches: [staging]', '    branches: [staging]\n  workflow_dispatch:');
 }
@@ -25,6 +27,9 @@ if (mutante === 'prod-sem-preview-url') {
 }
 if (mutante === 'prod-promove-por-tag') {
   producao = producao.replace('"$VERSION_ID@100%"', '--version-tag "$CS_BUILD_SHA" --percentage 100');
+}
+if (mutante === 'preview-sem-provisionamento') {
+  preview = preview.replace('npx --yes wrangler@4.158.0 triggers deploy --config wrangler.preview.toml', ':');
 }
 
 const falhas = [];
@@ -53,6 +58,12 @@ check(/workers_dev\s*=\s*true/.test(stagingConfig) && /preview_urls\s*=\s*true/.
   'CFREF1', 'staging precisa publicar URL imutável da versão candidata');
 check(/workers_dev\s*=\s*true/.test(producaoConfig) && /preview_urls\s*=\s*true/.test(producaoConfig),
   'CFREF2', 'produção precisa publicar URL imutável da versão candidata');
+const previewProvisiona = preview.indexOf('wrangler@4.158.0 triggers deploy --config wrangler.preview.toml');
+const previewUpload = preview.indexOf('wrangler@4.158.0 versions upload');
+check(previewProvisiona >= 0 && previewUpload > previewProvisiona,
+  'CFREF3', 'preview de PR precisa provisionar a URL remota antes do upload versionado');
+check(/workers_dev\s*=\s*true/.test(previewConfig) && /preview_urls\s*=\s*true/.test(previewConfig),
+  'CFREF3', 'configuração confiável do preview precisa habilitar URLs imutáveis');
 
 for (const falha of falhas) console.error(`FAIL ${falha}`);
 if (mutante && !falhas.length) {
