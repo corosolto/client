@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import sys
+import subprocess
 
 PREFIX = "<!-- csbrasil-bot-sweep:"
 SUFFIX = " -->"
@@ -13,10 +14,104 @@ BOT_AUTHOR = "csbrasil-bot"
 BOT_AUTHORS = {BOT_AUTHOR, "github-actions[bot]"}
 STATE_RE = re.compile(r"<!-- csbrasil-bot-sweep:(classify|automerge):([A-Za-z0-9_-]+) -->")
 
+OPEN_PRS_QUERY = """
+query($owner: String!, $name: String!, $endCursor: String) {
+  repository(owner: $owner, name: $name) {
+    pullRequests(first: 100, after: $endCursor, states: OPEN,
+                 orderBy: {field: UPDATED_AT, direction: DESC}) {
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        number title body isDraft baseRefName baseRefOid mergeStateStatus
+        headRefName headRefOid reviewDecision
+        headRepository { nameWithOwner }
+        assignees(first: 100) { nodes { login } }
+        labels(first: 100) { nodes { name } }
+        latestReviews(first: 100) {
+          nodes { author { login } state submittedAt commit { oid } }
+        }
+        reviewRequests(first: 100) {
+          nodes {
+            requestedReviewer {
+              __typename
+              ... on User { login }
+              ... on Team { name slug }
+            }
+          }
+        }
+        statusCheckRollup {
+          contexts(first: 100) {
+            nodes {
+              __typename
+              ... on CheckRun { name conclusion status detailsUrl }
+              ... on StatusContext { context state targetUrl }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
 
 def _digest(value):
     encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _open_prs_from_pages(pages):
+    if not isinstance(pages, list) or not pages:
+        raise ValueError("GitHub returned no GraphQL pages")
+    result = []
+    numbers = set()
+    last = len(pages) - 1
+    for index, page in enumerate(pages):
+        try:
+            connection = page["data"]["repository"]["pullRequests"]
+            nodes = connection["nodes"]
+            has_next = connection["pageInfo"]["hasNextPage"]
+        except (KeyError, TypeError) as error:
+            raise ValueError("GitHub returned a malformed open PR page") from error
+        if not isinstance(nodes, list) or type(has_next) is not bool:
+            raise ValueError("GitHub returned a malformed open PR connection")
+        if has_next != (index < last):
+            raise ValueError("GitHub open PR pagination was incomplete")
+        for source in nodes:
+            if not isinstance(source, dict):
+                raise ValueError("GitHub returned a malformed open PR")
+            pr = dict(source)
+            number = pr.get("number")
+            if type(number) is not int or number <= 0 or number in numbers:
+                raise ValueError("GitHub returned an invalid or duplicate open PR number")
+            numbers.add(number)
+            for field in ("assignees", "labels", "latestReviews", "reviewRequests"):
+                connection_value = pr.get(field)
+                if not isinstance(connection_value, dict) or not isinstance(connection_value.get("nodes"), list):
+                    raise ValueError(f"GitHub returned malformed {field} for PR #{number}")
+                pr[field] = connection_value["nodes"]
+            rollup = pr.get("statusCheckRollup")
+            if rollup is None:
+                pr["statusCheckRollup"] = []
+            else:
+                contexts = rollup.get("contexts") if isinstance(rollup, dict) else None
+                if not isinstance(contexts, dict) or not isinstance(contexts.get("nodes"), list):
+                    raise ValueError(f"GitHub returned a malformed status rollup for PR #{number}")
+                pr["statusCheckRollup"] = contexts["nodes"]
+            result.append(pr)
+    return result
+
+
+def open_pr_inventory(repository):
+    if not isinstance(repository, str) or repository.count("/") != 1:
+        raise ValueError("repository must be owner/name")
+    owner, name = repository.split("/")
+    if not owner or not name:
+        raise ValueError("repository must be owner/name")
+    raw = subprocess.check_output([
+        "gh", "api", "graphql", "--paginate", "--slurp",
+        "-f", f"owner={owner}", "-f", f"name={name}", "-f", f"query={OPEN_PRS_QUERY}",
+    ], text=True)
+    return _open_prs_from_pages(json.loads(raw))
 
 
 def fingerprint(pr):
@@ -198,12 +293,53 @@ def selftest():
         print("  FALHOU state round trip")
     else:
         print("  ok   state round trip")
+
+    def raw_open_pr(number):
+        return {
+            "number": number,
+            "assignees": {"nodes": [{"login": "rubenmarcus"}]},
+            "labels": {"nodes": [{"name": "release"}]},
+            "latestReviews": {"nodes": []},
+            "reviewRequests": {"nodes": []},
+            "statusCheckRollup": {"contexts": {"nodes": [{"__typename": "CheckRun"}]}},
+        }
+
+    pages = [
+        {"data": {"repository": {"pullRequests": {
+            "pageInfo": {"hasNextPage": True},
+            "nodes": [raw_open_pr(number) for number in range(1, 101)],
+        }}}},
+        {"data": {"repository": {"pullRequests": {
+            "pageInfo": {"hasNextPage": False},
+            "nodes": [raw_open_pr(101)],
+        }}}},
+    ]
+    inventory = _open_prs_from_pages(pages)
+    if (len(inventory) == 101 and inventory[-1]["number"] == 101
+            and inventory[0]["labels"] == [{"name": "release"}]
+            and inventory[0]["statusCheckRollup"] == [{"__typename": "CheckRun"}]):
+        print("  ok   open PR inventory exhausts every GraphQL page")
+    else:
+        failures += 1
+        print("  FALHOU open PR inventory exhausts every GraphQL page")
+    try:
+        _open_prs_from_pages(pages[:1])
+    except ValueError:
+        print("  ok   truncated open PR inventory is rejected")
+    else:
+        failures += 1
+        print("  FALHOU truncated open PR inventory is rejected")
     return 0 if not failures else 1
 
 
 def main():
     if "--selftest" in sys.argv:
         return selftest()
+    if "--list-open" in sys.argv:
+        if len(sys.argv) != 3:
+            raise ValueError("usage: bot_sweep.py --list-open owner/name")
+        print(json.dumps(open_pr_inventory(sys.argv[2])))
+        return 0
     payload = json.load(sys.stdin)
     if "--encode" in sys.argv:
         print(encode_state(payload["kind"], payload["pr"]))
@@ -211,7 +347,7 @@ def main():
     if "--should-dispatch" in sys.argv:
         print(json.dumps(should_dispatch(payload["pr"], payload.get("comments"), payload["kind"])))
         return 0
-    raise ValueError("choose --encode, --should-dispatch, or --selftest")
+    raise ValueError("choose --encode, --should-dispatch, --list-open, or --selftest")
 
 
 if __name__ == "__main__":
