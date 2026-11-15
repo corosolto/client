@@ -16,6 +16,7 @@ const mutations = {
   'reload-reinicia': ['restante > 0 && !b._netReloadActive', 'restante > 0'],
   'reload-nao-cancela': ['restante === 0 && b._netReloadActive', 'false'],
   'reload-perde-ciclo': ['if (novoCicloReload) ent._netReloadActive = false;', 'if (false) ent._netReloadActive = false;'],
+  'reload-estende': ['Math.min(ent._netReloadUntilMs || reloadUntilMs, reloadUntilMs)', 'reloadUntilMs'],
   'fase-zero': ['info.laco ? elapsed % info.dur : elapsed', '0'],
   'rampa-reinicia': ['else ctrl.emote?.(info.id, info.laco ? elapsed % info.dur : elapsed);', 'else { ctrl._emoteK = 0; ctrl.emote?.(info.id, info.laco ? elapsed % info.dur : elapsed); }'],
   'stop-ignorado': ['ctrl.pararEmote?.(); b._netEmoteAppliedTick = null;', 'b._netEmoteAppliedTick = null;'],
@@ -132,6 +133,18 @@ try {
   check('R3P18', preservedCycle && b.mesh.ctrl._reloadT > .2 && b.mesh.ctrl.reloadK > .1,
     { preservou: preservedCycle, fase: b.mesh.ctrl._reloadT, peso: b.mesh.ctrl.reloadK });
   send();
+  // Um snapshot do mesmo ciclo não pode empurrar o fim local para a frente.
+  send({ reloadIn: 2 }, 9, 80);
+  const deadlineReload = b._netReloadUntilMs;
+  now += 500;
+  send({ reloadIn: 1.9 }, 9, 80.1);
+  const deadlinePreservado = b._netReloadUntilMs <= deadlineReload;
+  now = deadlineReload + 1;
+  frame(0);
+  check('R3P19', deadlinePreservado && b.mesh.ctrl._reloadDur === 0,
+    { primeiro: deadlineReload, depois: b._netReloadUntilMs, dur: b.mesh.ctrl._reloadDur });
+  send();
+
 
   // Import pendente, depois stop: resolver o módulo não pode recolocar a dança.
   const load = game._emoteMods.bind(game);

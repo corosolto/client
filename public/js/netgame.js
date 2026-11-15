@@ -527,7 +527,10 @@ class Netcode {
           ? reloadEndAntes == null || novoCicloReload ? reloadEndT : Math.min(reloadEndAntes, reloadEndT)
           : null;
         ent._netReloadAtT = snap.t;
-        ent._netReloadUntilMs = reloadIn > 0 ? nowMs + reloadIn * 1000 : 0;
+        const reloadUntilMs = nowMs + reloadIn * 1000;
+        ent._netReloadUntilMs = reloadIn > 0
+          ? (reloadEndAntes == null || novoCicloReload ? reloadUntilMs : Math.min(ent._netReloadUntilMs || reloadUntilMs, reloadUntilMs))
+          : 0;
         ent._netEmote = e.alive && game.state === 'live' && emoteInfo(e.emote) ? e.emote : null;
         ent._netEmoteElapsed = Math.max(0, Number(e.emoteElapsed) || 0);
         ent._netStateAtMs = nowMs;
