@@ -384,7 +384,7 @@ const an7 = await page.evaluate(async () => {
 });
 await fechar();
 
-/* ---- AN4: fiação no jogo (jogador 3P + bot colado no jogador) ---- */
+/* ---- AN4: fiação no jogo (jogador 3P + caller real de tiro do bot) ---- */
 const an4 = {};
 if (MUT !== 'opcional-fantasma') {
   const { page: p2, fechar: f2 } = await abrir();
@@ -396,12 +396,14 @@ if (MUT !== 'opcional-fantasma') {
     p.ammo[w] = { mag: 0, res: 30 };
     g._startReload();
     const jogadorRecarregando = (g.playerTP?.ctrl?._reloadDur || 0) > 0;
-    const b = g.bots.find(x => x.mesh?.ctrl && x.alive && x.team !== g.playerTeam);
-    b.mag = 0; b.nextShotAt = 0; b.reactAt = 0; b.focusUntil = 0; b.alertUntil = 0;
+    const { WEAPONS } = await import('/js/data/weapons.js');
+    const b = g.bots.find(x => x.mesh?.ctrl && x.alive && x.team !== g.playerTeam && (WEAPONS[x.weapon]?.mag || 0) > 0);
+    if (!b) throw new Error('sem bot inimigo vivo com arma de fogo');
+    b.mag = 1; b.nextShotAt = 0; b.reactAt = 0; b.focusUntil = 0; b.alertUntil = 0;
     b.target = g.player;
     b.pos.set(g.player.pos.x + 2.5, g.player.pos.y, g.player.pos.z); b.think = 0;
-    let botRecarregou = false;
-    for (let i = 0; i < 900 && !botRecarregou; i++) { g.update(1 / 60); botRecarregou = (b.mesh?.ctrl?._reloadDur || 0) > 0; }
+    g._botShootNN(b, g.player);
+    const botRecarregou = (b.mesh?.ctrl?._reloadDur || 0) > 0;
     // AN10: cadência de animação cai com a distância (bot teleportado pra longe)
     const longe = g.bots.find(x => x.mesh?.ctrl && x.alive && x !== b) || b;
     longe.pos.set(g.player.pos.x + 80, longe.pos.y, g.player.pos.z + 80);
