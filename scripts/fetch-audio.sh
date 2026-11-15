@@ -78,8 +78,15 @@ else
   echo "Baixando pacote de áudio de: $URL"
   if [[ "$URL" == r2://* ]]; then
     rm -f /tmp/csbrasil-audio.zip
+    objeto="${URL#r2://}"
+    bucket="${objeto%%/*}"
+    key="${objeto#*/}"
+    if [ -z "$bucket" ] || [ -z "$key" ] || [ "$key" = "$objeto" ]; then
+      echo "AUDIO_PACK_URL R2 inválida: esperado r2://bucket/chave" >&2
+      exit 1
+    fi
     CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-${CF_API_TOKEN:-}}" \
-      npx --no-install wrangler r2 object get "${URL#r2://}" --file /tmp/csbrasil-audio.zip --remote
+      npx --no-install wrangler r2 object get "$key" --bucket="$bucket" --file /tmp/csbrasil-audio.zip --remote
   else
     curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL \
       "${AUTH_ARGS[@]}" "$URL" -o /tmp/csbrasil-audio.zip

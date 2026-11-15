@@ -23,8 +23,27 @@ const executavel = (nome, fonte) => {
 executavel('npx', `#!/usr/bin/env bash
 set -euo pipefail
 [ "\${CLOUDFLARE_API_TOKEN:-}" = token-sentinela ]
+[ "$1" = --no-install ]; shift
+[ "$1" = wrangler ]; shift
+[ "$1" = r2 ]; shift
+[ "$1" = object ]; shift
+[ "$1" = get ]; shift
+key="$1"; shift
+[ "$key" = audio-pack.zip ]
 out=''
-while [ "$#" -gt 0 ]; do if [ "$1" = --file ]; then out="$2"; shift 2; else shift; fi; done
+bucket=''
+remote=0
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --bucket=*) bucket="\${1#--bucket=}"; shift ;;
+    --file) out="$2"; shift 2 ;;
+    --remote) remote=1; shift ;;
+    *) exit 64 ;;
+  esac
+done
+[ "$bucket" = corosolto-private ]
+[ "$remote" = 1 ]
+[ -n "$out" ]
 cp "$FIXTURE_ZIP" "$out"
 `);
 executavel('unzip', `#!/usr/bin/env bash

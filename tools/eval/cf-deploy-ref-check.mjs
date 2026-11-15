@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
-const validos = new Set(['', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato', 'prod-sem-preview-url', 'prod-promove-por-tag', 'preview-sem-provisionamento', 'preview-base-arbitraria']);
+const validos = new Set(['', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato', 'prod-sem-preview-url', 'prod-promove-por-tag', 'prod-percentual-com-simbolo', 'preview-sem-provisionamento', 'preview-base-arbitraria']);
 if (!validos.has(mutante)) {
-  console.error('uso: cf-deploy-ref-check [--mutante=staging-dispatch-arbitrario|prod-dispatch-arbitrario|prod-sem-candidato|prod-sem-preview-url|prod-promove-por-tag|preview-sem-provisionamento|preview-base-arbitraria]');
+  console.error('uso: cf-deploy-ref-check [--mutante=staging-dispatch-arbitrario|prod-dispatch-arbitrario|prod-sem-candidato|prod-sem-preview-url|prod-promove-por-tag|prod-percentual-com-simbolo|preview-sem-provisionamento|preview-base-arbitraria]');
   process.exit(2);
 }
 
@@ -26,7 +26,10 @@ if (mutante === 'prod-sem-preview-url') {
   producaoConfig = producaoConfig.replace('preview_urls = true', 'preview_urls = false');
 }
 if (mutante === 'prod-promove-por-tag') {
-  producao = producao.replace('"$VERSION_ID@100%"', '--version-tag "$CS_BUILD_SHA" --percentage 100');
+  producao = producao.replace('"$VERSION_ID@100"', '--version-tag "$CS_BUILD_SHA" --percentage 100');
+}
+if (mutante === 'prod-percentual-com-simbolo') {
+  producao = producao.replace('"$VERSION_ID@100"', '"$VERSION_ID@100%"');
 }
 if (mutante === 'preview-sem-provisionamento') {
   preview = preview.replace('npx --yes wrangler@4.158.0 triggers deploy --config wrangler.preview.toml', ':');
@@ -51,8 +54,9 @@ const validaWorkflow = (fonte, ramo, id) => {
     'preview remoto precisa ser provisionado antes do upload, verificado por bytes e só então promovido');
   check(/Worker Version ID:[\s\S]*echo "version_id=\$VERSION_ID"/.test(fonte)
     && /VERSION_ID: \$\{\{ steps\.upload\.outputs\.version_id \}\}/.test(fonte)
-    && /versions deploy "\$VERSION_ID@100%"/.test(fonte),
-  id, 'promoção precisa usar o ID único retornado pelo mesmo upload, nunca tag ambígua');
+    && /versions deploy "\$VERSION_ID@100"/.test(fonte)
+    && !/versions deploy "\$VERSION_ID@100%"/.test(fonte),
+  id, 'promoção precisa usar o ID único retornado pelo upload com percentual numérico válido');
 };
 
 validaWorkflow(staging, 'staging', 'CFREF1');

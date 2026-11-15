@@ -80,6 +80,6 @@ jobs:
           VERSION_ID: ${{ steps.upload.outputs.version_id }}
         run: |
           set -euo pipefail
-          npx wrangler versions deploy "$VERSION_ID@100%" \
+          npx wrangler versions deploy "$VERSION_ID@100" \
             --config wrangler.staging.toml \
             --yes
