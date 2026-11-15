@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
-const validos = new Set(['', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato', 'prod-sem-preview-url']);
+const validos = new Set(['', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato', 'prod-sem-preview-url', 'prod-promove-por-tag']);
 if (!validos.has(mutante)) {
-  console.error('uso: cf-deploy-ref-check [--mutante=staging-dispatch-arbitrario|prod-dispatch-arbitrario|prod-sem-candidato|prod-sem-preview-url]');
+  console.error('uso: cf-deploy-ref-check [--mutante=staging-dispatch-arbitrario|prod-dispatch-arbitrario|prod-sem-candidato|prod-sem-preview-url|prod-promove-por-tag]');
   process.exit(2);
 }
 
@@ -23,6 +23,9 @@ if (mutante === 'prod-sem-candidato') {
 if (mutante === 'prod-sem-preview-url') {
   producaoConfig = producaoConfig.replace('preview_urls = true', 'preview_urls = false');
 }
+if (mutante === 'prod-promove-por-tag') {
+  producao = producao.replace('"$VERSION_ID@100%"', '--version-tag "$CS_BUILD_SHA" --percentage 100');
+}
 
 const falhas = [];
 const check = (ok, id, mensagem) => { if (!ok) falhas.push(`${id} ${mensagem}`); };
@@ -32,14 +35,16 @@ const validaWorkflow = (fonte, ramo, id) => {
   check(/ref: \$\{\{ github\.sha \}\}/.test(fonte), id, 'checkout precisa fixar o SHA do push');
   check(/id: build[\s\S]*git rev-parse HEAD[\s\S]*steps\.build\.outputs\.sha/.test(fonte),
     id, 'build e verificação precisam compartilhar o SHA realmente checado');
+  const provisiona = fonte.indexOf('npx wrangler triggers deploy');
   const upload = fonte.indexOf('npx wrangler versions upload');
   const verifica = fonte.indexOf('node tools/cf/verifica-deploy.mjs');
   const promove = fonte.indexOf('npx wrangler versions deploy');
-  check(upload >= 0 && verifica > upload && promove > verifica, id,
-    'versão precisa ser enviada sem tráfego, verificada por bytes e só então promovida');
-  check(/versions upload[\s\S]*--tag "\$CS_BUILD_SHA"/.test(fonte)
-    && /versions deploy[\s\S]*--version-tag "\$CS_BUILD_SHA"[\s\S]*--percentage 100/.test(fonte),
-  id, 'upload e promoção precisam apontar para a mesma versão identificada pelo SHA');
+  check(provisiona >= 0 && upload > provisiona && verifica > upload && promove > verifica, id,
+    'preview remoto precisa ser provisionado antes do upload, verificado por bytes e só então promovido');
+  check(/Worker Version ID:[\s\S]*echo "version_id=\$VERSION_ID"/.test(fonte)
+    && /VERSION_ID: \$\{\{ steps\.upload\.outputs\.version_id \}\}/.test(fonte)
+    && /versions deploy "\$VERSION_ID@100%"/.test(fonte),
+  id, 'promoção precisa usar o ID único retornado pelo mesmo upload, nunca tag ambígua');
 };
 
 validaWorkflow(staging, 'staging', 'CFREF1');

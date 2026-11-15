@@ -57,15 +57,17 @@ jobs:
           CS_BUILD_SHA: ${{ steps.build.outputs.sha }}
         run: |
           set -euo pipefail
+          npx wrangler triggers deploy --config wrangler.prod.toml
           npx wrangler versions upload \
             --config wrangler.prod.toml \
-            --tag "$CS_BUILD_SHA" \
             --message "release $CS_BUILD_SHA" 2>&1 | tee "$RUNNER_TEMP/wrangler-prod-upload.log"
+          VERSION_ID=$(grep 'Worker Version ID:' "$RUNNER_TEMP/wrangler-prod-upload.log" | grep -Eo '[0-9a-fA-F]{8}-[0-9a-fA-F-]{27,}' | tail -n 1)
           URL=$(grep -Eo 'https://[^[:space:]]+\.workers\.dev' "$RUNNER_TEMP/wrangler-prod-upload.log" | tail -n 1 | sed 's/[),.]$//')
-          [ -n "$URL" ] || {
-            echo "::error::Wrangler não retornou a URL da versão candidata"
+          [ -n "$VERSION_ID" ] && [ -n "$URL" ] || {
+            echo "::error::Wrangler não retornou ID e URL da versão candidata"
             exit 1
           }
+          echo "version_id=$VERSION_ID" >> "$GITHUB_OUTPUT"
           echo "url=$URL" >> "$GITHUB_OUTPUT"
       - name: Verifica versão candidata (build, áudio e viewmodels)
         env:
@@ -78,11 +80,9 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          CS_BUILD_SHA: ${{ steps.build.outputs.sha }}
+          VERSION_ID: ${{ steps.upload.outputs.version_id }}
         run: |
           set -euo pipefail
-          npx wrangler versions deploy \
+          npx wrangler versions deploy "$VERSION_ID@100%" \
             --config wrangler.prod.toml \
-            --version-tag "$CS_BUILD_SHA" \
-            --percentage 100 \
             --yes
