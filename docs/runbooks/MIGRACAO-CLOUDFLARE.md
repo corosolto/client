@@ -221,8 +221,10 @@ viewmodels respondem 200 com tamanho e ETag (sha256) do manifesto.
   `vercel env pull` devolve placeholder, não o valor. `X_PIXEL_TOKEN` não existe fora da Vercel; staging
   fica sem (não manda conversão ao X) e produção depende do dono gravar o token de novo.
 - **Produção.** `wrangler.prod.toml` (Worker `csb-prod`, mesmo build, binding `PRIVADO`) e
-  `cf-prod-deploy.yml`: publica no push `chore(release):` da main (o mesmo commit que a Vercel builda)
-  e por `workflow_dispatch` com tag. Publicar não muda tráfego.
+  `cf-prod-deploy.yml`: o push `chore(release):` da `main` protegida (o mesmo commit que a Vercel
+  builda) envia uma versão sem tráfego, verifica D1–D3 na URL imutável e só então promove a tag do
+  SHA a 100%. O workflow não aceita `workflow_dispatch`: rollback entra por novo commit de release
+  na `main`, nunca por YAML de branch com o token da conta.
 - **Virada.** `tools/cf/virada.sh liga|desliga|status`: Worker Routes `www.corosolto.com.br/*`,
   `www.csbrasil.online/*` e `csbrasil.online/*` apontando para o `csb-prod`. O DNS continua proxied para a
   Vercel; a rota intercepta antes da origem, e `desliga` devolve o tráfego à Vercel em segundos. O 308
@@ -274,4 +276,4 @@ npm run cf:paridade -- --alvo https://<worker>.workers.dev
 | 2026-11-09 | limpeza-lote2 | lote 2 removeu 9 `tools/eval` órfãos e 59 geradores raiz sem chamadores; arquivou históricos e pastas privadas fora do repo; ajustou os consumidores de `plans/` e `references/` | L2 aguarda PR e merge; arquivos `tools/blender/**` e `tools/fabrica/**` seguem intactos por decisão do dono |
 | 2026-11-09 | — | links compartilháveis do jogo e do site passam a usar `https://corosol.to`; canonical, `og:url`, hreflang, sitemap e JSON-LD permanecem em `www`; régua `eval:shareorigin` com mutantes entra na suite fast | abrir PR para `staging`, acompanhar pr-fast e confirmar a prova de convite no navegador |
 | 2026-11-10 | vercel-sem-preview | preview 100% Cloudflare: branch de PR nunca mais builda na Vercel (`vercel-ignore.sh` sai 0; régua com mutantes `preview-pr-builda`/`staging-pulado`/`release-pulado`); `preview-build.yml` só por `workflow_dispatch` (input `pr_number`), `preview-deploy.yml` segue em `workflow_run` como emergência; PRV1 proíbe reativar o disparo automático; bot não promete URL Vercel | merge e observar fatura: Build CPU Minutes ≈ builds de release (~3/semana) + staging/main/lote; conferir no painel que PR novo gera "Ignored Build Step" e staging segue buildando |
-| 2026-11-14 | cf-fase3 | fases 3–4 prontas: Blob copiado para R2 `corosolto-private`; áudio privado por `r2://` (manifesto byte a byte igual ao da produção); viewmodel servido do R2 pelo Worker; `caches.default` por `s-maxage`; `staging.corosolto.com.br` com segredos do Secret Manager; `verifica-deploy` por deploy (staging 63/63 viewmodels, D1–D3 verdes); `csb-prod` + `cf-prod-deploy.yml`; `tools/cf/virada.sh` | merge em staging, depois promover para main; `cf-prod-deploy` publica o `csb-prod`; `virada.sh liga` + `smoke:prod`; dono grava `X_PIXEL_TOKEN` no `csb-prod` |
+| 2026-11-14 | cf-fase3 | fases 3–4 prontas: Blob copiado para R2 `corosolto-private`; áudio privado por `r2://` (manifesto byte a byte igual ao da produção); viewmodel servido do R2 pelo Worker; `caches.default` por `s-maxage`; `staging.corosolto.com.br` com segredos do Secret Manager; `verifica-deploy` por versão candidata (staging 63/63 viewmodels, D1–D3 verdes antes da promoção); `csb-prod` + `cf-prod-deploy.yml` somente por push protegido; `tools/cf/virada.sh` | merge em staging, depois promover para main; `cf-prod-deploy` envia, verifica e só então promove o `csb-prod`; `virada.sh liga` + `smoke:prod`; dono grava `X_PIXEL_TOKEN` no `csb-prod` |
