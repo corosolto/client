@@ -1025,13 +1025,9 @@
   ]
  },
  "refs": {
-  "adjim": {
-   "run": 3.9624
-  },
   "bandeirante": {
    "walk": 1.5803,
    "run": 3.9509,
-   "crouchwalk": 1.6773,
    "walk1h": 2.187
   },
   "barbudo": {
@@ -1088,19 +1084,15 @@
   "canarinho": {
    "walk": 1.2895,
    "run": 3.2239,
-   "crouchwalk": 1.3686,
    "walk1h": 1.7846
   },
   "capitao": {
-   "walk": 1.899,
-   "run": 4.7475,
    "walk1h": 2.6279
   },
   "chave": {
    "walk": 1.6236,
    "run": 4.0592,
-   "crouchwalk": 1.7233,
-   "walk1h": 2.2469
+   "crouchwalk": 1.7233
   },
   "clubber": {
    "walk": 1.7324,
@@ -1145,9 +1137,6 @@
    "walk1h": 2.2297
   },
   "doidinho-bairro": {
-   "walk": 1.6636,
-   "run": 4.159,
-   "crouchwalk": 1.7656,
    "walk1h": 2.3022
   },
   "dollynho": {
@@ -1159,18 +1148,13 @@
   "doutora": {
    "walk": 1.5807,
    "run": 3.9519,
-   "crouchwalk": 1.6777,
-   "walk1h": 2.1875
+   "crouchwalk": 1.6777
   },
   "emo": {
    "walk": 1.7275,
    "run": 4.3189,
    "crouchwalk": 1.8335,
    "walk1h": 2.3907
-  },
-  "esbirro": {
-   "walk": 1.6003,
-   "walk1h": 2.2147
   },
   "esquerdomacho": {
    "walk": 1.5939,
@@ -1189,8 +1173,6 @@
    "walk1h": 2.2466
   },
   "fluxo": {
-   "walk": 1.6702,
-   "run": 4.1757,
    "walk1h": 2.3114
   },
   "funkeiro": {
@@ -1214,7 +1196,6 @@
   "gotinha": {
    "walk": 1.0793,
    "run": 2.6982,
-   "crouchwalk": 1.1455,
    "walk1h": 1.4936
   },
   "hipster": {
@@ -1224,9 +1205,6 @@
    "walk1h": 2.219
   },
   "jozo": {
-   "walk": 1.5279,
-   "run": 3.8197,
-   "crouchwalk": 1.6216,
    "walk1h": 2.1144
   },
   "juiz": {
@@ -1291,8 +1269,7 @@
   "mistico": {
    "walk": 1.5192,
    "run": 3.7981,
-   "crouchwalk": 1.6124,
-   "walk1h": 2.1024
+   "crouchwalk": 1.6124
   },
   "motoca-cachorro-loko": {
    "walk": 1.6332,
@@ -1303,8 +1280,7 @@
   "mst": {
    "walk": 1.5305,
    "run": 3.8262,
-   "crouchwalk": 1.6244,
-   "walk1h": 2.118
+   "crouchwalk": 1.6244
   },
   "oakley": {
    "walk": 1.5168,
@@ -1343,7 +1319,6 @@
   },
   "proerd": {
    "walk": 1.407,
-   "run": 3.5176,
    "crouchwalk": 1.4933,
    "walk1h": 1.9471
   },
@@ -1376,7 +1351,6 @@
    "walk1h": 2.0211
   },
   "raul": {
-   "walk": 1.5024,
    "run": 3.7561,
    "crouchwalk": 1.5946,
    "walk1h": 2.0792
@@ -1399,21 +1373,15 @@
    "crouchwalk": 1.8845,
    "walk1h": 2.4572
   },
-  "sertanejo": {
-   "walk": 1.4702,
-   "run": 3.6757
-  },
   "sindicato": {
    "walk": 1.4069,
    "run": 3.5174,
-   "crouchwalk": 1.4933,
-   "walk1h": 1.947
+   "crouchwalk": 1.4933
   },
   "skatista": {
    "walk": 1.7394,
    "run": 4.3485,
-   "crouchwalk": 1.8461,
-   "walk1h": 2.4071
+   "crouchwalk": 1.8461
   },
   "titica": {
    "walk": 1.5016,

@@ -1,5 +1,5 @@
 {
- "gerado": "2026-11-13T23:39:29.238Z",
+ "gerado": "2026-11-15T20:08:18.542Z",
  "fonte": "tools/eval/char_probe.json (C3.faixaPorPose[0], o pé mais baixo do ciclo; bind = C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -(pé mais baixo do ciclo).",
  "tolerancia": 0.01,
@@ -9,14 +9,16 @@
    "crouchwalk": 0.0182
   },
   "sindicato": {
-   "run": 0.0188
+   "run": 0.0188,
+   "shoot": -0.0116
   },
   "mst": {
    "idle": -0.0235
   },
   "doutora": {
    "idle": -0.0101,
-   "run": 0.0133
+   "run": 0.0133,
+   "crouch": -0.0174
   },
   "mistico": {
    "run": 0.0155
@@ -25,10 +27,12 @@
    "walk": 0.0143,
    "run": 0.0372,
    "shoot": 0.0115,
+   "crouch": 0.0105,
    "crouchwalk": 0.0216
   },
   "sertanejo": {
-   "run": 0.0203,
+   "walk": 0.0624,
+   "run": 0.0567,
    "crouch": 0.0416,
    "crouchwalk": 0.0648
   },
@@ -37,13 +41,15 @@
   },
   "gotinha": {
    "run": 0.0171,
-   "crouchwalk": 0.0151
+   "crouch": 0.0516,
+   "crouchwalk": 0.0637
   },
   "farialimer": {
    "run": 0.01
   },
   "bombado": {
-   "run": 0.0151
+   "run": 0.0151,
+   "crouch": 0.0493
   },
   "hipster": {
    "run": 0.0118
@@ -59,10 +65,11 @@
    "crouch": 0.1403
   },
   "canarinho": {
-   "run": 0.0138
+   "run": 0.0138,
+   "crouchwalk": 0.021
   },
   "proerd": {
-   "run": 0.0231,
+   "run": 0.0641,
    "crouchwalk": 0.0134
   },
   "bonzo": {
@@ -75,12 +82,18 @@
    "crouchwalk": 0.0123
   },
   "jozo": {
-   "run": 0.0179
+   "walk": 0.0574,
+   "run": 0.0402,
+   "crouch": 0.0264,
+   "crouchwalk": 0.0454
   },
   "adjim": {
    "walk": 0.0467,
-   "run": 0.0227,
+   "run": 0.0463,
    "crouchwalk": 0.0317
+  },
+  "esbirro": {
+   "crouch": 0.1386
   },
   "titica": {
    "run": 0.0122
@@ -96,7 +109,8 @@
    "run": 0.0198
   },
   "emo": {
-   "run": 0.0105
+   "run": 0.0105,
+   "crouch": 0.0351
   },
   "blackmetal": {
    "run": 0.017,
@@ -106,7 +120,8 @@
    "run": 0.0107
   },
   "skatista": {
-   "run": 0.0137
+   "run": 0.0137,
+   "crouch": 0.0242
   },
   "clubber": {
    "run": 0.0119
@@ -115,16 +130,19 @@
    "run": 0.0264
   },
   "reggae": {
-   "run": 0.015
+   "run": 0.015,
+   "crouch": 0.0282
   },
   "pagodeiro": {
-   "run": 0.014
+   "run": 0.014,
+   "crouch": 0.0112
   },
   "mandrake": {
    "idle": -0.0167,
    "run": 0.0107
   },
   "raul": {
+   "walk": 0.0653,
    "run": 0.0135
   },
   "oakley": {
@@ -141,11 +159,13 @@
    "run": 0.0125
   },
   "fluxo": {
-   "run": 0.0118,
+   "walk": 0.0383,
+   "run": 0.0264,
    "crouchwalk": 0.0383
   },
   "ostentacao": {
-   "run": 0.0102
+   "run": 0.0102,
+   "crouch": 0.0211
   },
   "mariabonita": {
    "run": 0.0114
@@ -174,7 +194,9 @@
   },
   "capitao": {
    "idle": -0.0173,
-   "run": 0.0109
+   "walk": 0.0162,
+   "run": 0.0185,
+   "crouch": -0.0267
   },
   "dama": {
    "run": 0.0115,
@@ -184,7 +206,9 @@
    "idle": -0.0203
   },
   "senador": {
-   "run": 0.0102
+   "idle": -0.0183,
+   "run": 0.0102,
+   "crouch": -0.0289
   },
   "ministro": {
    "idle": -0.0123,
@@ -214,10 +238,10 @@
    "amplitude": 0.2183
   },
   {
-   "id": "proerd",
-   "pose": "crouch",
-   "desvio": 0.178,
-   "amplitude": 0.0201
+   "id": "esbirro",
+   "pose": "walk",
+   "desvio": -0.1911,
+   "amplitude": 0.1852
   },
   {
    "id": "ancap",
