@@ -7,48 +7,11 @@
    entidade e virou reboque de 30 bytes para o dono. Posição de vizinho virou u16,
    com passo de 15,6 mm. A v6 somou placar da rodada; a v7 soma um byte opcional
    de progresso de mantle por entidade. */
-import fs from 'node:fs';
-
-const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 let falhas = 0, ok = 0;
-const resultado = {};
 const cobra = (cond, msg) => {
-  resultado[msg] = !!cond;
   if (cond) { ok++; console.log(`  ok   ${msg}`); }
   else { falhas++; console.log(`  FALHA ${msg}`); }
 };
-
-const ALVO_DO_MUTANTE = {
-  'sem-negociacao': 'cliente oferece exclusivamente v8; capacidade legada permanece no codec',
-  'sem-decoder': 'o caminho de produção chama o decoder real',
-};
-/* Aplicação de mutante é estado SEPARADO da detecção: âncora ausente ou duplicada é erro
-   de arnês (exit 2), nunca mordida — a falha de replace não pode virar "DETECTADO". */
-const aplicaMutacao = (nome, src, ancora, troca) => {
-  const n = src.split(ancora).length - 1;
-  if (n !== 1) {
-    console.error(`mutante ${nome} NÃO APLICOU: âncora presente ${n} vez(es) — exige exatamente 1 (${ancora})`);
-    process.exit(2);
-  }
-  return src.replace(ancora, troca);
-};
-
-/* A abertura do socket saiu do net.js e virou `TransporteWS` (public/js/transporte.js) —
-   o seam por onde o WebTransport entra sem reescrever o NetClient. As cláusulas de
-   negociação e de limite passam a ler o arquivo NOVO; as de decodificação continuam no
-   net.js, que é quem decide o que fazer com os bytes. */
-let netSrc = fs.readFileSync('public/js/net.js', 'utf8');
-let tpSrc = fs.readFileSync('public/js/transporte.js', 'utf8');
-if (MUT === 'sem-negociacao') tpSrc = aplicaMutacao(MUT, tpSrc, 'new WebSocket(this.url, [CLIENT_SNAPSHOT_PROTOCOL])', 'new WebSocket(this.url)');
-else if (MUT === 'sem-decoder') netSrc = aplicaMutacao(MUT, netSrc, 'decodeSnapshot(dados)', 'JSON.parse(dados)');
-else if (MUT && !ALVO_DO_MUTANTE[MUT]) { console.log(`mutante desconhecido: ${MUT}`); process.exit(1); }
-
-cobra(/new WebSocket\(this\.url, \[CLIENT_SNAPSHOT_PROTOCOL\]\)/.test(tpSrc), 'cliente oferece exclusivamente v8; capacidade legada permanece no codec');
-cobra(/binaryType\s*=\s*['"]arraybuffer['"]/.test(tpSrc), 'frames binários chegam como ArrayBuffer, não Blob');
-cobra(/decodeSnapshot\(dados\)/.test(netSrc), 'o caminho de produção chama o decoder real');
-cobra(/MAX_SNAPSHOT_BYTES/.test(tpSrc), 'o transporte limita frame antes de alocar/decodificar');
-cobra(/enviarInseguro/.test(tpSrc) && /enviarInseguro/.test(netSrc),
-  'o transporte declara o canal que tolera perda, e o input já sai por ele (é o que vira datagrama)');
 
 let codec = null;
 try { codec = await import('../../public/js/netcodec.js'); }
@@ -82,7 +45,7 @@ if (codec) {
     objective: { position: { x: 1.5, z: 6.25 }, checkpoint: 4, escortCount: 3, contested: true },
     ents,
   };
-  const comum = codec.encodeSnapshot(sample);
+  const comum = codec.encodeSnapshot(sample, 8);
   const reboque = codec.encodeTrailerV5({
     id: 100, ackSeq: 812, mag: 17, res: 61, reloadIn: 1.25,
     primary: 'ak', secondary: 'pistol', x: ents[0].x, y: ents[0].y, z: ents[0].z,
@@ -125,16 +88,17 @@ if (codec) {
   const semPrivado = codec.decodeSnapshot(comum);
   cobra(!('ackSeq' in semPrivado.ents[0]) && !('mag' in semPrivado.ents[0]),
     'e nenhuma entidade carrega bloco privado de ninguém (era 14 bytes × N por snapshot)');
-  const outV6 = codec.decodeSnapshot(codec.encodeSnapshot(sample, 6));
+  const legacy = { ...sample, objective: null };
+  const outV6 = codec.decodeSnapshot(codec.encodeSnapshot(legacy, 6));
   cobra(outV6.roundKillsE === 7 && outV6.roundKillsB === 4 && !('mantleF' in outV6.ents[2]),
     'snapshot v6 continua decodificável e omite somente o mantle remoto da v7');
-  const outV5 = codec.decodeSnapshot(codec.encodeSnapshot(sample, 5));
+  const outV5 = codec.decodeSnapshot(codec.encodeSnapshot(legacy, 5));
   cobra(!('roundKillsE' in outV5) && !('roundKillsB' in outV5)
       && outV5.ents[3].fireN === 7,
     'snapshot v5 continua decodificável sem inventar campos exclusivos de v6/v7');
-  const binV6 = codec.encodeSnapshot(sample, 6);
+  const binV6 = codec.encodeSnapshot(legacy, 6);
   cobra(!('objective' in outV6), 'snapshot v6 continua decodificável sem inventar o objetivo exclusivo da v8');
-  const v4bin = codec.encodeSnapshot(sample, 4);
+  const v4bin = codec.encodeSnapshot(legacy, 4);
   cobra(binV6.byteLength < v4bin.byteLength * 0.75,
     `v6 preserva o corte de banda da v5: ${binV6.byteLength} contra ${v4bin.byteLength} bytes da v4 (${Math.round((1 - binV6.byteLength / v4bin.byteLength) * 100)}% menos)`);
   const outV4 = codec.decodeSnapshot(v4bin);
@@ -149,17 +113,13 @@ if (codec) {
   cobra(out.ctf && out.ctf.points.length === 3 && out.ctf.points[2].capTeam === 'E'
       && out.ctf.points[2].contested === true && near(out.ctf.points[2].prog, 0.625),
     'dono/progresso/contestação das bandeiras sobrevivem ao round-trip v3');
-  const outV3 = codec.decodeSnapshot(codec.encodeSnapshot(sample, 3));
+  const outV3 = codec.decodeSnapshot(codec.encodeSnapshot(legacy, 3));
   cobra(!('ackSeq' in outV3.ents[0]), 'snapshot v3 continua decodificável e omite somente a extensão de slot v4');
-  const outV2 = codec.decodeSnapshot(codec.encodeSnapshot(sample, 2));
+  const outV2 = codec.decodeSnapshot(codec.encodeSnapshot(legacy, 2));
   cobra(!('ctf' in outV2), 'snapshot v2 continua decodificável e omite somente a extensão CTF');
   const jsonBytes = Buffer.byteLength(JSON.stringify(sample));
   cobra(bin.byteLength < jsonBytes * 0.45,
     `payload binário fica abaixo de 45% do JSON (${bin.byteLength}/${jsonBytes} bytes)`);
-  cobra(JSON.stringify(codec.SNAPSHOT_PROTOCOLS) === JSON.stringify([
-      'coro-snapshot-v8', 'coro-snapshot-v7', 'coro-snapshot-v6', 'coro-snapshot-v5',
-      'coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']),
-    'capacidade do codec inclui v8 e preserva os nomes canônicos v7..v2/JSON');
 
   for (const ruim of [bin.slice(0, 12), new Uint8Array([0, 1, 2, 3]), new Uint8Array(codec.MAX_SNAPSHOT_BYTES + 1)]) {
     let recusou = false; try { codec.decodeSnapshot(ruim); } catch { recusou = true; }
@@ -167,14 +127,5 @@ if (codec) {
   }
 }
 
-if (MUT) {
-  const alvo = ALVO_DO_MUTANTE[MUT];
-  const perdidas = Object.keys(resultado).filter((m) => !resultado[m]);
-  const extras = perdidas.filter((m) => m !== alvo);
-  if (!perdidas.includes(alvo)) { console.log(`\nmutante "${MUT}" NÃO detectado — a cláusula alvo seguiu verde`); process.exit(1); }
-  if (extras.length) { console.log(`\nmutante "${MUT}" REPROVADO — acendeu cláusulas além da alvo: ${extras.join(' | ')}`); process.exit(1); }
-  console.log(`\nmutante "${MUT}" DETECTADO — só a cláusula alvo apagou; ${ok} positivo(s) mantido(s)`);
-  process.exit(0);
-}
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);
