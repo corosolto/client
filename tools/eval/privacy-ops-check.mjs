@@ -17,7 +17,7 @@ const context={
   URL,URLSearchParams,Date,JSON,
   setTimeout:fn=>timers.push(fn),setInterval:fn=>intervals.push(fn),
   requestAnimationFrame:fn=>rafs.push(fn),performance:{now:()=>now},
-  location:{href:'http://127.0.0.1:8137/',search:''},
+  location:{href:'http://127.0.0.1:8137/',hostname:'127.0.0.1',search:''},
   PerformanceObserver:class{
     constructor(fn){this.fn=fn;observers.push(this);}
     observe(options){assert.equal(options.buffered,false,'Historical resources must not enter a new opt-in');}

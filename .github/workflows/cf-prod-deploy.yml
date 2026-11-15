@@ -1,7 +1,6 @@
 # Produção no Cloudflare Workers (docs/runbooks/MIGRACAO-CLOUDFLARE.md, fase 4).
-# O trem de release publica somente o commit `chore(release):` que entrou pela main protegida.
-# Rollback exige um novo commit de release: este workflow não aceita dispatch a partir de refs
-# controlados por colaborador porque o próprio YAML receberá o token Cloudflare.
+# Todo push na `main` protegida publica exatamente o SHA recebido. Isso cobre o merge commit
+# do trem de release e hotfixes sem executar YAML de refs controladas por colaborador.
 name: cf-prod-deploy
 
 on:
@@ -17,7 +16,6 @@ concurrency:
 
 jobs:
   deploy:
-    if: startsWith(github.event.head_commit.message, 'chore(release):')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production

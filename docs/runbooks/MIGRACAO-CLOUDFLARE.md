@@ -229,10 +229,11 @@ viewmodels respondem 200 com tamanho e ETag (sha256) do manifesto.
   `vercel env pull` devolve placeholder, não o valor. `X_PIXEL_TOKEN` não existe fora da Vercel; staging
   fica sem (não manda conversão ao X) e produção depende do dono gravar o token de novo.
 - **Produção.** `wrangler.prod.toml` (Worker `csb-prod`, mesmo build, binding `PRIVADO`) e
-  `cf-prod-deploy.yml`: o push `chore(release):` da `main` protegida (o mesmo commit que a Vercel
-  builda) cria apenas um placeholder 503 se o Worker ainda não existir, provisiona
-  `workers_dev`/`preview_urls` sem trocar código, envia uma versão sem tráfego, captura o ID e a URL
-  imutáveis, verifica D1–D3 e só então promove aquele ID a 100%. Staging usa a mesma sequência e não
+  `cf-prod-deploy.yml`: todo push na `main` protegida publica exatamente o SHA recebido, inclusive
+  o merge commit do trem de release e hotfixes. O job cria apenas um placeholder 503 se o Worker
+  ainda não existir, provisiona `workers_dev`/`preview_urls` sem trocar código, envia uma versão
+  sem tráfego, captura o ID e a URL imutáveis, verifica D1–D3 e só então promove aquele ID a 100%.
+  Staging usa a mesma sequência e não
   cancela uma promoção em voo quando chega outro push. Os workflows não aceitam `workflow_dispatch`:
   rollback entra por novo commit de release na branch protegida, nunca por YAML de branch com o token
   da conta.
