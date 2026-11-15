@@ -133,6 +133,22 @@ for (const job of ['automerge', 'sweep']) {
   });
 }
 
+for (const token of ['missing', 'bot-pat']) {
+  test(`WSEC2 rejects automerge metadata with ${token} read credentials`, (t) => {
+    const dir = fixture(t);
+    mutateAutomerge(dir, (workflow) => {
+      const step = workflow.jobs.sweep.steps.find((item) => item.run?.includes('gh api --paginate --slurp'));
+      assert.ok(step);
+      const before = step.run;
+      step.run = token === 'missing'
+        ? step.run.replace('export GH_TOKEN="${{ github.token }}"\n', '')
+        : step.run.replace('${{ github.token }}', '${{ secrets.CSBRASIL_BOT_TOKEN }}');
+      assert.notEqual(step.run, before);
+    });
+    assertGuardFailure(run(SECRET_CHECK, dir), 'WSEC2');
+  });
+}
+
 test('AF6 rejects a negated push condition', (t) => {
   const dir = fixture(t);
   const path = join(dir, '.github/workflows/autofix.yml');
@@ -385,15 +401,17 @@ if ! mkdir "$lock" 2>/dev/null; then
   [[ "$fail_fast" == 1 ]] && exit 75
   while ! mkdir "$lock" 2>/dev/null; do sleep 0.05; done
 fi
+echo "$LOCK_RUN_ID" > "$LOCK_ACQUIRED"
 trap 'rmdir "$lock"' EXIT
 "$@"
 `);
   const trace = join(dir, 'npm.log');
   const suffix = `${process.pid}-${Date.now()}`;
+  const acquired = join(dir, 'acquired');
   const runHook = (id) => new Promise((resolve) => {
     const child = spawn('/bin/bash', [join(ROOT, '.githooks/pre-push'), 'origin', 'unused'], {
       cwd: dir,
-      env: { PATH: bin, LOCK_RUN_ID: id, LOCK_TRACE: trace, LOCK_SUFFIX: suffix },
+      env: { PATH: bin, LOCK_ACQUIRED: acquired, LOCK_RUN_ID: id, LOCK_TRACE: trace, LOCK_SUFFIX: suffix },
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     child.stdin.end();
@@ -402,7 +420,11 @@ trap 'rmdir "$lock"' EXIT
     child.on('exit', (status, signal) => resolve({ status, signal, stderr }));
   });
   const first = runHook('first');
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  const acquisitionDeadline = Date.now() + 2000;
+  while (!existsSync(acquired) && Date.now() < acquisitionDeadline) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  assert.equal(readFileSync(acquired, 'utf8').trim(), 'first');
   const second = runHook('second');
   const results = await Promise.all([first, second]);
   for (const result of results) {

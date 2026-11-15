@@ -112,6 +112,19 @@ for (let [nome, texto] of fontes) {
   if (falhaVazio) falhas.push(`WSEC2 ${falhaVazio}`);
   const workflow = estrutura('csbrasil-bot-automerge.yml', am, 'WSEC2');
   const jobs = jobsDe(workflow);
+  const leiturasSweep = passosDe(jobs.sweep).map(runDe)
+    .filter((run) => /gh api --paginate --slurp "repos\/\$REPO\/pulls\?state=open&per_page=100"/.test(run));
+  if (leiturasSweep.length !== 1) {
+    falhas.push(`WSEC2 sweep de automerge expõe ${leiturasSweep.length} leituras paginadas; esperado 1`);
+  } else {
+    const leitura = leiturasSweep[0].replace(/\\\n\s*/g, ' ');
+    const apis = [...leitura.matchAll(/\bgh\s+api\b/g)];
+    const overrides = [...leitura.matchAll(/(?:^|\n)\s*(?:export\s+)?GH_TOKEN\s*=/g)];
+    const escopoSomenteLeitura = /\(\s*export GH_TOKEN="\$\{\{ github\.token \}\}"[\s\S]*gh api --paginate --slurp "repos\/\$REPO\/pulls\?state=open&per_page=100"[\s\S]*gh pr view "\$number"[\s\S]*\)\s*python3/.test(leitura);
+    if (apis.length !== 1 || overrides.length !== 1 || !escopoSomenteLeitura) {
+      falhas.push('WSEC2 sweep de automerge não limita github.token à única leitura paginada');
+    }
+  }
   const ids = Object.keys(jobs);
   const esperados = ['automerge', 'sweep'];
   if (ids.length !== esperados.length || esperados.some((id) => !ids.includes(id))) {
