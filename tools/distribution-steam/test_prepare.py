@@ -41,7 +41,7 @@ class PreflightTests(unittest.TestCase):
             self.run_plan()
 
     def test_missing_native_and_escape_are_rejected(self):
-        for launch in ('absent.exe', '../game', '/game'):
+        for launch in ('absent.exe', '../game', '/game', '\\outside.exe', 'C:outside.exe', 'C:\\outside.exe'):
             with self.subTest(launch=launch), self.assertRaises(ValueError):
                 self.run_plan(launch=launch)
 
@@ -66,6 +66,24 @@ class PreflightTests(unittest.TestCase):
         (self.build / 'game').chmod(0o644)
         with self.assertRaisesRegex(ValueError, 'permissão'):
             self.run_plan()
+    def test_little_endian_macho_headers_are_accepted(self):
+        for magic in (b'\xce\xfa\xed\xfe', b'\xfe\xed\xfa\xce'):
+            with self.subTest(magic=magic.hex()):
+                (self.build / 'game').write_bytes(magic + b'fixture')
+                (self.build / 'game').chmod(0o755)
+                self.assertEqual(self.run_plan(platform='macos')['platform'], 'macos')
+
+    def test_native_backslashes_are_escaped_in_vdf(self):
+        build = self.root / 'windows\\build'
+        build.mkdir()
+        (build / 'game.exe').write_bytes(b'MZfixture')
+        output = self.root / 'windows\\output'
+        result = self.run_plan(content=build, output=output, launch='game.exe', platform='windows')
+        self.assertEqual(result['launch_path'], 'game.exe')
+        vdf = (output / 'app-preview.vdf').read_text()
+        self.assertIn(str(build.resolve()).replace('\\', '\\\\'), vdf)
+        self.assertIn(str((output / 'steam-output').resolve()).replace('\\', '\\\\'), vdf)
+
 
     def test_output_symlinks_are_refused_and_targets_kept_intact(self):
         for name in ('manifest.json', 'app-preview.vdf'):
