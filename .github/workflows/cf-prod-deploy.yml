@@ -35,6 +35,26 @@ jobs:
         with:
           ref: ${{ env.REF }}
           persist-credentials: false
+      - name: Valida tag de rollback na main
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || {
+            echo "::error::Tag de release inválida: $TAG"
+            exit 1
+          }
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          git fetch --no-tags origin "refs/tags/$TAG:refs/tags/$TAG"
+          [ "$(git rev-parse "refs/tags/$TAG^{commit}")" = "$(git rev-parse HEAD)" ] || {
+            echo "::error::O checkout não corresponde à tag $TAG"
+            exit 1
+          }
+          git merge-base --is-ancestor HEAD origin/main || {
+            echo "::error::A tag $TAG não pertence à história da main"
+            exit 1
+          }
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
