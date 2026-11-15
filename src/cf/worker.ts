@@ -42,6 +42,7 @@ const doCache = (guardada: Response) => {
   return saida;
 };
 const respostaDoSite = async (request: Request, env: Env, ctx: Ctx) => {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return astro.fetch(request, env, ctx);
   const asset = env.ASSETS ? await env.ASSETS.fetch(request) : null;
   return asset && asset.status !== 404 ? asset : astro.fetch(request, env, ctx);
 };

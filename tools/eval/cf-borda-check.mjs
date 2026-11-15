@@ -8,7 +8,7 @@
      B4  csbrasil.online (apex) responde 308 para o www preservando caminho e query
      B5  a chave no R2 é a mesma do Blob (scripts/vm-assets.mjs blobPathOf) para todo o manifesto
    Mutantes (cada um tem de reprovar): sem-strip, vm-sem-etag, apex-301,
-   apex-sem-worker-first, assets-sem-fallback. */
+   apex-sem-worker-first, assets-sem-fallback, assets-intercepta-post. */
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -25,6 +25,7 @@ const MUTACOES = {
   'apex-301': ['src/cf/borda.mjs', 'alvo.toString(), 308)', 'alvo.toString(), 301)'],
   'apex-sem-worker-first': ['src/cf/worker.ts', 'const apex = redirectDeHost(url);', 'const apex = null;'],
   'assets-sem-fallback': ['src/cf/worker.ts', 'const asset = env.ASSETS ? await env.ASSETS.fetch(request) : null;', 'const asset = null;'],
+  'assets-intercepta-post': ['src/cf/worker.ts', "if (request.method !== 'GET' && request.method !== 'HEAD') return astro.fetch(request, env, ctx);", ''],
 };
 if (MUTANTE && !MUTACOES[MUTANTE]) { console.error(`mutante desconhecido: ${MUTANTE}`); process.exit(2); }
 
@@ -166,6 +167,16 @@ const fallbackReal = await workerReal.fetch(
 );
 check(fallbackReal.headers.get('x-csb-source') === 'astro' && await fallbackReal.text() === 'astro',
   'B4', '404 de ASSETS precisa cair no handler Astro');
+const chamadasAntesDoPost = chamadasAssets;
+const postReal = await workerReal.fetch(
+  new Request('https://www.corosolto.com.br/api/conta', { method: 'POST' }),
+  { ASSETS: assetsOk },
+  ctx,
+);
+check(postReal.headers.get('x-csb-source') === 'astro'
+  && await postReal.text() === 'astro'
+  && chamadasAssets === chamadasAntesDoPost,
+'B4', 'método de escrita precisa ir direto ao Astro sem consultar ASSETS');
 
 // B5
 const divergentes = manifesto.files.filter((f) => borda.chaveR2Viewmodel(f) !== blobPathOf(f));
