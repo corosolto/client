@@ -258,12 +258,13 @@ Histórico e causa dos fixes desta rodada (o código aponta pra cá; comentário
 carregado uma vez no primeiro strafe/back, recarga, saque, hit, granada, faca ou cerimônia.
 Não há `models/anims/<id>/<extra>.glb`: multiplicar os 21 estados pelo elenco repetiria o mesmo
 esqueleto. `index.json.extras` é derivado dos nomes dentro do GLB; `extras.SOURCES.md` guarda os
-IDs do catálogo. `draw_pistol` e `holster_pistol` não existem na biblioteca convertida e caem no
-comportamento atual sem erro. Falha ou ausência de qualquer outro clipe também usa o fallback
-procedural/base; o primeiro saque fica pendente e é reproduzido quando o pack resolve. A granada pedida
-antes do pack também fica pendente: guarda o fim do arremesso no relógio do mixer e, quando o pack chega,
-toca em fase com ele (EX7b: 0,2 s corridos → clipe começa em 0,2 s e termina em 1,05 s). Se faltam
-≤0,1 s ou o arremesso já acabou, não toca; morte, revive, recarga nova e cerimônia descartam o pendente.
+IDs do catálogo. `draw_pistol` e `holster_pistol` não existem na biblioteca convertida, então
+a pistola usa imediatamente o saque procedural do braço direito. Falha ou ausência dos clipes de
+fuzil também cai nesse fallback quando o pack resolve; quando existem, o primeiro saque fica
+pendente e é reproduzido pelo clipe. A granada pedida antes do pack guarda o fim do arremesso no
+relógio do mixer e, quando o pack chega, toca em fase com ele (EX7b: 0,2 s corridos → clipe começa
+em 0,2 s e termina em 1,05 s). Se faltam ≤0,1 s ou o arremesso já acabou, não toca; morte, revive,
+recarga nova e cerimônia descartam o pendente.
 LOD≥2 não inicia extras.
 
 O `ctrl.update` deriva o componente frente de `speed`, `back` e `lateral`, percorre quatro setores
@@ -281,8 +282,9 @@ somente enquanto a camada correspondente está ativa; sem clipe eles continuam s
 braços/coluna do take derrubou a postura de 32 rigs; com a máscara restrita, 63/63 voltaram a
 passar fora da dívida e os três casos antigos de tremor foram baixados. `ctrl.grenade(1.05)` preserva a janela de `ANIM_ARREMESSO`. Na troca de arma o corpo novo executa
 `holster_rifle` curto (0,45 s) seguido de `draw_rifle` (0,65 s): não ficam duas malhas sobrepostas.
-`ctrl.ceremony(vitoria)` usa corpo inteiro e é chamado por `_cerimoniaCorpos` nos dois fins de
-rodada locais; o worker de rede pode chamar o mesmo método sem conhecer o pack.
+`ctrl.ceremony(vitoria)` usa corpo inteiro e é chamado por `_cerimoniaCorpos` nos fins de rodada
+locais e na transição autoritativa online. A identidade da rodada seguinte chama
+`_retomarCorposDaCerimonia` antes das entidades para devolver corpos vivos ao estado normal.
 
 ### Medição compartilhado × retarget por personagem
 
@@ -307,21 +309,24 @@ punho dominante com o clipe-base. Residual após a 3ª rodada: `knife_stab` aind
 no coronel (teto 2,5×), sem vantagem do retarget individual. Não foi afrouxado teto nem criado
 pack específico para esconder esse caso.
 
-A régua runtime é `npm run eval:estados3p` (EX1–EX11, 23 cláusulas), incluída no `check:fast`. Ela usa os GLBs e
+A régua runtime é `npm run eval:estados3p` (EX1–EX11, 25 cláusulas), incluída no `check:fast`. Ela usa os GLBs e
 `AnimationMixer` reais e prova: uma só requisição lazy, strafe e diagonal, pernas idênticas ao
-controle durante recarga andando, quatro direções + cabeça, holster→draw, faca, granada 1,05 s,
-vitória/derrota (e que a vitória segura 30 quadros parado, sem o idle voltar por cima) e LOD/fallback.
-EX4c/EX4d cobram o overlay procedural do flinch quando o clipe de hit não está tocando: segundo hit em
-LOD 2 depois de um hit com clipe, e hit cujo clipe é trocado pela recarga dentro da janela de 0,18 s
-(`_hitClip` passa a seguir o clipe dono do trem superior em `_playUpper`/`_stopUpper`).
-EX10a–e sobem o `Game` real (posto_treta, barbudo × capitão) com o `CharController` espionado no
-protótipo e disparam as transições: `_damage` no bot e no jogador (flinch com direção, dano/100 e
-cabeça), `_throwNade` (grenade 1,05), troca de arma do jogador e `_syncRemoteWeapon` do bot (draw no
-corpo novo) e `_endRound` (ceremony false no perdedor, true no vencedor). Mutantes: `strafe-mudo`,
-`reload-perna-congelada`, `hit-sem-direcao`, `saque-mudo`, `faca-usa-rifle`, `vitoria-muda`,
-`cerimonia-vira-idle`, `flinch-preso-no-hit`, `granada-perdida-lazy` e oito que reescrevem `game.js` e têm de reprovar só a cláusula EX10/EX11 do ponto alterado:
+controle durante recarga andando, quatro direções + cabeça, holster→draw, fallback procedural de
+pistola e pack ausente, faca, granada 1,05 s, vitória/derrota (e que a vitória segura 30 quadros
+parado, sem o idle voltar por cima) e LOD/fallback. EX4c/EX4d cobram o overlay procedural do flinch
+quando o clipe de hit não está tocando: segundo hit em LOD 2 depois de um hit com clipe, e hit cujo
+clipe é trocado pela recarga dentro da janela de 0,18 s (`_hitClip` passa a seguir o clipe dono do
+trem superior em `_playUpper`/`_stopUpper`). EX10a–f sobem o `Game` real (posto_treta, barbudo ×
+capitão) com o `CharController` espionado no protótipo e disparam `_damage`, `_throwNade`, troca de
+arma, `_syncRemoteWeapon`, golpe local de faca e `_endRound`. Mutantes: `strafe-mudo`,
+`reload-perna-congelada`, `hit-sem-direcao`, `saque-mudo`, `saque-pistola-mudo`,
+`saque-pack-fallback-mudo`, `faca-usa-rifle`, `vitoria-muda`, `cerimonia-vira-idle`,
+`flinch-preso-no-hit`, `granada-perdida-lazy` e nove que reescrevem `game.js`:
 `jogo-flinch-mudo`, `jogo-flinch-sem-cabeca`, `jogo-granada-muda`, `jogo-saque-tp-mudo`,
-`jogo-saque-bot-mudo`, `jogo-cerimonia-muda`, `jogo-cerimonia-invertida`, `bot-strafe-espelhado`.
+`jogo-saque-bot-mudo`, `jogo-cerimonia-muda`, `jogo-cerimonia-invertida`,
+`jogo-faca-tp-muda`, `bot-strafe-espelhado`.
+`npm run eval:remotos3p` cobre o headshot até `hit_head`, o início da cerimônia pelo winner
+autoritativo e o reset por identidade da rodada seguinte, com sete mutantes causais.
 EX11 anda o bot do single-player 2 m/s para cada lado pelo `_updateBot` real (posição e yaw
 roteirizados): a lateral chega +2,00 à direita com `strafe_right` e −2,00 à esquerda com
 `strafe_left`. Antes o bot projetava em +X local e trocava os dois lados (−2,00 → `strafe_left`

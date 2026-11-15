@@ -19,6 +19,7 @@ const MUT_JOGO = {
   'jogo-saque-bot-mudo': ['if (oldGroup) next.ctrl?.draw?.();', '', 'EX10d-saque-bot'],
   'jogo-cerimonia-muda': ['    this._cerimoniaCorpos?.(winner);\n', '', 'EX10e-cerimonia'],
   'jogo-cerimonia-invertida': ['b.mesh?.ctrl?.ceremony?.(!!winner && winner === b.team)', 'b.mesh?.ctrl?.ceremony?.(!!winner && winner !== b.team)', 'EX10e-cerimonia'],
+  'jogo-faca-tp-muda': ["    if (this.camView !== 'first') this.playerTP?.ctrl?.shoot?.();\n    this._meleeHit();", '    this._meleeHit();', 'EX10f-faca-local'],
   'bot-strafe-espelhado': ['const lat = (mz * Math.sin(b.yaw) - mx * Math.cos(b.yaw)) / dtSafe;', 'const lat = (mx * Math.cos(b.yaw) - mz * Math.sin(b.yaw)) / dtSafe;', 'EX11-bot-strafe-lado'],
 };
 const MUT_ALVO = {
@@ -31,8 +32,10 @@ const MUT_ALVO = {
   'cerimonia-vira-idle': ['EX8b-cerimonia-segura-parado'],
   'flinch-preso-no-hit': ['EX4d-flinch-volta-se-clipe-interrompido'],
   'granada-perdida-lazy': ['EX7b-granada-antes-do-pack'],
+  'saque-pistola-mudo': ['EX5c-saque-pistola-fallback'],
+  'saque-pack-fallback-mudo': ['EX9b-pack-ausente'],
 };
-const mutants = ['strafe-mudo', 'reload-perna-congelada', 'hit-sem-direcao', 'saque-mudo', 'faca-usa-rifle', 'vitoria-muda', 'cerimonia-vira-idle', 'flinch-preso-no-hit', 'granada-perdida-lazy', ...Object.keys(MUT_JOGO)];
+const mutants = ['strafe-mudo', 'reload-perna-congelada', 'hit-sem-direcao', 'saque-mudo', 'saque-pistola-mudo', 'saque-pack-fallback-mudo', 'faca-usa-rifle', 'vitoria-muda', 'cerimonia-vira-idle', 'flinch-preso-no-hit', 'granada-perdida-lazy', ...Object.keys(MUT_JOGO)];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
 if (process.argv.includes('--self-test')) {
   for (const kind of ['', ...mutants]) {
@@ -78,6 +81,8 @@ if (mutant === 'strafe-mudo') once('this._setLocoDirecional(', 'this._setLocoSem
 if (mutant === 'reload-perna-congelada') once('this._playUpper(name, Math.max(0.05, this._reloadDur - this._reloadT))', 'this._playFull(name, Math.max(0.05, this._reloadDur - this._reloadT))');
 if (mutant === 'hit-sem-direcao') once("return `hit_${quadrante}`;", "return 'hit_front';");
 if (mutant === 'saque-mudo') once("this._playUpper(`draw_${this.oneHanded ? 'pistol' : 'rifle'}`, 0.65);", "this._playUpper('estado_inexistente', 0.65);");
+if (mutant === 'saque-pistola-mudo') once("if (this.oneHanded) { this._drawRequested = false; this._drawT = 0.32; return; }", "if (this.oneHanded) return;");
+if (mutant === 'saque-pack-fallback-mudo') once("if (this._extrasReady) { this._drawRequested = false; this._drawT = 0.32; }", "if (this._extrasReady) this._drawRequested = false;");
 if (mutant === 'faca-usa-rifle') once("this._playUpper('knife_stab'", "this._playUpper('shoot'");
 if (mutant === 'vitoria-muda') once("this._to(nome);", "this._to('idle');");
 if (mutant === 'cerimonia-vira-idle') once("if (/^(victory|defeat)$/.test(this.curName || '')) {", 'if (false) {');
@@ -198,6 +203,13 @@ check('EX5-saque', () => {
   a.ctrl.draw(); assert.equal(a.ctrl._upperName, 'holster_rifle');
   step(a, 30); assert.equal(a.ctrl._upperName, 'draw_rifle');
 });
+check('EX5c-saque-pistola-fallback', () => {
+  const p = body('capitao', 'pistol');
+  p.ctrl.draw();
+  assert.ok(p.ctrl._drawT > 0, 'pistola sem clipe não iniciou saque procedural');
+  step(p, 1);
+  assert.ok(p.ctrl._drawBone, 'saque procedural não moveu o braço direito');
+});
 check('EX5b-saque-morre', () => {
   const d = body(); d.ctrl.draw(); step(d, 4); d.ctrl.die(); d.ctrl.revive(); d.ctrl.flinch({ x: 1, z: 0 }, 1); step(d, 32);
   assert.notEqual(d.ctrl._upperName, 'draw_rifle');
@@ -222,15 +234,21 @@ check('EX8b-cerimonia-segura-parado', () => {
 check('EX9-lod-fallback', () => {
   const l = body(); l.ctrl.lod = 2; l.ctrl.reload(1); step(l, 2); assert.equal(l.ctrl._upperName, null);
 });
-if (!mutant) {
+if (!mutant || mutant === 'saque-pack-fallback-mudo') {
   const ausente = source.replace("assetUrl('models/anims/extras.glb')", "assetUrl('models/anims/extras-ausente.glb')");
   const M = await import('data:text/javascript;base64,' + Buffer.from(ausente).toString('base64'));
   await M.preloadCharacterAssets(['adjim']);
   const m = M.buildCharacterModel(def('adjim'), { weaponId: 'ak' });
   m.ctrl.reload(1); step(m, 12);
-  check('EX9b-pack-ausente', () => { assert.equal(m.ctrl._upperName, null); assert.ok(m.ctrl.reloadK > 0.5); });
+  m.ctrl.draw();
+  for (let i = 0; i < 100 && !m.ctrl._extrasReady; i++) await new Promise((resolve) => setTimeout(resolve, 10));
+  check('EX9b-pack-ausente', () => {
+    assert.equal(m.ctrl._upperName, null);
+    assert.ok(m.ctrl.reloadK > 0.5);
+    assert.ok(m.ctrl._drawT > 0, 'pack ausente não acionou saque procedural');
+  });
 }
-/* EX10: os quatro call sites medidos no Game real (o mesmo que o harness sobe), com o
+/* EX10: call sites medidos no Game real (o mesmo que o harness sobe), com o
    CharController real espionado no protótipo: quem recebe a chamada e com quais argumentos. */
 const JS = path.join(root, 'public/js');
 let GameMod = { Game: H.Game };
@@ -253,7 +271,7 @@ await R.preloadCharacterAssets(['barbudo', 'capitao'], { weapons: ['pistol', 'ak
 assert.ok(R.hasModel('barbudo') && R.hasModel('capitao'), 'GLB barbudo/capitao ausente');
 const protoCtrl = Object.getPrototypeOf(R.buildCharacterModel(def('barbudo'), { weaponId: 'pistol' }).ctrl);
 const chamadas = [];
-for (const nome of ['flinch', 'draw', 'grenade', 'ceremony']) {
+for (const nome of ['flinch', 'draw', 'grenade', 'ceremony', 'shoot']) {
   const original = protoCtrl[nome];
   protoCtrl[nome] = function (...args) { chamadas.push({ nome, ctrl: this, args }); return original.apply(this, args); };
 }
@@ -300,6 +318,14 @@ check('EX10d-saque-bot', () => {
   const d = de('draw');
   assert.equal(d.length, 1, `${d.length} chamada(s) de draw no bot`);
   assert.equal(d[0].ctrl, bot.mesh.ctrl);
+});
+check('EX10f-faca-local', () => {
+  jogo.state = 'live'; jogo.player.weapon = 'knife'; jogo.player.nextShotAt = 0; jogo.player.drawUntil = 0; jogo.camView = 'third';
+  jogo._ensurePlayerTP(); de('draw');
+  assert.equal(jogo._tryKnifeAttack('quick'), true, 'ataque de faca foi recusado');
+  const s = de('shoot');
+  assert.equal(s.length, 1, `${s.length} chamada(s) de shoot no ataque local de faca`);
+  assert.equal(s[0].ctrl, jogo.playerTP.ctrl);
 });
 check('EX10e-cerimonia', () => {
   jogo.roundKills = { E: 1, B: 0 }; jogo._endRound();

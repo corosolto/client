@@ -443,6 +443,7 @@ class Netcode {
       if (this._evOn) this.limparDropsDeRede();
       const relogioDoServidor = game.timeLeft;   // prepareRound escreve 360: o relógio é do servidor
       game._resultado = null; game._showScoreboard(false);
+      game._retomarCorposDaCerimonia?.();
       game.objective?.prepareRound?.();
       this._netRodada = Number.isFinite(snap.roundNum) ? snap.roundNum : game.roundNum;
       if (Number.isFinite(relogioDoServidor)) game.timeLeft = relogioDoServidor;
@@ -624,7 +625,7 @@ class Netcode {
     if (e.k === 'hit') {
       if (vId !== meu) {
         if (att?.pos && vic?.pos && vic !== p && vic.alive) {
-          vic.mesh?.ctrl?.flinch?.({ x: vic.pos.x - att.pos.x, z: vic.pos.z - att.pos.z }, d / 100);
+          vic.mesh?.ctrl?.flinch?.({ x: vic.pos.x - att.pos.x, z: vic.pos.z - att.pos.z }, d / 100, h);
         }
         return;
       }
@@ -694,6 +695,7 @@ class Netcode {
         game.player.scoped = false; game.el.scope?.classList.remove('on');
         game.radioOpen = null; game._radioUi?.();
         game._compra?.fimDeRodadaRemoto?.(winner === game.playerTeam);   // festa local; crédito é do nó
+        if (!resultadoDesconhecido) game._cerimoniaCorpos?.(winner);
         if (resultadoDesconhecido) game._resultadoDaRodada('RESULTADO ATUALIZADO', 'a sala avançou durante a reconexão');
         else if (!winner) { game._resultadoDaRodada('EMPATE NA TRETA', 'ninguém convenceu ninguém'); game.sfx.roundLose(); }
         else {

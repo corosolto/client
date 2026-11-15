@@ -1,8 +1,11 @@
 const mutacoes = {
   'lateral-mudo': ['const lat = vx * Math.cos(fwdYaw) - vz * Math.sin(fwdYaw);', 'const lat = 0;'],
-  'flinch-remoto-mudo': ['vic.mesh?.ctrl?.flinch?.({ x: vic.pos.x - att.pos.x, z: vic.pos.z - att.pos.z }, d / 100);', 'void d;'],
+  'flinch-remoto-mudo': ['vic.mesh?.ctrl?.flinch?.({ x: vic.pos.x - att.pos.x, z: vic.pos.z - att.pos.z }, d / 100, h);', 'void d;'],
+  'flinch-remoto-sem-cabeca': ['vic.mesh?.ctrl?.flinch?.({ x: vic.pos.x - att.pos.x, z: vic.pos.z - att.pos.z }, d / 100, h);', 'vic.mesh?.ctrl?.flinch?.({ x: vic.pos.x - att.pos.x, z: vic.pos.z - att.pos.z }, d / 100);'],
   'morte-sem-direcao': ['vic.mesh?.ctrl?.die?.({ x: vic.pos.x - att.pos.x, z: vic.pos.z - att.pos.z });', 'vic.mesh?.ctrl?.die?.();'],
   'saque-mudo': ['if (trocouArma) ent.mesh?.ctrl?.draw?.();', 'void trocouArma;'],
+  'cerimonia-online-muda': ['if (!resultadoDesconhecido) game._cerimoniaCorpos?.(winner);', 'void resultadoDesconhecido;'],
+  'cerimonia-reset-mudo': ['game._retomarCorposDaCerimonia?.();', 'void 0;'],
 };
 export async function load(url, context, nextLoad) {
   const resultado = await nextLoad(url, context);
