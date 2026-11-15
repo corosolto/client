@@ -1462,7 +1462,7 @@ class CharController {
     if (this._drawPending) {
       this._drawPending = false; this._drawRequested = false;
       this._playUpper(`draw_${this.oneHanded ? 'pistol' : 'rifle'}`, 0.65);
-    } else if (this._reloadDur > 0 && this._reloadClip) {
+    } else if (this._reloadDur > 0 && this._reloadClip && !this._upperName.startsWith('reload_')) {
       this._stopUpper();
       this._startReloadClip();
     } else this._stopUpper();
