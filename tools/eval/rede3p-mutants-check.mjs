@@ -8,7 +8,7 @@ const targets = {
   'reload-nao-cancela': ['R3P3', 'R3P14', 'R3P19'],
   'reload-perde-ciclo': ['R3P17'],
   'fase-zero': ['R3P4', 'R3P8', 'R3P9'],
-  'reload-estende': ['R3P19'],
+  'reload-estende': ['R3P19', 'R3P20'],
   'rampa-reinicia': ['R3P5'],
   'stop-ignorado': ['R3P7', 'R3P12', 'R3P14'],
   'import-ressuscita': ['R3P4race'],
@@ -28,7 +28,7 @@ function run(mutant = '') {
 const nominal = run();
 assert.equal(nominal.result.status, 0, `base nominal deve passar\n${nominal.result.stdout}\n${nominal.result.stderr}`);
 assert.equal(nominal.observed.mutant, '');
-assert.equal(nominal.observed.clauses, 23);
+assert.equal(nominal.observed.clauses, 24);
 assert.deepEqual(nominal.observed.failed, []);
 console.log(nominal.result.stdout.trimEnd());
 for (const [mutant, clauses] of Object.entries(targets)) {

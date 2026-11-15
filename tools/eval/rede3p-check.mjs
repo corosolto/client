@@ -122,6 +122,7 @@ try {
   // O fim autoritativo oscila até um décimo pela quantização; chegada atrasada
   // não altera o ciclo. O tick continua fresco mesmo quando o Game.t reinicia.
   send({ reloadIn: 2 }, 9, 50); frames(3);
+  const deadlineAntesDoReset = b._netReloadUntilMs;
   let preservedCycle = true;
   for (const [serverTime, remaining, delay] of [[50.04, 1.96, 180], [50.09, 1.91, 5], [50.14, 1.86, 120], [0, 1.8, 10], [.04, 1.76, 90]]) {
     const before = b.mesh.ctrl._reloadT;
@@ -132,6 +133,8 @@ try {
   }
   check('R3P18', preservedCycle && b.mesh.ctrl._reloadT > .2 && b.mesh.ctrl.reloadK > .1,
     { preservou: preservedCycle, fase: b.mesh.ctrl._reloadT, peso: b.mesh.ctrl.reloadK });
+  check('R3P20', b._netReloadUntilMs <= deadlineAntesDoReset,
+    { antes: deadlineAntesDoReset, depois: b._netReloadUntilMs });
   send();
   // Um snapshot do mesmo ciclo não pode empurrar o fim local para a frente.
   send({ reloadIn: 2 }, 9, 80);

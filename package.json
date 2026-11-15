@@ -912,7 +912,7 @@
     "//eval:map-fauna-curated": "Acervo Mint usado no mapa: binding, textura, rig e preload mobile; mutantes recusam fallback e fauna removida.",
     "eval:map-fauna-curated": "node tools/eval/map-fauna-curated-mutants-check.mjs",
     "eval:map-fauna-curated:runtime": "node tools/eval/map-fauna-curated-ci.mjs",
-    "//eval:netcodec-v8": "Javaporcos usa wire v8 distinto; preserva bytes antigos/default7 e recusa JSON com perda.",
+    "//eval:netcodec-v8": "Javaporcos usa wire v8 distinto; preserva bytes antigos, mantém o default canônico atual e recusa JSON com perda.",
     "eval:netcodec-v8": "node tools/eval/netcodec-v8-control.mjs",
     "//eval:javaporcosaudio": "Vozes gravadas do javaporco (rosnado, carga, morte, horda e fuçar) no Sfx: duração na faixa, variação entre chamadas, teto de vozes simultâneas e ganho mestre. Mutantes: voz-muda, voz-clonada, teto-ignorado, ruido-estourado.",
     "eval:javaporcosaudio": "node tools/eval/javaporcos-audio-check.mjs && ! node tools/eval/javaporcos-audio-check.mjs --mutante=voz-muda && ! node tools/eval/javaporcos-audio-check.mjs --mutante=voz-clonada && ! node tools/eval/javaporcos-audio-check.mjs --mutante=teto-ignorado && ! node tools/eval/javaporcos-audio-check.mjs --mutante=ruido-estourado",
