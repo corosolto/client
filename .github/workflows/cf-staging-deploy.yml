@@ -9,7 +9,7 @@ permissions:
 
 concurrency:
   group: cf-staging-deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -52,6 +52,7 @@ jobs:
           CS_BUILD_SHA: ${{ steps.build.outputs.sha }}
         run: |
           set -euo pipefail
+          bash tools/cf/bootstrap-worker.sh csb-staging
           npx wrangler triggers deploy --config wrangler.staging.toml
           npx wrangler versions upload \
             --config wrangler.staging.toml \

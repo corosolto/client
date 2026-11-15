@@ -213,12 +213,15 @@ viewmodels respondem 200 com tamanho e ETag (sha256) do manifesto.
   por isso `audio:check` só roda no `build:cf` quando há `AUDIO_PACK_SHA256`.
 - **Viewmodel.** Não entra mais no build do Workers: o Worker serve `/private-assets/viewmodels/<caminho>`
   do binding R2 `PRIVADO` pela chave do manifesto versionado (`viewmodels/sha256/<sha><ext>`, a mesma do
-  Blob), com ETag/304 e HEAD (`src/cf/borda.mjs`). Caminho fora do manifesto, objeto ausente ou de tamanho
-  errado cai no 404 do Astro e o jogo usa o legado, como na Vercel sem o arquivo. Preview não tem o
-  binding (código de PR não lê o bucket privado).
-- **Cache.** `s-maxage` vira TTL do `caches.default` (`/api/og`, `/mapa`) e sai do `cache-control` do
-  navegador junto com `stale-while-revalidate`, como a Vercel fazia; viewmodel `immutable` também é
-  guardado. O cache do Workers só vale em domínio próprio (no `workers.dev` todo hit renderiza).
+  Blob), com ETag/304 e HEAD (`src/cf/borda.mjs`). Antes de responder ou devolver 304, o Worker lê o
+  objeto e confere tamanho e SHA-256; ausência ou divergência cai no 404 do Astro e o jogo usa o legado,
+  como na Vercel sem o arquivo. Preview não tem o binding (código de PR não lê o bucket privado).
+- **Cache.** `s-maxage` vira a janela fresca do `caches.default` (`/api/og`, `/mapa`) e
+  `stale-while-revalidate` vira a janela em que a resposta anterior é servida enquanto o Worker
+  revalida em segundo plano. Fill frio e revalidação da mesma URL compartilham uma única operação,
+  impedindo gravações fora de ordem. As duas diretivas saem do `cache-control` do navegador, como na
+  Vercel; viewmodel `immutable` também é guardado. O cache do Workers só vale em domínio próprio (no
+  `workers.dev` todo hit renderiza).
 - **SHA.** `CS_BUILD_SHA` (workflows) > `VERCEL_GIT_COMMIT_SHA` > `GITHUB_SHA`.
 - **Staging.** Custom Domain `staging.corosolto.com.br` no `csb-staging`; segredos `API_PROXY_SECRET`,
   `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` instalados a partir do Secret Manager do backend
@@ -227,13 +230,17 @@ viewmodels respondem 200 com tamanho e ETag (sha256) do manifesto.
   fica sem (não manda conversão ao X) e produção depende do dono gravar o token de novo.
 - **Produção.** `wrangler.prod.toml` (Worker `csb-prod`, mesmo build, binding `PRIVADO`) e
   `cf-prod-deploy.yml`: o push `chore(release):` da `main` protegida (o mesmo commit que a Vercel
-  builda) provisiona `workers_dev`/`preview_urls` sem trocar código, envia uma versão sem tráfego,
-  captura o ID e a URL imutáveis, verifica D1–D3 e só então promove aquele ID a 100%. O workflow não
-  aceita `workflow_dispatch`: rollback entra por novo commit de release na `main`, nunca por YAML de
-  branch com o token da conta.
+  builda) cria apenas um placeholder 503 se o Worker ainda não existir, provisiona
+  `workers_dev`/`preview_urls` sem trocar código, envia uma versão sem tráfego, captura o ID e a URL
+  imutáveis, verifica D1–D3 e só então promove aquele ID a 100%. Staging usa a mesma sequência e não
+  cancela uma promoção em voo quando chega outro push. Os workflows não aceitam `workflow_dispatch`:
+  rollback entra por novo commit de release na branch protegida, nunca por YAML de branch com o token
+  da conta.
 - **Virada.** `tools/cf/virada.sh liga|desliga|status`: Worker Routes `www.corosolto.com.br/*`,
-  `www.csbrasil.online/*` e `csbrasil.online/*` apontando para o `csb-prod`. O DNS continua proxied para a
-  Vercel; a rota intercepta antes da origem, e `desliga` devolve o tráfego à Vercel em segundos. O 308
+  `www.csbrasil.online/*` e `csbrasil.online/*` apontando para o `csb-prod`. O script adquire uma trava
+  local, verifica a propriedade de todas as rotas antes da primeira mutação e recusa sobrescrever
+  ou apagar uma rota pertencente a outro Worker. O DNS continua proxied para a Vercel; a rota intercepta
+  antes da origem, e `desliga` devolve o tráfego à Vercel em segundos. O 308
   `csbrasil.online` → `www.csbrasil.online`, que era config de domínio da Vercel, mora no Worker.
   `corosolto.com.br` e `corosol.to` já redirecionam por regra da Cloudflare, sem Vercel.
 

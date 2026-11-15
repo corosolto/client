@@ -57,6 +57,7 @@ jobs:
           CS_BUILD_SHA: ${{ steps.build.outputs.sha }}
         run: |
           set -euo pipefail
+          bash tools/cf/bootstrap-worker.sh csb-prod
           npx wrangler triggers deploy --config wrangler.prod.toml
           npx wrangler versions upload \
             --config wrangler.prod.toml \

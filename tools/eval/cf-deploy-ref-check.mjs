@@ -1,9 +1,14 @@
 import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
-const validos = new Set(['', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato', 'prod-sem-preview-url', 'prod-promove-por-tag', 'prod-percentual-com-simbolo', 'preview-sem-provisionamento', 'preview-base-arbitraria']);
+const validos = new Set([
+  '', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato',
+  'prod-sem-preview-url', 'prod-promove-por-tag', 'prod-percentual-com-simbolo',
+  'preview-sem-provisionamento', 'preview-base-arbitraria', 'staging-sem-bootstrap',
+  'prod-sem-bootstrap', 'preview-sem-bootstrap', 'staging-cancela-promocao',
+]);
 if (!validos.has(mutante)) {
-  console.error('uso: cf-deploy-ref-check [--mutante=staging-dispatch-arbitrario|prod-dispatch-arbitrario|prod-sem-candidato|prod-sem-preview-url|prod-promove-por-tag|prod-percentual-com-simbolo|preview-sem-provisionamento|preview-base-arbitraria]');
+  console.error(`mutante desconhecido: ${mutante}`);
   process.exit(2);
 }
 
@@ -37,6 +42,18 @@ if (mutante === 'preview-sem-provisionamento') {
 if (mutante === 'preview-base-arbitraria') {
   preview = preview.replace(" && (github.event.workflow_run.pull_requests[0].base.ref == 'staging' || github.event.workflow_run.pull_requests[0].base.ref == 'main')", '');
 }
+if (mutante === 'staging-sem-bootstrap') {
+  staging = staging.replace('bash tools/cf/bootstrap-worker.sh csb-staging', ':');
+}
+if (mutante === 'prod-sem-bootstrap') {
+  producao = producao.replace('bash tools/cf/bootstrap-worker.sh csb-prod', ':');
+}
+if (mutante === 'preview-sem-bootstrap') {
+  preview = preview.replace('bash tools/cf/bootstrap-worker.sh csb-preview', ':');
+}
+if (mutante === 'staging-cancela-promocao') {
+  staging = staging.replace('cancel-in-progress: false', 'cancel-in-progress: true');
+}
 
 const falhas = [];
 const check = (ok, id, mensagem) => { if (!ok) falhas.push(`${id} ${mensagem}`); };
@@ -46,12 +63,13 @@ const validaWorkflow = (fonte, ramo, id) => {
   check(/ref: \$\{\{ github\.sha \}\}/.test(fonte), id, 'checkout precisa fixar o SHA do push');
   check(/id: build[\s\S]*git rev-parse HEAD[\s\S]*steps\.build\.outputs\.sha/.test(fonte),
     id, 'build e verificação precisam compartilhar o SHA realmente checado');
+  const bootstrap = fonte.indexOf('bash tools/cf/bootstrap-worker.sh');
   const provisiona = fonte.indexOf('npx wrangler triggers deploy');
   const upload = fonte.indexOf('npx wrangler versions upload');
   const verifica = fonte.indexOf('node tools/cf/verifica-deploy.mjs');
   const promove = fonte.indexOf('npx wrangler versions deploy');
-  check(provisiona >= 0 && upload > provisiona && verifica > upload && promove > verifica, id,
-    'preview remoto precisa ser provisionado antes do upload, verificado por bytes e só então promovido');
+  check(bootstrap >= 0 && provisiona > bootstrap && upload > provisiona && verifica > upload && promove > verifica, id,
+    'Worker ausente precisa receber placeholder seguro antes de triggers/upload, verificação e promoção');
   check(/Worker Version ID:[\s\S]*echo "version_id=\$VERSION_ID"/.test(fonte)
     && /VERSION_ID: \$\{\{ steps\.upload\.outputs\.version_id \}\}/.test(fonte)
     && /versions deploy "\$VERSION_ID@100"/.test(fonte)
@@ -61,14 +79,21 @@ const validaWorkflow = (fonte, ramo, id) => {
 
 validaWorkflow(staging, 'staging', 'CFREF1');
 validaWorkflow(producao, 'main', 'CFREF2');
+check(/cancel-in-progress:\s*false/.test(staging),
+  'CFREF1', 'staging não pode cancelar uma promoção em voo quando chega outro push');
+check(/bootstrap-worker\.sh csb-staging/.test(staging),
+  'CFREF1', 'staging precisa inicializar exatamente csb-staging');
+check(/bootstrap-worker\.sh csb-prod/.test(producao),
+  'CFREF2', 'produção precisa inicializar exatamente csb-prod');
 check(/workers_dev\s*=\s*true/.test(stagingConfig) && /preview_urls\s*=\s*true/.test(stagingConfig),
   'CFREF1', 'staging precisa publicar URL imutável da versão candidata');
 check(/workers_dev\s*=\s*true/.test(producaoConfig) && /preview_urls\s*=\s*true/.test(producaoConfig),
   'CFREF2', 'produção precisa publicar URL imutável da versão candidata');
+const previewBootstrap = preview.indexOf('bash tools/cf/bootstrap-worker.sh csb-preview');
 const previewProvisiona = preview.indexOf('wrangler@4.158.0 triggers deploy --config wrangler.preview.toml');
 const previewUpload = preview.indexOf('wrangler@4.158.0 versions upload');
-check(previewProvisiona >= 0 && previewUpload > previewProvisiona,
-  'CFREF3', 'preview de PR precisa provisionar a URL remota antes do upload versionado');
+check(previewBootstrap >= 0 && previewProvisiona > previewBootstrap && previewUpload > previewProvisiona,
+  'CFREF3', 'preview de PR precisa inicializar o Worker antes de provisionar e enviar a versão');
 check(/workers_dev\s*=\s*true/.test(previewConfig) && /preview_urls\s*=\s*true/.test(previewConfig),
   'CFREF3', 'configuração confiável do preview precisa habilitar URLs imutáveis');
 check(/base\.ref == 'staging'[\s\S]*base\.ref == 'main'/.test(preview)

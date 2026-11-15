@@ -34,7 +34,7 @@ export async function viewmodelDoBucket(request, bucket, indice) {
   const etag = `"${entrada.sha256}"`;
   const headers = new Headers({ 'content-type': entrada.contentType, etag });
   const chave = chaveR2Viewmodel(entrada);
-  const objeto = request.method === 'HEAD' ? await bucket.head(chave) : await bucket.get(chave);
+  const objeto = await bucket.get(chave);
   if (!objeto) {
     console.error(`[viewmodel] ausente no R2: ${chave} (${caminho})`);
     return null;
@@ -43,23 +43,32 @@ export async function viewmodelDoBucket(request, bucket, indice) {
     console.error(`[viewmodel] tamanho divergente no R2: ${chave} tem ${objeto.size}, manifesto ${entrada.bytes}`);
     return null;
   }
+  const bytes = await objeto.arrayBuffer();
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  let sha256 = '';
+  for (const byte of digest) sha256 += byte.toString(16).padStart(2, '0');
+  if (sha256 !== entrada.sha256) {
+    console.error(`[viewmodel] sha256 divergente no R2: ${chave} tem ${sha256}, manifesto ${entrada.sha256}`);
+    return null;
+  }
   if (request.headers.get('if-none-match') === etag) return new Response(null, { status: 304, headers });
   headers.set('content-length', String(entrada.bytes));
-  return new Response(request.method === 'HEAD' ? null : objeto.body, { status: 200, headers });
+  return new Response(request.method === 'HEAD' ? null : bytes, { status: 200, headers });
 }
 
 /* A Vercel consome `s-maxage` e `stale-while-revalidate` na CDN e tira os dois da resposta. Aqui o
    `s-maxage` vira o TTL do caches.default e o navegador recebe o resto, como antes. */
 export function politicaCache(valor) {
-  let borda = 0;
+  let borda = 0, stale = 0;
   const cliente = [];
   for (const diretiva of String(valor || '').split(',').map((d) => d.trim()).filter(Boolean)) {
     const s = /^s-maxage=(\d+)$/i.exec(diretiva);
     if (s) { borda = Number(s[1]); continue; }
-    if (/^stale-while-revalidate=/i.test(diretiva)) continue;
+    const swr = /^stale-while-revalidate=(\d+)$/i.exec(diretiva);
+    if (swr) { stale = Number(swr[1]); continue; }
     cliente.push(diretiva);
   }
-  return { borda, cliente: cliente.join(', ') };
+  return { borda, stale, cliente: cliente.join(', ') };
 }
 
 /* TTL de borda: o `s-maxage` da rota; viewmodel `immutable` (URL com ?v=<sha>) guarda pelo

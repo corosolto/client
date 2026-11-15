@@ -33,6 +33,28 @@ rota_id() {
   api "https://api.cloudflare.com/client/v4/zones/$1/workers/routes" \
     | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s).result.find(x=>x.pattern===process.argv[1]);if(r)console.log(`${r.id} ${r.script||"(sem worker)"}`)})' "$2"
 }
+preflight_propriedade() {
+  local item dominio padrao atual dono
+  for item in "${ROTAS[@]}"; do
+    read -r dominio padrao <<<"$item"
+    atual=$(rota_id "$(zona "$dominio")" "$padrao")
+    if [ -n "$atual" ]; then
+      dono="${atual#* }"
+      [ "$dono" = "$WORKER" ] || {
+        echo "recusado: $padrao pertence a $dono, não a $WORKER; nenhuma rota foi alterada" >&2
+        return 1
+      }
+    fi
+  done
+}
+trava_exclusiva() {
+  LOCK_DIR="${TMPDIR:-/tmp}/csb-cf-virada.lock"
+  mkdir "$LOCK_DIR" 2>/dev/null || {
+    echo "outra virada já está em andamento ($LOCK_DIR)" >&2
+    return 1
+  }
+  trap 'rmdir "$LOCK_DIR"' EXIT
+}
 
 case "${1:-status}" in
   status)
@@ -43,13 +65,18 @@ case "${1:-status}" in
     done
     ;;
   liga)
+    trava_exclusiva
+    preflight_propriedade
     for item in "${ROTAS[@]}"; do
       read -r dominio padrao <<<"$item"
       z=$(zona "$dominio")
       atual=$(rota_id "$z" "$padrao")
       if [ -n "$atual" ]; then
-        api -X PUT "https://api.cloudflare.com/client/v4/zones/$z/workers/routes/${atual%% *}" \
-          -d "{\"pattern\":\"$padrao\",\"script\":\"$WORKER\"}" >/dev/null
+        dono="${atual#* }"
+        [ "$dono" = "$WORKER" ] || {
+          echo "recusado: $padrao já pertence a $dono, não a $WORKER" >&2
+          exit 1
+        }
       else
         api -X POST "https://api.cloudflare.com/client/v4/zones/$z/workers/routes" \
           -d "{\"pattern\":\"$padrao\",\"script\":\"$WORKER\"}" >/dev/null
@@ -58,11 +85,20 @@ case "${1:-status}" in
     done
     ;;
   desliga)
+    trava_exclusiva
+    preflight_propriedade
     for item in "${ROTAS[@]}"; do
       read -r dominio padrao <<<"$item"
       z=$(zona "$dominio")
       atual=$(rota_id "$z" "$padrao")
-      [ -z "$atual" ] || api -X DELETE "https://api.cloudflare.com/client/v4/zones/$z/workers/routes/${atual%% *}" >/dev/null
+      if [ -n "$atual" ]; then
+        dono="${atual#* }"
+        [ "$dono" = "$WORKER" ] || {
+          echo "recusado: $padrao pertence a $dono; rollback de $WORKER não pode removê-la" >&2
+          exit 1
+        }
+        api -X DELETE "https://api.cloudflare.com/client/v4/zones/$z/workers/routes/${atual%% *}" >/dev/null
+      fi
       echo "$padrao -> Vercel (sem rota)"
     done
     ;;
