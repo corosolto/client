@@ -8,7 +8,7 @@
      B4  csbrasil.online (apex) responde 308 para o www preservando caminho e query
      B5  a chave no R2 é a mesma do Blob (scripts/vm-assets.mjs blobPathOf) para todo o manifesto
    Mutantes (cada um tem de reprovar): sem-strip, vm-sem-etag, apex-301,
-   apex-sem-worker-first, assets-sem-fallback, assets-intercepta-post. */
+   apex-sem-worker-first, assets-sem-fallback, assets-intercepta-post, cache-ignora-etag. */
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -26,6 +26,7 @@ const MUTACOES = {
   'apex-sem-worker-first': ['src/cf/worker.ts', 'const apex = redirectDeHost(url);', 'const apex = null;'],
   'assets-sem-fallback': ['src/cf/worker.ts', 'const asset = env.ASSETS ? await env.ASSETS.fetch(request) : null;', 'const asset = null;'],
   'assets-intercepta-post': ['src/cf/worker.ts', "if (request.method !== 'GET' && request.method !== 'HEAD') return astro.fetch(request, env, ctx);", ''],
+  'cache-ignora-etag': ['src/cf/worker.ts', "if (request.headers.get('if-none-match') === saida.headers.get('etag'))", 'if (false)'],
 };
 if (MUTANTE && !MUTACOES[MUTANTE]) { console.error(`mutante desconhecido: ${MUTANTE}`); process.exit(2); }
 
@@ -131,12 +132,19 @@ await build({
     },
   }],
 });
+let cacheEntry = null;
+const pendentes = [];
 Object.defineProperty(globalThis, 'caches', {
   configurable: true,
-  value: { default: { match: async () => undefined, put: async () => {} } },
+  value: {
+    default: {
+      match: async () => cacheEntry?.clone(),
+      put: async (_request, response) => { cacheEntry = response.clone(); },
+    },
+  },
 });
 const workerReal = (await import(pathToFileURL(bundleWorker).href)).default;
-const ctx = { waitUntil() {} };
+const ctx = { waitUntil(promise) { pendentes.push(promise); } };
 let chamadasAssets = 0;
 const assetsOk = {
   fetch: async () => {
@@ -169,15 +177,28 @@ check(fallbackReal.headers.get('x-csb-source') === 'astro' && await fallbackReal
   'B4', '404 de ASSETS precisa cair no handler Astro');
 const chamadasAntesDoPost = chamadasAssets;
 const postReal = await workerReal.fetch(
-  new Request('https://www.corosolto.com.br/api/conta', { method: 'POST' }),
+  new Request('https://csbrasil.online/discord', { method: 'POST' }),
   { ASSETS: assetsOk },
   ctx,
 );
 check(postReal.headers.get('x-csb-source') === 'astro'
   && await postReal.text() === 'astro'
   && chamadasAssets === chamadasAntesDoPost,
-'B4', 'método de escrita precisa ir direto ao Astro sem consultar ASSETS');
+'B4', 'método de escrita precisa ir direto ao Astro antes de apex, redirects e ASSETS');
 
+cacheEntry = null;
+const vmPrimeiro = await workerReal.fetch(new Request(url), { PRIVADO: cheio }, ctx);
+await Promise.all(pendentes.splice(0));
+const vmCondicional = await workerReal.fetch(
+  new Request(url, { headers: { 'if-none-match': `"${entrada.sha256}"` } }),
+  { PRIVADO: cheio },
+  ctx,
+);
+check(vmPrimeiro.status === 200
+  && vmCondicional.status === 304
+  && vmCondicional.body === null
+  && vmCondicional.headers.get('etag') === `"${entrada.sha256}"`,
+'B3', 'GET cacheado com If-None-Match igual precisa responder 304 sem corpo');
 // B5
 const divergentes = manifesto.files.filter((f) => borda.chaveR2Viewmodel(f) !== blobPathOf(f));
 check(!divergentes.length, 'B5', `${divergentes.length} chave(s) R2 ≠ Blob: ${divergentes.slice(0, 3).map((f) => f.path).join(', ')}`);

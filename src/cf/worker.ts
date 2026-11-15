@@ -42,7 +42,6 @@ const doCache = (guardada: Response) => {
   return saida;
 };
 const respostaDoSite = async (request: Request, env: Env, ctx: Ctx) => {
-  if (request.method !== 'GET' && request.method !== 'HEAD') return astro.fetch(request, env, ctx);
   const asset = env.ASSETS ? await env.ASSETS.fetch(request) : null;
   return asset && asset.status !== 404 ? asset : astro.fetch(request, env, ctx);
 };
@@ -52,12 +51,17 @@ export default {
   async fetch(request: Request, env: Env, ctx: Ctx): Promise<Response> {
     const url = new URL(request.url);
     ponteEnv(env);
+    if (request.method !== 'GET' && request.method !== 'HEAD') return astro.fetch(request, env, ctx);
     const apex = redirectDeHost(url);
     if (apex) return apex;
     const cache = request.method === 'GET' ? cacheDaBorda.default : null;
     const hit = cache ? await cache.match(request) : undefined;
-    if (hit) return doCache(hit);
-
+    if (hit) {
+      const saida = doCache(hit);
+      if (request.headers.get('if-none-match') === saida.headers.get('etag'))
+        return new Response(null, { status: 304, headers: saida.headers });
+      return saida;
+    }
     const redirect = redirectPara(REDIRECTS, url);
     const resposta = redirect
       ? Response.redirect(new URL(redirect.destino, url).toString(), redirect.status)
