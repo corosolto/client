@@ -12,17 +12,20 @@
      quadril-fora-da-capsula horizontal do Hips sem encolher              -> EMM12
      rotacao-local           rotação local da referência, sem retarget    -> EMM13
      lobby-sem-clipe         DANÇAR do lobby registra driver sem `clipe`  -> EMM11
+    partida-sem-clipe       o primeiro uso na partida não registra o driver -> EMM11
      travessao-no-titulo     `—` volta numa `origem` (title da roda)      -> EMM0c
    Uso: node tools/eval/emotes-mocap-check.mjs [--self-test | --mutante=<nome>] */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
+import { parse } from 'acorn';
 import { spawnSync } from 'node:child_process';
 import { root, requests, THREE, CHARACTERS, parseGlb, carregaRuntime, once, step, esperaClipe } from './lib/glbchars-node.mjs';
 
 const mutant = process.argv.find((x) => x.startsWith('--mutante='))?.split('=')[1] || '';
-const mutants = ['emote-mocap-mudo', 'arma-visivel-no-emote', 'emote-nao-cancela', 'id-renumerado', 'quadril-fora-da-capsula', 'rotacao-local', 'lobby-sem-clipe', 'travessao-no-titulo'];
+const mutants = ['emote-mocap-mudo', 'arma-visivel-no-emote', 'emote-nao-cancela', 'id-renumerado', 'quadril-fora-da-capsula', 'rotacao-local', 'lobby-sem-clipe', 'partida-sem-clipe', 'travessao-no-titulo'];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
 if (process.argv.includes('--self-test')) {
   for (const kind of ['', ...mutants]) {
@@ -295,19 +298,73 @@ if (!mutant) {
   });
 }
 
-/* EMM11 — o descriptor real e compartilhado entrega o clipe exato, e partida/lobby
-   instalam esse mesmo objeto em vez de reconstruírem versões divergentes. */
-const gameSource = fs.readFileSync(path.join(root, 'public/js/game.js'), 'utf8');
+/* EMM11 — executa os inicializadores reais de partida/lobby com apenas o import()
+   injetado. Comentários, chamadas mortas e descriptors reconstruídos não instalam o
+   objeto compartilhado e, portanto, reprovam. */
+const gameReal = fs.readFileSync(path.join(root, 'public/js/game.js'), 'utf8');
+const gameSource = mutant === 'partida-sem-clipe'
+  ? once(gameReal, 'setEmoteDriver(mod.EMOTE_DRIVER);', 'void mod.EMOTE_DRIVER;')
+  : gameReal;
 const mainReal = fs.readFileSync(path.join(root, 'public/js/main.js'), 'utf8');
 const mainSource = mutant === 'lobby-sem-clipe'
   ? once(mainReal, 'setEmoteDriver(m.EMOTE_DRIVER);', 'setEmoteDriver({ pose: m.poseEmote, duracao: m.emoteDuracao, laco: m.emoteLaco });')
   : mainReal;
-check('EMM11-callsites', () => {
+const noAst = (source, predicado, nome) => {
+  let achado = null;
+  const visita = (node) => {
+    if (!node || typeof node !== 'object' || achado) return;
+    if (predicado(node)) { achado = node; return; }
+    for (const valor of Object.values(node)) {
+      if (Array.isArray(valor)) valor.forEach(visita);
+      else visita(valor);
+    }
+  };
+  visita(parse(source, { ecmaVersion: 'latest', sourceType: 'module' }));
+  assert.ok(achado, `${nome} não encontrado`);
+  return achado;
+};
+const nomeSetterImportado = (source) => {
+  const declaracao = noAst(source, (node) => node.type === 'ImportDeclaration'
+    && node.source.value === './glbchars.js'
+    && node.specifiers.some((spec) => spec.type === 'ImportSpecifier' && spec.imported.name === 'setEmoteDriver'), 'import de setEmoteDriver');
+  return declaracao.specifiers.find((spec) => spec.type === 'ImportSpecifier' && spec.imported.name === 'setEmoteDriver').local.name;
+};
+const injetaImportador = (source) => once(source, "import('./emotes.js')", 'importer()');
+const exercitaPartida = async () => {
+  const metodo = noAst(gameSource, (node) => node.type === 'MethodDefinition' && node.key?.name === '_emoteMods', 'Game._emoteMods');
+  const corpo = gameSource.slice(metodo.value.body.start + 1, metodo.value.body.end - 1);
+  const setter = nomeSetterImportado(gameSource);
+  let instalado = null;
+  const contexto = vm.createContext({ importer: async () => E, [setter]: (driver) => { instalado = driver; } });
+  const inicializa = vm.runInContext(`(async function () {${injetaImportador(corpo)}})`, contexto);
+  const estado = { _emoteMod: null, _emoteLoading: null };
+  const modulo = await inicializa.call(estado);
+  return { instalado, modulo, estado };
+};
+const exercitaLobby = async () => {
+  const funcao = noAst(mainSource, (node) => node.type === 'FunctionDeclaration' && node.id?.name === 'carregaEmotes', 'carregaEmotes');
+  noAst(mainSource, (node) => node.type === 'VariableDeclarator' && node.id?.name === 'emotesMod'
+    && node.init?.type === 'Literal' && node.init.value === null, 'declaração de emotesMod');
+  const setter = nomeSetterImportado(mainSource);
+  const fonte = injetaImportador(mainSource.slice(funcao.start, funcao.end));
+  let instalado = null;
+  const contexto = vm.createContext({ emotesMod: null, importer: async () => E, [setter]: (driver) => { instalado = driver; } });
+  const inicializa = vm.runInContext(`(${fonte})`, contexto);
+  const modulo = await inicializa();
+  return { instalado, modulo, emotesMod: contexto.emotesMod };
+};
+const partida = await exercitaPartida();
+const lobby = await exercitaLobby();
+check('EMM11-inicializadores', () => {
   const esperado = E.emoteInfo('capoeira');
   assert.equal(E.EMOTE_DRIVER.clipe('capoeira'), esperado, 'driver não devolveu o registro exato do clipe');
   assert.deepEqual(Object.keys(E.EMOTE_DRIVER).sort(), ['clipe', 'duracao', 'laco', 'pose']);
-  assert.ok(gameSource.includes('setEmoteDriver(mod.EMOTE_DRIVER);'), 'partida não instala o descriptor real');
-  assert.ok(mainSource.includes('setEmoteDriver(m.EMOTE_DRIVER);'), 'lobby não instala o descriptor real');
+  assert.equal(partida.instalado, E.EMOTE_DRIVER, 'partida não instalou o descriptor real');
+  assert.equal(partida.modulo, E);
+  assert.equal(partida.estado._emoteMod, E);
+  assert.equal(lobby.instalado, E.EMOTE_DRIVER, 'lobby não instalou o descriptor real');
+  assert.equal(lobby.modulo, E);
+  assert.equal(lobby.emotesMod, E);
   assert.ok(gameSource.includes('this._emoteAnel(e.shiftKey)'));
   assert.ok(!/import[^;]*emotes\.js/.test(fs.readFileSync(path.join(root, 'public/js/glbchars.js'), 'utf8')), 'glbchars importou emotes.js');
 });
@@ -318,7 +375,7 @@ console.log(`medidas ${JSON.stringify(medidas)}`);
 if (mutant) {
   assert.ok(failures.length > 0, `MUTAÇÃO PASSOU — ${mutant}`);
   const ESPERADO = { 'emote-mocap-mudo': ['EMM3', 'EMM4', 'EMM7', 'EMM9'], 'arma-visivel-no-emote': ['EMM5'], 'emote-nao-cancela': ['EMM6'], 'id-renumerado': ['EMM0-'],
-    'quadril-fora-da-capsula': ['EMM12'], 'rotacao-local': ['EMM13'], 'lobby-sem-clipe': ['EMM11'], 'travessao-no-titulo': ['EMM0c'] };
+    'quadril-fora-da-capsula': ['EMM12'], 'rotacao-local': ['EMM13'], 'lobby-sem-clipe': ['EMM11'], 'partida-sem-clipe': ['EMM11'], 'travessao-no-titulo': ['EMM0c'] };
   for (const id of ESPERADO[mutant]) assert.ok(failures.some((x) => x.id.startsWith(id)), `${mutant} não reprovou ${id}: ${failures.map((x) => x.id).join(', ')}`);
   console.log(`MUTANTE ${mutant} REPROVADO: ${failures.map((x) => x.id).join(', ')}`);
 } else {
