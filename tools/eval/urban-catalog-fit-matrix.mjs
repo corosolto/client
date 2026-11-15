@@ -18,7 +18,7 @@ const port = Number(process.env.URBAN_FIT_PORT || 9475);
 const catalog = readJson('tools/character-kit/garment/urban-catalog.json');
 const census = readJson('tools/character-kit/garment/body-census.json');
 const eyewearManifest = readJson('public/models/items/eyewear-manifest.json');
-const BODY_CHUNK = 22;
+const BODY_CHUNK = 26;
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const hashFile = path => hash(readFileSync(path));
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');

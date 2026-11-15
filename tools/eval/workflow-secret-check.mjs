@@ -29,6 +29,7 @@
 
    Uso: node tools/eval/workflow-secret-check.mjs [--mutante=<nome>]
    ============================================================================ */
+import { spawnSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { gatilhosDe, ifDe, jobsDe, parseWorkflow, passosDe, runDe } from './workflow-yaml.mjs';
@@ -54,6 +55,18 @@ function estrutura(nome, texto, clausula) {
   }
 }
 
+
+function falhaSweepVazio(nome, texto) {
+  const expressao = /gh api --paginate --slurp "repos\/\$REPO\/pulls\?state=open&per_page=100"[\s\S]{0,200}?\|\s*jq -r '([^']+)'/.exec(texto)?.[1];
+  if (!expressao) return `${nome} não expõe a expressão jq do sweep paginado`;
+  for (const entrada of ['[]\n', '[[]]\n']) {
+    const resultado = spawnSync('jq', ['-r', expressao], { input: entrada, encoding: 'utf8' });
+    if (resultado.status !== 0 || resultado.stdout !== '') {
+      return `${nome} falha quando a API não retorna PRs abertos`;
+    }
+  }
+  return '';
+}
 const fontes = arquivos.map((nome) => [nome, readFileSync(join(DIR, nome), 'utf8')]);
 /* gatilho-cego-novo: um workflow novo escuta review de PR e reprova sem o secret,
    sem `if:` que exclua o fork. É a forma exata do vermelho do classify em 21/08. */
@@ -95,8 +108,23 @@ for (let [nome, texto] of fontes) {
   if (MUT === 'guarda-em-job') am = am.replace(/^jobs:\n/m, 'jobs:\n  bot-token:\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - run: echo token\n');
   if (MUT === 'passo-fura-guarda') am = am.replace(/(- name: Fetch PR status\n)\s+if: env\.pular != '1'\n/, '$1');
   if (MUT === 'guarda-muda') am = am.replace(/::warning title=Bot inerte::/, '');
+  const falhaVazio = falhaSweepVazio('csbrasil-bot-automerge.yml', am);
+  if (falhaVazio) falhas.push(`WSEC2 ${falhaVazio}`);
   const workflow = estrutura('csbrasil-bot-automerge.yml', am, 'WSEC2');
   const jobs = jobsDe(workflow);
+  const leiturasSweep = passosDe(jobs.sweep).map(runDe)
+    .filter((run) => /gh api --paginate --slurp "repos\/\$REPO\/pulls\?state=open&per_page=100"/.test(run));
+  if (leiturasSweep.length !== 1) {
+    falhas.push(`WSEC2 sweep de automerge expõe ${leiturasSweep.length} leituras paginadas; esperado 1`);
+  } else {
+    const leitura = leiturasSweep[0].replace(/\\\n\s*/g, ' ');
+    const apis = [...leitura.matchAll(/\bgh\s+api\b/g)];
+    const overrides = [...leitura.matchAll(/(?:^|\n)\s*(?:export\s+)?GH_TOKEN\s*=/g)];
+    const escopoSomenteLeitura = /\(\s*export GH_TOKEN="\$\{\{ github\.token \}\}"[\s\S]*gh api --paginate --slurp "repos\/\$REPO\/pulls\?state=open&per_page=100"[\s\S]*gh pr view "\$number"[\s\S]*\)\s*python3/.test(leitura);
+    if (apis.length !== 1 || overrides.length !== 1 || !escopoSomenteLeitura) {
+      falhas.push('WSEC2 sweep de automerge não limita github.token à única leitura paginada');
+    }
+  }
   const ids = Object.keys(jobs);
   const esperados = ['automerge', 'sweep'];
   if (ids.length !== esperados.length || esperados.some((id) => !ids.includes(id))) {
@@ -150,9 +178,10 @@ function falhasMetadata(texto) {
     }
     if (comandos.length === 1) {
       const overrides = [...normalizado.matchAll(/(?:^|[;\n]\s*)(?:export\s+)?GH_TOKEN\s*=/g)];
+      const apis = [...normalizado.matchAll(/\bgh\s+api\b/g)];
       const apiLeituraPaginada = /gh api --paginate --slurp "repos\/\$REPO\/pulls\?state=open&per_page=100"/.test(normalizado)
         && /\|\s*while read -r number;\s*do\s*gh pr view "\$number"/.test(normalizado);
-      const apiProibida = /\bgh api\b/.test(normalizado) && !apiLeituraPaginada;
+      const apiProibida = apis.length !== (apiLeituraPaginada ? 1 : 0);
       if (Object.hasOwn(env, 'GH_TOKEN') || overrides.length !== 1 || apiProibida
           || /\bgh workflow run\b|\bgh pr (?:edit|comment|review|merge)\b/.test(normalizado)) {
         locais.push(`job ${job} mistura escrita ou override extra no passo de leitura`);
@@ -186,6 +215,8 @@ function falhasMetadata(texto) {
 {
   const texto = readFileSync(join(DIR, 'csbrasil-bot-pr-classify.yml'), 'utf8');
   falhasMetadata(texto).forEach((falha) => falhas.push(`WSEC3 ${falha}`));
+  const falhaVazio = falhaSweepVazio('csbrasil-bot-pr-classify.yml', texto);
+  if (falhaVazio) falhas.push(`WSEC3 ${falhaVazio}`);
   const mutantes = {
     'sem-checks-read': texto.replace('  checks: read\n', ''),
     'sem-statuses-read': texto.replace('  statuses: read\n', ''),
@@ -195,6 +226,7 @@ function falhasMetadata(texto) {
     'escrita-com-token-do-repo': texto.replace('run: python3 scripts/ci/ensure_labels.py', 'run: GH_TOKEN="${{ github.token }}" python3 scripts/ci/ensure_labels.py'),
     'escrita-com-env-do-repo': texto.replace('      - name: Ensure labels exist\n', '      - name: Ensure labels exist\n        env:\n          GH_TOKEN: ${{ github.token }}\n'),
     'leitura-com-escrita-do-repo': texto.replace(' > /tmp/pr.json', ' > /tmp/pr.json; GH_TOKEN="${{ github.token }}" gh api -X POST repos/x/issues/1/labels -f labels[]=x'),
+    'leitura-paginada-com-escrita': texto.replace('          gh api --paginate --slurp', '          gh api -X POST repos/x/issues/1/labels -f labels[]=x\n          gh api --paginate --slurp'),
     'token-leitura-vaza': texto.replace('\n          )\n          python3', '\n          python3'),
   };
   for (const [nome, mutado] of Object.entries(mutantes)) {
@@ -204,7 +236,7 @@ function falhasMetadata(texto) {
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m WSEC1 nenhum portão reprova PR de fork por secret que aquele gatilho não pode ter (${arquivos.length} workflows)`);
-if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m WSEC3 metadata completa usa github.token com checks/statuses read; escritas preservam o PAT; 9/9 mutantes detectados');
+if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m WSEC3 metadata completa usa github.token com checks/statuses read; escritas preservam o PAT; 10/10 mutantes detectados; sweep vazio é seguro');
 if (MUT && !falhas.length) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);
   falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso (MC1)
