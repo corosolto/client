@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { NodeIO } from '@gltf-transform/core';
-import { LEGENDA, falhasDe, motivosParaManter, erroDoVeto } from './eval/baked-states-metrics.mjs';
+import { LEGENDA, RIG_VETOS, falhasDe, motivosParaManter, erroDoVeto } from './eval/baked-states-metrics.mjs';
 
 const arg = (name) => process.argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3);
 if (!arg('legacy-out') || !arg('legacy')) throw new Error('uso: node tools/import-baked-states.mjs --legacy-out=<dir> --legacy=<dir> [--check]');
@@ -158,6 +158,7 @@ const VETOS = {
   'hipster/idle': 'eval:select 0.617/23.7 > teto 0.675/23.6',
   'mandrake/idle': 'eval:select referência do teto: o idle assado baixa o teto global 0.675/23.6 → 0.545/17.5 e reabre a dívida do elenco',
   'pagodeiro/idle1h': 'eval:select referência do teto: o idle1h assado baixa o teto global 0.675/23.6 → 0.545/17.5 e reabre a dívida do elenco',
+  ...RIG_VETOS,
 };
 const SCRIPTS = readJSON(path.resolve('package.json')).scripts;
 const corpos = {};
