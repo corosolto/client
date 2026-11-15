@@ -79,7 +79,7 @@ if [ "${CSBRASIL_PREPUSH_LOCKED:-0}" != 1 ]; then
   if command -v flock >/dev/null 2>&1; then
     exec flock -w 2400 "$trava" env CSBRASIL_PREPUSH_LOCKED=1 "$0" "$@"
   elif command -v lockf >/dev/null 2>&1; then
-    exec lockf -k -t 2400 "$trava" env CSBRASIL_PREPUSH_LOCKED=1 "$0" "$@"
+    exec lockf -t 2400 "$trava" env CSBRASIL_PREPUSH_LOCKED=1 "$0" "$@"
   else
     echo "pre-push: flock/lockf ausente; não posso serializar os portões com segurança" >&2
     exit 1
