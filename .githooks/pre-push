@@ -23,7 +23,7 @@ set -uo pipefail
 # Durante a migração, um dono antigo ainda vivo termina antes de o v2 prosseguir;
 # lock legado morto fica intacto e não pode bloquear pushes novos.
 if [ "${CSBRASIL_PREPUSH_LOCKED:-0}" != 1 ]; then
-  legado=/tmp/csbrasil-prepush.lock
+  legado=${CSBRASIL_PREPUSH_LEGACY_LOCK:-/tmp/csbrasil-prepush.lock}
   idade_processo() {
     local pid="$1" decorrido dias=0 horas minutos segundos
     decorrido=$(ps -p "$pid" -o etime= 2>/dev/null | tr -d ' ')
@@ -75,7 +75,7 @@ if [ "${CSBRASIL_PREPUSH_LOCKED:-0}" != 1 ]; then
     fi
   fi
 
-  trava=/tmp/csbrasil-prepush-v2.lock
+  trava=${CSBRASIL_PREPUSH_V2_LOCK:-/tmp/csbrasil-prepush-v2.lock}
   if command -v flock >/dev/null 2>&1; then
     exec flock -w 2400 "$trava" env CSBRASIL_PREPUSH_LOCKED=1 "$0" "$@"
   elif command -v lockf >/dev/null 2>&1; then
