@@ -8,10 +8,12 @@
      R4 o jogo usa a velocidade do manifest nos estados de locomoção trocados (índice + anim-speed-ref);
      R5 o pack mesclado <id>.glb decodifica no GLTFLoader do jogo com os clipes da pasta.
    Mutantes (cada um tem que reprovar):
-     --mutante=pe-afundado  afunda 13 cm o quadril do death do bonzo e regrava o hash (só R3 pega);
-     --mutante=ref-global   o glbchars volta a usar só as refs globais;
-     --mutante=regra-ruido  aplica a regra antiga (qualquer número pior): recusa clipe válido;
-     --mutante=veto-forjado troca o veto do canarinho/idle1h por um cotovelo dentro da faixa. */
+     --mutante=pe-afundado          afunda 13 cm o quadril do death do bonzo e regrava o hash (só R3 pega);
+     --mutante=ref-global           o glbchars volta a usar só as refs globais;
+     --mutante=regra-ruido          aplica a regra antiga (qualquer número pior): recusa clipe válido;
+     --mutante=veto-forjado         troca o veto do canarinho/idle1h por um cotovelo dentro da faixa;
+     --mutante=veto-duplicado       repete uma chave do catálogo direto e apaga silenciosamente outro estado;
+     --mutante=veto-rig-duplicado   repete uma chave herdada de RIG_VETOS. */
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -27,6 +29,8 @@ const MUTANTES = {
   'ref-global': (f) => f.startsWith('R4 glbchars'),
   'regra-ruido': (f) => f.startsWith('R1') && f.includes('substituído contra a regra'),
   'veto-forjado': (f) => f.startsWith('R1 canarinho/idle1h: veto de runtime inválido'),
+  'veto-duplicado': (f) => f.startsWith('R1 catálogo de vetos: chave duplicada pagodeiro/idle'),
+  'veto-rig-duplicado': (f) => f.startsWith('R1 catálogo de vetos: chave duplicada adjim/run'),
   'mesclado-adulterado': (f) => f.startsWith('R5 bonzo/death: keyframes do mesclado diferem'),
 };
 if (MUT && !MUTANTES[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
@@ -35,11 +39,29 @@ const data = JSON.parse(fs.readFileSync(path.resolve('tools/eval/baked-states.js
 const indice = JSON.parse(fs.readFileSync(path.join(ANIMS, 'index.json'), 'utf8'));
 const scripts = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf8')).scripts;
 let glbchars = fs.readFileSync(path.resolve('public/js/glbchars.js'), 'utf8');
+let vetoSource = fs.readFileSync(path.resolve('tools/eval/baked-state-vetos.mjs'), 'utf8');
+let rigVetoSource = fs.readFileSync(path.resolve('tools/eval/baked-states-metrics.mjs'), 'utf8');
+if (MUT === 'veto-duplicado') vetoSource = vetoSource.replace("'pagodeiro/idle1h':", "'pagodeiro/idle':");
+if (MUT === 'veto-rig-duplicado') rigVetoSource = rigVetoSource.replace("'bandeirante/crouchwalk':", "'adjim/run':");
 const S = data.estados;
 const LOCO = ['walk', 'run', 'crouchwalk', 'walk1h'];
 const TOL_PISO_CM = 1.5;
 const h12 = (bytes) => createHash('sha256').update(bytes).digest('hex').slice(0, 12);
 const falhas = [];
+const chavesDoCatalogo = (source, marcador) => {
+  const inicio = source.indexOf(marcador), fim = source.indexOf('\n});', inicio);
+  if (inicio < 0 || fim < 0) throw new Error(`catálogo ausente: ${marcador}`);
+  return [...source.slice(inicio, fim).matchAll(/^\s*'([^']+)':/gm)].map((m) => m[1]);
+};
+const chavesVeto = [
+  ...chavesDoCatalogo(vetoSource, 'export const RUNTIME_VETOS = Object.freeze({'),
+  ...chavesDoCatalogo(rigVetoSource, 'export const RIG_VETOS = Object.freeze({'),
+];
+const chavesVetoVistas = new Set();
+for (const chave of chavesVeto) {
+  if (chavesVetoVistas.has(chave)) falhas.push(`R1 catálogo de vetos: chave duplicada ${chave}`);
+  chavesVetoVistas.add(chave);
+}
 const lidos = new Map();
 const ler = (id, estado) => {
   const k = `${id}/${estado}`;
