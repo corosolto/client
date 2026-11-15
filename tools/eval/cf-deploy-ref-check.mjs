@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
-const validos = new Set(['', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato', 'prod-sem-preview-url', 'prod-promove-por-tag', 'preview-sem-provisionamento']);
+const validos = new Set(['', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato', 'prod-sem-preview-url', 'prod-promove-por-tag', 'preview-sem-provisionamento', 'preview-base-arbitraria']);
 if (!validos.has(mutante)) {
-  console.error('uso: cf-deploy-ref-check [--mutante=staging-dispatch-arbitrario|prod-dispatch-arbitrario|prod-sem-candidato|prod-sem-preview-url|prod-promove-por-tag|preview-sem-provisionamento]');
+  console.error('uso: cf-deploy-ref-check [--mutante=staging-dispatch-arbitrario|prod-dispatch-arbitrario|prod-sem-candidato|prod-sem-preview-url|prod-promove-por-tag|preview-sem-provisionamento|preview-base-arbitraria]');
   process.exit(2);
 }
 
@@ -30,6 +30,9 @@ if (mutante === 'prod-promove-por-tag') {
 }
 if (mutante === 'preview-sem-provisionamento') {
   preview = preview.replace('npx --yes wrangler@4.158.0 triggers deploy --config wrangler.preview.toml', ':');
+}
+if (mutante === 'preview-base-arbitraria') {
+  preview = preview.replace(" && (github.event.workflow_run.pull_requests[0].base.ref == 'staging' || github.event.workflow_run.pull_requests[0].base.ref == 'main')", '');
 }
 
 const falhas = [];
@@ -64,6 +67,9 @@ check(previewProvisiona >= 0 && previewUpload > previewProvisiona,
   'CFREF3', 'preview de PR precisa provisionar a URL remota antes do upload versionado');
 check(/workers_dev\s*=\s*true/.test(previewConfig) && /preview_urls\s*=\s*true/.test(previewConfig),
   'CFREF3', 'configuração confiável do preview precisa habilitar URLs imutáveis');
+check(/base\.ref == 'staging'[\s\S]*base\.ref == 'main'/.test(preview)
+  && /ref: \$\{\{ github\.event\.workflow_run\.pull_requests\[0\]\.base\.sha \}\}/.test(preview),
+  'CFREF3', 'configuração tokenizada precisa vir somente da base protegida main ou staging');
 
 for (const falha of falhas) console.error(`FAIL ${falha}`);
 if (mutante && !falhas.length) {

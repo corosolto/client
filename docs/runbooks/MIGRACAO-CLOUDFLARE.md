@@ -158,9 +158,11 @@ O workflow `.github/workflows/cf-preview.yml` roda em `pull_request_target`, por
 o job `compile` faz `npm ci` e `npm run build:cf` num runner descartável sem segredos e exporta só
 `dist`. O job `preview` não faz checkout do head: baixa `dist` como dados, instala Wrangler 4.158.0
 sem credenciais fora do workspace. `wrangler.preview.toml` e
-`scripts/ci/cf_preview_comment.py` vêm de um checkout sparse do `base.sha`; a config confiável habilita
-`workers_dev`/`preview_urls` e o job aplica esses triggers antes do upload versionado. O token
-Cloudflare fica restrito a provisionamento/upload e o token de escrita no PR ao comentário. Assim,
+`scripts/ci/cf_preview_comment.py` vêm de um checkout sparse do `base.sha`, e o job só aceita
+`base.ref` `main` ou `staging`; uma branch intermediária não pode fornecer configuração a um passo
+tokenizado. A config confiável habilita `workers_dev`/`preview_urls` e o job aplica esses triggers
+antes do upload versionado. O token Cloudflare fica restrito a provisionamento/upload e o token de
+escrita no PR ao comentário. Assim,
 executáveis, configuração e scripts controlados pelo PR nunca entram no job tokenizado. O comentário
 e o smoke aceitam a URL somente de `github-actions[bot]`, com SHA e URL no mesmo corpo, ignorando
 marcadores forjados; `tools/cf/` entra no gatilho. O Wrangler devolve uma URL de versão, por exemplo
