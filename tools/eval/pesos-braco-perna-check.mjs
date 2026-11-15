@@ -16,8 +16,8 @@
    - um GLB fora de tools/eval/pesos-braco-perna-tetos.json tiver QUALQUER
      vértice vazado (teto padrão 0 — vale para todo personagem/skin novo e
      para os três Lula reparados);
-   - um legado listado passar do teto congelado (o teto só pode baixar);
-   - o arquivo de tetos citar um id sem GLB, ou um reparado voltar à lista;
+   - um legado listado divergir do teto congelado: regressão reprova e melhora
+     exige baixar o teto no mesmo commit;
    - um reparado (lista `reparados`) rasgar mais que a origem: rasgo = maior
      distância (cm) entre vértices de peças diferentes coladas a ≤ 1 cm no
      bind, por pose (5 sintéticas + 11 clipes embutidos × 8 instantes,
@@ -28,6 +28,7 @@
    MUTANTES (--mutante=<id>, em memória, nada é escrito em disco):
      vaza-lula     planta peso de LeftUpLeg em 5 vértices de braço do lula-mandrake
      legado-piora  planta 1 vértice vazado a mais no aljuiz-toga-mandrake
+     legado-melhora remove 1 vértice vazado do aljuiz-toga-mandrake sem baixar o teto
      novo-vazando  soma um "skin:personagem-novo" (cópia do lula-drip com 66
                    vértices vazados, o número do drip antes do reparo) sem teto
      teto-orfao    soma ao arquivo de tetos um id que não existe
@@ -47,6 +48,7 @@ const RAIZ = fileURLToPath(new URL('../../', import.meta.url));
 const MUTANTES = {
   'vaza-lula': 'skin:lula-mandrake: 5 vértice(s) de braço com peso de perna',
   'legado-piora': 'skin:aljuiz-toga-mandrake: 92 vértice(s) de braço com peso de perna > teto congelado 91',
+  'legado-melhora': 'skin:aljuiz-toga-mandrake: teto congelado 91 está frouxo; medição atual 90',
   'novo-vazando': 'skin:personagem-novo: 66 vértice(s) de braço com peso de perna',
   'teto-orfao': 'teto para skin:nao-existe sem GLB',
   'cola-solta': 'skin:lula-mandrake: rasgo entre peças',
@@ -98,6 +100,26 @@ function plantarVazamento(g, n) {
   return g;
 }
 
+function removerUmVazamento(g) {
+  for (const s of skinsDoGlb(g, { geometria: false })) {
+    const braco = s.nomes.map((nome) => RE_BRACO_CENSO.test(nome));
+    const perna = s.nomes.map((nome) => /(?:UpLeg|Leg)$/.test(nome));
+    for (let v = 0; v < s.W.length / 4; v++) {
+      let pesoBraco = 0, pesoPerna = 0, indiceBraco = null;
+      for (let k = 0; k < 4; k++) {
+        const indice = s.J[v * 4 + k], peso = s.W[v * 4 + k];
+        if (braco[indice]) { pesoBraco += peso; indiceBraco ??= indice; }
+        if (perna[indice]) pesoPerna += peso;
+      }
+      if (pesoBraco <= 0.3 || pesoPerna <= 0.1 || indiceBraco === null) continue;
+      for (let k = 0; k < 4; k++) if (perna[s.J[v * 4 + k]])
+        gravarInfluencia(g, s, v, k, indiceBraco, s.W[v * 4 + k]);
+      return;
+    }
+  }
+  throw new Error('MUTANTE NÃO APLICOU');
+}
+
 const falhas = [];
 const medidas = [];
 const ids = [...glbs.keys()];
@@ -121,6 +143,7 @@ for (const id of ids) {
     gravarInfluencia(g, s, v, 0, s.nomes.indexOf('Hips'), 1);
   }
   if (mutante === 'legado-piora' && id === 'skin:aljuiz-toga-mandrake') plantarVazamento(g, 1);
+  if (mutante === 'legado-melhora' && id === 'skin:aljuiz-toga-mandrake') removerUmVazamento(g);
   const { bracos, vazados } = medirVazamento(g);
   medidas.push({ id, bracos, vazados });
   // Reparado não pode rasgar mais que a origem em pose nenhuma, nem ganhar falha no pose test.
@@ -149,9 +172,10 @@ if (mutante === 'novo-vazando' && !medidas.some((m) => m.id === 'skin:personagem
 
 const legados = medidas.filter((m) => tetos[m.id]);
 const baixou = legados.filter((m) => m.vazados < tetos[m.id].vazados);
+for (const m of baixou)
+  falhas.push(`${m.id}: teto congelado ${tetos[m.id].vazados} está frouxo; medição atual ${m.vazados} (baixe o teto no mesmo commit)`);
 if (falhas.length) {
   for (const f of falhas) console.error(`FAIL: ${f}`);
   process.exit(1);
 }
-console.log(`PASS: ${medidas.length} GLBs com skin; ${medidas.length - legados.length} sem vazamento braço→perna (inclui ${Object.keys(tetosDoc.reparados || {}).length} reparados), ${legados.length} legados dentro do teto congelado (${legados.reduce((t, m) => t + m.vazados, 0)} vértices).`);
-for (const m of baixou) console.log(`  teto pode baixar: ${m.id} ${tetos[m.id].vazados} → ${m.vazados}`);
+console.log(`PASS: ${medidas.length} GLBs com skin; ${medidas.length - legados.length} sem vazamento braço→perna (inclui ${Object.keys(tetosDoc.reparados || {}).length} reparados), ${legados.length} legados exatamente nos tetos congelados (${legados.reduce((t, m) => t + m.vazados, 0)} vértices).`);

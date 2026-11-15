@@ -10,43 +10,36 @@
     "eyewearRuntime": "69bb2b162cea02cce46fee1ba252764dc7028667e0232a3d445bed2f39459c4d",
     "faceLandmarks": "cf178868a1cc58449d710a4d7c2557be3eef15efd38440178ae674a08a0bee43",
     "scene": "1c1a06efd230ffb56ce93c36d9fbf826d8d0f8f580720abe57fc3ed896b2fa0a",
-    "captureTool": "f9e2995e4835087fdd613403dba9396e6df600da5625d64a8c4a47706c798f34"
+    "captureTool": "fcc36fc7bc40ffa949bce62d420b1e0c9b537b302b410e33afd8e3279f25cdac"
   },
   "files": {
     "bodies-01.png": {
       "kind": "body-contact-sheet",
-      "bytes": 3183754,
-      "sha256": "0a096bc9939c412dd5ddb102ea51a04fe09239e3f06a6c3065f1b65962863974",
+      "bytes": 3767886,
+      "sha256": "41072379f99a15dcac89d09ef7ec4b754092ecd45cb51509c5326bae9a9514b6",
       "width": 1120,
-      "height": 4969
+      "height": 5859
     },
     "bodies-02.png": {
       "kind": "body-contact-sheet",
-      "bytes": 3229180,
-      "sha256": "40eb9757eda3ba990611f97c302b35924beb56cd6b6a08d505edc943b164e4bb",
+      "bytes": 3823373,
+      "sha256": "fd89d32e65c8cfb8b860d49ebe79ce5ff4d687e795e05e6d1df56528c440fe94",
       "width": 1120,
-      "height": 4969
+      "height": 5859
     },
     "bodies-03.png": {
       "kind": "body-contact-sheet",
-      "bytes": 3294934,
-      "sha256": "c76873f308a0a5cab0079fe05bb2a8b7d67c764c394b14fad3e5ac3a13e23318",
+      "bytes": 3961788,
+      "sha256": "abc39ffee74a4860c26fbb6b1c902e03d823ee6131b00c7ea22815c75f0a66e8",
       "width": 1120,
-      "height": 4969
+      "height": 5859
     },
     "bodies-04.png": {
       "kind": "body-contact-sheet",
-      "bytes": 3420513,
-      "sha256": "0d113f529d6025ce955881f1c9d91bda3ef65079921b01aa44a3e8186a767019",
+      "bytes": 3745373,
+      "sha256": "440d651ebd0424bf735ce724e19300532c2e287f9cb7df7791560da59035c5f6",
       "width": 1120,
-      "height": 4969
-    },
-    "bodies-05.png": {
-      "kind": "body-contact-sheet",
-      "bytes": 2178117,
-      "sha256": "89fb6857f35d09c79a7248636b403efa71558570b6667a2f0b1389cff2b4a605",
-      "width": 1120,
-      "height": 3189
+      "height": 5414
     },
     "families-34.png": {
       "kind": "family-gallery",

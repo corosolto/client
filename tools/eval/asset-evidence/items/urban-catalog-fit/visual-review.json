@@ -8,7 +8,7 @@
     "headwearAbsentFromBodySheets": "pass",
     "bodySilhouetteVisible": "pass"
   },
-  "evidenceManifestSha256": "973b8ffc54aeaff85acd717231d2bc4c33ce38e43b59b0a38a543ae7abe20509",
+  "evidenceManifestSha256": "f8e0225ffd628d841a512aca28caeeefbf413df55ae131665edb768365e0e7f0",
   "sourceHashes": {
     "urbanCatalog": "47baca9a13940c67e51826031ff87742bd49f763aa62ee14985ff48193118743",
     "mintBatch": "061c6af4061e62540d7ec2ab072d609dea2fe24e9f9facc5696607390750b8eb",
@@ -19,7 +19,7 @@
     "eyewearRuntime": "69bb2b162cea02cce46fee1ba252764dc7028667e0232a3d445bed2f39459c4d",
     "faceLandmarks": "cf178868a1cc58449d710a4d7c2557be3eef15efd38440178ae674a08a0bee43",
     "scene": "1c1a06efd230ffb56ce93c36d9fbf826d8d0f8f580720abe57fc3ed896b2fa0a",
-    "captureTool": "f9e2995e4835087fdd613403dba9396e6df600da5625d64a8c4a47706c798f34"
+    "captureTool": "fcc36fc7bc40ffa949bce62d420b1e0c9b537b302b410e33afd8e3279f25cdac"
   },
   "sheetsReviewed": [
     "blocked-permission-needed-13.png",
@@ -27,11 +27,10 @@
     "bodies-02.png",
     "bodies-03.png",
     "bodies-04.png",
-    "bodies-05.png",
     "families-34.png"
   ],
   "findings": [
-    "As cinco folhas rotulam os 100 selecionáveis como ESTUDO DE SILHUETA · ENCAIXE NÃO AVALIADO; nenhum corpo é candidato ou certificado.",
+    "As quatro folhas rotulam os 100 selecionáveis como ESTUDO DE SILHUETA · ENCAIXE NÃO AVALIADO; nenhum corpo é candidato ou certificado.",
     "As folhas preservam silhuetas, cabeças e rigs divergentes sem promover encaixe universal; os proxies continuam servindo apenas para contato visual.",
     "families-34.png mantém headwear somente como estudo isolado de forma e declara que não demonstra compatibilidade corporal; os 30 jobs seguros de headwear estão adiados.",
     "Os 13 pedidos protegidos continuam sem arte, montagem ou envio ao Mint."

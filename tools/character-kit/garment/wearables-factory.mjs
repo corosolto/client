@@ -304,11 +304,14 @@ export function buildMatrix(manifest, census) {
   validateCensus(census);
   const familyIds = new Set(census.families.map(family => family.familyId));
   const bodyById = new Map(census.bodies.map(body => [body.bodyId, body]));
+  const knownHeadIncompatibilities = new Map(manifest.slots.head.knownIncompatibleBodies.map(row => [row.bodyId, row]));
   const entries = [];
   for (const item of manifest.items) for (const body of census.bodies) {
     const structuralReason = structuralIncompatibility(item, body);
+    const slotIncompatibility = item.slot === 'head' ? knownHeadIncompatibilities.get(body.bodyId) : null;
     let status, reason;
     if (structuralReason) { status = 'incompatible'; reason = structuralReason; }
+    else if (slotIncompatibility) { status = 'incompatible'; reason = slotIncompatibility.reason; }
     else if (item.incompatibleBodies.includes(body.bodyId)) { status = 'incompatible'; reason = 'item explicitly marks this body incompatible'; }
     else if (item.inventoryStatus !== 'versioned') { status = 'unknown'; reason = item.reason; }
     else {
@@ -377,6 +380,13 @@ export function validateBundle(manifest, census, matrix, root) {
   validateManifest(manifest, root);
   must(matrix?.schemaVersion === MATRIX_VERSION && matrix.status === 'draft' && matrix.runtimeEnabled === false, 'matrix version/status invalid');
   must(Array.isArray(matrix.entries) && matrix.entries.length === manifest.items.length * census.bodies.length, 'matrix pair coverage mismatch');
+  for (const known of manifest.slots.head.knownIncompatibleBodies) {
+    const body = bodies.get(known.bodyId);
+    must(body && body.sourceSha256 === known.bodySha256, `head: stale or orphan known incompatibility ${known.bodyId}`);
+    const rows = matrix.entries.filter(entry => entry.slot === 'head' && entry.bodyId === known.bodyId);
+    const expected = manifest.items.filter(item => item.slot === 'head').length;
+    must(rows.length === expected && rows.every(entry => entry.status === 'incompatible' && entry.reason === known.reason), `head: known incompatibility missing from matrix for ${known.bodyId}`);
+  }
   const pairs = new Set();
   for (const entry of matrix.entries) {
     const key = `${entry.itemId}\u0000${entry.bodyId}`; must(!pairs.has(key), 'duplicate matrix pair'); pairs.add(key);
@@ -414,6 +424,14 @@ export function runMutants(manifest, census, matrix, root) {
       const m = structuredClone(manifest); m.items[0].certifiedFamilies = census.families.map(family => family.familyId);
       must(m.items[0].certifiedFamilies.length > 0, 'false-universal mutant did not apply');
       validateBundle(m, census, matrix, root);
+    },
+    'head-policy-ignored': () => {
+      const x = structuredClone(matrix);
+      const knownIds = new Set(manifest.slots.head.knownIncompatibleBodies.map(row => row.bodyId));
+      const rows = x.entries.filter(entry => entry.slot === 'head' && knownIds.has(entry.bodyId));
+      must(rows.length === knownIds.size, 'head-policy-ignored mutant did not apply');
+      for (const row of rows) { row.status = 'unknown'; row.reason = 'no measured body profile'; }
+      validateBundle(manifest, census, x, root);
     },
   };
   return Object.entries(mutants).map(([name, mutate]) => {
