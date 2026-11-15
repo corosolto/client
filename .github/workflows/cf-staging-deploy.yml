@@ -16,9 +16,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -27,21 +24,16 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Confere conta Cloudflare
-        run: |
-          set -euo pipefail
-          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "::error::Configure CLOUDFLARE_ACCOUNT_ID em Actions Variables"
-            exit 1
-          fi
-          if [ -z "$CF_API_TOKEN" ]; then
-            echo "::error::Configure CF_WORKERS_TOKEN com Workers Scripts:Edit e R2 em Actions Secrets"
-            exit 1
-          fi
       - run: npm ci
-      # Pacote de áudio privado (cópia do Blob da Vercel no R2): mesma URL/sha de produção, em
-      # Actions Variables. Sem a variável o build cai no pacote público, e o D2 da verificação
-      # abaixo continua comparando o que foi publicado com o que este build gerou.
+      - name: Baixa pacote de áudio privado
+        env:
+          AUDIO_PACK_URL: ${{ vars.AUDIO_PACK_URL }}
+          AUDIO_PACK_SHA256: ${{ vars.AUDIO_PACK_SHA256 }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: bash scripts/fetch-audio.sh --prefetch-r2
+      # O token existe só nesta etapa e na publicação. O build consome o cache verificado,
+      # sem acesso ao R2 nem a qualquer segredo.
       - name: Build Cloudflare
         env:
           AUDIO_PACK_URL: ${{ vars.AUDIO_PACK_URL }}
@@ -50,6 +42,8 @@ jobs:
         run: npm run build:cf
       - name: Publica csb-staging
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           SUBDOMAIN: ${{ vars.CF_WORKERS_SUBDOMAIN }}
         run: |
           set -euo pipefail

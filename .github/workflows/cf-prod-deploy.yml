@@ -29,8 +29,6 @@ jobs:
     timeout-minutes: 30
     environment: production
     env:
-      CF_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       REF: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.sha }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -41,16 +39,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Confere conta e pacote de áudio
+      - run: npm ci
+      - name: Baixa pacote de áudio privado
         env:
           AUDIO_PACK_URL: ${{ vars.AUDIO_PACK_URL }}
-        run: |
-          set -euo pipefail
-          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || { echo "::error::Configure CLOUDFLARE_ACCOUNT_ID em Actions Variables"; exit 1; }
-          [ -n "$CF_API_TOKEN" ] || { echo "::error::Configure CF_WORKERS_TOKEN com Workers Scripts:Edit e R2 em Actions Secrets"; exit 1; }
-          # Produção nunca cai no pacote público em silêncio: sem o privado, o deploy nem começa.
-          [ -n "$AUDIO_PACK_URL" ] || { echo "::error::Configure AUDIO_PACK_URL/AUDIO_PACK_SHA256 em Actions Variables"; exit 1; }
-      - run: npm ci
+          AUDIO_PACK_SHA256: ${{ vars.AUDIO_PACK_SHA256 }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: bash scripts/fetch-audio.sh --prefetch-r2
       - name: Build Cloudflare
         id: build
         env:
@@ -64,6 +60,8 @@ jobs:
           npm run build:cf
       - name: Publica csb-prod
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           SUBDOMAIN: ${{ vars.CF_WORKERS_SUBDOMAIN }}
         run: |
           set -euo pipefail
