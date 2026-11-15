@@ -16,9 +16,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      REF: ${{ github.event_name == 'workflow_dispatch' && 'refs/heads/staging' || github.sha }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: ${{ env.REF }}
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
@@ -35,11 +38,15 @@ jobs:
       # O token existe só nesta etapa e na publicação. O build consome o cache verificado,
       # sem acesso ao R2 nem a qualquer segredo.
       - name: Build Cloudflare
+        id: build
         env:
           AUDIO_PACK_URL: ${{ vars.AUDIO_PACK_URL }}
           AUDIO_PACK_SHA256: ${{ vars.AUDIO_PACK_SHA256 }}
-          CS_BUILD_SHA: ${{ github.sha }}
-        run: npm run build:cf
+        run: |
+          set -euo pipefail
+          CS_BUILD_SHA="$(git rev-parse HEAD)"
+          echo "sha=$CS_BUILD_SHA" >> "$GITHUB_OUTPUT"
+          CS_BUILD_SHA="$CS_BUILD_SHA" npm run build:cf
       - name: Publica csb-staging
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
@@ -55,7 +62,7 @@ jobs:
           echo "URL: $URL" >> "$GITHUB_STEP_SUMMARY"
       - name: Verifica o deploy (build, áudio e viewmodels)
         env:
-          CS_BUILD_SHA: ${{ github.sha }}
+          CS_BUILD_SHA: ${{ steps.build.outputs.sha }}
         run: |
           set -euo pipefail
           node tools/cf/verifica-deploy.mjs --base="$STAGING_URL" --sha="$CS_BUILD_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
