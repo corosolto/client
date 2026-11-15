@@ -6,7 +6,7 @@
 */
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
-import { TETO_PEGADA_M, tetoTexto } from './lib/grip-tolerancia.mjs';
+import { contratoSocketCanonico, TETO_PEGADA_M, tetoTexto } from './lib/grip-tolerancia.mjs';
 
 const mutation = process.argv.includes('--mutante=arma-deslocada');
 const lendaMutation = process.argv.includes('--mutante=lenda-arma-deslocada');
@@ -31,7 +31,8 @@ for (const id of ids) {
   const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'));
   check(receipt.characterSha256 === sha256(receipt.character), `${id} SHA personagem`, receipt.characterSha256);
   check(receipt.weaponSha256 === sha256(receipt.weaponFile), `${id} SHA arma ${receipt.weapon}`, receipt.weaponSha256);
-  check(receipt.socketContract?.maxHandDistanceMeters === TETO_PEGADA_M, `${id} tolerância do recibo`, `${receipt.socketContract?.maxHandDistanceMeters} m = ${tetoTexto}`);
+  check(receipt.weapon !== 'm4' || (receipt.socketContract && contratoSocketCanonico(receipt.socketContract)),
+    `${id} contrato de socket`, receipt.weapon === 'm4' ? `mãos, anchors e tolerância = contrato canônico (${tetoTexto})` : `${receipt.weapon} usa contrato próprio`);
   const requiredPoses = id === 'motoca-cachorro-loko' ? ['idle', 'walk', 'crouch'] : ['walk', 'crouch'];
   check(requiredPoses.every((clip) => receipt.poses[clip]), `${id} estados de pegada`, requiredPoses.join('/'));
   for (const [clip, pose] of Object.entries(receipt.poses)) {

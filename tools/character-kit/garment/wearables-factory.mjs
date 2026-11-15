@@ -188,12 +188,26 @@ export function validateManifest(manifest, root) {
   must(JSON.stringify(Object.keys(manifest.slots).sort()) === JSON.stringify([...CANONICAL_SLOTS].sort()), 'canonical slot set mismatch');
   const slotEntries = CANONICAL_SLOTS.map(slot => {
     const policy = manifest.slots[slot];
-    exactKeys(policy, ['allowedModes', 'layer', 'regions', 'conflicts', 'socketRole'], `slot ${slot}`);
+    const keys = ['allowedModes', 'layer', 'regions', 'conflicts', 'socketRole'];
+    if (slot === 'head') keys.push('fitPolicy', 'knownIncompatibleBodies');
+    exactKeys(policy, keys, `slot ${slot}`);
     uniqueStrings(policy.allowedModes, `${slot}.allowedModes`); must(policy.allowedModes.every(mode => MODES.has(mode)), `${slot}: invalid attachment mode`);
     must(Number.isSafeInteger(policy.layer) && policy.layer >= 0, `${slot}: invalid layer`);
     uniqueStrings(policy.regions, `${slot}.regions`); uniqueStrings(policy.conflicts, `${slot}.conflicts`);
     must(policy.conflicts.every(conflict => CANONICAL_SLOTS.includes(conflict) && conflict !== slot), `${slot}: invalid slot conflict`);
     must(policy.socketRole === null || Object.hasOwn(REQUIRED_ROLES, policy.socketRole), `${slot}: invalid socket role`);
+    if (slot === 'head') {
+      must(policy.fitPolicy === 'deferred-per-body', 'head: invalid fit policy');
+      must(Array.isArray(policy.knownIncompatibleBodies), 'head.knownIncompatibleBodies array required');
+      const incompatibleIds = new Set();
+      for (const row of policy.knownIncompatibleBodies) {
+        exactKeys(row, ['bodyId', 'bodySha256', 'reason'], 'head known incompatible body');
+        must(typeof row.bodyId === 'string' && /^(character|skin):[a-z0-9-]+$/.test(row.bodyId) && !incompatibleIds.has(row.bodyId), 'head: invalid or duplicate incompatible body');
+        incompatibleIds.add(row.bodyId);
+        must(typeof row.bodySha256 === 'string' && /^[a-f0-9]{64}$/.test(row.bodySha256), `head: invalid body hash for ${row.bodyId}`);
+        must(typeof row.reason === 'string' && row.reason.length > 0, `head: missing incompatibility reason for ${row.bodyId}`);
+      }
+    }
     return [slot, policy];
   });
   for (const [slot, policy] of slotEntries) for (const conflict of policy.conflicts) {
@@ -225,7 +239,10 @@ export function validateManifest(manifest, root) {
       must(item.asset === null && item.provenance === null, `${item.id}: missing inventory cannot claim asset/provenance`);
       must(item.certifiedFamilies.length === 0 && item.certifiedBodies.length === 0 && item.fitProfiles.length === 0, `${item.id}: missing asset cannot certify fit`);
     } else {
-      must(item.inventoryStatus === 'versioned', `${item.id}: invalid inventory status`);
+      must(item.inventoryStatus === 'versioned' || item.inventoryStatus === 'deferred', `${item.id}: invalid inventory status`);
+      if (item.inventoryStatus === 'deferred') {
+        must(item.certifiedFamilies.length === 0 && item.certifiedBodies.length === 0 && item.fitProfiles.length === 0, `${item.id}: deferred asset cannot certify fit`);
+      }
       exactKeys(item.asset, ['path', 'sha256', 'bytes'], `${item.id}.asset`);
       const asset = safeFile(root, item.asset.path, `${item.id} asset`), bytes = readFileSync(asset);
       must(item.asset.bytes === bytes.length && item.asset.sha256 === hash(bytes), `${item.id}: asset bytes/hash mismatch`);
@@ -287,11 +304,14 @@ export function buildMatrix(manifest, census) {
   validateCensus(census);
   const familyIds = new Set(census.families.map(family => family.familyId));
   const bodyById = new Map(census.bodies.map(body => [body.bodyId, body]));
+  const knownHeadIncompatibilities = new Map(manifest.slots.head.knownIncompatibleBodies.map(row => [row.bodyId, row]));
   const entries = [];
   for (const item of manifest.items) for (const body of census.bodies) {
     const structuralReason = structuralIncompatibility(item, body);
+    const slotIncompatibility = item.slot === 'head' ? knownHeadIncompatibilities.get(body.bodyId) : null;
     let status, reason;
     if (structuralReason) { status = 'incompatible'; reason = structuralReason; }
+    else if (slotIncompatibility) { status = 'incompatible'; reason = slotIncompatibility.reason; }
     else if (item.incompatibleBodies.includes(body.bodyId)) { status = 'incompatible'; reason = 'item explicitly marks this body incompatible'; }
     else if (item.inventoryStatus !== 'versioned') { status = 'unknown'; reason = item.reason; }
     else {
@@ -360,6 +380,13 @@ export function validateBundle(manifest, census, matrix, root) {
   validateManifest(manifest, root);
   must(matrix?.schemaVersion === MATRIX_VERSION && matrix.status === 'draft' && matrix.runtimeEnabled === false, 'matrix version/status invalid');
   must(Array.isArray(matrix.entries) && matrix.entries.length === manifest.items.length * census.bodies.length, 'matrix pair coverage mismatch');
+  for (const known of manifest.slots.head.knownIncompatibleBodies) {
+    const body = bodies.get(known.bodyId);
+    must(body && body.sourceSha256 === known.bodySha256, `head: stale or orphan known incompatibility ${known.bodyId}`);
+    const rows = matrix.entries.filter(entry => entry.slot === 'head' && entry.bodyId === known.bodyId);
+    const expected = manifest.items.filter(item => item.slot === 'head').length;
+    must(rows.length === expected && rows.every(entry => entry.status === 'incompatible' && entry.reason === known.reason), `head: known incompatibility missing from matrix for ${known.bodyId}`);
+  }
   const pairs = new Set();
   for (const entry of matrix.entries) {
     const key = `${entry.itemId}\u0000${entry.bodyId}`; must(!pairs.has(key), 'duplicate matrix pair'); pairs.add(key);
@@ -397,6 +424,14 @@ export function runMutants(manifest, census, matrix, root) {
       const m = structuredClone(manifest); m.items[0].certifiedFamilies = census.families.map(family => family.familyId);
       must(m.items[0].certifiedFamilies.length > 0, 'false-universal mutant did not apply');
       validateBundle(m, census, matrix, root);
+    },
+    'head-policy-ignored': () => {
+      const x = structuredClone(matrix);
+      const knownIds = new Set(manifest.slots.head.knownIncompatibleBodies.map(row => row.bodyId));
+      const rows = x.entries.filter(entry => entry.slot === 'head' && knownIds.has(entry.bodyId));
+      must(rows.length === knownIds.size, 'head-policy-ignored mutant did not apply');
+      for (const row of rows) { row.status = 'unknown'; row.reason = 'no measured body profile'; }
+      validateBundle(manifest, census, x, root);
     },
   };
   return Object.entries(mutants).map(([name, mutate]) => {
