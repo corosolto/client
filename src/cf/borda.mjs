@@ -33,7 +33,6 @@ export async function viewmodelDoBucket(request, bucket, indice) {
   if (!entrada) return null;
   const etag = `"${entrada.sha256}"`;
   const headers = new Headers({ 'content-type': entrada.contentType, etag });
-  if (request.headers.get('if-none-match') === etag) return new Response(null, { status: 304, headers });
   const chave = chaveR2Viewmodel(entrada);
   const objeto = request.method === 'HEAD' ? await bucket.head(chave) : await bucket.get(chave);
   if (!objeto) {
@@ -44,6 +43,7 @@ export async function viewmodelDoBucket(request, bucket, indice) {
     console.error(`[viewmodel] tamanho divergente no R2: ${chave} tem ${objeto.size}, manifesto ${entrada.bytes}`);
     return null;
   }
+  if (request.headers.get('if-none-match') === etag) return new Response(null, { status: 304, headers });
   headers.set('content-length', String(entrada.bytes));
   return new Response(request.method === 'HEAD' ? null : objeto.body, { status: 200, headers });
 }

@@ -7,7 +7,7 @@
          null (cai no 404 do Astro) para caminho fora do manifesto, objeto ausente ou tamanho errado
      B4  csbrasil.online (apex) responde 308 para o www preservando caminho e query
      B5  a chave no R2 é a mesma do Blob (scripts/vm-assets.mjs blobPathOf) para todo o manifesto
-   Mutantes (cada um tem de reprovar): sem-strip, vm-sem-etag, apex-301,
+   Mutantes (cada um tem de reprovar): sem-strip, vm-sem-etag, vm-304-antes-r2, apex-301,
    apex-sem-worker-first, assets-sem-fallback, assets-intercepta-post, cache-ignora-etag. */
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -22,6 +22,7 @@ const MUTANTE = process.argv.find((a) => a.startsWith('--mutante='))?.slice(10) 
 const MUTACOES = {
   'sem-strip': ['src/cf/borda.mjs', "if (/^stale-while-revalidate=/i.test(diretiva)) continue;", ''],
   'vm-sem-etag': ['src/cf/borda.mjs', "const headers = new Headers({ 'content-type': entrada.contentType, etag });", "const headers = new Headers({ 'content-type': entrada.contentType });"],
+  'vm-304-antes-r2': ['src/cf/borda.mjs', '  const chave = chaveR2Viewmodel(entrada);', "  if (request.headers.get('if-none-match') === etag) return new Response(null, { status: 304, headers });\n  const chave = chaveR2Viewmodel(entrada);"],
   'apex-301': ['src/cf/borda.mjs', 'alvo.toString(), 308)', 'alvo.toString(), 301)'],
   'apex-sem-worker-first': ['src/cf/worker.ts', 'const apex = redirectDeHost(url);', 'const apex = null;'],
   'assets-sem-fallback': ['src/cf/worker.ts', 'const asset = env.ASSETS ? await env.ASSETS.fetch(request) : null;', 'const asset = null;'],
@@ -90,6 +91,8 @@ for (const [caso, req, b] of [
   ['sem binding', new Request(url), undefined],
   ['objeto ausente', new Request(url), bucket(new Map())],
   ['tamanho errado', new Request(url), bucket(new Map([[borda.chaveR2Viewmodel(entrada), entrada.bytes - 1]]))],
+  ['If-None-Match com objeto ausente', new Request(url, { headers: { 'if-none-match': `"${entrada.sha256}"` } }), bucket(new Map())],
+  ['If-None-Match com tamanho errado', new Request(url, { headers: { 'if-none-match': `"${entrada.sha256}"` } }), bucket(new Map([[borda.chaveR2Viewmodel(entrada), entrada.bytes - 1]]))],
 ]) {
   const r = await silencioso(() => borda.viewmodelDoBucket(req, b, indice));
   check(r === null, 'B3', `${caso}: esperado null (404 do Astro), veio ${r?.status}`);
