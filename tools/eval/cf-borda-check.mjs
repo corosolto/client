@@ -26,7 +26,7 @@ const MUTACOES = {
   'apex-sem-worker-first': ['src/cf/worker.ts', 'const apex = redirectDeHost(url);', 'const apex = null;'],
   'assets-sem-fallback': ['src/cf/worker.ts', 'const asset = env.ASSETS ? await env.ASSETS.fetch(request) : null;', 'const asset = null;'],
   'assets-intercepta-post': ['src/cf/worker.ts', "if (request.method !== 'GET' && request.method !== 'HEAD') return astro.fetch(request, env, ctx);", ''],
-  'cache-ignora-etag': ['src/cf/worker.ts', "if (request.headers.get('if-none-match') === saida.headers.get('etag'))", 'if (false)'],
+  'cache-ignora-etag': ['src/cf/worker.ts', "if (etag && request.headers.get('if-none-match') === etag)", 'if (false)'],
 };
 if (MUTANTE && !MUTACOES[MUTANTE]) { console.error(`mutante desconhecido: ${MUTANTE}`); process.exit(2); }
 
@@ -149,7 +149,7 @@ let chamadasAssets = 0;
 const assetsOk = {
   fetch: async () => {
     chamadasAssets++;
-    return new Response('asset', { headers: { 'x-csb-source': 'asset' } });
+    return new Response('asset', { headers: { 'cache-control': 'public, max-age=60, s-maxage=60', 'x-csb-source': 'asset' } });
   },
 };
 const apexReal = await workerReal.fetch(
@@ -162,12 +162,23 @@ check(apexReal.status === 308
   && chamadasAssets === 0,
 'B4', 'entrypoint precisa redirecionar apex antes de consultar ASSETS');
 const assetReal = await workerReal.fetch(
-  new Request('https://www.corosolto.com.br/arquivo-estatico.txt'),
+  new Request('https://www.corosolto.com.br/mapa'),
   { ASSETS: assetsOk },
   ctx,
 );
 check(assetReal.headers.get('x-csb-source') === 'asset' && await assetReal.text() === 'asset',
   'B4', 'entrypoint precisa entregar resposta do binding ASSETS');
+await Promise.all(pendentes.splice(0));
+const assetCacheado = await workerReal.fetch(
+  new Request('https://www.corosolto.com.br/mapa'),
+  { ASSETS: { fetch: async () => { throw new Error('cache ignorado'); } } },
+  ctx,
+);
+check(assetCacheado.status === 200
+  && assetCacheado.headers.get('etag') === null
+  && await assetCacheado.text() === 'asset',
+'B4', 'GET cacheado sem ETag e sem If-None-Match precisa preservar status e corpo');
+cacheEntry = null;
 const fallbackReal = await workerReal.fetch(
   new Request('https://www.corosolto.com.br/rota-astro'),
   { ASSETS: { fetch: async () => new Response(null, { status: 404 }) } },

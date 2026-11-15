@@ -58,7 +58,8 @@ export default {
     const hit = cache ? await cache.match(request) : undefined;
     if (hit) {
       const saida = doCache(hit);
-      if (request.headers.get('if-none-match') === saida.headers.get('etag'))
+      const etag = saida.headers.get('etag');
+      if (etag && request.headers.get('if-none-match') === etag)
         return new Response(null, { status: 304, headers: saida.headers });
       return saida;
     }
