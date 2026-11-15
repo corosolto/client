@@ -19,8 +19,8 @@
         "pairs": 101,
         "certified": 0,
         "candidate": 0,
-        "incompatible": 1,
-        "unknown": 100
+        "incompatible": 3,
+        "unknown": 98
       },
       "face": {
         "items": 0,
@@ -1356,8 +1356,8 @@
       "bodyId": "character:julia-zanatta",
       "familyId": "rig-cf26b508edb3",
       "certified": false,
-      "status": "unknown",
-      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+      "status": "incompatible",
+      "reason": "Tiara de flores faz parte da identidade e ocupa o mesmo volume do boné."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1383,8 +1383,8 @@
       "bodyId": "character:lobisomem",
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
-      "status": "unknown",
-      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+      "status": "incompatible",
+      "reason": "Rosto focinhudo e orientado para a lateral; o eixo Head não representa uma coroa vertical utilizável."
     },
     {
       "itemId": "treta-cap-procedural-v1",
