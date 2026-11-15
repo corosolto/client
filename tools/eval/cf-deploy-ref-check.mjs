@@ -1,35 +1,44 @@
 import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
-const validos = new Set(['', 'staging-dispatch-arbitrario', 'prod-sem-ancestria']);
+const validos = new Set(['', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato']);
 if (!validos.has(mutante)) {
-  console.error('uso: cf-deploy-ref-check [--mutante=staging-dispatch-arbitrario|prod-sem-ancestria]');
+  console.error('uso: cf-deploy-ref-check [--mutante=staging-dispatch-arbitrario|prod-dispatch-arbitrario|prod-sem-candidato]');
   process.exit(2);
 }
 
 let staging = readFileSync('.github/workflows/cf-staging-deploy.yml', 'utf8');
 let producao = readFileSync('.github/workflows/cf-prod-deploy.yml', 'utf8');
 if (mutante === 'staging-dispatch-arbitrario') {
-  staging = staging.replace("github.event_name == 'workflow_dispatch' && 'refs/heads/staging' || github.sha", 'github.ref');
+  staging = staging.replace('    branches: [staging]', '    branches: [staging]\n  workflow_dispatch:');
 }
-if (mutante === 'prod-sem-ancestria') {
-  producao = producao.replace(/\n\s+git merge-base --is-ancestor HEAD origin\/main \|\| \{[\s\S]*?\n\s+\}/, '');
+if (mutante === 'prod-dispatch-arbitrario') {
+  producao = producao.replace('    branches: [main]', '    branches: [main]\n  workflow_dispatch:');
+}
+if (mutante === 'prod-sem-candidato') {
+  producao = producao.replace('npx wrangler versions upload', 'npx wrangler versions deploy');
 }
 
 const falhas = [];
 const check = (ok, id, mensagem) => { if (!ok) falhas.push(`${id} ${mensagem}`); };
-check(/REF: \$\{\{ github\.event_name == 'workflow_dispatch' && 'refs\/heads\/staging' \|\| github\.sha \}\}/.test(staging),
-  'CFREF1', 'dispatch de staging precisa fixar refs/heads/staging');
-check(/ref: \$\{\{ env\.REF \}\}/.test(staging), 'CFREF1', 'checkout de staging precisa usar o ref validado');
-check(/id: build[\s\S]*git rev-parse HEAD[\s\S]*steps\.build\.outputs\.sha/.test(staging),
-  'CFREF1', 'build e verificação precisam compartilhar o SHA realmente checado');
+const validaWorkflow = (fonte, ramo, id) => {
+  check(!/^\s+workflow_dispatch:/m.test(fonte), id, 'workflow com segredo Cloudflare não pode executar YAML de ref arbitrário');
+  check(new RegExp(`branches: \\[${ramo}\\]`).test(fonte), id, `deploy precisa nascer de push na ${ramo} protegida`);
+  check(/ref: \$\{\{ github\.sha \}\}/.test(fonte), id, 'checkout precisa fixar o SHA do push');
+  check(/id: build[\s\S]*git rev-parse HEAD[\s\S]*steps\.build\.outputs\.sha/.test(fonte),
+    id, 'build e verificação precisam compartilhar o SHA realmente checado');
+  const upload = fonte.indexOf('npx wrangler versions upload');
+  const verifica = fonte.indexOf('node tools/cf/verifica-deploy.mjs');
+  const promove = fonte.indexOf('npx wrangler versions deploy');
+  check(upload >= 0 && verifica > upload && promove > verifica, id,
+    'versão precisa ser enviada sem tráfego, verificada por bytes e só então promovida');
+  check(/versions upload[\s\S]*--tag "\$CS_BUILD_SHA"/.test(fonte)
+    && /versions deploy[\s\S]*--version-tag "\$CS_BUILD_SHA"[\s\S]*--percentage 100/.test(fonte),
+  id, 'upload e promoção precisam apontar para a mesma versão identificada pelo SHA');
+};
 
-const valida = producao.indexOf('- name: Valida tag de rollback na main');
-const primeiroSegredo = producao.indexOf('${{ secrets.CF_WORKERS_TOKEN }}');
-check(valida >= 0 && primeiroSegredo > valida, 'CFREF2', 'tag precisa ser validada antes de qualquer segredo Cloudflare');
-check(/\^v\[0-9\]\+/.test(producao) && /refs\/tags\/\$TAG/.test(producao), 'CFREF2', 'rollback precisa aceitar somente tag semver e resolver a tag imutável');
-check(/git merge-base --is-ancestor HEAD origin\/main/.test(producao), 'CFREF2', 'tag de rollback precisa pertencer à história da main');
-check(/git rev-parse "refs\/tags\/\$TAG\^\{commit\}"/.test(producao), 'CFREF2', 'checkout precisa corresponder ao commit da tag');
+validaWorkflow(staging, 'staging', 'CFREF1');
+validaWorkflow(producao, 'main', 'CFREF2');
 
 for (const falha of falhas) console.error(`FAIL ${falha}`);
 if (mutante && !falhas.length) {
@@ -37,4 +46,4 @@ if (mutante && !falhas.length) {
   process.exit(1);
 }
 if (falhas.length) process.exit(1);
-console.log('PASS CF-REF: dispatch usa somente staging ou tag semver alcançável pela main antes dos segredos');
+console.log('PASS CF-REF: somente pushes protegidos enviam, verificam e depois promovem a versão Cloudflare');

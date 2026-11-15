@@ -3,7 +3,6 @@ name: cf-staging-deploy
 on:
   push:
     branches: [staging]
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,12 +15,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      REF: ${{ github.event_name == 'workflow_dispatch' && 'refs/heads/staging' || github.sha }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: ${{ env.REF }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
@@ -47,22 +44,42 @@ jobs:
           CS_BUILD_SHA="$(git rev-parse HEAD)"
           echo "sha=$CS_BUILD_SHA" >> "$GITHUB_OUTPUT"
           CS_BUILD_SHA="$CS_BUILD_SHA" npm run build:cf
-      - name: Publica csb-staging
+      - name: Envia versão candidata de csb-staging
+        id: upload
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          SUBDOMAIN: ${{ vars.CF_WORKERS_SUBDOMAIN }}
-        run: |
-          set -euo pipefail
-          npx wrangler deploy --config wrangler.staging.toml 2>&1 | tee "$RUNNER_TEMP/wrangler-staging.log"
-          URL=$(grep -Eo 'https://[^[:space:]]+\.workers\.dev' "$RUNNER_TEMP/wrangler-staging.log" | tail -n 1 | sed 's/[),.]$//' || true)
-          URL="${URL:-https://csb-staging.${SUBDOMAIN:-rubenmarcus-dev}.workers.dev}"
-          echo "STAGING_URL=$URL" >> "$GITHUB_ENV"
-          echo "### Cloudflare staging" >> "$GITHUB_STEP_SUMMARY"
-          echo "URL: $URL" >> "$GITHUB_STEP_SUMMARY"
-      - name: Verifica o deploy (build, áudio e viewmodels)
-        env:
           CS_BUILD_SHA: ${{ steps.build.outputs.sha }}
         run: |
           set -euo pipefail
-          node tools/cf/verifica-deploy.mjs --base="$STAGING_URL" --sha="$CS_BUILD_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+          npx wrangler versions upload \
+            --config wrangler.staging.toml \
+            --tag "$CS_BUILD_SHA" \
+            --message "staging $CS_BUILD_SHA" 2>&1 | tee "$RUNNER_TEMP/wrangler-staging-upload.log"
+          URL=$(grep -Eo 'https://[^[:space:]]+\.workers\.dev' "$RUNNER_TEMP/wrangler-staging-upload.log" | tail -n 1 | sed 's/[),.]$//')
+          [ -n "$URL" ] || {
+            echo "::error::Wrangler não retornou a URL da versão candidata"
+            exit 1
+          }
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "### Cloudflare staging candidato" >> "$GITHUB_STEP_SUMMARY"
+          echo "URL: $URL" >> "$GITHUB_STEP_SUMMARY"
+      - name: Verifica versão candidata (build, áudio e viewmodels)
+        env:
+          CS_BUILD_SHA: ${{ steps.build.outputs.sha }}
+          CANDIDATE_URL: ${{ steps.upload.outputs.url }}
+        run: |
+          set -euo pipefail
+          node tools/cf/verifica-deploy.mjs --base="$CANDIDATE_URL" --sha="$CS_BUILD_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Promove versão verificada para csb-staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CS_BUILD_SHA: ${{ steps.build.outputs.sha }}
+        run: |
+          set -euo pipefail
+          npx wrangler versions deploy \
+            --config wrangler.staging.toml \
+            --version-tag "$CS_BUILD_SHA" \
+            --percentage 100 \
+            --yes

@@ -7,12 +7,14 @@
          null (cai no 404 do Astro) para caminho fora do manifesto, objeto ausente ou tamanho errado
      B4  csbrasil.online (apex) responde 308 para o www preservando caminho e query
      B5  a chave no R2 é a mesma do Blob (scripts/vm-assets.mjs blobPathOf) para todo o manifesto
-   Mutantes (cada um tem de reprovar): sem-strip, vm-sem-etag, apex-301, apex-sem-worker-first. */
+   Mutantes (cada um tem de reprovar): sem-strip, vm-sem-etag, apex-301,
+   apex-sem-worker-first, assets-sem-fallback. */
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { build } from 'esbuild';
 import { blobPathOf } from '../../scripts/vm-assets.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
@@ -21,18 +23,21 @@ const MUTACOES = {
   'sem-strip': ['src/cf/borda.mjs', "if (/^stale-while-revalidate=/i.test(diretiva)) continue;", ''],
   'vm-sem-etag': ['src/cf/borda.mjs', "const headers = new Headers({ 'content-type': entrada.contentType, etag });", "const headers = new Headers({ 'content-type': entrada.contentType });"],
   'apex-301': ['src/cf/borda.mjs', 'alvo.toString(), 308)', 'alvo.toString(), 301)'],
-  'apex-sem-worker-first': ['wrangler.prod.toml', 'run_worker_first = true', 'run_worker_first = ["/", "/index.html"]'],
+  'apex-sem-worker-first': ['src/cf/worker.ts', 'const apex = redirectDeHost(url);', 'const apex = null;'],
+  'assets-sem-fallback': ['src/cf/worker.ts', 'const asset = env.ASSETS ? await env.ASSETS.fetch(request) : null;', 'const asset = null;'],
 };
 if (MUTANTE && !MUTACOES[MUTANTE]) { console.error(`mutante desconhecido: ${MUTANTE}`); process.exit(2); }
 
 let fonte = readFileSync(path.join(ROOT, 'src/cf/borda.mjs'), 'utf8');
-let wrangler = readFileSync(path.join(ROOT, 'wrangler.prod.toml'), 'utf8');
+let worker = readFileSync(path.join(ROOT, 'src/cf/worker.ts'), 'utf8');
+const wrangler = readFileSync(path.join(ROOT, 'wrangler.prod.toml'), 'utf8');
 if (MUTANTE) {
   const [arquivo, de, para] = MUTACOES[MUTANTE];
-  const alvo = arquivo === 'src/cf/borda.mjs' ? fonte : wrangler;
+  let alvo = arquivo === 'src/cf/borda.mjs' ? fonte : worker;
   if (!alvo.includes(de)) { console.error(`mutante ${MUTANTE} não encontrou o trecho em ${arquivo}`); process.exit(2); }
-  if (arquivo === 'src/cf/borda.mjs') fonte = fonte.replace(de, para);
-  else wrangler = wrangler.replace(de, para);
+  alvo = alvo.replace(de, para);
+  if (arquivo === 'src/cf/borda.mjs') fonte = alvo;
+  else worker = alvo;
 }
 const arquivo = path.join(mkdtempSync(path.join(tmpdir(), 'cf-borda-')), 'borda.mjs');
 writeFileSync(arquivo, fonte);
@@ -93,6 +98,74 @@ const apex = borda.redirectDeHost(new URL('https://csbrasil.online/jogar/multipl
 check(apex?.status === 308 && apex.headers.get('location') === 'https://www.csbrasil.online/jogar/multiplayer?partida=1', 'B4', `apex: ${apex?.status} ${apex?.headers.get('location')}`);
 check(/run_worker_first\s*=\s*true/.test(wrangler), 'B4', 'apex precisa passar toda rota estática pelo redirect do Worker');
 check(borda.redirectDeHost(new URL('https://www.corosolto.com.br/')) === null, 'B4', 'www não redireciona');
+
+// Integração real do entrypoint: o redirect do apex precisa acontecer antes de ASSETS,
+// ASSETS precisa servir estáticos, e 404 do binding precisa cair no handler Astro.
+const dirWorker = mkdtempSync(path.join(tmpdir(), 'cf-worker-'));
+const bundleWorker = path.join(dirWorker, 'worker.mjs');
+await build({
+  stdin: {
+    contents: worker,
+    resolveDir: path.join(ROOT, 'src/cf'),
+    sourcefile: 'worker.ts',
+    loader: 'ts',
+  },
+  outfile: bundleWorker,
+  bundle: true,
+  format: 'esm',
+  platform: 'node',
+  target: 'node22',
+  logLevel: 'silent',
+  plugins: [{
+    name: 'astro-stub',
+    setup(esbuild) {
+      esbuild.onResolve({ filter: /^@astrojs\/cloudflare\/entrypoints\/server$/ }, () => ({
+        path: 'astro-stub',
+        namespace: 'cf-borda',
+      }));
+      esbuild.onLoad({ filter: /.*/, namespace: 'cf-borda' }, () => ({
+        contents: "export default { fetch: async () => new Response('astro', { headers: { 'x-csb-source': 'astro' } }) };",
+        loader: 'js',
+      }));
+    },
+  }],
+});
+Object.defineProperty(globalThis, 'caches', {
+  configurable: true,
+  value: { default: { match: async () => undefined, put: async () => {} } },
+});
+const workerReal = (await import(pathToFileURL(bundleWorker).href)).default;
+const ctx = { waitUntil() {} };
+let chamadasAssets = 0;
+const assetsOk = {
+  fetch: async () => {
+    chamadasAssets++;
+    return new Response('asset', { headers: { 'x-csb-source': 'asset' } });
+  },
+};
+const apexReal = await workerReal.fetch(
+  new Request('https://csbrasil.online/jogar/multiplayer?partida=1'),
+  { ASSETS: assetsOk },
+  ctx,
+);
+check(apexReal.status === 308
+  && apexReal.headers.get('location') === 'https://www.csbrasil.online/jogar/multiplayer?partida=1'
+  && chamadasAssets === 0,
+'B4', 'entrypoint precisa redirecionar apex antes de consultar ASSETS');
+const assetReal = await workerReal.fetch(
+  new Request('https://www.corosolto.com.br/arquivo-estatico.txt'),
+  { ASSETS: assetsOk },
+  ctx,
+);
+check(assetReal.headers.get('x-csb-source') === 'asset' && await assetReal.text() === 'asset',
+  'B4', 'entrypoint precisa entregar resposta do binding ASSETS');
+const fallbackReal = await workerReal.fetch(
+  new Request('https://www.corosolto.com.br/rota-astro'),
+  { ASSETS: { fetch: async () => new Response(null, { status: 404 }) } },
+  ctx,
+);
+check(fallbackReal.headers.get('x-csb-source') === 'astro' && await fallbackReal.text() === 'astro',
+  'B4', '404 de ASSETS precisa cair no handler Astro');
 
 // B5
 const divergentes = manifesto.files.filter((f) => borda.chaveR2Viewmodel(f) !== blobPathOf(f));
