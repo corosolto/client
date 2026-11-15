@@ -17,6 +17,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { createHash } from 'node:crypto';
 import { motivosParaManter, motivosRegraRuido, erroDoVeto } from './baked-states-metrics.mjs';
+import { RUNTIME_VETOS } from './baked-state-vetos.mjs';
 import { readGLB, buildScene, worldMats, poseWith, skinVerts, bboxOf } from './tp-mount-probe.mjs';
 import { marcarRef, refsDoCorpo, REFS_PADRAO } from '../../public/js/anim-speed-ref.js';
 
@@ -95,8 +96,14 @@ for (const id of ids) {
       }
       falhas.push(`R1 ${k}: substituído contra a regra (${motivos.join('; ')})`);
     }
-    // Veto de runtime só mantém clipe que a regra trocaria, com régua do jogo e medição do lado ruim dela.
-    const erroVeto = veto === undefined ? null : troca !== 0 ? 'estado substituído' : regra(a, n).length ? 'estado que a regra já mantém' : erroDoVeto(veto, scripts);
+    // A evidência gerada referencia exatamente o catálogo revisado; texto plausível
+    // não cria uma exceção nova nem esconde uma medição canônica removida.
+    const vetoCanonico = RUNTIME_VETOS[k];
+    const erroVeto = veto !== vetoCanonico ? `difere do catálogo canônico (${vetoCanonico ?? 'ausente'})`
+      : veto === undefined ? null
+      : troca !== 0 ? 'estado substituído'
+      : regra(a, n).length ? 'estado que a regra já mantém'
+      : erroDoVeto(veto, scripts);
     if (erroVeto) falhas.push(`R1 ${k}: veto de runtime inválido (${erroVeto})`);
     if (troca === 0 && !motivos.length && veto === undefined) falhas.push(`R1 ${k}: mantido sem motivo — a regra manda substituir`);
     if (veto !== undefined) vetos.push(`${k}: ${veto}`);
