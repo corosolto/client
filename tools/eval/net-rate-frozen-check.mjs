@@ -70,7 +70,7 @@ await check('clock: recuo de sessão reinicia a janela sem congelamento', () => 
 });
 await check('clock: partida reinicia medidor e preserva null na telemetria', async () => {
   const net = new NetClient('ws://fixture.invalid/ws'); let hooks; const sent = [];
-  const pending = net._conectar(1000, () => ({ abrir(value) { hooks = value; }, fechar() {}, enviar(value) { sent.push(value); } }));
+  const pending = net._conectar(1000, () => ({ protocolo: 'coro-snapshot-v8', abrir(value) { hooks = value; }, fechar() {}, enviar(value) { sent.push(value); } }));
   hooks.mensagem(JSON.stringify({ type: 'welcome', protocolVersion: 8, clientVersion: VERSION, simHash: SIM_HASH }), false, 100);
   await pending;
   for (let i = 1; i <= 90; i++) hooks.mensagem(JSON.stringify({ type: 'snapshot', t: i / 30, tick: i, ents: [] }), false, 700);
