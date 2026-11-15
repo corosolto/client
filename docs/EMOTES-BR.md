@@ -1,6 +1,7 @@
 # Emotes brasileiros: repertório, método e limites
 
-Régua: `tools/eval/emotes-check.mjs` (`npm run eval:emotes`) · Código: `public/js/emotes.js`
+Réguas: `npm run eval:emotes`, `npm run eval:emotepartida` e `npm run eval:rede3p`.
+Coreografia: `public/js/emotes.js`; metadados leves: `public/js/data/emote-catalog.js`.
 
 ## O problema que decidiu a arquitetura
 
@@ -59,11 +60,9 @@ fontes acima.
 
 ## Limites declarados (o que NÃO está entregue)
 
-1. **Dança local, não sincronizada.** Na partida a dança roda pra quem apertou (tecla `T`,
-   roda de 8 passos, câmera afasta sozinha; régua `eval:emotepartida`). Os outros jogadores
-   NÃO veem: o pacote de input do servidor é `{ax, az, crouch, shift, jump, yaw, pitch,
-   shoot, weapon}` e não tem campo de emote. Para sincronizar falta **um campo** no
-   protocolo do servidor autoritativo — mudança de backend, que é do dono.
+1. **Disponibilidade depende do nó.** O snapshot v9 publica a dança dos humanos,
+   além de postura/recarga de humanos e bots; nós v8 não têm esses estados públicos.
+   A porta visual de produção continua fechada até o aceite do dono (seção abaixo).
 2. **Sem polegar.** O rig não tem osso de dedo (só `Curl_L`/`Curl_R` de fechamento de
    mão). Não existe joinha possível: o gesto entregue chama **Salve** porque é isso que o
    corpo faz. Preferimos o nome honesto ao nome bonito.
@@ -73,7 +72,8 @@ fontes acima.
    qualidade sem mudar nada do que está aqui: o controlador aceita os dois.
 4. **Classificação indicativa.** A `sarrada no ar` é gesto de quadril. Está estilizada,
    mas é decisão do dono mantê-la no catálogo público, restringi-la ou removê-la — lojas
-   de aplicativo olham isso. Basta tirar a linha do catálogo em `public/js/emotes.js`.
+   de aplicativo olham isso. A ordem de `public/js/data/emote-catalog.js` é o contrato
+   binário v9: não remover nem reordenar IDs numa versão já publicada.
 
 ## Como se dança
 
@@ -82,6 +82,42 @@ fontes acima.
 | Lobby (hub) | botão **DANÇAR** embaixo do personagem; abre os 8 passos. Só aparece quando há boneco 3D — em preview estático (hardware fraco/renderização por software) não há o que dançar e o botão some |
 | Partida | tecla **T** abre a roda; **1-8** ou clique escolhe; **T**/**ESC** fecha; a câmera sai da 1ª pessoa e afasta 1,5 m pra você se ver |
 | Sair | andar, atirar, trocar de arma, levar dano ou morrer derruba o passo na hora |
+
+## Estados remotos de terceira pessoa (v9)
+
+O catálogo leve mantém a ordem `passinho`, `samba`, `ginga`, `frevo`, `forro`,
+`quadradinho`, `sarrada`, `salve`. O input manda a intenção atual como string ou `null`
+em cada passo e no heartbeat de pausa. A autoridade do servidor decide início,
+cancelamento e duração; a câmera local e a roda continuam nos caminhos existentes.
+
+`Netcode.applySnapshot` recebe agachamento, segundos restantes de recarga, ID da dança
+e segundos decorridos. O corpo GLB recebe `setCrouch`; a borda de recarga chama
+`reload(restante)` uma vez, e a queda chama `cancelReload`. Repetir pacotes não reinicia
+o envelope. Trocar o controlador reaplica o restante, não a duração inicial.
+O fim da recarga no relógio do servidor separa dois ciclos positivos quando os
+snapshots intermediários de troca de arma se perdem. Oscilação de até um décimo
+pela quantização e jitter de chegada não reiniciam o ciclo; `Game.t` reiniciado
+reancora esse fim sem descartar o tick monotônico da Room.
+
+A primeira dança remota chama `Game._emoteMods()` dinamicamente; o callback instala só
+o driver, nunca toca uma dança. Assim, stop/morte durante o import não ressuscitam emote.
+O próximo quadro consulta o estado atual e aplica a fase, inclusive ao entrar no meio.
+Pacotes seguintes corrigem o relógio sem zerar a rampa. Laços usam módulo da duração;
+gestos únicos expiram e morte elimina recarga e dança antes do respawn.
+
+Os estados visuais só aceitam ticks crescentes. Datagramas antigos continuam disponíveis
+para interpolação posicional, mas não ressuscitam dança, recarga ou agachamento cancelados.
+O casamento de uma entidade limpa o tick anterior; o tick da Room continua entre mapas.
+
+`eval:rede3p` atravessa o codec binário, o Netcode e o CharController com rig/clipes reais
+em Node. Mede clip/altura de crouch, envelope de reload, fase/rampa/movimento de juntas,
+cancelamento no import, troca de controlador, morte/respawn, fallback v8, datagramas
+fora de ordem, recargas consecutivas com perda de pacotes, jitter e input/heartbeat
+com stop explícito. Doze mutantes alteram a implementação
+em memória, sem escrever no disco. O controlador primeiro exige nominal verde completo,
+depois cobra o conjunto exato de falhas de cada mutação. Uma prova em cópia temporária
+quebra o instrumento de altura e exige reprovação do controlador; base vermelha não
+compra aprovação dos mutantes. Erro de infraestrutura também não serve como prova.
 
 ## Porta fechada em produção (23/10)
 

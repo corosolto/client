@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -128,6 +128,22 @@ for (const job of ['automerge', 'sweep']) {
     mutateAutomerge(dir, (workflow) => {
       assert.match(workflow.jobs[job].steps[0].run, /GH_TOKEN/);
       workflow.jobs[job].steps.shift();
+    });
+    assertGuardFailure(run(SECRET_CHECK, dir), 'WSEC2');
+  });
+}
+
+for (const token of ['missing', 'bot-pat']) {
+  test(`WSEC2 rejects automerge metadata with ${token} read credentials`, (t) => {
+    const dir = fixture(t);
+    mutateAutomerge(dir, (workflow) => {
+      const step = workflow.jobs.sweep.steps.find((item) => item.run?.includes('gh api --paginate --slurp'));
+      assert.ok(step);
+      const before = step.run;
+      step.run = token === 'missing'
+        ? step.run.replace('export GH_TOKEN="${{ github.token }}"\n', '')
+        : step.run.replace('${{ github.token }}', '${{ secrets.CSBRASIL_BOT_TOKEN }}');
+      assert.notEqual(step.run, before);
     });
     assertGuardFailure(run(SECRET_CHECK, dir), 'WSEC2');
   });
@@ -345,4 +361,75 @@ test('AF4 ignores flags printed after the merge invocation', (t) => {
     });
   });
   assertGuardFailure(run(AUTOFIX_CHECK, dir), 'AF4');
+});
+
+test('pre-push lockf fallback waits for the current gate owner', async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'corosolto-prepush-lock-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const bin = join(dir, 'bin');
+  mkdirSync(bin);
+  const commands = ['bash', 'cat', 'cut', 'date', 'env', 'grep', 'head', 'mkdir', 'node', 'ps', 'rm', 'rmdir', 'sleep', 'stat', 'tail', 'tr'];
+  for (const command of commands) {
+    const found = spawnSync('/bin/bash', ['-lc', `command -v ${command}`], { encoding: 'utf8' }).stdout.trim();
+    assert.ok(found, `missing fixture command ${command}`);
+    symlinkSync(command === 'node' ? process.execPath : found, join(bin, command));
+  }
+  const executable = (name, source) => {
+    const path = join(bin, name);
+    writeFileSync(path, source);
+    chmodSync(path, 0o755);
+  };
+  executable('git', `#!/bin/bash
+if [[ "$1" == rev-parse && "$2" == --show-toplevel ]]; then pwd; exit 0; fi
+if [[ "$1" == rev-list ]]; then exit 0; fi
+exit 1
+`);
+  executable('npm', `#!/bin/bash
+echo "$LOCK_RUN_ID" >> "$LOCK_TRACE"
+sleep 0.2
+`);
+  executable('lockf', `#!/bin/bash
+fail_fast=0
+while [[ "$1" == -* ]]; do
+  if [[ "$1" == -k ]]; then fail_fast=1; shift; continue; fi
+  if [[ "$1" == -t ]]; then shift 2; continue; fi
+  exit 2
+done
+lock="$1.$LOCK_SUFFIX.fake"
+shift
+if ! mkdir "$lock" 2>/dev/null; then
+  [[ "$fail_fast" == 1 ]] && exit 75
+  while ! mkdir "$lock" 2>/dev/null; do sleep 0.05; done
+fi
+echo "$LOCK_RUN_ID" > "$LOCK_ACQUIRED"
+trap 'rmdir "$lock"' EXIT
+"$@"
+`);
+  const trace = join(dir, 'npm.log');
+  const suffix = `${process.pid}-${Date.now()}`;
+  const acquired = join(dir, 'acquired');
+  const runHook = (id) => new Promise((resolve) => {
+    const child = spawn('/bin/bash', [join(ROOT, '.githooks/pre-push'), 'origin', 'unused'], {
+      cwd: dir,
+      env: { PATH: bin, LOCK_ACQUIRED: acquired, LOCK_RUN_ID: id, LOCK_TRACE: trace, LOCK_SUFFIX: suffix },
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    child.stdin.end();
+    let stderr = '';
+    child.stderr.on('data', (chunk) => { stderr += chunk; });
+    child.on('exit', (status, signal) => resolve({ status, signal, stderr }));
+  });
+  const first = runHook('first');
+  const acquisitionDeadline = Date.now() + 2000;
+  while (!existsSync(acquired) && Date.now() < acquisitionDeadline) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  assert.equal(readFileSync(acquired, 'utf8').trim(), 'first');
+  const second = runHook('second');
+  const results = await Promise.all([first, second]);
+  for (const result of results) {
+    assert.equal(result.signal, null, result.stderr);
+    assert.equal(result.status, 0, result.stderr);
+  }
+  assert.deepEqual(readFileSync(trace, 'utf8').trim().split('\n'), ['first', 'first', 'second', 'second']);
 });

@@ -327,9 +327,16 @@ jobs:
       - name: Dispara classify só quando algum insumo de decisão mudou
         run: |
           python3 scripts/ci/bot_sweep.py --selftest
-          GH_TOKEN="${{ github.token }}" gh pr list --repo "$REPO" --state open --limit 100 \
-            --json number,title,body,isDraft,baseRefName,baseRefOid,mergeStateStatus,assignees,labels,headRefName,headRefOid,headRepository,statusCheckRollup,latestReviews,reviewRequests,reviewDecision \
-            > /tmp/classify-sweep.json
+          (
+          export GH_TOKEN="${{ github.token }}"
+          gh api --paginate --slurp "repos/$REPO/pulls?state=open&per_page=100" \
+            | jq -r 'add // [] | .[].number' \
+            | while read -r number; do
+                gh pr view "$number" --repo "$REPO" \
+                  --json number,title,body,isDraft,baseRefName,baseRefOid,mergeStateStatus,assignees,labels,headRefName,headRefOid,headRepository,statusCheckRollup,latestReviews,reviewRequests,reviewDecision
+              done \
+            | jq -s '.' > /tmp/classify-sweep.json
+          )
           python3 - <<'PY'
           import json, os, subprocess
           from scripts.ci.bot_sweep import should_dispatch
