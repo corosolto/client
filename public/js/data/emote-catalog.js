@@ -22,7 +22,10 @@ export const EMOTES = [
   { id: 'comemoracao', nome: 'Comemoração',        origem: 'Gesto - as mãos que celebram a rodada',           dur: 2.7333, laco: true,  clipe: true, fonte: 'mixamo/gestures-pack-basic/happy-hand-gesture', reserva: 'salve', desbloqueio: 'base' },
 ];
 export const EMOTE_IDS = EMOTES.map((e) => e.id);
-export const V9_EMOTE_IDS = Object.freeze(EMOTE_IDS.slice(0, 8));
+export const V9_EMOTE_IDS = Object.freeze([
+  'passinho', 'samba', 'ginga', 'frevo',
+  'forro', 'quadradinho', 'sarrada', 'salve',
+]);
 const POR_ID = new Map(EMOTES.map((e) => [e.id, e]));
 export const emoteInfo = (id) => POR_ID.get(id) || null;
 // Sem campo explícito o emote é da base: os 8 procedurais nasceram liberados.
