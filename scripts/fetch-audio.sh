@@ -4,6 +4,9 @@
 # Cache de build: o zip fica em node_modules/.cache/csb-packs/ (a Vercel guarda a pasta
 # entre builds) sob chave URL+sha; sem a pasta (máquina local) o script baixa como antes.
 set -e
+PREFETCH_R2=0
+if [ "${1:-}" = "--prefetch-r2" ]; then PREFETCH_R2=1; shift; fi
+[ "$#" -eq 0 ] || { echo "uso: scripts/fetch-audio.sh [--prefetch-r2]" >&2; exit 2; }
 cd "$(dirname "$0")/.."
 
 # URL do zip do pacote. Configure pela env AUDIO_PACK_URL ou edite aqui
@@ -30,6 +33,10 @@ case "$URL" in
     PACOTE_PRIVADO=1
     ;;
 esac
+[ "$PREFETCH_R2" != 1 ] || [[ "$URL" == r2://* ]] || {
+  echo "--prefetch-r2 exige AUDIO_PACK_URL r2://..." >&2
+  exit 2
+}
 
 # O manifest que o jogo consome precisa de `mapSoundscapes` para todo mapa do
 # `maps.js` — sem isso o `world.sound` de cada mapa aponta pros `audio/ambiente/*`
@@ -50,14 +57,14 @@ prepara_ambiencia() {
   [ "$PACOTE_PRIVADO" = 1 ] || node tools/audio/ensure-map-soundscapes.mjs
 }
 
-if [ -f "$DEST/manifest.json" ] && [ "${VERCEL:-}" != "1" ]; then
+if [ "$PREFETCH_R2" != 1 ] && [ -f "$DEST/manifest.json" ] && [ "${VERCEL:-}" != "1" ]; then
   prepara_ambiencia
   echo "audio/ já configurado — nada a fazer."
   exit 0
 fi
 mkdir -p "$DEST"
 CACHE_DIR="node_modules/.cache/csb-packs"
-if [ "${VERCEL:-}" = "1" ]; then mkdir -p "$CACHE_DIR"; fi
+if [ "${VERCEL:-}" = "1" ] || [ "$PREFETCH_R2" = 1 ]; then mkdir -p "$CACHE_DIR"; fi
 # Chave = sha256 de (digest + URL inteira): URL longa não trunca nem colide com outra de prefixo igual.
 CACHE_ZIP="$CACHE_DIR/audio-$(printf '%s' "${AUDIO_PACK_SHA256:-}${URL}" | shasum -a 256 | cut -d' ' -f1).zip"
 confere_sha() {
@@ -71,13 +78,18 @@ else
   echo "Baixando pacote de áudio de: $URL"
   if [[ "$URL" == r2://* ]]; then
     rm -f /tmp/csbrasil-audio.zip
-    npx --no-install wrangler r2 object get "${URL#r2://}" --file /tmp/csbrasil-audio.zip --remote
+    CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-${CF_API_TOKEN:-}}" \
+      npx --no-install wrangler r2 object get "${URL#r2://}" --file /tmp/csbrasil-audio.zip --remote
   else
     curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL \
       "${AUTH_ARGS[@]}" "$URL" -o /tmp/csbrasil-audio.zip
   fi
   confere_sha /tmp/csbrasil-audio.zip
   if [ -d "$CACHE_DIR" ]; then cp /tmp/csbrasil-audio.zip "$CACHE_ZIP"; fi
+fi
+if [ "$PREFETCH_R2" = 1 ]; then
+  echo "Pacote privado preparado no cache: $CACHE_ZIP"
+  exit 0
 fi
 unzip -o -q /tmp/csbrasil-audio.zip -d "$DEST/"
 [ -f "$DEST/manifest.json" ] || cp "$DEST/manifest.example.json" "$DEST/manifest.json"

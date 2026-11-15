@@ -12,73 +12,96 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const arg = (nome) => process.argv.find((a) => a.startsWith(`--${nome}=`))?.slice(nome.length + 3);
-const BASE = (arg('base') || '').replace(/\/+$/, '');
-const SHA = arg('sha') || '';
-const DIST = arg('dist') || 'dist/client';
-const SEM_VM = process.argv.includes('--sem-viewmodel');
-if (!/^https:\/\//.test(BASE) || !/^[a-f0-9]{40}$/.test(SHA)) {
-  console.error('uso: --base=https://<host> --sha=<commit de 40 hex>');
-  process.exit(2);
-}
-
-const falhas = [];
-const check = (ok, id, msg) => { console.log(`${ok ? 'PASS' : 'FAIL'} ${id} ${msg}`); if (!ok) falhas.push(id); };
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
-const pega = async (url, init = {}) => {
-  for (let tentativa = 1; ; tentativa += 1) {
-    try {
-      return await fetch(url, { ...init, redirect: 'manual', signal: AbortSignal.timeout(30000) });
-    } catch (erro) {
-      if (tentativa >= 3) throw erro;
-      await new Promise((r) => setTimeout(r, tentativa * 2000));
-    }
+
+export async function verificarDeploy({
+  base,
+  sha,
+  dist = 'dist/client',
+  semViewmodel = false,
+  manifestPath = 'tools/viewmodels/vm-assets.manifest.json',
+  fetchImpl = fetch,
+  log = console.log,
+}) {
+  const BASE = (base || '').replace(/\/+$/, '');
+  if (!/^https:\/\//.test(BASE) || !/^[a-f0-9]{40}$/.test(sha || '')) {
+    throw new Error('uso: --base=https://<host> --sha=<commit de 40 hex>');
   }
-};
 
-const home = await pega(`${BASE}/`);
-const html = await home.text();
-const gravado = /GIT_SHA = "([a-f0-9]*)"/.exec(html)?.[1] ?? '(ausente)';
-check(home.status === 200 && gravado === SHA, 'D1', `/ ${home.status}, build ${gravado} (esperado ${SHA})`);
-
-const local = readFileSync(path.join(DIST, 'audio/manifest.json'));
-const remoto = await pega(`${BASE}/audio/manifest.json`);
-const corpo = Buffer.from(await remoto.arrayBuffer());
-check(remoto.status === 200 && sha256(corpo) === sha256(local), 'D2',
-  `/audio/manifest.json ${remoto.status}, ${sha256(corpo).slice(0, 12)} publicado vs ${sha256(local).slice(0, 12)} do build`);
-
-if (SEM_VM) {
-  console.log('SKIP D3 --sem-viewmodel');
-} else {
-  const { files } = JSON.parse(readFileSync('tools/viewmodels/vm-assets.manifest.json', 'utf8'));
-  const ruins = [];
-  const fila = [...files];
-  await Promise.all(Array.from({ length: 8 }, async () => {
-    for (let f = fila.shift(); f; f = fila.shift()) {
-      const url = `${BASE}/private-assets/viewmodels/${f.path}?v=${f.sha256.slice(0, 10)}`;
-      const r = await pega(url, { method: 'HEAD' });
-      // A borda comprime texto (recoil.json): o ETag vira fraco e o content-length some. Nesse
-      // caso o corpo é baixado e o sha256 do conteúdo decide.
-      const etag = (r.headers.get('etag') || '').replace(/^W\//, '');
-      let tam = Number(r.headers.get('content-length'));
-      let shaOk = etag === `"${f.sha256}"`;
-      if (r.status === 200 && shaOk && tam !== f.bytes) {
-        const corpo = Buffer.from(await (await pega(url)).arrayBuffer());
-        tam = corpo.length;
-        shaOk = sha256(corpo) === f.sha256;
+  const falhas = [];
+  const check = (ok, id, msg) => { log(`${ok ? 'PASS' : 'FAIL'} ${id} ${msg}`); if (!ok) falhas.push(id); };
+  const pega = async (url, init = {}) => {
+    for (let tentativa = 1; ; tentativa += 1) {
+      try {
+        return await fetchImpl(url, { ...init, redirect: 'manual', signal: AbortSignal.timeout(30000) });
+      } catch (erro) {
+        if (tentativa >= 3) throw erro;
+        await new Promise((resolve) => setTimeout(resolve, tentativa * 2000));
       }
-      if (r.status !== 200 || tam !== f.bytes || !shaOk)
-        ruins.push(`${f.path} (${r.status}, ${tam} B, etag ${r.headers.get('etag')})`);
     }
-  }));
-  check(!ruins.length, 'D3', ruins.length
-    ? `${ruins.length}/${files.length} viewmodels fora do contrato: ${ruins.slice(0, 4).join('; ')}`
-    : `${files.length}/${files.length} viewmodels servidos do R2 com tamanho e sha256 do manifesto`);
+  };
+
+  const home = await pega(`${BASE}/`);
+  const html = await home.text();
+  const gravado = /GIT_SHA = "([a-f0-9]*)"/.exec(html)?.[1] ?? '(ausente)';
+  check(home.status === 200 && gravado === sha, 'D1', `/ ${home.status}, build ${gravado} (esperado ${sha})`);
+
+  const local = readFileSync(path.join(dist, 'audio/manifest.json'));
+  const remoto = await pega(`${BASE}/audio/manifest.json`);
+  const corpo = Buffer.from(await remoto.arrayBuffer());
+  check(remoto.status === 200 && sha256(corpo) === sha256(local), 'D2',
+    `/audio/manifest.json ${remoto.status}, ${sha256(corpo).slice(0, 12)} publicado vs ${sha256(local).slice(0, 12)} do build`);
+
+  if (semViewmodel) {
+    log('SKIP D3 --sem-viewmodel');
+  } else {
+    const { files } = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    const ruins = [];
+    const fila = [...files];
+    await Promise.all(Array.from({ length: 8 }, async () => {
+      for (let f = fila.shift(); f; f = fila.shift()) {
+        const url = `${BASE}/private-assets/viewmodels/${f.path}?v=${f.sha256.slice(0, 10)}`;
+        /* O corpo decide sempre. ETag e content-length podem ser forjados ou apontar para bytes
+           corruptos do mesmo tamanho; HEAD sozinho não prova o artefato publicado. */
+        const resposta = await pega(url);
+        const body = Buffer.from(await resposta.arrayBuffer());
+        const etag = (resposta.headers.get('etag') || '').replace(/^W\//, '');
+        const valido = resposta.status === 200
+          && body.length === f.bytes
+          && etag === `"${f.sha256}"`
+          && sha256(body) === f.sha256;
+        if (!valido) ruins.push(`${f.path} (${resposta.status}, ${body.length} B, etag ${resposta.headers.get('etag')})`);
+      }
+    }));
+    check(!ruins.length, 'D3', ruins.length
+      ? `${ruins.length}/${files.length} viewmodels fora do contrato: ${ruins.slice(0, 4).join('; ')}`
+      : `${files.length}/${files.length} viewmodels servidos do R2 com tamanho e sha256 do manifesto`);
+  }
+
+  return { falhas };
 }
 
-if (falhas.length) {
-  console.error(`verifica-deploy: ${falhas.length} falha(s) em ${BASE}: ${falhas.join(', ')}`);
-  process.exit(1);
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  const base = arg('base') || '';
+  const sha = arg('sha') || '';
+  try {
+    const { falhas } = await verificarDeploy({
+      base,
+      sha,
+      dist: arg('dist') || 'dist/client',
+      semViewmodel: process.argv.includes('--sem-viewmodel'),
+    });
+    if (falhas.length) {
+      console.error(`verifica-deploy: ${falhas.length} falha(s) em ${base}: ${falhas.join(', ')}`);
+      process.exitCode = 1;
+    } else {
+      console.log(`verifica-deploy: ${base.replace(/\/+$/, '')} conforme`);
+    }
+  } catch (erro) {
+    console.error(erro.message);
+    process.exitCode = 2;
+  }
 }
-console.log(`verifica-deploy: ${BASE} conforme`);
