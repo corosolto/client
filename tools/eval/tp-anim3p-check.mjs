@@ -94,15 +94,31 @@ async function abrir() {
     if (depois === antes) throw new Error(`mutante ${MUT} não aplicou em ${r.request().url()}`);
     await r.fulfill({ response: res, body: depois });
   });
-  if (MUT === 'pega-morta') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('solveCCDIK(this.ikL.chain, this.ikL.end, _ikTgt, { iterations: 12, endOffset: this.ikL.endOffset });', 'void _ikTgt;'));
-  if (MUT === 'torso-mudo') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('_deltaMundo(torso.spines[0], cosY, 0, -sinY, k * 0.20);', 'void k; void cosY; void sinY;'));
-  if (MUT === 'lean-morto') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace(') * 0.12;', ') * 0;'));
-  if (MUT === 'flinch-mudo') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('this._flinchDur = 0.18;', 'this._flinchDur = 0;'));
-  if (MUT === 'agachado-estatua') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('{ this._fireDur = 0.12; this._fireT = 0; return; }', '{ return; }'));
-  if (MUT === 'ar-correndo') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('} else if (this._ar && this.actions.jump) {', '} else if (false) {'));
-  if (MUT === 'quadril-colado') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('const teto = 0.61;', 'const teto = 0;'));
-  if (MUT === 'reload-sem-clipe') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('this._reloadClip = this._playUpper(', 'this._reloadClip = false && this._playUpper('));
-  if (MUT === 'hit-sem-clipe') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('this._hitClip = this._playUpper(', 'this._hitClip = false && this._playUpper('));
+  const glbMutations = new Map([
+    ['pega-morta', ['solveCCDIK(this.ikL.chain, this.ikL.end, _ikTgt, { iterations: 12, endOffset: this.ikL.endOffset });', 'void _ikTgt;']],
+    ['torso-mudo', ['_deltaMundo(torso.spines[0], cosY, 0, -sinY, k * 0.20);', 'void k; void cosY; void sinY;']],
+    ['lean-morto', [') * 0.12;', ') * 0;']],
+    ['flinch-mudo', ['this._flinchDur = 0.18;', 'this._flinchDur = 0;']],
+    ['agachado-estatua', ['{ this._fireDur = 0.12; this._fireT = 0; return; }', '{ return; }']],
+    ['ar-correndo', ['} else if (this._ar && this.actions.jump) {', '} else if (false) {']],
+    ['quadril-colado', ['const teto = 0.61;', 'const teto = 0;']],
+    ['reload-sem-clipe', ['this._reloadClip = this._playUpper(', 'this._reloadClip = false && this._playUpper(']],
+    ['hit-sem-clipe', ['this._hitClip = this._playUpper(', 'this._hitClip = false && this._playUpper(']],
+  ]);
+  const glbMutation = glbMutations.get(MUT);
+  if (glbMutation) await reescreve(/\/js\/glbchars\.js/, (t) => t.replace(...glbMutation));
+  // A instância procedural mede indisponibilidade real do pack, não uma corrida
+  // contra o carregamento assíncrono. A rota mais específica também preserva o
+  // mutante na cópia isolada (Playwright prioriza a última rota registrada).
+  await reescreve(/\/js\/glbchars\.js\?sempack=1$/, (t) => {
+    let out = t.replace("assetUrl('models/anims/extras.glb')", "assetUrl('models/anims/extras-ausente.glb')");
+    if (glbMutation) {
+      const mutated = out.replace(...glbMutation);
+      if (mutated === out) throw new Error(`mutante ${MUT} não aplicou na variante sem pack`);
+      out = mutated;
+    }
+    return out;
+  });
   if (MUT === 'lod-cego') await reescreve(/\/js\/game\.js/, (t) => t.replace('const passo = distCam > 45 ? 0.1 : (distCam > 25 ? 0.05 : 0);', 'const passo = 0;'));
   if (MUT === 'reload-mudo') await reescreve(/\/js\/game\.js/, (t) => t.split('b.mesh?.ctrl?.reload?.(Wb.reload || 2.4); ').join('').split(' b.mesh?.ctrl?.reload?.(Wb.reload || 2.4);').join(''));
   // Diagnóstico de boot somente na falha; limites do teste permanecem os mesmos.
@@ -186,7 +202,7 @@ async function abrir() {
    Dois caminhos medidos em corpos separados, nunca misturados por flag:
    · produção (pack extras.glb carregado): AN12 recarga com reload_rifle, AN13 hit_*;
    · fallback procedural (o MESMO glbchars.js importado como outra instância de módulo,
-     ?sempack=1, cujo pack nunca chega dentro do laço síncrono): AN1, AN2 e AN6.
+     ?sempack=1, com extras.glb reescrito para um asset inexistente): AN1, AN2 e AN6.
      A cláusula exige que esse corpo não tenha tocado clipe nenhum. */
 const { page, fechar } = await abrir();
 const m = await page.evaluate(async () => {
