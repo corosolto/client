@@ -10,13 +10,14 @@ if(mutant==='injects-third-party')source=source.replace("function allowed() {","
 if(mutant==='sem-opt-in')source=source.replace("window.addEventListener('cs-privacy-change',enableCloudflareAnalytics);",'');
 if(mutant==='sem-parada-retirada')source=source.replaceAll('window.__cfBeacon=null;','');
 if(mutant==='analytics-em-staging')source=source.replace("return CLOUDFLARE_TOKENS[location.hostname.toLowerCase()] || '';","return Object.entries(CLOUDFLARE_TOKENS).find(([domain])=>location.hostname.endsWith(domain))?.[1] || '';");
-function boot(hostname='www.corosolto.com.br',privacy=null){
+if(mutant==='duplica-pendente')source=source.replace('if(cloudflareLoaded){','if(false){');
+function boot(hostname='www.corosolto.com.br',privacy=null,autoLoad=true){
   const store=new Map([['cs_anon','essential-guest-proof'],['awpbr_token','essential-token'],['cs_acq','old-attribution'],['cs_ops_last','old-diagnostics']]);
   if(privacy)store.set('cs_privacy',JSON.stringify(privacy));
   const session=new Map([['cs_session','old-tracking'],['cs_invite_landing','old-invite-tracking']]);const events=[];
   const scripts=[];const listeners={};
   const context={localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},sessionStorage:{removeItem:k=>session.delete(k)},CustomEvent:class{constructor(type,opts){this.type=type;this.detail=opts.detail;}},Date,JSON,URL,Object,location:{hostname}};
-  context.document={createElement:tag=>{const handlers={};return {tag,dataset:{},addEventListener:(type,fn)=>handlers[type]=fn,remove(){this.removed=true;},emit:type=>handlers[type]?.()};},head:{appendChild:script=>{scripts.push(script);script.emit('load');}}};
+  context.document={createElement:tag=>{const handlers={};return {tag,dataset:{},addEventListener:(type,fn)=>handlers[type]=fn,remove(){this.removed=true;},emit:type=>handlers[type]?.()};},head:{appendChild:script=>{scripts.push(script);if(autoLoad)script.emit('load');}}};
   context.window={dispatchEvent:e=>{events.push(e);listeners[e.type]?.(e);},addEventListener:(type,fn)=>listeners[type]=fn};
   vm.runInNewContext(source,context);
   return {store,session,events,scripts,listeners,p:context.window.__csPrivacy,browserWindow:context.window};
@@ -37,6 +38,19 @@ assert(!recusado.store.has('cs_ops_last'));assert(!recusado.session.has('cs_sess
 recusado.p.set(true);
 assert.equal(recusado.scripts.length,1,'Explicit opt-in loads Cloudflare after refused boot');
 assert.equal(recusado.browserWindow.__cfBeacon.token,'5f7f6c1ab01c4e2fb6b326dbab3e7197','Opt-in activates the production beacon');
+const pendente=boot('www.corosolto.com.br',null,false);
+assert.equal(pendente.scripts.length,1,'Pending beacon starts with one script');
+pendente.p.set(false);
+assert.deepEqual(JSON.parse(pendente.scripts[0].dataset.cfBeacon),{token:''},'Pending withdrawal blanks the captured token');
+pendente.p.set(true);
+assert.equal(pendente.scripts.length,1,'Re-opt-in reuses the pending beacon');
+assert.deepEqual(JSON.parse(pendente.scripts[0].dataset.cfBeacon),{token:'5f7f6c1ab01c4e2fb6b326dbab3e7197'});
+pendente.p.set(false);
+pendente.scripts[0].emit('load');
+assert.equal(pendente.browserWindow.__cfBeacon,null,'Late load preserves a newer refusal');
+pendente.p.set(true);
+assert.equal(pendente.scripts.length,1,'Rapid withdrawal and re-opt-in never duplicates the beacon');
+assert.equal(pendente.browserWindow.__cfBeacon.token,'5f7f6c1ab01c4e2fb6b326dbab3e7197');
 const csbrasil=boot('csbrasil.online');
 assert.deepEqual(JSON.parse(csbrasil.scripts[0].dataset.cfBeacon),{token:'b777fa448ebe48d8a635e74e9902be19'});
 assert.equal(boot('staging.corosolto.com.br').scripts.length,0,'Staging must not pollute production RUM');

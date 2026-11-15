@@ -20,12 +20,16 @@
   function cloudflareToken() {
     return CLOUDFLARE_TOKENS[location.hostname.toLowerCase()] || '';
   }
-  let cloudflareLoaded=false,cloudflareReady=false,cloudflareScript=null;
+  let cloudflareLoaded=false,cloudflareScript=null;
   function enableCloudflareAnalytics() {
     const token=cloudflareToken();
     if(!allowed() || !token)return;
     window.__cfBeacon={token};
-    if(cloudflareLoaded)return;
+    if(cloudflareLoaded){
+      // Se o módulo ainda não executou, restaura o token no mesmo elemento; nunca cria uma segunda instância.
+      cloudflareScript.dataset.cfBeacon=JSON.stringify({token});
+      return;
+    }
     cloudflareLoaded=true;
     const script=document.createElement('script');
     cloudflareScript=script;
@@ -33,7 +37,6 @@
     script.src='https://static.cloudflareinsights.com/beacon.min.js';
     script.dataset.cfBeacon=JSON.stringify({token});
     script.addEventListener('load',()=>{
-      cloudflareReady=true;
       if(!allowed())window.__cfBeacon=null;
     });
     document.head.appendChild(script);
@@ -41,12 +44,8 @@
   function stopCloudflareAnalytics() {
     // O beacon consulta este global antes de cada envio; anulá-lo preserva o fluxo atual.
     window.__cfBeacon=null;
-    if(cloudflareScript && !cloudflareReady){
-      cloudflareScript.dataset.cfBeacon='{"token":""}';
-      cloudflareScript.remove();
-      cloudflareScript=null;
-      cloudflareLoaded=false;
-    }
+    // Se o módulo ainda não executou, ele também não pode capturar um token válido.
+    if(cloudflareScript)cloudflareScript.dataset.cfBeacon='{"token":""}';
   }
   function clearOptionalStorage() {
     try { localStorage.removeItem('cs_acq');localStorage.removeItem('cs_ops_last');sessionStorage.removeItem('cs_session');sessionStorage.removeItem('cs_invite_landing'); } catch {}
