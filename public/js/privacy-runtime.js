@@ -6,7 +6,9 @@
   const VERSION='corosolto-analytics-v1',KEY='cs_privacy';
   const CLOUDFLARE_TOKENS=Object.freeze({
     'corosolto.com.br':'5f7f6c1ab01c4e2fb6b326dbab3e7197',
+    'www.corosolto.com.br':'5f7f6c1ab01c4e2fb6b326dbab3e7197',
     'csbrasil.online':'b777fa448ebe48d8a635e74e9902be19',
+    'www.csbrasil.online':'b777fa448ebe48d8a635e74e9902be19',
   });
   function choice() {
     try {
@@ -16,8 +18,7 @@
   }
   function allowed() { return choice()?.analytics!==false; }
   function cloudflareToken() {
-    const host=location.hostname.toLowerCase();
-    return Object.entries(CLOUDFLARE_TOKENS).find(([domain])=>host===domain || host.endsWith(`.${domain}`))?.[1] || '';
+    return CLOUDFLARE_TOKENS[location.hostname.toLowerCase()] || '';
   }
   let cloudflareLoaded=false;
   function enableCloudflareAnalytics() {
@@ -30,6 +31,10 @@
     script.dataset.cfBeacon=JSON.stringify({token});
     document.head.appendChild(script);
   }
+  function stopCloudflareAnalytics() {
+    // O beacon não oferece teardown. A recarga reaplica a recusa antes de qualquer script opcional.
+    if(cloudflareLoaded)location.reload();
+  }
   function clearOptionalStorage() {
     try { localStorage.removeItem('cs_acq');localStorage.removeItem('cs_ops_last');sessionStorage.removeItem('cs_session');sessionStorage.removeItem('cs_invite_landing'); } catch {}
   }
@@ -40,6 +45,7 @@
     localStorage.setItem(KEY,JSON.stringify(value));
     if(!analytics)clearOptionalStorage();
     notify(value);
+    if(!analytics)stopCloudflareAnalytics();
     return value;
   }
   if(!allowed())clearOptionalStorage();
@@ -47,8 +53,10 @@
   window.addEventListener('cs-privacy-change',enableCloudflareAnalytics);
   window.addEventListener('storage',event=>{
     if(event.key!==KEY && event.key!==null)return;
+    const value=choice() || {version:VERSION,analytics:true};
     if(!allowed())clearOptionalStorage();
-    notify(choice() || {version:VERSION,analytics:true});
+    notify(value);
+    if(!allowed())stopCloudflareAnalytics();
   });
   window.__csPrivacy={allowed,choice,set};
 })();
