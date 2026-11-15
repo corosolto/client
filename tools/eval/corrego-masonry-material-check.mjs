@@ -6,10 +6,12 @@ const flags = {};
 for (const a of argv) {
   if (a === '--fisica') { if (flags.fisica) uso(`--fisica duplicado`); flags.fisica = true; }
   else if (a.startsWith('--mutante=')) { if (flags.mutante !== undefined) uso('--mutante duplicado'); flags.mutante = a.slice(10); }
+  else if (a === '--selftest-blind-mutant') { if (flags.blindSelftest) uso('--selftest-blind-mutant duplicado'); flags.blindSelftest = true; }
   else uso(`argumento desconhecido: ${a}`);
 }
 const MUT = flags.mutante ?? '';
 if (flags.mutante !== undefined && !flags.mutante) uso('--mutante vazio');
+if (flags.blindSelftest && !MUT) uso('--selftest-blind-mutant exige --mutante');
 // CONJUNTO EXATO: multiset de IDs de falha idêntico ao alvo — defeito
 // independente junto do mutante reprova (infra 78), nominal RED também.
 const MUTANTES = {
@@ -26,6 +28,7 @@ const MUTANTES = {
 if (MUT && !Object.hasOwn(MUTANTES, MUT)) uso(`mutante desconhecido: ${MUT} (válidos: ${Object.keys(MUTANTES).join(', ')})`);
 const FISICA = !!flags.fisica;
 if (MUT && FISICA) uso('--mutante e --fisica são exclusivos');
+const BLIND_SELFTEST = !!flags.blindSelftest;
 const contagem = (fs) => fs.reduce((m, { id }) => (m[id] = (m[id] || 0) + 1, m), {});
 const mesmoConjunto = (a, b) => JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort());
 
@@ -197,7 +200,7 @@ if (MUT) {
   }
   if (!aplicou) { console.error(`mutação ${MUT} não alterou o mundo — mutante fantasma`); process.exit(78); }
   // mesma instância coletada: mutantes são in-place, re-coletar perde o mapa trocado
-  const pos = validarMateriais({ muros, cru }, src);
+  const pos = BLIND_SELFTEST ? [] : validarMateriais({ muros, cru }, src);
   if (!pos.length) { console.error(`mutante ${MUT} passou GREEN — régua cega`); process.exit(78); }
   const obtido = contagem(pos);
   if (!mesmoConjunto(obtido, MUTANTES[MUT])) {

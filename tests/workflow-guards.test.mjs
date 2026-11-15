@@ -137,11 +137,11 @@ for (const token of ['missing', 'bot-pat']) {
   test(`WSEC2 rejects automerge metadata with ${token} read credentials`, (t) => {
     const dir = fixture(t);
     mutateAutomerge(dir, (workflow) => {
-      const step = workflow.jobs.sweep.steps.find((item) => item.run?.includes('gh api --paginate --slurp'));
+      const step = workflow.jobs.sweep.steps.find((item) => item.run?.includes('python3 scripts/ci/bot_sweep.py --list-open'));
       assert.ok(step);
       const before = step.run;
       step.run = token === 'missing'
-        ? step.run.replace('export GH_TOKEN="${{ github.token }}"\n', '')
+        ? step.run.replace('GH_TOKEN="${{ github.token }}" ', '')
         : step.run.replace('${{ github.token }}', '${{ secrets.CSBRASIL_BOT_TOKEN }}');
       assert.notEqual(step.run, before);
     });
