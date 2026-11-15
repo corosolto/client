@@ -15,7 +15,7 @@ const BASELINE = {
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
 const NOVOS = {
-  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:rig-census', 'eval:studiochar', 'eval:rede3p', 'eval:pesos-braco-perna', 'eval:rigmaos', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:prodcrash', 'eval:workflowguards']),
+  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:rig-census', 'eval:studiochar', 'eval:estados3p', 'eval:emotes-mocap', 'eval:rede3p', 'eval:pesos-braco-perna', 'eval:rigmaos', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:prodcrash', 'eval:workflowguards']),
   deploy: new Set(['eval:weapon-passe', 'eval:dispose', 'eval:workflowguards']),
 };
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
