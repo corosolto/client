@@ -26,6 +26,7 @@ const MUTANTES = {
   'ref-global': (f) => f.startsWith('R4 glbchars'),
   'regra-ruido': (f) => f.startsWith('R1') && f.includes('substituído contra a regra'),
   'veto-forjado': (f) => f.startsWith('R1 canarinho/idle1h: veto de runtime inválido'),
+  'mesclado-adulterado': (f) => f.startsWith('R5 bonzo/death: keyframes do mesclado diferem'),
 };
 if (MUT && !MUTANTES[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 const ANIMS = path.resolve('public/models/anims');
@@ -195,11 +196,22 @@ for (const id of ids) {
   if (/rate\((WALK|RUN|CROUCH)_REF\)/.test(glbchars)) falhas.push('R4 glbchars: rate() ainda usa ref global direta');
 }
 
-/* R5 — pack mesclado decodifica no GLTFLoader do jogo (sem decoder: os clipes são float). */
-if (!MUT) {
+/* R5 — o pack mesclado decodifica no GLTFLoader do jogo e preserva cada keyframe da
+   fonte individual coberta pelo hash R2. Só nome/duração não provam os bytes tocados. */
+if (!MUT || MUT === 'mesclado-adulterado') {
   await import('./three-node.mjs');
   const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
   const loader = new GLTFLoader();
+  const mesmoArray = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
+  const mesmoClipe = (mesclado, fonte) => {
+    if (!fonte || mesclado.tracks.length !== fonte.tracks.length) return false;
+    const porNome = new Map(fonte.tracks.map((t) => [t.name, t]));
+    return mesclado.tracks.every((t) => {
+      const f = porNome.get(t.name);
+      return f && t.ValueTypeName === f.ValueTypeName && t.getInterpolation() === f.getInterpolation()
+        && mesmoArray(t.times, f.times) && mesmoArray(t.values, f.values);
+    });
+  };
   for (const id of ids) {
     const esperados = S.filter((s) => ler(id, s));
     if (!esperados.length) continue;
@@ -211,12 +223,17 @@ if (!MUT) {
       const gltf = await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
       const nomes = gltf.animations.map((a) => a.name);
       if (JSON.stringify([...nomes].sort()) !== JSON.stringify([...esperados].sort())) falhas.push(`R5 ${id}: mesclado tem ${nomes}, pasta tem ${esperados}`);
+      if (MUT === 'mesclado-adulterado' && id === 'bonzo') {
+        const track = gltf.animations.find((a) => a.name === 'death')?.tracks[0];
+        if (!track) throw new Error('mutante mesclado-adulterado não encontrou bonzo/death');
+        track.values[0] += 0.1;
+      }
       for (const clip of gltf.animations) {
         const proprio = ler(id, clip.name);
         if (!proprio) { falhas.push(`R5 ${id}/${clip.name}: no mesclado e não na pasta`); continue; }
-        const { json } = glbDe(proprio);
-        const dur = Math.max(...(json?.animations?.[0]?.samplers || []).map((s) => json.accessors[s.input].max[0]));
-        if (Math.abs(clip.duration - dur) > 1e-3) falhas.push(`R5 ${id}/${clip.name}: mesclado dura ${clip.duration}s, arquivo ${dur}s (rode npm run anims:merge)`);
+        const data = proprio.buffer.slice(proprio.byteOffset, proprio.byteOffset + proprio.byteLength);
+        const fonte = (await loader.parseAsync(data, '')).animations[0];
+        if (!mesmoClipe(clip, fonte)) falhas.push(`R5 ${id}/${clip.name}: keyframes do mesclado diferem do arquivo coberto por R2 (rode npm run anims:merge)`);
         if (!clip.tracks.every((t) => Array.from(t.values).every(Number.isFinite))) falhas.push(`R5 ${id}/${clip.name}: track não finita`);
       }
     } catch (error) { falhas.push(`R5 ${id}: GLTFLoader não decodificou: ${error.message}`); }

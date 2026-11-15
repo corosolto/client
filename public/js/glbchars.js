@@ -1495,7 +1495,7 @@ class CharController {
     if (this.lod < 2 && (back || Math.abs(lateral) > 0.25)) this._requestExtras();
     const base = this._loco === 'walk' && usaClipe1h && this.actions.walk1h ? 'walk1h' : this._loco;
     const variante = (nome) => this.oneHanded && this.actions[`${nome}_pistol`] ? `${nome}_pistol` : nome;
-    const costas = this._loco === 'run' ? 'run_back' : 'walk_back';
+    const costas = this._loco === 'run' && !(this.oneHanded && this.actions.walk_back_pistol) ? 'run_back' : 'walk_back';
     if (this.lod >= 2 || (back && !this.actions[variante(costas)])) {
       this._to(back ? (usaClipe1h && this.actions.walk1h ? 'walk1h' : 'walk') : base);
       return;

@@ -167,6 +167,7 @@
 - Girar no lugar deixa o quadril para trás e os pés alcançam depois, em vez de o corpo inteiro teleportar junto com a mira.
 - Personagens distantes animam com menos frequência, devolvendo quadros ao celular sem mudar o que se vê de perto.
 - Jogadores remotos usam o mesmo sinal lateral do corpo 3P: andar à direita toca `strafe_right` também durante giros, sem inverter a inclinação nem o fallback sem pack.
+- Recuar correndo com pistola usa o clipe autorado de uma mão, em vez de voltar à caminhada genérica.
 - A validação da pose parada respeita a banda absoluta de contato com o chão, sem reprovar uma pose válida por diferença contra uma medição antiga.
 - Recarregar ficou visível de fora: em terceira pessoa, a mão livre vai ao carregador e o corpo mergulha durante a recarga, do jogador e dos bots — dá saber quando o adversário está vulnerável.
 - Piscina da Treta volta a carregar sua ambiência.
