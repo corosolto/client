@@ -8,18 +8,18 @@
     "headwearAbsentFromBodySheets": "pass",
     "bodySilhouetteVisible": "pass"
   },
-  "evidenceManifestSha256": "f7be6fd7178d2fad0f039a9ebdda89e91f5b6929cb81a767a1c936f4d8863fa8",
+  "evidenceManifestSha256": "f8e0225ffd628d841a512aca28caeeefbf413df55ae131665edb768365e0e7f0",
   "sourceHashes": {
     "urbanCatalog": "47baca9a13940c67e51826031ff87742bd49f763aa62ee14985ff48193118743",
     "mintBatch": "061c6af4061e62540d7ec2ab072d609dea2fe24e9f9facc5696607390750b8eb",
-    "bodyCensus": "4f37f66a40f8c71614684605f1ca951b19d21fc1cd1c3d6210609ccd3ddc8f9b",
-    "rigidFactory": "b76add300328a8c450a392d50008942ff8e4230d9617230ba565ce93e13e8f7f",
-    "apparelFactory": "1389cb9a320860df7bf8f7fd8ff5bb5198bbfc04e0bb6b514421b3153877a5f4",
+    "bodyCensus": "c8751a6a138f1e864e51957de464594719daa7be9507654be3a606732493f10c",
+    "rigidFactory": "a6d654d010bae8c629180a3e0d0c9b78eba0fc4abed4435f6be9f78d339938a5",
+    "apparelFactory": "d98e66ae663cab9c8081d7fd3bf6261165b50523a3ba2c1561c54a39c2c38927",
     "eyewearManifest": "9d28f8f7e84e0b9bacc1dffabb71b5adc213601853e7ec5167cf39a223fecc32",
-    "eyewearRuntime": "389ef195aae7fc62409faa6ad802813f51e1755da1debd3264116d36f5eec0f0",
+    "eyewearRuntime": "69bb2b162cea02cce46fee1ba252764dc7028667e0232a3d445bed2f39459c4d",
     "faceLandmarks": "cf178868a1cc58449d710a4d7c2557be3eef15efd38440178ae674a08a0bee43",
     "scene": "1c1a06efd230ffb56ce93c36d9fbf826d8d0f8f580720abe57fc3ed896b2fa0a",
-    "captureTool": "2c140df3b8bb64b4b78cf0260e21ec0b9cc3f69f750fbab9a6a18a94bf74316a"
+    "captureTool": "fcc36fc7bc40ffa949bce62d420b1e0c9b537b302b410e33afd8e3279f25cdac"
   },
   "sheetsReviewed": [
     "blocked-permission-needed-13.png",
@@ -30,8 +30,8 @@
     "families-34.png"
   ],
   "findings": [
-    "As quatro folhas rotulam os 87 selecionáveis como ESTUDO DE SILHUETA · ENCAIXE NÃO AVALIADO; nenhum corpo é candidato ou certificado.",
-    "A folha bodies-02 preserva a tiara de character:julia-zanatta e a cabeça lateral/focinhuda de character:lobisomem sem montar boné; os seis proxies restantes servem apenas para contato visual.",
+    "As quatro folhas rotulam os 100 selecionáveis como ESTUDO DE SILHUETA · ENCAIXE NÃO AVALIADO; nenhum corpo é candidato ou certificado.",
+    "As folhas preservam silhuetas, cabeças e rigs divergentes sem promover encaixe universal; os proxies continuam servindo apenas para contato visual.",
     "families-34.png mantém headwear somente como estudo isolado de forma e declara que não demonstra compatibilidade corporal; os 30 jobs seguros de headwear estão adiados.",
     "Os 13 pedidos protegidos continuam sem arte, montagem ou envio ao Mint."
   ],

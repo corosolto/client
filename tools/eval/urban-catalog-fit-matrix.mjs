@@ -18,7 +18,7 @@ const port = Number(process.env.URBAN_FIT_PORT || 9475);
 const catalog = readJson('tools/character-kit/garment/urban-catalog.json');
 const census = readJson('tools/character-kit/garment/body-census.json');
 const eyewearManifest = readJson('public/models/items/eyewear-manifest.json');
-const BODY_CHUNK = 22;
+const BODY_CHUNK = 26;
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const hashFile = path => hash(readFileSync(path));
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -107,7 +107,7 @@ async function bodyCell(front, threeQuarter, row) {
 async function writeBodySheet(rows, cells, index) {
   const columns = 2, cellWidth = 560, cellHeight = 445;
   const sheetName = `bodies-${String(index + 1).padStart(2, '0')}.png`;
-  const title = Buffer.from(`<svg width="${columns * cellWidth}" height="74"><rect width="100%" height="74" fill="#101827"/><text x="20" y="30" font-family="Arial" font-size="23" font-weight="700" fill="white">Estudo urbano · corpos ${index * BODY_CHUNK + 1}–${index * BODY_CHUNK + rows.length} de 88</text><text x="20" y="55" font-family="Arial" font-size="13" fill="#f2d76b">SILHUETA APENAS · frente + 3/4 · bonés adiados · nenhum encaixe corporal aprovado</text></svg>`);
+  const title = Buffer.from(`<svg width="${columns * cellWidth}" height="74"><rect width="100%" height="74" fill="#101827"/><text x="20" y="30" font-family="Arial" font-size="23" font-weight="700" fill="white">Estudo urbano · corpos ${index * BODY_CHUNK + 1}–${index * BODY_CHUNK + rows.length} de ${census.bodies.length}</text><text x="20" y="55" font-family="Arial" font-size="13" fill="#f2d76b">SILHUETA APENAS · frente + 3/4 · bonés adiados · nenhum encaixe corporal aprovado</text></svg>`);
   const composites = [{input: title, left: 0, top: 0}];
   cells.forEach((cell, cellIndex) => composites.push({input: cell, left: (cellIndex % columns) * cellWidth, top: 74 + Math.floor(cellIndex / columns) * cellHeight}));
   await sharp({create: {width: columns * cellWidth, height: 74 + Math.ceil(cells.length / columns) * cellHeight, channels: 4, background: '#111927'}})
@@ -264,7 +264,7 @@ async function capture() {
     }
     const evidence = {schemaVersion: 'cs-urban-catalog-fit-evidence/1', sourceHashes: hashes, files};
     writeFileSync(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`);
-    console.log(`urban-catalog-fit write: ${report.bodies.filter(row => row.status === 'study-only').length}/87 selectable study-only, ${report.bodies.filter(row => row.status === 'not-applicable').length}/1 auxiliary not-applicable, ${report.families.length}/34 shape families, ${report.catalog.filter(row => row.resolution === 'deferred-headwear').length} headwear concepts deferred, ${report.blockedCards.length}/13 rights-blocked, ${Object.keys(files).length} hash-pinned sheets`);
+    console.log(`urban-catalog-fit write: ${report.bodies.filter(row => row.status === 'study-only').length}/${report.summary.selectableBodies} selectable study-only, ${report.bodies.filter(row => row.status === 'not-applicable').length}/${report.summary.auxiliaryBodies} auxiliary not-applicable, ${report.families.length}/34 shape families, ${report.catalog.filter(row => row.resolution === 'deferred-headwear').length} headwear concepts deferred, ${report.blockedCards.length}/13 rights-blocked, ${Object.keys(files).length} hash-pinned sheets`);
   } finally {
     await browser.close();
     await new Promise(resolve => http.close(resolve));
@@ -286,7 +286,7 @@ async function check() {
     assert.equal(metadata.width, expected.width, `${file}: evidence width changed`);
     assert.equal(metadata.height, expected.height, `${file}: evidence height changed`);
   }
-  console.log(`urban-catalog-fit check: ${report.bodies.filter(row => row.status === 'study-only').length}/87 selectable study-only, ${report.bodies.filter(row => row.status === 'not-applicable').length}/1 auxiliary not-applicable, ${report.families.length}/34 shape families, ${Object.keys(evidence.files).length} hash-pinned sheets, console errors=0`);
+  console.log(`urban-catalog-fit check: ${report.bodies.filter(row => row.status === 'study-only').length}/${report.summary.selectableBodies} selectable study-only, ${report.bodies.filter(row => row.status === 'not-applicable').length}/${report.summary.auxiliaryBodies} auxiliary not-applicable, ${report.families.length}/34 shape families, ${Object.keys(evidence.files).length} hash-pinned sheets, console errors=0`);
 }
 
 const mode = process.argv[2] || '--check';
