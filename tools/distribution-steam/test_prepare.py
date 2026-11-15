@@ -73,13 +73,13 @@ class PreflightTests(unittest.TestCase):
                 (self.build / 'game').chmod(0o755)
                 self.assertEqual(self.run_plan(platform='macos')['platform'], 'macos')
 
-    def test_native_backslashes_are_escaped_in_vdf(self):
+    def test_windows_subdirectory_launch_is_normalized_portably(self):
         build = self.root / 'windows\\build'
-        build.mkdir()
-        (build / 'game.exe').write_bytes(b'MZfixture')
+        (build / 'bin').mkdir(parents=True)
+        (build / 'bin/game.exe').write_bytes(b'MZfixture')
         output = self.root / 'windows\\output'
-        result = self.run_plan(content=build, output=output, launch='game.exe', platform='windows')
-        self.assertEqual(result['launch_path'], 'game.exe')
+        result = self.run_plan(content=build, output=output, launch='bin\\game.exe', platform='windows')
+        self.assertEqual(result['launch_path'], 'bin/game.exe')
         vdf = (output / 'app-preview.vdf').read_text()
         self.assertIn(str(build.resolve()).replace('\\', '\\\\'), vdf)
         self.assertIn(str((output / 'steam-output').resolve()).replace('\\', '\\\\'), vdf)

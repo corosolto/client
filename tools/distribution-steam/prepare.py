@@ -21,12 +21,13 @@ def prepare(content, output, launch, platform, app_id, depot_id):
         raise ValueError('Build deve existir; saída precisa ficar fora do conteúdo do depot.')
     if any(c in str(content) + str(output) + launch for c in '\n\r"'):
         raise ValueError('Paths com quebra de linha ou aspas não são aceitos no VDF.')
-    relative = Path(launch)
+    host_relative = Path(launch)
     windows_relative = PureWindowsPath(launch)
-    if (relative.is_absolute() or relative.anchor or windows_relative.drive or windows_relative.root
-            or '..' in relative.parts or not relative.parts):
+    if (host_relative.is_absolute() or host_relative.anchor or windows_relative.drive or windows_relative.root
+            or '..' in host_relative.parts or '..' in windows_relative.parts or not windows_relative.parts):
         raise ValueError('Executável precisa ser um path relativo dentro da build.')
-    launch_path = relative.as_posix()
+    relative = Path(*windows_relative.parts)
+    launch_path = windows_relative.as_posix()
     files = []
     for directory, dirs, names in os.walk(content, followlinks=False):
         for name in dirs + names:
