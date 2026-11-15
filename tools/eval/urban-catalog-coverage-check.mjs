@@ -251,7 +251,7 @@ function validate(data, {verifyFiles = true} = {}) {
   }
 
   const bodySheets = new Set(report.bodies.map(row => row.evidence.sheet));
-  assert.equal(bodySheets.size, 5, '101 bodies must be split across five contact sheets');
+  assert.equal(bodySheets.size, 4, '101 bodies must fit in four contact sheets');
   const familySheets = new Set(report.families.map(row => row.evidence.sheet));
   const blockedSheets = new Set(report.blockedCards.map(row => row.evidence.sheet));
   assert.equal(familySheets.size, 1, 'family gallery screenshot missing');
