@@ -252,6 +252,11 @@
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
 
+## [2.1.0-alpha.149] — 2026-11-13
+
+### Corrigido
+- fix: add emote-catalog.js (unblock backend Docker build) (#1359)
+
 ## [2.1.0-alpha.148] — 2026-11-13
 
 ### Mudado
