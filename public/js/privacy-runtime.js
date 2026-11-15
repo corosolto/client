@@ -20,20 +20,33 @@
   function cloudflareToken() {
     return CLOUDFLARE_TOKENS[location.hostname.toLowerCase()] || '';
   }
-  let cloudflareLoaded=false;
+  let cloudflareLoaded=false,cloudflareReady=false,cloudflareScript=null;
   function enableCloudflareAnalytics() {
     const token=cloudflareToken();
-    if(cloudflareLoaded || !allowed() || !token)return;
+    if(!allowed() || !token)return;
+    window.__cfBeacon={token};
+    if(cloudflareLoaded)return;
     cloudflareLoaded=true;
     const script=document.createElement('script');
+    cloudflareScript=script;
     script.type='module';
     script.src='https://static.cloudflareinsights.com/beacon.min.js';
     script.dataset.cfBeacon=JSON.stringify({token});
+    script.addEventListener('load',()=>{
+      cloudflareReady=true;
+      if(!allowed())window.__cfBeacon=null;
+    });
     document.head.appendChild(script);
   }
   function stopCloudflareAnalytics() {
-    // O beacon não oferece teardown. A recarga reaplica a recusa antes de qualquer script opcional.
-    if(cloudflareLoaded)location.reload();
+    // O beacon consulta este global antes de cada envio; anulá-lo preserva o fluxo atual.
+    window.__cfBeacon=null;
+    if(cloudflareScript && !cloudflareReady){
+      cloudflareScript.dataset.cfBeacon='{"token":""}';
+      cloudflareScript.remove();
+      cloudflareScript=null;
+      cloudflareLoaded=false;
+    }
   }
   function clearOptionalStorage() {
     try { localStorage.removeItem('cs_acq');localStorage.removeItem('cs_ops_last');sessionStorage.removeItem('cs_session');sessionStorage.removeItem('cs_invite_landing'); } catch {}
