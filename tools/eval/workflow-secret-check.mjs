@@ -97,6 +97,12 @@ for (let [nome, texto] of fontes) {
   if (MUT === 'guarda-muda') am = am.replace(/::warning title=Bot inerte::/, '');
   const workflow = estrutura('csbrasil-bot-automerge.yml', am, 'WSEC2');
   const jobs = jobsDe(workflow);
+  const inventarios = passosDe(jobs.sweep).map(runDe)
+    .filter((run) => /python3 scripts\/ci\/bot_sweep\.py --list-open/.test(run));
+  if (inventarios.length !== 1
+      || !/GH_TOKEN="\$\{\{ github\.token \}\}"\s+python3 scripts\/ci\/bot_sweep\.py --list-open "\$REPO"/.test(inventarios[0])) {
+    falhas.push('WSEC2 sweep de automerge não limita github.token à única leitura paginada');
+  }
   const ids = Object.keys(jobs);
   const esperados = ['automerge', 'sweep'];
   if (ids.length !== esperados.length || esperados.some((id) => !ids.includes(id))) {

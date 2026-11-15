@@ -31,7 +31,7 @@
       "allowedModes": ["rigid"],
       "layer": 30,
       "regions": ["head"],
-      "conflicts": ["baked-headwear", "asymmetric-head-axis"],
+      "conflicts": [],
       "socketRole": "head",
       "fitPolicy": "deferred-per-body",
       "knownIncompatibleBodies": [

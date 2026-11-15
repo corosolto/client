@@ -102,6 +102,8 @@ def _diff_digest(base_oid, head_oid):
     return digest.hexdigest()
 
 
+
+
 def _bool(value, field):
     if not isinstance(value, bool):
         raise ValueError(f"{field} must be a boolean")
@@ -387,6 +389,9 @@ def selftest():
         ("unsorted files", {"diff_files": ["z", "a"]}),
         ("unverified diff", {"full_diff_verified": False}),
         ("inconsistent ancestry", {"hotfix_main_only": True}),
+        ("forged commit count", {"head_commit_count": 2}),
+        ("forged main ancestry", {"main_is_ancestor": True}),
+        ("forged staging disjointness", {"staging_disjoint": True}),
         ("wrong repository", {"expected_repository": "fork/client"}),
     ):
         rejected(name, dict(attestation, **mutation), pr)

@@ -3,24 +3,24 @@
   "status": "draft",
   "runtimeEnabled": false,
   "summary": {
-    "bodies": 88,
+    "bodies": 101,
     "items": 8,
     "countsBySlot": {
       "back": {
         "items": 1,
-        "pairs": 88,
+        "pairs": 101,
         "certified": 0,
         "candidate": 0,
         "incompatible": 1,
-        "unknown": 87
+        "unknown": 100
       },
       "head": {
         "items": 1,
-        "pairs": 88,
+        "pairs": 101,
         "certified": 0,
-        "candidate": 3,
-        "incompatible": 1,
-        "unknown": 84
+        "candidate": 0,
+        "incompatible": 3,
+        "unknown": 98
       },
       "face": {
         "items": 0,
@@ -32,51 +32,51 @@
       },
       "piercing": {
         "items": 1,
-        "pairs": 88,
+        "pairs": 101,
         "certified": 0,
         "candidate": 0,
         "incompatible": 1,
-        "unknown": 87
+        "unknown": 100
       },
       "tattoo": {
         "items": 1,
-        "pairs": 88,
+        "pairs": 101,
         "certified": 0,
         "candidate": 0,
         "incompatible": 0,
-        "unknown": 88
+        "unknown": 101
       },
       "torso-inner": {
         "items": 1,
-        "pairs": 88,
+        "pairs": 101,
         "certified": 0,
         "candidate": 0,
         "incompatible": 4,
-        "unknown": 84
+        "unknown": 97
       },
       "torso-outer": {
         "items": 1,
-        "pairs": 88,
+        "pairs": 101,
         "certified": 0,
         "candidate": 0,
         "incompatible": 4,
-        "unknown": 84
+        "unknown": 97
       },
       "legs": {
         "items": 1,
-        "pairs": 88,
+        "pairs": 101,
         "certified": 0,
         "candidate": 0,
         "incompatible": 4,
-        "unknown": 84
+        "unknown": 97
       },
       "feet": {
         "items": 1,
-        "pairs": 88,
+        "pairs": 101,
         "certified": 0,
         "candidate": 0,
         "incompatible": 4,
-        "unknown": 84
+        "unknown": 97
       }
     }
   },
@@ -795,7 +795,106 @@
     {
       "itemId": "gap:backpack",
       "slot": "back",
+      "bodyId": "skin:canarinho-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D backpack asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:backpack",
+      "slot": "back",
+      "bodyId": "skin:canarinho-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D backpack asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:backpack",
+      "slot": "back",
+      "bodyId": "skin:canarinho-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D backpack asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:backpack",
+      "slot": "back",
+      "bodyId": "skin:curupira-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D backpack asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:backpack",
+      "slot": "back",
+      "bodyId": "skin:emo-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D backpack asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:backpack",
+      "slot": "back",
+      "bodyId": "skin:et-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D backpack asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:backpack",
+      "slot": "back",
+      "bodyId": "skin:gotinha-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D backpack asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:backpack",
+      "slot": "back",
+      "bodyId": "skin:gotinha-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D backpack asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:backpack",
+      "slot": "back",
+      "bodyId": "skin:gotinha-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D backpack asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:backpack",
+      "slot": "back",
       "bodyId": "skin:janja",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D backpack asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:backpack",
+      "slot": "back",
+      "bodyId": "skin:lampiao-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D backpack asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:backpack",
+      "slot": "back",
+      "bodyId": "skin:lobisomem-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -832,6 +931,24 @@
       "itemId": "gap:backpack",
       "slot": "back",
       "bodyId": "skin:lula-na-regua",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D backpack asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:backpack",
+      "slot": "back",
+      "bodyId": "skin:mandrake-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D backpack asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:backpack",
+      "slot": "back",
+      "bodyId": "skin:mariabonita-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -889,7 +1006,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -898,7 +1015,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -907,7 +1024,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -915,8 +1032,8 @@
       "bodyId": "character:barbudo",
       "familyId": "rig-cf26b508edb3",
       "certified": false,
-      "status": "candidate",
-      "reason": "Private idle/walk/crouch proof imported for this exact body hash; brim clearance and human commercial approval remain pending."
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -925,7 +1042,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -934,7 +1051,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -943,7 +1060,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -952,7 +1069,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -961,7 +1078,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -970,7 +1087,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -979,7 +1096,7 @@
       "familyId": "rig-a95b48489ba3",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -988,7 +1105,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -997,7 +1114,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1005,8 +1122,8 @@
       "bodyId": "character:capitao",
       "familyId": "rig-cf26b508edb3",
       "certified": false,
-      "status": "candidate",
-      "reason": "Private idle/walk/crouch proof imported for this exact body hash; brim clearance and human commercial approval remain pending."
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1015,7 +1132,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1024,7 +1141,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1033,7 +1150,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1042,7 +1159,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1051,7 +1168,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1060,7 +1177,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1069,7 +1186,7 @@
       "familyId": "rig-cf26b508edb3",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1078,7 +1195,7 @@
       "familyId": "rig-cf26b508edb3",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1087,7 +1204,7 @@
       "familyId": "rig-a95b48489ba3",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1096,7 +1213,7 @@
       "familyId": "rig-aa0b4ae0c501",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1105,7 +1222,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1114,7 +1231,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1123,7 +1240,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1132,7 +1249,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1140,8 +1257,8 @@
       "bodyId": "character:esquerdomacho",
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
-      "status": "candidate",
-      "reason": "Private idle/walk/crouch proof imported for this exact body hash; brim clearance and human commercial approval remain pending."
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1150,7 +1267,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1159,7 +1276,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1168,7 +1285,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1177,7 +1294,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1186,7 +1303,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1195,7 +1312,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1204,7 +1321,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1213,7 +1330,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1222,7 +1339,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1231,7 +1348,7 @@
       "familyId": "rig-cf26b508edb3",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1239,8 +1356,8 @@
       "bodyId": "character:julia-zanatta",
       "familyId": "rig-cf26b508edb3",
       "certified": false,
-      "status": "unknown",
-      "reason": "no measured body profile"
+      "status": "incompatible",
+      "reason": "Tiara de flores faz parte da identidade e ocupa o mesmo volume do boné."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1249,7 +1366,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1258,7 +1375,7 @@
       "familyId": "rig-a95b48489ba3",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1266,8 +1383,8 @@
       "bodyId": "character:lobisomem",
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
-      "status": "unknown",
-      "reason": "no measured body profile"
+      "status": "incompatible",
+      "reason": "Rosto focinhudo e orientado para a lateral; o eixo Head não representa uma coroa vertical utilizável."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1276,7 +1393,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1285,7 +1402,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1294,7 +1411,7 @@
       "familyId": "rig-cf26b508edb3",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1303,7 +1420,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1312,7 +1429,7 @@
       "familyId": "rig-a95b48489ba3",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1321,7 +1438,7 @@
       "familyId": "rig-cf26b508edb3",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1330,7 +1447,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1339,7 +1456,7 @@
       "familyId": "rig-04bce278898e",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1348,7 +1465,7 @@
       "familyId": "rig-715c6fe0fd7c",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1357,7 +1474,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1366,7 +1483,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1375,7 +1492,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1384,7 +1501,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1393,7 +1510,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1402,7 +1519,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1411,7 +1528,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1420,7 +1537,7 @@
       "familyId": "rig-cf26b508edb3",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1429,7 +1546,7 @@
       "familyId": "rig-a95b48489ba3",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1438,7 +1555,7 @@
       "familyId": "rig-aa0b4ae0c501",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1447,7 +1564,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1456,7 +1573,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1465,7 +1582,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1474,7 +1591,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1483,7 +1600,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1492,7 +1609,7 @@
       "familyId": "rig-cf26b508edb3",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1501,7 +1618,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1510,7 +1627,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1519,7 +1636,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1528,7 +1645,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1537,7 +1654,7 @@
       "familyId": "rig-5875ed3e37b4",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1546,7 +1663,7 @@
       "familyId": "rig-c9ebfa9c881d",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1555,7 +1672,7 @@
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1564,7 +1681,7 @@
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1573,7 +1690,7 @@
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1582,7 +1699,88 @@
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+    },
+    {
+      "itemId": "treta-cap-procedural-v1",
+      "slot": "head",
+      "bodyId": "skin:canarinho-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+    },
+    {
+      "itemId": "treta-cap-procedural-v1",
+      "slot": "head",
+      "bodyId": "skin:canarinho-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+    },
+    {
+      "itemId": "treta-cap-procedural-v1",
+      "slot": "head",
+      "bodyId": "skin:canarinho-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+    },
+    {
+      "itemId": "treta-cap-procedural-v1",
+      "slot": "head",
+      "bodyId": "skin:curupira-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+    },
+    {
+      "itemId": "treta-cap-procedural-v1",
+      "slot": "head",
+      "bodyId": "skin:emo-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+    },
+    {
+      "itemId": "treta-cap-procedural-v1",
+      "slot": "head",
+      "bodyId": "skin:et-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+    },
+    {
+      "itemId": "treta-cap-procedural-v1",
+      "slot": "head",
+      "bodyId": "skin:gotinha-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+    },
+    {
+      "itemId": "treta-cap-procedural-v1",
+      "slot": "head",
+      "bodyId": "skin:gotinha-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+    },
+    {
+      "itemId": "treta-cap-procedural-v1",
+      "slot": "head",
+      "bodyId": "skin:gotinha-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1591,7 +1789,25 @@
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+    },
+    {
+      "itemId": "treta-cap-procedural-v1",
+      "slot": "head",
+      "bodyId": "skin:lampiao-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+    },
+    {
+      "itemId": "treta-cap-procedural-v1",
+      "slot": "head",
+      "bodyId": "skin:lobisomem-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1600,7 +1816,7 @@
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1609,7 +1825,7 @@
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1618,7 +1834,7 @@
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1627,7 +1843,25 @@
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+    },
+    {
+      "itemId": "treta-cap-procedural-v1",
+      "slot": "head",
+      "bodyId": "skin:mandrake-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
+    },
+    {
+      "itemId": "treta-cap-procedural-v1",
+      "slot": "head",
+      "bodyId": "skin:mariabonita-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1636,7 +1870,7 @@
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1645,7 +1879,7 @@
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1654,7 +1888,7 @@
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "treta-cap-procedural-v1",
@@ -1663,7 +1897,7 @@
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
-      "reason": "no measured body profile"
+      "reason": "Headwear fitting deferred after user review: every head shape needs an individual profile, and baked hair, tiaras or non-human skull axes may make a cap incompatible."
     },
     {
       "itemId": "gap:piercing",
@@ -2379,7 +2613,106 @@
     {
       "itemId": "gap:piercing",
       "slot": "piercing",
+      "bodyId": "skin:canarinho-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D piercing asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:piercing",
+      "slot": "piercing",
+      "bodyId": "skin:canarinho-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D piercing asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:piercing",
+      "slot": "piercing",
+      "bodyId": "skin:canarinho-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D piercing asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:piercing",
+      "slot": "piercing",
+      "bodyId": "skin:curupira-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D piercing asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:piercing",
+      "slot": "piercing",
+      "bodyId": "skin:emo-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D piercing asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:piercing",
+      "slot": "piercing",
+      "bodyId": "skin:et-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D piercing asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:piercing",
+      "slot": "piercing",
+      "bodyId": "skin:gotinha-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D piercing asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:piercing",
+      "slot": "piercing",
+      "bodyId": "skin:gotinha-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D piercing asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:piercing",
+      "slot": "piercing",
+      "bodyId": "skin:gotinha-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D piercing asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:piercing",
+      "slot": "piercing",
       "bodyId": "skin:janja",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D piercing asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:piercing",
+      "slot": "piercing",
+      "bodyId": "skin:lampiao-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D piercing asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:piercing",
+      "slot": "piercing",
+      "bodyId": "skin:lobisomem-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -2416,6 +2749,24 @@
       "itemId": "gap:piercing",
       "slot": "piercing",
       "bodyId": "skin:lula-na-regua",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D piercing asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:piercing",
+      "slot": "piercing",
+      "bodyId": "skin:mandrake-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed 3D piercing asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:piercing",
+      "slot": "piercing",
+      "bodyId": "skin:mariabonita-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -3171,7 +3522,106 @@
     {
       "itemId": "gap:tattoo",
       "slot": "tattoo",
+      "bodyId": "skin:canarinho-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed tattoo texture or decal asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:tattoo",
+      "slot": "tattoo",
+      "bodyId": "skin:canarinho-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed tattoo texture or decal asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:tattoo",
+      "slot": "tattoo",
+      "bodyId": "skin:canarinho-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed tattoo texture or decal asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:tattoo",
+      "slot": "tattoo",
+      "bodyId": "skin:curupira-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed tattoo texture or decal asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:tattoo",
+      "slot": "tattoo",
+      "bodyId": "skin:emo-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed tattoo texture or decal asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:tattoo",
+      "slot": "tattoo",
+      "bodyId": "skin:et-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed tattoo texture or decal asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:tattoo",
+      "slot": "tattoo",
+      "bodyId": "skin:gotinha-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed tattoo texture or decal asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:tattoo",
+      "slot": "tattoo",
+      "bodyId": "skin:gotinha-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed tattoo texture or decal asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:tattoo",
+      "slot": "tattoo",
+      "bodyId": "skin:gotinha-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed tattoo texture or decal asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:tattoo",
+      "slot": "tattoo",
       "bodyId": "skin:janja",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed tattoo texture or decal asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:tattoo",
+      "slot": "tattoo",
+      "bodyId": "skin:lampiao-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed tattoo texture or decal asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:tattoo",
+      "slot": "tattoo",
+      "bodyId": "skin:lobisomem-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -3208,6 +3658,24 @@
       "itemId": "gap:tattoo",
       "slot": "tattoo",
       "bodyId": "skin:lula-na-regua",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed tattoo texture or decal asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:tattoo",
+      "slot": "tattoo",
+      "bodyId": "skin:mandrake-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed tattoo texture or decal asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:tattoo",
+      "slot": "tattoo",
+      "bodyId": "skin:mariabonita-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -3963,7 +4431,106 @@
     {
       "itemId": "gap:shirt",
       "slot": "torso-inner",
+      "bodyId": "skin:canarinho-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shirt asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shirt",
+      "slot": "torso-inner",
+      "bodyId": "skin:canarinho-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shirt asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shirt",
+      "slot": "torso-inner",
+      "bodyId": "skin:canarinho-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shirt asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shirt",
+      "slot": "torso-inner",
+      "bodyId": "skin:curupira-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shirt asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shirt",
+      "slot": "torso-inner",
+      "bodyId": "skin:emo-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shirt asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shirt",
+      "slot": "torso-inner",
+      "bodyId": "skin:et-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shirt asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shirt",
+      "slot": "torso-inner",
+      "bodyId": "skin:gotinha-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shirt asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shirt",
+      "slot": "torso-inner",
+      "bodyId": "skin:gotinha-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shirt asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shirt",
+      "slot": "torso-inner",
+      "bodyId": "skin:gotinha-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shirt asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shirt",
+      "slot": "torso-inner",
       "bodyId": "skin:janja",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shirt asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shirt",
+      "slot": "torso-inner",
+      "bodyId": "skin:lampiao-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shirt asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shirt",
+      "slot": "torso-inner",
+      "bodyId": "skin:lobisomem-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -4000,6 +4567,24 @@
       "itemId": "gap:shirt",
       "slot": "torso-inner",
       "bodyId": "skin:lula-na-regua",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shirt asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shirt",
+      "slot": "torso-inner",
+      "bodyId": "skin:mandrake-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shirt asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shirt",
+      "slot": "torso-inner",
+      "bodyId": "skin:mariabonita-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -4755,7 +5340,106 @@
     {
       "itemId": "gap:jacket",
       "slot": "torso-outer",
+      "bodyId": "skin:canarinho-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned jacket asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:jacket",
+      "slot": "torso-outer",
+      "bodyId": "skin:canarinho-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned jacket asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:jacket",
+      "slot": "torso-outer",
+      "bodyId": "skin:canarinho-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned jacket asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:jacket",
+      "slot": "torso-outer",
+      "bodyId": "skin:curupira-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned jacket asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:jacket",
+      "slot": "torso-outer",
+      "bodyId": "skin:emo-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned jacket asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:jacket",
+      "slot": "torso-outer",
+      "bodyId": "skin:et-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned jacket asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:jacket",
+      "slot": "torso-outer",
+      "bodyId": "skin:gotinha-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned jacket asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:jacket",
+      "slot": "torso-outer",
+      "bodyId": "skin:gotinha-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned jacket asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:jacket",
+      "slot": "torso-outer",
+      "bodyId": "skin:gotinha-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned jacket asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:jacket",
+      "slot": "torso-outer",
       "bodyId": "skin:janja",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned jacket asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:jacket",
+      "slot": "torso-outer",
+      "bodyId": "skin:lampiao-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned jacket asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:jacket",
+      "slot": "torso-outer",
+      "bodyId": "skin:lobisomem-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -4792,6 +5476,24 @@
       "itemId": "gap:jacket",
       "slot": "torso-outer",
       "bodyId": "skin:lula-na-regua",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned jacket asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:jacket",
+      "slot": "torso-outer",
+      "bodyId": "skin:mandrake-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned jacket asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:jacket",
+      "slot": "torso-outer",
+      "bodyId": "skin:mariabonita-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -5547,7 +6249,106 @@
     {
       "itemId": "gap:pants",
       "slot": "legs",
+      "bodyId": "skin:canarinho-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned pants asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:pants",
+      "slot": "legs",
+      "bodyId": "skin:canarinho-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned pants asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:pants",
+      "slot": "legs",
+      "bodyId": "skin:canarinho-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned pants asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:pants",
+      "slot": "legs",
+      "bodyId": "skin:curupira-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned pants asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:pants",
+      "slot": "legs",
+      "bodyId": "skin:emo-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned pants asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:pants",
+      "slot": "legs",
+      "bodyId": "skin:et-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned pants asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:pants",
+      "slot": "legs",
+      "bodyId": "skin:gotinha-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned pants asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:pants",
+      "slot": "legs",
+      "bodyId": "skin:gotinha-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned pants asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:pants",
+      "slot": "legs",
+      "bodyId": "skin:gotinha-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned pants asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:pants",
+      "slot": "legs",
       "bodyId": "skin:janja",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned pants asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:pants",
+      "slot": "legs",
+      "bodyId": "skin:lampiao-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned pants asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:pants",
+      "slot": "legs",
+      "bodyId": "skin:lobisomem-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -5584,6 +6385,24 @@
       "itemId": "gap:pants",
       "slot": "legs",
       "bodyId": "skin:lula-na-regua",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned pants asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:pants",
+      "slot": "legs",
+      "bodyId": "skin:mandrake-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned pants asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:pants",
+      "slot": "legs",
+      "bodyId": "skin:mariabonita-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -6339,7 +7158,106 @@
     {
       "itemId": "gap:shoes",
       "slot": "feet",
+      "bodyId": "skin:canarinho-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shoe asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shoes",
+      "slot": "feet",
+      "bodyId": "skin:canarinho-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shoe asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shoes",
+      "slot": "feet",
+      "bodyId": "skin:canarinho-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shoe asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shoes",
+      "slot": "feet",
+      "bodyId": "skin:curupira-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shoe asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shoes",
+      "slot": "feet",
+      "bodyId": "skin:emo-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shoe asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shoes",
+      "slot": "feet",
+      "bodyId": "skin:et-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shoe asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shoes",
+      "slot": "feet",
+      "bodyId": "skin:gotinha-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shoe asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shoes",
+      "slot": "feet",
+      "bodyId": "skin:gotinha-drip",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shoe asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shoes",
+      "slot": "feet",
+      "bodyId": "skin:gotinha-mandrake",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shoe asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shoes",
+      "slot": "feet",
       "bodyId": "skin:janja",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shoe asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shoes",
+      "slot": "feet",
+      "bodyId": "skin:lampiao-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shoe asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shoes",
+      "slot": "feet",
+      "bodyId": "skin:lobisomem-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -6376,6 +7294,24 @@
       "itemId": "gap:shoes",
       "slot": "feet",
       "bodyId": "skin:lula-na-regua",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shoe asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shoes",
+      "slot": "feet",
+      "bodyId": "skin:mandrake-cyborg",
+      "familyId": "rig-dc96cfa99b23",
+      "certified": false,
+      "status": "unknown",
+      "reason": "No licensed skinned shoe asset with registered origin is versioned in the candidate."
+    },
+    {
+      "itemId": "gap:shoes",
+      "slot": "feet",
+      "bodyId": "skin:mariabonita-cyborg",
       "familyId": "rig-dc96cfa99b23",
       "certified": false,
       "status": "unknown",
@@ -6769,11 +7705,24 @@
         "skin:bolsonaro-cyborg",
         "skin:bolsonaro-drip",
         "skin:bolsonaro-mandrake",
+        "skin:canarinho-cyborg",
+        "skin:canarinho-drip",
+        "skin:canarinho-mandrake",
+        "skin:curupira-cyborg",
+        "skin:emo-cyborg",
+        "skin:et-cyborg",
+        "skin:gotinha-cyborg",
+        "skin:gotinha-drip",
+        "skin:gotinha-mandrake",
         "skin:janja",
+        "skin:lampiao-cyborg",
+        "skin:lobisomem-cyborg",
         "skin:lula-cyborg",
         "skin:lula-drip",
         "skin:lula-mandrake",
         "skin:lula-na-regua",
+        "skin:mandrake-cyborg",
+        "skin:mariabonita-cyborg",
         "skin:michelle-bolsonaro",
         "skin:michelle-mandrake",
         "skin:senador-drip",
