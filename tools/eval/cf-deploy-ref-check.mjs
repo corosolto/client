@@ -1,14 +1,16 @@
 import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
-const validos = new Set(['', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato']);
+const validos = new Set(['', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato', 'prod-sem-preview-url']);
 if (!validos.has(mutante)) {
-  console.error('uso: cf-deploy-ref-check [--mutante=staging-dispatch-arbitrario|prod-dispatch-arbitrario|prod-sem-candidato]');
+  console.error('uso: cf-deploy-ref-check [--mutante=staging-dispatch-arbitrario|prod-dispatch-arbitrario|prod-sem-candidato|prod-sem-preview-url]');
   process.exit(2);
 }
 
 let staging = readFileSync('.github/workflows/cf-staging-deploy.yml', 'utf8');
 let producao = readFileSync('.github/workflows/cf-prod-deploy.yml', 'utf8');
+let stagingConfig = readFileSync('wrangler.staging.toml', 'utf8');
+let producaoConfig = readFileSync('wrangler.prod.toml', 'utf8');
 if (mutante === 'staging-dispatch-arbitrario') {
   staging = staging.replace('    branches: [staging]', '    branches: [staging]\n  workflow_dispatch:');
 }
@@ -17,6 +19,9 @@ if (mutante === 'prod-dispatch-arbitrario') {
 }
 if (mutante === 'prod-sem-candidato') {
   producao = producao.replace('npx wrangler versions upload', 'npx wrangler versions deploy');
+}
+if (mutante === 'prod-sem-preview-url') {
+  producaoConfig = producaoConfig.replace('preview_urls = true', 'preview_urls = false');
 }
 
 const falhas = [];
@@ -39,6 +44,10 @@ const validaWorkflow = (fonte, ramo, id) => {
 
 validaWorkflow(staging, 'staging', 'CFREF1');
 validaWorkflow(producao, 'main', 'CFREF2');
+check(/workers_dev\s*=\s*true/.test(stagingConfig) && /preview_urls\s*=\s*true/.test(stagingConfig),
+  'CFREF1', 'staging precisa publicar URL imutável da versão candidata');
+check(/workers_dev\s*=\s*true/.test(producaoConfig) && /preview_urls\s*=\s*true/.test(producaoConfig),
+  'CFREF2', 'produção precisa publicar URL imutável da versão candidata');
 
 for (const falha of falhas) console.error(`FAIL ${falha}`);
 if (mutante && !falhas.length) {
