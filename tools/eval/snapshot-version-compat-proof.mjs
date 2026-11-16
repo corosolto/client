@@ -27,7 +27,7 @@ const run=args=>spawnSync(process.execPath,[script,...args],{encoding:'utf8',tim
 const baseline=run([]),report=reportOf(baseline);
 assert(baseline.status===0 && !baseline.error && !baseline.signal && report?.mutant===null && report.cases===11 && report.failed.length===0,
  'cross-codec baseline invalid: '+JSON.stringify({status:baseline.status,error:baseline.error?.code,failed:report?.failed}));
-for(const [mutant,expected] of [[name,clause],['namespace-antigo','v9 and the objective extension keep distinct preferred namespaces'],
+for(const [mutant,expected] of [[name,clause],['namespace-antigo','v10, v9 and the objective extension keep distinct preferred namespaces'],
  ['sem-mantle',clause],['limite-v7','published v7 keeps its original team and entity limits'],
  ['time-j-v7','published v7 keeps its original team and entity limits']]){
  const result=run(['--mutante='+mutant]);
