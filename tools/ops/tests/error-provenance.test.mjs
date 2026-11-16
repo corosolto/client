@@ -116,8 +116,16 @@ test('o watchdog do cliente consulta erroDeRede antes de derrubar o launch', () 
 const EVAL_CSP_798 = "Uncaught EvalError: Evaluating a string as JavaScript violates the following Content Security Policy directive because 'unsafe-eval' is not an allowed source of script: script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com\".";
 const BLOB_798 = 'blob:https://www.csbrasil.online/a5428b51-d0be-4e18-a6da-fd19c6f8ad38:2:1320381';
 
+/* O 1cda8537 publicado é da receita anterior à #1151, sobre o texto bruto: confere a
+   procedência do payload, não a chave de agrupamento de hoje. */
+const fnvBruto = (texto) => {
+  let h = 2166136261;
+  for (let i = 0; i < texto.length; i++) { h ^= texto.charCodeAt(i); h = (h * 16777619) >>> 0; }
+  return `0000000${h.toString(16)}`.slice(-8);
+};
+
 test('#798 (1): o payload do teste é o da issue (fingerprint 1cda8537)', () => {
-  assert.equal(crashFingerprint('error', EVAL_CSP_798, BLOB_798), '1cda8537');
+  assert.equal(fnvBruto(`error|${EVAL_CSP_798}|${BLOB_798}`), '1cda8537');
 });
 
 test('#798 (2): EvalError de CSP com source blob: é externo', () => {
@@ -152,4 +160,37 @@ test('#798 (7): a EVAL_CSP_RE do servidor e a evalCsp do cliente têm a MESMA re
   assert.match(servidor, literal, 'EVAL_CSP_RE sumiu ou mudou em src/lib/error-provenance.mjs');
   assert.match(cliente, literal, 'evalCsp sumiu ou divergiu em src/pages/index.astro');
   assert.match(cliente, guarda, 'a guarda blob: do espelho sumiu em src/pages/index.astro');
+});
+
+/* ── #1151: UUID DE blob: NÃO ENTRA NA CHAVE ───────────────────────────────────────────
+   O GLTFLoader cria um object URL por textura, e cada UUID novo virava uma linha de 1 hit
+   no js_error (106 linhas de uma família só). A origem continua na chave: localhost e
+   produção não podem dividir o mesmo balde. */
+
+const TEXTURA_1151 = (uuid, host = 'https://www.corosolto.com.br') =>
+  `THREE.GLTFLoader: Couldn't load texture blob:${host}/${uuid}`;
+
+test('#1151 (1): dois UUIDs da mesma origem dão o mesmo fingerprint', () => {
+  assert.equal(
+    crashFingerprint('warn', TEXTURA_1151('689c89d8-2851-4666-9d3f-f7a651f69583'), null),
+    crashFingerprint('warn', TEXTURA_1151('12282842-f62c-48d1-978d-448b82325a94'), null),
+  );
+  assert.equal(
+    crashFingerprint('error', EVAL_CSP_798, BLOB_798),
+    crashFingerprint('error', EVAL_CSP_798, BLOB_798.replace('a5428b51-d0be-4e18-a6da-fd19c6f8ad38', 'ea680e47-79f1-4a5b-bc15-fa0bb7ab250e')),
+  );
+});
+
+test('#1151 (2): origens diferentes continuam em chaves diferentes', () => {
+  const uuid = 'ea680e47-79f1-4a5b-bc15-fa0bb7ab250e';
+  assert.notEqual(
+    crashFingerprint('warn', TEXTURA_1151(uuid), null),
+    crashFingerprint('warn', TEXTURA_1151(uuid, 'http://localhost:4321'), null),
+  );
+});
+
+test('#1151 (3): o reporte do index.astro normaliza mensagem e source antes do hash', () => {
+  const pagina = readFileSync(fileURLToPath(new URL('../../../src/pages/index.astro', import.meta.url)), 'utf8');
+  assert.match(pagina, /digital\(kind \+ '\|' \+ normalizaFingerprint\(mFinal\) \+ '\|' \+ normalizaFingerprint\(sFinal \|\| ''\)\)/);
+  assert.match(pagina, /function normalizaFingerprint\(v\)\{[^}]*blob:\(https\?:/);
 });
