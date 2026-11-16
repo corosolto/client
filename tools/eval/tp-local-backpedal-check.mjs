@@ -171,7 +171,7 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
         }
         if (frame >= 30) {
           const ctrl = tested.built.ctrl;
-          const backName = ctrl._loco === 'run' ? 'run_back' : (ctrl.oneHanded && ctrl.actions.walk_back_pistol ? 'walk_back_pistol' : 'walk_back');
+          const backName = ctrl.oneHanded && ctrl.actions.walk_back_pistol ? 'walk_back_pistol' : ctrl._loco === 'run' ? 'run_back' : 'walk_back';
           const lado = c.dynamicSide
             ? (tested.args[5] > 0 ? 'strafe_right' : 'strafe_left')
             : /left/.test(c.name) ? 'strafe_left' : /right|quarter/.test(c.name) ? 'strafe_right' : null;

@@ -211,7 +211,7 @@ const m = await page.evaluate(async () => {
   const g = window.__game;
   const T = await import('/vendor/three.module.js');
   const { buildCharacterModel } = await import('/js/glbchars.js');
-  const S = await import('/js/glbchars-sempack-eval.js');
+  const S = await import('/js/glbchars.js?sempack=1');
   const V = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
   const cand = (g.bots || []).filter(x => x.mesh?.ctrl?.ikL && x.mesh?.ctrl?.torso?.spines?.length && x.alive).slice(0, 8);
   if (!cand.length) return { erro: 'sem bot com arma de 2 mãos' };
