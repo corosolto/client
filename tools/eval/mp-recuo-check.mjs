@@ -76,12 +76,12 @@ async function roda({ yaw = 0, humano = false, vf = 0, vl = 0, giro = 0 }, semPa
   if (!m.ctrl.actions.strafe_right) throw new Error('extras.glb não registrou strafe_right');
   if (semPack) { for (const k of EXTRAS_LOCO) delete m.ctrl.actions[k]; m.ctrl._requestExtras = () => {}; }
   if (!m?.ctrl?.actions?.walk || !m.ctrl.actions.run) throw new Error('mst sem walk/run — a régua não sabe medir');
+  const recebido = { lat: 0, spd: 0 };
+  { const up = m.ctrl.update.bind(m.ctrl); m.ctrl.update = (...a) => { recebido.spd = a[3] || 0; recebido.lat = a[5] || 0; return up(...a); }; }
   if (MUT === 'semrecuo') { const up = m.ctrl.update.bind(m.ctrl); m.ctrl.update = (dt, mv, alvo, spd) => up(dt, mv, alvo, spd, false); }
   if (MUT === 'semlateral') { const up = m.ctrl.update.bind(m.ctrl); m.ctrl.update = (dt, mv, alvo, spd, back) => up(dt, mv, alvo, spd, back, 0); }
   // latcru: lateral como deslocamento cru do segmento de 50 ms (sem dividir pelo tempo).
   if (MUT === 'latcru') { const up = m.ctrl.update.bind(m.ctrl); m.ctrl.update = (dt, mv, alvo, spd, back, lat) => up(dt, mv, alvo, spd, back, lat * SNAP_MS / 1000); }
-  const recebido = { lat: 0, spd: 0 };
-  { const up = m.ctrl.update.bind(m.ctrl); m.ctrl.update = (...a) => { recebido.spd = a[3] || 0; recebido.lat = a[5] || 0; return up(...a); }; }
   let clock = 100000;
   const nc = makeNetcode({ camera: { position: new THREE.Vector3() } }, { meta: { snapshotHz: 20 }, startPing() {}, stopPing() {}, onSlot: null, onPersonagem: null });
   clearInterval(nc._nsTimer);
