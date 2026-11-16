@@ -153,8 +153,8 @@ const falhas = [], melhoras = [];
 for (const [id, estados] of Object.entries(medido)) {
   for (const estado of ESTADOS) {
     const v = estados[estado];
-    if (estado === 'idle' && Math.abs(v) > BANDA_IDLE) {
-      falhas.push(`${id}/${estado}: ${v.toFixed(4)} m — ${v < 0 ? 'AFUNDA' : 'FLUTUA'} fora da banda ±${BANDA_IDLE}`);
+    if (estado === 'idle') {
+      if (Math.abs(v) > BANDA_IDLE) falhas.push(`${id}/${estado}: ${v.toFixed(4)} m — ${v < 0 ? 'AFUNDA' : 'FLUTUA'} fora da banda ±${BANDA_IDLE}`);
       continue;
     }
     const antes = catraca.personagens?.[id]?.[estado];

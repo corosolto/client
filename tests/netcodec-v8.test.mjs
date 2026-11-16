@@ -56,7 +56,7 @@ test('entity limit remains 64 in v7 and becomes 80 only in v8',()=>{
 });
 
 test('version input must be an integer in the supported range',()=>{
- for(const version of [NaN,2.5,7.5,8.5,Infinity,1,10,'8',null])assert.throws(()=>current.encodeSnapshot(fixture(),version),/snapshot_version/);
+ for(const version of [NaN,2.5,7.5,8.5,Infinity,1,11,'8',null])assert.throws(()=>current.encodeSnapshot(fixture(),version),/snapshot_version/);
 });
 
 test('v8 objective accepts plain finite JSON values without silent loss',()=>{

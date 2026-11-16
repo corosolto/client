@@ -6,14 +6,19 @@ import { WEAPONS, supDeCod, anguloDeDisparo } from './game.js';
 import { frase } from './i18n.js';
 import { preloadEyewearAssets } from './eyewear.js';
 import { preloadCosmeticAssets } from './glbchars.js';
-import { emoteInfo } from './data/emote-catalog.js';
+import { emoteInfo, V9_EMOTE_IDS, V10_EMOTE_IDS } from './data/emote-catalog.js';
 import { InterpolationClock, ensureEntityBuffer, pushEntitySample, sampleEntityBuffer } from './net-interpolation.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
 
 const PLAYER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const V9_EMOTES = new Set(V9_EMOTE_IDS), V10_EMOTES = new Set(V10_EMOTE_IDS);
 function rosterPlayerId(entity, row) {
   return !entity?.bot && PLAYER_ID.test(row?.pid || '') ? row.pid : '';
+}
+function emoteDeRede(net, id) {
+  const version = Number(net.meta?.protocolVersion) || 0;
+  return (version >= 10 ? V10_EMOTES : V9_EMOTES).has(id) ? id : null;
 }
 
 class Netcode {
@@ -193,7 +198,7 @@ class Netcode {
       shoot: !!this.game.mouseDown0, weapon: p.weapon,
       // INTENÇÃO de mirar (1 bit). Quem integra o `adsF` — e portanto a precisão — é o servidor.
       ads: !!p.scoped,
-      emote: this.game._emoteAtual || null,
+      emote: emoteDeRede(this.net, this.game._emoteAtual),
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
       // duração DESTE passo (teto do laço do navegador): o servidor integra o comando por ela,
       // e não pelo tick dele — senão o ack compara poses de instantes diferentes (BUG-152).
@@ -338,7 +343,7 @@ class Netcode {
     this.net.sendInput({
       ax: 0, az: 0, crouch: false, shift: false, jump: false,
       yaw: p.yaw, pitch: p.pitch, shoot: false, weapon: p.weapon,
-      emote: game._emoteAtual || null,
+      emote: emoteDeRede(this.net, game._emoteAtual),
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(), dtms: 1,
     });
     this._inputAt = now;
@@ -442,6 +447,7 @@ class Netcode {
       if (this._evOn) this.limparDropsDeRede();
       const relogioDoServidor = game.timeLeft;   // prepareRound escreve 360: o relógio é do servidor
       game._resultado = null; game._showScoreboard(false);
+      game._retomarCorposDaCerimonia?.();
       game.objective?.prepareRound?.();
       this._netRodada = Number.isFinite(snap.roundNum) ? snap.roundNum : game.roundNum;
       if (Number.isFinite(relogioDoServidor)) game.timeLeft = relogioDoServidor;
@@ -623,7 +629,7 @@ class Netcode {
     if (e.k === 'hit') {
       if (vId !== meu) {
         if (att?.pos && vic?.pos && vic !== p && vic.alive) {
-          vic.mesh?.ctrl?.flinch?.({ x: vic.pos.x - att.pos.x, z: vic.pos.z - att.pos.z }, d / 100);
+          vic.mesh?.ctrl?.flinch?.({ x: vic.pos.x - att.pos.x, z: vic.pos.z - att.pos.z }, d / 100, h);
         }
         return;
       }
@@ -693,6 +699,7 @@ class Netcode {
         game.player.scoped = false; game.el.scope?.classList.remove('on');
         game.radioOpen = null; game._radioUi?.();
         game._compra?.fimDeRodadaRemoto?.(winner === game.playerTeam);   // festa local; crédito é do nó
+        if (!resultadoDesconhecido) game._cerimoniaCorpos?.(winner);
         if (resultadoDesconhecido) game._resultadoDaRodada('RESULTADO ATUALIZADO', 'a sala avançou durante a reconexão');
         else if (!winner) { game._resultadoDaRodada('EMPATE NA TRETA', 'ninguém convenceu ninguém'); game.sfx.roundLose(); }
         else {
@@ -1067,6 +1074,9 @@ class Netcode {
       const spd = Math.min(6, b._netSpd || 0);
       const fwdYaw = segYaw == null ? corpoYaw : (b._netBot === false ? segYaw + Math.PI : segYaw);
       const fwd = vx * Math.sin(fwdYaw) + vz * Math.cos(fwdYaw);
+      // Mesmo eixo do controlador 3P: lateral positiva é a direita visual do corpo (−X local).
+      // Para humano remoto, fwdYaw já inclui π; a projeção continua usando o yaw do segmento.
+      const lat = vz * Math.sin(fwdYaw) - vx * Math.cos(fwdYaw);
       if (b.mesh.isGLB) {
         const distCam = Math.hypot(b.pos.x - game.camera.position.x, b.pos.z - game.camera.position.z);
         b.mesh.ctrl.lod = distCam > 45 ? 2 : (distCam > 25 ? 1 : 0);
@@ -1077,7 +1087,7 @@ class Netcode {
         const mMantle = Number.isFinite(b.mantleF) && b.mantleF > 0 && b.mantleF < 1;
         b.mesh.ctrl.setAr?.(mMantle);
         b.mesh.ctrl.setMantle?.(mMantle ? b.mantleF : null);
-        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25, vx * Math.cos(fwdYaw) - vz * Math.sin(fwdYaw));
+        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, fwd < -0.25, lat);
       } else poseCharacter(b.mesh.parts, spd, 0, game.time);
     } else {
       b.deadT = (b.deadT || 0) + dt; b._deadShown = true;
