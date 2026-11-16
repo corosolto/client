@@ -308,10 +308,15 @@ const envRevalidacao = {
   },
 };
 const requestCondicional = new Request(swrRequest, { headers: { 'if-none-match': '"cliente-antigo"' } });
-const [staleCondicionalA, staleCondicionalB] = await Promise.all([
+const respostasStale = Promise.all([
   workerReal.fetch(requestCondicional, envRevalidacao, ctx),
   workerReal.fetch(requestCondicional, envRevalidacao, ctx),
 ]);
+if (MUTANTE === 'cache-sem-stale') {
+  await new Promise((resolve) => setImmediate(resolve));
+  for (const libera of liberaRevalidacoes) libera();
+}
+const [staleCondicionalA, staleCondicionalB] = await respostasStale;
 check(staleCondicionalA.status === 200
   && staleCondicionalB.status === 200
   && await staleCondicionalA.text() === 'stale-v1'

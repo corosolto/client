@@ -6,9 +6,11 @@ const validos = new Set([
   '', 'staging-dispatch-arbitrario', 'prod-dispatch-arbitrario', 'prod-sem-candidato',
   'prod-sem-preview-url', 'prod-promove-por-tag', 'prod-percentual-com-simbolo',
   'preview-sem-provisionamento', 'preview-base-arbitraria', 'staging-sem-bootstrap',
-  'prod-sem-bootstrap', 'preview-sem-bootstrap', 'staging-cancela-promocao',
-  'prod-gate-head-message', 'prod-bootstrap-comentado', 'prod-job-if-false',
-  'prod-verifica-condicional', 'prod-verifica-continua-erro', 'prod-verifica-decoy',
+  'prod-sem-bootstrap', 'preview-sem-bootstrap', 'staging-mantem-obsoleto',
+  'prod-mantem-obsoleto', 'staging-sem-head-guard', 'prod-sem-head-guard',
+  'prod-gate-head-message',
+  'prod-bootstrap-comentado', 'prod-job-if-false', 'prod-verifica-condicional',
+  'prod-verifica-continua-erro', 'prod-verifica-decoy',
 ]);
 if (!validos.has(mutante)) {
   console.error(`mutante desconhecido: ${mutante}`);
@@ -54,8 +56,17 @@ if (mutante === 'prod-sem-bootstrap') {
 if (mutante === 'preview-sem-bootstrap') {
   preview = preview.replace('bash tools/cf/bootstrap-worker.sh csb-preview', ':');
 }
-if (mutante === 'staging-cancela-promocao') {
-  staging = staging.replace('cancel-in-progress: false', 'cancel-in-progress: true');
+if (mutante === 'staging-mantem-obsoleto') {
+  staging = staging.replace('cancel-in-progress: true', 'cancel-in-progress: false');
+}
+if (mutante === 'prod-mantem-obsoleto') {
+  producao = producao.replace('cancel-in-progress: true', 'cancel-in-progress: false');
+}
+if (mutante === 'staging-sem-head-guard') {
+  staging = staging.replace('node tools/cf/assert-branch-head.mjs --branch=staging --sha="$CS_BUILD_SHA"', ':');
+}
+if (mutante === 'prod-sem-head-guard') {
+  producao = producao.replace('node tools/cf/assert-branch-head.mjs --branch=main --sha="$CS_BUILD_SHA"', ':');
 }
 if (mutante === 'prod-gate-head-message') {
   producao = producao.replace('  deploy:\n', "  deploy:\n    if: startsWith(github.event.head_commit.message, 'chore(release):')\n");
@@ -122,6 +133,7 @@ const validaWorkflow = (fonte, ramo, id) => {
     ['provisionamento', new RegExp(`^npx wrangler triggers deploy --config wrangler\\.${alvo}\\.toml$`)],
     ['upload', /^npx wrangler versions upload \\$/],
     ['verificação', /^node tools\/cf\/verifica-deploy\.mjs --base="\$CANDIDATE_URL" --sha="\$CS_BUILD_SHA" \| tee -a "\$GITHUB_STEP_SUMMARY"$/],
+    ['vigência do ramo', new RegExp(`^node tools/cf/assert-branch-head\\.mjs --branch=${ramo} --sha="\\$CS_BUILD_SHA"$`)],
     ['promoção', /^npx wrangler versions deploy "\$VERSION_ID@100" \\$/],
   ];
   const incondicional = ({ step } = {}) => step && !Object.hasOwn(step, 'if')
@@ -139,6 +151,10 @@ const validaWorkflow = (fonte, ramo, id) => {
       || comando.order > comandosCriticos[index - 1].order), id,
     'bootstrap, provisionamento, upload, verificação e promoção precisam manter a ordem segura');
   }
+  const vigencia = comandosCriticos[5];
+  check(vigencia?.step?.env?.GITHUB_TOKEN === '${{ github.token }}'
+    && vigencia?.step?.env?.CS_BUILD_SHA === '${{ steps.build.outputs.sha }}',
+  id, 'vigência do ramo precisa consultar GitHub com o SHA candidato imediatamente antes da promoção');
   check(/Worker Version ID:[\s\S]*echo "version_id=\$VERSION_ID"/.test(workflow.comandos)
     && JSON.stringify(workflow.steps).includes('steps.upload.outputs.version_id')
     && /versions deploy "\$VERSION_ID@100"/.test(workflow.comandos)
@@ -151,8 +167,10 @@ const stagingWorkflow = validaWorkflow(staging, 'staging', 'CFREF1');
 const producaoWorkflow = validaWorkflow(producao, 'main', 'CFREF2');
 check(producaoWorkflow.job && !Object.hasOwn(producaoWorkflow.job, 'if'), 'CFREF2',
   'todo push protegido na main precisa publicar o SHA, inclusive merge commit de release');
-check(stagingWorkflow.doc?.concurrency?.['cancel-in-progress'] === false,
-  'CFREF1', 'staging não pode cancelar uma promoção em voo quando chega outro push');
+check(stagingWorkflow.doc?.concurrency?.['cancel-in-progress'] === true,
+  'CFREF1', 'push novo em staging precisa cancelar qualquer promoção obsoleta em voo');
+check(producaoWorkflow.doc?.concurrency?.['cancel-in-progress'] === true,
+  'CFREF2', 'push novo na main precisa cancelar qualquer promoção obsoleta em voo');
 check(stagingWorkflow.comandos.includes('bash tools/cf/bootstrap-worker.sh csb-staging'),
   'CFREF1', 'staging precisa inicializar exatamente csb-staging');
 check(producaoWorkflow.comandos.includes('bash tools/cf/bootstrap-worker.sh csb-prod'),
