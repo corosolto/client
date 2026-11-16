@@ -1,66 +1,66 @@
-# Contribuindo com o CORO SOLTO: Treta Suprema
+# Contributing to CORO SOLTO: Treta Suprema
 
-Valeu por querer contribuir. Este é um projeto de fãs, open source, feito pra
-celebrar a **cultura brasileira** com humor — a zoeira é universal e distribuída
-igualmente para todos os lados.
+Thanks for wanting to contribute. This is an open-source fan project made to
+celebrate **Brazilian culture** with humor — the *zoeira* (playful Brazilian
+ribbing) is universal and dished out equally to everyone.
 
-**Para começar:** escolha uma [issue aberta](https://github.com/corosolto/client/issues)
-e confira os comentários recentes e PRs associados. Combine um recorte pequeno
-com o mantenedor. [`docs/issues/`](docs/issues/) guarda propostas com arquivos e
-critério de aceite; compare com as issues existentes antes de abrir outra.
+**To get started:** choose an [open issue](https://github.com/corosolto/client/issues)
+and check its recent comments and associated PRs. Agree on a small scope
+with the maintainer. [`docs/issues/`](docs/issues/) contains proposals with files and
+acceptance criteria; compare them with existing issues before opening another one.
 
 ---
 
-## Nossa posição (leia antes de contribuir)
+## Our position (read before contributing)
 
-- **O jogo NÃO tem lado político.** As facções têm a mesma mecânica, os mesmos
-  personagens exagerados e a mesma zoeira. Duas das cinco (Tribos Urbanas e
-  Funkeiros) não têm nada de política.
-- **O jogo NÃO incita ódio** contra nenhuma pessoa ou grupo. É sátira leve,
-  cartunesca e fictícia — sem gore, sem violência realista.
-- **Sem pessoas reais.** Nada de políticos, celebridades ou pessoas privadas
-  identificáveis (nome, rosto, voz imitada). Só arquétipos originais.
-- Contribuições que violem esses princípios serão recusadas.
+- **The game does NOT take political sides.** The factions have the same mechanics,
+  the same exaggerated characters, and the same playful ribbing. Two of the five
+  (Tribos Urbanas and Funkeiros) have nothing to do with politics.
+- **The game does NOT incite hatred** against any person or group. It is light,
+  cartoonish, fictional satire — no gore, no realistic violence.
+- **No real people.** No identifiable politicians, celebrities, or private
+  individuals (name, face, or imitated voice). Original archetypes only.
+- Contributions that violate these principles will be rejected.
 
-## Regras de PR (valem para todo mundo, CI cobra)
+## PR rules (they apply to everyone, and CI enforces them)
 
-1. **PR title and description MUST be written in English** — vale para todo autor, humano ou bot.
-   O check `pr-language` reprova texto em português no título ou no corpo; código, comandos e links
-   continuam permitidos. O template já nasce em inglês.
-2. **`package.json` e `public/js/version.js` têm que concordar** — o `?v=` do import map
-   (`src/pages/index.astro`) sai da versão no build; se os dois arquivos divergem o
-   navegador serve módulo velho do cache e "a correção não chega" — já custou dias
-   (ver `public/js/version.js`). O workflow `pr-gates.yml` reprova a divergência. O
-   BUMP da versão NÃO é mais tarefa do PR: desde 08/08 o `release.yml` bumpa, taga e
-   publica o GitHub Release sozinho — em LOTE (desde 14/10; 13/10 era 2×/dia, antes a cada push).
-3. **Produção publica no LOTE, não em todo merge** (14/10): a integração Git da Vercel na `main`
-   continua sendo o caminho (decisão do dono em 08/08), mas o `ignoreCommand`
-   (`scripts/ci/vercel-ignore.sh`) só deixa buildar produção no commit `chore(release):`.
-   Empilhe os PRs e feche num PR de lote: o `release.yml` sai quando entra na `main` um PR
-   com a label `release` ou com branch `lote-*`, `claude/lote-*` ou `*/lote-*`, e só com o
-   `pr-fast` verde nesse merge. PR comum não dispara release. PR de lote entra por
-   **merge commit** (não squash nem rebase): o job `lote` lê o PR associado ao commit que
-   chegou na `main`, e é o merge commit que aponta para o lote. O `csbrasil-bot-daily-release`
-   cria ou atualiza uma única PR `staging → main` por dia às 12:17 UTC; PRs seguras entram em
-   `staging` pelo automerge. Hotfix usa título `hotfix:` e PR baseada/apontada para `main`:
-   o bot compara a ancestry com `main` e `staging`; qualquer commit não publicado vindo de
-   `staging` aplica `needs-hotfix-review`, remove `safe-automerge` e bloqueia release. Com
-   ancestry main-only, recebe `release` e dispara o trem após o merge verde. O dispatch manual
-   (`gh workflow run release.yml`) continua como fallback. O caminho manual por tag
-   (`deploy-prod.yml`) continua de pé como fallback.
-4. **Preview de fork exige revisão humana**: o `cs-brasil-ai-bot` (`preview-bot.yml`)
-   classifica o diff sem executá-lo. Um mantenedor revisa o SHA atual e aplica
-   `preview-autorizado`; qualquer push revoga a aprovação.
-5. **Quality gates locais antes de abrir**: `npm run check:fast` (segundos) e, se mexeu em
-   jogo, `npm run check:deploy` (o mesmo portão que o hook `pre-push` roda). Vermelho
-   novo no quality gate = PR volta.
-6. **Nada de travessão `—` no texto do site (`src/`)**. Use hífen com espaços (` - `). O
-   em-dash é a marca de texto gerado por IA e, num jogo que se vende como original, entrega
-   a origem em título, meta, OG e nas descrições de arma/personagem. O `travessao:check`
-   reprova `—` e `–` em `src/`; escreva ` - ` e siga a vida. Vale para texto escrito por
-   gente e por IA - a régua não distingue, e é essa a intenção.
+1. **PR title and description MUST be written in English** — this applies to every author, human or bot.
+   The `pr-language` check rejects Portuguese text in the title or body; code, commands, and links
+   are still allowed. The template is already in English.
+2. **`package.json` and `public/js/version.js` must agree** — the import map's `?v=`
+   (`src/pages/index.astro`) comes from the version at build time; if the two files differ, the
+   browser serves a stale cached module and "the fix never arrives" — this has already cost us days
+   (see `public/js/version.js`). The `pr-gates.yml` workflow rejects mismatches. Bumping
+   the version is NO longer the PR's job: since 08/08, `release.yml` automatically bumps, tags, and
+   publishes the GitHub Release — in BATCHES (since 14/10; on 13/10 it was 2×/day, and before that on every push).
+3. **Production ships in BATCHES, not on every merge** (14/10): Vercel's Git integration on `main`
+   is still the path (owner's decision on 08/08), but `ignoreCommand`
+   (`scripts/ci/vercel-ignore.sh`) only allows production builds on `chore(release):` commits.
+   Stack the PRs and close them in a batch PR: `release.yml` runs when a PR reaches `main`
+   with the `release` label or a `lote-*`, `claude/lote-*`, or `*/lote-*` branch, and only when
+   `pr-fast` is green on that merge. Regular PRs do not trigger a release. Batch PRs land via
+   **merge commit** (no squash or rebase): the `lote` job reads the PR associated with the commit that
+   reached `main`, and the merge commit is what points to the batch. `csbrasil-bot-daily-release`
+   creates or updates one `staging → main` PR per day at 12:17 UTC; safe PRs enter
+   `staging` through automerge. A hotfix uses the `hotfix:` title and a PR based on and targeting `main`:
+   the bot compares its ancestry with `main` and `staging`; any unpublished commit from
+   `staging` applies `needs-hotfix-review`, removes `safe-automerge`, and blocks the release. With
+   main-only ancestry, it receives `release` and starts the release train after a green merge. Manual dispatch
+   (`gh workflow run release.yml`) remains available as a fallback. The manual tag path
+   (`deploy-prod.yml`) also remains available as a fallback.
+4. **Fork previews require human review**: `cs-brasil-ai-bot` (`preview-bot.yml`)
+   classifies the diff without executing it. A maintainer reviews the current SHA and applies
+   `preview-autorizado`; any push revokes the approval.
+5. **Local quality gates before opening**: `npm run check:fast` (seconds) and, if you changed
+   the game, `npm run check:deploy` (the same gate run by the `pre-push` hook). A new
+   quality-gate failure = PR sent back.
+6. **No em dashes `—` in site text (`src/`)**. Use a hyphen with spaces (` - `). The
+   em dash is a hallmark of AI-generated text and, in a game that presents itself as original, reveals
+   that origin in titles, meta tags, OG tags, and weapon/character descriptions. `travessao:check`
+   rejects `—` and `–` in `src/`; write ` - ` and move on. This applies to text written by
+   humans and AI alike - the rule does not distinguish between them, and that is intentional.
 
-## Rodando localmente
+## Running locally
 
 ```bash
 git clone https://github.com/corosolto/client.git
@@ -70,13 +70,13 @@ npm run fetch-audio       # opcional — sem o pacote, o jogo usa sons sintetiza
 npm run dev               # http://localhost:4321 · o JOGO está na rota /
 ```
 
-Confira o requisito de Node no [quickstart do README](README.md#rodar-localmente)
-e rode `node --version` e `npm --version` no terminal que vai instalar as dependências.
+Check the Node requirement in the [README quickstart](README.md#rodar-localmente)
+and run `node --version` and `npm --version` in the terminal you will use to install dependencies.
 
-Para repetir o ambiente do CI sem caçar versão ou biblioteca do Chromium, abra o clone num
-**Dev Container**. A imagem usa Node 22, o npm de `packageManager` e o Playwright exato do
-lock; o `postCreateCommand` executa o mesmo `scripts/setup.mjs` acima e termina com o
-diagnóstico do navegador. Num terminal já configurado, o caminho equivalente é:
+To reproduce the CI environment without hunting down Chromium versions or libraries, open the clone in a
+**Dev Container**. The image uses Node 22, the npm version from `packageManager`, and the exact Playwright version from
+the lockfile; `postCreateCommand` runs the same `scripts/setup.mjs` shown above and finishes with
+browser diagnostics. In an already configured terminal, the equivalent path is:
 
 ```bash
 node scripts/ci-local.mjs --setup       # setup + Playwright do lock num prefixo privado + Chromium (sem root)
@@ -86,22 +86,22 @@ node scripts/ci-local.mjs               # diagnóstico e check:fast
 node scripts/ci-local.mjs eval:boot     # qualquer script npm, com CHROME_BIN já descoberto
 ```
 
-O prefixo privado em `node_modules/.ci-local-prefix` atende às réguas que consultam
-`npm root -g`, sem escrever no npm global do sistema. Uma sobrescrita de `CHROME_BIN`
-só é aceita quando resolve para o mesmo Chromium instalado pelo Playwright do lock.
+The private prefix in `node_modules/.ci-local-prefix` supports gates that query
+`npm root -g` without writing to the system's global npm installation. A `CHROME_BIN`
+override is only accepted when it resolves to the same Chromium installed by the lockfile's Playwright version.
 
-O runner não define `PREPUSH=0` nem outra forma de pular portão. Falta de Node/npm, pacote,
-Chromium ou biblioteca nativa sai como `⊘ SKIP` com exit **78** (`EX_CONFIG`), antes dos testes;
-depois do diagnóstico verde, o exit e o veredito são do script executado.
+The runner does not set `PREPUSH=0` or any other way to skip a gate. Missing Node/npm, packages,
+Chromium, or native libraries produces `⊘ SKIP` with exit code **78** (`EX_CONFIG`) before the tests;
+after diagnostics pass, the exit code and verdict come from the script being run.
 
-**O jogo é a rota `/`, e o HTML dele é `src/pages/index.astro`.** Não existe
-`public/index.html` — servir `public/` com um servidor estático te dá os assets,
-não o jogo. (A versão anterior deste arquivo mandava justamente pro lugar
-errado.)
+**The game is at route `/`, and its HTML is `src/pages/index.astro`.** There is no
+`public/index.html` — serving `public/` with a static server gives you the assets,
+not the game. (The previous version of this file pointed to exactly the wrong
+place.)
 
-### Worktree por feature: `npm ci` é passo obrigatório
+### One worktree per feature: `npm ci` is mandatory
 
-A regra da casa é uma worktree nova por feature, criada a partir de `origin/main`:
+The house rule is a fresh worktree for each feature, created from `origin/main`:
 
 ```bash
 git fetch origin main
@@ -110,56 +110,56 @@ cd ../worktrees/meu-defeito
 npm ci                    # obrigatório, uma vez por worktree
 ```
 
-**Nunca** faça `ln -s ../outra-worktree/node_modules .`. O atalho economiza um
-minuto e custa um dia:
+**Never** run `ln -s ../outra-worktree/node_modules .`. That shortcut saves a
+minute and costs a day:
 
-1. **Contaminação cruzada.** Os dois braços passam a medir a mesma árvore de
-   dependências. Em 28/10 isso produziu a issue #1135 (aberta e fechada no mesmo
-   dia): um pareamento A/B ficou com três gates vermelhos dos **dois** lados,
-   porque os dois lados liam o `node_modules` errado. Pareamento com árvore
-   compartilhada não mede diff nenhum.
-2. **Veredito sobre a coisa errada.** Sem dependência instalada, um portão que
-   roda processo filho pode reprovar acusando conteúdo. Era o defeito da issue
-   #1133: a SB7 imprimia `✗ SB7 módulos locais mudam de URL junto com o conteúdo`
-   quando a causa real, duas camadas abaixo, era `Cannot find package 'astro'`.
+1. **Cross-contamination.** Both branches end up measuring the same dependency
+   tree. On 28/10, this caused issue #1135 (opened and closed on the same
+   day): an A/B comparison had three red gates on **both** sides
+   because both sides were reading the wrong `node_modules`. A comparison with a
+   shared tree measures no diff at all.
+2. **A verdict on the wrong thing.** Without dependencies installed, a gate that
+   runs a child process can fail while blaming the content. That was the bug in issue
+   #1133: SB7 printed `✗ SB7 módulos locais mudam de URL junto com o conteúdo`
+   when the real cause, two layers down, was `Cannot find package 'astro'`.
 
-Hoje esse segundo caso sai como `⊘ SKIP` com a causa e o comando que conserta, e
-o processo encerra com **78** (`EX_CONFIG`), que não é verde nem vermelho. Se um
-gate seu pular com 78, a leitura é "não medi": rode `npm ci` e rode de novo. O
-mecanismo mora em `tools/eval/sonda-filho.mjs`, e o porquê de SKIP ter código
-próprio em vez de virar 0 ou 1 está em `docs/docs/sonda-processos.md`.
+Today, this second case produces `⊘ SKIP` with the cause and the command that fixes it, and
+the process exits with **78** (`EX_CONFIG`), which is neither green nor red. If one
+of your gates skips with 78, read it as "not measured": run `npm ci` and run it again. The
+mechanism lives in `tools/eval/sonda-filho.mjs`, and the reason SKIP has its own code
+instead of becoming 0 or 1 is in `docs/docs/sonda-processos.md`.
 
-## As duas zonas
+## The two zones
 
-| | `public/` — o JOGO | `src/` — o SITE |
+| | `public/` — the GAME | `src/` — the SITE |
 |---|---|---|
-| Stack | vanilla JS, ES modules, Three.js vendorizado | Astro + SSR na Vercel |
-| Build | **nenhum** | `astro build` |
-| Framework | **proibido** (decisão de projeto) | bem-vindo |
-| Dependência nova | abra issue antes | ok, se justificada |
-| Antes de editar | leia `tools/eval/ARCH.md` | leia `docs/seguranca.md` se for `/api/*` |
+| Stack | vanilla JS, ES modules, vendored Three.js | Astro + SSR on Vercel |
+| Build | **none** | `astro build` |
+| Framework | **forbidden** (project decision) | welcome |
+| New dependency | open an issue first | okay, if justified |
+| Before editing | read `tools/eval/ARCH.md` | read `docs/seguranca.md` for `/api/*` |
 
-## Como fazer as coisas
+## How to do things
 
-### Adicionar uma arma
+### Adding a weapon
 
-1. Coloque o GLB em `public/models/weapons/<id>.glb` (normalizado, ~1 unidade
-   no maior eixo).
-2. `public/js/weapons.js`: adicione o `id` em `WEAPON_IDS` e uma entrada no
-   `CFG` com `len` (comprimento real em metros), `rot` (graus pra apontar o cano
-   em +Z) e `gripZ` (fração do comprimento, da boca até a empunhadura).
-3. **Não chute o `rot`.** Rode `npm run eval:vm` (`vm-mint-audit.mjs`): ele mede
-   a seção transversal perto de cada ponta em Z — o cano é fino, a coronha é
-   grossa. Se a ponta +Z não for a mais fina, a arma está de ré e leva +180 no
-   yaw. A leitura a olho já errou nas bullpups; a medição não erra.
-4. `public/js/game.js`: entrada no objeto `WEAPONS` (`name`, `short`, `dmg`,
+1. Put the GLB in `public/models/weapons/<id>.glb` (normalized, ~1 unit
+   on its longest axis).
+2. `public/js/weapons.js`: add the `id` to `WEAPON_IDS` and an entry to
+   `CFG` with `len` (actual length in meters), `rot` (degrees to point the barrel
+   along +Z), and `gripZ` (fraction of the length from the muzzle to the grip).
+3. **Do not guess `rot`.** Run `npm run eval:vm` (`vm-mint-audit.mjs`): it measures
+   the cross-section near each end along Z — the barrel is thin, the stock is
+   thick. If the +Z end is not the thinnest, the weapon is backward and needs +180
+   yaw. Visual inspection has already failed on bullpups; measurement does not fail.
+4. `public/js/game.js`: add an entry to the `WEAPONS` object (`name`, `short`, `dmg`,
    `mag`, `reserve`, `rate`, `reload`, `spreadHip`, `recoil`).
-5. `src/data/jogo.ts`: espelhe em `ARMAS` pra arma aparecer em `/armas`.
-6. Rode `npm run check:deploy` e os bloqueantes `npm run eval:vm` e `npm run eval:kick`.
+5. `src/data/jogo.ts`: mirror it in `ARMAS` so the weapon appears on `/armas`.
+6. Run `npm run check:deploy` and the blocking checks `npm run eval:vm` and `npm run eval:kick`.
 
-### Adicionar um personagem
+### Adding a character
 
-O pipeline tem 6 passos e nenhum deles é opcional:
+The pipeline has 6 steps, and none of them is optional:
 
 ```
 tools/rig-from-donor.mjs    esqueleto de um doador + auto-skin (GLBs da Mint vêm sem rig)
@@ -170,57 +170,57 @@ tools/check-clip.mjs        valida: 0 ossos faltando, durações e root motion i
 registry em 3 arquivos      public/js/characters.js · manifest de áudio · src/data/jogo.ts
 ```
 
-Rode `check-clip.mjs` **antes** de commitar: personagem sem clipe validado
-entra no jogo em T-pose.
+Run `check-clip.mjs` **before** committing: a character without a validated clip
+enters the game in a T-pose.
 
-### Adicionar um mapa
+### Adding a map
 
-`public/js/map_<nome>.js` exportando um `build*`, registrado em
-`public/js/maps.js` (`MAPS`). Colisores são AABBs declarados junto de cada mesh.
-Espelhe em `src/data/jogo.ts` (`MAPAS`) pro mapa aparecer em `/mapas`.
+Create `public/js/map_<nome>.js` exporting a `build*`, registered in
+`public/js/maps.js` (`MAPS`). Colliders are AABBs declared alongside each mesh.
+Mirror it in `src/data/jogo.ts` (`MAPAS`) so the map appears on `/mapas`.
 
-**Sem escrever código:** o formato "mapa como dado" (`public/js/map_json.js`) carrega
-uma arena a partir de um descritor JSON — caixas, rampas, plataformas, água, props por
-GLB, spawns, bandeiras e pickups. O editor visual é `public/construtor.html` (abra
-`/construtor.html` com `npm run dev`): ele valida na mesma régua do jogo
-(`npm run eval:mapjson` · `npm run eval:mapjsonboot`) e gera o `.json` + o snippet de
-registro. Passo a passo em `docs/docs/construtor-de-mapas.md`. Relevo em camadas
-(mezanino sobre piso) continua exigindo o caminho de código acima.
+**Without writing code:** the "map as data" format (`public/js/map_json.js`) loads
+an arena from a JSON descriptor — boxes, ramps, platforms, water, GLB props,
+spawns, flags, and pickups. The visual editor is `public/construtor.html` (open
+`/construtor.html` with `npm run dev`): it validates against the same rules as the game
+(`npm run eval:mapjson` · `npm run eval:mapjsonboot`) and generates the `.json` plus the registration
+snippet. See the step-by-step guide in `docs/docs/construtor-de-mapas.md`. Layered terrain
+(a mezzanine above the floor) still requires the code path above.
 
-> **Este espelho já foi esquecido, e nos dois sentidos.** A `quebrada` entrou
-> no registro do jogo e não apareceu em `/mapas`, no `llms.txt` nem no JSON-LD; a
-> `praca_old` saiu do registro e continuou listada nos três. Um a mais e um a
-> menos: o **total** continuou 5, então nenhuma contagem acusou. Mapa entrou ou
-> saiu → `src/data/jogo.ts` no mesmo PR, e rode `npm run check:seo`.
+> **This mirror has been forgotten before, in both directions.** `quebrada` was added
+> to the game registry but did not appear on `/mapas`, in `llms.txt`, or in the JSON-LD;
+> `praca_old` was removed from the registry but remained listed in all three. One extra and one
+> missing: the **total** stayed at 5, so no count caught it. Map added or
+> removed → update `src/data/jogo.ts` in the same PR and run `npm run check:seo`.
 
-### Mexer no site
+### Working on the site
 
-- Nome, host e descrições saem de `src/lib/site.ts`. **Não escreva o nome do
-  jogo à mão em página nenhuma** — foi assim que "CS BRASIL" e "CORO SOLTO"
-  passaram meses divergindo entre o `<title>` e o JSON-LD.
-- Nova página = novo `jsonld` no `<Layout>` e uma entrada em
+- Name, host, and descriptions come from `src/lib/site.ts`. **Never hard-code the
+  game's name on any page** — that is how "CS BRASIL" and "CORO SOLTO"
+  diverged between the `<title>` and JSON-LD for months.
+- New page = new `jsonld` in `<Layout>` and an entry in
   `src/pages/sitemap.xml.ts`.
-- Nova rota `/api/*` que grava algo: passe pelo `rateLimit()` de
+- New `/api/*` route that writes data: use `rateLimit()` from
   `src/lib/ratelimit.ts`.
-- Qualquer URL vinda do usuário que o servidor for BUSCAR: passe pelo
-  `src/lib/safe-url.ts`. Ler `docs/seguranca.md` antes economiza uma revisão.
+- Any user-supplied URL that the server will FETCH: use
+  `src/lib/safe-url.ts`. Reading `docs/seguranca.md` first saves a review round.
 
-## Antes de abrir o PR
+## Before opening the PR
 
-**O `git push` já roda o `check:prepush` sozinho** — é o hook `.githooks/pre-push`.
-Ele existe porque numa única sessão de 12/08/2026 quatro pushes seguidos abriram CI
-vermelho em portão que roda em **5 segundos** na máquina: `docs:check` duas vezes,
-`arch:check` e `eval:shaderlog`. O portão existia; ninguém rodava.
+**`git push` already runs `check:prepush` automatically** — through the `.githooks/pre-push` hook.
+It exists because in a single session on 12/08/2026, four consecutive pushes triggered red CI
+on a gate that runs in **5 seconds** locally: `docs:check` twice,
+`arch:check`, and `eval:shaderlog`. The gate existed; nobody ran it.
 
-O hook executa o núcleo e as suites afetadas pelo diff. Qualquer caminho desconhecido ou
-transversal (`package.json`, `game.js`, `main.js`, boot/rede, workflows) cai no `check:deploy`
-completo. A seleção é só local e o CI continua completo. Rode `npm run check:fast` ou
-`npm run check:deploy` diretamente quando quiser a suíte inteira antes do primeiro push.
+The hook runs the core checks and the suites affected by the diff. Any unknown or
+cross-cutting path (`package.json`, `game.js`, `main.js`, boot/network, workflows) triggers the full
+`check:deploy`. Selection is local only; CI still runs everything. Run `npm run check:fast` or
+`npm run check:deploy` directly whenever you want the full suite before the first push.
 
-Em uma falha preexistente comprovada, `PREPUSH=0 git push` pula o hook — e o CI continua
-sendo a rede de baixo. Não use esse escape para uma falha do seu próprio diff.
+For a proven pre-existing failure, `PREPUSH=0 git push` skips the hook — and CI remains
+the safety net. Do not use this escape hatch for a failure caused by your own diff.
 
-Antes de abrir o PR, o resto continua na sua mão:
+Before opening the PR, the rest is still up to you:
 
 ```bash
 npm run check:deploy # quality gate completo (check:fast é a versão rápida)
@@ -229,115 +229,115 @@ npm run build        # o site tem que buildar
 npm run check:seo    # se você mexeu em src/ (inclui src/pages/llms.txt.ts)
 ```
 
-`check:seo` roda `npm run build` e depois mede o **HTML publicado**, não o
-`.astro`. É de propósito: foi assim que um `sitemap.xml` estático sombreando a
-rota dinâmica apareceu, e é assim que a cláusula AEO1 pega página prometendo
-ranking global com `RANKING_ON = false`. **Não afrouxe teto para fechar placar.**
+`check:seo` runs `npm run build` and then measures the **published HTML**, not the
+`.astro`. That is intentional: it is how a static `sitemap.xml` shadowing the
+dynamic route was caught, and how the AEO1 clause catches a page promising a
+global ranking with `RANKING_ON = false`. **Do not loosen a limit just to make the score pass.**
 
-E teste à mão: o jogo abre, o console fica limpo, uma partida completa roda
-(round termina, placar abre com Tab).
+Test manually too: the game opens, the console stays clean, and a full match runs
+(the round ends, and the scoreboard opens with Tab).
 
-## Regras de código
+## Code rules
 
-- **Português** em nome, comentário, commit e doc.
-- **Código não é relatório.** Comentário novo só explica uma invariante, compatibilidade ou
-  risco que os nomes não expressem, em no máximo duas linhas. Histórico, causa raiz, números e
-  reprodução ficam na issue, em `KNOWN-BUGS.md` ou em `docs/`; o comentário apenas aponta.
-- Não narre o óbvio, não deixe diário de investigação e não use comentários para compensar nome
-  ruim. Ao tocar num trecho, remova comentários redundantes daquele mesmo trecho.
-- `arquivo:linha` em qualquer afirmação sobre código.
-- PRs pequenos e focados: uma feature ou um fix por PR.
-- **Sistema interconectado** (arma + mão + animação + ADS + mira + HUD) se mexe
-  **sequencialmente, por uma pessoa só**. Fan-out paralelo nesse sistema já
-  produziu 13 regressões numa única rodada.
-- **Segredos nunca no git.** `service_role` key e `.env` só na Vercel.
-- Assets grandes não vão pro git. `public/audio/` é ignorado; sons novos entram
-  no pacote via `audio/manifest.example.json`.
+- **Portuguese** in names, comments, commits, and docs.
+- **Code is not a report.** A new comment should only explain an invariant, compatibility requirement, or
+  risk that the names do not express, in at most two lines. History, root cause, numbers, and
+  reproduction steps belong in the issue, `KNOWN-BUGS.md`, or `docs/`; the comment only points to them.
+- Do not narrate the obvious, leave an investigation diary, or use comments to compensate for poor
+  naming. When touching a section, remove redundant comments from that same section.
+- Use `arquivo:linha` in every claim about code.
+- Small, focused PRs: one feature or one fix per PR.
+- **Interconnected systems** (weapon + hand + animation + ADS + crosshair + HUD) must be changed
+  **sequentially, by one person**. Parallel fan-out in this system has already
+  caused 13 regressions in a single round.
+- **Secrets never go into git.** `service_role` keys and `.env` belong only in Vercel.
+- Large assets do not go into git. `public/audio/` is ignored; new sounds are added
+  to the package via `audio/manifest.example.json`.
 
-## Conteúdo
+## Content
 
-- Nada com copyright: sprites, sons, modelos de jogos comerciais, logos, marcas
-  ou fotos. Só material original ou com licença compatível.
-- Personagem novo segue o padrão: arquétipo fictício, nome fictício, humor sem
-  crueldade, sem mirar grupos protegidos.
-- Exceção decidida pelo dono em 04/10/2026: **figura política pública** pode entrar
-  como caricatura satírica, e só assim. Nome caricato, nunca o nome real. Modelo 3D
-  gerado a partir de concept 2D caricato; foto real só serve de referência para o
-  concept e precisa ser conferida a olho (`docs/LICOES.md` em `../progress`, lição 9). O mesmo
-  tratamento vale para todos os campos políticos. Sem gore e sem humilhação física.
-  Quando um personagem desses vai ao ar é decisão do dono.
+- Nothing copyrighted: sprites, sounds, models from commercial games, logos, brands,
+  or photos. Original material or material with a compatible license only.
+- New characters follow the standard: fictional archetype, fictional name, humor without
+  cruelty, and no targeting protected groups.
+- Exception decided by the owner on 04/10/2026: a **public political figure** may appear
+  as a satirical caricature, and only in that form. Use a caricatured name, never the real name. Generate the 3D
+  model from a caricatured 2D concept; a real photo may only serve as a reference for the
+  concept and must be visually reviewed (`docs/LICOES.md` in `../progress`, lesson 9). The same
+  treatment applies across the political spectrum. No gore and no physical humiliation.
+  The owner decides when such a character goes live.
 
-## Processo
+## Process
 
-1. Feature grande? Abra uma **issue** antes (as ideias vivem em `docs/IDEAS.md` do repo privado `progress`).
-2. Fork, branch, PR com descrição clara e screenshots.
+1. Large feature? Open an **issue** first (ideas live in `docs/IDEAS.md` in the private `progress` repo).
+2. Fork, branch, and open a PR with a clear description and screenshots.
 
-   **Nome da branch: `v2/<assunto>`** — `v2/multiplayer`, `v2/audio`, `v2/ui-hud`.
-   O prefixo é o ciclo de release (ver o topo do [`CHANGELOG.md`](CHANGELOG.md)): tudo que
-   entra na v2 vive em `v2/*` e sai de lá para a `main`. A regra nasceu de um problema
-   concreto: em 04/08 a branch de trabalho se chamava `feat/evio-feel` — nome de uma
-   feature de julho — e tinha acumulado **143 commits** de assuntos completamente
-   diferentes (personagens GLB, funkeiros, viewmodel, mapas), sem upstream, enquanto a
-   `main` seguia parada em 18/07. Nome que não diz o que a branch é vira depósito.
-3. Ao contribuir, você concorda em licenciar sua contribuição sob a **AGPL-3.0**
-   (veja [`LICENSE`](LICENSE)).
+   **Branch name: `v2/<assunto>`** — `v2/multiplayer`, `v2/audio`, `v2/ui-hud`.
+   The prefix is the release cycle (see the top of [`CHANGELOG.md`](CHANGELOG.md)): everything
+   in v2 lives in `v2/*` and goes from there to `main`. This rule came from a
+   concrete problem: on 04/08, the working branch was called `feat/evio-feel` — the name of a
+   July feature — and had accumulated **143 commits** on completely different
+   subjects (GLB characters, funkeiros, viewmodel, maps), with no upstream, while
+   `main` had been stuck since 18/07. A name that does not say what the branch is turns it into a dumping ground.
+3. By contributing, you agree to license your contribution under **AGPL-3.0**
+   (see [`LICENSE`](LICENSE)).
 
-   > **Migração aplicada em 07/08/2026.** O projeto era MIT e virou **AGPL-3.0**.
-   > Contribuições anteriores à troca entraram sob MIT — licença permissiva e
-   > compatível: elas seguem MIT dentro do conjunto, que é distribuído sob
-   > AGPL-3.0. Se isso for decisivo pra você, pergunte antes de abrir o PR.
+   > **Migration applied on 07/08/2026.** The project was MIT and became **AGPL-3.0**.
+   > Contributions made before the change were submitted under MIT — a permissive,
+   > compatible license: they remain MIT within the whole, which is distributed under
+   > AGPL-3.0. If this is a deciding factor for you, ask before opening the PR.
 
-### As superfícies da licença
+### License surfaces
 
-Estes arquivos **repetem o nome da licença** — uma troca de licença muda todos no
-mesmo commit (metade trocada é pior que nenhuma). A tabela é gerada:
+These files **repeat the license name** — a license change updates all of them in the
+same commit (changing only half is worse than changing none). The table is generated:
 
-<!-- BEGIN:GERADO:licenca_pontos — não edite à mão, rode `npm run docs` -->
+<!-- BEGIN:GERADO:licenca_pontos — do not edit manually, run `npm run docs` -->
 
-| Superfície | Arquivo | Onde diz `AGPL-3.0` |
+| Surface | File | Where it says `AGPL-3.0` |
 |---|---|---|
-| licença canônica | `LICENSE` | 11×  |
-| badge + seção de licenças | `README.md` | 5×  |
-| termo que o contribuidor aceita | `CONTRIBUTING.md` | 6×  |
-| rodapé do site | `src/layouts/Layout.astro` | 1×  |
-| JSON-LD do jogo | `src/pages/index.astro` | 1×  |
-| página `/sobre` | `src/pages/sobre.astro` | 3×  |
-| `llms.txt` (resposta para LLM) | `public/llms.txt` | **arquivo não existe**  |
-| rodapé desta documentação | `docs/docusaurus.config.js` | — (não nomeia a licença)  |
+| canonical license | `LICENSE` | 11×  |
+| badge + license section | `README.md` | 5×  |
+| term accepted by the contributor | `CONTRIBUTING.md` | 6×  |
+| site footer | `src/layouts/Layout.astro` | 1×  |
+| game JSON-LD | `src/pages/index.astro` | 1×  |
+| `/sobre` page | `src/pages/sobre.astro` | 3×  |
+| `llms.txt` (LLM response) | `public/llms.txt` | **file does not exist**  |
+| footer of this documentation | `docs/docusaurus.config.js` | — (does not name the license)  |
 
-**27 ocorrências** de `AGPL-3.0` em **6** das 8 superfícies declaradas. Trocar a licença é mudar **todas elas no mesmo commit**: metade trocada é pior que nenhuma, porque cada arquivo passa a responder uma coisa diferente para quem pergunta.
+**27 occurrences** of `AGPL-3.0` across **6** of the 8 declared surfaces. Changing the license means changing **all of them in the same commit**: changing only half is worse than changing none, because each file would give a different answer to the same question.
 
-**Outros nomes de licença citados nessas superfícies:** `MIT` em `README.md` (4×), `MIT` em `CONTRIBUTING.md` (4×), `MIT` em `src/pages/sobre.astro` (1×), `MIT` em `docs/docusaurus.config.js` (1×). Citar não é declarar — essas linhas são histórico da migração ou crédito a dependência de terceiro. A regra continua a mesma: **só o `LICENSE` declara**, e hoje ele diz `AGPL-3.0`.
+**Other license names mentioned on these surfaces:** `MIT` in `README.md` (4×), `MIT` in `CONTRIBUTING.md` (4×), `MIT` in `src/pages/sobre.astro` (1×), `MIT` in `docs/docusaurus.config.js` (1×). Mentioning is not declaring — these lines are migration history or credits for third-party dependencies. The rule remains the same: **only `LICENSE` declares the license**, and today it says `AGPL-3.0`.
 
-> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep -n dos nomes de licença conhecidos, nas superfícies declaradas em tools/gen-docs.mjs`
+> Block generated by `node tools/gen-docs.mjs`. Source: `grep -n of known license names, on the surfaces declared in tools/gen-docs.mjs`
 
 <!-- END:GERADO:licenca_pontos -->
 
-O CI valida a presença de `Signed-off-by:` em cada commit do PR. Depois de
-`npm install` ou `npm run setup`, o hook versionado em `.githooks/` acrescenta
-automaticamente o nome e o email configurados no Git. Ao commitar, você confirma
-essa declaração para a contribuição enviada. Se você já usa um `core.hooksPath`
-próprio, ele é preservado e o instalador avisa para continuar usando `git commit -s`.
+CI validates the presence of `Signed-off-by:` in every commit in the PR. After
+`npm install` or `npm run setup`, the versioned hook in `.githooks/` automatically adds
+the name and email configured in Git. By committing, you confirm
+this declaration for the submitted contribution. If you already use your own
+`core.hooksPath`, it is preserved and the installer tells you to keep using `git commit -s`.
 
-Se ainda não instalou as dependências, assine manualmente:
+If you have not installed the dependencies yet, sign manually:
 
 ```bash
 git commit -s -m "feat: minha mudança"
 ```
 
-### Quem escreveu o commit
+### Who wrote the commit
 
-Este repositório é **AI generated e AI friendly**: boa parte do código é escrita
-por agentes de IA, e **todo** commit diz quem o escreveu no trailer `Agent:` —
-é o que sustenta o "cada commit diz qual" do README. Humano commitando sozinho
-leva `Agent: humano`; o campo nunca fica vazio, porque campo opcional envelhece
-para vazio (a convenção nasceu escrita em três arquivos e, 200 commits depois,
-não estava em **nenhum** deles).
+This repository is **AI-generated and AI-friendly**: much of the code is written
+by AI agents, and **every** commit says who wrote it in the `Agent:` trailer —
+this is what backs the README's "every commit says which one" claim. A human committing alone
+uses `Agent: humano`; the field is never empty, because optional fields become
+empty over time (the convention was initially written in three files and, 200 commits later,
+was in **none** of them).
 
-Você não precisa digitar: o `.githooks/prepare-commit-msg` preenche sozinho,
-lendo a assinatura do ambiente (`CLAUDECODE`, `KIMI_*`, `CODEX_*`, `OPENCODE*`,
-`CURSOR_TRACE_ID`, `AI_AGENT`). Para dizer o modelo junto — que raramente está no
-ambiente — exporte `AGENTE`, que tem precedência sobre a detecção:
+You do not need to type it: `.githooks/prepare-commit-msg` fills it in automatically
+by reading the environment signature (`CLAUDECODE`, `KIMI_*`, `CODEX_*`, `OPENCODE*`,
+`CURSOR_TRACE_ID`, `AI_AGENT`). To include the model — which is rarely available in
+the environment — export `AGENTE`, which takes precedence over detection:
 
 ```bash
 export AGENTE="Claude Code (Opus 5)"
@@ -345,44 +345,44 @@ git commit -s -m "fix: minha correção"      # trailer entra sozinho
 git commit -s -m "fix: x" --trailer "Agent: Kimi Code"   # ou explícito
 ```
 
-Agente commitando em nome de humano mantém o `Signed-off-by` de quem assina e
-acrescenta o `Agent:` de quem escreveu. O `.githooks/commit-msg` recusa commit
-sem o trailer, e o portão `Check trailer Agent` do CI cobre o que o hook não
-alcança: clone sem `npm run setup`, `--no-verify` e commit pela interface do
-GitHub.
+An agent committing on a human's behalf keeps the signer's `Signed-off-by` and
+adds the writer's `Agent:`. `.githooks/commit-msg` rejects commits
+without the trailer, and CI's `Check trailer Agent` gate covers what the hook cannot
+reach: clones without `npm run setup`, `--no-verify`, and commits made through the
+GitHub interface.
 
-#### Co-autoria de IA não entra
+#### AI co-authorship is not allowed
 
-O `Agent:` é a atribuição desta base, e ele diz **qual** agente. O
-`Co-Authored-By: Claude` que as ferramentas acrescentam sozinhas não diz nada
-que o `Agent:` já não diga, aparece sempre colado nele — **415 dos 1004 commits
-da main** carregam o par — e ainda inventa um co-autor sem conta, que entra no
-"Contributors" do GitHub misturado com gente de verdade.
+`Agent:` is this codebase's attribution mechanism, and it says **which** agent.
+The `Co-Authored-By: Claude` line that tools add automatically says nothing
+that `Agent:` does not already say, always appears next to it — **415 of the 1004 commits
+on main** carry the pair — and invents a co-author without an account, which appears in
+GitHub's "Contributors" mixed in with real people.
 
-Os mesmos três portões do `Agent:` recusam essa linha, lendo a lista de agentes
-de `scripts/coautoria-ia.re` (um arquivo só: lista copiada em três lugares
-diverge, e aí a mesma mensagem nasce aprovada num portão e reprovada no outro).
-**Co-autor humano continua valendo** — a régua só morde nome de ferramenta.
+The same three `Agent:` gates reject this line, reading the agent list
+from `scripts/coautoria-ia.re` (a single file: a list copied to three places
+diverges, and then the same message passes one gate and fails another).
+**Human co-authors are still allowed** — the rule only rejects tool names.
 
-Desligue na origem e você nunca vê o portão: o Claude Code já vem desligado por
-`"includeCoAuthoredBy": false` em `.claude/settings.json`; as outras ferramentas
-têm opção equivalente. Se já entrou na mensagem, limpe o intervalo com:
+Disable it at the source and you will never see the gate: Claude Code is already disabled by
+`"includeCoAuthoredBy": false` in `.claude/settings.json`; other tools
+have an equivalent option. If it is already in the message, clean the range with:
 
 ```bash
 git rebase <base> --exec 'git log -1 --format=%B | sh scripts/checa-coautoria-ia.sh --limpa > /tmp/m && git commit --amend --no-edit -F /tmp/m'
 ```
 
-### Commit grande pede motivo
+### Large commits need a reason
 
-Commit pequeno é o que torna revisão, `git bisect` e reversão baratos, e é a
-primeira coisa que se perde quando um agente trabalha por horas sem parar. O
-`.githooks/commit-msg` recusa commit acima de **15 arquivos ou 800 linhas**,
-ignorando arquivo gerado (`public/docs/`, `CHANGELOG.md`, `package-lock.json`,
+Small commits make reviews, `git bisect`, and reverts cheap, and they are the
+first thing lost when an agent works for hours without stopping.
+`.githooks/commit-msg` rejects commits over **15 files or 800 lines**,
+ignoring generated files (`public/docs/`, `CHANGELOG.md`, `package-lock.json`,
 `STATUS.md`, `tools/eval/ARCH.md`, `docs/i18n/`, `graphify-out/`,
-`public/js/version.js`) e commit de release.
+`public/js/version.js`) and release commits.
 
-O teto não é opinião. Ele é uma **observação datada e ancorada num commit**, e é
-por isso que o comando abaixo devolve o mesmo resultado hoje e daqui a um ano:
+The limit is not a matter of opinion. It is a **dated observation anchored to a commit**, which is
+why the command below returns the same result today and a year from now:
 
 ```bash
 git log --no-merges -400 --format='%H%x00%s' --numstat 7b20e46 |
@@ -394,54 +394,54 @@ git log --no-merges -400 --format='%H%x00%s' --numstat 7b20e46 |
 #     p95: 21 arquivos, 1736 linhas
 ```
 
-**Isto não é um bloco gerado, e a decisão é deliberada.** A primeira versão desta
-seção foi gerada pelo `gen-docs`, e a medição mudava a cada commit — inclusive o
-commit que a regenerava. Percentil de janela móvel não é um fato sobre o estado
-do repositório, como "34 arquivos, 27.639 linhas"; é uma **observação histórica**,
-e observação se ancora, não se persegue. O que a lei 2 da casa cobra é
-reprodutibilidade, e a âncora `7b20e46` dá exatamente isso.
+**This is not a generated block, and the decision is deliberate.** The first version of this
+section was generated by `gen-docs`, and the measurement changed with every commit — including
+the commit that regenerated it. A moving-window percentile is not a fact about the repository's
+state, like "34 files, 27,639 lines"; it is a **historical observation**,
+and observations are anchored, not chased. House rule 2 requires
+reproducibility, and the `7b20e46` anchor provides exactly that.
 
-Vale reancorar quando o perfil de trabalho mudar de verdade — não a cada PR. A
-lista de arquivo gerado é a mesma do `scripts/medir-commit.awk`, que é quem o
-hook usa, exercitada por fixture no `agente_check.py --selftest` (o filtro já
-nasceu quebrado uma vez, com um `^` no meio da linha que nunca casava).
+Re-anchor it when the work profile genuinely changes — not on every PR. The
+generated-file list is the same one in `scripts/medir-commit.awk`, which the
+hook uses, exercised by a fixture in `agente_check.py --selftest` (the filter
+was broken once from the start, with a `^` in the middle of a line that never matched).
 
-Quando o commit grande é o certo (mover uma pasta, regenerar um acervo, aplicar
-um rename), diga por quê e siga:
+When a large commit is the right choice (moving a directory, regenerating a collection, applying
+a rename), explain why and proceed:
 
 ```bash
 git commit -s --trailer "Commit-grande: git mv da pasta fpvm, sem mudança de conteúdo"
 ```
 
-Rebase, merge, cherry-pick e revert não são medidos de novo: o commit já passou
-pelo teto uma vez, e cobrar duas transforma conflito resolvido em commit
-reprovado.
+Rebases, merges, cherry-picks, and reverts are not measured again: the commit has already
+passed the limit check once, and checking twice turns a resolved conflict into a
+rejected commit.
 
-## Reportando bugs
+## Reporting bugs
 
-Abra uma issue com: o que aconteceu, o que você esperava, passos pra reproduzir,
-navegador/SO e, se der, print do console (F12). O jogo tem um overlay de crash
-que persiste a exceção na tela justamente pra esse print.
+Open an issue with: what happened, what you expected, steps to reproduce,
+browser/OS and, if possible, a console screenshot (F12). The game has a crash overlay
+that keeps the exception on screen specifically for that screenshot.
 
-**Descreva com as suas palavras, não com o diagnóstico que você imagina.** Nesta
-base o sintoma quase nunca é o defeito: *"o jogo reiniciou sozinho"* era um botão
-do menu de pausa debaixo da mira, e *"a música não toca"* era um `%2520` numa URL
-codificada duas vezes. A frase literal é o dado; a interpretação a gente mede.
+**Describe it in your own words, not with the diagnosis you imagine.** In this
+codebase, the symptom is almost never the bug: *"the game restarted by itself"* was a button
+in the pause menu underneath the crosshair, and *"the music does not play"* was a `%2520` in a
+twice-encoded URL. The literal statement is the data; we measure the interpretation.
 
-**Vulnerabilidade de segurança não vai em issue pública** — veja
+**Security vulnerabilities do not belong in public issues** — see
 [`SECURITY.md`](SECURITY.md).
 
-### Vai consertar um bug?
+### Going to fix a bug?
 
-Existe uma skill pra isso, e ela serve pra agente e pra gente:
-[`.claude/skills/bug-hunt/SKILL.md`](.claude/skills/bug-hunt/SKILL.md). Ela codifica o
-método que este repositório pagou caro pra aprender — régua antes do conserto, mutação que prova
-que a régua morde, refutar o palpite óbvio antes de agir nele — cada regra com o
-caso real que a comprou. Traz também o fluxo: onde registrar
-(`KNOWN-BUGS.md`), em que ordem rodar o quality
-gate, e como reportar o que você **não** verificou.
+There is a skill for that, for agents and humans alike:
+[`.claude/skills/bug-hunt/SKILL.md`](.claude/skills/bug-hunt/SKILL.md). It codifies the
+method this repository paid dearly to learn — a gate before the fix, a mutation that proves
+the gate has teeth, and disproving the obvious guess before acting on it — each rule paired with the
+real case that taught it. It also includes the workflow: where to record findings
+(`KNOWN-BUGS.md`), the order in which to run the quality
+gates, and how to report what you did **not** verify.
 
-Defeito com evidência (`arquivo:linha`, saída de régua ou passo de reprodução)
-entra no `KNOWN-BUGS.md`. Suspeita sem medição vai
-pro fim do arquivo, na seção *Relatados, ainda não reproduzidos* — e não sobe de seção
-sem número.
+A bug with evidence (`arquivo:linha`, gate output, or reproduction steps)
+goes into `KNOWN-BUGS.md`. An unmeasured suspicion goes
+to the end of the file, in the *Relatados, ainda não reproduzidos* (Reported, not yet reproduced) section — and does not move up
+without numbers.
