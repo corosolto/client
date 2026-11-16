@@ -15,6 +15,7 @@
     partida-sem-clipe       o primeiro uso na partida não registra o driver -> EMM11
      travessao-no-titulo     `—` volta numa `origem` (title da roda)      -> EMM0c
      pack-ausente-mudo       falha do pack não deixa erro nem log         -> EMM10
+     qa-um-rig              catálogo perde um dos dois rigs de prova      -> EMM0d
    Uso: node tools/eval/emotes-mocap-check.mjs [--self-test | --mutante=<nome>] */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -24,9 +25,10 @@ import vm from 'node:vm';
 import { parse } from 'acorn';
 import { spawnSync } from 'node:child_process';
 import { root, requests, THREE, CHARACTERS, parseGlb, carregaRuntime, once, step, esperaClipe } from './lib/glbchars-node.mjs';
+import { EMOTE_QA_RIGS, validarFonteEmote } from '../emote-pack-validation.mjs';
 
 const mutant = process.argv.find((x) => x.startsWith('--mutante='))?.split('=')[1] || '';
-const mutants = ['emote-mocap-mudo', 'arma-visivel-no-emote', 'emote-nao-cancela', 'id-renumerado', 'quadril-fora-da-capsula', 'rotacao-local', 'lobby-sem-clipe', 'partida-sem-clipe', 'travessao-no-titulo', 'pack-ausente-mudo'];
+const mutants = ['emote-mocap-mudo', 'arma-visivel-no-emote', 'emote-nao-cancela', 'id-renumerado', 'quadril-fora-da-capsula', 'rotacao-local', 'lobby-sem-clipe', 'partida-sem-clipe', 'travessao-no-titulo', 'pack-ausente-mudo', 'qa-um-rig'];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
 if (process.argv.includes('--self-test')) {
   for (const kind of ['', ...mutants]) {
@@ -117,6 +119,13 @@ check('EMM0b-catalogo', () => {
 /* EMM0c: nome e origem viram texto do jogador (title dos botões da roda e do lobby). */
 check('EMM0c-texto-publico', () => {
   for (const e of E.EMOTES) assert.ok(!/[—–]/.test(`${e.nome} ${e.origem}`), `${e.id}: travessão no texto público`);
+});
+check('EMM0d-qa-dois-rigs', () => {
+  const qa = Object.fromEntries(EMOTE_QA_RIGS.map((rig) => [rig, { verdict: 'pass' }]));
+  if (mutant === 'qa-um-rig') delete qa[EMOTE_QA_RIGS[1]];
+  assert.doesNotThrow(() => validarFonteEmote('capoeira', {
+    id: 'mixamo/capoeira-pack/capoeira', key: 'emote_capoeira_capoeira', keyStatus: 'emote', qa,
+  }, 'emote_capoeira_capoeira'));
 });
 
 /* EMM1 — o pack versionado tem exatamente os 8 clipes, com a duração do catálogo. */
@@ -382,7 +391,7 @@ if (mutant) {
   assert.ok(failures.length > 0, `MUTAÇÃO PASSOU — ${mutant}`);
   const ESPERADO = { 'emote-mocap-mudo': ['EMM3', 'EMM4', 'EMM7', 'EMM9'], 'arma-visivel-no-emote': ['EMM5'], 'emote-nao-cancela': ['EMM6'], 'id-renumerado': ['EMM0-'],
     'quadril-fora-da-capsula': ['EMM12'], 'rotacao-local': ['EMM13'], 'lobby-sem-clipe': ['EMM11'], 'partida-sem-clipe': ['EMM11'], 'travessao-no-titulo': ['EMM0c'],
-    'pack-ausente-mudo': ['EMM10'] };
+    'pack-ausente-mudo': ['EMM10'], 'qa-um-rig': ['EMM0d'] };
   for (const id of ESPERADO[mutant]) assert.ok(failures.some((x) => x.id.startsWith(id)), `${mutant} não reprovou ${id}: ${failures.map((x) => x.id).join(', ')}`);
   console.log(`MUTANTE ${mutant} REPROVADO: ${failures.map((x) => x.id).join(', ')}`);
 } else {
