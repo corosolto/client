@@ -27,7 +27,7 @@
 
    Uso: node tools/eval/backend-hints-check.mjs [--mutante=inject|vazio]
    ============================================================================ */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
@@ -46,7 +46,8 @@ if (!PADROES.length) {
   process.exit(1);
 }
 
-const SUPERFICIES = ['public/js', 'public/llms.txt', 'src/pages', 'CHANGELOG.md'];
+const SUPERFICIES = ['public/js', 'src/pages', 'CHANGELOG.md'];
+if (existsSync('public/llms.txt')) SUPERFICIES.push('public/llms.txt');
 const DÍVIDA = [
   // docs/ buildada em /docs: decisão editorial pendente (ver cabeçalho).
   // 'dist/client/docs': 50 menções em 15/08/2026.
