@@ -40,6 +40,8 @@ for (const [name, clauses] of [
   ['player', ['TP alterou player/physics', 'autoridade/câmera/aim/root divergiram']],
   ['sem-strafe', ['clip ativo incorreto', 'ação/pose negativa alterada']],
   ['lado-invertido', ['clip ativo incorreto', 'ação/pose negativa alterada']],
+  ['strafe-tempo', ['não avançou pelo rate', 'não reiniciou pelo rate']],
+  ['strafe-cauda-tempo', ['não avançou pelo rate']],
 ]) {
   const result = run([`--mutante=${name}`]);
   if (!proof(result, name, clauses)) {
