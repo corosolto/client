@@ -49,7 +49,14 @@ cp "$FIXTURE_ZIP" "$out"
 executavel('unzip', `#!/usr/bin/env bash
 set -euo pipefail
 dest=''
-while [ "$#" -gt 0 ]; do if [ "$1" = -d ]; then dest="$2"; shift 2; else shift; fi; done
+archive=''
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = -d ]; then dest="$2"; shift 2
+  elif [[ "$1" == -* ]]; then shift
+  else archive="$1"; shift
+  fi
+done
+[ -z "\${EXPECTED_ZIP:-}" ] || [ "$archive" = "$EXPECTED_ZIP" ]
 mkdir -p "$dest"
 cp "$FIXTURE_MANIFEST" "$dest/manifest.json"
 printf 'privado' > "$dest/origem-r2.marker"
@@ -73,6 +80,11 @@ try {
   assert.equal(readFileSync(path.join(dest, 'manifest.json'), 'utf8'), readFileSync(manifesto, 'utf8'));
   assert.equal(readFileSync(path.join(dest, 'origem-r2.marker'), 'utf8'), 'privado');
   assert.equal(readdirSync(cache).filter((nome) => nome.endsWith('.zip')).length, 1, 'prefetch precisa deixar um ZIP verificado no cache');
+  const cacheZip = path.join(cache, readdirSync(cache).find((nome) => nome.endsWith('.zip')));
+  const quente = execFileSync('bash', ['scripts/fetch-audio.sh', '--prefetch-r2'], {
+    cwd: root, env: { ...env, EXPECTED_ZIP: cacheZip }, encoding: 'utf8',
+  });
+  assert.match(quente, /Pacote de áudio do cache de build/, 'segundo prefetch precisa usar o ZIP verificado do cache');
 
   const semSegredo = { ...env };
   delete semSegredo.CF_API_TOKEN;

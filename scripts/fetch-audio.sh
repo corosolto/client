@@ -95,7 +95,7 @@ else
   if [ -d "$CACHE_DIR" ]; then cp /tmp/csbrasil-audio.zip "$CACHE_ZIP"; fi
 fi
 if [ "$PREFETCH_R2" = 1 ]; then
-  unzip -o -q /tmp/csbrasil-audio.zip -d "$DEST/"
+  unzip -o -q "$CACHE_ZIP" -d "$DEST/"
   [ -f "$DEST/manifest.json" ] || { echo "Pacote privado sem manifest.json" >&2; exit 1; }
   echo "Pacote privado preparado no cache e extraído em $DEST: $CACHE_ZIP"
   exit 0
