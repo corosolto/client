@@ -21,11 +21,11 @@ const mutations = {
   'stop-ignorado': ['ctrl.pararEmote?.(); b._netEmoteAppliedTick = null;', 'b._netEmoteAppliedTick = null;'],
   'import-ressuscita': ['b._netEmoteLoading = false;', "b._netEmoteLoading = false; ctrl.emote?.('frevo', 0);"],
   'troca-sem-estado': ['const novo = b._netVisualCtrl !== ctrl;', 'const novo = false;'],
-  'intencao-ausente': ['emote: V9_EMOTES.has(this.game._emoteAtual) ? this.game._emoteAtual : null,', 'emote: null,'],
-  'emote-local-vaza': ['emote: V9_EMOTES.has(this.game._emoteAtual) ? this.game._emoteAtual : null,', 'emote: this.game._emoteAtual || null,'],
+  'intencao-ausente': ['emote: emoteDeRede(this.net, this.game._emoteAtual),', 'emote: null,'],
+  'emote-local-vaza': ['emote: emoteDeRede(this.net, this.game._emoteAtual),', 'emote: this.game._emoteAtual || null,'],
   'estado-antigo': ['if (estadoNovo) {', 'if (true) {'],
-  'pausa-para-emote': ['emote: V9_EMOTES.has(game._emoteAtual) ? game._emoteAtual : null,', 'emote: null,'],
-  'pausa-local-vaza': ['emote: V9_EMOTES.has(game._emoteAtual) ? game._emoteAtual : null,', 'emote: game._emoteAtual || null,'],
+  'pausa-para-emote': ['emote: emoteDeRede(this.net, game._emoteAtual),', 'emote: null,'],
+  'pausa-local-vaza': ['emote: emoteDeRede(this.net, game._emoteAtual),', 'emote: game._emoteAtual || null,'],
 };
 assert(!mutant || mutations[mutant], 'mutante conhecido');
 let netUrl = new URL('../../public/js/netgame.js', import.meta.url).href;

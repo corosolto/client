@@ -339,7 +339,7 @@
     "check:prepush": "node tools/eval/selecao-pre-push.mjs",
     "check:vercel": "node tools/eval/runner.mjs syntax eval:recoil-contract eval:firing-cadence eval:ballistics-falloff eval:assetfetch eval:apis eval:geoproxy eval:nosgemeos",
     "check:fast": "node tools/eval/runner.mjs --suite=fast",
-    "//eval:rede3p": "Snapshot v9 até o rig real: crouch, recarga por borda, dança e ordenação; doze mutantes causais.",
+    "//eval:rede3p": "Snapshot v9/v10 até o rig real: crouch, recarga por borda, dança e ordenação; quatorze mutantes causais.",
     "eval:rede3p": "node tools/eval/rede3p-mutants-check.mjs && node tools/eval/rede3p-mutants-proof.mjs",
     "eval:tags": "node tools/eval/tag-main-check.mjs",
     "eval:simclock": "node tools/eval/sim-clock-check.mjs",
