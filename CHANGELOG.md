@@ -70,6 +70,7 @@
 - Edge traffic count (`src/lib/server-traffic.mjs`) now names in-app browsers: TikTok (`musical_ly`/`BytedanceWebview`/`TikTok`), Instagram, Facebook (`FBAN`/`FBAV`/`FB_IAB`), LinkedIn (`LinkedInApp`) and X (`TwitterAndroid`/`Twitter for iPhone`) stay `kind: browser` (they are people) with `agent: app/<name>`; open browsers keep the empty agent. Reason: the 08/11 TikTok paid campaign sent 517 visits in one hour, 72% loaded the game and 85% left in under a minute without entering, and the admin had no way to tell them from Chrome. `server-traffic-check.mjs` gains the five UA cases plus the open-Chrome and `facebookexternalhit` counter-cases, and is finally wired as `eval:servertraffic` inside `check:fast` (it had no script since #988).
 
 ### Fixed
+- A queda do multiplayer contabiliza a sessão local antes de desmontar o jogo para reconexão, e o funil do convite de login respeita o consentimento no próprio emissor. As réguas de time acompanham os helpers de Javaporcos, a telemetria aceita o metadado completo de build e a inspeção pública ignora `llms.txt` somente quando ele não existe.
 - O gate de acessórios injeta explicitamente o catálogo v9 ao executar `netgame.js` sem imports, e a matriz gerada do arsenal acompanha as linhas atuais de `game.js`; o `pre-push` volta a medir ambos em vez de parar com `V9_EMOTE_IDS` ausente ou documentação desatualizada.
 - Os sweeps agendados dos bots agora paginam todos os PRs abertos via GraphQL, fazem essa leitura de inventário com o `github.token` somente leitura em vez do PAT de escrita, recalculam ancestralidade e contagem de commits no grafo Git em vez de confiar no JSON recebido, e tratam o exit `78` dos mutantes cegos como falha de infraestrutura, com regressões explícitas.
 - CI/release: o `pre-push` não apaga uma trava substituída, e gates sem evidência editorial/material encerram como não medidos (78), nunca verde.
@@ -3153,7 +3154,7 @@
 ### Mudado
 - Pagina os perfis do sitemap além de 1.000 linhas (#842)
 - Pagina os perfis do sitemap além de 1.000 linhas
-- Mede o sitemap contra o max-rows do PostgREST
+- Mede o sitemap contra o limite máximo de linhas do backend
 
 ## [2.1.0-alpha.79] — 2026-10-13
 
@@ -3198,7 +3199,7 @@
 ## [2.1.0-alpha.73] — 2026-10-13
 
 ### Mudado
-- feat: integrar comunidade e conta Supabase ao jogo (#807)
+- feat: integrar comunidade e conta ao jogo (#807)
 - Navegador do portão de boot consente com a medição
 - Contrato do /ranking aceita o redirect para o hub da comunidade
 - Sincroniza o lockfile com o package.json da composição
