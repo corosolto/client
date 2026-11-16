@@ -1378,6 +1378,7 @@ class CharController {
     this.cur = null; this.dead = false; this.shooting = false; this.crouch = false; this.jumping = false;
     this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0; this._porte1hK = 0;
     this._flinchT = 0; this._flinchDur = 0; this._flinchDir = null; this._fireT = 0; this._fireDur = 0;
+    this._drawT = 0; this._drawBone = null; this._drawBase = new THREE.Quaternion();
     this._emoteId = null; this._emoteT = 0; this._emoteK = 0; this._emoteDip = 0;
     this.emotando = false; this._emoteOssos = []; this._emoteClipeInfo = null; this._emoteClipeAtivo = false; this._ultimoPose = null;
     // Repouso do esqueleto ANTES de qualquer pose, uma vez por personagem: base do retarget
@@ -1390,6 +1391,7 @@ class CharController {
     this.weaponId = 'awp';
     this._upperName = null; this._upperDur = 0; this._upperT = 0; this._upperAction = null;
     this._upperActions = new Map(); this._drawPending = false; this._drawRequested = false; this._reloadClip = false; this._hitClip = false; this._grenadePending = null; this._ceremonyPending = null;
+    this._extrasReady = false;
     this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
     this._loco = 'idle'; // current locomotion state (hysteresis memory for walk/run choice)
     for (const name of EXTRA_STATES) if (_extraClips[name]) actions[name] = mixer.clipAction(_extraClips[name]);
@@ -1404,6 +1406,7 @@ class CharController {
     if (this._extrasBind) return;
     this._extrasBind = true;
     void extrasPack().then(() => {
+      this._extrasReady = true;
       for (const name of EXTRA_STATES) if (_extraClips[name] && !this.actions[name]) this.actions[name] = this.mixer.clipAction(_extraClips[name]);
       if (this._reloadDur > 0 && !this._reloadClip) this._startReloadClip();
       if (this._grenadePending) this._retomaGranada();
@@ -1602,10 +1605,12 @@ class CharController {
 
   draw() {
     if (this.dead || this.lod >= 2 || this.weaponId === 'knife') return;
-    const tipo = this.oneHanded ? 'pistol' : 'rifle';
+    if (this.oneHanded) { this._drawRequested = false; this._drawT = 0.32; return; }
     this._drawRequested = true;
-    this._drawPending = this._playUpper(`holster_${tipo}`, 0.45);
-    if (!this._drawPending) this._playUpper(`draw_${tipo}`, 0.65);
+    this._drawPending = this._playUpper('holster_rifle', 0.45);
+    if (this._drawPending) return;
+    if (this._playUpper('draw_rifle', 0.65)) { this._drawRequested = false; return; }
+    if (this._extrasReady) { this._drawRequested = false; this._drawT = 0.32; }
   }
 
   grenade(dur = 1.05) {
@@ -1721,6 +1726,7 @@ class CharController {
     /* Overlays de vida (reload/flinch/lean/pitch) morrem junto com o corpo (dono, 31/10). Hist: docs/ANIM-3P.md. */
     this.cancelReload();
     this._stopUpper(); this._ceremonyPending = null; this._drawPending = false; this._drawRequested = false; this._grenadePending = null;
+    this._drawT = 0;
     this._flinchDur = 0;
     this._leanK = 0;
     this.aimPitch = 0;
@@ -1737,6 +1743,7 @@ class CharController {
     this._deathK = 0; this._deathDir = null;
     this.dead = false; this.shooting = false; this.jumping = false; this._ar = false; this._mantleF = null;
     this._ceremonyPending = null; this._drawPending = false; this._drawRequested = false; this._grenadePending = null; this._stopUpper();
+    this._drawT = 0;
     this.mixer.stopAllAction();
     this.cur = null;
     this._to('idle');
@@ -1755,6 +1762,8 @@ class CharController {
   // stride, so we drive the cycle rate from how fast the body is really moving).
   update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
     this._restaurarPoseMorte();
+    if (this._drawBone) { this._drawBone.quaternion.copy(this._drawBase); this._drawBone = null; }
+    this._drawT = Math.max(0, this._drawT - dt);
     const freeHand = this._previewFreeHand;
     // Restaura antes do mixer: uma pose idêntica pode não reescrever a propriedade em dt=0.
     if (freeHand?.applied) { freeHand.bone.quaternion.copy(freeHand.before); freeHand.applied = false; }
@@ -1914,6 +1923,16 @@ class CharController {
           orientTpMount(t);   // reorienta o cano pós-IK
         }
       }
+    }
+    const drawArm = this._drawT > 0 && !this.dead && this.lod < 1 && !this.emotando && this.corpo?.get('RightArm');
+    if (drawArm?.parent) {
+      this._drawBone = drawArm;
+      this._drawBase.copy(drawArm.quaternion);
+      this.group.updateMatrixWorld(true);
+      drawArm.parent.getWorldQuaternion(_pq).invert();
+      _axisF.set(Math.cos(this.group.rotation.y), 0, -Math.sin(this.group.rotation.y)).applyQuaternion(_pq).normalize();
+      drawArm.quaternion.premultiply(_qLean.setFromAxisAngle(_axisF, Math.sin(Math.PI * this._drawT / 0.32) * 0.3));
+      if (this.tpMount) orientTpMount(this.tpMount);
     }
     // IK da mão de apoio (FASE 2): palma L no guarda-mão da arma montada (só 2 mãos).
     // Roda depois do mixer/pose — corrige o contato por arma sem tocar na orientação.

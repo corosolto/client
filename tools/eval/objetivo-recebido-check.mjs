@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { instrumentarObjetivo, objetivoConsumido, capturarObjetivoAtual } from './objetivo-recebido.mjs';
-import { EMOTE_IDS } from '../../public/js/data/emote-catalog.js';
+import { V9_EMOTE_IDS, V10_EMOTE_IDS } from '../../public/js/data/emote-catalog.js';
 
 const source = fs.readFileSync(new URL('../../public/js/netgame.js', import.meta.url), 'utf8');
 for (const omitir of [false, true]) {
@@ -10,7 +10,7 @@ for (const omitir of [false, true]) {
   let applied = { ...incoming }, calls = 0;
   const objective = { applyNetState(net) { calls++; applied = { ...net }; }, netState: () => applied };
   const net = { snap: { tick: 7, state: 'live', ents: [], objective: incoming }, startPing() {} };
-  const context = vm.createContext({ performance, setInterval() {}, clearInterval() {}, V9_EMOTE_IDS: EMOTE_IDS });
+  const context = vm.createContext({ performance, setInterval() {}, clearInterval() {}, V9_EMOTE_IDS, V10_EMOTE_IDS });
   const code = instrumentarObjetivo(source, omitir).replace(/^import .*;\s*$/gm, '').replace('export function makeNetcode', 'function makeNetcode');
   vm.runInContext(`${code}\nglobalThis.make = makeNetcode;`, context);
   const adapter = context.make({ state: 'live', objective }, net);

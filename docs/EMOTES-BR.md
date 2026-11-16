@@ -60,8 +60,8 @@ fontes acima.
 
 ## Limites declarados (o que NÃO está entregue)
 
-1. **Disponibilidade depende do nó.** O snapshot v9 publica a dança dos humanos,
-   além de postura/recarga de humanos e bots; nós v8 não têm esses estados públicos.
+1. **Disponibilidade depende do nó.** O snapshot v10 publica os 16 emotes; v9 publica
+   somente os oito procedurais, e v8 não tem postura/recarga/emote públicos.
    A porta visual de produção continua fechada até o aceite do dono (seção abaixo).
 2. **Sem polegar.** O rig não tem osso de dedo (só `Curl_L`/`Curl_R` de fechamento de
    mão). Não existe joinha possível: o gesto entregue chama **Salve** porque é isso que o
@@ -72,8 +72,8 @@ fontes acima.
    qualidade sem mudar nada do que está aqui: o controlador aceita os dois.
 4. **Classificação indicativa.** A `sarrada no ar` é gesto de quadril. Está estilizada,
    mas é decisão do dono mantê-la no catálogo público, restringi-la ou removê-la — lojas
-   de aplicativo olham isso. A ordem de `public/js/data/emote-catalog.js` é o contrato
-   binário v9: não remover nem reordenar IDs numa versão já publicada.
+   de aplicativo olham isso. A ordem de `public/js/data/emote-catalog.js` é contrato
+   binário: v9 congela 1–8 e v10 acrescenta 9–16; nunca reordenar IDs publicados.
 
 ## Como se dança
 
@@ -83,11 +83,12 @@ fontes acima.
 | Partida | tecla **T** abre a roda; **1-8** ou clique escolhe; **T**/**ESC** fecha; a câmera sai da 1ª pessoa e afasta 1,5 m pra você se ver |
 | Sair | andar, atirar, trocar de arma, levar dano ou morrer derruba o passo na hora |
 
-## Estados remotos de terceira pessoa (v9)
+## Estados remotos de terceira pessoa (v9/v10)
 
 O catálogo leve mantém a ordem `passinho`, `samba`, `ginga`, `frevo`, `forro`,
-`quadradinho`, `sarrada`, `salve`. O input manda a intenção atual como string ou `null`
-em cada passo e no heartbeat de pausa. A autoridade do servidor decide início,
+`quadradinho`, `sarrada`, `salve`, seguida pelos oito IDs capturados. A v9 termina em
+`salve`; a v10 publica o catálogo inteiro. O input manda a intenção atual como string ou
+`null` em cada passo e no heartbeat de pausa. A autoridade do servidor decide início,
 cancelamento e duração; a câmera local e a roda continuam nos caminhos existentes.
 
 `Netcode.applySnapshot` recebe agachamento, segundos restantes de recarga, ID da dança
@@ -227,19 +228,18 @@ os laços seguem até o jogador sair. Em LOD≥2 o clipe não toca: o corpo fica
 a coreografia de reserva. Ao voltar para perto, o clipe retoma na fase certa. A reserva
 procedural também cobre o download do pack e uma falha dele.
 
-**Rede.** A v9 fica congelada nos 8 emotes procedurais de #1266. Os ids 9–16 existem
-somente no catálogo local: `V9_EMOTE_IDS` limita encoder e decoder ao contrato publicado,
-e o encoder rejeita uma dança de captura em snapshot v9. Assim uma aba antiga nunca
-recebe um byte que reinterpretaria ou rejeitaria, e os outros jogadores veem a dança
-procedural de reserva/nenhuma dança até existir um protocolo novo. `ctrl.emote(id,
-elapsed)` já aceita fase remota e reaplicar o mesmo emote só corrige deriva maior que
-0,25 s, sem reiniciar clipe nem rampa; essa capacidade fica pronta para a próxima versão.
+**Rede.** A v9 continua congelada nos 8 emotes procedurais de #1266. A v10 preserva
+os mesmos bytes 1–8 e acrescenta os ids 9–16. `V9_EMOTE_IDS` e `V10_EMOTE_IDS`
+separam os contratos no encoder e decoder; o input normal e o heartbeat escolhem o
+catálogo pela versão negociada. Assim uma conexão v9 nunca recebe um ID novo, enquanto
+uma conexão v10 transmite o emote capturado e sua fase. `ctrl.emote(id, elapsed)`
+reaplica a fase remota sem reiniciar clipe ou rampa quando a deriva fica abaixo de 0,25 s.
 
-**Risco de rollout.** O decoder v9 atual converte qualquer byte fora de `V9_EMOTE_IDS`
-em `null` e preserva o restante do snapshot. O decoder já publicado em #1266 rejeitava
-esse byte, então a tolerância nova é só defesa: o encoder v9 continua proibido de emitir
-9–16. Um protocolo futuro precisa negociar esses IDs com cliente e backend antes de
-publicá-los; mudar apenas o catálogo não libera replicação.
+**Risco de rollout.** O backend deve ser publicado primeiro com o codec v10 e continuar
+codificando v9/v8 por conexão. O cliente prefere v10 e cai para v9/v8; no fallback v9
+ele filtra apenas 9–16, sem derrubar a partida. O decoder v9 trata bytes acima do
+catálogo congelado como `null`, mas o encoder v9 nunca os emite. Mudar apenas o catálogo
+não libera replicação: a versão negociada continua sendo a autoridade.
 
 **Desbloqueio.** O campo `desbloqueio` (`'base'` | `'passe'`) existe para o passe de
 temporada travar depois. Hoje nada é travado; a roda só marca **PASSE**. Ficam na base

@@ -1,5 +1,5 @@
 /* Metadados compartilhados pelo runtime e pelo codec; sem carregar coreografia.
-   A ordem do catálogo é estável. A v9 publica somente os oito IDs congelados abaixo. */
+   A ordem do catálogo é estável. A v9 congelou os oito procedurais; a v10 publica todos. */
 export const EMOTES = [
   { id: 'passinho',    nome: 'Passinho',        origem: 'Funk carioca (RJ) - Patrimônio Imaterial do Rio, 2024', dur: 1.60, laco: true },
   { id: 'samba',       nome: 'Samba no pé',     origem: 'Samba - a base de pés alternados do Rio',               dur: 1.40, laco: true },
@@ -9,8 +9,8 @@ export const EMOTES = [
   { id: 'quadradinho', nome: 'Quadradinho',     origem: 'Funk - o rebolado virado quadrado, em quatro tempos',   dur: 1.60, laco: true },
   { id: 'sarrada',     nome: 'Sarrada no ar',   origem: 'Funk - impulso de quadril com as mãos à frente',        dur: 1.10, laco: false },
   { id: 'salve',       nome: 'Salve',           origem: 'Saudação de rua - o braço que sobe no lugar do aperto de mão', dur: 1.30, laco: false },
-  /* Emotes de captura, clipe do pack lazy emotes-mocap.glb. São locais enquanto a
-     negociação de rede continuar em v9; publicar novos IDs exige um protocolo novo.
+  /* Emotes de captura, clipe do pack lazy emotes-mocap.glb. A v10 publica estes IDs;
+     a v9 continua restrita aos oito procedurais durante o rollout.
      reserva = dança procedural de fallback; desbloqueio base|passe. Ver docs/EMOTES-BR.md. */
   { id: 'capoeira',    nome: 'Ginga',              origem: 'Capoeira - a ginga de roda, captura de movimento', dur: 3.4333, laco: true,  clipe: true, fonte: 'mixamo/capoeira-pack/capoeira', reserva: 'ginga', desbloqueio: 'base' },
   { id: 'meia_lua',    nome: 'Meia-lua de frente', origem: 'Capoeira - chute circular de frente, de dentro pra fora', dur: 2.4667, laco: true, clipe: true, fonte: 'mixamo/capoeira-pack/meia-lua-de-frente', reserva: 'ginga', desbloqueio: 'passe' },
@@ -22,10 +22,8 @@ export const EMOTES = [
   { id: 'comemoracao', nome: 'Comemoração',        origem: 'Gesto - as mãos que celebram a rodada',           dur: 2.7333, laco: true,  clipe: true, fonte: 'mixamo/gestures-pack-basic/happy-hand-gesture', reserva: 'salve', desbloqueio: 'base' },
 ];
 export const EMOTE_IDS = EMOTES.map((e) => e.id);
-export const V9_EMOTE_IDS = Object.freeze([
-  'passinho', 'samba', 'ginga', 'frevo',
-  'forro', 'quadradinho', 'sarrada', 'salve',
-]);
+export const V9_EMOTE_IDS = Object.freeze(EMOTE_IDS.slice(0, 8));
+export const V10_EMOTE_IDS = Object.freeze(EMOTE_IDS.slice(0, 16));
 const POR_ID = new Map(EMOTES.map((e) => [e.id, e]));
 export const emoteInfo = (id) => POR_ID.get(id) || null;
 // Sem campo explícito o emote é da base: os 8 procedurais nasceram liberados.

@@ -186,14 +186,14 @@ try {
 
   const input = { ax: 0, az: 0, crouch: false, shift: false, jump: false };
   game._emoteAtual = 'samba'; mp.stepPlayer(game.player, input, 1 / 60);
-  game._emoteAtual = 'capoeira'; mp.stepPlayer(game.player, input, 1 / 60);
+  game._emoteAtual = 'local-only'; mp.stepPlayer(game.player, input, 1 / 60);
   game._emoteAtual = null; mp.stepPlayer(game.player, input, 1 / 60);
   check('R3P13', inputs.at(-3)?.emote === 'samba' && inputs.at(-2)?.emote === null && inputs.at(-1)?.emote === null,
     inputs.slice(-3).map(i => i.emote));
   game.paused = true; game._emoteAtual = 'samba'; mp._inputAt = 0;
   mp._pulsoDePausa();
   const sambaPausado = inputs.at(-1)?.emote;
-  game._emoteAtual = 'capoeira'; mp._inputAt = 0;
+  game._emoteAtual = 'local-only'; mp._inputAt = 0;
   mp._pulsoDePausa();
   check('R3P16', sambaPausado === 'samba' && inputs.at(-1)?.emote === null,
     { v9: sambaPausado, captura: inputs.at(-1)?.emote });

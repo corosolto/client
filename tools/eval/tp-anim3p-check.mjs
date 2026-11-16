@@ -95,28 +95,31 @@ async function abrir() {
     if (depois === antes) throw new Error(`mutante ${MUT} não aplicou em ${r.request().url()}`);
     await r.fulfill({ response: res, body: depois });
   });
-  const mutaGlb = (t) => {
-    if (MUT === 'pega-morta') return t.replace('solveCCDIK(this.ikL.chain, this.ikL.end, _ikTgt, { iterations: 12, endOffset: this.ikL.endOffset });', 'void _ikTgt;');
-    if (MUT === 'torso-mudo') return t.replace('_deltaMundo(torso.spines[0], cosY, 0, -sinY, k * 0.20);', 'void k; void cosY; void sinY;');
-    if (MUT === 'lean-morto') return t.replace(') * 0.12;', ') * 0;');
-    if (MUT === 'flinch-mudo') return t.replace('this._flinchDur = 0.18;', 'this._flinchDur = 0;');
-    if (MUT === 'agachado-estatua') return t.replace('{ this._fireDur = 0.12; this._fireT = 0; return; }', '{ return; }');
-    if (MUT === 'ar-correndo') return t.replace('} else if (this._ar && this.actions.jump) {', '} else if (false) {');
-    if (MUT === 'quadril-colado') return t.replace('const teto = 0.61;', 'const teto = 0;');
-    if (MUT === 'reload-sem-clipe') return t.replace('this._reloadClip = this._playUpper(', 'this._reloadClip = false && this._playUpper(');
-    if (MUT === 'reload-repete-clipe') return t.replace("this._reloadDur > 0 && this._reloadClip && !this._upperName.startsWith('reload_')", 'this._reloadDur > 0 && this._reloadClip');
-    if (MUT === 'hit-sem-clipe') return t.replace('this._hitClip = this._playUpper(', 'this._hitClip = false && this._playUpper(');
-    return t;
-  };
-  if (['pega-morta', 'torso-mudo', 'lean-morto', 'flinch-mudo', 'agachado-estatua', 'ar-correndo', 'quadril-colado', 'reload-sem-clipe', 'reload-repete-clipe', 'hit-sem-clipe'].includes(MUT)) {
-    await reescreve(/\/js\/glbchars\.js(?:\?|$)/, mutaGlb);
-  }
-  await page.route(/\/js\/glbchars-sempack-eval\.js(?:\?|$)/, async (r) => {
-    const res = await fetch(`${BASE}/js/glbchars.js`);
-    const antes = await res.text();
-    const depois = mutaGlb(antes).replace("assetUrl('models/anims/extras.glb')", "assetUrl('models/anims/extras-ausente.glb')");
-    if (depois === antes) throw new Error('variante sem pack não foi aplicada');
-    await r.fulfill({ status: res.status, headers: { 'content-type': 'text/javascript' }, body: depois });
+  const glbMutations = new Map([
+    ['pega-morta', ['solveCCDIK(this.ikL.chain, this.ikL.end, _ikTgt, { iterations: 12, endOffset: this.ikL.endOffset });', 'void _ikTgt;']],
+    ['torso-mudo', ['_deltaMundo(torso.spines[0], cosY, 0, -sinY, k * 0.20);', 'void k; void cosY; void sinY;']],
+    ['lean-morto', [') * 0.12;', ') * 0;']],
+    ['flinch-mudo', ['this._flinchDur = 0.18;', 'this._flinchDur = 0;']],
+    ['agachado-estatua', ['{ this._fireDur = 0.12; this._fireT = 0; return; }', '{ return; }']],
+    ['ar-correndo', ['} else if (this._ar && this.actions.jump) {', '} else if (false) {']],
+    ['quadril-colado', ['const teto = 0.61;', 'const teto = 0;']],
+    ['reload-sem-clipe', ['this._reloadClip = this._playUpper(', 'this._reloadClip = false && this._playUpper(']],
+    ['reload-repete-clipe', ["this._reloadDur > 0 && this._reloadClip && !this._upperName.startsWith('reload_')", 'this._reloadDur > 0 && this._reloadClip']],
+    ['hit-sem-clipe', ['this._hitClip = this._playUpper(', 'this._hitClip = false && this._playUpper(']],
+  ]);
+  const glbMutation = glbMutations.get(MUT);
+  if (glbMutation) await reescreve(/\/js\/glbchars\.js/, (t) => t.replace(...glbMutation));
+  // A instância procedural mede indisponibilidade real do pack, não uma corrida
+  // contra o carregamento assíncrono. A rota mais específica também preserva o
+  // mutante na cópia isolada (Playwright prioriza a última rota registrada).
+  await reescreve(/\/js\/glbchars\.js\?sempack=1$/, (t) => {
+    let out = t.replace("assetUrl('models/anims/extras.glb')", "assetUrl('models/anims/extras-ausente.glb')");
+    if (glbMutation) {
+      const mutated = out.replace(...glbMutation);
+      if (mutated === out) throw new Error(`mutante ${MUT} não aplicou na variante sem pack`);
+      out = mutated;
+    }
+    return out;
   });
   if (MUT === 'lod-cego') await reescreve(/\/js\/game\.js/, (t) => t.replace('const passo = distCam > 45 ? 0.1 : (distCam > 25 ? 0.05 : 0);', 'const passo = 0;'));
   if (MUT === 'reload-mudo') await reescreve(/\/js\/game\.js/, (t) => t.split('b.mesh?.ctrl?.reload?.(Wb.reload || 2.4); ').join('').split(' b.mesh?.ctrl?.reload?.(Wb.reload || 2.4);').join(''));
@@ -200,8 +203,8 @@ async function abrir() {
 /* ---- AN1–AN3: até 8 bots; cada cláusula usa um rig que consiga exercê-la ----
    Dois caminhos medidos em corpos separados, nunca misturados por flag:
    · produção (pack extras.glb carregado): AN12 recarga com reload_rifle, AN13 hit_*;
-   · fallback procedural (o MESMO glbchars.js servido como variante de teste,
-     com extras.glb apontado para um ativo inexistente): AN1, AN2 e AN6.
+   · fallback procedural (o MESMO glbchars.js importado como outra instância de módulo,
+     ?sempack=1, com extras.glb reescrito para um asset inexistente): AN1, AN2 e AN6.
      A cláusula exige que esse corpo não tenha tocado clipe nenhum. */
 const { page, fechar } = await abrir();
 const m = await page.evaluate(async () => {
@@ -391,7 +394,7 @@ const an7 = await page.evaluate(async () => {
 });
 await fechar();
 
-/* ---- AN4: fiação no jogo (jogador 3P + bot colado no jogador) ---- */
+/* ---- AN4: fiação no jogo (jogador 3P + caller real de tiro do bot) ---- */
 const an4 = {};
 if (MUT !== 'opcional-fantasma') {
   const { page: p2, fechar: f2 } = await abrir();
@@ -403,12 +406,14 @@ if (MUT !== 'opcional-fantasma') {
     p.ammo[w] = { mag: 0, res: 30 };
     g._startReload();
     const jogadorRecarregando = (g.playerTP?.ctrl?._reloadDur || 0) > 0;
-    const b = g.bots.find(x => x.mesh?.ctrl && x.alive && x.team !== g.playerTeam);
-    b.mag = 0; b.nextShotAt = 0; b.reactAt = 0; b.focusUntil = 0; b.alertUntil = 0;
+    const { WEAPONS } = await import('/js/data/weapons.js');
+    const b = g.bots.find(x => x.mesh?.ctrl && x.alive && x.team !== g.playerTeam && (WEAPONS[x.weapon]?.mag || 0) > 0);
+    if (!b) throw new Error('sem bot inimigo vivo com arma de fogo');
+    b.mag = 1; b.nextShotAt = 0; b.reactAt = 0; b.focusUntil = 0; b.alertUntil = 0;
     b.target = g.player;
     b.pos.set(g.player.pos.x + 2.5, g.player.pos.y, g.player.pos.z); b.think = 0;
-    let botRecarregou = false;
-    for (let i = 0; i < 900 && !botRecarregou; i++) { g.update(1 / 60); botRecarregou = (b.mesh?.ctrl?._reloadDur || 0) > 0; }
+    g._botShootNN(b, g.player);
+    const botRecarregou = (b.mesh?.ctrl?._reloadDur || 0) > 0;
     // AN10: cadência de animação cai com a distância (bot teleportado pra longe)
     const longe = g.bots.find(x => x.mesh?.ctrl && x.alive && x !== b) || b;
     longe.pos.set(g.player.pos.x + 80, longe.pos.y, g.player.pos.z + 80);

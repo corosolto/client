@@ -3219,7 +3219,6 @@ export class Game {
     else this.vm.rig.startDraw();
     this.el.weaponName.textContent = WEAPONS[this.player.weapon].name;
     const slots = { E: 1, B: 0 };
-    this.playerTP?.ctrl?.revive?.();
     for (const b of this.bots) {
       if (b._objectiveNpc) continue;
       const botSpawn = place(b, b.team, slots[b.team]++);
@@ -3230,8 +3229,8 @@ export class Game {
       b.mesh.group.rotation.set(0, b.yaw, 0);
       b.mesh.group.position.copy(b.pos);
       b.mesh.group.visible = true;
-      if (b.mesh.isGLB) b.mesh.ctrl.revive();
     }
+    this._retomarCorposDaCerimonia();
   }
 
   /* RITMO: o round tem ALVO (this.killsToWin) — quem chega primeiro fecha na hora. Roda a
@@ -3293,6 +3292,10 @@ export class Game {
   _cerimoniaCorpos(winner) {
     for (const b of this.bots) if (b.alive) b.mesh?.ctrl?.ceremony?.(!!winner && winner === b.team);
     if (this.player.alive) this.playerTP?.ctrl?.ceremony?.(!!winner && winner === this.playerTeam);
+  }
+  _retomarCorposDaCerimonia() {
+    if (this.player.alive) this.playerTP?.ctrl?.revive?.();
+    for (const b of this.bots) if (b.alive) b.mesh?.ctrl?.revive?.();
   }
   _endRound(forcedWinner = null) {
     const p = this.roundKills.E, b = this.roundKills.B;
@@ -4284,6 +4287,7 @@ export class Game {
     if (this.vm.melee?.active) this.vm.melee.attack(heavy ? 'heavy' : 'quick');
     else if (this.vm.authored?.active('knife')) this.vm.authored.shoot('knife');
     else this.vm.swingAt = this.time;
+    if (this.camView !== 'first') this.playerTP?.ctrl?.shoot?.();
     this._meleeHit();
     return true;
   }

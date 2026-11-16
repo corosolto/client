@@ -204,6 +204,7 @@ Cobertura: **4143 de 10191 linhas (41%)** do `game.js` têm dono declarado. O re
 | 3230 | `_checkCtfAlvo()` | 13 |
 | 3243 | `_checkPace()` | 13 |
 | 3256 | `_cerimoniaCorpos()` | 4 |
+| 3296 | `_retomarCorposDaCerimonia()` | 4 |
 | 3256 | `_endRound()` | 37 |
 | 3293 | `_roundWinnerVoice()` | 12 |
 | 3305 | `_fimDaPartida()` | 13 |

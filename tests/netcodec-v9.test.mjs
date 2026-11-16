@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 const codec = await import(process.env.CODEC_UNDER_TEST || '../public/js/netcodec.js');
-const { EMOTE_IDS, V9_EMOTE_IDS } = await import('../public/js/data/emote-catalog.js');
+const { EMOTE_IDS, V9_EMOTE_IDS, V10_EMOTE_IDS } = await import('../public/js/data/emote-catalog.js');
 const ids = ['passinho','samba','ginga','frevo','forro','quadradinho','sarrada','salve'];
 const entity = (id, extra = {}) => ({id,name:`P${id}`,team:'E',bot:id % 2,alive:true,
   x:1,y:0,z:2,yaw:0,pitch:0,hp:100,weapon:'ak',k:0,d:0,respawnIn:0,...extra});
@@ -71,13 +71,29 @@ test('R8 emote id from a newer catalog decodes as no emote without dropping the 
     assert.deepEqual({...out,ents:null},{...base,ents:null},`id ${id}`);
   }
 });
-test('R9 v9 never emits catalog ids that older v9 clients reject', () => {
+test('R9 v9 downconverts newer catalog ids without emitting bytes older clients reject', () => {
   assert.deepEqual(V9_EMOTE_IDS, ids);
   assert.deepEqual(EMOTE_IDS.slice(8), ['capoeira','meia_lua','bencao','uprock','freeze','continencia','marra','comemoracao']);
   for (const emote of EMOTE_IDS.slice(8)) {
-    assert.throws(() => codec.encodeSnapshot(snapshot([entity(1, { emote })]), 9), /emote/, emote);
+    const wire = codec.encodeSnapshot(snapshot([entity(1, { emote, emoteElapsed: 1 })]), 9);
+    assert.equal(wire.at(-2), 0, emote);
+    const out = codec.decodeSnapshot(wire);
+    assert.equal(out.ents[0].emote, null, emote);
+    assert.equal(out.ents[0].emoteElapsed, 0, emote);
   }
   const wire = codec.encodeSnapshot(snapshot(ids.map((emote, i) => entity(i + 1, { emote }))), 9);
   const out = codec.decodeSnapshot(wire);
   assert.deepEqual(out.ents.map((ent) => ent.emote), ids);
+});
+test('R10 v10 publishes every capture emote while preserving frozen v9 bytes', () => {
+  assert.deepEqual(V10_EMOTE_IDS, EMOTE_IDS.slice(0, 16));
+  const wire = codec.encodeSnapshot(snapshot(EMOTE_IDS.map((emote, i) =>
+    entity(i + 1, { emote, emoteElapsed: i / 10 }))), 10);
+  const out = codec.decodeSnapshot(wire);
+  assert.deepEqual(out.ents.map((ent) => ent.emote), EMOTE_IDS);
+  for (const [i, emote] of EMOTE_IDS.entries()) {
+    const one = codec.encodeSnapshot(snapshot([entity(1, { emote })]), 10);
+    assert.equal(one.at(-2), i + 1, emote);
+  }
+  assert.equal(codec.decodeSnapshot(codec.encodeSnapshot(snapshot([entity(1, { emote: 'capoeira' })]), 9)).ents[0].emote, null);
 });

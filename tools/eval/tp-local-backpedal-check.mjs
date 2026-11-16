@@ -12,7 +12,7 @@ const root = process.cwd();
 const option = name => process.argv.find(a => a.startsWith(name + '='))?.slice(name.length + 1);
 const preview = process.argv.includes('--candidate-preview');
 const mutant = option('--mutante') || '';
-assert.ok(['', 'no-back', 'wrong-sign', 'player', 'sem-strafe', 'lado-invertido'].includes(mutant), 'mutante desconhecido');
+assert.ok(['', 'no-back', 'wrong-sign', 'player', 'sem-strafe', 'lado-invertido', 'strafe-tempo', 'strafe-cauda-tempo'].includes(mutant), 'mutante desconhecido');
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const loadedInputs = {};
 function read(file) {
@@ -78,6 +78,7 @@ const cases = [
   {name: 'backward', yaw: 0, ax: 0, az: 1, back: true},
   {name: 'left-rotated', yaw: .73, ax: -1, az: 0, back: false},
   {name: 'right-rotated', yaw: -1.2, ax: 1, az: 0, back: false},
+  {name: 'strafe-switch', yaw: 0, vel: [2, 0, .25], switchAt: 40, switchVel: [-2, 0, .25], dynamicSide: true, back: false},
   {name: 'stopped', yaw: .3, ax: 0, az: 0, back: false, idle: true},
   {name: 'backward-rotated', yaw: Math.PI / 2, ax: 0, az: 1, back: true},
   {name: 'forward-rotated', yaw: Math.PI / 2, ax: 0, az: -1, back: false},
@@ -99,7 +100,21 @@ function fixture(id, weapon, c, semPack) {
     ray: new THREE.Raycaster()};
   const update = built.ctrl.update.bind(built.ctrl);
   const state = {built, game, args: null};
-  built.ctrl.update = (...args) => {state.args = args; return update(...args);};
+  built.ctrl.update = (...args) => {
+    state.args = args;
+    const result = update(...args);
+    const pair = new Set([built.ctrl._locoAName, built.ctrl._locoBName].filter(Boolean));
+    const strafe = Object.entries(built.ctrl.actions)
+      .filter(([name, candidate]) => name.startsWith('strafe_') && candidate.isRunning() && candidate.getEffectiveWeight() > 0);
+    const candidates = mutant === 'strafe-cauda-tempo'
+      ? strafe.filter(([name]) => !pair.has(name))
+      : strafe.filter(([name]) => pair.has(name));
+    const action = candidates.sort((a, b) => b[1].getEffectiveWeight() - a[1].getEffectiveWeight())[0]?.[1];
+    if (action && (mutant === 'strafe-tempo' || mutant === 'strafe-cauda-tempo')) {
+      action.time = (action.time + dt / 2) % action.getClip().duration;
+    }
+    return result;
+  };
   return state;
 }
 function step(state, c, method) {
@@ -114,11 +129,12 @@ function step(state, c, method) {
   built.group.updateMatrixWorld(true);
   const ctrl = built.ctrl, action = ctrl.cur;
   const clip = Object.keys(ctrl.actions).find(k => ctrl.actions[k] === action), dominant = ctrl.curName;
-  const actions = Object.fromEntries(Object.entries(ctrl.actions).map(([name, a]) => [name, {time: a.time, rate: a.getEffectiveTimeScale(), weight: a.getEffectiveWeight(), enabled: a.enabled, running: a.isRunning()}]));
+  const loco = [ctrl._locoAName, ctrl._locoBName].filter(Boolean);
+  const actions = Object.fromEntries(Object.entries(ctrl.actions).map(([name, a]) => [name, {time: a.time, rate: a.getEffectiveTimeScale(), duration: a.getClip().duration, weight: a.getEffectiveWeight(), enabled: a.enabled, running: a.isRunning()}]));
   const bones = [];
   ctrl.model.traverse(o => {if (o.isBone && /(Leg|Foot)/.test(o.name)) bones.push([o.name, ...o.quaternion.toArray()]);});
   assert.ok(bones.length, 'nenhum osso Leg/Foot medido');
-  return {sp, clip, dominant, time: action.time, rate: action.getEffectiveTimeScale(), duration: action.getClip().duration, actions, bones,
+  return {sp, clip, dominant, loco, time: action.time, rate: action.getEffectiveTimeScale(), duration: action.getClip().duration, actions, bones,
     authority: {player: JSON.parse(before), camera: {position: g.camera.position.toArray(), quaternion: g.camera.quaternion.toArray()}, eye: g._eyeWorld.toArray(), aim: g._tpAimPoint.toArray(), bodyRoot: built.group.matrixWorld.toArray()}};
 }
 const rows = [], clips = {}, clipDetails = {}, failureTypes = new Set();
@@ -138,10 +154,14 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
       clips[id] = Object.fromEntries(Object.entries(clipDetails[id]).map(([name, clip]) => [name, {name: clip.name, duration: clip.duration, trackNames: clip.tracks.map(t => t.name), payloadSHA256: digest(JSON.stringify(clip))}]));
     }
     const errors = [], samples = [];
-    let authorityFrames = 0, negativeFrames = 0;
+    let authorityFrames = 0, negativeFrames = 0, temporalFrames = 0, previousPair = '', previousPhases = new Map();
     const check = fn => {try {fn();} catch (e) {failureTypes.add(e.name); if (!errors.includes(e.message)) errors.push(e.message);}};
     try {
       for (let frame = 0; frame < 60; frame++) {
+        if (c.switchAt === frame) {
+          tested.game.player.vel.set(...c.switchVel);
+          reference.game.player.vel.set(...c.switchVel);
+        }
         const a = step(tested, c, selected), b = step(reference, c, legacy);
         check(() => assert.deepEqual(a.authority, b.authority, 'autoridade/câmera/aim/root divergiram'));
         authorityFrames++;
@@ -151,13 +171,42 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
         }
         if (frame >= 30) {
           const ctrl = tested.built.ctrl;
-          const backName = ctrl.oneHanded && ctrl.actions.walk_back_pistol ? 'walk_back_pistol' : ctrl._loco === 'run' ? 'run_back' : 'walk_back';
-          const lado = /left/.test(c.name) ? 'strafe_left' : /right|quarter/.test(c.name) ? 'strafe_right' : null;
+          const backName = ctrl._loco === 'run' ? 'run_back' : (ctrl.oneHanded && ctrl.actions.walk_back_pistol ? 'walk_back_pistol' : 'walk_back');
+          const lado = c.dynamicSide
+            ? (tested.args[5] > 0 ? 'strafe_right' : 'strafe_left')
+            : /left/.test(c.name) ? 'strafe_left' : /right|quarter/.test(c.name) ? 'strafe_right' : null;
           const ladoNome = lado && ctrl.oneHanded && ctrl.actions[`${lado}_pistol`] ? `${lado}_pistol` : lado;
           const legado = c.back ? (ctrl.oneHanded && ctrl.actions.walk1h ? 'walk1h' : 'walk') : 'run';
           const expected = c.idle ? (ctrl.oneHanded && ctrl.actions.idle1h ? 'idle1h' : 'idle') : semPack ? legado : ladoNome || (c.back ? backName : 'run');
           check(() => assert.equal(a.dominant, expected, `clip ativo incorreto: ${a.dominant} em vez de ${expected}`));
           if (!c.idle) check(() => assert.equal(Math.sign(a.actions[a.dominant].rate), semPack && c.back ? -1 : 1, 'sentido real do mixer incorreto'));
+          if (!c.idle) {
+            const pair = a.loco.length ? a.loco : [a.dominant];
+            const pairKey = pair.join('|');
+            const names = new Set([
+              ...pair,
+              ...Object.entries(a.actions)
+                .filter(([name, action]) => name.startsWith('strafe_') && action.running && action.weight > 0)
+                .map(([name]) => name),
+            ]);
+            const nextPhases = new Map();
+            for (const name of names) {
+              const active = a.actions[name], previous = previousPhases.get(name);
+              if (!active?.running) continue;
+              const pairChanged = previousPair && pairKey !== previousPair;
+              const reiniciou = pairChanged && pair.includes(name);
+              if (previous || reiniciou) {
+                const base = reiniciou ? 0 : previous.time;
+                const time = ((base + dt * active.rate) % active.duration + active.duration) % active.duration;
+                check(() => assert.ok(Math.abs(time - active.time) < 1e-9,
+                  `${name} não ${reiniciou ? 'reiniciou' : 'avançou'} pelo rate no quadro ${frame}: ${time} != ${active.time}`));
+                temporalFrames++;
+              }
+              nextPhases.set(name, active);
+            }
+            previousPair = pairKey;
+            previousPhases = nextPhases;
+          }
           check(() => assert.equal(tested.args[4], c.back, 'back incorreto'));
           check(() => assert.equal(tested.args[2], false, 'hasTarget alterado'));
           check(() => assert.equal(tested.args[3], a.sp, 'speed alterado'));
@@ -166,12 +215,10 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
       }
       if (!c.idle) {
         assert.notDeepEqual(samples[0].bones, samples[1].bones, 'pose real não avançou');
-        const a = samples[1], b = samples[2], time = ((a.time + (b.frame - a.frame) * dt * a.rate) % a.duration + a.duration) % a.duration;
-        const blended = Object.entries(a.actions).some(([name, action]) => name.startsWith('strafe_') && action.weight > 0);
-        if (!blended) assert.ok(Math.abs(time - b.time) < 1e-9, 'trajetória temporal difere do rate assinado');
+        assert.ok(temporalFrames > 0, 'nenhum quadro temporal do clipe dominante foi medido');
       }
     } catch (e) {failureTypes.add(e.name); errors.push(e.message);}
-    rows.push({id, weapon, case: semPack ? `${c.name} sem-pack` : c.name, pass: !errors.length, errors, authorityFrames, negativeFrames, samples});
+    rows.push({id, weapon, case: semPack ? `${c.name} sem-pack` : c.name, pass: !errors.length, errors, authorityFrames, negativeFrames, temporalFrames, samples});
   }
 }
 for (const [file, sha] of Object.entries(loadedInputs)) assert.equal(digest(fs.readFileSync(path.join(root, file))), sha, 'asset mudou durante gate');

@@ -14,6 +14,7 @@
      lobby-sem-clipe         DANÇAR do lobby registra driver sem `clipe`  -> EMM11
     partida-sem-clipe       o primeiro uso na partida não registra o driver -> EMM11
      travessao-no-titulo     `—` volta numa `origem` (title da roda)      -> EMM0c
+     pack-ausente-mudo       falha do pack não deixa erro nem log         -> EMM10
    Uso: node tools/eval/emotes-mocap-check.mjs [--self-test | --mutante=<nome>] */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -25,7 +26,7 @@ import { spawnSync } from 'node:child_process';
 import { root, requests, THREE, CHARACTERS, parseGlb, carregaRuntime, once, step, esperaClipe } from './lib/glbchars-node.mjs';
 
 const mutant = process.argv.find((x) => x.startsWith('--mutante='))?.split('=')[1] || '';
-const mutants = ['emote-mocap-mudo', 'arma-visivel-no-emote', 'emote-nao-cancela', 'id-renumerado', 'quadril-fora-da-capsula', 'rotacao-local', 'lobby-sem-clipe', 'partida-sem-clipe', 'travessao-no-titulo'];
+const mutants = ['emote-mocap-mudo', 'arma-visivel-no-emote', 'emote-nao-cancela', 'id-renumerado', 'quadril-fora-da-capsula', 'rotacao-local', 'lobby-sem-clipe', 'partida-sem-clipe', 'travessao-no-titulo', 'pack-ausente-mudo'];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
 if (process.argv.includes('--self-test')) {
   for (const kind of ['', ...mutants]) {
@@ -271,8 +272,13 @@ check('EMM9-ressincronia', () => {
 
 /* EMM10 — pack ausente: a falha original fica observável no controlador e no log,
    enquanto o emote segue com a coreografia de reserva. */
-if (!mutant) {
-  const { G: M } = await carregaRuntime({ glbchars: (s) => once(s, "assetUrl('models/anims/emotes-mocap.glb')", "assetUrl('models/anims/emotes-ausente.glb')") });
+if (!mutant || mutant === 'pack-ausente-mudo') {
+  const { G: M } = await carregaRuntime({ glbchars: (s) => {
+    let source = once(s, "assetUrl('models/anims/emotes-mocap.glb')", "assetUrl('models/anims/emotes-ausente.glb')");
+    if (mutant !== 'pack-ausente-mudo') return source;
+    source = once(source, "console.error('[glbchars] falha ao carregar models/anims/emotes-mocap.glb', error);", 'void error;');
+    return once(source, '.catch((error) => { this._emotePackError = error; });', '.catch(() => {});');
+  } });
   await M.preloadCharacterAssets(['capitao']);
   const m = body('capitao', 'ak', M), c = body('capitao', 'ak', M);
   const ausentesAntes = pedidosPack('emotes-ausente.glb');
@@ -375,7 +381,8 @@ console.log(`medidas ${JSON.stringify(medidas)}`);
 if (mutant) {
   assert.ok(failures.length > 0, `MUTAÇÃO PASSOU — ${mutant}`);
   const ESPERADO = { 'emote-mocap-mudo': ['EMM3', 'EMM4', 'EMM7', 'EMM9'], 'arma-visivel-no-emote': ['EMM5'], 'emote-nao-cancela': ['EMM6'], 'id-renumerado': ['EMM0-'],
-    'quadril-fora-da-capsula': ['EMM12'], 'rotacao-local': ['EMM13'], 'lobby-sem-clipe': ['EMM11'], 'partida-sem-clipe': ['EMM11'], 'travessao-no-titulo': ['EMM0c'] };
+    'quadril-fora-da-capsula': ['EMM12'], 'rotacao-local': ['EMM13'], 'lobby-sem-clipe': ['EMM11'], 'partida-sem-clipe': ['EMM11'], 'travessao-no-titulo': ['EMM0c'],
+    'pack-ausente-mudo': ['EMM10'] };
   for (const id of ESPERADO[mutant]) assert.ok(failures.some((x) => x.id.startsWith(id)), `${mutant} não reprovou ${id}: ${failures.map((x) => x.id).join(', ')}`);
   console.log(`MUTANTE ${mutant} REPROVADO: ${failures.map((x) => x.id).join(', ')}`);
 } else {
