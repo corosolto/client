@@ -34,8 +34,9 @@ const MUT_ALVO = {
   'granada-perdida-lazy': ['EX7b-granada-antes-do-pack'],
   'saque-pistola-mudo': ['EX5c-saque-pistola-fallback'],
   'saque-pack-fallback-mudo': ['EX9b-pack-ausente'],
+  'reload-reinicia-fim': ['EX3b-reload-termina'],
 };
-const mutants = ['strafe-mudo', 'reload-perna-congelada', 'hit-sem-direcao', 'saque-mudo', 'saque-pistola-mudo', 'saque-pack-fallback-mudo', 'faca-usa-rifle', 'vitoria-muda', 'cerimonia-vira-idle', 'flinch-preso-no-hit', 'granada-perdida-lazy', ...Object.keys(MUT_JOGO)];
+const mutants = ['strafe-mudo', 'reload-perna-congelada', 'reload-reinicia-fim', 'hit-sem-direcao', 'saque-mudo', 'saque-pistola-mudo', 'saque-pack-fallback-mudo', 'faca-usa-rifle', 'vitoria-muda', 'cerimonia-vira-idle', 'flinch-preso-no-hit', 'granada-perdida-lazy', ...Object.keys(MUT_JOGO)];
 assert.ok(!mutant || mutants.includes(mutant), `mutante desconhecido: ${mutant}`);
 if (process.argv.includes('--self-test')) {
   for (const kind of ['', ...mutants]) {
@@ -88,6 +89,7 @@ if (mutant === 'vitoria-muda') once("this._to(nome);", "this._to('idle');");
 if (mutant === 'cerimonia-vira-idle') once("if (/^(victory|defeat)$/.test(this.curName || '')) {", 'if (false) {');
 if (mutant === 'flinch-preso-no-hit') once("    this._hitClip = name.startsWith('hit_');", '');
 if (mutant === 'granada-perdida-lazy') once('      if (this._grenadePending) this._retomaGranada();\n', '');
+if (mutant === 'reload-reinicia-fim') once('if (reloadTerminou) {', 'if (false) {');
 source = source.replace(/from (['"])([^'"\n]+)\1/g, (all, quote, spec) => {
   const file = spec === 'three' ? path.join(root, 'public/vendor/three.module.js')
     : spec.startsWith('three/addons/') ? path.join(root, 'public/vendor/addons', spec.slice(13))
@@ -164,6 +166,15 @@ check('EX3-reload-pernas-livres', () => {
   step(r, 12, 1); step(controle, 12, 1);
   const anguloPerna = r.ctrl.corpo.get('LeftFoot').getWorldQuaternion(new THREE.Quaternion()).angleTo(controle.ctrl.corpo.get('LeftFoot').getWorldQuaternion(new THREE.Quaternion()));
   assert.ok(anguloPerna < 1e-3, `recarga alterou perna em ${anguloPerna} rad`);
+});
+check('EX3b-reload-termina', () => {
+  const f = body(); f.ctrl.reload(1);
+  assert.equal(f.ctrl._upperName, 'reload_rifle');
+  f.ctrl._tickUpper(f.ctrl._upperDur);
+  assert.equal(f.ctrl._upperName, null, 'clipe de recarga reiniciou ao terminar');
+  assert.equal(f.ctrl._reloadClip, false);
+  assert.equal(f.ctrl._reloadDur, 0);
+  assert.equal(f.ctrl._reloadT, 0);
 });
 check('EX4-hit-direcao', () => {
   a.ctrl.flinch({ x: 0, z: -1 }, 0.5, false); assert.equal(a.ctrl._upperName, 'hit_front');

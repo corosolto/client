@@ -1461,8 +1461,11 @@ class CharController {
       this._drawPending = false; this._drawRequested = false;
       this._playUpper(`draw_${this.oneHanded ? 'pistol' : 'rifle'}`, 0.65);
     } else if (this._reloadDur > 0 && this._reloadClip) {
+      const reloadTerminou = this._upperName.startsWith('reload_');
       this._stopUpper();
-      this._startReloadClip();
+      if (reloadTerminou) {
+        this._reloadClip = false; this._reloadDur = 0; this._reloadT = 0;
+      } else this._startReloadClip();   // hit interrompeu o clipe: retoma só o restante
     } else this._stopUpper();
   }
 
