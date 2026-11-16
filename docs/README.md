@@ -1,10 +1,10 @@
-# `docs/` — site de documentação para desenvolvedores (Docusaurus 3)
+# `docs/` — developer documentation site (Docusaurus 3)
 
-Aplicação **separada** do site Astro da raiz. Tem o próprio `package.json` e o próprio
-`node_modules`. Nada aqui é importado pelo jogo nem pelo site principal.
+A **separate** application from the Astro site at the root. It has its own `package.json` and its
+own `node_modules`. Nothing here is imported by the game or the main site.
 
-Conteúdo: instrumentação de IA, processos, quality gates, arquitetura, estado atual e
-como colaborar. Tudo escrito contra o código, com `arquivo:linha` conferido.
+Contents: AI instrumentation, processes, quality gates, architecture, current status, and how to
+contribute. Everything is written against the code, with verified `file:line` references.
 
 ```
 docs/
@@ -44,11 +44,11 @@ docs/
   runbooks/operacao-autonoma.md  diagnóstico e rollback de produção (npm run ops:diag)
 ```
 
-> Só o que está em `docs/docs/` entra no site Docusaurus — é o `routeBasePath: '/'` do
-> preset. Os `.md` de trabalho interno não são página publicada e não fazem parte
-> da árvore pública.
+> Only the contents of `docs/docs/` are included in the Docusaurus site — this is the preset's
+> `routeBasePath: '/'`. Internal working `.md` files are not published pages and are not part
+> of the public tree.
 
-## Subir localmente
+## Running locally
 
 ```bash
 cd docs
@@ -56,8 +56,9 @@ npm install
 npm start          # http://localhost:3000/docs/
 ```
 
-`npm start` respeita o `baseUrl: '/docs/'`, então o dev server abre em
-`http://localhost:3000/docs/`, não na raiz. É de propósito: é o mesmo caminho da produção.
+`npm start` respects `baseUrl: '/docs/'`, so the dev server opens at
+`http://localhost:3000/docs/`, not at the root. This is intentional: it is the same path used
+in production.
 
 Build:
 
@@ -67,11 +68,11 @@ npm run build      # gera docs/build/
 npm run serve      # serve docs/build/ localmente pra conferir
 ```
 
-### O build RODA — e o que precisou para rodar (05/08/2026)
+### The build RUNS — and what it took to run (08/05/2026)
 
-Até 05/08 esta seção dizia "ninguém rodou `npm run build` ainda", porque a doc foi
-escrita numa máquina sem rede. Rodou. `npm install` (1.307 pacotes) e
-`npx docusaurus build` completam, com **uma** correção necessária:
+Until 08/05, this section said "nobody has run `npm run build` yet," because the documentation
+was written on a machine without network access. It has now been run. `npm install` (1,307
+packages) and `npx docusaurus build` complete, with **one** necessary fix:
 
 ```
 [ERROR] Error: Unable to build website for locale pt-BR.
@@ -81,113 +82,112 @@ escrita numa máquina sem rede. Rodou. `npm install` (1.307 pacotes) e
      * options has an unknown property 'name'  … 'color' … 'reporters' … 'reporter'
 ```
 
-**Causa raiz:** `webpackbar@6.0.1` (o que o Docusaurus 3.6.3 traz) passa `{name, color,
-reporter, reporters}` para o `ProgressPlugin` do webpack. O webpack resolvido aqui é o
-**5.109.2**, que apertou o schema desse plugin e passou a rejeitar propriedade
-desconhecida. Não é config nossa nem conteúdo: é incompatibilidade entre duas
-dependências transitivas.
+**Root cause:** `webpackbar@6.0.1` (the version shipped with Docusaurus 3.6.3) passes
+`{name, color, reporter, reporters}` to webpack's `ProgressPlugin`. The webpack version resolved
+here is **5.109.2**, which tightened that plugin's schema and began rejecting unknown properties.
+This is neither our configuration nor our content: it is an incompatibility between two
+transitive dependencies.
 
-**Correção:** um `overrides` de uma linha em `docs/package.json`, subindo o `webpackbar`
-para a `7.0.0` (a versão que fala com o webpack 5.10x). É a menor mudança que resolve —
-não mexe na versão do Docusaurus nem na do webpack:
+**Fix:** a one-line `overrides` entry in `docs/package.json`, upgrading `webpackbar` to `7.0.0`
+(the version compatible with webpack 5.10x). It is the smallest change that resolves the issue —
+it does not change the Docusaurus or webpack version:
 
 ```json
 "overrides": { "webpackbar": "^7.0.0" }
 ```
 
-Depois disso: `✔ Client: Compiled successfully` e `[SUCCESS] Generated static files in
-"build"`. O `npm start` (dev server) usa o mesmo webpack e o mesmo plugin, então a
-correção vale para os dois.
+After that: `✔ Client: Compiled successfully` and `[SUCCESS] Generated static files in
+"build"`. `npm start` (dev server) uses the same webpack and the same plugin, so the fix applies
+to both.
 
-> O CLI avisa que existe Docusaurus 3.10.2. Subir de versão maior **também** resolveria,
-> e com menos gambiarra a longo prazo — mas é troca grande num pacote que ninguém tinha
-> conseguido buildar até hoje. Primeiro fazer rodar, depois atualizar.
+> The CLI reports that Docusaurus 3.10.2 is available. A major version upgrade **would also**
+> solve the problem, with less workaround debt in the long term — but it is a large change to a
+> package that nobody had managed to build until now. Get it working first, then upgrade.
 
-## Publicar em `/docs` junto do site Astro
+## Publishing at `/docs` alongside the Astro site
 
-A forma mais simples é buildar a documentação **para dentro** do diretório estático do
-Astro:
+The simplest approach is to build the documentation **into** Astro's static directory:
 
 ```bash
 cd docs
 npm run build:site      # equivale a: docusaurus build --out-dir ../public/docs
 ```
 
-Depois o build normal do site na raiz publica tudo junto:
+Then the normal site build at the root publishes everything together:
 
 ```bash
 cd ..
 npm run build           # astro build
 ```
 
-Resultado: `https://csbrasil.online/docs/`.
+Result: `https://csbrasil.online/docs/`.
 
-### Por que isso funciona — conferido neste repositório
+### Why this works — verified in this repository
 
-1. `astro.config.mjs` não sobrescreve `publicDir`. O padrão do Astro é `./public`, e o
-   conteúdo desse diretório é copiado **como está** para a saída do build, servido a
-   partir da raiz do site.
-2. A prova de que `public/` é servido na raiz está no próprio jogo: o import map de
-   `src/pages/index.astro:97-123` aponta para `./js/main.js`, `./js/game.js` etc., e esses
-   arquivos existem **só** em `public/js/`. Como o jogo funciona em produção, `public/X` é
-   servido em `/X`. Logo `public/docs/` é servido em `/docs/`.
-3. O `package.json` da raiz confirma o layout da saída: o script `preview` é
-   `python3 -m http.server 4321 -d dist/client` — ou seja, a saída estática (incluindo o
-   que veio de `public/`) fica em `dist/client`.
-4. `baseUrl: '/docs/'` já está configurado em `docusaurus.config.js`. Sem ele, todo asset
-   e todo link internos apontariam para a raiz e quebrariam.
-5. Não existe rota `/docs` no Astro (`ls src/pages` não tem `docs.astro` nem
-   `docs/index.astro`), então não há colisão de rota.
+1. `astro.config.mjs` does not override `publicDir`. Astro's default is `./public`, and the
+   contents of that directory are copied **as-is** to the build output and served from the site
+   root.
+2. The game itself proves that `public/` is served at the root: the import map in
+   `src/pages/index.astro:97-123` points to `./js/main.js`, `./js/game.js`, etc., and those
+   files exist **only** in `public/js/`. Since the game works in production, `public/X` is
+   served at `/X`. Therefore, `public/docs/` is served at `/docs/`.
+3. The root `package.json` confirms the output layout: the `preview` script is
+   `python3 -m http.server 4321 -d dist/client` — in other words, the static output (including
+   what came from `public/`) goes into `dist/client`.
+4. `baseUrl: '/docs/'` is already configured in `docusaurus.config.js`. Without it, every asset
+   and internal link would point to the root and break.
+5. There is no `/docs` route in Astro (`ls src/pages` contains neither `docs.astro` nor
+   `docs/index.astro`), so there is no route collision.
 
-### Cuidados
+### Precautions
 
-- **A raiz TEM `.gitignore`** (esta seção afirmava o contrário; era verdade quando foi
-  escrita e deixou de ser). Ele não lista `public/docs/`, então build gerado ali entra no
-  `git status` pronto pra ser commitado. Escolha uma das duas:
-  - **Não commitar o build** — crie um `.gitignore` com `public/docs/` e faça o build da
-    doc entrar no `buildCommand` do `vercel.json`, antes do `npm run build`. Ex.:
+- **The root HAS a `.gitignore`** (this section previously claimed the opposite; that was true
+  when it was written and has since changed). It does not list `public/docs/`, so a build
+  generated there appears in `git status` ready to be committed. Choose one of the two options:
+  - **Do not commit the build** — create a `.gitignore` entry with `public/docs/` and add the
+    documentation build to `buildCommand` in `vercel.json`, before `npm run build`. Example:
     `"buildCommand": "bash scripts/fetch-audio.sh && (cd docs && npm ci && npm run build:site) && npm run build"`.
-  - **Commitar o build** — mais simples, funciona sem mexer no pipeline da Vercel, mas
-    polui o diff. Nesse caso, rode `npm run build:site` sempre que mudar a doc.
-- **`docusaurus build --out-dir` apaga o diretório de saída antes de escrever.** Não
-  aponte para `public/` inteiro. Aponte para `public/docs/` e só.
-- **Não coloque nada em `public/docs/` à mão.** Ele é gerado.
+  - **Commit the build** — simpler, works without changing the Vercel pipeline, but clutters the
+    diff. In this case, run `npm run build:site` whenever the documentation changes.
+- **`docusaurus build --out-dir` deletes the output directory before writing.** Do not point it
+  at all of `public/`. Point it at `public/docs/` only.
+- **Do not put anything in `public/docs/` manually.** It is generated.
 
-### Alternativa: publicar separado
+### Alternative: publish separately
 
-Se preferir manter a doc fora do domínio do jogo (GitHub Pages, Netlify, Vercel em outro
-projeto), troque em `docusaurus.config.js`:
+If you prefer to keep the documentation outside the game's domain (GitHub Pages, Netlify, Vercel
+in another project), change `docusaurus.config.js`:
 
 ```js
 baseUrl: '/',            // em vez de '/docs/'
 url: 'https://SEU-DOMINIO',
 ```
 
-e rode `npm run build` normal. Nesse caso `static/.nojekyll` (já incluído) é o que impede
-o GitHub Pages de ignorar diretórios começados com `_`.
+and run the normal `npm run build`. In this case, `static/.nojekyll` (already included) prevents
+GitHub Pages from ignoring directories that start with `_`.
 
-## Identidade visual — de onde vem cada peça
+## Visual identity — where each piece comes from
 
-Nada aqui foi desenhado nesta pasta: as quatro imagens são recortes/conversões de
-arquivos que já existem na raiz, e ficam duplicadas porque **o Docusaurus só enxerga
+Nothing here was designed in this folder: the four images are crops/conversions of files that
+already exist at the root, and they are duplicated because **Docusaurus can only see
 `docs/static/`**.
 
-| Onde aparece | Arquivo | Origem |
+| Where it appears | File | Source |
 |---|---|---|
-| aba do navegador | `static/img/favicon.ico` | `public/favicon.ico` (cópia byte a byte) |
-| navbar | `static/img/canarinho-icone.webp` | `public/img/canarinho-pistola.png`, recortado e reduzido a 128 px |
-| cabeçalho da home | `static/img/canarinho-header.webp` | `public/img/canarinho-header.webp` (cópia) |
-| rodapé | `static/img/logo-coro-solto.webp` | `public/logo.png`, recortado e reduzido a 440 px |
+| browser tab | `static/img/favicon.ico` | `public/favicon.ico` (byte-for-byte copy) |
+| navbar | `static/img/canarinho-icone.webp` | `public/img/canarinho-pistola.png`, cropped and resized to 128 px |
+| home header | `static/img/canarinho-header.webp` | `public/img/canarinho-header.webp` (copy) |
+| footer | `static/img/logo-coro-solto.webp` | `public/logo.png`, cropped and resized to 440 px |
 
-Duas decisões que parecem arbitrárias e não são:
+Two decisions that may seem arbitrary but are not:
 
-- **A logomarca não vai na navbar.** Ela é um letreiro de 4 linhas (`CORO / SOLTO / TRETA
-  / SUPREMA`); a 32 px de altura, que é a altura da navbar, vira borrão. Na navbar vai o
-  ícone do canarinho; o letreiro vai no rodapé, onde tem largura.
-- **O banner animado já traz o letreiro**, então a logomarca solta não se repete na
-  mesma dobra da home.
+- **The logo does not go in the navbar.** It is a four-line wordmark (`CORO / SOLTO / TRETA /
+  SUPREMA`); at the navbar's 32 px height, it becomes a blur. The canary icon goes in the navbar;
+  the wordmark goes in the footer, where there is enough width.
+- **The animated banner already includes the wordmark**, so the standalone logo is not repeated
+  in the same fold of the home page.
 
-Se o favicon ou o banner mudarem no site, recopie:
+If the favicon or banner changes on the site, copy them again:
 
 ```bash
 cd docs
@@ -195,17 +195,17 @@ cp ../public/favicon.ico static/img/favicon.ico
 cp ../public/img/canarinho-header.webp static/img/canarinho-header.webp
 ```
 
-**Peso:** `docs/static/img/` inteiro são ~174 KB. É de propósito — o `public/` versionado
-do repositório já está bem acima do teto de 250 MB da CrazyGames, então imagem nova entra
-convertida para WebP na resolução de uso, nunca no tamanho original.
+**Size:** all of `docs/static/img/` is ~174 KB. This is intentional — the repository's versioned
+`public/` is already well above CrazyGames' 250 MB limit, so every new image is converted to WebP
+at its display resolution, never kept at its original size.
 
-## Como manter esta documentação honesta
+## How to keep this documentation honest
 
-A regra é a mesma do resto do repositório: **nada de número inventado**.
+The rule is the same as in the rest of the repository: **no invented numbers**.
 
-**Número derivável do código NÃO se escreve à mão aqui.** Ele vira bloco gerado por
-`node tools/gen-docs.mjs`, entre marcadores `BEGIN:GERADO:<nome>` / `END:GERADO:<nome>`, e
-`npm run docs:check` (dentro do `check:fast`) reprova quando um bloco diverge do código.
+**A number derivable from code must NOT be written manually here.** It becomes a block generated
+by `node tools/gen-docs.mjs`, between `BEGIN:GERADO:<name>` / `END:GERADO:<name>` markers, and
+`npm run docs:check` (inside `check:fast`) fails when a block diverges from the code.
 
 ```bash
 npm run docs          # regenera todos os blocos
@@ -213,19 +213,19 @@ npm run docs:check    # sai 1 se algum estiver velho — é o que roda no portã
 node tools/gen-docs.mjs --json   # todos os fatos medidos, para outra ferramenta
 ```
 
-Nas páginas de `docs/docs/` o marcador é comentário **MDX** (`{/* … */}`): o Docusaurus 3
-compila `.md` como MDX, e comentário HTML ali é erro de parse que **derruba o build**. No
-`README.md` da raiz é comentário HTML normal.
+In `docs/docs/` pages, the marker is an **MDX** comment (`{/* … */}`): Docusaurus 3 compiles
+`.md` as MDX, and an HTML comment there is a parse error that **breaks the build**. In the root
+`README.md`, a normal HTML comment is used.
 
-O que **não** é derivável — placar do portão, decisões, o porquê de cada número — continua
-escrito à mão, e aí a regra é não carregar número que envelhece: cite o comando que o
-produz, ou escreva a frase sem ele.
+What is **not** derivable — gate scores, decisions, the rationale behind each number — remains
+manually written, and the rule there is to avoid numbers that become outdated: cite the command
+that produces them, or write the sentence without them.
 
-- Toda afirmação técnica tem `arquivo:linha`. Se o arquivo andar, o ponteiro fica errado —
-  confira antes de editar (é o mesmo problema que o `tools/gen-arch.mjs` resolve para o
-  `ARCH.md`). O bloco `ponteiros` de [Arquitetura](docs/arquitetura.md) acusa os que
-  apontam para além do fim do arquivo.
-- A página `estado.md` tem saída de terminal **colada de uma execução real**. Ao
-  atualizar, rode `node tools/eval/invariants.mjs` de verdade e cole a saída inteira,
-  incluindo o que falha. Anote commit e data.
-- Se não mediu, não escreva.
+- Every technical claim has a `file:line` reference. If the file changes, the pointer becomes
+  incorrect — check it before editing (this is the same problem that `tools/gen-arch.mjs` solves
+  for `ARCH.md`). The `ponteiros` block in [Architecture](docs/arquitetura.md) reports references
+  that point beyond the end of a file.
+- The `estado.md` page contains terminal output **pasted from a real run**. When updating it,
+  actually run `node tools/eval/invariants.mjs` and paste the entire output, including failures.
+  Record the commit and date.
+- If you did not measure it, do not write it.
