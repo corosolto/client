@@ -1,8 +1,9 @@
 // Cenografia HD do Córrego (só com ?hd=1). NADA aqui tem colisão nem raycast: fios, luminária e nó de fiação nos postes do
-// mapa, cano/relógio/gato nas fachadas, caixa d'água azul sobre tijolo e varal nas lajes, lastro de tijolo nos telhados de zinco,
-// guia do canal, lixo da margem, nó dos sacos autorais, varal com caimento, pano com bojo no varal autoral, toldo, boca de
-// comércio (porta de enrolar + placa + freezer), portões/basculantes de tela nas fachadas livres, kit de viela nos becos, guia de
-// sarjeta nas fachadas de rua, guarda tubular das rampas da travessia (a pedido do kit) e skyline de SP com grade de janelas.
+// mapa, dois postes de concreto com feixe de cabos na rua do spawn oeste, cano/relógio/gato nas fachadas, caixa d'água azul
+// sobre tijolo e varal nas lajes e no tabuleiro da travessia, lastro de tijolo nos telhados de zinco, guia, esgoto e lixo do
+// canal, lixo da margem, nó dos sacos autorais, varal com caimento, pano no varal autoral (linha baixa), toldo, boca de comércio
+// (porta de enrolar + placa + freezer), portões/basculantes de tela nas fachadas livres, ferragem do portão do barraco, kit de
+// viela nos becos, guia de sarjeta nas fachadas de rua, guarda tubular das rampas da travessia (a pedido do kit) e skyline de SP.
 // Lê a planta pelos colisores do mundo (casas = caixas ≥ 2,6 m com base ≤ 1,1 m; postes = 0,26 m × 9,4 m).
 import * as THREE from 'three';
 import { soltaAoSubir } from './hd_cenografia_lajes.js';
@@ -231,6 +232,37 @@ function postes(F, W, rng, lista, ctf) {
   });
   return cabos;
 }
+// Dois postes de concreto da rua do spawn oeste (pose `rua`, (−21; −5) olhando +x): P1 no canto do barraco de passagem
+// (−16,3; −8,0), P2 na calçada da casa B (−16,95; 1,9) em (−19,4; −0,7) — fora de rota. Cruzeta dupla, luminária, caixa cinza,
+// relógio com eletroduto no P1; 9 cabos entre eles (4 nas cruzetas, 5 em feixe a 7,0–7,5 m) e descidas P1 → bar A(−9,75; 2,6)
+// (3,75 m, acima da placa) e P2 → face −z da casa B (relógio a 1,3 m). Posições copiadas da planta; sem casas, só postes e cabos.
+function postesRua(F, W, rng, casas) {
+  const P = [[-16.3, -8.0, 1], [-19.4, -0.7, -1]], d = Math.hypot(P[1][0] - P[0][0], P[1][1] - P[0][1]);
+  const ux = (P[1][0] - P[0][0]) / d, uz = (P[1][1] - P[0][1]) / d, px = uz, pz = -ux, ry = Math.atan2(-pz, px);
+  let cabos = 0;
+  const cabo = (A, B, barriga, r) => { W.cor(ESCURO).fio(catenaria(A, B, barriga, 3.6, 10), r); cabos++; };
+  for (const [x, z, lum] of P) {
+    F.cor(0x8e8d86, .95).torno(x, 0, z, [[.14, 0], [.13, .4], [.105, 8.3], [.095, 8.65]], 10).cor(0x55534c).torno(x, 0, z, [[.145, 0], [.145, .45], [.135, .5]], 10);
+    for (const [y, l] of [[8.3, 1.3], [7.6, 1.0]]) { F.cor(0x6d6a62).caixa(x, y, z, l, .08, .08, ry); for (const s of [-1, 1]) F.cor(0x8e8f8a).caixa(x + s * (l / 2 - .06) * px, y + .08, z + s * (l / 2 - .06) * pz, .07, .12, .07, ry); }
+    F.cor(0x6d7072).tubo([V(x, 7.0, z), V(x + lum * .3, 7.4, z), V(x + lum * 1.15, 7.45, z)], .028, 4).caixa(x + lum * 1.15, 7.31, z, .5, .13, .22).cor(0xbfc3bd).caixa(x + lum * 1.15, 7.29, z, .44, .02, .18);
+    F.cor(0x7a7d7a).caixa(x + lum * .17, 4.4, z, .22, .5, .34, ry);
+    for (let k = 0; k < 2; k++) { const r = .2 + rng() * .06, cy = 5.6 - k * .08 - r, pts = []; for (let t = 0; t <= 14; t++) { const a = t / 14 * Math.PI * 2; pts.push(V(x + lum * .16 + px * Math.cos(a) * r * 1.1, cy + Math.sin(a) * r, z + pz * Math.cos(a) * r * 1.1)); } W.cor(ESCURO).fio(pts, .009); }
+  }
+  // Relógio no P1 (face da rua), eletroduto até o feixe.
+  F.cor(0x8a8d8c).caixa(P[0][0] + .17, 1.3, P[0][1], .11, .42, .3, 0).cor(0x1b1d1e).caixa(P[0][0] + .23, 1.5, P[0][1], .012, .14, .16, 0).cor(0x767978).tubo([V(P[0][0] + .17, 1.73, P[0][1]), V(P[0][0] + .17, 6.95, P[0][1])], .016, 4);
+  for (const s of [-1, 1]) {
+    cabo(V(P[0][0] + s * .59 * px, 8.42, P[0][1] + s * .59 * pz), V(P[1][0] + s * .59 * px, 8.42, P[1][1] + s * .59 * pz), .3 + rng() * .1, .012);
+    cabo(V(P[0][0] + s * .44 * px, 7.72, P[0][1] + s * .44 * pz), V(P[1][0] + s * .44 * px, 7.72, P[1][1] + s * .44 * pz), .3 + rng() * .1, .010);
+  }
+  for (let k = 0; k < 5; k++) { const o = (k - 2) * .09, y = 7.0 + k * .1; cabo(V(P[0][0] + o * px, y, P[0][1] + o * pz), V(P[1][0] + o * px, y, P[1][1] + o * pz), .35 + rng() * .2, .009); }
+  const kA = casas.length ? maisPerto(casas, -9.75, 2.6) : null, kB = casas.length ? maisPerto(casas, -16.95, 1.9) : null;
+  if (kA) { const f = faceDe(kA, 'z', -1), ax = f.fx + f.tx * -1.25, az = f.fz + f.tz * -1.25;
+    cabo(V(P[0][0] + .1, 6.95, P[0][1]), V(ax, 3.75, az), .2, .009); F.cor(0x3a3d3f).caixa(ax, 3.7, az, .1, .1, .06, f.ry); }
+  if (kB) { const f = faceDe(kB, 'z', -1), bx = f.fx + f.tx * -.8 + f.nx * .055, bz = f.fz + f.tz * -.8 + f.nz * .055;
+    cabo(V(P[1][0], 6.95, P[1][1]), V(bx, 3.3, bz), .12, .009);
+    F.cor(0x8a8d8c).caixa(bx, 1.3, bz, .3, .42, .11, f.ry).cor(0x1b1d1e).caixa(bx + f.nx * .056, 1.5, bz + f.nz * .056, .16, .14, .012, f.ry).cor(0x767978).tubo([V(bx, 1.73, bz), V(bx, 3.3, bz)], .016, 4); }
+  return cabos;
+}
 
 // Fachadas voltadas para ±x (as que o jogador vê): cano de PVC de descida, relógio de luz com eletroduto, gato pendurado
 // e ramal até o poste mais próximo. Tudo com ≤ 12 cm de saliência; o ramal sobe da fachada para o poste (7,85 m, sob a
@@ -385,19 +417,42 @@ function lastro(L, rng) {
   return im;
 }
 
-// Guia de concreto na beira do canal (|x| = 3,17; 26 cm): pula pontes (z = −22, 0, 22) e rampas (RAMPAS de map_corrego.js) e as pontas assoreadas.
-// Afundada 2 cm e com o topo encardido: o topo claro ao sol lia como linha de 1 px correndo rente ao chão.
+// Guia de concreto na beira do canal (|x| = 3,17; 24 cm): pula pontes (z = −22, 0, 22) e rampas (RAMPAS de map_corrego.js) e as pontas assoreadas.
+// Afundada 2 cm, encardida (0x6f6f69) e contínua (segmentos emendados, sem giro nem altura por segmento): a face clara ao sol
+// e a fresta entre segmentos liam como linha branca pontilhada de 1 px na aresta do muro (`ponte`).
 function guiaCanal(F, rng) {
   let n = 0;
   for (const lado of [-1, 1]) for (let z = -32; z < 32; z += 2) {
-    const z1 = Math.min(32, z + 1.98), zm = (z + z1) / 2, h = .24 + (hash2(z, lado) - .5) * .03;
+    const z1 = Math.min(32, z + 2), zm = (z + z1) / 2, h = .24;
     if ([-22, 0, 22].some((b) => Math.abs(zm - b) < 2.1) || RAMPAS.some(([l, a, b]) => l === lado && zm > a - 1 && zm < b + 1)) continue;
-    F.cor(0x8a8a84, .82 + rng() * .3).caixa(lado * 3.17, -.02, zm, .3, h, z1 - z - .02, 0, 0, lado * (rng() - .5) * .02);
-    F.cor(0x6a6964, .85 + rng() * .2).caixa(lado * 3.17, h - .02, zm, .31, .012, z1 - z - .02);
-    if (rng() < .3) F.cor(0x45443f).caixa(lado * 3.17, h - .01, zm + (rng() - .5), .32, .012, .6);
+    F.cor(0x6f6f69, .9 + rng() * .14).caixa(lado * 3.17, -.02, zm, .3, h, z1 - z + .02);
+    F.cor(0x4e4e49, .9 + rng() * .14).caixa(lado * 3.17, h - .02, zm, .31, .012, z1 - z + .02);
+    if (rng() < .3) F.cor(0x3a3a36).caixa(lado * 3.17, h - .01, zm + (rng() - .5), .32, .012, .6);
     n++;
   }
   return n;
+}
+// Esgoto e lixo no canal (pose `ponte`, de z 0 para −z): tubo de PVC Ø 20 cm saindo do muro (x = ∓3) a −0,95 m com escorrido
+// escuro até a lâmina (−1,61), fio de despejo e espuma; 4 sacos/sacolas e 2 garrafas PET presos junto aos muros, meio afundados.
+// Longe de pontes (z −22, 0, 22) e dos pilares da travessia (z −11 ± 1,6).
+function esgotoCanal(F, rng) {
+  for (const [lado, z] of [[-1, -6.5], [1, -16]]) {
+    const xw = lado * 3, s = -lado;   // s = sentido para dentro do canal
+    F.cor(0x8d9290, .95).tubo([V(xw - s * .05, -.95, z), V(xw + s * .43, -.98, z)], .1, 8);
+    F.cor(0x111110).quad(V(xw + s * .41, -1.05, z - .07 * s), V(xw + s * .41, -1.05, z + .07 * s), V(xw + s * .41, -.91, z + .07 * s), V(xw + s * .41, -.91, z - .07 * s));
+    F.cor(0x1e2418, .9).quad(V(xw + s * .015, -.86, z - .2 * s), V(xw + s * .015, -.86, z + .2 * s), V(xw + s * .015, -1.62, z + .45 * s), V(xw + s * .015, -1.62, z - .45 * s));
+    F.cor(0x6b6a52).tubo([V(xw + s * .42, -1.0, z), V(xw + s * .5, -1.25, z), V(xw + s * .58, -1.6, z)], .025, 5);
+    F.cor(0x8f8d78, .95).torno(xw + s * .6, -1.605, z, [[.3, 0], [.36, .01], [.18, .02]], 10, rng() * 6.28);
+  }
+  for (const [x, z, sz, cor] of [[-2.72, -4.2, .24, 0x24272a], [2.74, -8.0, .2, 0xb8b9b2], [-2.7, -13.3, .22, 0x2c3238], [2.7, -17.2, .19, 0x2f4a7a]]) {
+    const g = rng() * 6.28;
+    F.cor(cor, .9 + rng() * .2).torno(x, -1.72, z, [[sz * .55, 0], [sz * 1.05, sz * .3], [sz, sz * .75], [sz * .6, sz * 1.05], [sz * .18, sz * 1.15], [sz * .14, sz * 1.35]], 8, g);
+  }
+  for (const [x, z, g] of [[2.6, -5.0, .4], [-2.62, -9.6, 2.1]]) {
+    const cx = Math.cos(g) * .15, cz = Math.sin(g) * .15, cor = [0x8e978e, 0x9aa39a][Math.floor(rng() * 2)];
+    F.cor(cor, .95).tubo([V(x - cx, -1.59, z - cz), V(x + cx, -1.595, z + cz)], .042, 6).cor(0x2f4a6a).tubo([V(x + cx, -1.595, z + cz), V(x + cx * 1.15, -1.597, z + cz * 1.15)], .018, 5);
+  }
+  return 6;
 }
 // Margem do canal (passeio entre a guia e a fileira A, |x| 3,4–4,6): sacos de lixo pretos amarrados, sacolas claras e garrafas
 // PET deitadas, longe de ponte, rampa e geladeira. Os tufos de capim são os autorais, reposicionados em map_corrego_hd.js.
@@ -504,15 +559,18 @@ function guardaTravessia(F, rng) {
 }
 
 // Pano pendurado em (cx, y, cz) com o varal na direção (dx, dz): lençol (listra opcional), camisa ou calça, em grade 4×3 com
-// bojo de 5–8 cm (mais embaixo e no meio, com uma dobra de 3 ondas) e normal média; dois pregadores no topo.
-function pano(F, rng, cx, y, cz, dx, dz, w, h, cor) {
-  const nx = -dz, nz = dx, vai = (rng() - .5) * .05, tipo = rng(), bojo = .05 + rng() * .03, fase = rng() * 6.28;
+// bojo de 5–8 cm (mais embaixo e no meio, com uma dobra de 3 ondas) e normal média; dois pregadores no topo. `tipoFixo` força o
+// tipo (< 0,4 lençol) sem mudar o consumo do rng.
+function pano(F, rng, cx, y, cz, dx, dz, w, h, cor, tipoFixo) {
+  const nx = -dz, nz = dx, vai = (rng() - .5) * .05, tipoR = rng(), tipo = tipoFixo ?? tipoR, bojo = .05 + rng() * .03, fase = rng() * 6.28;
   const Q = (u, v, fora = 0) => { const b = bojo * Math.sin(Math.PI * Math.min(1, Math.max(0, u + .5))) * (.25 + .75 * v) + bojo * .35 * Math.sin(3.1 * Math.PI * (u + .5) + fase) * v;
     return V(cx + dx * u * w + nx * (vai * v + fora + b), y - v * h, cz + dz * u * w + nz * (vai * v + fora + b)); };
   // quadrilátero (u, v) nos cantos [s0t0, s1t0, s0t1, s1t1] como grade bilinear
   const bil = (c, nu, nv, fora = 0) => F.grade((s, t) => Q(lerp(lerp(c[0][0], c[1][0], s), lerp(c[2][0], c[3][0], s), t), lerp(lerp(c[0][1], c[1][1], s), lerp(c[2][1], c[3][1], s), t), fora), nu, nv);
   let preg = [-.42, .42];
-  if (tipo < .4) { F.cor(cor, .85 + rng() * .3); bil([[-.5, 0], [.5, 0], [-.5, 1], [.5, 1]], 4, 3); if (rng() < .6) { F.cor(PANOS[Math.floor(rng() * PANOS.length)], .9); bil([[-.5, .58], [.5, .58], [-.5, .74], [.5, .74]], 4, 1, .004); } }
+  // Listra do lençol: só em 1 em 3, em altura sorteada (v 0,25–0,75) e 1,5 cm à frente (a 4 mm brigava no z a 9 m). Com a
+  // listra fixa em v 0,58–0,74 todos os lençóis do varal alinhavam a mesma linha e ela lia como a laje atravessando o pano.
+  if (tipo < .4) { F.cor(cor, .85 + rng() * .3); bil([[-.5, 0], [.5, 0], [-.5, 1], [.5, 1]], 4, 3); if (rng() < .34) { const v0 = .25 + rng() * .5; F.cor(PANOS[Math.floor(rng() * PANOS.length)], .9); bil([[-.5, v0], [.5, v0], [-.5, v0 + .1], [.5, v0 + .1]], 4, 1, .015); } }
   else if (tipo < .76) { F.cor(cor, .85 + rng() * .3); bil([[-.34, .06], [.34, .06], [-.36, 1], [.36, 1]], 4, 3);
     F.quad(Q(-.34, 0), Q(-.12, 0), Q(-.12, .08), Q(-.34, .08)).quad(Q(.12, 0), Q(.34, 0), Q(.34, .08), Q(.12, .08));
     bil([[-.34, .06], [-.52, .04], [-.36, .40], [-.60, .34]], 2, 2); bil([[.52, .04], [.34, .06], [.60, .34], [.36, .40]], 2, 2); preg = [-.23, .23]; }
@@ -542,17 +600,40 @@ function varais(F, W, rng, casas) {
 }
 
 // Pano no varal autoral (map_corrego.js: cabo reto de 4,2 m a 3,2 m, 12 varais): os retângulos de cor pura vão a escala
-// zero no kit e aqui entram camisa, calça e lençol pendurados no mesmo cabo. Posições copiadas da planta.
+// zero no kit. O cabo autoral fica vazio; uma linha baixa a 2,62 m, amarrada a ele por duas descidas, leva camisa, calça, um
+// lençol grande claro de 1,1 m e os pregadores, com a barra dos panos em ≥ 2,1 m (a 3,2 m liam como peças chapadas a 5 m, `rua`).
 const VARAIS_AUTORAIS = [[-18.4, 13.65], [-3.2, 13.65], [16.8, 13.65], [28.4, 13.65], [-29.0, 6.0], [9.6, 6.0]];
-function roupas(F, rng) {
+function roupas(F, W, rng) {
   let n = 0;
   for (const lado of [-1, 1]) for (const [z, xv] of VARAIS_AUTORAIS) {
-    const x = lado * xv; let s = -1.75 + rng() * .3;
-    while (s < 1.7) { const w = .32 + rng() * .28; if (s + w > 1.95) break;
-      pano(F, rng, x, 3.19, z + s + w / 2, 0, 1, w, .5 + rng() * .3, PANOS[Math.floor(rng() * PANOS.length)]); s += w + .05 + rng() * .12; }
+    const x = lado * xv, xc = x + lado * .12, y = 2.62, alt = (t) => y - .05 * 4 * t * (1 - t);
+    W.cor(0x1c1b1a).fio([V(x, 3.2, z - 1.95), V(xc, y, z - 1.9)], .006).fio(catenaria(V(xc, y, z - 1.9), V(xc, y, z + 1.9), .05, 2.4), .006).fio([V(xc, y, z + 1.9), V(x, 3.2, z + 1.95)], .006);
+    let s = -1.75 + rng() * .3, i = 0; const lencol = Math.floor(rng() * 3);
+    while (s < 1.7) { const sheet = i === lencol, w = sheet ? 1.1 : .32 + rng() * .28; if (s + w > 1.85) break; const yy = alt((s + w / 2 + 1.9) / 3.8) - .012;
+      pano(F, rng, xc, yy, z + s + w / 2, 0, 1, w, sheet ? yy - 2.1 : Math.min(.42 + rng() * .3, yy - 2.1), sheet ? [0xd9d5c8, 0xd2cbb6][lado > 0 ? 0 : 1] : PANOS[Math.floor(rng() * PANOS.length)], sheet ? .1 : undefined);
+      s += w + .05 + rng() * .12; i++; }
     n++;
   }
   return n;
+}
+// Laje do tabuleiro da travessia (pose `alto`: (−4,6; 5,6; −11) olhando +x −z): caixa d'água azul de 500 L sobre 2 fiadas
+// na ponta oposta do vão (x 4,4, a 9 m da câmera, ~40° à direita: a −2,2 m ficava a 2,5 m e tomava um quarto do quadro),
+// encostada no guarda de z −12,25; varal de dois T na mesma borda (x −1…2,2) com o braço cruzando o guarda e o cabo 20 cm para
+// FORA (z −12,45): os panos pendem sobre o vazio, não sobre a rota. Cano do ladrão desce pela borda. Posições de PASS.
+function mirante(F, W, rng) {
+  const y = PASS.y, z = PASS.z - PASS.meiaL, tx = 4.4, tz = z + .5, cor = 0x1b4f9c, r = .42, alt = .8;
+  const yb = base(F, rng, tx, y, tz, 1.0, 1.0, 0, 2);
+  F.cor(cor, .95).torno(tx, yb, tz, [[r * .84, 0], [r * .98, alt * .18], [r, alt * .72], [r * .97, alt * .9], [r * .92, alt]], 20)
+    .cor(cor, 1.05).torno(tx, yb + alt, tz, [[r * .92, 0], [r * .55, alt * .06], [r * .2, alt * .09]], 20);
+  for (const f of [.3, .55]) F.cor(cor, .8).torno(tx, yb + alt * f, tz, [[r * 1.01, 0], [r * 1.01, .025]], 20);
+  F.cor(0x8d9290).tubo([V(tx - r * .9, yb + alt * .75, tz), V(tx - r * 1.4, yb + alt * .75, tz), V(tx - r * 1.4, y + .3, tz), V(tx - r * 1.4, y + .3, z + .06)], .02, 4);
+  const x0 = -1.0, x1 = 2.2, zc = z - .2, L = x1 - x0;
+  for (const px of [x0, x1]) F.cor(0x7c7f7c).tubo([V(px, y, z + .25), V(px, y + 1.75, z + .25)], .022, 5).caixa(px, y + 1.72, z + .05, .05, .05, .5).cor(0x4a4c4a).caixa(px, y, z + .25, .24, .09, .24);
+  W.cor(0x1c1b1a).fio(catenaria(V(x0, y + 1.74, zc), V(x1, y + 1.74, zc), .08, y + 1.4), .006);
+  let s = .25 + rng() * .2;
+  while (s < L - .5) { const w = .32 + rng() * .24; if (s + w > L - .25) break; const t = (s + w / 2) / L, yy = y + 1.74 - .08 * 4 * t * (1 - t) - .012;
+    pano(F, rng, x0 + s + w / 2, yy, zc, 1, 0, w, .5 + rng() * .3, PANOS[Math.floor(rng() * PANOS.length)]); s += w + .05 + rng() * .1; }
+  return 1;
 }
 
 // Toldo listrado com dois tirantes na fachada f (faceDe), com a aba a `y`; `placa` = placa cega acima (sem texto).
@@ -710,6 +791,21 @@ function portoes(F, T, rng, casas) {
   }
   return n;
 }
+// Parede +z do barraco de passagem (map_corrego.js: x −20,3…−16,1, face em z −8,62, tapume de compensado) lida como portão
+// na pose `rua`: ganha a ferragem de portão de correr — trilho no alto com suportes e roldanas, quadro de cantoneira (3 montantes,
+// 3 travessas), 3 dobradiças de chapa com pino na ponta esquerda e cadeado com corrente no montante do meio. Nada tem colisão.
+function portaoBarraco(F, W, rng) {
+  const x0 = -20.3, x1 = -16.1, xm = -18.2, zf = -8.62;
+  F.cor(0x3f3b36).caixa(xm, 3.02, zf + .075, 4.5, .06, .05);
+  for (const x of [x0 + .3, x1 - .3]) F.cor(0x2f2c28).caixa(x, 2.98, zf + .05, .08, .1, .1);
+  for (const x of [xm - 1.0, xm + 1.0]) F.cor(0x2a2825).caixa(x, 2.88, zf + .06, .1, .13, .06);
+  for (const x of [x0 + .08, xm, x1 - .08]) F.cor(0x3f3b36, .9 + rng() * .2).caixa(x, .03, zf + .035, .05, 2.92, .04);
+  for (const y of [.25, 1.5, 2.75]) F.cor(0x3f3b36, .95).caixa(xm, y, zf + .03, 4.1, .05, .035);
+  for (const y of [.45, 1.5, 2.55]) F.cor(FERRO).caixa(x0 + .16, y, zf + .045, .16, .12, .025).cor(0x4a4540).tubo([V(x0 + .05, y - .02, zf + .055), V(x0 + .05, y + .14, zf + .055)], .018, 5);
+  F.cor(0x8a7a3a).caixa(xm + .06, 1.0, zf + .07, .05, .06, .025).cor(0x5b5a56).caixa(xm + .06, 1.06, zf + .07, .035, .04, .012);
+  W.cor(0x2a2a2a).fio([V(xm - .02, 1.32, zf + .06), V(xm + .05, 1.16, zf + .085), V(xm + .06, 1.08, zf + .07)], .008);
+  return 1;
+}
 // Basculante 1 × 1,2 m com grade no pavimento de cima (tijolo cru: y de topo − 2,8) das fachadas livres ±z de casas de ≥ 2 pavimentos;
 // aro de concreto de 6 cm e peitoril escuro. Na face +z a janela autoral está em u = 0,6 (só a célula −meia·0,45 e, se couber, +meia·0,6).
 function basculantes(F, T, rng, casas) {
@@ -766,7 +862,7 @@ function skyline(grupo, rng) {
   const N = 150, lista = [];
   for (let i = 0; i < N; i++) {
     const a = rng() * Math.PI * 2, r = 70 + Math.pow(rng(), .8) * 115, t = rng(), h = (t < .7 ? 12 + rng() * 18 : t < .95 ? 30 + rng() * 26 : 55 + rng() * 25) * .8;
-    lista.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, w: 8 + rng() * 14, d: 8 + rng() * 14, h: h * (1 + r / 400), ry: rng() * .5, cor: [0x5e6670, 0x6f7680, 0x66707c, 0x545c66, 0x727880, 0x5a6470][Math.floor(rng() * 6)] });
+    lista.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, w: 8 + rng() * 14, d: 8 + rng() * 14, h: h * (1 + r / 400), ry: rng() * .5, cor: [0x6e6252, 0x7a6b58, 0x655a4a, 0x80735e, 0x5e5446, 0x74685a][Math.floor(rng() * 6)] });
   }
   const mat = new THREE.MeshStandardMaterial({ roughness: .92, metalness: 0, name: 'hd-skyline' });
   mat.onBeforeCompile = (s) => {
@@ -783,14 +879,14 @@ function skyline(grupo, rng) {
         float hdR = fract(sin(dot(hdCel, vec2(12.9898, 78.233))) * 43758.5453);
         float hdJan = step(0.30, hdFy) * step(hdFy, 0.72) * step(0.22, hdFu) * step(hdFu, 0.78) * step(0.4, vHdYUS.x);
         hdJanE = hdJan * step(0.7, hdR); hdJanM = hdJan - hdJanE;
-        hdVar = step(0.5, hdSem) * step(0.04, hdFy) * step(hdFy, 0.28) * step(0.4, vHdYUS.x);
-        diffuseColor.rgb *= 1.0 - 0.55 * hdJanE - 0.30 * hdJanM;
+        hdVar = step(0.67, hdSem) * step(0.04, hdFy) * step(hdFy, 0.28) * step(0.4, vHdYUS.x);
+        diffuseColor.rgb *= 1.0 - 0.75 * hdJanE - 0.45 * hdJanM;
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.54, 0.50), hdVar * 0.5); }
       else diffuseColor.rgb *= 0.9;`)
       .replace('#include <fog_fragment>', THREE.ShaderChunk.fog_fragment.replace(/, fogFactor \);/, ', fogFactor * 0.72 );')
-        + '\n gl_FragColor.rgb = min(gl_FragColor.rgb * (1.0 - 0.20 * hdJanE - 0.09 * hdJanM) + 0.035 * hdVar, vec3(1.0));');
+        + '\n gl_FragColor.rgb = min(gl_FragColor.rgb * (1.0 - 0.32 * hdJanE - 0.16 * hdJanM) + 0.035 * hdVar, vec3(1.0));');
   };
-  mat.customProgramCacheKey = () => 'hd-skyline5';
+  mat.customProgramCacheKey = () => 'hd-skyline6';
   const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat, N), o = new THREE.Object3D(), c = new THREE.Color();
   lista.forEach((k, i) => { o.position.set(k.x, k.h / 2 - 2, k.z); o.rotation.set(0, k.ry, 0); o.scale.set(k.w, k.h, k.d); o.updateMatrix(); im.setMatrixAt(i, o.matrix); im.setColorAt(i, c.setHex(k.cor).multiplyScalar(.85 + rng() * .3)); });
   im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; im.frustumCulled = false; im.name = 'hd-skyline'; im.castShadow = false; im.receiveShadow = false;
@@ -805,18 +901,21 @@ export function cenografiaCorrego(scene, opts = {}) {
   const F = fundidor(), W = fiador(), T = texturador(), relogios = [], L = [];
   const topo = casas.length && (lig('lajes') || lig('telhados')) ? medidor(scene) : null;
   if (lig('postes') && lista.length) info.cabos = postes(F, W, rngDe(7717), lista, mundo?.ctfPoints);
+  if (lig('postes')) info.cabosRua = postesRua(F, W, rngDe(6161), casas);
   if (lig('fachadas') && casas.length) info.fachadas = fachadas(F, W, rngDe(9311), casas, lista, relogios);
   if (lig('lajes') && topo) Object.assign(info, lajes(F, W, rngDe(40123), casas, topo));
+  if (lig('lajes')) info.mirante = mirante(F, W, rngDe(7177));
   if (lig('telhados') && topo) { info.telhados = telhados(F, rngDe(50821), casas, topo, L); info.lastro = L.length; }
-  if (lig('canal')) info.guia = guiaCanal(F, rngDe(5519));
+  if (lig('canal')) { info.guia = guiaCanal(F, rngDe(5519)); info.esgoto = esgotoCanal(F, rngDe(5527)); }
   if (lig('margem')) info.margem = margem(F, rngDe(7331));
   if (lig('guias') && casas.length) info.guias = guias(F, rngDe(1933), casas, cols);
   if (lig('varais') && casas.length) info.varais = varais(F, W, rngDe(1201), casas);
-  if (lig('roupas')) info.roupas = roupas(F, rngDe(6113));
+  if (lig('roupas')) info.roupas = roupas(F, W, rngDe(6113));
   if (lig('sacos')) info.sacos = nosDeSaco(F, rngDe(4477));
   if (lig('toldos') && casas.length) info.toldos = toldos(F, rngDe(3307), casas);
   if (lig('comercio') && casas.length && typeof document !== 'undefined') info.comercio = comercio(F, T, rngDe(2719), casas);
   if (lig('portoes') && casas.length && typeof document !== 'undefined') { info.portoes = portoes(F, T, rngDe(6121), casas); info.basculantes = basculantes(F, T, rngDe(8431), casas); }
+  if (lig('portoes')) info.portaoBarraco = portaoBarraco(F, W, rngDe(6131));
   if (lig('becos') && casas.length) info.becos = becos(F, rngDe(2213), casas);
   if (opts.guarda) info.guarda = guardaTravessia(F, rngDe(3119));   // só a pedido do kit (travessia de concreto ligada)
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .8, metalness: 0, side: THREE.DoubleSide, name: 'hd-cenografia' });

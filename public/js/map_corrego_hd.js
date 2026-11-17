@@ -23,7 +23,7 @@ const LUMA = 'vec3(0.3, 0.59, 0.11)';
 //   asphalt_br|ffffff  rua (TEX.asphalt; todo o chão de rua é este — dirt_field não chega a material nenhum)
 //   tex_madeira|ffffff tábua da ponte, tapume da palafita, guarda da travessia   tex_madeira|9a8f7e tablado da travessia/pranchas
 //   tex_madeira|b08a6a barraco de passagem   tex_madeira|8a6a4e matMadeiraBruta (vigas da travessia, tapume largo do puxadinho,
-//   paus de tampo, pilares da prancha)   tex_madeira|7a5a3a pilares da travessia (galvanizadoHD, cor pura)   tex_zinco|ffffff telhados e barracos
+//   paus de tampo, pilares da prancha)   tex_madeira|7a5a3a pilares da travessia (pilarHD, cor pura)   tex_zinco|ffffff telhados e barracos
 //   concrete_br|8f8b80 parede e rampa do canal   concrete_br|6f6f61 fundo do canal   concrete_br|b4ada0/8d8579 embasamento,
 //   lajes (o topo é o piso da laje do sobrado), platibanda   concrete_br|9d968a pilar das casas/palafita e poste de distribuição
 //   concrete_br|9a8f7e entulho  concrete_br|8a867c manilha  concrete_br|ffffff pilar da cobertura  concrete_br|3f7f9c caixa d'água cúbica
@@ -57,7 +57,7 @@ const REGRAS = {
   'tex_madeira|9a8f7e': { concreto: 'tabuleiro', cor: 0xd6d4ce, ao: 0.4, frente: 'travessia' },
   'tex_madeira|b08a6a': { madeira: 'compensado', cor: 0xffffff, frente: 'madeira' },
   'tex_madeira|8a6a4e': { madeira: 'compensado', cor: 0xffffff, frente: 'madeira' },
-  'tex_madeira|7a5a3a': { semMapa: true, cor: 0x9c9b97, rugosidade: .55, metal: .1, galvanizado: true, frente: 'madeira' },
+  'tex_madeira|7a5a3a': { semMapa: true, cor: 0xa6a49e, rugosidade: .9, metal: 0, pilar: true, frente: 'madeira' },
   'tex_zinco|ffffff': { chapa: true, cor: 0xa09e99, ferrugem: .25 },
   '|8a6a4e': { cor: 0x5e5751, rugosidade: .85, metal: 0, frente: 'madeira' },
   '|7c6a52': { cor: 0x9a9ea2, rugosidade: .55, metal: .3, frente: 'madeira' },
@@ -208,8 +208,8 @@ function campoFachadas(cols) {
 // escorrido e pé sujo; o canal ganha linha d'água (limo até 45 cm acima da lâmina de −1,61 m, crosta clara, submerso escuro)
 // e beiço sujo na aresta da margem; 'entulho' (manilha, caco, saco) ganha só a linha d'água e o pé sujo, esteja onde estiver.
 const CANAL = `float hdYa = hdY + 1.61;
-  float hdLimo = (1.0 - smoothstep(0.05, 0.5, hdYa)) * smoothstep(-0.4, -0.1, hdYa) * (0.7 + 0.3 * hdN(vec2(hdQ.x * 2.1, hdYa * 4.0))) * (1.0 - hdPiso);
-  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.13, 0.15, 0.09) * (0.7 + 0.6 * hdMedio), hdLimo * 0.8);
+  float hdLimo = (1.0 - smoothstep(0.22, 0.38, hdYa)) * smoothstep(-0.4, -0.1, hdYa) * (0.75 + 0.25 * hdN(vec2(hdQ.x * 2.1, hdYa * 4.0))) * (1.0 - hdPiso);
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.11, 0.13, 0.07) * (0.7 + 0.6 * hdMedio), hdLimo * 0.88);
   float hdCrosta = smoothstep(0.42, 0.5, hdYa) * (1.0 - smoothstep(0.55, 0.72, hdYa)) * smoothstep(0.35, 0.6, hdN(vec2(hdQ.x * 0.9, 2.0))) * (1.0 - hdPiso);
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.62, 0.60, 0.52), hdCrosta * 0.5);
   float hdNivel = smoothstep(0.12, 0.17, hdYa) * (1.0 - smoothstep(0.24, 0.32, hdYa)) * (1.0 - hdPiso) * (0.75 + 0.25 * hdN(vec2(hdQ.x * 1.4, 3.0)));
@@ -217,7 +217,10 @@ const CANAL = `float hdYa = hdY + 1.61;
   float hdSub = 1.0 - smoothstep(-0.15, 0.0, hdYa); diffuseColor.rgb *= 1.0 - 0.45 * hdSub; hdRug = mix(hdRug, 0.5, hdSub);
   float hdBeico = max(smoothstep(-0.35, -0.02, hdY) * (1.0 - hdPiso), hdPiso * step(-0.05, hdY) * (1.0 - smoothstep(3.1, 3.9, abs(vHdPos.x))) * (0.6 + 0.4 * hdN(vHdPos.xz * 0.8)));
   diffuseColor.rgb = hdUmido(diffuseColor.rgb, 0.45 * hdBeico) * (1.0 - 0.26 * hdBeico);
-  float hdMancha = hdPiso * smoothstep(0.55, 0.75, hdN(vHdPos.xz * 0.35 + 9.0)); diffuseColor.rgb = hdUmido(diffuseColor.rgb, 0.4 * hdMancha) * (1.0 - 0.2 * hdMancha); hdRug = mix(hdRug, 0.35, hdMancha * 0.5);`;
+  float hdMancha = hdPiso * smoothstep(0.55, 0.75, hdN(vHdPos.xz * 0.35 + 9.0)); diffuseColor.rgb = hdUmido(diffuseColor.rgb, 0.4 * hdMancha) * (1.0 - 0.2 * hdMancha); hdRug = mix(hdRug, 0.35, hdMancha * 0.5);
+  // Topo do muro do canal: fosco (o alfa do piso_cor_rug dava brilho ao sol = linha branca de 1 px a 20 m) e AO de 8 cm na aresta.
+  float hdTopo = hdPiso * step(-0.05, hdY); hdRug = mix(hdRug, max(hdRug, 0.88), hdTopo);
+  diffuseColor.rgb *= 1.0 - 0.3 * hdTopo * (1.0 - smoothstep(3.0, 3.1, abs(vHdPos.x)));`;
 const FUNDO = `float hdSub = 1.0 - smoothstep(-1.66, -1.55, hdY); diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.55, 0.52, 0.40), hdSub) * (1.0 - 0.25 * hdSub); hdRug = mix(hdRug, 0.45, hdSub);
   float hdLodo = smoothstep(0.5, 0.7, hdN(vHdPos.xz * 0.4 + 2.0)); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.10, 0.11, 0.07), hdLodo * 0.6 * hdSub);`;
 const PE = `float hdSuj = smoothstep(0.55, 0.04, hdY) * (1.0 - hdCorpoF(hdY)) * (0.5 + 0.5 * hdN(hdQ * 1.3)) * (1.0 - hdPiso);
@@ -233,14 +236,26 @@ const LINHA = `float hdYa = hdY + 1.61, hdSub = 1.0 - smoothstep(-0.12, 0.02, hd
 // Vira cimento queimado cinza-frio (0,218/0,240/0,260: o sol 0xffc888 aquece o neutro em +30 de R−B) com junta de desempenadeira
 // a 1,2 m, ~1 placa em 14 remendada e mancha de umidade (`umi` = fator GLSL: o tabuleiro só a aceita no plano horizontal —
 // na rampa os borrões de 2–3 m liam como pelagem); o relevo da fôrma cai a 30 % no plano (as veias liam como tábua).
-const laje = (umi = '1.0') => `{ vec2 hdG = vHdPos.xz / 1.2, hdFr = fract(hdG), hdPx = fwidth(hdG), hdDj = min(hdFr, 1.0 - hdFr) * 1.2; float hdPxM = max(hdPx.x, hdPx.y);
+const laje = (umi = '1.0', cru = false) => `{ vec2 hdG = vHdPos.xz / 1.2, hdFr = fract(hdG), hdPx = fwidth(hdG), hdDj = min(hdFr, 1.0 - hdFr) * 1.2; float hdPxM = max(hdPx.x, hdPx.y);
   float hdJunta = (1.0 - smoothstep(0.004, 0.010 + hdPxM * 1.8, min(hdDj.x, hdDj.y))) * smoothstep(0.25, 0.08, hdPxM);
   float hdRem = step(0.93, hdH(floor(hdG)));
   vec3 hdQue = vec3(0.218, 0.240, 0.260) * mix(0.92, 1.06, hdH(floor(hdG) + 5.0)) * (0.90 + 0.2 * hdN(vHdPos.xz * 0.7 + 3.0)) * (0.95 + 0.1 * hdMedio) * hdGrao(vHdPos.xz);
   hdQue = mix(hdQue, vec3(0.25, 0.27, 0.29) * (0.9 + 0.2 * hdN(vHdPos.xz * 2.7)), hdRem) * (1.0 - 0.35 * hdJunta);
+  ${cru ? `// Tabuleiro: concreto cru (40 % da fôrma projetada, relevo a 55 %), não cimento queimado liso — lia como cartão bege chapado.
+  hdQue = mix(hdQue, diffuseColor.rgb * 2.4 * vec3(0.96, 1.0, 1.04), 0.4);` : ''}
   float hdUmi = smoothstep(0.6, 0.85, hdN(vHdPos.xz * 0.55 + 11.0)) * (0.6 + 0.4 * hdN(vHdPos.xz * 3.1)) * ${umi};
   hdQue = hdUmido(hdQue, 0.5 * hdUmi) * (1.0 - 0.22 * hdUmi);
-  diffuseColor.rgb = mix(diffuseColor.rgb, hdQue, hdPiso); hdRug = mix(hdRug, mix(0.72, 0.5, hdUmi), hdPiso); hdRel = mix(hdRel, 0.3, hdPiso); }`;
+  diffuseColor.rgb = mix(diffuseColor.rgb, hdQue, hdPiso); hdRug = mix(hdRug, mix(0.72, 0.5, hdUmi), hdPiso); hdRel = mix(hdRel, ${cru ? '0.55' : '0.3'}, hdPiso); }`;
+// Tabuleiro da travessia (x −5…5, z −11 ± 1,25): 2 juntas de dilatação em x = ±1,7, ferrugem escorrendo da base de cada montante
+// (x = 1,4k − 0,7 nas duas bordas) para o meio, e poça seca (anel escuro, miolo claro). Só no plano horizontal de cima.
+const TABULEIRO = `{ float hdPl = step(0.95, hdGn.y) * step(abs(vHdPos.z + 11.0), 1.3) * step(abs(vHdPos.x), 5.1);
+  float hdDil = (1.0 - smoothstep(0.012, 0.02 + fwidth(vHdPos.x) * 1.5, abs(abs(vHdPos.x) - 1.7))) * hdPl;
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.05, 0.05, 0.05), 0.85 * hdDil); hdRug = mix(hdRug, 0.95, hdDil);
+  float hdPu = fract((vHdPos.x + 0.7) / 1.4) * 1.4, hdDx = min(abs(hdPu - 0.03), 1.4 - abs(hdPu - 0.03)), hdDz = 1.25 - abs(vHdPos.z + 11.0);
+  float hdFerT = (smoothstep(0.24, 0.05, length(vec2(hdDx, max(hdDz, 0.0)))) * 0.7 + smoothstep(0.10, 0.02, hdDx + (hdN(vec2(vHdPos.x * 9.0, vHdPos.z * 3.0)) - 0.5) * 0.08) * (1.0 - smoothstep(0.1, 0.8, hdDz)) * 0.55) * hdPl;
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.30, 0.13, 0.05) * (0.8 + 0.4 * hdN(vHdPos.xz * 15.0)), min(1.0, hdFerT) * 0.8);
+  float hdPn = hdN(vHdPos.xz * 0.5 + 21.0), hdAnel = smoothstep(0.50, 0.55, hdPn) * (1.0 - smoothstep(0.58, 0.63, hdPn)) * hdPl, hdMiolo = smoothstep(0.58, 0.66, hdPn) * hdPl;
+  diffuseColor.rgb *= (1.0 - 0.32 * hdAnel) * (1.0 + 0.06 * hdMiolo); hdRug = mix(hdRug, 0.6, hdMiolo * 0.5); }`;
 // AO por vértice do lote (vao.js) entra atenuado (k = peso do AO, número ou expressão GLSL): pilar e faixa de laje em sombra
 // viravam marrom-preto com o AO cheio.
 const aoMeio = (k) => `#if defined( USE_COLOR_ALPHA ) || defined( USE_COLOR )
@@ -252,13 +267,13 @@ function concretoHD(m, r) {
   const ao = r.ao ?? 0.55, ganho = r.ganho ?? 1;
   // Tabuleiro da travessia: topo (hdGn.y > 0,7, nunca o fundo) em cimento queimado; manta asfáltica preta só no plano horizontal
   // (> 0,95: a rampa a 0,84 fica fora) em placas de 1,2 m de borda nítida; AO de 10 cm na aresta longitudinal (z −11 ± 1,25).
-  // Face inferior vista de baixo (hdGn.y < −0,5, a normal geométrica aponta para a câmera): albedo × 1,6, AO de vértice 0,2 e
-  // sem escorrido — com AO 0,4, sem sol e com a manta pelo fundo, lia preta (p50 18).
+  // Face inferior vista de baixo (hdGn.y < −0,5, a normal geométrica aponta para a câmera): albedo × 2, AO de vértice 0,1, sem
+  // escorrido e um rebatimento falso (emissivo 10 % do albedo): só o hemisfério de chão chega lá e com ×1,6 ainda lia preta.
   const MANTA = `{ vec2 hdMc = floor(vHdPos.xz / 1.2); float hdPlano = step(0.95, hdGn.y), hdFaixa = abs(vHdPos.z + 11.0);
     float hdManta = 0.0; // manta asfáltica desligada: sob o sol quente lia como placas de terra em xadrez (r17/r18); fica só o cimento queimado com juntas.
     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.070, 0.069, 0.070) * (0.85 + 0.3 * hdN(vHdPos.xz * 6.0)), hdManta); hdRug = mix(hdRug, 0.6, hdManta); hdRel = mix(hdRel, 0.2, hdManta);
     diffuseColor.rgb *= 1.0 - 0.14 * hdPlano * smoothstep(1.05, 1.22, hdFaixa) * step(hdFaixa, 1.3);
-    hdBaixo = step(hdGn.y, -0.5); diffuseColor.rgb *= 1.0 + 0.6 * hdBaixo; }`;
+    hdBaixo = step(hdGn.y, -0.5); diffuseColor.rgb *= 1.0 + 1.0 * hdBaixo; }`;
   m.map = tex(piso || canal ? 'piso_cor_rug' : 'forma_color'); m.normalMap = tex(piso || canal ? 'piso_normal' : 'forma_normal', false); m.roughnessMap = null; m.roughness = 1; m.normalScale.set(1.3, 1.3);
   m.onBeforeCompile = (s) => { mundo(s, piso || canal ? 1.9 : 1.8);
     s.fragmentShader = s.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
@@ -268,14 +283,15 @@ function concretoHD(m, r) {
         ${parede ? `diffuseColor.rgb = mix(vec3(dot(diffuseColor.rgb, ${LUMA})), diffuseColor.rgb, 0.5) * ${ganho.toFixed(2)};` : ''}
         float hdMacro = hdN(hdQ * 0.55) * 0.6 + hdN(hdQ * 1.9) * 0.4, hdMedio = hdN(hdQ * 5.5) * 0.55 + hdN(hdQ * 13.0) * 0.45, hdCorpo = hdCorpoF(hdY);
         diffuseColor.rgb *= ${tabuleiro ? 'mix(0.92, 1.08, hdMacro)' : 'mix(mix(0.80, 1.10, hdMacro), mix(0.94, 1.04, hdMacro), hdCorpo)'} * mix(0.92, 1.06, hdMedio) * hdGrao(hdQ);
-        ${parede ? laje(tabuleiro ? 'step(0.95, hdGn.y)' : '1.0') : ''}${tabuleiro ? MANTA : ''}
+        ${parede ? laje(tabuleiro ? 'step(0.95, hdGn.y)' : '1.0', tabuleiro) : ''}${tabuleiro ? MANTA + TABULEIRO : ''}
         float hdEsc = smoothstep(0.64, 0.84, hdN(vec2(hdQ.x * 1.1 + hdN(hdQ * 0.31) * 2.0, hdY * 0.18))) * (1.0 - hdPiso) * (1.0 - hdBaixo) * ${canal ? 'smoothstep(-1.5, -0.15, hdY)' : 'smoothstep(1.9, 3.0, hdY)'};
         diffuseColor.rgb = hdUmido(diffuseColor.rgb, 0.5 * hdEsc) * (1.0 - 0.28 * hdEsc);
         ${canal ? CANAL : piso ? FUNDO : entulho ? LINHA : PE} }`)
-      .replace('#include <color_fragment>', parede ? aoMeio(tabuleiro ? `mix(${ao.toFixed(2)}, 0.20, hdBaixo)` : ao) : '#include <color_fragment>')
+      .replace('#include <color_fragment>', parede ? aoMeio(tabuleiro ? `mix(${ao.toFixed(2)}, 0.10, hdBaixo)` : ao) : '#include <color_fragment>')
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = roughness * hdRug;')
-      .replace('#include <normal_fragment_maps>', NORMAL_REL); };
-  m.customProgramCacheKey = () => `corrego-hd-concreto11-${r.concreto}-${ao}-${ganho}`;
+      .replace('#include <normal_fragment_maps>', NORMAL_REL);
+    if (tabuleiro) s.fragmentShader = s.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * 0.10 * hdBaixo;'); };
+  m.customProgramCacheKey = () => `corrego-hd-concreto12-${r.concreto}-${ao}-${ganho}`;
 }
 // Peça sem mapa que fica no leito (tambor): ferrugem em mancha, faixa de ferrugem laranja-escura de 10 cm logo acima da lâmina
 // (−1,61 m), limo verde-escuro no submerso e limo claro até 35 cm acima. Metalness vai a zero: com 0,35 o reflexo do céu lavava a faixa.
@@ -293,8 +309,9 @@ function linhaDaguaHD(m) {
   m.customProgramCacheKey = () => 'corrego-hd-linha3';
 }
 // Geladeira do canal (1,5 × 1,8 em x ±5,9 / z ±10) e caixa de energia do poste (matEletro, cor pura): esmalte cinza neutro com
-// friso horizontal a 0,60 m (1/3 de 1,8), puxador vertical na face voltada para a rua (z = ±10 + 0,45, 0,75–1,05 m), ferrugem no
-// pé e no friso, grão fino. Sem mapa, metalness 0 e sem AO de vértice: a variante com forma_color (concreto 'parede') saiu preta.
+// friso do freezer a 1,22 m (1/3 de cima), borracha escura contornando as duas portas (6 cm da borda), puxador vertical de 4 cm
+// na face da rua (z = ±10 + 0,45, 0,40–1,10 e 1,30–1,62), plaqueta, amassado ±14 %, ferrugem no pé (até 0,3 m), no friso e
+// escorrendo dos cantos. Sem mapa, metalness 0 e sem AO de vértice. Antes, friso de 1 cm e puxador de 30 cm liam como caixa branca.
 function geladeiraHD(m) {
   m.metalness = 0; m.vertexColors = false;
   m.onBeforeCompile = (s) => { mundo(s);
@@ -302,18 +319,24 @@ function geladeiraHD(m) {
       float hdRug = 1.0;
       { float hdY = vHdPos.y; vec2 hdQ = vec2(vHdPos.x + vHdPos.z, hdY); float hdFw = fwidth(hdY);
         vec3 hdGn = abs(normalize(cross(dFdx(vHdPos), dFdy(vHdPos)))); float hdLado = 1.0 - step(0.7, hdGn.y);
-        float hdPainel = 1.0 + (hdN(hdQ * 0.9 + 4.0) - 0.5) * 0.10 + (hdN(hdQ * 7.0) - 0.5) * 0.05;
-        float hdFriso = (1.0 - smoothstep(0.012, 0.018 + hdFw * 1.5, abs(hdY - 0.60))) * hdLado;
-        float hdZc = vHdPos.z - 10.0 * floor(vHdPos.z / 10.0 + 0.5);
-        float hdPux = step(hdGn.z, hdGn.x) * hdLado * (1.0 - smoothstep(0.014, 0.02 + fwidth(hdZc) * 1.5, abs(hdZc - 0.45))) * step(0.75, hdY) * (1.0 - step(1.05, hdY));
-        float hdFer = (1.0 - smoothstep(0.02, 0.22, hdY)) * smoothstep(0.3, 0.65, hdN(hdQ * 6.0)) * hdLado;
-        hdFer = max(hdFer, hdFriso * smoothstep(0.55, 0.8, hdN(vec2(hdQ.x * 9.0, 1.0))) * 0.7);
-        diffuseColor.rgb *= hdPainel * (1.0 + (hdGrao(hdQ) - 1.0) * 0.5) * (1.0 - 0.55 * hdFriso);
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.09, 0.09, 0.09), 0.8 * hdPux);
+        float hdPainel = 1.0 + (hdN(hdQ * 0.9 + 4.0) - 0.5) * 0.14 + (hdN(hdQ * 7.0) - 0.5) * 0.06;
+        float hdZc = vHdPos.z - 10.0 * floor(vHdPos.z / 10.0 + 0.5), hdXc = vHdPos.x - 5.9 * sign(vHdPos.x);
+        float hdU = hdGn.x > hdGn.z ? hdZc : hdXc, hdFu = fwidth(hdU);
+        float hdFriso = (1.0 - smoothstep(0.012, 0.016 + hdFw * 1.5, abs(hdY - 1.22))) * hdLado;
+        // Borracha das portas: vertical a 6 cm das bordas (só na geladeira, |u| < 0,76), topo a 1,74 e pé a 0,06.
+        float hdPorta = step(abs(hdU), 0.76) * hdLado, hdDentro = step(0.06, hdY) * (1.0 - step(1.74, hdY));
+        float hdBorr = max((1.0 - smoothstep(0.008, 0.012 + hdFu * 1.5, abs(abs(hdU) - 0.69))) * hdDentro, (1.0 - smoothstep(0.008, 0.012 + hdFw * 1.5, min(abs(hdY - 1.74), abs(hdY - 0.06)))) * step(abs(hdU), 0.69)) * hdPorta;
+        float hdPux = step(hdGn.z, hdGn.x) * hdLado * (1.0 - smoothstep(0.018, 0.024 + fwidth(hdZc) * 1.5, abs(hdZc - 0.45))) * max(step(0.40, hdY) * (1.0 - step(1.10, hdY)), step(1.30, hdY) * (1.0 - step(1.62, hdY)));
+        float hdPlaca = step(abs(hdU), 0.07) * step(abs(hdY - 1.66), 0.018) * hdPorta;
+        float hdFer = (1.0 - smoothstep(0.03, 0.30, hdY + (hdN(vec2(hdQ.x * 5.0, 2.0)) - 0.5) * 0.1)) * smoothstep(0.3, 0.6, hdN(hdQ * 6.0)) * hdLado;
+        hdFer = max(hdFer, hdFriso * smoothstep(0.5, 0.75, hdN(vec2(hdQ.x * 9.0, 1.0))) * 0.8);
+        hdFer = max(hdFer, (1.0 - smoothstep(0.0, 0.06, abs(abs(hdU) - 0.69))) * (1.0 - smoothstep(0.06, 0.4, hdY)) * smoothstep(0.4, 0.7, hdN(vec2(hdQ.x * 7.0, hdY * 3.0))) * hdPorta);
+        diffuseColor.rgb *= hdPainel * (1.0 + (hdGrao(hdQ) - 1.0) * 0.5) * (1.0 - 0.7 * hdFriso) * (1.0 - 0.6 * hdBorr);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.07, 0.07, 0.07), 0.85 * max(hdPux, hdPlaca));
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.22, 0.10, 0.05) * (0.7 + 0.6 * hdN(hdQ * 15.0)), 0.85 * hdFer);
-        hdRug = 1.0 + 0.6 * hdFer; }`)
+        hdRug = 1.0 + 0.6 * hdFer + 0.3 * hdBorr; }`)
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = min(1.0, roughness * hdRug);'); };
-  m.customProgramCacheKey = () => 'corrego-hd-geladeira1';
+  m.customProgramCacheKey = () => 'corrego-hd-geladeira2';
 }
 // Saco de lixo (cor pura, dodecaedro autoral): pregas claras radiais que convergem no nó (ângulo em volta do eixo do objeto,
 // torcidas por ruído, mais fortes para cima), amassado por ruído de 10–15 cm e grão fino; fosco. A posição é a do OBJETO
@@ -334,22 +357,25 @@ function sacoHD(m) {
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = min(1.0, roughness * hdRug);'); };
   m.customProgramCacheKey = () => 'corrego-hd-saco1';
 }
-// Pilar da travessia (matMadeira, cor pura) lido como tubo galvanizado: tom por altura em manchas de 20–40 cm (±6 %), emenda a
-// cada 1,5 m com filete escuro e ferrugem leve escorrendo 12 cm abaixo, grão fino. Neutro 0x9c9b97: 0x9a9ea2 lia azulado à sombra.
-function galvanizadoHD(m) {
+// Pilar da travessia (matMadeira, cor pura) lido como pilar de concreto: linha de fôrma a cada 1 m, mofo verde-escuro nos 45 cm
+// de baixo (fora da faixa do corpo), escorrido de ferrugem da viga só acima de 2,1 m, tom por altura ±5 % e grão. Era tubo
+// galvanizado com emenda a 1,5 m: lia como pilar liso (dpBloco 2,2).
+function pilarHD(m) {
   m.onBeforeCompile = (s) => { mundo(s);
     s.fragmentShader = s.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
       float hdRug = 1.0;
       { float hdY = vHdPos.y; vec2 hdQ = vec2(vHdPos.x + vHdPos.z, hdY); float hdFw = fwidth(hdY);
-        float hdTom = 1.0 + (hdN(vec2(hdQ.x * 1.7, hdY * 3.3)) - 0.5) * 0.12 + (hdN(hdQ * 9.0 + 2.0) - 0.5) * 0.04;
-        float hdJ = hdY / 1.5 - floor(hdY / 1.5), hdDj = min(hdJ, 1.0 - hdJ) * 1.5, hdAbaixo = hdJ * 1.5;
-        float hdEm = (1.0 - smoothstep(0.006, 0.012 + hdFw * 1.5, hdDj)) * smoothstep(0.05, 0.01, hdFw);
-        float hdFer = (1.0 - smoothstep(0.0, 0.12, hdAbaixo)) * smoothstep(0.45, 0.75, hdN(vec2(hdQ.x * 11.0, hdY * 2.0))) * step(0.01, hdY);
-        diffuseColor.rgb *= hdTom * (1.0 + (hdGrao(hdQ) - 1.0) * 0.5) * (1.0 - 0.4 * hdEm);
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.24, 0.11, 0.05) * (0.7 + 0.6 * hdN(hdQ * 17.0)), 0.6 * hdFer);
-        hdRug = 1.0 + 0.5 * hdFer; }`)
+        float hdTom = 1.0 + (hdN(vec2(hdQ.x * 1.7, hdY * 1.1)) - 0.5) * 0.10 + (hdN(hdQ * 9.0 + 2.0) - 0.5) * 0.05;
+        float hdJ = fract(hdY), hdDj = min(hdJ, 1.0 - hdJ);
+        float hdEm = (1.0 - smoothstep(0.004, 0.009 + hdFw * 1.5, hdDj)) * smoothstep(0.05, 0.01, hdFw);
+        float hdMofo = (1.0 - smoothstep(0.12, 0.45, hdY + (hdN(vec2(hdQ.x * 3.0, 1.0)) - 0.5) * 0.12)) * (0.6 + 0.4 * hdN(hdQ * 6.0)) * step(-0.2, hdY);
+        float hdFer = smoothstep(2.1, 2.7, hdY) * smoothstep(0.6, 0.8, hdN(vec2(hdQ.x * 13.0, hdY * 0.6))) * (0.5 + 0.5 * hdN(hdQ * 5.0));
+        diffuseColor.rgb *= hdTom * (1.0 + (hdGrao(hdQ) - 1.0) * 0.6) * (1.0 - 0.35 * hdEm);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.07, 0.085, 0.06) * (0.7 + 0.6 * hdN(hdQ * 11.0)), 0.75 * hdMofo);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.26, 0.12, 0.05) * (0.7 + 0.6 * hdN(hdQ * 17.0)), 0.55 * hdFer);
+        hdRug = 1.0 + 0.3 * hdFer + 0.1 * hdMofo; }`)
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = min(1.0, roughness * hdRug);'); };
-  m.customProgramCacheKey = () => 'corrego-hd-galv1';
+  m.customProgramCacheKey = () => 'corrego-hd-pilar1';
 }
 // Guarda-corpo da travessia alta (matGuarda: caixa de 0,9 × 0,1 m no vão e mureta de 0,55 m girada na rampa, sem sombra): vira
 // guarda tubular galvanizado por descarte — só ficam o corrimão (0,76–0,86 m sobre o piso), a barra do meio (0,40–0,48) e os
@@ -381,19 +407,22 @@ function guardaHD(m, rampa) {
 
 // Chapa ondulada (worn_corrugated_iron, 13 ondas/m = 7,6 cm): a onda desce o caimento lido da normal; no telhado folhas
 // de 1,0 × 2,2 m com sombra de sobreposição e tom por folha (legível de longe, onde a onda some no mip); na parede painel
-// por ruído. Ferrugem só em mancha. Tom claro: o mapa tem média 0,16, a cor compensa (0x9a–0xa0, não 0x7d).
+// por ruído. Ferrugem só em mancha. Tom claro: o mapa tem média 0,16, a cor compensa (0x9a–0xa0, não 0x7d). Na parede, dentro da
+// faixa do corpo (hdCorpoF), o mapa vai à sua média local (mip +5, grão ±7 %), sem ferrugem e com painel a 30 %: a mancha
+// preta do worn_corrugated_iron tinha tamanho de torso na casinha (`alto`).
 function chapaHD(m, r) {
   m.map = tex('chapa_color'); m.normalMap = tex('chapa_normal', false); m.roughnessMap = null; m.roughness = .66; m.metalness = .35; m.normalScale.set(.6, .6);
   m.onBeforeCompile = (s) => { mundo(s, 1.0, 'caimento');
     s.fragmentShader = s.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
       float hdMetal = 1.0, hdRug = 1.0, hdRel = 1.0; diffuseColor.a = 1.0;
       { vec2 hdQ = vec2(vHdPos.x + vHdPos.z, vHdPos.y);
-        vec3 hdGn = normalize(cross(dFdx(vHdPos), dFdy(vHdPos))); float hdTelha = smoothstep(0.35, 0.6, abs(hdGn.y));
+        vec3 hdGn = normalize(cross(dFdx(vHdPos), dFdy(vHdPos))); float hdTelha = smoothstep(0.35, 0.6, abs(hdGn.y)), hdCorpoC = hdCorpoF(vHdPos.y) * (1.0 - hdTelha);
+        { vec3 hdMedC = diffuse * texture2D(map, vMapUv, 5.0).rgb; diffuseColor.rgb = mix(diffuseColor.rgb, hdMedC * clamp(diffuseColor.rgb / max(hdMedC, vec3(1e-4)), 0.93, 1.07), hdCorpoC); }
         float hdPainel = hdN(vHdPos.xz * 0.35 + vec2(vHdPos.y * 0.3, 0.0)), hdF2 = hdN(vec2(hdQ.x * 1.3 + 4.1, hdQ.y * 2.2));
-        float hdFerr = smoothstep(0.60, 0.82, hdN(hdQ * 0.9 + 2.0) * 0.6 + hdF2 * 0.4);
+        float hdFerr = smoothstep(0.60, 0.82, hdN(hdQ * 0.9 + 2.0) * 0.6 + hdF2 * 0.4) * (1.0 - hdCorpoC);
         vec2 hdFolha = vec2(vMapUv.x, vMapUv.y / 2.2), hdFr = fract(hdFolha), hdPx = fwidth(hdFolha);
         float hdEmV = 1.0 - smoothstep(0.0, 0.02 + hdPx.y * 2.0, hdFr.y * 2.2), hdEmU = 1.0 - smoothstep(0.0, 0.012 + hdPx.x * 2.0, hdFr.x);
-        float hdTom = mix(1.0 + (hdPainel - 0.5) * 0.36, mix(0.86, 1.12, hdH(floor(hdFolha))), hdTelha);
+        float hdTom = mix(1.0 + (hdPainel - 0.5) * 0.36 * (1.0 - 0.7 * hdCorpoC), mix(0.86, 1.12, hdH(floor(hdFolha))), hdTelha);
         diffuseColor.rgb *= hdTom * (1.0 - hdTelha * (0.45 * hdEmV + 0.25 * hdEmU));
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.22, 0.12, 0.07) * (0.7 + 0.6 * hdF2), ${r.ferrugem.toFixed(2)} * hdFerr);
         // Telhado lê fibrocimento cinza (não marrom metálico): no plano inclinado o albedo vai a 60 % de luminância neutra-fria.
@@ -402,28 +431,39 @@ function chapaHD(m, r) {
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = min(1.0, roughness * hdRug);')
       .replace('#include <metalnessmap_fragment>', 'float metalnessFactor = metalness * hdMetal;')
       .replace('#include <normal_fragment_maps>', NORMAL_REL); };
-  m.customProgramCacheKey = () => `corrego-hd-chapa5-${r.ferrugem}`;
+  m.customProgramCacheKey = () => `corrego-hd-chapa6-${r.ferrugem}`;
 }
 
 // Madeira que fica madeira vira tábua cinza desbotada (ponte, guarda, tablado da travessia) ou compensado claro (albedo ≈ 0,4) em
 // chapas de 1,10 × 2,20 m com emenda escura, veio fraco (variação do mapa a 55 %) e AO de vértice a 35 % (barraco, tapume do
 // puxadinho, vigas): tex_madeira tem média linear 0,17 e com AO cheio o tapume à sombra ficava em p50 64, chapado.
+// Compensado projetado no mundo a 1,10 m (a emenda do tile cai na emenda da chapa) com o mapa deslocado por chapa (hash da
+// célula): o tile de 2 × 2 por UV repetia a mesma veia e mostrava a costura no meio do tapume (`rua` x ≈ 150). Escorrido e
+// sujeira só fora da faixa do corpo; face inferior (viga sob o tabuleiro) clareia como o tabuleiro.
 function madeiraHD(m, r) {
   const comp = r.madeira === 'compensado';
   m.roughness = .9; m.metalness = 0;
-  m.onBeforeCompile = (s) => { mundo(s);
-    s.fragmentShader = s.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+  m.onBeforeCompile = (s) => { mundo(s, comp ? 1.1 : 0);
+    s.fragmentShader = s.fragmentShader.replace('#include <map_fragment>', `${comp ? `#ifdef USE_MAP
+      vec2 hdDeslM = vec2(0.0);
+      { vec3 hdGd = abs(normalize(cross(dFdx(vHdPos), dFdy(vHdPos)))); vec2 hdSd = hdGd.y > 0.7 ? vHdPos.xz : (hdGd.x > hdGd.z ? vHdPos.zy : vHdPos.xy);
+        vec2 hdCd = floor(hdSd / vec2(1.10, 2.20)); hdDeslM = vec2(hdH(hdCd), hdH(hdCd + 3.0)) * 0.5; }
+      vec4 sampledDiffuseColor = texture2D(map, vMapUv + hdDeslM); diffuseColor *= sampledDiffuseColor;
+      #endif` : '#include <map_fragment>'}
+      float hdBaixoM = 0.0;
       { vec3 hdL = vec3(dot(diffuseColor.rgb, ${LUMA})); ${comp ? 'hdL = mix(vec3(0.17), hdL, 0.55);' : ''} vec2 hdQ = vec2(vHdPos.x + vHdPos.z, vHdPos.y);
-        float hdW = hdN(hdQ * 0.8 + 3.0);
+        float hdW = hdN(hdQ * 0.8 + 3.0), hdForaM = 1.0 - hdCorpoF(vHdPos.y);
         diffuseColor.rgb = mix(diffuseColor.rgb, hdL * ${comp ? 'vec3(1.96, 1.86, 1.66)' : 'vec3(1.28, 1.32, 1.26)'}, ${comp ? '0.92' : '0.86'}) * mix(${comp ? '0.88, 1.08' : '0.78, 1.12'}, hdW) * hdGrao(hdQ * 0.5);
-        ${comp ? `vec3 hdGn = abs(normalize(cross(dFdx(vHdPos), dFdy(vHdPos)))); vec2 hdS = hdGn.y > 0.7 ? vHdPos.xz : (hdGn.x > hdGn.z ? vHdPos.zy : vHdPos.xy);
+        ${comp ? `vec3 hdGs = normalize(cross(dFdx(vHdPos), dFdy(vHdPos))), hdGn = abs(hdGs); vec2 hdS = hdGn.y > 0.7 ? vHdPos.xz : (hdGn.x > hdGn.z ? vHdPos.zy : vHdPos.xy);
         vec2 hdG = hdS / vec2(1.10, 2.20), hdFr = abs(fract(hdG) - 0.5), hdPx = fwidth(hdG);
         float hdEm = max(1.0 - smoothstep(0.0, 0.012 + hdPx.x * 1.5, (0.5 - hdFr.x) * 1.10), 1.0 - smoothstep(0.0, 0.012 + hdPx.y * 1.5, (0.5 - hdFr.y) * 2.20));
         diffuseColor.rgb *= mix(0.86, 1.1, hdH(floor(hdG))) * (1.0 - 0.45 * hdEm);
-        float hdEsc = smoothstep(0.6, 0.85, hdN(vec2(hdS.x * 2.3, hdS.y * 0.25) + 7.0)) * (1.0 - hdGn.y);
-        diffuseColor.rgb = hdUmido(diffuseColor.rgb, 0.5 * hdEsc) * (1.0 - 0.22 * hdEsc);` : `float hdSuj = smoothstep(0.5, 0.8, hdN(hdQ * 1.7 + 1.0)); diffuseColor.rgb *= 1.0 - 0.18 * hdSuj;`} }`)
-      .replace('#include <color_fragment>', comp ? aoMeio(0.35) : '#include <color_fragment>'); };
-  m.customProgramCacheKey = () => `corrego-hd-madeira8-${r.madeira}`;
+        float hdEsc = smoothstep(0.6, 0.85, hdN(vec2(hdS.x * 2.3, hdS.y * 0.25) + 7.0)) * (1.0 - hdGn.y) * hdForaM;
+        diffuseColor.rgb = hdUmido(diffuseColor.rgb, 0.5 * hdEsc) * (1.0 - 0.22 * hdEsc);
+        hdBaixoM = step(hdGs.y, -0.5); diffuseColor.rgb *= 1.0 + 0.8 * hdBaixoM;` : `float hdSuj = smoothstep(0.5, 0.8, hdN(hdQ * 1.7 + 1.0)) * hdForaM; diffuseColor.rgb *= 1.0 - 0.18 * hdSuj;`} }`)
+      .replace('#include <color_fragment>', comp ? aoMeio('mix(0.35, 0.15, hdBaixoM)') : '#include <color_fragment>');
+    if (comp) s.fragmentShader = s.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * 0.08 * hdBaixoM;'); };
+  m.customProgramCacheKey = () => `corrego-hd-madeira9-${r.madeira}`;
 }
 
 // Reboco pintado: textura de reboco real projetada no mundo (1,7 m), relevo por normal, e a idade do Sertão (mancha,
@@ -432,7 +472,9 @@ function madeiraHD(m, r) {
 // neutraliza o matiz; m.color = luma × tom é o `diffuse` que entra no mapa E no corpoLiso, logo é o único lugar onde a tinta fica
 // uniforme na faixa do corpo) e o tom pastel entra com croma ×1,8 (S ≈ 0,17 ao sol / 0,25 à sombra na tela), luma mantida.
 // Tijolo menos saturado e quase só no pé: um buraco de 10 px no alto da empena lia como mancha magenta.
-// corpoLiso 0,85: a mancha da própria reboco_cor_rug (cabeça, rgb≈69/50/32 a 4 m) entrava a 100 % na faixa do corpo.
+// corpoLiso 1: a mancha da própria reboco_cor_rug (cabeça, rgb≈69/50/32 a 4 m) entrava a 100 % na faixa do corpo; com 0,85 ainda
+// sobrava 15 %. Fora da faixa a mancha do mapa entra à metade (`antes`: mip +5 a 50 %) e o macro a 60 %: as manchas de torso
+// na palafita (y 2,2–4,9, `alto`) e na parede verde (`parede`) eram o mapa + macro inteiros. Sub-tijolo terroso (não salmão).
 // Três acabamentos por tinta (variante = soma dos bytes da cor autoral mod 3, estável por material; pelo hash só e6d4b4 — muro
 // externo, uma palafita, barracos da fileira C — caía em v1, invisível nas poses, e TINTA_FIXA sobrepõe: d9c78e, a casa A do bar
 // (−9,75; 2,6) e a A leste (−1,1), vira v1 verde-água; c9a883, a B oeste (1,9) à direita/fundo da pose `rua`, fica v2 pelo hash):
@@ -440,7 +482,7 @@ function madeiraHD(m, r) {
 // da tabela ou bits 8+16 da cor) descascada só acima de 2,1 m, 2 cinza-massa (luma, S ≈ 0,05: 90 % para a luma e 0,97/0,98/1,0
 // contra o sol) com remendos de massa acima de 2,1 m — relativos à parede (luma × 1,06, dessaturados): placas de cor fixa liam
 // como planos claros flutuando. Nada entra na faixa do corpo (0,45–2,1 m) além de tinta uniforme e grão; rodapé escuro de 0,45 m.
-const SUB_TIJOLO = { tex: null, metros: 1.0, cor: [1.05, .95, .9], tijolo: true, pe: .60, alto: .80, y0: 0, foraDoCorpo: true, sat: .8, forca: 1, beico: .55 };
+const SUB_TIJOLO = { tex: null, metros: 1.0, cor: [.9, .66, .5], tijolo: true, pe: .60, alto: .80, y0: 0, foraDoCorpo: true, sat: .65, forca: 1, beico: .55 };
 const TINTA_PASTEL = [[0.738, 1.128, 1.026], [1.10, 1.02, 0.62], [0.824, 0.978, 1.596]];   // verde-água, amarelo, azul (luma 1)
 const TINTA_FIXA = { 0xd9c78e: [1, 0], 0xe6d4b4: [1, 0] };   // [variante, tom] — e6d4b4 divide a parede do bar com d9c78e: mesmo verde-água (azul fazia costura lilás)
 const varianteReboco = (v) => [
@@ -470,7 +512,8 @@ function rebocoHD(m) {
       ${varianteReboco(v)}
       float hdRod = (1.0 - smoothstep(0.42, 0.46, hdYb)) * (1.0 - hdPisoB);
       diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.085, 0.085, 0.082) * (0.85 + 0.3 * hdN(hdQb * 6.0)), 0.8 * hdRod); hdRugA = mix(hdRugA, 0.75, hdRod); }`;
-  projetaMundo(m, 1.7, { rodape: .5, sub: SUB_TIJOLO, pe: { altura: .5, cor: [.40, .38, .34], escuro: .3 }, corpoLiso: .85, extra: { chave: `corrego-reb7-v${v}`, depois } });
+  const antes = `{ vec3 hdMedA = diffuse * texture2D(map, vMapUv, 5.0).rgb; diffuseColor.rgb = mix(diffuseColor.rgb, hdMedA, 0.5); }`;
+  projetaMundo(m, 1.7, { rodape: .5, sub: SUB_TIJOLO, pe: { altura: .5, cor: [.40, .38, .34], escuro: .3 }, corpoLiso: 1, macro: .6, extra: { chave: `corrego-reb8-v${v}`, antes, depois } });
   const obc = m.onBeforeCompile, chave = m.customProgramCacheKey;
   m.onBeforeCompile = (s) => { obc(s); s.fragmentShader = s.fragmentShader.replace('#include <roughnessmap_fragment>', 'float roughnessFactor = roughness * hdRugA;'); };
   m.customProgramCacheKey = () => `${chave()}-rug`;
@@ -479,8 +522,9 @@ function rebocoHD(m) {
 // Tijolo cru (pbr_bricks051, cuja UV repetia o tile a cada ~180 px): bloco cerâmico de 6 furos 39 × 19 cm assentado com
 // junta cinza de 1,5 cm, projetado em metros; tom por bloco e por fiada (quase plano na faixa do corpo), argamassa escorrida/
 // respingada sobre o bloco, cinta de concreto de 15 cm no topo de cada pavimento (y = k·2,8) e verga corrida de 12 cm no nível
-// dos vãos (2,15 m do piso) e topo horizontal (piso da laje) em concreto. O mapa fica só como grão. Bloco pouco saturado:
-// o 0,46/0,21/0,10 anterior lia como tijolinho europeu a 1500 px.
+// dos vãos (2,15 m do piso, o topo da janela autoral) com sombra de 3 cm abaixo, e topo horizontal (piso da laje) em concreto.
+// O mapa fica só como grão. Bloco laranja desbotado 0,42/0,14/0,06 (≈ 172/105/68 sRGB; sol + AgX lavam o matiz, croma alta
+// de propósito) com junta cinza-clara 1,8 cm: o 0,40/0,215/0,135 lia como tijolinho escuro uniforme (sat 0,25) a 1500 px.
 function blocoHD(m) {
   m.normalMap = tex('reboco_normal', false); m.roughnessMap = null; m.roughness = 1; m.normalScale.set(.7, .7);
   m.onBeforeCompile = (s) => { mundo(s, 1.0);
@@ -492,21 +536,22 @@ function blocoHD(m) {
         float hdFi = floor(hdY / 0.2), hdDesl = 0.2 * mod(hdFi, 2.0);
         vec2 hdB = vec2((hdU + hdDesl) / 0.4, hdY / 0.2), hdFr = fract(hdB), hdPx = fwidth(hdB), hdDj = min(hdFr, 1.0 - hdFr) * vec2(0.4, 0.2);
         float hdLonge = smoothstep(0.14, 0.04, hdPx.y * 0.2);
-        float hdJunta = (1.0 - smoothstep(0.0, 0.015 + max(hdPx.x * 0.4, hdPx.y * 0.2) * 1.5, min(hdDj.x, hdDj.y))) * hdLonge;
-        float hdVar = mix(1.0, 0.3, hdCorpoF(hdY)), hdTom = mix(1.0, mix(0.84, 1.12, hdH(floor(hdB))), hdVar) * mix(0.95, 1.05, hdH(vec2(hdFi, 7.0)));
-        vec3 hdBloco = vec3(0.40, 0.215, 0.135) * hdTom * hdGr * (0.9 + 0.2 * hdN(hdQ * 9.0));
-        vec3 hdArg = vec3(0.27, 0.265, 0.245) * (0.8 + 0.4 * hdN(hdQ * 23.0));
+        float hdJunta = (1.0 - smoothstep(0.0, 0.018 + max(hdPx.x * 0.4, hdPx.y * 0.2) * 1.5, min(hdDj.x, hdDj.y))) * hdLonge;
+        float hdVar = mix(1.0, 0.45, hdCorpoF(hdY)), hdTom = mix(1.0, mix(0.84, 1.12, hdH(floor(hdB))), hdVar) * mix(0.95, 1.05, hdH(vec2(hdFi, 7.0)));
+        vec3 hdBloco = vec3(0.42, 0.14, 0.06) * hdTom * hdGr * (0.9 + 0.2 * hdN(hdQ * 9.0));
+        vec3 hdArg = vec3(0.36, 0.35, 0.33) * (0.8 + 0.4 * hdN(hdQ * 23.0));
         float hdResp = smoothstep(0.66, 0.74, hdN(hdQ * 6.0 + 1.0) * 0.55 + hdN(vec2(hdU * 2.0, hdY * 0.5) + 4.0) * 0.45) * hdLonge * (1.0 - 0.7 * hdCorpoF(hdY));
         vec3 hdC = mix(mix(hdBloco, hdArg, 0.18 * (1.0 - hdLonge)), hdArg * 1.08, max(hdJunta, 0.85 * hdResp));
-        float hdMod = fract(hdY / 2.8) * 2.8, hdCinta = max(max(smoothstep(2.63, 2.66, hdMod), hdPiso), smoothstep(2.13, 2.16, hdMod) * (1.0 - smoothstep(2.26, 2.29, hdMod)));
-        vec3 hdConc = vec3(0.36, 0.355, 0.33) * (0.85 + 0.3 * hdN(hdQ * 2.1)) * hdGrao(hdQ);
-        hdC = mix(hdC, hdConc, hdCinta);
+        float hdMod = fract(hdY / 2.8) * 2.8, hdCinta = max(max(smoothstep(2.63, 2.66, hdMod), hdPiso), smoothstep(2.13, 2.16, hdMod) * (1.0 - smoothstep(2.29, 2.32, hdMod)));
+        float hdSombraV = smoothstep(2.09, 2.11, hdMod) * (1.0 - smoothstep(2.12, 2.14, hdMod)) * (1.0 - hdPiso);
+        vec3 hdConc = vec3(0.40, 0.39, 0.36) * (0.85 + 0.3 * hdN(hdQ * 2.1)) * hdGrao(hdQ);
+        hdC = mix(hdC, hdConc, hdCinta) * (1.0 - 0.4 * hdSombraV);
         float hdEsc = smoothstep(0.66, 0.86, hdN(vec2(hdU * 1.1, hdY * 0.18))) * (1.0 - hdPiso) * smoothstep(1.9, 3.0, hdY);
         hdC = hdUmido(hdC, 0.45 * hdEsc) * (1.0 - 0.25 * hdEsc);
         float hdSuj = smoothstep(0.55, 0.04, hdY) * (1.0 - hdPiso); hdC = hdUmido(hdC, 0.5 * hdSuj) * (1.0 - 0.3 * hdSuj);
         diffuseColor.rgb = hdC; hdRug = mix(0.95, 0.8, hdCinta); }`)
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = roughness * hdRug;'); };
-  m.customProgramCacheKey = () => 'corrego-hd-bloco2';
+  m.customProgramCacheKey = () => 'corrego-hd-bloco3';
 }
 
 // Vãos (matVao: porta 1,0 × 2,1 e janela 1,0 × 1,0 em placa de 10 cm, 2 cm à frente da parede). O lote estático funde todos
@@ -574,14 +619,15 @@ function janelaHD(m, U) {
 }
 
 // Lâmina do córrego (water.js): cor e espuma por uniforme; o update fica intacto. A faixa de espuma branca na emenda
-// água/margem era a "linha de 1 px" apontada; vira filete cinza-oliva estreito. Com `espuma`, o fragmento ganha nata marrom
+// água/margem era a "linha de 1 px" apontada; vira filete cinza-oliva estreito. Água marrom-oliva (0x4a4830 rasa / 0x201f14
+// funda: verde-cinza lia como piscina), nata bege-oliva. Com `espuma`, o fragmento ganha nata marrom
 // nos cantos (|x| > 2,2 m, junto aos muros) lida da textura B que já está no shader; a string original volta em desliga().
 const ESPUMA_ANCORA = 'cor = mix(cor, uCeuCor, fres * 0.22);';
 function aguaHD(scene, espuma) {
   let malha = null; scene.traverse((o) => { if (o.userData?.aguaViva && o.material?.uniforms) malha = o; });
   if (!malha) return () => {};
   const mat = malha.material, u = mat.uniforms, cores = {}, nums = {}, frag = mat.fragmentShader;
-  for (const [k, v] of [['uCorRasa', 0x4a6150], ['uCorFunda', 0x1c2a21], ['uCorEspuma', 0x9aa69b]]) if (u[k]?.value?.isColor) { cores[k] = u[k].value.getHex(); u[k].value.setHex(v); }
+  for (const [k, v] of [['uCorRasa', 0x4a4830], ['uCorFunda', 0x201f14], ['uCorEspuma', 0x9c9a86]]) if (u[k]?.value?.isColor) { cores[k] = u[k].value.getHex(); u[k].value.setHex(v); }
   for (const [k, v] of [['uEspumaFaixa', .14], ['uEspumaMiolo', .05]]) if (typeof u[k]?.value === 'number') { nums[k] = u[k].value; u[k].value = Math.min(u[k].value, v); }
   const patch = espuma && typeof frag === 'string' && frag.includes(ESPUMA_ANCORA) && u.tNormalB && u.uTime;
   if (patch) {
@@ -709,7 +755,7 @@ export function aplicaCorregoHD(scene, renderer, opts = {}) {
     if (r.concreto) m.emissive.setHex(0x000000);
     if (r.chao) chaoHD(m, o.poca, campo); else if (r.reboco) rebocoHD(m); else if (r.bloco) blocoHD(m); else if (r.janela) janelaHD(m, U); else if (r.concreto) concretoHD(m, r); else if (r.chapa) chapaHD(m, r); else if (r.madeira) madeiraHD(m, r); else if (r.linhaDagua) linhaDaguaHD(m);
     // Cor pura com shader próprio: ?hdeletro=0 deixa só a cor/rugosidade da regra (fallback chapado, nunca o material original).
-    else if (r.geladeira) { if (o.eletro) geladeiraHD(m); } else if (r.galvanizado) { if (o.eletro) galvanizadoHD(m); } else if (r.saco) sacoHD(m); else if (r.guarda) guardaHD(m, !guardaCen);
+    else if (r.geladeira) { if (o.eletro) geladeiraHD(m); } else if (r.pilar) { if (o.eletro) pilarHD(m); } else if (r.saco) sacoHD(m); else if (r.guarda) guardaHD(m, !guardaCen);
     for (const t of [m.map, m.normalMap]) if (t && t.anisotropy < 8) { aniso.push([t, t.anisotropy]); t.anisotropy = 8; t.needsUpdate = true; }
     // dispose() solta os programas antigos do material (o three guarda todas as variantes até lá).
     m.dispose(); m.needsUpdate = true;
