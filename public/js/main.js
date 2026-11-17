@@ -2006,7 +2006,9 @@ function sendMatchEvent(result) {
     sessionId: getSessionId(), eventId: _matchEventId, version: versaoComOrigem(VERSION),
     ...telemetryGameContext, ...sinaisDeBuild(),
     map: currentMap, mode: modoTelemetria(g), weaponMode: settings.wpnMode || 'all',
-    character: currentChar, team: g.arena ? g.player.team : g.playerTeam,
+    /* O corpo que jogou, não o do lobby (currentChar muda no lobby e no MP); a skin vai à parte para o perfil mostrar o retrato dela. */
+    character: g.playerDef?.id || g.playerCharId || currentChar, skin: g.playerDef?.skinId || null,
+    team: g.arena ? g.player.team : g.playerTeam,
     faction: g.playerFaction || currentFaction,
     result: result || 'quit',
     kills: p.kills || 0, deaths: p.deaths || 0, headshots: p.headshots || 0,
@@ -3997,7 +3999,8 @@ function partialPayload() {
     uid: getAnonId(), nick, token: getToken(), won: false, kills: p.kills, deaths: p.deaths,
     headshots: p.headshots || 0, bestStreak: g.mk.best || 0, rounds, team: g.playerTeam,
     faction: g.playerFaction || currentFaction,
-    seconds: Math.round(g.time), character: currentChar, mode: modoEfetivoAtual(),
+    seconds: Math.round(g.time), character: g.playerDef?.id || g.playerCharId || currentChar, skin: g.playerDef?.skinId || null,
+    mode: modoEfetivoAtual(),
   };
 }
 addEventListener('beforeunload', (e) => {
@@ -4073,7 +4076,7 @@ async function recordMatchStats(s) {
       uid: getAnonId(), nick, token: getToken(), won: s.won, kills: s.kills, deaths: s.deaths,
       headshots: s.headshots, bestStreak: s.bestStreak,
       rounds: s.roundsP + s.roundsB, team: s.team, faction: currentFaction, seconds: s.seconds || 0,
-      character: s.character, mode: modoEfetivoAtual(),
+      character: s.character, skin: game?.playerDef?.skinId || null, mode: modoEfetivoAtual(),
     });
     if (!res) submitNote('ranking global indisponível');
     else if (res.error) submitNote(res.message || traduErroSubmit(res.error));
