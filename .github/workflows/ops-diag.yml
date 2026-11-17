@@ -15,10 +15,14 @@
 # EM VERMELHO (saída 1: CRÍTICO ou ALTO): abre UMA issue `ops-diag` com o relatório, ou
 # comenta na que já está aberta. Verde (0) fecha a issue aberta. Inconclusivo (78: rede
 # do runner) fica só no log — não é verde nem vermelho.
+#
+# AGENDA: de hora em hora (minuto 17, UTC), por workflow_dispatch vindo do Worker
+# vigia-cron (workers/vigia-cron/, runbook docs/runbooks/vigia-cron.md). O `schedule`
+# do GitHub saiu porque descarta disparo sob carga: medido em 11/2026, o `17 * * * *`
+# daqui rodou 32 vezes em 10 dias contra 240 previstas (~13%), e o prod-watch `*/15`
+# 27 de 672 em 7 dias.
 name: ops-diag
 on:
-  schedule:
-    - cron: '17 * * * *'
   workflow_dispatch:
 
 permissions:

@@ -13,9 +13,9 @@ import { LIVESTOCK_CHECK_IDS, parseLivestockChecks } from '../../eval/sertao-liv
 
 const wf = (n) => readFileSync(fileURLToPath(new URL(`../../../.github/workflows/${n}`, import.meta.url)), 'utf8');
 
-test('ops-diag.yml: agendado e manual, navegador, artifact, issue em vermelho, fecha em verde, teto de tempo', () => {
+test('ops-diag.yml: manual (relógio no vigia-cron), navegador, artifact, issue em vermelho, fecha em verde, teto de tempo', () => {
   const s = wf('ops-diag.yml');
-  assert.match(s, /schedule:\n\s+- cron: '/); assert.match(s, /workflow_dispatch:/);
+  assert.doesNotMatch(s, /^\s+schedule:/m, 'o relógio é o vigia-cron; schedule do GitHub descarta disparo'); assert.match(s, /workflow_dispatch:/);
   assert.match(s, /node tools\/ops\/diagnose\.mjs --browser --partida --sem-gpu --out=artifacts\/ops\/ci/);
   assert.match(s, /upload-artifact@[0-9a-f]{40}/); assert.match(s, /path: artifacts\/ops\/ci\//);
   assert.match(s, /codigo == '1'[\s\S]*gh issue (create|comment)/); assert.match(s, /codigo == '0'[\s\S]*gh issue close/);

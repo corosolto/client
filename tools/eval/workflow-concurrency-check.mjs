@@ -43,7 +43,7 @@ const POR_PR = [
   'autofix.yml', 'csbrasil-bot-pr-classify.yml',
   'smoke-web.yml', 'pr-gates.yml', 'csbrasil-bot-automerge.yml', 'preview-deploy.yml',
 ];
-const NUNCA_CANCELA = ['deploy-prod.yml', 'ops-diag.yml', 'crash-fix.yml'];
+const NUNCA_CANCELA = ['deploy-prod.yml', 'ops-diag.yml', 'crash-fix.yml', 'vigia-cron-deploy.yml'];
 
 /* Bloco `concurrency:` na coluna 0 (nível do workflow), lido por indentação: a
    régua roda no check:deploy, que é node puro e sem dependência de YAML. */
