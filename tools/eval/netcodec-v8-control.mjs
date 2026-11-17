@@ -1,4 +1,4 @@
-// #1160: default legado e JSON sem perda, medidos pelo codec importado em processos novos.
+// #1160: default atual e JSON sem perda, medidos pelo codec importado em processos novos.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -11,7 +11,7 @@ const target = path.join(root, 'public/js/netcodec.js');
 const original = fs.readFileSync(target, 'utf8');
 const hash = value => createHash('sha256').update(value).digest('hex');
 const cases = [
-  ['default-v8', 'version = 7', 'version = CURRENT_VERSION', ['unversioned producers retain v7 and refuse objective/J']],
+  ['default-v7', 'version = CURRENT_VERSION', 'version = 7', ['unversioned producers use current v9 contract']],
   ['negative-zero', ' && !Object.is(v, -0)', '', [
     'EN1 rejects negative-zero JSON root', 'EN2 rejects negative-zero JSON object',
     'EN3 rejects negative-zero JSON array', 'EN4 rejects negative-zero JSON nested',
