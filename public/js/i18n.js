@@ -835,6 +835,16 @@ const DICT = {
   'A temporada fechou para resgates.': 'The season is closed for claims.',
   'Espere um momento antes de tentar novamente.': 'Wait a moment before trying again.',
   'O passe não respondeu agora. Tente de novo em instantes.': 'The pass did not answer. Try again in a moment.',
+  // tp:passe grade, prévia 3D, resgatar tudo, celebração de nível, missão e pós-partida (tp/passe.js, tp/passe-festa.js)
+  'PRONTO PARA RESGATAR': 'READY TO CLAIM', 'ALCANÇADO': 'REACHED', 'TRAVADO': 'LOCKED',
+  'Fechar a prévia': 'Close the preview', 'LIBERA NO': 'UNLOCKS AT', 'Arraste para girar': 'Drag to rotate',
+  'Carregando o modelo 3D…': 'Loading the 3D model…', 'A prévia 3D chega junto com o personagem.': 'The 3D preview arrives with the character.',
+  'Prévia 3D indisponível neste aparelho.': '3D preview unavailable on this device.',
+  'Resumo do resgate': 'Claim summary', 'RESGATE CONCLUÍDO': 'CLAIM COMPLETE', 'NENHUM NÍVEL RESGATADO': 'NO LEVEL CLAIMED',
+  'A fila parou antes do fim.': 'The queue stopped before the end.', 'OK': 'OK',
+  'PRESENTE DE BOAS-VINDAS': 'WELCOME GIFT', 'SUBIU DE NÍVEL!': 'LEVEL UP!',
+  'Presente de boas-vindas: você começa no nível 10': 'Welcome gift: you start at level 10',
+  'Recompensas liberadas': 'Unlocked rewards', 'VER PASSE': 'SEE PASS', 'PASSE SESSÃO DA TRETA': 'SESSÃO DA TRETA PASS',
   // tp:fim-passe
 };
 
@@ -990,6 +1000,17 @@ const FRASES = {
   passeFaltaProximo: { pt: (x, n) => `faltam ${x} XP para o nível ${n}`, en: (x, n) => `${x} XP to level ${n}` },
   passeTermina: { pt: (d) => `TERMINA EM ${d}`, en: (d) => `ENDS ${d}` },
   passeConvite: { pt: (xp) => `+${xp} XP por amigo que confirma o e-mail e joga uma partida`, en: (xp) => `+${xp} XP per friend who confirms their email and plays a match` },
+  passeVerModelo: { pt: (nome) => `Ver ${nome} em 3D`, en: (nome) => `View ${nome} in 3D` },
+  passeResgatarTudo: { pt: (n) => `RESGATAR TUDO · ${n}`, en: (n) => `CLAIM ALL · ${n}` },
+  passeResgatandoTudo: { pt: (i, n) => `RESGATANDO ${i}/${n}…`, en: (i, n) => `CLAIMING ${i}/${n}…` },
+  passeResumoNiveis: { pt: (n) => (n === 1 ? '1 NÍVEL RESGATADO' : `${n} NÍVEIS RESGATADOS`), en: (n) => (n === 1 ? '1 LEVEL CLAIMED' : `${n} LEVELS CLAIMED`) },
+  passeResumoPersonagens: { pt: (n) => (n === 1 ? '1 PERSONAGEM' : `${n} PERSONAGENS`), en: (n) => (n === 1 ? '1 CHARACTER' : `${n} CHARACTERS`) },
+  passeResumoSkins: { pt: (n) => (n === 1 ? '1 SKIN DE ARMA' : `${n} SKINS DE ARMA`), en: (n) => (n === 1 ? '1 WEAPON SKIN' : `${n} WEAPON SKINS`) },
+  passeResumoBoost: { pt: (p) => `BÔNUS ATÉ +${p}% XP`, en: (p) => `BOOST UP TO +${p}% XP` },
+  passeFestaSubiu: { pt: (n) => `Você chegou ao nível ${n} do passe Sessão da Treta.`, en: (n) => `You reached level ${n} of the Sessão da Treta pass.` },
+  passeMissaoXp: { pt: (xp) => `+${xp} XP · missão`, en: (xp) => `+${xp} XP · mission` },
+  passeGanhoXp: { pt: (xp) => `+${xp} XP do passe`, en: (xp) => `+${xp} pass XP` },
+  passeAbaResgatar: { pt: (n) => `PASSE, ${n} ${n === 1 ? 'nível' : 'níveis'} para resgatar`, en: (n) => `PASS, ${n} ${n === 1 ? 'level' : 'levels'} to claim` },
 };
 export const frase = (id, ...args) => {
   const f = FRASES[id];
