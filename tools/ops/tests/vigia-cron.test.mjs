@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import worker from '../../../workers/vigia-cron/index.mjs';
 import { ALVOS, REF, TEMPO_MAX_MS, disparaCron } from '../../../workers/vigia-cron/dispara.mjs';
 import { errosDoWorkflow } from '../../../workers/vigia-cron/contrato.mjs';
+import { confereAlvos } from '../../../workers/vigia-cron/confere-alvos.mjs';
 
 const raiz = (p) => readFileSync(fileURLToPath(new URL(`../../../${p}`, import.meta.url)), 'utf8');
 const TOKENS = { GITHUB_TOKEN_CLIENT: 'tok-client-SENTINELA', GITHUB_TOKEN_BACKEND: 'tok-backend-SENTINELA' };
@@ -55,7 +56,7 @@ test('cada cron dispara o workflow certo, na main, com User-Agent e o token do r
   for (const [cron, [repo, workflow, token]] of Object.entries(esperado)) {
     const { fn, chamadas } = fetchFalso(204);
     const r = await disparaCron(cron, TOKENS, fn);
-    assert.deepEqual(r, [{ cron, repo, workflow, ok: true }]);
+    assert.deepEqual(r, [{ cron, repo, workflow, ok: true, status: 204 }]);
     assert.equal(chamadas.length, 1);
     const { url, init } = chamadas[0];
     assert.equal(url, `https://api.github.com/repos/${repo}/actions/workflows/${workflow}/dispatches`);
@@ -156,6 +157,51 @@ test('contrato do dispatch: reprova sem workflow_dispatch e com input obrigatór
   const confere = deploy.indexOf('run: node workers/vigia-cron/confere-alvos.mjs');
   assert.ok(confere > 0 && confere < deploy.indexOf(' deploy --config'), 'o deploy publica sem conferir os alvos da main (backend incluso)');
   assert.match(raiz('workers/vigia-cron/confere-alvos.mjs'), /errosDoWorkflow/);
+});
+
+/* API fake do GitHub para o preflight do deploy: GET do YAML e POST do dispatch. */
+function githubFalso({ yaml, dispatch }) {
+  const chamadas = [];
+  const fn = async (url, init = {}) => {
+    chamadas.push({ url, metodo: init.method || 'GET', auth: init.headers?.authorization });
+    if (url.includes('/contents/')) return new Response(yaml, { status: 200 });
+    const status = typeof dispatch === 'function' ? dispatch(url) : dispatch;
+    return new Response(status === 204 ? null : '{"message":"Resource not accessible by personal access token"}', { status });
+  };
+  return { fn, chamadas };
+}
+const YAML_OK = "on:\n  schedule:\n    - cron: '*/15 * * * *'\n  workflow_dispatch:\n\njobs: {}\n";
+
+test('preflight do deploy: só passa com 204 REAL no dispatch de cada alvo, com o token de cada repo', async (t) => {
+  capturaConsole(t);
+  const linhas = [];
+  const { fn, chamadas } = githubFalso({ yaml: YAML_OK, dispatch: 204 });
+  assert.equal(await confereAlvos(TOKENS, fn, (l) => linhas.push(l)), true);
+  const posts = chamadas.filter((c) => c.metodo === 'POST');
+  const alvos = Object.values(ALVOS).flat();
+  assert.equal(posts.length, alvos.length, 'cada alvo é disparado uma vez');
+  for (const { repo, workflow, segredo } of alvos) {
+    const p = posts.find((c) => c.url.endsWith(`/repos/${repo}/actions/workflows/${workflow}/dispatches`));
+    assert.ok(p, `sem dispatch para ${repo}/${workflow}`);
+    assert.equal(p.auth, `Bearer ${TOKENS[segredo]}`);
+  }
+  assert.doesNotMatch(linhas.join('\n'), /SENTINELA/, 'token vazou no log');
+});
+
+test('preflight do deploy: token que lê mas não dispara (403) reprova, com motivo; 401/404/422 também', async (t) => {
+  capturaConsole(t);
+  for (const [status, motivo] of [[403, /sem Actions: write/], [401, /inválido ou expirado/], [404, /sem acesso ao repo/], [422, /sem workflow_dispatch/]]) {
+    const linhas = [];
+    const { fn } = githubFalso({ yaml: YAML_OK, dispatch: (url) => (url.includes('corosolto/backend') ? status : 204) });
+    assert.equal(await confereAlvos(TOKENS, fn, (l) => linhas.push(l)), false, `status ${status} passou`);
+    const log = linhas.join('\n');
+    assert.match(log, new RegExp(`::error::corosolto/backend/sync-nodes\\.yml@main: dispatch respondeu ${status}`));
+    assert.match(log, motivo);
+    assert.doesNotMatch(log, /SENTINELA/);
+  }
+  const semDispatch = githubFalso({ yaml: YAML_OK.replace('  workflow_dispatch:\n', ''), dispatch: 204 });
+  assert.equal(await confereAlvos(TOKENS, semDispatch.fn, () => {}), false);
+  assert.equal(semDispatch.chamadas.filter((c) => c.metodo === 'POST').length, 0, 'contrato quebrado não chega a disparar');
 });
 
 test('o deploy instala exatamente os segredos que ALVOS lê, sem ecoar valor', () => {

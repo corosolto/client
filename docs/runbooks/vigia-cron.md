@@ -39,9 +39,13 @@ dois disparam no mesmo tique, a rodada em dobro é inofensiva:
   `wrangler.toml` = chaves de `ALVOS`, cada cron dispara o workflow certo com o token certo,
   erro HTTP vai para o log sem o token, e os alvos do client cumprem o contrato e mantêm o
   `schedule`.
-- `workers/vigia-cron/confere-alvos.mjs` (no deploy, antes de publicar): lê da `main` de cada
-  repo, pela API e com o token do Worker, todos os workflows alvo (inclusive o
-  `backend/sync-nodes.yml`) e reprova se algum não cumprir o contrato.
+- `workers/vigia-cron/confere-alvos.mjs` (no deploy, antes de publicar), com os tokens do Worker:
+  lê da `main` de cada repo todos os workflows alvo (inclusive o `backend/sync-nodes.yml`) e
+  confere o contrato; depois DISPARA cada alvo uma vez e exige 204. Ler o YAML só prova
+  leitura; o 204 prova Actions: write. Não usamos ref sentinela inexistente esperando 422:
+  nada documenta que o GitHub checa a permissão antes de validar a ref. A rodada extra é a de
+  um tique do Worker e só acontece quando ele é publicado; 401/403/404/422 reprovam o deploy
+  com o motivo no log.
 - `.github/workflows/vigia-cron-deploy.yml`: publica em push na `main` que toca a pasta, ou
   manualmente (`gh workflow run vigia-cron-deploy.yml -R corosolto/client --ref main`).
 
@@ -74,8 +78,8 @@ npx wrangler tail vigia-cron
 
 | sintoma no log | causa | conserto |
 |---|---|---|
-| `"status":401` | token revogado ou expirado | renove o PAT e rode `vigia-cron-deploy` de novo |
-| `"status":403` / `"status":404` | token sem Actions: write no repo | ajuste o escopo do PAT (tabela acima) |
+| `"status":401` | token revogado ou expirado | renove o PAT e rode `vigia-cron-deploy` de novo (o preflight do deploy já reprova com 401) |
+| `"status":403` / `"status":404` | token sem Actions: write no repo | ajuste o escopo do PAT (tabela acima); o preflight do deploy reprova nesse caso |
 | `"status":422` | workflow sem `workflow_dispatch` na `main` ou input obrigatório | o `confere-alvos.mjs` barra o deploy nesse caso; se o YAML mudou depois do deploy, conserte o workflow ou rode o deploy de novo para ver o erro |
 | `segredo … ausente` | deploy sem o secret | cadastre o secret no repo e rode o deploy |
 | `cron sem alvo` | `wrangler.toml` e `ALVOS` divergiram | o `ops:test` reprova isso no PR |

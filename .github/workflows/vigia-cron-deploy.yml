@@ -68,10 +68,12 @@ jobs:
           [ -n "$GITHUB_TOKEN_CLIENT" ] || { echo "::error::CSBRASIL_BOT_TOKEN ausente: o Worker não dispara prod-watch nem ops-diag"; falta=1; }
           [ -n "$GITHUB_TOKEN_BACKEND" ] || { echo "::error::BACKEND_DISPATCH_TOKEN ausente: o Worker não dispara o sync-nodes do backend"; falta=1; }
           exit "$falta"
-      # O teste acima só lê o client. Os alvos de verdade são os YAML da `main` de cada repo,
-      # com o token que o Worker vai usar: backend sem workflow_dispatch ou com input
-      # obrigatório levaria 422 a cada 30 min sem ninguém ver.
-      - name: Alvos na main aceitam o dispatch (workers/vigia-cron/confere-alvos.mjs)
+      # O teste acima só lê o client. Aqui, com os tokens que o Worker vai usar: (1) os YAML da
+      # `main` de cada repo cumprem o contrato (backend incluso) e (2) cada alvo é DISPARADO uma
+      # vez e precisa responder 204. Ler o YAML só prova leitura; o 204 prova Actions: write.
+      # A rodada extra é a mesma de um tique do Worker e só acontece quando ele é publicado.
+      # 401/403/404/422 reprovam o deploy com o motivo no log (sem token).
+      - name: Alvos aceitam o dispatch do Worker (workers/vigia-cron/confere-alvos.mjs)
         env:
           GITHUB_TOKEN_CLIENT: ${{ secrets.CSBRASIL_BOT_TOKEN }}
           GITHUB_TOKEN_BACKEND: ${{ secrets.BACKEND_DISPATCH_TOKEN }}

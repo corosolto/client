@@ -25,12 +25,14 @@ export const REF = 'main';
    invocação até a plataforma matá-la sem log: aborta, registra `rede: …` e o cron falha. */
 export const TEMPO_MAX_MS = 10_000;
 
+/* Devolve { ok, status }: status é o HTTP do GitHub, ou null quando nem houve resposta
+   (segredo ausente, rede, timeout). O confere-alvos.mjs usa o status para explicar a falha. */
 async function dispara(alvo, env, fetchImpl, tempoMaxMs) {
   const base = { repo: alvo.repo, workflow: alvo.workflow, ref: REF };
   const token = env[alvo.segredo];
   if (!token) {
     console.error(JSON.stringify({ ...base, ok: false, erro: `segredo ${alvo.segredo} ausente no Worker` }));
-    return false;
+    return { ok: false, status: null };
   }
   let resposta;
   try {
@@ -48,15 +50,15 @@ async function dispara(alvo, env, fetchImpl, tempoMaxMs) {
     });
   } catch (erro) {
     console.error(JSON.stringify({ ...base, ok: false, erro: `rede: ${erro?.message || erro}` }));
-    return false;
+    return { ok: false, status: null };
   }
   if (resposta.status === 204) {
     console.log(JSON.stringify({ ...base, ok: true, status: 204 }));
-    return true;
+    return { ok: true, status: 204 };
   }
   const corpo = (await resposta.text().catch(() => '')).slice(0, 500);
   console.error(JSON.stringify({ ...base, ok: false, status: resposta.status, corpo }));
-  return false;
+  return { ok: false, status: resposta.status };
 }
 
 /* Dispara todos os alvos do cron e devolve o resultado por alvo. Exportado para o
@@ -65,9 +67,9 @@ export async function disparaCron(cron, env, fetchImpl = fetch, tempoMaxMs = TEM
   const alvos = ALVOS[cron];
   if (!alvos) {
     console.error(JSON.stringify({ cron, ok: false, erro: 'cron sem alvo: wrangler.toml e ALVOS divergiram' }));
-    return [{ cron, repo: '(nenhum)', workflow: '(cron sem alvo)', ok: false }];
+    return [{ cron, repo: '(nenhum)', workflow: '(cron sem alvo)', ok: false, status: null }];
   }
   const resultados = [];
-  for (const alvo of alvos) resultados.push({ cron, workflow: alvo.workflow, repo: alvo.repo, ok: await dispara(alvo, env, fetchImpl, tempoMaxMs) });
+  for (const alvo of alvos) resultados.push({ cron, workflow: alvo.workflow, repo: alvo.repo, ...(await dispara(alvo, env, fetchImpl, tempoMaxMs)) });
   return resultados;
 }
