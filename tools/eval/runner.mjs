@@ -105,6 +105,7 @@ if (shard) {
 }
 
 const VERM = '\x1b[31m', VERDE = '\x1b[32m', AMAR = '\x1b[33m', CINZA = '\x1b[90m', OFF = '\x1b[0m';
+const MAX_BUFFER_PASSO = 16 * 1024 * 1024;
 const inicioMs = Date.now();
 const resultados = new Array(passos.length);
 
@@ -182,7 +183,10 @@ if (jobs === 2) {
   for (const [indice, p] of passos.entries()) {
     process.stdout.write(`  ${p} … `);
     const t = Date.now();
-    const r = spawnSync('npm', ['run', '--silent', p], { encoding: 'utf8' });
+    const r = spawnSync('npm', ['run', '--silent', p], {
+      encoding: 'utf8',
+      maxBuffer: MAX_BUFFER_PASSO,
+    });
     const resultado = classificar(p, r, (Date.now() - t) / 1000);
     resultados[indice] = resultado;
     imprimir(resultado);
