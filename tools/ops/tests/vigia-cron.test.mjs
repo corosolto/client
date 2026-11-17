@@ -130,9 +130,10 @@ test('o deploy instala exatamente os segredos que ALVOS lê, sem ecoar valor', (
   const segredos = new Set(Object.values(ALVOS).flat().map((a) => a.segredo));
   for (const nome of segredos) {
     assert.match(s, new RegExp(`^ {10}${nome}: \\$\\{\\{ secrets\\.[A-Z_]+ \\}\\}$`, 'm'), `deploy não injeta ${nome}`);
-    assert.ok(s.includes(`'${nome}=\${${nome}}'`), `deploy não põe ${nome} no --secrets-file por referência`);
+    assert.ok(s.includes(`${nome}: e.${nome}`), `deploy não põe o valor de ${nome} no JSON do --secrets-file`);
   }
-  assert.match(s, /wrangler@[\d.]+ deploy --config workers\/vigia-cron\/wrangler\.toml --secrets-file/);
+  assert.match(s, /node -e '[^']*JSON\.stringify\([^']*'\s*\\\n\s*\| npx --yes wrangler@[\d.]+ deploy --config workers\/vigia-cron\/wrangler\.toml --secrets-file \/dev\/stdin/);
+  assert.doesNotMatch(s, /'GITHUB_TOKEN_[A-Z]+=\$\{/, 'placeholder ${VAR} literal no --secrets-file');
   assert.match(s, /- 'workers\/vigia-cron\/\*\*'/);
   const teste = s.indexOf('run: node --test tools/ops/tests/vigia-cron.test.mjs');
   assert.ok(teste > 0 && teste < s.indexOf(' deploy --config'), 'o deploy publica sem rodar este contrato antes (o ops:test não roda no pr-fast)');
