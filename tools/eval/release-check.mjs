@@ -11,7 +11,10 @@
  *
  * RLS5: uma falha do release local restaura os arquivos antes de sair.
  *
- * RLS6: release não dispara um segundo deploy; o fallback fica manual.
+ * RLS6: produção tem UM caminho: a integração Git da Vercel na main, filtrada pelo
+ *       ignoreCommand (RLS9). Nenhum workflow publica `vercel deploy --prod` — o fallback
+ *       manual `deploy-prod.yml` falhou em todos os runs desde 11/08 (último em 18/10) e
+ *       saiu em 17/11/2026; o hotfix é `gh workflow run release.yml`.
  * RLS8: o push do bot não cancela o run que ainda publica o Release e avisa o backend.
  * RLS9: TREM DE RELEASE (13/10/2026). Produção só builda em commit `chore(release):`
  *       (vercel.json → ignoreCommand → scripts/ci/vercel-ignore.sh, executado aqui de
@@ -72,7 +75,6 @@ import { SUITES } from './suites.mjs';
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.split('=')[1];
 const arquivos = ['.github/workflows/release.yml', '.github/workflows/ci.yml'];
 let workflowRelease = readFileSync('.github/workflows/release.yml', 'utf8');
-let workflowDeploy = readFileSync('.github/workflows/deploy-prod.yml', 'utf8');
 let workflowSources = readdirSync('.github/workflows')
   .filter((arquivo) => /\.ya?ml$/.test(arquivo))
   .map((arquivo) => [arquivo, readFileSync(`.github/workflows/${arquivo}`, 'utf8')]);
@@ -115,17 +117,8 @@ const gatilhos = (workflow) => {
   for (let i = inicio + 1; i < linhas.length && (linhas[i] === '' || /^\s/.test(linhas[i])); i++) bloco.push(linhas[i]);
   return bloco.flatMap((linha) => linha.match(/^  ([\w-]+):/)?.slice(1) || []);
 };
-const validaCaminhoProd = () => {
-  const eventos = gatilhos(workflowDeploy);
-  return vercel.git?.deploymentEnabled?.main === true
-    && eventos.length === 1
-    && eventos[0] === 'workflow_dispatch'
-    && workflowsProd().length === 1
-    && workflowsProd()[0] === 'deploy-prod.yml'
-    && /^permissions:\n  contents: read\s*$/m.test(workflowDeploy)
-    && /^concurrency:\n  group: deploy-prod\n  cancel-in-progress: false\s*$/m.test(workflowDeploy)
-    && /^\s+ref:\s*refs\/tags\/\$\{\{\s*github\.event\.inputs\.tag\s*\}\}\s*$/m.test(workflowDeploy);
-};
+const validaCaminhoProd = () => vercel.git?.deploymentEnabled?.main === true
+  && workflowsProd().length === 0;
 let caminhoProdUnico = validaCaminhoProd();
 let animacoesNoDeploy = ['anims:check', 'anims:merge:check'].every((passo) => SUITES.deploy.includes(passo));
 /* RLS8 — com o gatilho em todo push da main, concurrency no TOPO deixaria o merge de um PR
@@ -476,7 +469,7 @@ if (mutante) {
   else if (mutante === 'semdocs') docsRelease[0] = false;
   else if (mutante === 'semrollback') rollbackRelease = false;
   else if (mutante === 'deploy-duplo') {
-    workflowDeploy = workflowDeploy.replace('on:\n', 'on:\n  release:\n    types: [published]\n');
+    workflowSources.push(['deploy-prod.yml', 'on:\n  release:\n    types: [published]\njobs:\n  prod:\n    steps:\n      - run: vercel deploy --prebuilt --prod']);
     caminhoProdUnico = validaCaminhoProd();
   }
   else if (mutante === 'deploy-yaml') {
@@ -592,7 +585,7 @@ console.log(`${creditos === total && total ? '✓' : '✗'} RLS2 notas com contr
 console.log(`${dco === totalCommits && totalCommits ? '✓' : '✗'} RLS3 commits automáticos com DCO: ${dco}/${totalCommits} caminhos`);
 console.log(`${docsOk === docsRelease.length ? '✓' : '✗'} RLS4 site de docs reconstruído e versionado: ${docsOk}/${docsRelease.length} caminhos`);
 console.log(`${rollbackRelease ? '✓' : '✗'} RLS5 falha local restaura a árvore de trabalho`);
-console.log(`${caminhoProdUnico ? '✓' : '✗'} RLS6 produção tem um caminho automático e fallback manual`);
+console.log(`${caminhoProdUnico ? '✓' : '✗'} RLS6 produção tem um caminho só (Vercel Git na main) e nenhum workflow faz deploy --prod`);
 console.log(`${animacoesNoDeploy ? '✓' : '✗'} RLS7 deploy valida manifesto e GLBs mesclados de animação`);
 console.log(`${concorrenciaRelease ? '✓' : '✗'} RLS8 embarque cancelável (lote novo cancela o velho), bump em grupo próprio e nunca cancelado, nada no topo`);
 console.log(`${tremRelease ? '✓' : '✗'} RLS9 produção só sai no commit de release, e o release só sai com a main verde`);

@@ -97,10 +97,10 @@ Quando o quality gate está verde e o dono diz que está errado, o defeito é do
 
 ## 4. Rollback
 
-**Site (Vercel).** Produção publica a `main` pela integração Git. Reverter = *Promote* do
-deploy anterior no painel (Deployments → deploy bom → Promote to Production) ou, pelo
-caminho manual por tag, `gh workflow run deploy-prod.yml -f tag=v2.0.0-alpha.<N-1>`
-(`.github/workflows/deploy-prod.yml`, que já purga `/js/*` no fim). Depois: `npm run
+**Site (Vercel).** Produção publica a `main` pela integração Git (só o commit `chore(release):`,
+ver `scripts/ci/vercel-ignore.sh`). Reverter = *Promote* do deploy anterior no painel
+(Deployments → deploy bom → Promote to Production) ou `git revert` por PR na `main` seguido de
+`gh workflow run release.yml`. O `prod-watch.yml` purga `/js/*` depois do deploy. Depois: `npm run
 prod:coherence` e `npm run ops:diag -- --remoto`.
 
 **Edge (Cloudflare).** Não tem rollback — tem purge. `/js/*`, `/style.css` e `/` são os

@@ -11,15 +11,14 @@
 #   3. GitHub Release com as notas do CHANGELOG (mesma extração do job release do ci.yml).
 #
 # POR QUE TUDO NUM WORKFLOW SÓ (e não "tag dispara ci.yml que cria o Release que dispara
-# o deploy-prod.yml"): evento criado com o GITHUB_TOKEN **não dispara workflow novo** —
-# é a proteção anti-recursão do GitHub. O caso alpha.32 está documentado no cabeçalho do
-# deploy-prod.yml. A mesma regra trabalha A FAVOR aqui: o push do bot não re-dispara nem
-# este workflow nem o build do ci.yml — não existe loop. (A Vercel tem webhook próprio e
-# VAI buildar o commit de bump: 2 deploys por merge, inofensivo, o último fica valendo.)
+# o deploy"): evento criado com o GITHUB_TOKEN **não dispara workflow novo** — é a
+# proteção anti-recursão do GitHub (caso alpha.32). A mesma regra trabalha A FAVOR aqui:
+# o push do bot não re-dispara nem este workflow nem o build do ci.yml — não existe loop.
+# (A Vercel tem webhook próprio e VAI buildar o commit de bump.)
 #
 # Deploy de produção NÃO passa por aqui: decisão do dono (08/08) é manter o auto-deploy
-# da Vercel na main. O deploy-prod.yml continua existindo como caminho manual por tag
-# (gh workflow run deploy-prod.yml -f tag=vX) caso o auto-deploy seja desligado de novo.
+# da Vercel na main. O fallback manual por tag (`deploy-prod.yml`) falhou em todos os
+# runs desde 11/08 e saiu em 17/11/2026; hotfix é `gh workflow run release.yml`.
 #
 # TREM DE RELEASE (13/10/2026, autorizado pelo dono): era um release por push na main —
 # 126 releases para 130 merges em 30 dias. Cada um reescrevia README/AGENTS/ARCH/docs,

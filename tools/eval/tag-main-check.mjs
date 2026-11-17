@@ -42,7 +42,7 @@ const maior = (a, b) => {
 };
 
 /* Case-insensitive de propósito: tag como `V2.0.0-alpha.36` some de qualquer filtro `v*`
-   — inclusive desta régua e do parâmetro do deploy-prod.yml. Tag que ninguém enxerga é
+   — inclusive desta régua. Tag que ninguém enxerga é
    pior que tag errada, então ela ENTRA nas checagens e o TM4 cobra o nome. */
 const EH_RELEASE = /^v\d+\.\d+\.\d+/i;
 /* Ancorada no fim: sem o `$`, `v2.0.0oops` casa pelo prefixo e escapa do TM4. */
