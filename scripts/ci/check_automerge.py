@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import sys
 
 GOOD = {"SUCCESS", "SKIPPED", "NEUTRAL"}
@@ -94,6 +95,16 @@ def decide(pr: dict) -> dict:
         "human_blocked": human_blocked,
         "lista_incompleta": lista_incompleta,
     }
+
+
+def revalidate_decision(evaluated_pr, evaluated_result, current_pr):
+    """Reject stale eligibility even when a mutation leaves the decision unchanged."""
+    if current_pr != evaluated_pr:
+        raise ValueError("automerge eligibility inputs changed after evaluation; aborting merge")
+    current_result = decide(current_pr)
+    if current_result != evaluated_result:
+        raise ValueError("automerge eligibility decision changed after evaluation; aborting merge")
+    return current_result
 
 
 def selftest() -> int:
@@ -234,13 +245,37 @@ def selftest() -> int:
         ok = obtido == esperado
         erros += 0 if ok else 1
         print(f"  {'ok  ' if ok else 'FALHOU'} {nome}: eligible={obtido} (esperado {esperado})")
+
+    evaluated_result = decide(base)
+    revalidation_cases = [
+        ("revalidação inalterada preserva elegibilidade", dict(base), True),
+        ("revalidação rejeita label posterior", com(labels=[
+            {"name": "safe-automerge"}, {"name": "target:staging"},
+        ]), False),
+        ("revalidação rejeita review posterior", com(reviewDecision="CHANGES_REQUESTED"), False),
+        ("revalidação rejeita check posterior", com(statusCheckRollup=[
+            {"__typename": "CheckRun", "conclusion": "FAILURE"},
+        ]), False),
+    ]
+    for nome, current_pr, deve_aceitar in revalidation_cases:
+        try:
+            revalidate_decision(base, evaluated_result, current_pr)
+        except ValueError:
+            aceitou = False
+        else:
+            aceitou = True
+        ok = aceitou == deve_aceitar
+        erros += 0 if ok else 1
+        print(f"  {'ok  ' if ok else 'FALHOU'} {nome}")
     return 0 if not erros else 1
 
 
 def main() -> int:
     if "--selftest" in sys.argv:
         return selftest()
-    print(json.dumps(decide(json.load(sys.stdin))))
+    payload = json.load(sys.stdin)
+    payload['expected_repository'] = os.environ.get('GITHUB_REPOSITORY', '')
+    print(json.dumps(decide(payload)))
     return 0
 
 

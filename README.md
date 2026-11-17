@@ -10,8 +10,8 @@
 [![Discord](https://img.shields.io/badge/Discord-entrar-5865F2?logo=discord&logoColor=white)](https://discord.gg/XQHAFBcrhv)
 [![Telegram](https://img.shields.io/badge/Telegram-entrar-26A5E4?logo=telegram&logoColor=white)](https://t.me/corosolto)
 
-**AI generated & AI friendly** — construído em par com agentes de IA, e cada
-commit diz qual escreveu (trailer `Agent:`, convenção em `CONTRIBUTING.md`):
+**AI generated & AI friendly** — built alongside AI agents, and each
+commit says which one wrote it (`Agent:` trailer, convention in `CONTRIBUTING.md`):
 
 [![Claude Fable 5](https://img.shields.io/badge/agente-Claude_Fable_5-d97757?logo=claude&logoColor=white)](https://claude.com/claude-code)
 [![Claude Opus](https://img.shields.io/badge/agente-Claude_Opus-d97757?logo=claude&logoColor=white)](https://claude.com/claude-code)
@@ -24,19 +24,19 @@ commit diz qual escreveu (trailer `Agent:`, convenção em `CONTRIBUTING.md`):
 [![Meshy](https://img.shields.io/badge/rig-Meshy-00c4b3)](https://www.meshy.ai)
 [![mint.gg](https://img.shields.io/badge/3D-mint.gg-8a2be2)](https://mint.gg)
 
-![CORO SOLTO: Treta Suprema — FPS satírico de navegador com facções brasileiras](public/og-image.jpg)
+![CORO SOLTO: Treta Suprema — satirical browser FPS with Brazilian factions](public/og-image.jpg)
 
-**FPS gratuito de navegador em Three.js**: facções brasileiras caricatas,
-personagens originais, mapas satíricos e armas. Partidas contra bots e
-multiplayer beta, direto na aba. Sem download ou instalação para jogar.
+**Free browser FPS built with Three.js**: caricatured Brazilian factions,
+original characters, satirical maps and weapons. Matches against bots and
+beta multiplayer, right in your browser tab. No download or installation required to play.
 
-<!-- BEGIN:GERADO:numeros — não edite à mão, rode `npm run docs` -->
+<!-- BEGIN:GERADO:numeros — do not edit by hand, run `npm run docs` -->
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 83.954 linhas em 215 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **10.206** linhas | `wc -l public/js/game.js` |
-| `main.js` | 5.795 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 84.363 linhas em 217 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **10.261** linhas | `wc -l public/js/game.js` |
+| `main.js` | 5.811 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 74 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 274 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
@@ -44,55 +44,55 @@ multiplayer beta, direto na aba. Sem download ou instalação para jogar.
 | Personagens jogáveis | 63, em 7 grupos | array `CHARACTERS` de `characters.js` |
 | Mapas no menu | 14 | `MAPS` menos `MAPAS_PARADOS` |
 | Arnêses visuais em HTML | 26 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 1050 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
-| Scripts de pipeline | 93 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Scripts do arnês | 1060 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts de pipeline | 90 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 27 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.1.0-alpha.148` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.1.0-alpha.150` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
 <!-- END:GERADO:numeros -->
 
-> **O multiplayer está em beta.** O cliente de rede vive em
-> [`public/js/net.js`](public/js/net.js), com os transportes em
-> [`public/js/transporte.js`](public/js/transporte.js) — salas públicas e privadas
-> por código de convite saem do mesmo cliente. Para testar o jogo local sem
-> configurar um servidor multiplayer, comece pelo modo singleplayer.
-> No celular há beta instalável como PWA com controles de toque
+> **Multiplayer is in beta.** The network client lives in
+> [`public/js/net.js`](public/js/net.js), with transports in
+> [`public/js/transporte.js`](public/js/transporte.js) — public and private rooms
+> using invite codes run on the same client. To test the game locally without
+> setting up a multiplayer server, start with singleplayer mode.
+> On mobile, an installable PWA beta with touch controls is available
 > ([`public/site.webmanifest`](public/site.webmanifest)).
 
-▶ **Jogue:** <https://www.corosolto.com.br/>
+▶ **Play:** <https://www.corosolto.com.br/>
 
-> **O jogo já se chamou CS BRASIL.** É o mesmo jogo, e o nome antigo segue
-> registrado como nome alternativo pra quem
-> procura por ele.
+> **The game was previously called CS BRASIL.** It is the same game, and the old name remains
+> registered as an alternative name for people
+> searching for it.
 
-> Este jogo nasceu gerado por IA a partir de um único prompt —
-> o prompt original está em `PROMPT.md` do repo privado `progress`.
+> This game was originally generated by AI from a single prompt —
+> the original prompt is in `PROMPT.md` in the private `progress` repo.
 
 ---
 
-## Comece por aqui
+## Start here
 
-| Você é… | Leia |
+| You are… | Read |
 |---|---|
-| curioso | esta página, e depois <https://www.corosolto.com.br/> |
-| dev novo (ou agente) | [`docs/README.md`](docs/README.md) → [`CONTRIBUTING.md`](CONTRIBUTING.md) |
-| quer entender a stack | [`docs/docs/stack.md`](docs/docs/stack.md) — Three.js, Astro, Supabase, geração de asset, skills |
-| quer contribuir hoje | [issues abertas](https://github.com/corosolto/client/issues) e [`CONTRIBUTING.md`](CONTRIBUTING.md); confira o estado antes de escolher |
-| quer saber o que está quebrado | as [issues abertas](https://github.com/corosolto/client/issues) |
+| curious | this page, then <https://www.corosolto.com.br/> |
+| a new dev (or agent) | [`docs/README.md`](docs/README.md) → [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| looking to understand the stack | [`docs/docs/stack.md`](docs/docs/stack.md) — Three.js, Astro, Supabase, asset generation, skills |
+| looking to contribute today | [open issues](https://github.com/corosolto/client/issues) and [`CONTRIBUTING.md`](CONTRIBUTING.md); check the status before choosing one |
+| looking to find out what is broken | the [open issues](https://github.com/corosolto/client/issues) |
 
-**Site de documentação** (Docusaurus, com instrumentação de IA, quality gates e
-arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/docs/>.
+**Documentation site** (Docusaurus, with AI instrumentation, quality gates and
+architecture): `cd docs && npm install && npm start` → <http://localhost:3000/docs/>.
 
 ## Stack
 
-<!-- BEGIN:GERADO:stack — não edite à mão, rode `npm run docs` -->
+<!-- BEGIN:GERADO:stack — do not edit by hand, run `npm run docs` -->
 
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 215 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 217 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -103,39 +103,39 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Esta documentação | **Docusaurus** | `3.10.2` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **224** importam Playwright, **114** importam gltf-transform e **17** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **225** importam Playwright, **114** importam gltf-transform e **17** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
 <!-- END:GERADO:stack -->
 
-O detalhe de cada uma — por que o jogo não tem build, como o asset é gerado
-(mint.gg, Tripo3D, Meshy, OpenRouter), o que Playwright e gltf-transform fazem
-aqui, e o que são as skills de agente — está em
-[Stack e ferramentas](docs/docs/stack.md).
+Details on each one — why the game has no build step, how assets are generated
+(mint.gg, Tripo3D, Meshy, OpenRouter), what Playwright and gltf-transform do
+here, and what agent skills are — can be found in
+[Stack and tools](docs/docs/stack.md).
 
-## Arquitetura
+## Architecture
 
-Um repositório, **duas zonas com regras diferentes**:
+One repository, **two zones with different rules**:
 
-- **O JOGO — `public/`** · JavaScript vanilla com ES modules, Three.js
-  vendorizado em `public/vendor/` (a revisão está na tabela de stack acima),
-  **zero build**. Nunca vira framework.
-  **Não existe `public/index.html`:** o HTML do jogo é `src/pages/index.astro`,
-  servido na rota `/`. (Este README já afirmou o contrário por meses e mandava
-  todo dev novo para o arquivo errado.)
-- **O SITE — `src/`** · [Astro](https://astro.build) com SSR na Vercel. Landing,
-  ranking global, perfis públicos, páginas de conteúdo e as rotas `/api/*`. Aqui
-  framework é bem-vindo — mas o jogo continua intocado.
+- **THE GAME — `public/`** · Vanilla JavaScript with ES modules, Three.js
+  vendored in `public/vendor/` (the revision is in the stack table above),
+  **zero build**. It never becomes a framework.
+  **There is no `public/index.html`:** the game's HTML is `src/pages/index.astro`,
+  served at the `/` route. (This README claimed the opposite for months and sent
+  every new dev to the wrong file.)
+- **THE SITE — `src/`** · [Astro](https://astro.build) with SSR on Vercel. Landing page,
+  global ranking, public profiles, content pages and the `/api/*` routes. Here,
+  frameworks are welcome — but the game remains untouched.
 
-O ranking e a telemetria vivem num **Postgres gerenciado** (schema privado, fora do repo) — o ranking está
-**desligado por flag** hoje, a coleta não parou (ver a seção abaixo). A
-`service_role` key fica só no servidor; a `anon` key é pública por design, e a
-segurança vem das policies e dos grants por coluna.
+Ranking and telemetry live in **managed Postgres** (private schema, outside the repo) — ranking is
+**disabled by a flag** today, but collection has not stopped (see the section below). The
+`service_role` key stays on the server only; the `anon` key is public by design, and
+security comes from policies and per-column grants.
 
-Sem contagem na árvore abaixo — os números vivem no bloco gerado lá em cima.
-Índice por número escrito à mão desatualiza no primeiro commit; é a mesma razão
-de o `tools/eval/ARCH.md` ser gerado.
+No counts in the tree below — the numbers live in the generated block above.
+A hand-written numeric index becomes outdated with the first commit; this is the same reason
+`tools/eval/ARCH.md` is generated.
 
 ```
 STATUS.md              estado de hoje (leia primeiro)
@@ -156,23 +156,25 @@ src/
 public/                O JOGO (vanilla, zero build)
   js/ vendor/ models/ style.css robots.txt llms.txt og-image.png
   audio/                 ⚠ NÃO versionado — ver "Áudio" abaixo
-tools/                 pipeline de asset (gen-asset, gen-image, otimização de GLB)
+tools/                 pipeline do client (otimização de GLB e documentação)
   gen-arch.mjs         GERA tools/eval/ARCH.md (índice + tabela de conflito)
   gen-docs.mjs         GERA os blocos numéricos deste README e de docs/
+../studio/tools/
+                       gen-asset e gen-image no Studio público (`corosolto/studio`)
 tools/eval/            o arnês de medição e os quality gates de qualidade
 docs/                  documentação para devs (Docusaurus) + as issues de entrada
 .agents/skills/        skills de agente (.claude/skills/ são symlinks pra cá)
 ```
 
-**Duas pastas NÃO vêm no clone**, por decisão registrada: `public/audio/` (direitos
-incertos) e `references/` (telas-alvo da UI e frames de referência, que ficam só na
-máquina do dono). O que sobrevive das `references/` são os **números medidos**:
-`tools/eval/ref_ui.json` e `tools/eval/ref_viewmodel.json`, esses versionados. Régua que
-precisa rodar em CI lê o JSON, nunca o PNG.
+**Two folders are NOT included in the clone**, by documented decision: `public/audio/` (uncertain
+rights) and `references/` (target UI screenshots and reference frames, which remain only on the
+owner's machine). What survives from `references/` is the **measured numbers**:
+`tools/eval/ref_ui.json` and `tools/eval/ref_viewmodel.json`, which are versioned. Any harness that
+needs to run in CI reads the JSON, never the PNG.
 
-## Rodar localmente
+## Run locally
 
-**O site completo** (é o modo que você quer — inclui o jogo):
+**The full site** (this is the mode you want — it includes the game):
 
 ```bash
 git clone https://github.com/corosolto/client.git
@@ -182,103 +184,103 @@ npm run fetch-audio       # opcional: sem o pacote, o jogo usa sons sintetizados
 npm run dev               # http://localhost:4321 — o jogo está em /
 ```
 
-Use Node/npm compatíveis com os `engines` do `package-lock.json`, incluindo Astro e
-suas dependências. A instalação foi conferida em 10/10/2026 com Node `23.6.0` e npm `11.6.0`.
-Confira `node --version` e `npm --version` no mesmo terminal antes de instalar.
+Use Node/npm versions compatible with the `engines` in `package-lock.json`, including Astro and
+its dependencies. Installation was verified on 10/10/2026 with Node `23.6.0` and npm `11.6.0`.
+Check `node --version` and `npm --version` in the same terminal before installing.
 
-Build e preview:
+Build and preview:
 
 ```bash
 npm run build             # gera dist/ (client + server)
 npm run preview           # serve dist/client estaticamente
 ```
 
-`python3 -m http.server -d public` serve **só os assets** do jogo — o HTML não
-está lá. Use `npm run dev`.
+`python3 -m http.server -d public` serves **only the game assets** — the HTML is not
+there. Use `npm run dev`.
 
-## Quality gate de qualidade
+## Quality gates
 
-Comandos atuais do quality gate: veja o bloco gerado no [`AGENTS.md`](AGENTS.md) e em [`docs/docs/comecando.md`](docs/docs/comecando.md).
+For the current quality gate commands, see the generated block in [`AGENTS.md`](AGENTS.md) and [`docs/docs/comecando.md`](docs/docs/comecando.md).
 
 ```bash
 npm run arch         # regenera tools/eval/ARCH.md (índice + tabela de conflito)
 npm run docs         # regenera os blocos numéricos deste README e de docs/
 ```
 
-Nada commita com invariante vermelha. O catálogo do arnês está em
+Nothing gets committed with a failing invariant. The harness catalog is in
 [`tools/eval/README.md`](tools/eval/README.md).
 
-**Documentação que carrega número é gerada.** `npm run docs:check` (dentro do
-`check:fast`) reprova quando um bloco gerado diverge do código — foi assim que
-uma linha afirmando "`game.js` tem 3.234 linhas" sobreviveu até o arquivo
-dobrar de tamanho.
+**Documentation containing numbers is generated.** `npm run docs:check` (part of
+`check:fast`) fails when a generated block diverges from the code — that is how
+a line claiming "`game.js` has 3,234 lines" survived until the file
+doubled in size.
 
-> `npm run eval:vm` e `npm run eval:invariants` leem GLBs de `public/models/`. Numa
-> árvore sem os assets baixados, os dois falham com `ENOENT` — é ambiente, não
-> regressão.
+> `npm run eval:vm` and `npm run eval:invariants` read GLBs from `public/models/`. In a
+> tree without the downloaded assets, both fail with `ENOENT` — that is an environment issue, not a
+> regression.
 
-## Knowledge graph com Graphify
+## Knowledge graph with Graphify
 
-O repo agora inclui integração project-scoped do [Graphify](https://github.com/Graphify-Labs/graphify)
-para múltiplos adapters:
+The repo now includes project-scoped [Graphify](https://github.com/Graphify-Labs/graphify) integration
+for multiple adapters:
 
 - Claude Code
 - Codex
-- adapters compatíveis com `agent skills` via `.agents/` (as configs de OpenCode e Kimi saíram da árvore em 11/2026)
+- adapters compatible with `agent skills` via `.agents/` (the OpenCode and Kimi configs were removed from the tree in 11/2026)
 
-Arquivos principais:
+Main files:
 
-- `AGENTS.md` e `CLAUDE.md`: instruções de uso do grafo
-- `.codex/`, `.claude/`, `.agents/`: skills/config por adapter
-- `graphify-out/graph.json`: grafo consultável
-- `graphify-out/GRAPH_REPORT.md`: resumo navegável
-- `graphify-out/graph.html`: visualização local do grafo
+- `AGENTS.md` and `CLAUDE.md`: graph usage instructions
+- `.codex/`, `.claude/`, `.agents/`: per-adapter skills/config
+- `graphify-out/graph.json`: queryable graph
+- `graphify-out/GRAPH_REPORT.md`: navigable summary
+- `graphify-out/graph.html`: local graph visualization
 
-Build inicial do grafo:
+Initial graph build:
 
-- foi gerado em modo `code-only`, local e determinístico
-- inclui SQL (schema e migrations; o schema saiu da árvore pública, é privado)
-- não usa API externa
+- generated in `code-only` mode, locally and deterministically
+- includes SQL (schema and migrations; the schema was removed from the public tree and is private)
+- uses no external API
 
-Atualizar depois de mudanças de código:
+Update after code changes:
 
 ```bash
 ./scripts/graphify update .
 ./scripts/graphify cluster-only . --graph ./graphify-out/graph.json --no-label
 ```
 
-Regenerar do zero:
+Rebuild from scratch:
 
 ```bash
 ./scripts/graphify extract . --code-only --out . --force
 ./scripts/graphify cluster-only . --graph ./graphify-out/graph.json --no-label
 ```
 
-Observação: a versão atual do Graphify extrai este repo muito bem em JS/TS/SQL, mas ainda
-reporta parsing parcial em arquivos `.astro`. Isso é limitação do extrator atual, não do
-projeto.
+Note: the current Graphify version extracts this repo very well in JS/TS/SQL, but still
+reports partial parsing in `.astro` files. This is a limitation of the current extractor, not of the
+project.
 
-## Controles
+## Controls
 
-| Tecla | Ação |
+| Key | Action |
 | --- | --- |
-| W A S D | Mover |
-| Mouse | Mirar |
-| Shift | Correr |
-| **Ctrl ou C** | **Agachar — mira bem mais estável** |
-| Espaço | Pular |
-| Clique esq. | Atirar |
-| Clique dir. | Luneta / ADS |
-| R | Recarregar |
-| 1 / 2 / 3 | Primária / pistola / faca |
-| **Z / X / V** | **Rádio estilo CS (comandos de voz)** |
-| **M** | **Trocar de time (a qualquer momento)** |
-| Tab | Placar |
-| Esc | Pausar |
+| W A S D | Move |
+| Mouse | Aim |
+| Shift | Sprint |
+| **Ctrl or C** | **Crouch — much steadier aim** |
+| Space | Jump |
+| Left click | Fire |
+| Right click | Scope / ADS |
+| R | Reload |
+| 1 / 2 / 3 | Primary / pistol / knife |
+| **Z / X / V** | **CS-style radio (voice commands)** |
+| **M** | **Switch teams (at any time)** |
+| Tab | Scoreboard |
+| Esc | Pause |
 
-**Regras**, lidas das constantes de `public/js/game.js`:
+**Rules**, read from the constants in `public/js/game.js`:
 
-<!-- BEGIN:GERADO:regras — não edite à mão, rode `npm run docs` -->
+<!-- BEGIN:GERADO:regras — do not edit by hand, run `npm run docs` -->
 
 | Regra | Valor | Constante |
 |---|---|---|
@@ -294,19 +296,19 @@ projeto.
 
 <!-- END:GERADO:regras -->
 
-O menu aceita de 1 a 8 bots por lado (`settings.bots`); o padrão é 4×4. O time
-com mais abates leva o round. AWP mata com um tiro em qualquer lugar do corpo.
-Multikills disparam anúncios estilo Unreal Tournament.
+The menu accepts 1 to 8 bots per side (`settings.bots`); the default is 4×4. The team
+with the most kills wins the round. The AWP kills with one shot anywhere on the body.
+Multikills trigger Unreal Tournament-style announcements.
 
-**Regeneração de vida está DESLIGADA** (decisão do dono, 05/08/2026): vida só
-volta com respawn. `?regen=1` religa a regra antiga — inteira, com a simetria
-jogador↔bot. Ela foi desligada porque era **invisível**: sem ícone, sem som e
-sem linha nas configurações, e regra que o jogador não percebe é
-indistinguível de defeito.
+**Health regeneration is OFF** (owner's decision, 05/08/2026): health only
+returns on respawn. `?regen=1` restores the old rule — in full, with player↔bot
+symmetry. It was disabled because it was **invisible**: no icon, no sound and
+no line in the settings, and a rule the player cannot perceive is
+indistinguishable from a bug.
 
-Os mapas registrados, e em que modo cada um abre:
+The registered maps, and the mode each one opens in:
 
-<!-- BEGIN:GERADO:mapas — não edite à mão, rode `npm run docs` -->
+<!-- BEGIN:GERADO:mapas — do not edit by hand, run `npm run docs` -->
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
@@ -331,57 +333,57 @@ Os mapas registrados, e em que modo cada um abre:
 
 <!-- END:GERADO:mapas -->
 
-## Ranking global — DESLIGADO
+## Global ranking — OFF
 
-`RANKING_ON = false` em [`src/lib/site.ts`](src/lib/site.ts). Decisão do dono em
-04/08/2026: *"vamos desabilitar o ranking por enquanto, depois a gente ajeita"*.
-O motivo é o de sempre nesta base — o modelo é **client-authoritative**, o placar
-é forjável, e publicar classificação forjável é publicar número errado.
+`RANKING_ON = false` in [`src/lib/site.ts`](src/lib/site.ts). Owner's decision on
+04/08/2026: *"let's disable ranking for now, we'll fix it later"*.
+The reason is the usual one in this codebase — the model is **client-authoritative**, the score
+can be forged, and publishing a forgeable ranking means publishing wrong numbers.
 
-**É flag, não remoção.** Com `false`:
+**It is a flag, not a removal.** With `false`:
 
-- `/ranking` e `/u/*` respondem **200 com aviso + `noindex`** — não 404. As URLs
-  estão indexadas e vão voltar no mesmo endereço;
-- o link some do nav e do rodapé do site;
-- `/api/leaderboard` responde `{disabled:true}`; o cliente não conhece a flag,
-  ele reage à resposta da API. Uma fonte de verdade, no servidor.
+- `/ranking` and `/u/*` return **200 with a warning + `noindex`** — not 404. The URLs
+  are indexed and will return at the same addresses;
+- the link disappears from the site nav and footer;
+- `/api/leaderboard` returns `{disabled:true}`; the client does not know about the flag,
+  it reacts to the API response. One source of truth, on the server.
 
-**O que NÃO parou: a coleta.** `submit_match` continua gravando (valida token,
-rate limit por nick/IP/dia, tetos absolutos e consistência física) e a telemetria
-nova continua medindo. Quando o ranking voltar, o histórico está lá.
+**What did NOT stop: collection.** `submit_match` keeps recording (it validates the token,
+rate-limits by nick/IP/day, and enforces absolute caps and physical consistency), and the new
+telemetry keeps measuring. When ranking returns, the history will be there.
 
-- Schema e migrations: privados, fora da árvore
-- O que foi endurecido no pré-release: [`docs/seguranca.md`](docs/seguranca.md)
+- Schema and migrations: private, outside the tree
+- What was hardened before release: [`docs/seguranca.md`](docs/seguranca.md)
 
-A correção definitiva é o servidor de jogo escrever com `service_role` e o RLS
-bloquear o cliente; está na fila junto do multiplayer.
+The permanent fix is for the game server to write with `service_role` and for RLS to
+block the client; it is queued alongside multiplayer.
 
-## Áudio (`public/audio/`)
+## Audio (`public/audio/`)
 
-A pasta **não é versionada**: as vozes e memes têm direitos incertos, e o
-repositório público leva só o código. Sem o pacote, o jogo usa sons
-sintetizados e funciona normalmente.
+The folder **is not versioned**: the voices and memes have uncertain rights, and the
+public repository contains only code. Without the pack, the game uses synthesized
+sounds and works normally.
 
 ```bash
 npm run fetch-audio     # ou: AUDIO_PACK_URL=<zip> bash scripts/fetch-audio.sh
 ```
 
-O jogo carrega `audio/manifest.json` (veja `audio/manifest.example.json`, esse
-sim versionado). Samples originais do CS 1.6 são propriedade da Valve e **não**
-são distribuídos aqui.
+The game loads `audio/manifest.json` (see `audio/manifest.example.json`, which is
+versioned). Original CS 1.6 samples are the property of Valve and are **not**
+distributed here.
 
 ## SEO / AEO
 
-- `site` com `www` no `astro.config.mjs` — todo canonical sai daí
-- `/sitemap.xml` **dinâmico**, cobrindo uma URL por jogador
-- `public/robots.txt` e `/llms.txt` (gerado por `src/pages/llms.txt.ts`)
-- JSON-LD: um único nó `VideoGame` com `@id` estável, mais `ItemList`,
-  `ProfilePage`/`Person`, `HowTo`, `FAQPage` e `BreadcrumbList` por página
-- `Cache-Control` de CDN em `/ranking`, `/u/*` e `/mapa`
+- `site` with `www` in `astro.config.mjs` — every canonical URL comes from there
+- **Dynamic** `/sitemap.xml`, covering one URL per player
+- `public/robots.txt` and `/llms.txt` (generated by `src/pages/llms.txt.ts`)
+- JSON-LD: a single `VideoGame` node with a stable `@id`, plus `ItemList`,
+  `ProfilePage`/`Person`, `HowTo`, `FAQPage` and `BreadcrumbList` per page
+- CDN `Cache-Control` on `/ranking`, `/u/*` and `/mapa`
 
-## Licenças / créditos
+## Licenses / credits
 
-<!-- BEGIN:GERADO:licenca — não edite à mão, rode `npm run docs` -->
+<!-- BEGIN:GERADO:licenca — do not edit by hand, run `npm run docs` -->
 
 O código está sob **AGPL-3.0** (GNU Affero General Public License, versão 3) — é o que vale hoje, e a fonte é o arquivo `LICENSE` na raiz do repositório. Nenhum outro arquivo tem autoridade sobre isso.
 
@@ -389,17 +391,17 @@ O código está sob **AGPL-3.0** (GNU Affero General Public License, versão 3) 
 
 <!-- END:GERADO:licenca -->
 
-> **Migrado de MIT para AGPL-3.0 em 07/08/2026.** As contribuições feitas antes
-> da troca entraram sob MIT — licença permissiva e compatível com a AGPL: elas
-> continuam MIT dentro do todo, e o conjunto é distribuído sob AGPL-3.0. Quem
-> contribuiu antes não perde nada nem precisa de novo consentimento (a direção
-> incompatível seria a inversa).
+> **Migrated from MIT to AGPL-3.0 on 07/08/2026.** Contributions made before
+> the switch were submitted under MIT — a permissive license compatible with the AGPL: they
+> remain MIT within the whole, and the combined work is distributed under AGPL-3.0. Previous
+> contributors lose nothing and do not need to give new consent (the incompatible
+> direction would be the reverse).
 
-- Three.js r160 — MIT (© Three.js authors), em `public/vendor/`.
-- Código, texturas, personagens e logo: originais.
-- Áudios: fornecidos pelo usuário; verifique direitos antes de uso comercial.
-  Sons do CS 1.6 **não inclusos** (Valve).
-- Paródia independente, sem afiliação com a Valve. Counter-Strike é marca da
+- Three.js r160 — MIT (© Three.js authors), in `public/vendor/`.
+- Code, textures, characters and logo: original.
+- Audio: provided by the user; verify rights before commercial use.
+  CS 1.6 sounds **not included** (Valve).
+- Independent parody, not affiliated with Valve. Counter-Strike is a trademark of
   Valve Corporation.
 
-*Feito para rir, não para brigar.*
+*Made for laughs, not for fights.*

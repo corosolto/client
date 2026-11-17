@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.148`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.150`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -26,6 +26,9 @@
 ## Unreleased — 2026-11-04
 
 ### Added
+- Multiplayer: snapshots v9 agora levam agachamento, recarga e emotes dos corpos remotos, inclusive recarga/agachamento de bots. Emotes são autoritativos, com fase para entrada no meio da dança e cancelamento por movimento/tiro/morte. O servidor mantém o formato v8 para conexões antigas; o cliente novo aceita fallback v8. Acréscimo de 3 bytes por entidade. IDs de emote só crescem no fim do catálogo; um cliente com catálogo menor decodifica ID desconhecido como "sem emote" naquela entidade, sem derrubar o snapshot (mutante `emote-desconhecido-derruba-snapshot` em `eval:netcodecbin`). `eval:rede3p` mede codec → controlador/rig real e doze mutantes, incluindo datagramas fora de ordem, ciclos de recarga com perda de pacotes e intenção durante pausa; exige nominal verde, falhas causais exatas e rejeita instrumento de medição defeituoso. O fallback WebTransport → WebSocket renova o ticket de uso único e mantém o nó escolhido. Contrato e ordem de publicação em `docs/visual-consistency/CLIENT-SNAPSHOT-NEGOTIATION.md`.
+- O anúncio do passe agora comunica a temática **Creepypasta** em vez de barras de TV: banner original gerado no Mint com Capitão Caveira, Teletreco Sinal Fraco, Boneca da Cristaleira e Clóvis Fora do Ar, logotipo em letras de horror e cópia/alt bilíngues (`public/img/passe/sessao-da-treta-s1.webp`, `public/js/passe-anuncio.js`).
+- Installed PWA now opens and starts single-player without a connection. A root service worker keeps the game shell, the default Praça dos Três Poderes match and the same-origin resources loaded by the current installation; successful later visits refresh the cache and add maps/assets the player uses. Multiplayer, account, ranking and other server-backed features remain online-only.
 - Pacotes do Studio em produção pelo R2: em produção e preview o resolvedor busca os pacotes fixados em `https://assets.corosolto.com.br/packs/<kind>/<id>/<versão>/` (`public/js/data/pack-origin.js`; host local segue em `/packs/` com `STUDIO_PACK_ROOT`, `?packorigin=cdn|local` força), com a mesma verificação de SHA-256; a CSP lista a origem no `connect-src`. `npm run publish:packs` (`scripts/publish-studio-packs.mjs`) sobe só pacote fixado e íntegro, com `Content-Type` pela extensão, `Cache-Control` imutável, `If-None-Match: *`, pula o que já está igual, recusa sobrescrever conteúdo diferente, tem `--dry-run` e confere cada objeto pela origem pública (SHA-256, bytes, MIME, cache, CORS). Réguas: `eval:studiochar` R19 (4 mutantes novos: origem errada, origem ignorada, sempre CDN, CSP sem origem) e `eval:packpublish` (13 mutantes), as duas no pr-fast.
 - Passe grátis "Sessão da Treta" (temporada 1, facção Fora do Ar): aba PASSE no lobby (só aparece com `GET /api/passe` respondendo), tela com os 15 níveis e as 5 recompensas de cada um, barra de XP, missões diárias e semanais, convites, bônus de XP ativo e RESGATAR; anúncio uma vez por versão do passe (visitante vai para o convite de login, que ganhou `abrirLoginPrompt`). Personagem com `passe:{season, level}` em `characters.js` aparece com cadeado e "Nível N" e só é escolhido quando `unlocked.characters` do servidor o lista; a partida offline e o pedido de personagem no multiplayer passam pela mesma trava. O client só manda `{action:'claim', level}` e, com consentimento de medição (`window.__csPrivacy`), o funil do painel `{action:'analytics', event:'modal_view'|'open'}`. `/api/passe` entra no proxy em rollout (404 do backend vira 503). Réguas: `eval:passe` (pr-fast + `check:fast`, 20 mutantes; os caminhos de main.js rodam num vm) e `tools/eval/passe-browser.mjs` (lobby real com o mock `tools/eval/passe-mock.mjs`; `PASSE_MOCK=conta|visitante` no `serve.mjs` para dev local).
 - `/app`: a light landing for visitors who open the game inside an app's browser (TikTok, Instagram, Facebook, LinkedIn, X). On 08/11 the TikTok paid campaign sent 517 visits in one hour; 72% loaded the 8 MB game inside the WebView and 85% left in under a minute without entering. Both edges (`middleware.js` on Vercel, `src/middleware.ts` on Workers) now answer the home with a 302 to `/app` when `server-traffic.mjs` classifies the user agent as `app/*` (`desvioParaApp`): only the home, query kept intact, `?jogo=1` and `?sala=` pass through, the redirected request is not counted (the landing is). The page weighs about 1.4 MB (6 s vertical gameplay clip + poster from `launch-media/2026-10-18-tricolor-morumbi`), is static and `noindex`, puts both calls above the fold and rewrites every link to the home with the visitor's `utm_*` plus `jogo=1`; ABRIR NO NAVEGADOR tries `intent://` on Android and `x-safari-https://` on iOS, with the in-app menu tip after 1.8 s if nothing opened. Origem shows it as landing `/app` under the app agents; Campanhas keeps attribution by source. `server-traffic-check` gains the redirect matrix (home, query, `jogo=1`, `sala`, deep route, open Chrome, preview bot, HEAD, foreign host) and the Vercel middleware 302 case; mutants "sem UA" and "loop jogo=1" die.
@@ -44,6 +47,8 @@
 ### Changed
 - Vercel Web Analytics leaves the site (fase 5): `privacy-runtime.js` no longer injects `/_vercel/insights/script.js`, which 404s on Workers; the quick-look analytics is the Cloudflare Web Analytics already active on the zones, and first-party telemetry keeps the same consent gate. `privacy-choice-check` now asserts no third-party script (mutant `injects-third-party` replaces `vercel-continue-after-withdraw`).
 - Cloudflare Workers ready for production (fases 3–4 do `docs/runbooks/MIGRACAO-CLOUDFLARE.md`). The private audio pack and the authored viewmodels left the Vercel Blob for the private R2 bucket `corosolto-private`: `fetch-audio.sh` accepts `r2://bucket/key` with `AUDIO_PACK_SHA256`, and the Worker serves `/private-assets/viewmodels/*` straight from the R2 binding by the versioned manifest (ETag, 304, HEAD; anything off-contract falls through to the Astro 404 and the legacy viewmodel, as before). `s-maxage` now feeds `caches.default` and is stripped from the browser `cache-control` like Vercel did; the legacy apex domain 308s to its `www` inside the Worker; `window.__CS_BUILD.sha` reads `CS_BUILD_SHA`. `build:cf` runs `strip:decalbg`, `assert:assets` and (with the private pack) `audio:check`. Every staging/production deploy runs `tools/cf/verifica-deploy.mjs` (build SHA, byte-equal audio manifest, 63 viewmodels by size and sha256) because header parity alone missed a staging serving the public audio pack and no viewmodels for days. New: `wrangler.prod.toml` (`csb-prod`), `cf-prod-deploy.yml` (release commit on main or dispatch by tag) and `tools/cf/virada.sh` (Worker Routes in front of Vercel, reversible in seconds). Régua `eval:cfborda` (mutants `sem-strip`, `vm-sem-etag`, `apex-301`) joins the fast suite and pr-fast.
+- O smoke de Cloudflare agora usa uma fixture HTTPS/WSS para o cenário de queda e reconexão do nó; a fixture HTTP era bloqueada como mixed content nos previews HTTPS e deixava o último teste vermelho antes de exercitar a reconexão.
+- Release gates now enumerate every review page, keep write credentials out of metadata reads, require positive attestation evidence, reject infrastructure-skipped masonry checks, serialize pre-push ownership with waiting `flock`/`lockf` fallbacks, and fail when character-voice proof is absent. Paginated PR sweeps also handle an empty repository, while WSEC3 rejects any extra `gh api` command beside its exact read-only request.
 - Preview de PR não gasta mais Vercel: `scripts/ci/vercel-ignore.sh` sai 0 para toda branch de PR (o preview é o `*.workers.dev` do `cf-preview.yml`); `staging`, `main`, `lote-*` e `*/lote-*` continuam buildando sempre e produção segue só no `chore(release):`. A régua `eval:vercelignore` foi reescrita para o contrato novo (mutantes `preview-pr-builda`, `staging-pulado`, `release-pulado`). `preview-build.yml` passou a `workflow_dispatch` (input `pr_number`, emergência); `preview-deploy.yml` segue em `workflow_run` publicando `--prebuilt` só quando alguém despacha o build — nenhum PR dispara mais esse par. A PRV1 do `workflow_security_check.py` proíbe o build de voltar a disparar sozinho por `pull_request`/`push`/`schedule` (mutante novo `compila-volta-pr`) e mantém a proibição de `secrets.`; DG3/DG6 e o concurrency-check prendem o par como estava; o bot do `preview-bot.yml` e o label `preview-autorizado` não prometem mais URL da Vercel. Fatura esperada: Build CPU Minutes ≈ builds de release + staging/main/lote (~3/semana); Fast Origin Transfer só muda na virada (fase 4).
 - Bloqueios do release #1251: respostas do smoke passam a ser classificadas pelo hostname antes da lista de terceiros, impedindo que `/img/facebook-*` ou `?origem=twitter.com` esconda 404/500 do próprio host; `eval:cfparidade` só aceita mutante com exit 1; `eval:bots-perf` entra em `operacao-flavio-comportamento` e a prova browser fica no Chrome com GPU real, pois o runner `portao-controles` usa SwiftShader (`degraded=true`, 3,5 s/quadro), sem novos jobs nem falsa cobertura de GPU. `cf-preview.yml` compila o PR via `pull_request` sem segredos e entrega somente o artefato; `cf-preview-deploy.yml` reage ao `workflow_run`, carrega a configuração do branch base e publica com Wrangler pinado, sem executar código do PR com tokens Cloudflare/GitHub. Sticky e smoke exigem `github-actions[bot]` e SHA+URL no mesmo comentário; `tools/cf/` passa a disparar preview e o job `skip` declara `runs-on: ubuntu-latest` para o workflow voltar a iniciar.
 - Compartilhamento: links de convite, perfil, clã e botões sociais usam `https://corosol.to` com seus UTMs; canonical, `og:url`, hreflang, sitemap e JSON-LD continuam em `https://www.corosolto.com.br`. A régua `eval:shareorigin` mede o build e morde duas mutações.
@@ -63,6 +68,18 @@
 
 ### Fixed
 - Cloudflare deploy credentials are scoped only to the private-audio prefetch and Wrangler publish steps, never to dependency install, build or post-deploy verification. The R2 prefetch maps the Actions token to Wrangler's native variable, verifies the ZIP, extracts it into the build tree and leaves the cache for the secret-free build. Post-deploy viewmodel verification always downloads and hashes each body, rejecting equal-length corruption even when `content-length` and `ETag` look valid. Production routes every asset request through the Worker first, so the apex 308 applies to static pages too; the Worker serves matching assets through the `ASSETS` binding before falling back to Astro. Manual staging deploys always check out protected `staging`; production rollback accepts only a SemVer tag whose exact commit is reachable from `main`, and validates that before exposing any Cloudflare secret.
+- Os sweeps agendados dos bots agora paginam todos os PRs abertos via GraphQL, fazem essa leitura de inventário com o `github.token` somente leitura em vez do PAT de escrita, recalculam ancestralidade e contagem de commits no grafo Git em vez de confiar no JSON recebido, e tratam o exit `78` dos mutantes cegos como falha de infraestrutura, com regressões explícitas.
+- CI/release: o `pre-push` não apaga uma trava substituída, e gates sem evidência editorial/material encerram como não medidos (78), nunca verde.
+- Release tooling: Steam preparation accepts little-endian Mach-O headers, escapes native Windows paths in VDF, and checks out the exact source commit whose artifact was validated.
+- CI: os consumidores de `ferro-balcao` e `boot-mutant-verdict` reconhecem o exit 78 da taxonomia atual como medição inválida, em vez de esperar o exit 3 antigo e derrubar todo `pr-fast`.
+- O hook local de `pre-push` mantém o seletor `check:prepush`, `check:deploy` usa a suíte única do runner e o manifest declara o adapter Cloudflare/Wrangler exigidos pelos gates.
+- `tools/rig-from-donor.mjs` now fits the elbow and wrist joints to the mesh instead of copying the `mst` skeleton verbatim. On the Creepypasta Season Mint meshes the arm ran ~10 cm above the donor joint line and the forearm bent forward, leaving the hand flesh far from `LeftHand`/`RightHand` (capitao-caveira: 23 cm); proximity weights then split the hand across Arm/ForeArm/Hand and the clips rotated it around a pivot outside the flesh, so both hands rendered as flat stretched shards (capitao-caveira: hand edges stretching 86× in walkfire, 36× in death). The fit moves only translations (donor rest rotations stay, so `retarget-glb` and the shared clips still apply) and recomputes the IBM of the moved subtree only; `AJUSTE_JUNTAS=0` reproduces the old output byte for byte. 12/37 of the batch failed before; after, the 34 meshes with hand flesh are ≤ 1.6×, and the 3 short-armed mascots (no flesh at the wrist) are reported as not measurable and still tear with the human skeleton. Roster GLBs in `public/` were not re-rigged. Guarded by `eval:rigmaos` (CPU skinning with the 11 shared clips over a synthetic mesh with the pilot's offsets; mutants `transplante-cru`, `ibm-velha`), in CI and `check:fast`.
+- A régua RM4 deixa de manter exceções privadas: os sete GLBs legados acima de 2,5× ficam vinculados ao advisory `RIG_RM4_LEGACY_20261108`, registrado no ratchet comum `tools/eval/KNOWN-RED.json` com plano #1124 e tetos presos à melhor medição aceita. Qualquer melhora obriga a baixar o teto, chegar ao limite normal remove a exceção, e uma regressão posterior volta a reprovar; modelos sem aresta pesada são reportados como não mensuráveis, sem mascarar falhas mensuráveis nem contá-los como aprovados. Os binários públicos e seus manifestos de identidade permanecem intactos.
+- O parser de justificativas do ratchet aceita `because` além de `porque`, mantendo o corpo dos PRs compatível com o gate English sem perder a exigência de motivo explícito.
+- Deep-link into a match (`?sala=`, `?auto=`) no longer opens mute: `Sfx.ensure()` called `resume()` outside a user gesture, the promise rejected silently and the context stayed `suspended` until some later sound happened inside a gesture. `_resume()` handles the rejection and `unlockOnGesture()` (capturing `pointerdown`/`keydown`) resumes on the first gesture and unbinds itself; `main.js` arms it right after creating the Sfx. Pinned by `eval:audiounlock` (UNL1–4; mutants `sem-destrave`, `gesto-vazio`).
+- The Werewolf's growls stay with the Werewolf: `_voicePool` drops the in-game takes of speechless characters (`SFX_ONLY_VOICE_IDS`) from the generic faction pool, so Caipora (no voice yet) and `sfx.voice('M')` stop inheriting howls once the private manifest structures `characterVoice.lobisomem.kill`. VOZ10 + mutant `lobo-no-pool` in `eval:mp-voz-personagem`.
+- Gates that had fallen behind the game: `audio-voice-mix-check` MIX11 re-anchored on the MP per-character routing (the old chain only exists in single-player), MIX15 on the 5-track menu selection of 04/10, three surviving mutants re-anchored and MIX9d added (own take beats the pool in a faction without rollback); `netcode-check` fixture gained `protocolVersion: 8` (the whole gate died with `protocolo_incompativel`); `character-voice-contract-check` reports local-only `specs/`/`plans/` as NOTA instead of failing outside the owner's machine and VOICE5 reads the real installer (`fab-game-local.mjs`).
+- `.githooks/pre-push` now serializes itself per machine (atomic `mkdir` lock with owner pid, stale lock reclaimed, 40 min max wait): three concurrent `check:deploy` runs pushed the load to 76 and none finished within 30 min.
 - Production crash recovery: the match result no longer treats every objective as Javaporcos territory (Operação Flávio has no `regras.times`); map downloads retry once after transient module-network failures and failed map promises can be attempted again; optional Javaporcos audio retries its fetch without escalating the fallback to `console.error`; menu scenery failures release the splash instead of aborting boot; and `main.js`/`site-links.js` no longer require top-level `await`, restoring module parsing on Safari 14-era WebViews.
 - Browsers and embedded WebViews that disallow WebAssembly now keep the Meshopt decoder rejection inside the existing compressed-model fallback instead of emitting an actionable global `WebAssembly.instantiate()` rejection.
 - Slow menu scenery no longer turns the 20-second splash failsafe into `boot-watchdog`: the accepted entry gesture releases module sequencing while the optional 3D arena continues loading, and the watchdog recognizes that handoff without masking a genuinely unresponsive boot.
@@ -70,6 +87,7 @@
 - Pre-push no longer falls back to the full `check:deploy` when a change touches the two edge entry points: `middleware.js` (Vercel proxy root) and `src/middleware.ts` (Workers) now select `core + network` in `selecao-pre-push.mjs` (the landing PR #1291 burned a full local run because of this). Covered by a new case in `eval-suites.test.mjs`.
 - Online drops with network ID 0 work end to end (finding by estraga-codigo on #1291, minor). Server event IDs are uint32 and 0 is valid, but three checks used truthiness: `pedirPick` on a network drop with `_nid === 0` fell through to the spawn-rack path (`pickupWeapon`) and the server got the wrong request; `limparDropsDeRede` never removed it on round reset; and `_pickPendente = 0` doubled as the "nothing pending" sentinel, so an input carrying `pick: 0` was omitted from `sendInput`. The sentinel is now `null` (set in the constructor), every check is `!= null`, and `net-event-id-check` grows the drop lifecycle clause (drop 0/1/0xffffffff spawns, `gone` removes it, round reset removes it, `pick: 0` reaches `sendInput` and is consumed) plus the rack counter-case; the truthiness mutant dies. `eval:netcode` fails on virgin staging with `protocolo_incompativel` (protocol v8 bump in flight by another lane) and is not affected by this change.
 - Revisão do release #1251: `origemCompartilhamento` só usa `corosol.to` no apex ou em subdomínios com fronteira (`*.corosolto.com.br`), sem desviar hosts como `evilcorosolto.com.br`; o middleware Astro devolve `next()` na Vercel, cujo proxy já conta a requisição, e só agenda `/api/server-traffic` no Workers. Regressões comportamentais cobrem apex/subdomínio/host estranho e os dois adaptadores; `eval:shareorigin` ganha o mutante sem fronteira e os builds Vercel/Cloudflare passam. UIR20 deixa de prender a forma `new Set` de `geo.ts` e chama `langFromCountry` para verificar `US/GB → en` e `PT/BR/ausente → pt`.
+- Social login no longer gets stuck on `guest_invalid` when the browser holds a stale guest proof. Google, other OAuth providers and email now retry automatically without the invalid proof, preserving local history and never accepting it as valid; subsequent clicks do not resend it, and each provider gets one retry and navigation. Covered by LP15/E05 and both recovery mutants.
 - Social login no longer gets stuck on `guest_invalid` when the browser holds a stale guest proof. Google, other OAuth providers and email now retry automatically without the invalid proof, preserving local history and never accepting it as valid; subsequent clicks do not resend it, and each provider gets one retry and navigation. Covered by LP15/E05 and both recovery mutants.
 - Multiplayer character voices belong to the character again (owner, 09/11: Saci and other absent characters shouting in a Lampião room). `Sfx.characterVoice` now resolves take of the event → another in-game take of the SAME character (kill/radio/round) → faction pool only for characters without structured in-game voice; the legacy string form (select-only) keeps the pool. The live pack stored every Mítico as that string with all 56 kill takes mixed in `voice.M`, so any Mítico kill picked any Mítico: `tools/audio/miticos-character-voice-apply.mjs` + `miticos-voice-map.json` (pool M identified offline by transcription + voice pitch band) restructure the 9 Míticos as `{select, kill}` with captions, zero new bytes, pool untouched — the owner applies it to the private manifest. Pinned by `eval:mp-voz-personagem` (VOZ1–6, mutant `pool-da-faccao`).
 - Bot radio callouts reach the multiplayer: the dedicated node died in `_botCall` at the DOM check, so the snapshot `voice` channel (room.js/netcodec v5+) was never filled and the online team was mute while single-player had "Contato!". The node now marks `_voiceSnap='radio'` with the same 5 s global cooldown and each client applies the single-player rule in `NetGame.voice` (≤55 m from you, enemies speak less, line in the radio log). Headless room A/B over 90 s: 10 radio events vs 0 on main. Pinned by VOZ7–9 (mutant `rede-muda`). Needs a backend image with this client ref to reach production.
@@ -117,6 +135,7 @@
 ## Não lançado — 2026-10-19
 
 ### Adicionado
+- Added an offline Studio asset-pack verifier and immutable local installer with schema, safe-path, byte-size, SHA-256 and executable-content checks, real failure fixtures, and an explicit future runtime promotion contract. No Studio pack is enabled in the runtime.
 - Dá para dançar no meio da partida: a tecla T abre uma roda com os oito passos, a câmera se afasta para você se ver dançando e qualquer passo cai no instante em que você anda, atira ou morre.
 - O modo Vira-Casaca entra na seleção local: cada abate converte o adversário para o seu lado e a partida termina quando um time domina o elenco inteiro.
 - O personagem agora dança no lobby: oito passos brasileiros — passinho, samba no pé, ginga, frevo, dois pra lá, quadradinho, sarrada no ar e um salve — direto na tela de escolha, sem baixar nada a mais para quem não pedir.
@@ -150,6 +169,8 @@
 - Girar no lugar deixa o quadril para trás e os pés alcançam depois, em vez de o corpo inteiro teleportar junto com a mira.
 - Personagens distantes animam com menos frequência, devolvendo quadros ao celular sem mudar o que se vê de perto.
 - Recarregar ficou visível de fora: em terceira pessoa, a mão livre vai ao carregador e o corpo mergulha durante a recarga, do jogador e dos bots — dá saber quando o adversário está vulnerável.
+- A recarga de jogadores remotos termina no prazo autoritativo mesmo quando chegam snapshots atrasados, sem ganhar tempo extra a cada pacote.
+- Produtores de snapshots sem versão explícita usam o protocolo atual e preservam agachamento, recarga e emotes.
 - Piscina da Treta volta a carregar sua ambiência.
 - O placar reaproveita cada retrato em vez de baixar o mesmo avatar seis vezes.
 - O guia inicial mostra movimento, tiro e recarga por 15 segundos; a ajuda completa continua no ALT.
@@ -252,6 +273,357 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.150] — 2026-11-17
+
+### Mudado
+- fix(ci): harden asset and robots evidence gates (#1358)
+- test(ci): enforce structured bot workflow guards (#1328)
+- fix: keep installed single-player playable offline (#1350)
+- fix(ci): preserve devcontainer and image cancellation guards (#1355)
+- ci: build once and share browser environments (#1322)
+- feat(net): extract lobby and interpolation resilience (#1326)
+- chore: reconcile main hotfixes into staging (#1351)
+- chore(eval): retire Quake 4 probes (#1360)
+- CI: use canonical npm lockfile and pin action digests with Renovate (#1233)
+- ci: unify release attestation and debounce bot sweeps (#1325)
+- fix(profile): record solo presence and send weapon mode (#1330)
+- fix(audio): unlock AudioContext on deep links, filter character voices, and reanchor checks (#1295)
+- ci: standardize local environment with CI (#1323)
+- fix(personagens): repeso do roster — virilha, sovaco e cauda (profeta-calcada, bolsonaro-mandrake) (#1270)
+- fix(ci): read PR metadata with repository token (#1363)
+- feat(pass): replace temporary bars with Creepypasta artwork (#1364)
+- docs: add PR and issue queue skill (#1361)
+- feat: add verified local Studio pack installs (#1225)
+- fix(ops): read current ranking flag and exclude ad noise (#1362)
+- fix: rebind missing respawn countdown (#1366)
+- fix: distinguish blind and unmeasured verdict exits (#1367)
+- fix(rig): fit donor elbow and wrist joints to the mesh (#1253)
+- feat(steam): add manifest and no-upload preflight (#1102)
+- fix(skins): keep Lula sleeves weighted to the arms (#1265)
+- fix(ci): close release gate evidence gaps (#1370)
+- feat(network): publish crouch, reload, and emotes in snapshot v9 (#1266)
+- refactor(studio): move content production to Studio (#1221)
+- docs: align queue skill pre-push exception (#1369)
+- eval(rig): census deformation across 100 GLBs (#1274)
+- fix(bot): harden release review gates (#1379)
+- Merge hotfix: translate documentation to English (#1382)
+- fix(net): close release review findings (#1381)
+- fix(release): harden Steam preparation (#1380)
+- fix(gameplay): playtest feedback - smoke, CTF minimap, ammo, economy (#1376)
+- release: daily batch 2026-11-14 (#1368)
+- docs(i18n): translate main documentation to English
+- fix(net): keep reload deadlines monotonic
+- fix(steam): normalize Windows launch paths portably
+- fix(net): close release review findings
+- fix(bot): scope sweep inventory token
+- fix(release): harden Steam preparation
+- fix(ci): harden release review gates
+- fix(gameplay): playtest feedback - smoke, CTF minimap, ammo, economy
+- fix(items): propagate head incompatibilities
+- fix(ci): compact urban fit evidence
+- fix(ci): scope automerge metadata reads
+- fix(ci): wait for the lockf fallback
+- fix(ci): harden paginated metadata sweeps
+- fix(smoke): preserve local fixture transport
+- docs: record HTTPS smoke fixture
+- fix(smoke): use TLS fixture on HTTPS previews
+- fix(ci): validate legacy lock timestamp portability
+- fix(ci): validate legacy lock process age
+- fix(ci): isolate kernel lock from legacy path
+- fix(ci): preserve writer credentials and lock ownership
+- fix(docs): rebuild integrated route bundle
+- fix(ci): validate legacy lock timestamp portability
+- fix(ci): validate legacy lock process age
+- fix(ci): isolate kernel lock from legacy path
+- fix(ci): preserve writer credentials and lock ownership
+- fix(docs): remove generated merge markers
+- fix(docs): remove generated merge markers
+- fix(ci): validate legacy lock timestamp portability
+- fix(ci): validate legacy lock process age
+- fix(ci): isolate kernel lock from legacy path
+- fix(ci): preserve writer credentials and lock ownership
+- fix(ci): close release gate evidence gaps
+- fix(ci): close release gate evidence gaps
+- fix(eval): enforce grip and legacy ceilings
+- fix(studio): refresh urban body evidence
+- docs: scope pre-push exception to PREPUSH only
+- docs: align queue skill pre-push exception
+- test(assets): refresh rig evidence manifests
+- test(ops): expect inconclusive exit 78
+- fix(eval): share mutation verdict taxonomy
+- test(ci): detect inverted classifier cancellation
+- docs(weapons): refresh generated matrix anchors
+- fix(eval): preserve visual blind verdicts
+- chore(steam): remove PR handoff artifact
+- fix(respawn): tolerate missing overlay DOM
+- fix(ci): prevent classifier self-cancellation
+- fix(eval): classify remaining verdict exits
+- docs(pr-maintenance): expand original branch
+- docs(pr-maintenance): close operational gaps
+- fix(evidence): restore current P90 hash
+- test: atualize contrato do banner Creepypasta
+- fix(rig): ratchet legacy hand ceilings
+- test(ci): reject mixed metadata writes
+- test(ci): reject mixed classifier token use
+- test(ci): prove classifier token split
+- test(net): align negotiation gate with current harness
+- fix(rig): separar mãos não mensuráveis dos aprovados
+- fix(ci): grant metadata token read permissions
+- fix(rig): reject two weight regressions
+- chore(studio): remove handoff artifact from pack PR
+- test(net): exercise rejected websocket selection
+- fix(rig): keep measuring the visible hand
+- fix(steam): limit artifact workflow to Windows
+- test(rig): fail closed on thresholds and cubic clips
+- fix(ci): use repository token for PR metadata reads
+- fix(ops): keep third-party stripping inside one script
+- docs(eval): correct skin weight mutant count
+- test: expect infrastructure proofs to carry EX_CONFIG
+- docs(pr-maintenance): rescan history before merge
+- docs(pr-maintenance): reject dirty reusable lanes
+- docs(pr-maintenance): fail closed on publication and gates
+- docs(pr-maintenance): pin reviewed base before merge
+- docs(pr-maintenance): revalidate PR body before merge
+- docs(pr-maintenance): guard default-branch PR bodies
+- fix(skins): preserve charvideo and refresh asset inventory
+- docs(pr-maintenance): fail closed when history cannot be read
+- docs(pr-maintenance): fence closing-keyword guard
+- docs(pr-maintenance): fail closed across fork and issue flows
+- fix(studio-pack): lease locks when process identity is unavailable
+- docs(pr-maintenance): separate base and head remotes
+- test(vm): wait explicitly for authored secondary
+- fix(studio): distinguish reused lock owner PIDs
+- fix(skill): fail closed on queue identity checks
+- fix(skill): reserve crash issue closure for humans
+- fix(studio): verify lock inode at publish
+- fix(skill): capture queue head before lane setup
+- fix(studio): pin lock candidate parent
+- fix(skill): pin queue operations to reviewed targets
+- fix(ops): keep browser gate closure local
+- fix(studio): publish install locks atomically
+- fix(studio): close install reservation crash windows
+- docs: pin queue merges to reviewed heads
+- fix(studio): recover interrupted pack installs
+- fix(studio): harden pack promotion races
+- feat: troque arte do passe por Creepypasta
+- fix(audio): preserve voice batches and serialize pushes
+- fix(profile): deduplicate account presence pulses
+- fix(ci): scope Renovate pinning to actions
+- fix(eval): execute account presence guard contract
+- test(telemetry): remove duplicate settings fixture
+- fix(studio): restore complete visual critic vocabulary
+- fix(gates): harden pre-push lock and diff fallback
+- test(passe): skip suppressed announcement wait
+- fix(eval): parse nested account session blocks
+- fix: cover every map mutant application failure
+- fix: distinguish blind and unmeasured mutant exits
+- fix(bot): revalidate automerge before merge
+- fix(studio): keep visual critic agent discoverable
+- fix(ops): support current ranking flag and exclude ad noise
+- docs: add PR and issue queue skill
+- fix(bot): fingerprint every merge eligibility input
+- fix(eval): provide weapon mode to telemetry sandbox
+- fix(eval): inspect nested account session callback
+- chore(eval): retire Quake 4 probes
+- fix: rebind missing respawn countdown
+- fix(pwa): cache BotBrain weights offline
+- fix(devcontainer): resolve Dockerfile beside config
+- fix(ci): require documented robots mutant evidence
+- fix(ci): require robots mutant evidence
+- test(ci): verify Dev Container Dockerfile resolution
+- test(ci): scope duration cache fallback assertion
+- fix(eval): restrict canceled image exemption
+- fix(ci): select Dev Container Dockerfile explicitly
+- test(ci): bind merge ordering to validated head
+- fix(ci): run structured guards after failures
+- fix(eval): remove avatar click in mutation
+- fix(devcontainer): resolve Dockerfile from build context
+- fix(ci): keep sweep recording non-fatal after merge
+- fix(ci): keep post-merge bookkeeping non-fatal
+- fix(ci): close adversarial merge and container gaps
+- docs: regenerate weapon matrix anchors
+- fix(ci): require exact push sweep condition
+- fix(eval): verify WebM container format
+- docs: refresh weapon matrix source links
+- docs(net): condense extracted parity comments
+- fix(eval): reject missing image cancellations
+- Mantém recursos tardios disponíveis offline
+- Preserva contrato do manifesto de módulos
+- docs: regenerate integrated weapon matrix
+- Endurece gerações do cache offline
+- Valida PWA offline contra o site real
+- Habilita single-player offline na PWA
+- test: cover pass discovery in auto mode
+- docs: keep faction provenance off the public site
+- test(net): preserve protocol negotiation after staging merge
+- fix(ci): validate pass gate browser executable
+- fix(ci): reuse browser setup for pass gate
+- test(ci): preserve dispose mutant detection
+- fix(net): harden interpolation edge cases
+- fix(ci): expect dispose mutation to fail
+- docs: shorten the family URL comment
+- docs: shorten Studio character comments
+- docs: shorten the extra-clips release comment
+- fix(ci): classify zero-byte image aborts as UI cancellations
+- fix(ci): isolate the pass announcement from the lobby gate
+- fix(ci): accept deploy extras and refresh weapon matrix
+- fix(ci): serve the pass through its boot mock
+- fix(ci): tolerate the known Node 26 register warning
+- docs: keep new runtime comments within two lines
+- fix(ci): recognize typeset merge assignments
+- fix(ci): accept repeated Bash assignment options
+- fix(ci): accept options on Bash merge assignments
+- fix(ci): expand Bash declaration merge endpoints
+- fix(ci): resolve merge payload aliases to a fixed point
+- fix(ci): expand annotated merge payload assignments
+- fix(ci): reject GraphQL merges and invalid permission shorthands
+- fix(ci): move automerge execution into canonical scripts
+- fix(ci): close remaining automerge guard bypasses
+- fix(game): preserve puff identity during cleanup
+- fix(game): preserve puff identity during cleanup
+- fix(game): preserve puff identity during cleanup
+- fix(game): preserve puff identity during cleanup
+- fix(game): make puff disposal idempotent
+- fix(game): make puff disposal idempotent
+- fix(game): make puff disposal idempotent
+- test(ci): bind merges to the eligibility verdict
+- fix(bot): complete classification and automerge snapshots
+- fix(ci): version shared artifacts by run attempt
+- fix(game): dispose per-game puff during landing cleanup
+- fix(game): dispose per-game puff during landing cleanup
+- fix(game): dispose per-game puff during landing cleanup
+- fix(bot): complete sweep state and dispose per-game puff
+- test(ci): compare full runner aggregator tokens
+- test(ci): compare full runner aggregator tokens
+- test(ci): compare full runner aggregator tokens
+- test(ci): compare full runner aggregator tokens
+- fix(ci): accept the Cloudflare preview comment author
+- fix(ci): accept the Cloudflare preview comment author
+- fix(bot): fingerprint PR title and body changes
+- fix(game): keep shared puff alive during landing cleanup
+- fix(game): keep shared puff alive during landing cleanup
+- fix(game): keep shared puff alive during landing cleanup
+- fix(game): keep shared puff alive during landing cleanup
+- test(ci): allow explicit eval steps after suite aggregators
+- test(ci): allow explicit eval steps after suite aggregators
+- test(ci): allow explicit eval steps after suite aggregators
+- test(net): cover reconnect success and final warning
+- test(net): cover the eight-second grenade fallback
+- test(ci): allow explicit eval steps after suite aggregators
+- fix(ci): accept the Cloudflare preview comment author
+- fix(ci): share Vercel output and harden release parsing
+- test(ci): require an executable automerge decision
+- test(ci): scope AF4 flags to each merge invocation
+- test(net): remove source-distance assertion from side coverage
+- fix(ci): make robots mutation failure shellcheck-safe
+- test(net): close the accepted socket in reconnect smoke
+- fix(perfil): conta logada que só joga alimenta posse solo e last_active; modo de arma viaja
+- fix(bot): revalidate changed eligibility inputs
+- fix(ci): make shared setup gates merge-safe
+- test(net): stabilize reconnect smoke and protocol fixture
+- fix(ci): reject malformed merge queue permissions
+- fix(bot): recognize fallback sweep comment author
+- fix(net): clamp reordered interpolation window
+- test(ci): reject squash on continued merge lines
+- fix(ci): validate Astro client output in shared environment
+- ci: recompute attested diff evidence
+- test(ci): allow runner fixture time for added core guard
+- Use writable Playwright browser cache
+- test(ci): enforce structured bot workflow guards
+- test(ci): add shared structured YAML loader
+- feat(audio): roteiro do lote Creepypasta (batch 1, 14 personagens)
+- feat(net): extract interpolation clock and buffer
+- feat(net): extract lobby and reconnect handling
+- ci: consume shared release attestation
+- ci: add shared release attestation and sweep state
+- ci: build once and share browser environments
+- fix(rig): registrar advisory da régua RM4
+- fix(rig): corrigir pesos de mão do elenco
+- fix(ci): alinhar geo ao contrato UIR20
+- test(vm): deixar mutante sem prime alcançar a troca
+- fix(rig): fechar excecoes legadas com advisory
+- fix(rig): isolar asserção RM2 do mutante
+- fix(gates): comentario compara contra staging; roteiro e gerador do lote 2 dos Míticos
+- fix(rig): medir distância perpendicular sem dupla projeção
+- test(rede): contrato transporte → codec volta à régua executando net.js e transporte.js reais
+- test(ci): add Cloudflare preview fixture
+- fix(evidencia): teto da pegada tem um dono e fora do contrato prova a violação
+- fix(evidencia): idle da camera-roxa sai do contrato de pegada com o motivo
+- fix(evidencia): GLB antigo dos Lula vem do histórico, não de origin/main
+- eval(rig): GLB legado acima do estrito usa o próprio teto na troca de sha
+- eval(rig): eval:rigmaos na suite fast depois do merge da staging
+- eval(rig): censo de rig na suite fast, padrão do #1265
+- test(rede): WebSocket falso só seleciona protocolo oferecido
+- test(suites): restaura catraca da sequência e declara rede3p como passo novo
+- docs(rede): regra de compatibilidade adiante dos IDs de emote
+- fix(rede): emote de catálogo mais novo vira sem emote no decoder v9
+- fix(personagens): pose-skin amostra CUBICSPLINE com Hermite do glTF
+- chore(evidencia): medidas e folhas do roster vão para o studio-assets
+- chore(evidencia): folhas e medidas dos Lula vão para o studio-assets
+- docs(evidencia): folhas dos Lula recapturadas com os GLBs enviados
+- docs(evidencia): medidas.json dos Lula com os bytes enviados e rasgo por pose
+- test(eval): régua de pesos mede o rasgo em cm por pose e congela o pose test
+- test(rede): remove regex de ticket coberta por execucao real
+- docs(rede): aponta contrato da recarga sem duplicar explicacao
+- fix(rede): reconhece ciclos de recarga sob perda de pacotes
+- Restaure mutantes e renove ticket no fallback WT
+- test(eval): tp-drip-source rebaseia manifesto e seleção de luvas do repeso
+- fix(personagens): repesa camera-roxa (sovaco e virilha em degradê)
+- fix(personagens): repesa doidinho-bairro (preenchimento harmônico curto)
+- fix(build): declare cloudflare adapter dependencies
+- fix(ci): restore suite contracts
+- fix(skins): lula-mandrake e lula-cyborg colam as peças no repeso (colar=0,01)
+- test(eval): régua de pesos barra rasgo entre peças coladas (mutante cola-solta)
+- eval(rig): censo de rig no check:fast e no pr-fast, com docs
+- eval(rig): censo de deformação de skin — porte do teste de pose do Studio
+- feat(personagens): R11 colar — peça colada anda junto no repeso
+- fix(personagens): R7 ancora no osso distal, não no mais pesado
+- feat(personagens): R7 cadeia — virilha fora das duas coxas, sovaco fora de Spine02
+- fix(personagens): solda do repeso enxerga par vizinho a ≤ 1e-5 m
+- feat(personagens): repeso ganha virilha, sovaco/pescoço e cauda (R7–R9)
+- feat(personagens): R11 colar — peça colada anda junto no repeso
+- docs(changelog): destrave de áudio, pool do Lobisomem, réguas e trava do pre-push
+- fix(audio): rosnado do Lobisomem só pelo Lobisomem; pre-push serializado por máquina
+- fix(audio): destrava o AudioContext no 1º gesto e atualiza réguas presas no passado
+- docs: registrar correção do pre-push
+- fix(ci): restore local pre-push selector
+- docs(evidencia): antes × depois do repeso do roster e medidas por GLB
+- fix(personagens): repesa profeta-calcada (virilha e sovaco em degradê)
+- fix(skins): repesa bolsonaro-mandrake (sovaco fora de Spine02, 0 vazamento)
+- fix(personagens): R7 ancora no osso distal, não no mais pesado
+- feat(personagens): R7 cadeia — virilha fora das duas coxas, sovaco fora de Spine02
+- test(rede): rejeite mutantes sobre base nominal vermelha
+- test(rede): declare v8 nas fixtures de taxa de rede
+- fix(personagens): solda do repeso enxerga par vizinho a ≤ 1e-5 m
+- feat(personagens): repeso ganha virilha, sovaco/pescoço e cauda (R7–R9)
+- docs: regenera lista do check:fast com eval:pesos-braco-perna
+- test(rede): adapte consumidores e provas ao contrato v9
+- docs(evidencia): antes × depois do repeso dos Lula em 3ª pessoa com AK
+- fix(charvideo): ?pose=shoot e ?pose=walkfire seguram o gatilho
+- docs: atualize blocos gerados para a regua de rede 3p
+- fix(rede): preserve estados contra datagramas antigos e pausa
+- test(rede): fixa ids binarios dos oito emotes entre releases
+- ci(rede): cobra codec v9 e animacao remota com mutantes
+- feat(animacao): aplica postura recarga e emotes dos snapshots remotos
+- feat(rede): adiciona protocolo v9 para estados de terceira pessoa
+- test(eval): régua de vazamento braço→perna em todo GLB de personagem e skin
+- fix(skins): repesa os três Lula para a manga não seguir a perna
+- feat(personagens): ferramenta que repesa só JOINTS_0/WEIGHTS_0 de skin meshy-28
+- test(rig): régua da mão mede os 74 GLB reais do elenco
+- docs(rig): números do lote30 sem contar mascote sem mão medível
+- test(rig): régua de mão em lâmina com skinning em CPU e mutantes
+- fix(rig): rig-from-donor encaixa cotovelo e punho na malha
+- chore(ci): add Renovate pinning action digests
+- chore(ci): npm canonical lockfile, drop bun.lock
+- docs: record genuine Lajes candidate verification
+- docs: refresh generated weapon matrix links
+- feat: verify and install Studio asset packs
+- Point production workflows to the public Studio
+- Studio: separa ferramentas de producao do client
+- docs(steam): registra bloqueio do envio e nova base
+- fix(steam): protege saidas e recusa arquivos especiais no preflight
+- feat: preparar manifesto e preflight Steam sem upload
 
 ## [2.1.0-alpha.149] — 2026-11-13
 
@@ -6958,7 +7330,7 @@
 - Brasília recebeu **1** mural de homenagem: é praça aberta sobre pilotis e não tem 8
   paredes de 4 m livres. As vagas são medidas, não declaradas.
 - Os murais do Chorão e do Yuka são "no espírito de", não retrato — semelhança de verdade
-  precisa de foto de referência local (`tools/gen-image.mjs --ref`).
+  precisa de foto de referência local (`../studio/tools/gen-image.mjs --ref`).
 - `013_feedback.sql` é aplicada **à mão** na base de produção; até lá o form responde
   "indisponível".
 - 13 dívidas críticas seguem no `tools/eval/KNOWN-RED.json` e o BOT8/BUG-03 continua aberto.

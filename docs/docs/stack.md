@@ -17,7 +17,7 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 215 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 217 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -28,7 +28,7 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Esta documentação | **Docusaurus** | `3.10.2` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **224** importam Playwright, **114** importam gltf-transform e **17** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **225** importam Playwright, **114** importam gltf-transform e **17** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
@@ -123,11 +123,13 @@ hipotético:
 | Serviço | O que gera | Script | Chave |
 |---|---|---|---|
 | **mint.gg** (Mint MCP) | personagens rigados, packs, animação | ferramentas MCP; o registro do que foi gerado é `mint-assets.json` | conta do dono, via MCP |
-| **Tripo3D** | props 3D por texto (padrão) | `tools/gen-asset.mjs --provider tripo` | `TRIPO_API_KEY` |
-| **Meshy** | props 3D por texto (alternativa) e rig | `tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
-| **OpenRouter** | arte 2D (cartaz de facção, wallpaper, splash) | `tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
+| **Tripo3D** | props 3D por texto (padrão) | `../studio/tools/gen-asset.mjs --provider tripo` | `TRIPO_API_KEY` |
+| **Meshy** | props 3D por texto (alternativa) e rig | `../studio/tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
+| **OpenRouter** | arte 2D (cartaz de facção, wallpaper, splash) | `../studio/tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
 
 `mint-assets.json` registra **165 assets** gerados via Mint (59 `mint-model` · 35 `mint-asset-pack` · 5 `mint-text-to-3d` · 9 `mint-chat` · 4 `local-derivative` · 1 `openrouter-image-concept` · 4 `replicate-gen` · 3 `mint-asset-pack-item` · 10 `mint-humanoid-model` · 1 `mint-model-batch` · 4 `sketchfab-model` · 30 `polyhaven-model`), cada um com `assetId`, `chatUrl` e notas do que deu errado na tentativa anterior.
+
+Os scripts de geração `../studio/tools/gen-asset.mjs` e `../studio/tools/gen-image.mjs` ficam no **[Coro Solto Studio](https://github.com/corosolto/studio)**, um repositório público separado; os caminhos são relativos a um checkout do client ao lado dele. Fontes editáveis e packs licenciados permanecem privados em `corosolto/studio-assets`, sem caminhos correspondentes no repositório público.
 
 As três chaves de API vivem em `.env` na raiz — **gitignored, modo 600, nunca em `argv`** (argv vaza no `ps` de qualquer processo da máquina). Sem elas o jogo roda igual: o pipeline de geração é offline, o resultado é que entra no repositório.
 
@@ -158,13 +160,13 @@ o asset vira um binário sem procedência no meio do repositório.
 
 ### Props 3D: Tripo3D e Meshy
 
-`tools/gen-asset.mjs` gera um prop por texto, baixa o GLB e grava **já otimizado** em
+`../studio/tools/gen-asset.mjs` gera um prop por texto, baixa o GLB e grava **já otimizado** em
 `public/models/props/`:
 
 ```bash
-node tools/gen-asset.mjs --prompt "caixa de som de baile" --id caixa_som
-node tools/gen-asset.mjs --provider meshy --prompt "carro tunado" --id carro_tunado
-node tools/gen-asset.mjs --resume <task_id> --id caixa_som   # tarefa já paga
+node ../studio/tools/gen-asset.mjs --prompt "caixa de som de baile" --id caixa_som
+node ../studio/tools/gen-asset.mjs --provider meshy --prompt "carro tunado" --id carro_tunado
+node ../studio/tools/gen-asset.mjs --resume <task_id> --id caixa_som   # tarefa já paga
 ```
 
 Tripo é o padrão; Meshy é a alternativa. `--face-limit` (padrão 12000), `--raw-only` para
@@ -176,7 +178,7 @@ que vem de GLB são **props**.
 
 ### Arte 2D: OpenRouter
 
-`tools/gen-image.mjs` é o irmão 2D: gera cartaz de facção, wallpaper e splash por texto
+`../studio/tools/gen-image.mjs` é o irmão 2D: gera cartaz de facção, wallpaper e splash por texto
 (+ imagens de referência), e entrega o arquivo **já enquadrado e comprimido** para a caixa
 em que a tela vai desenhá-lo.
 

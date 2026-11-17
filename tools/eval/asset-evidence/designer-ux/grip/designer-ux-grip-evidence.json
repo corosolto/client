@@ -3,7 +3,7 @@
   "characterSha256": "77d1d5d6c6f7cce58846797bea4db5ffe21160f22f1880a7f440b8b1fdccfb07",
   "weapon": "m4",
   "weaponFile": "public/models/weapons/m4.glb",
-  "weaponSha256": "b03516d557e2ecb61de3997e339d59be9e35d69bc3b5e23c09cb7dd69cb7a677",
+  "weaponSha256": "e0904b474581b66168d2ec6c190e32528ce7c5ad80a98329da1622f548795932",
   "socketContract": {
     "triggerHand": "RightHand",
     "supportHand": "LeftHand",

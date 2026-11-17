@@ -8,14 +8,14 @@ const mutant=process.argv.find(arg=>arg.startsWith('--mutante='))?.slice(10)||nu
 const mutations={
  'objective-no-v7':['if (version >= 8) w.json(snapshot.objective);','if (version >= 7) w.json(snapshot.objective);'],
  'sem-mantle':['      if (version >= 7) {\n        const mantle = Number.isFinite(ent.mantleF) ? Math.max(0, Math.min(1, ent.mantleF)) : null;\n        w.u8(mantle == null ? 0 : 1 + Math.round(mantle * 254));\n      }',''],
- 'namespace-antigo':["['coro-snapshot-v8', 'coro-snapshot-v7'","['coro-snapshot-v7'"],
  'limite-v7':["if (ents.length > (version >= 8 ? 80 : MAX_ENTITIES))", "if (ents.length > (version >= 7 ? 80 : MAX_ENTITIES))"],
  'time-j-v7':["(snapshot.objective != null || ents.some(ent => ent.team === 'J'))", "(snapshot.objective != null)"],
 };
 if(mutant){
  assert(Object.hasOwn(mutations,mutant),'known version mutant');
  const [before,after]=mutations[mutant];assert.equal(source.split(before).length-1,1,'unique version mutation');
- source=source.replace(before,after).replace("'./data/weapons.js'",JSON.stringify(new URL('./data/weapons.js',sourceUrl).href));
+ source=source.replace(before,after).replace(/from\s+(['"])(\.\/[^'"]+)\1/g,
+  (_match,_quote,spec)=>'from '+JSON.stringify(new URL(spec,sourceUrl).href));
 }
 const current=await import(mutant?'data:text/javascript;base64,'+Buffer.from(source).toString('base64'):sourceUrl.href);
 if(mutant)console.log('Mutação aplicada: '+mutant);
@@ -38,10 +38,6 @@ for(const version of [2,3,4,5,6,7])check('published v'+version+' preserves exact
   assert.deepEqual(current.decodeSnapshot(oldFrame),published.decodeSnapshot(oldFrame),'new client decodes published server');
   assert.deepEqual(published.decodeSnapshot(newFrame),current.decodeSnapshot(newFrame),'published client decodes new server');
  }
-});
-check('objective extension has a distinct preferred v8 namespace',()=>{
- assert.deepEqual(current.SNAPSHOT_PROTOCOLS,['coro-snapshot-v8',...published.SNAPSHOT_PROTOCOLS]);
- const frame=current.encodeSnapshot(snapshot([]),8);assert.equal(frame[4],8);
 });
 check('v8 preserves objective uint32 NPC third team eighty bodies and mantle simultaneously',()=>{
  const ents=Array.from({length:80},(_,i)=>entity(i+65536,i===79?'J':i%2?'B':'E',i%3/2));

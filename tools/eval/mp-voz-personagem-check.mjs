@@ -21,7 +21,7 @@ import { encodeSnapshot, decodeSnapshot } from '../../public/js/netcodec.js';
 const mutante = process.argv.find((a) => a.startsWith('--mutante='))?.slice(10) || '';
 /* Saída 1 = cláusula reprovou (o que o mutante deve causar); 2 = arnês quebrado (âncora
    ausente, mutante desconhecido, backend fora do alcance). O package.json cobra 1, não "≠0". */
-if (mutante && !['pool-da-faccao', 'rede-muda'].includes(mutante)) { console.error(`mutante desconhecido: ${mutante}`); process.exit(2); }
+if (mutante && !['pool-da-faccao', 'rede-muda', 'lobo-no-pool'].includes(mutante)) { console.error(`mutante desconhecido: ${mutante}`); process.exit(2); }
 const aplicaMutacao = (src, ancora, troca) => {
   if (src.split(ancora).length !== 2) { console.error(`mutante ${mutante} NÃO APLICOU: âncora ${ancora}`); process.exit(2); }
   return src.replace(ancora, troca);
@@ -32,6 +32,7 @@ if (mutante === 'pool-da-faccao') {
   audio = aplicaMutacao(audio, 'const own = rollback ? null : this._ownIngameVoice(characterId, event);',
     'const own = rollback ? null : this.pack?.characterVoice?.[characterId]?.[event];');
 }
+if (mutante === 'lobo-no-pool') audio = aplicaMutacao(audio, 'return sfx.size ? curado.filter((file) => !sfx.has(file)) : curado;', 'return curado;');
 globalThis.location = { search: '', href: 'http://regua/' };
 globalThis.performance ||= { now: () => Date.now() };
 globalThis.Audio = class { constructor() { this.volume = 1; } addEventListener() {} play() { return Promise.resolve(); } pause() {} };
@@ -58,6 +59,12 @@ check('VOZ3', selectLampiao.size === 1 && selectLampiao.has('audio/a/lampiao-sel
 const killCuca = sorteia('cuca', 'kill', 'M'), killNinguem = sorteia('ninguem', 'kill', 'E');
 check('VOZ4', killCuca.size > 0 && [...killCuca].every((f) => sfx.pack.voice.M.includes(f)) && killNinguem.has('audio/a/meme-e.mp3'),
   'forma string (só seleção) e personagem sem voz própria seguem no pool da facção (status quo)');
+sfx.pack.characterVoice.lobisomem = { kill: W };
+const killCaipora = sorteia('caipora', 'kill', 'M'), killLobo = sorteia('lobisomem', 'kill', 'M');
+tocou.length = 0; for (let i = 0; i < 40; i++) { sfx._lastVoice = 0; sfx.voice('M', 0); } const genericoM = new Set(tocou);
+check('VOZ10', killCaipora.size > 0 && !killCaipora.has(W[0]) && killLobo.size === 1 && killLobo.has(W[0]) && genericoM.size > 0 && !genericoM.has(W[0]),
+  `rosnado do Lobisomem só sai pelo Lobisomem; Caipora (sem voz) e sfx.voice('M') não herdam (${[...killCaipora].join(',')})`);
+delete sfx.pack.characterVoice.lobisomem;
 
 /* ---- VOZ5-6: patch do manifest vivo ---- */
 const mapa = JSON.parse(readFileSync('tools/audio/miticos-voice-map.json', 'utf8'));

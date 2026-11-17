@@ -41,6 +41,7 @@ function conectar(net) {
   let entrega = null;
   const tp = {
     pronto: true,
+    protocolo: 'coro-snapshot-v8',
     abrir(cb) { entrega = cb; cb.aberto(); },
     enviar: (p) => { enviados.push(JSON.parse(p)); return true; },
     enviarInseguro(p) { return this.enviar(p); },

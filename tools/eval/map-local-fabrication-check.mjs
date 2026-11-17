@@ -54,13 +54,37 @@ function medirCorrego(mutante = null) {
   }
   console.log(JSON.stringify({...recibo, exit:child.status, signal:child.signal, resultado, pass:true}));
 }
+function provarMutanteCegoComoInfra() {
+  const child = spawnSync(process.execPath, [
+    corregoCLI, '--mutante=repeat-diverge', '--selftest-blind-mutant',
+  ], {
+    encoding:'utf8', cwd:fileURLToPath(new URL('../../', import.meta.url)),
+    ...corregoBudget, shell:false, killSignal:'SIGKILL',
+  });
+  assert.equal(child.error, undefined, 'Córrego cego: falha ao executar CLI dedicada');
+  assert.equal(child.signal, null, 'Córrego cego: CLI dedicada terminou por sinal');
+  assert.equal(child.status, 78, 'Córrego cego: falha de discriminação deve ser infra 78');
+  assert.match(child.stderr, /régua cega/, 'Córrego cego: diagnóstico ausente');
+  console.log(JSON.stringify({
+    id:'corrego', checker:'corrego-masonry-material-check.mjs',
+    selftest:'blind-mutant', exit:child.status, pass:true,
+  }));
+}
 let fail = 0;
 for (const id of ['escadao','mansao','penitenciaria','corrego','amazonia']) {
   if (id === 'corrego') {
     medirCorrego();
     if (process.argv.includes('--self-test')) {
       medirCorrego('repeat-diverge');
+      provarMutanteCegoComoInfra();
       console.log('Mutante morto: '+id);
+      const cego = spawnSync(process.execPath, [corregoCLI, '--mutante=cego'], {
+        encoding:'utf8', cwd:fileURLToPath(new URL('../../', import.meta.url)),
+        ...corregoBudget, shell:false, killSignal:'SIGKILL',
+      });
+      assert.equal(cego.error, undefined, 'Córrego: mutante cego falhou ao executar');
+      assert.equal(cego.signal, null, 'Córrego: mutante cego terminou por sinal');
+      assert.equal(cego.status, 78, `Córrego: gate cego precisa sair 78, veio ${cego.status}`);
     }
     continue;
   }

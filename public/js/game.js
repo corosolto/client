@@ -45,7 +45,7 @@ import { viewmodelVisibility } from './vmvisibility.js';
 import { urlDoBrasao } from './brasoes_versao.js';
 
 import { WEAPONS } from './data/weapons.js';
-import { ECONOMIA, economiaLigada, MAPAS_PICKUP_GRATIS } from './economia-partida.js';
+import { ECONOMIA, economiaLigada, MAPAS_PICKUP_GRATIS, creditar } from './economia-partida.js';
 import { CompraPartida } from './compra-partida.js';
 import { danoComArmadura, ARMADURA_MAX } from './armadura.js';
 import { vestirArmadura, ocultarArmadura } from './armadura-visual.js';
@@ -2697,12 +2697,13 @@ export class Game {
   }
   async _emoteMods() {
     if (this._emoteMod) return this._emoteMod;
-    try {
-      const mod = await import('./emotes.js');
+    if (this._emoteLoading) return this._emoteLoading;
+    this._emoteLoading = import('./emotes.js').then((mod) => {
       setEmoteDriver({ pose: mod.poseEmote, duracao: mod.emoteDuracao, laco: mod.emoteLaco });
       this._emoteMod = mod;
       return mod;
-    } catch { return null; }
+    }).catch(() => null).finally(() => { this._emoteLoading = null; });
+    return this._emoteLoading;
   }
   _emoteUi(mod) {
     const m = this.el.emoteWheel;
@@ -4751,7 +4752,7 @@ export class Game {
       this._abortarArmaNaMorte();   // recarga e arremesso morrem com o jogador (GRM3/GRM4)
       this._unequipNade();
       this._resetKillSequence();
-      this.el.respawn.classList.remove('hidden');
+      this.el.respawn?.classList.remove('hidden');
       this.sfx.death(ent.def?.id);
     } else {
       ent.target = null; ent.deadT = 0;
@@ -5859,7 +5860,7 @@ export class Game {
     // BUG-186: domo ACIMA do chão. Com centros em 0-2,6 m metade de cada sprite ficava
     // enterrada e a nuvem virava uma faixa rente ao piso.
     for (let i = 0; i < 24; i++) {
-      const mat = new THREE.SpriteMaterial({ map: this._smokeTex, color: cor, transparent: true, opacity: 0, depthWrite: false });
+      const mat = new THREE.SpriteMaterial({ map: this._smokeTex, color: cor, transparent: true, opacity: 0, depthWrite: true });
       const sp = new THREE.Sprite(mat);
       const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * R, h = 1.4 + Math.random() * 1.6 - r * 0.3;
       sp.position.set(Math.cos(a) * r, h, Math.sin(a) * r);
@@ -6130,11 +6131,16 @@ export class Game {
           // credita a captura: +1 pro time e +1 pra cada combatente do time DENTRO do anel
           this.ctfCaps[solo] = (this.ctfCaps[solo] || 0) + 1;
           this.roundCaps[solo] = (this.roundCaps[solo] || 0) + 1;   // placar DA RODADA (quem leva o round)
+          // Economia: recompensa TRETA$ por capturar bandeira (300 = CS2 plant/defuse)
+          const RECOMPENSA_CTF = 300;
           for (const c of this.combatants) {
             if (!c.alive || c.team !== solo) continue;
             if (this.world.ctfLayerContains?.(pt, c.pos) === false) continue;
             const dx = c.pos.x - pt.x, dz = c.pos.z - pt.z;
-            if (dx * dx + dz * dz <= pt.r * pt.r) c.captures = (c.captures || 0) + 1;
+            if (dx * dx + dz * dz <= pt.r * pt.r) {
+              c.captures = (c.captures || 0) + 1;
+              if (this._compra && c.carteira) creditar(c.carteira, RECOMPENSA_CTF);
+            }
           }
           this._updateCtfHud();
         }
@@ -7400,7 +7406,8 @@ export class Game {
     if (!p.alive) {
       const left = p.respawnAt - this.time;
       // VIP jogador da Operação Flávio não renasce (respawnAt = Infinity): sem "Infinity" na tela.
-      this.el.respawnCount.textContent = Number.isFinite(left) ? Math.max(0, left).toFixed(1) : '—';
+      const respawnCount = this.el.respawnCount || (this.el.respawnCount = document.getElementById('respawn-count'));
+      if (respawnCount) respawnCount.textContent = Number.isFinite(left) ? Math.max(0, left).toFixed(1) : '—';
       this._deathFeedback(dt);
       this._tpDeath(dt);   // corpo TP cai (item: "boneco não caía morto")
       /* Online o _respawnPlayer é no-op (revive vem do snapshot): seguir morto mantém a
@@ -7570,6 +7577,10 @@ export class Game {
         // depois de servir o pente, não antes: portão de recarga, HUD e `util` do bot
         // seguem lendo número normal e nenhum precisa saber que existe modo infinito.
         if (inf) am.res = WEAPONS[k].reserve;
+        // Mata-mata sem economia: garantir pelo menos 1 magazine de reserva (nunca ficar sem munição)
+        if (!inf && !this._compra && am.res === 0 && am.mag === 0) {
+          am.res = wm; // 1 magazine de emergência
+        }
       }
       p.reloadWeapon = '';
       this.el.reloadNote.classList.add('hidden');
@@ -8174,7 +8185,7 @@ export class Game {
     }
     if (this._compra && ![p.primary, p.secondary, 'knife'].includes(p.weapon)) this._switchWeapon(p.secondary || 'pistol');
     this.camera.rotation.z = 0;
-    this.el.respawn.classList.add('hidden');
+    this.el.respawn?.classList.add('hidden');
     this.sfx.respawn();
     this._checkArenaWin();
   }
@@ -9726,6 +9737,49 @@ export class Game {
       x.fillRect(H + (c.pos.x - ox) * sc - 2, H + (c.pos.z - oz) * sc - 2, 4, 4);
     }
     x.shadowBlur = 0;
+    // CTF: desenhar bandeiras com cor do time que controla
+    if (this.ctf && this.ctfPts) {
+      for (const pt of this.ctfPts) {
+        const fx = H + (pt.x - ox) * sc;
+        const fy = H + (pt.z - oz) * sc;
+        const flagCol = pt.owner ? this._teamColor(pt.owner) : '#888888';
+        const captureR = (pt.r || 4.5) * sc;
+        
+        // Círculo da zona de captura (semi-transparente)
+        x.strokeStyle = flagCol + '44';
+        x.lineWidth = 1.5;
+        x.beginPath();
+        x.arc(fx, fy, captureR, 0, Math.PI * 2);
+        x.stroke();
+        
+        // Ícone de bandeira (triângulo com haste)
+        x.fillStyle = flagCol;
+        x.strokeStyle = flagCol;
+        x.lineWidth = 2;
+        // Haste
+        x.beginPath();
+        x.moveTo(fx, fy - 6);
+        x.lineTo(fx, fy + 4);
+        x.stroke();
+        // Pano da bandeira
+        x.beginPath();
+        x.moveTo(fx, fy - 6);
+        x.lineTo(fx + 7, fy - 3);
+        x.lineTo(fx, fy);
+        x.closePath();
+        x.fill();
+        
+        // Se está sendo capturada, adicionar pulso
+        if (pt.capTeam) {
+          const pulse = 0.5 + 0.5 * Math.sin(this.time * 4);
+          x.strokeStyle = this._teamColor(pt.capTeam) + Math.floor(pulse * 255).toString(16).padStart(2, '0');
+          x.lineWidth = 2;
+          x.beginPath();
+          x.arc(fx, fy, captureR + 2 + pulse * 3, 0, Math.PI * 2);
+          x.stroke();
+        }
+      }
+    }
     x.restore();
     x.drawImage(statics.overlay, 0, 0);
   }
@@ -10174,7 +10228,7 @@ export class Game {
     this.el.emoteWheel?.classList.add('hidden'); this.emoteOpen = false;
     this.el.mkBanner.classList.remove('show');
     this.el.scope.classList.remove('on');
-    this.el.respawn.classList.add('hidden');
+    this.el.respawn?.classList.add('hidden');
     this.el.reloadNote.classList.add('hidden');
     this.el.banner.classList.add('hidden');
     this.el.lockHint.classList.add('hidden');
@@ -10192,11 +10246,12 @@ export class Game {
     for (const t of this._texLocais || []) t.dispose();
     this._texLocais = null;
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
-    /* Partículas de pouso são donas do material; o puff permanece compartilhado. A textura
-       (uTex) nasce via _texLocal e já caiu no laço de _texLocais acima: descartá-la aqui
-       de novo dava dispose duplo (eval:landing-impact exige exatamente 1). */
+    // Partículas de pouso são donas do material; a textura já pertence a _texLocais.
+    const puffFx = this.puffFx;
+    puffFx?.points?.material?.dispose();
+    this.puffFx = null;
     for (const fx of this._landingFxSystems || []) {
-      if (fx === this.puffFx) continue;
+      if (fx === puffFx) continue;
       fx.points?.material?.dispose();
     }
     this._landingFxSystems = [];

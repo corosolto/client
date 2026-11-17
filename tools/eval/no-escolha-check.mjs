@@ -86,6 +86,17 @@ const caido = [
 cobra(ordena(caido)[0].id === 'br' && ordena(caido).length === 2,
   'NE3 · nó fora do ar fica na lista, mas por último');
 
+/* NE3b · a lotação antiga só desempata nós no MESMO estado. Dois offline sem ping não podem
+   mudar a posição do online, e entre eles o mais cheio continua primeiro (lista mista real). */
+const mistos = [
+  { id: 'eu', ping: null, jogadores: 0, online: false },
+  { id: 'br', ping: 28, jogadores: 1, online: true },
+  { id: 'us', ping: null, jogadores: 7, online: false },
+];
+const ordemMista = ordena(mistos).map((n) => n.id).join(',');
+cobra(ordemMista === 'br,us,eu',
+  `NE3b · online primeiro; offline sem ping desempata por lotação (${ordemMista})`);
+
 console.log('\n· o QUICK PLAY procura gente, não o menor ping');
 
 /* NE7 · A CLÁUSULA QUE VALE. 60% das sessões medidas foram contra bot; a causa é esta escolha.

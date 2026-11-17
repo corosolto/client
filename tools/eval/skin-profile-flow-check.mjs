@@ -34,7 +34,7 @@ if (MUT || PROBE) {
   const nom = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], { stdio: ['ignore', 'inherit', 'inherit'] });
   if (nom.status !== 0) {
     console.error(`ERRO DE INFRA (skin-profile-flow-check): nominal REAL verde-primero falhou (status=${nom.status}, signal=${nom.signal ?? '-'})`);
-    process.exit(3);
+    process.exit(78);
   }
 }
 
@@ -91,7 +91,7 @@ const reg = (id, passou, detalhe, titulo) => {
   linhas.push(`${id} · ${titulo}\n   ${detalhe}\n   ${passou ? 'PASSA' : 'FALHA'}`);
   if (!passou) falhou.add(id);
 };
-/* Exceção em cláusula é infra (exit 3), nunca detecção — não preenche falhou. */
+/* Exceção em cláusula é infra (exit 78), nunca detecção — não preenche falhou. */
 const regInfra = (id, e) => infra.push(`${id}: ${e && e.message ? e.message : e}`);
 const mesmoMapa = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const drena = async () => {
@@ -284,7 +284,7 @@ try {
   const observado = [...falhou].sort();
   if (infra.length) {
     console.error(`ERRO DE INFRA (skin-profile-flow-check) — cláusula por exceção não é detecção: ${infra.join(' | ')}`);
-    process.exit(3);
+    process.exit(78);
   }
   if (!MUT && !PROBE) {
     console.log(falhou.size === 0 ? 'PASSA (skin-profile-flow-check)' : `REPROVA (skin-profile-flow-check) — ${observado.join(', ')}`);
@@ -297,5 +297,5 @@ try {
   process.exit(bateu ? 0 : 1);
 } catch (e) {
   console.error(`ERRO DE INFRA (skin-profile-flow-check): ${e && e.stack ? e.stack.split('\n')[0] : e}`);
-  process.exit(3);
+  process.exit(78);
 }

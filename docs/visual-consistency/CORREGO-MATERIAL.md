@@ -33,12 +33,12 @@ que o R2 escreveu errado. Histórico completo do A/B: R1 protótipo, R2 adoção
 - **Conjunto exato nos dois gates**: falhas agora são `{id, msg}` com ID estável
   por cláusula; mutante só aprova com o multiset ID→contagem IDÊNTICO ao alvo —
   `pos.some(substring)` acabou. Defeito independente junto do mutante reprova
-  (infra 3). Nominal continua primeiro e GREEN antes de qualquer mutação.
+  (infra 78). Nominal continua primeiro e GREEN antes de qualquer mutação.
   `texture-reference-check` roda ainda a **contraprova**: cada mutante é
   combinado com um defeito independente em âncora distinta (remoção do lock de
   `geo.userData.texelEscalada` ou da referência) e o conjunto tem que divergir.
 - **CLI**: `--mutante=` vazio é recusado (uso 2), além de duplicado/desconhecido;
-  falha de build/import do experimento vira infra 3, sem crash e sem engolir
+  falha de build/import do experimento vira infra 78, sem crash e sem engolir
   erro semântico (provado com âncora inexistente em cópia do script).
 - **`normalScale` exige finito nos dois eixos** — NaN passava por
   `Math.abs(NaN-1) > 1e-6` ser falso. Mesma cláusula `*-normalscale`.
@@ -108,6 +108,6 @@ Os relatos GLM R5/R6 sem artefato final foram tratados como incompletos. O crít
 
 Nominais dos dois gates GREEN. Oito mutantes de material terminam RED semântico1 com multiset exato: procedural-faixas(muro-fontes-pbr×8), normal-srgb(muro-normal-srgb×8), repeat-diverge(muro-samplers×1 e muro-sampler-transform×1), offset-nan(muro-sampler-finito×1 e muro-sampler-transform×1), offset-diverge e rotacao-no-probe(muro-sampler-transform×1 cada), rough-srgb(cru-rough-srgb×1) e raw-double-tint(cru-tint×1). O último caso de rotação evita regressão ao teste de um ponto UV.
 
-Os quatro mutantes reais do vao também terminam1: missing-reference, reference-wrong-dims, lock-removal-factor1 e uv-nao-finito. O novo uv-nao-finito injeta NaN em U[0] da geometria real e exige quatro cláusulas uv-finita-fria/quente/baseline/prop. Nominal precede cada variante; fonte temporária é removida em finally. Nome herdado do prototype (constructor/toString) é uso2 por Object.hasOwn; exceções de preparação/import/build viram infra3. Não há equivalência entre infra3 e mutante detectado. Logs Root root-corrego-*-R7-* e root-UV-R7-* no audit da missão; crítico final pendente no momento desta redação.
+Os quatro mutantes reais do vao também terminam1: missing-reference, reference-wrong-dims, lock-removal-factor1 e uv-nao-finito. O novo uv-nao-finito injeta NaN em U[0] da geometria real e exige quatro cláusulas uv-finita-fria/quente/baseline/prop. Nominal precede cada variante; fonte temporária é removida em finally. Nome herdado do prototype (constructor/toString) é uso2 por Object.hasOwn; exceções de preparação/import/build viram infra78. Não há equivalência entre infra78 e mutante detectado. Logs Root root-corrego-*-R7-* e root-UV-R7-* no audit da missão; crítico final pendente no momento desta redação.
 
 Calibração final do mutante rotacao-no-probe: center(.25,.5), rotationPI, offset(.15,.3). Mantém UV(.25,.5) igual ao albedo(.4,.2), mas difere em outros pontos. Assim, restaurar o guard antigo de único UV faz o mutante sobreviver; o guard atual de matriz completa o detecta. As listas correntes acima agora refletem8material/4UV.

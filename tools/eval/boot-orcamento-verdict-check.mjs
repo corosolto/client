@@ -25,9 +25,9 @@ for (const mutant of ['', 'cartaz-ansioso', 'fauna-cedo']) {
     { name: 'healthy', expected: mutant ? 1 : 0 },
     { name: 'candidate-failsafe', nominal: { causa: 'failsafe' }, expected: 1, stopsNominal: true },
     { name: 'reference-failsafe', reference: { causa: 'failsafe' }, expected: 1, stopsNominal: true },
-    { name: 'pageerror', measurementError: 'nominal', expected: 3 },
-    { name: 'reference-measurement-error', measurementError: 'reference', expected: 3 },
-    { name: 'snapshot-error', snapshotError: true, expected: 3 },
+    { name: 'pageerror', measurementError: 'nominal', expected: 78 },
+    { name: 'reference-measurement-error', measurementError: 'reference', expected: 78 },
+    { name: 'snapshot-error', snapshotError: true, expected: 78 },
   ];
   if (mutant) scenarios.push(
     { name: 'unrelated-budget', candidate: { bytes: 9000000 }, expected: 1 },
@@ -37,7 +37,7 @@ for (const mutant of ['', 'cartaz-ansioso', 'fauna-cedo']) {
     { name: 'nominal-posters', nominal: { cartazes: 2 }, expected: 1, stopsNominal: true },
     { name: 'nominal-fauna', nominal: { primeiraFauna: 5 }, expected: 1, stopsNominal: true },
     { name: 'mutant-candidate-failsafe', candidate: { causa: 'failsafe' }, expected: 1 },
-    { name: 'mutant-measurement-error', measurementError: 'mutant', expected: 3 },
+    { name: 'mutant-measurement-error', measurementError: 'mutant', expected: 78 },
     { name: 'target-with-budget', candidate: mutant === 'cartaz-ansioso' ? { cartazes: 2, bytes: 9000000 } : { primeiraFauna: 5, bytes: 9000000 }, expected: 0 },
   );
   for (const scenario of scenarios) {
@@ -77,11 +77,11 @@ for (const mutant of ['', 'cartaz-ansioso', 'fauna-cedo']) {
     if (scenario.stopsNominal) assert.deepEqual(errors, ['RED nominal; mutante não aplicado'], label);
     if (scenario.measurementError) {
       assert.equal(injected, true, `${label}: erro de medição realmente injetado`);
-      assert.ok(errors.includes('INFRA3 sem veredito: fixture measurement rejected'), label);
+      assert.ok(errors.includes('INFRA78 sem veredito: fixture measurement rejected'), label);
     }
-    if (scenario.snapshotError) assert.ok(errors.includes('INFRA3 snapshot final: fixture snapshot rejected'), label);
+    if (scenario.snapshotError) assert.ok(errors.includes('INFRA78 snapshot final: fixture snapshot rejected'), label);
     cases++;
   }
 }
 assert.equal(cases, 36);
-console.log('✓ 36 vereditos reais: nominal antes do mutante; alvo causal e cofalha de orçamento seguem a política real; medição/snapshot são INFRA3');
+console.log('✓ 36 vereditos reais: nominal antes do mutante; alvo causal e cofalha de orçamento seguem a política real; medição/snapshot são INFRA78');

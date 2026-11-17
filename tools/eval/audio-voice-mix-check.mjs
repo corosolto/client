@@ -21,18 +21,18 @@ let menuSelection = readFileSync('public/js/menu-music-selection.js', 'utf8');
 if (mutante === 'ganho-alto') audio = audio.replace('return Number.isFinite(q) && q > 0 ? q : 0.42;', 'return Number.isFinite(q) && q > 0 ? q : 0.52;');
 if (mutante === 'sem-round-mp') netgame = netgame.replace("if (!game.sfx.roundNumber(game.roundNum) && !game.sfx.csSound('roundstart'))", "if (!game.sfx.csSound('roundstart'))");
 if (mutante === 'sem-fallback-kill-mp') netgame = netgame.replace(
-  "if (!announced && !game.sfx.general('kill')) game.sfx.voice(game._voiceKey(att.team));",
-  "if (!announced && kind && !game.sfx.general('kill')) game.sfx.voice(game._voiceKey(att.team));",
+  "game.sfx.characterVoice(att.def?.id, 'kill', { fallbackFaction: game._voiceKey(att.team) })",
+  "game.sfx.characterVoice(att.def?.id, 'kill', { fallbackFaction: null })",
 );
-if (mutante === 'sem-voz-propria') audio = audio.replace('this.pack?.characterVoice?.[characterId]?.[event]', 'null');
+if (mutante === 'sem-voz-propria') audio = audio.replace('const own = rollback ? null : this._ownIngameVoice(characterId, event);', 'const own = null;');
 if (mutante === 'fish-volta-fallback') installer = installer.replace(
   'const selectedGeneral = fishAnnouncer?.general || legacyCallouts?.general || null;',
   'const selectedGeneral = legacyCallouts?.general || fishAnnouncer?.general || null;',
 );
-if (mutante === 'menu-rejeitada-volta') menuSelection = menuSelection.replace("'m03',", "'m01', 'm03',");
+if (mutante === 'menu-rejeitada-volta') menuSelection = menuSelection.replace("'m11',", "'m01', 'm11',");
 if (mutante === 'memes-historicos-silenciados') audio = audio.replace(
-  "const genericPool = this.pack?.voice?.[fallbackFaction];",
-  "const genericPool = null;",
+  'const file = this._pick(own || this._voicePool(fallbackFaction));',
+  'const file = this._pick(own || []);',
 );
 if (mutante === 'fala-sintetica-volta') audio += '\nconst regressao = globalThis.speechSynthesis;';
 if (mutante === 'fu-ia-volta') {
@@ -116,11 +116,17 @@ expect(typeof sfx.characterVoice === 'function'
   && sfx.characterVoice('mandrake', 'kill', { fallbackFaction: 'F' }) === true
   && samples.at(-1) === 'audio/a/9cef270856898158.mp3',
   'MIX9c kill do funkeiro ainda alcança a fala estruturada rejeitada.');
+sfx.pack.voice.M = ['audio/a/pool-m-saci.mp3'];
+sfx.pack.characterVoice.lampiao = { kill: ['audio/a/lampiao-kill.mp3'] };
+sfx._lastKillVoice = 0;
+expect(sfx.characterVoice('lampiao', 'kill', { fallbackFaction: 'M' }) === true
+  && samples.at(-1) === 'audio/a/lampiao-kill.mp3',
+  'MIX9d take próprio aprovado (facção sem rollback) perde para o pool da facção.');
 
 expect(netgame.includes("if (!game.sfx.roundNumber(game.roundNum) && !game.sfx.csSound('roundstart'))"),
   'MIX10 countdown multiplayer nao tenta falar o numero do round antes do sting.');
-expect(netgame.includes("if (!announced && !game.sfx.general('kill')) game.sfx.voice(game._voiceKey(att.team));"),
-  'MIX11 kill multiplayer nao percorre personagem, locutor e faccao sem ficar mudo.');
+expect(netgame.includes("game.sfx.characterVoice(att.def?.id, 'kill', { fallbackFaction: game._voiceKey(att.team) })"),
+  'MIX11 kill multiplayer nao roteia pelo personagem do atacante com fallback de faccao.');
 expect(installer.includes("arg('character-voices')")
   && installer.includes('characterVoice: selectedCharacterVoices')
   && installer.includes('const selectedGeneral = fishAnnouncer?.general || legacyCallouts?.general || null;'),
@@ -133,9 +139,9 @@ expect(netgame.includes("game.sfx.characterVoice(att.def?.id, 'kill'")
   && netgame.includes("this.game.sfx.characterVoice(ent.def?.id, kind"),
   'MIX14 multiplayer não roteia kill e rádio pelo personagem remoto/local real.');
 const menuIds = [...menuSelection.matchAll(/'m(\d{2})'/g)].map((match) => `m${match[1]}`);
-expect(JSON.stringify(menuIds) === JSON.stringify(['m03', 'm05', 'm10', 'm11', 'm14', 'm16', 'm17', 'm22'])
+expect(JSON.stringify(menuIds) === JSON.stringify(['m11', 'm14', 'm16', 'm17', 'm22'])
   && installer.includes("arg('menu-music')") && installer.includes('menuMusic: selectedMenuMusic'),
-  `MIX15 rotação/pack do menu não está presa às 8 faixas mantidas (${menuIds.join(', ')}).`);
+  `MIX15 rotação/pack do menu não está presa às 5 faixas da seleção de 04/10 (${menuIds.join(', ')}).`);
 
 if (mutante) {
   if (failures.length) {

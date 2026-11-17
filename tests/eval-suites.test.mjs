@@ -15,8 +15,8 @@ const BASELINE = {
   deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
 };
 const NOVOS = {
-  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:studiochar', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:cfborda', 'eval:prodcrash']),
-  deploy: new Set(['eval:weapon-passe', 'eval:dispose']),
+  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:rig-census', 'eval:studiochar', 'eval:rede3p', 'eval:pesos-braco-perna', 'eval:rigmaos', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:cfborda', 'eval:prodcrash', 'eval:workflowguards']),
+  deploy: new Set(['eval:weapon-passe', 'eval:dispose', 'eval:workflowguards']),
 };
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
 
@@ -38,24 +38,33 @@ for (const [nome, baseline] of Object.entries(BASELINE)) {
   });
 }
 
-test('staging adds portal, pass and production-crash checks without deleting migrated steps', () => {
+test('fast adds staging, Studio, rig checks, season-pass and production-crash checks without deleting migrated steps', () => {
   assert.ok(SUITES.fast.includes('eval:portalembed'));
   assert.ok(SUITES.fast.includes('eval:lixo'));
   assert.ok(SUITES.fast.includes('eval:envruntime'));
   assert.ok(SUITES.fast.includes('eval:servertraffic'));
+  assert.ok(SUITES.fast.includes('eval:rig-census'));
+  assert.ok(SUITES.fast.includes('eval:pesos-braco-perna'));
+  assert.ok(SUITES.fast.includes('eval:rigmaos'));
   assert.ok(SUITES.fast.includes('eval:shareorigin'));
-  assert.ok(SUITES.fast.includes('eval:prodcrash'));
+
   assert.ok(SUITES.fast.includes('eval:vm-enquadramento-placar'));
   assert.ok(SUITES.fast.includes('eval:pintura-fabrica'));
   assert.ok(SUITES.fast.includes('eval:passe'));
   assert.ok(SUITES.fast.includes('eval:packpublish'));
   assert.ok(SUITES.fast.includes('eval:cfborda'));
+  assert.ok(SUITES.fast.includes('eval:prodcrash'));
   assert.ok(SUITES.deploy.includes('eval:dispose'));
 });
 
 test('release de personagem do Studio entra na fast logo depois do characterkit', () => {
   const i = SUITES.fast.indexOf('eval:characterkit');
   assert.equal(SUITES.fast[i + 1], 'eval:studiochar');
+});
+
+test('rede3p entra no fast como único passo novo desta entrega', () => {
+  assert.equal(SUITES.fast.filter((passo) => passo === 'eval:rede3p').length, 1);
+  assert.equal(SUITES.fast.length, BASELINE.fast.quantidade + NOVOS.fast.size);
 });
 
 test('suites temáticas só reutilizam passos existentes, sem duplicar execução', () => {
