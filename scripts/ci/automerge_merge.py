@@ -35,6 +35,7 @@ mutation($id: ID!) {
 """
 # O GitHub recusa armar PR que já pode entrar agora ("Pull request is in clean status").
 JA_LIMPO = re.compile(r"\b(clean|unstable|has_hooks) status\b", re.IGNORECASE)
+REVIEW_THREADS_RULE = '<required review thread resolution>'
 
 
 def merge_command(pr: str, head_oid: str, merge_kind: str) -> list[str]:
@@ -56,12 +57,19 @@ def missing_contexts(base: str, rules: list[dict]) -> list[str]:
     exigidos = REQUIRED_CONTEXTS.get(base)
     if exigidos is None:
         return [f'<no native policy for base {base}>']
+    faltam = []
+    if not any(
+        rule.get('type') == 'pull_request'
+        and (rule.get('parameters') or {}).get('required_review_thread_resolution') is True
+        for rule in rules
+    ):
+        faltam.append(REVIEW_THREADS_RULE)
     presentes = {
         check.get('context')
         for rule in rules if rule.get('type') == 'required_status_checks'
         for check in (rule.get('parameters') or {}).get('required_status_checks') or []
     }
-    return [contexto for contexto in exigidos if contexto not in presentes]
+    return faltam + [contexto for contexto in exigidos if contexto not in presentes]
 
 
 def selftest() -> int:
@@ -100,16 +108,22 @@ def selftest() -> int:
         raise AssertionError('non-canonical head must abort')
     regra = lambda *ctx: {'type': 'required_status_checks', 'parameters': {
         'required_status_checks': [{'context': c} for c in ctx]}}
-    assert missing_contexts('main', [regra(*REQUIRED_CONTEXTS['main'])]) == []
-    assert missing_contexts('main', [regra('build', 'dco', 'versao-bumpada', 'ratchet')])
-    assert POLICY_CONTEXT in missing_contexts('staging', [regra(*[c for c in REQUIRED_CONTEXTS['staging'] if c != POLICY_CONTEXT])])
+    conversas = {'type': 'pull_request', 'parameters': {'required_review_thread_resolution': True}}
+    assert missing_contexts('main', [conversas, regra(*REQUIRED_CONTEXTS['main'])]) == []
+    assert missing_contexts('main', [regra(*REQUIRED_CONTEXTS['main'])]) == [REVIEW_THREADS_RULE]
+    assert missing_contexts('main', [conversas, regra('build', 'dco', 'versao-bumpada', 'ratchet')])
+    assert POLICY_CONTEXT in missing_contexts(
+        'staging', [conversas, regra(*[c for c in REQUIRED_CONTEXTS['staging'] if c != POLICY_CONTEXT])])
     assert missing_contexts('feature/x', [regra(*REQUIRED_CONTEXTS['main'])])
-    assert missing_contexts('main', [{'type': 'pull_request'}]) == list(REQUIRED_CONTEXTS['main'])
+    assert missing_contexts('main', [{'type': 'pull_request'}]) == [
+        REVIEW_THREADS_RULE, *REQUIRED_CONTEXTS['main']]
     # Formato real de GET repos/corosolto/client/rules/branches/main (17/11/2026): a resposta é
     # um ARRAY de regras ativas, cada uma com a origem do ruleset; não há envelope `rules`.
     real = json.loads(
         '[{"type":"deletion","ruleset_source_type":"Repository","ruleset_source":"corosolto/client",'
-        '"ruleset_id":19116007},{"parameters":{"do_not_enforce_on_create":false,"required_status_checks":'
+        '"ruleset_id":19116007},{"parameters":{"required_review_thread_resolution":true},'
+        '"ruleset_id":19116007,"ruleset_source":"corosolto/client","ruleset_source_type":"Repository",'
+        '"type":"pull_request"},{"parameters":{"do_not_enforce_on_create":false,"required_status_checks":'
         '[{"context":"build"},{"context":"dco"},{"context":"versao-bumpada"},{"context":"ratchet"},'
         '{"context":"english"},{"context":"hotfix-ancestry"}],"strict_required_status_checks_policy":false},'
         '"ruleset_id":19116007,"ruleset_source":"corosolto/client","ruleset_source_type":"Repository",'
