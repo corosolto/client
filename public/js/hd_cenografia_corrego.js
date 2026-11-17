@@ -188,7 +188,9 @@ export const folgaPass = (pts) => pts.every((p) => Math.abs(p.z - PASS.z) > PASS
 // Panos lavados (saturação ≤ 0,22): roupa de varal ao sol de SP é desbotada; os tons puros liam como bandeirinha.
 const PANOS = [0xd9d5c8, 0x6b7784, 0xb5ae95, 0x7f8f88, 0xb9c4cf, 0x8c8090, 0x4a525c, 0xd2cbb6, 0x6d8186, 0xc9c0b8];
 const PREGADOR = [0xb08a5a, 0x8fa0b0, 0xc9b8a0, 0x9aa88a];
-const CABO_MIN = 7.7;   // a travessia alta fica a 5,6 m: cabo entre postes nunca desce abaixo da cabeça de quem anda nela
+// Piso dos cabos entre postes: 5,0 m — a folga sobre a travessia alta (5,6 + 2,6) é garantida por folgaPass, que encolhe a barriga
+// até passar. Com piso em 7,7 m a cruzeta baixa (8,24) ficava com cabo reto esticado (`parede`): a flecha agora é 2–4 % do vão.
+const CABO_MIN = 5.0;
 // Pose `alto` da bancada (hd_lab.js): (−4,6, 5,6, −11) olhando (+x, −z). Prioriza laje/telhado dentro desse cone.
 const noAlto = (x, z) => { const dx = x + 4.6, dz = z + 11, d = Math.hypot(dx, dz); return d > 4 && d < 48 && (dx * .7071 - dz * .7071) / d > .72; };
 
@@ -216,6 +218,12 @@ function postes(F, W, rng, lista, ctf) {
       W.cor(k ? ESCURO : 0x1a1b1d).fio(pts, .009);
     }
     W.cor(ESCURO).fio([V(cx, 5.95, cz), V(cx + qx * .06 + p.cA * .05, 5.3, cz + qz * .06 - p.sA * .05), V(cx + qx * .04, 4.75 + rng() * .3, cz + qz * .04)], .008);
+    // Nó alto: caixa de emenda sob a cruzeta baixa (7,42–7,68 m) com dois laços de sobra e a descida de cada isolador baixo até ela
+    // — o cabo chegava à cruzeta sem nó nem caixa (`parede` 1230,170).
+    { const nx2 = p.sB, nz2 = p.cB, ex2 = p.x + nx2 * .17, ez2 = p.z + nz2 * .17;
+      F.cor(0x5f6361, .9 + rng() * .2).caixa(ex2, 7.42, ez2, .2, .26, .12, p.th2).cor(0x3a3c3c).caixa(ex2 + nx2 * .065, 7.46, ez2 + nz2 * .065, .14, .18, .01, p.th2);
+      for (let k = 0; k < 2; k++) { const r = .14 + rng() * .06, cy = 7.3 - k * .06 - r, pts = []; for (let t = 0; t <= 12; t++) { const a = t / 12 * Math.PI * 2; pts.push(V(ex2 + nx2 * (.02 + k * .02) + p.cB * Math.cos(a) * r * 1.1, cy + Math.sin(a) * r, ez2 + nz2 * (.02 + k * .02) - p.sB * Math.cos(a) * r * 1.1)); } W.cor(ESCURO).fio(pts, .008); }
+      for (const s of [-1, 1]) { const [bx3, bz3] = bracoB(p, s); W.cor(ESCURO).fio([V(bx3, ISO_B, bz3), V((bx3 + ex2) / 2, 7.92, (bz3 + ez2) / 2), V(ex2, 7.68, ez2)], .007); } }
     const viz = lista.map((q, j) => ({ q, j, d: Math.hypot(q.x - p.x, q.z - p.z) })).filter((o) => o.j !== i && o.d < 31).sort((a, b) => a.d - b.d).slice(0, 2);
     for (const { q, j, d } of viz) {
       const k = i < j ? `${i}-${j}` : `${j}-${i}`; if (feitos.has(k) || !livre([p.x, p.z], [q.x, q.z])) continue; feitos.add(k);
@@ -224,10 +232,10 @@ function postes(F, W, rng, lista, ctf) {
       const esq = (o) => (o.cA * px - o.sA * pz) < 0 ? 1 : -1, frente = (o, vx, vz) => (o.cB * vx - o.sB * vz) > 0 ? 1 : -1;
       for (const s of [1, -1]) {
         const [ax, az] = bracoA(p, s * esq(p)), [bx2, bz2] = bracoA(q, s * esq(q));
-        cabo(V(ax, ISO_A, az), V(bx2, ISO_A, bz2), Math.min(d * (.03 + rng() * .025), 1.0), Math.max(8, Math.round(d * .7)), .012);
+        cabo(V(ax, ISO_A, az), V(bx2, ISO_A, bz2), d * (.02 + rng() * .02), Math.max(8, Math.round(d * .7)), .012);
       }
       const [ax, az] = bracoB(p, frente(p, ux, uz)), [bx2, bz2] = bracoB(q, frente(q, -ux, -uz));
-      cabo(V(ax, ISO_B, az), V(bx2, ISO_B, bz2), Math.min(d * (.03 + rng() * .025), 1.0), Math.max(8, Math.round(d * .7)), .010);
+      cabo(V(ax, ISO_B, az), V(bx2, ISO_B, bz2), d * (.02 + rng() * .02), Math.max(8, Math.round(d * .7)), .010);
     }
   });
   return cabos;
@@ -275,7 +283,7 @@ function fachadas(F, W, rng, casas, lista, relogios) {
     const [cx, cz] = mundoDe(k, a, (rng() < .5 ? 1 : -1) * (k.hz - .35));
     F.cor(PVC[Math.floor(rng() * 2.999)], .85 + rng() * .25).tubo([V(cx, .03, cz), V(cx, topo, cz), V(cx - nx * .09, topo + .09, cz - nz * .09)], .045, 5);
     for (let y = .5; y < topo; y += 1.4) F.cor(0x3a3d3f).caixa(cx - nx * .03, y, cz - nz * .03, .12, .035, .12);
-    if (rng() < .8) {
+    {   // relógio em TODA fachada ±x (era 80 %): 1 relógio + conduíte por fachada no térreo das casas visíveis.
       const b = (rng() < .5 ? 1 : -1) * (k.hz - 1.0), [rx, rz] = mundoDe(k, s * (k.hx + .055), b), y = 1.25 + rng() * .2;
       F.cor(0x8a8d8c, .9 + rng() * .2).caixa(rx, y, rz, .11, .42, .3, k.ry).cor(0x1b1d1e).caixa(rx + nx * .056, y + .2, rz + nz * .056, .012, .14, .16, k.ry)
         .cor(0x767978).tubo([V(rx, y + .43, rz), V(rx, 3.25, rz)], .016, 4).tubo([V(rx, y, rz), V(rx, .06, rz)], .013, 4);
@@ -285,13 +293,21 @@ function fachadas(F, W, rng, casas, lista, relogios) {
       W.cor(0x121315).fio(pts, .011);
     }
   }
+  // Faces ±z livres (rua/largo): relógio + eletroduto no canto oposto à porta autoral (a = +0,6 na face +z), subindo até a cinta da laje.
+  for (const k of casas) for (const s of [-1, 1]) {
+    const f = faceDe(k, 'z', s); if (!faceLivre(f, casas) || f.meia < 1.6) continue;
+    const u = -s * (k.hx - .6), rx = f.fx + f.tx * u + f.nx * .035, rz = f.fz + f.tz * u + f.nz * .035, y = 1.25 + rng() * .2, yT = Math.min(3.25, k.topo - .2);
+    F.cor(0x8a8d8c, .9 + rng() * .2).caixa(rx, y, rz, .3, .42, .11, f.ry).cor(0x1b1d1e).caixa(rx + f.nx * .056, y + .2, rz + f.nz * .056, .16, .14, .012, f.ry)
+      .cor(0x767978).tubo([V(rx, y + .43, rz), V(rx, yT, rz)], .016, 4).tubo([V(rx, y, rz), V(rx, .06, rz)], .013, 4);
+    n++;
+  }
   // Ramal: do alto do eletroduto ao poste mais próximo do mesmo lado (≤ 16 m), passando por cima da rua.
   for (const r of relogios) {
     const p = lista.map((q) => ({ q, d: Math.hypot(q.x - r.x, q.z - r.z) })).filter((o) => o.d < 16 && Math.sign(o.q.x) === r.lado).sort((a, b) => a.d - b.d)[0];
     if (!p) continue;
-    const B = V(p.q.x, 7.85, p.q.z); let pts = catenaria(V(r.x, r.y, r.z), B, .18, 3.1, 8);
+    const B = V(p.q.x, 7.85, p.q.z); let pts = catenaria(V(r.x, r.y, r.z), B, p.d * .03, 3.1, 8);
     if (!folgaPass(pts)) {
-      const yA = r.topo - .3; pts = catenaria(V(r.x, yA, r.z), B, .12, 3.1, 8);
+      const yA = r.topo - .3; pts = catenaria(V(r.x, yA, r.z), B, p.d * .02, 3.1, 8);
       if (!folgaPass(pts)) continue;
       F.cor(0x767978).tubo([V(r.x, 3.2, r.z), V(r.x, yA, r.z)], .016, 4);
     }
@@ -337,10 +353,14 @@ function lajes(F, W, rng, casas, topo) {
       for (const a of [k.hx * .4 - .6, k.hx * .4 + .6]) { const [cx, cz] = mundoDe(k, a, k.hz * .5); caixaDagua(F, cx, yb, cz, true, tom * (.94 + rng() * .12)); }
       const [qx, qz] = mundoDe(k, k.hx * .4 - .6, k.hz * .5 + .5), [q2x, q2z] = mundoDe(k, k.hx * .4 - .6, k.hz * .5 + .8);
       F.cor(0x8d9290).tubo([V(qx, yb + .7, qz), V(q2x, yb + .7, q2z), V(q2x, y - .02, q2z)], .02, 4);
-      // Parabólica em −a/−b (longe do varal em b = 0 e da antena autoral em −a/+b), mastro de 1,25 m e braço do LNB.
-      const [px, pz] = mundoDe(k, -k.hx * .7, -k.hz * .4);
-      F.cor(0x5e6163).tubo([V(px, y, pz), V(px, y + 1.25, pz)], .025, 5).cor(0x34302c).caixa(px, y, pz, .22, .08, .22);
-      F.cor(0xb9bcb6, .95).torno(px, y + 1.1, pz, [[.04, 0], [.3, .07], [.45, .19], [.47, .22]], 12).cor(0x5e6163).tubo([V(px, y + 1.12, pz), V(px + .22, y + 1.55, pz + .1)], .012, 3).caixa(px + .22, y + 1.52, pz + .1, .07, .07, .07);
+      // Caixa de escada em −a/−b (2,0 × 2,4 × 2,3 m): bloco cerâmico aparente com cinta, laje de 12 cm e porta escura na face +a;
+      // a parabólica sobe para a laje dela (mastro de 1,0 m). Laje sem caixa de escada lia como cartão (`alto`).
+      const [ex, ez] = mundoDe(k, -k.hx * .62, -k.hz * .45), hE = 2.3, cE = Math.cos(k.ry), sE = Math.sin(k.ry);
+      F.cor(0x6a3a26, .9 + rng() * .2).caixa(ex, y, ez, 2.0, hE - .12, 2.4, k.ry).cor(0x8b8983).caixa(ex, y + hE - .12, ez, 2.12, .12, 2.52, k.ry).cor(0x7f7d77).caixa(ex, y + 1.05, ez, 2.03, .14, 2.43, k.ry);
+      F.cor(0x1a1917).caixa(ex + 1.01 * cE, y, ez - 1.01 * sE, .03, 2.05, .85, k.ry).cor(0x6e6c66).caixa(ex + 1.02 * cE, y + 2.05, ez - 1.02 * sE, .06, .1, .95, k.ry);
+      const px = ex - .6 * cE + .4 * sE, pz = ez + .6 * sE + .4 * cE, py = y + hE;
+      F.cor(0x5e6163).tubo([V(px, py, pz), V(px, py + 1.0, pz)], .025, 5).cor(0x34302c).caixa(px, py, pz, .22, .08, .22);
+      F.cor(0xb9bcb6, .95).torno(px, py + .85, pz, [[.04, 0], [.3, .07], [.45, .19], [.47, .22]], 12).cor(0x5e6163).tubo([V(px, py + .87, pz), V(px + .22, py + 1.3, pz + .1)], .012, 3).caixa(px + .22, py + 1.27, pz + .1, .07, .07, .07);
     } else {
       const yb = base(F, rng, x, y, z, 1.3, 1.3, g, 2), { r, alt } = caixaDagua(F, x, yb, z, azul, tom);
       F.cor(0x8d9290).tubo([V(x + r * .9, yb + alt * .75, z), V(x + r * 1.45, yb + alt * .75, z), V(x + r * 1.45, y - .02, z)], .02, 4);
@@ -374,7 +394,9 @@ function lajes(F, W, rng, casas, topo) {
 // InstancedMesh, um draw call); a chapa vai à malha fundida. O referência (Jaqueline/Vila Sônia) é cinza + laranja.
 // Zinco = chave `tex_zinco` OU plano inclinado acima da laje (a chave só existe depois que a textura chega; sem o fallback, a
 // cenografia, que roda antes, não punha nada). No cone da pose `alto` a chapa vai na água virada para a câmera, com 4–6 tijolos.
-function telhados(F, rng, casas, topo, L) {
+// 1 telhado em 4 (ordem das casas com zinco) vai para `ceram`: o shader da chapa (map_corrego_hd.js) o pinta de TELHA CERÂMICA na
+// caixa orientada (centro, cos/sin, meios-lados + 1,1 m de beiral); nele não vai chapa de remendo nem lastro.
+function telhados(F, rng, casas, topo, L, ceram) {
   let n = 0;
   const X = new THREE.Vector3(), Y = new THREE.Vector3(), Z = new THREE.Vector3(), P = new THREE.Vector3(), dh = new THREE.Vector3();
   const plano = (h, k, lado) => {
@@ -385,7 +407,8 @@ function telhados(F, rng, casas, topo, L) {
   for (const k of casas) {
     if (k.topo < 5 || SOBRADOS.some(([sx, sz]) => Math.abs(k.x - sx) < .6 && Math.abs(k.z - sz) < .6)) continue;
     let feito = false;
-    const alto = noAlto(k.x, k.z), ladoCam = Math.sign(localDe(k, -4.6, -11)[0]) || 1;
+    const alto = noAlto(k.x, k.z), ladoCam = Math.sign(localDe(k, -4.6, -11)[0]) || 1, ceramico = ceram && n % 4 === 1 && !alto;
+    if (ceramico && ceram.length < 5) { ceram.push({ x: k.x, z: k.z, cs: k.cs, sn: k.sn, ha: k.hx + 1.1, hb: k.hz + 1.1 }); n++; continue; }
     for (const lado of [-1, 1]) {
       const a0 = lado * k.hx * .55, b0 = (rng() - .5) * k.hz * .9, [x, z] = mundoDe(k, a0, b0), h = topo(x, z, k.topo + 1.4, k.topo - .3);
       if (!h || h.n.y < .5 || !(/tex_zinco/.test(h.chave) || (h.n.y < .995 && h.y > k.topo + .25))) continue;
@@ -418,16 +441,16 @@ function lastro(L, rng) {
 }
 
 // Guia de concreto na beira do canal (|x| = 3,17; 24 cm): pula pontes (z = −22, 0, 22) e rampas (RAMPAS de map_corrego.js) e as pontas assoreadas.
-// Afundada 2 cm, encardida (0x6f6f69) e contínua (segmentos emendados, sem giro nem altura por segmento): a face clara ao sol
-// e a fresta entre segmentos liam como linha branca pontilhada de 1 px na aresta do muro (`ponte`).
+// Afundada 2 cm, encardida (0x62625c) e contínua (segmentos emendados, sem giro nem altura por segmento). A tampa escura fica 1 cm
+// PARA DENTRO da guia (antes sobrava um lábio de 5 mm virado ao sol: linha branca pontilhada de 1 px na aresta do muro, `ponte`/`alto`).
 function guiaCanal(F, rng) {
   let n = 0;
   for (const lado of [-1, 1]) for (let z = -32; z < 32; z += 2) {
     const z1 = Math.min(32, z + 2), zm = (z + z1) / 2, h = .24;
     if ([-22, 0, 22].some((b) => Math.abs(zm - b) < 2.1) || RAMPAS.some(([l, a, b]) => l === lado && zm > a - 1 && zm < b + 1)) continue;
-    F.cor(0x6f6f69, .9 + rng() * .14).caixa(lado * 3.17, -.02, zm, .3, h, z1 - z + .02);
-    F.cor(0x4e4e49, .9 + rng() * .14).caixa(lado * 3.17, h - .02, zm, .31, .012, z1 - z + .02);
-    if (rng() < .3) F.cor(0x3a3a36).caixa(lado * 3.17, h - .01, zm + (rng() - .5), .32, .012, .6);
+    F.cor(0x62625c, .9 + rng() * .14).caixa(lado * 3.17, -.02, zm, .3, h, z1 - z + .02);
+    F.cor(0x47473f, .9 + rng() * .14).caixa(lado * 3.17, h - .02, zm, .28, .012, z1 - z + .02);
+    if (rng() < .3) F.cor(0x36362f).caixa(lado * 3.17, h - .01, zm + (rng() - .5), .27, .012, .6);
     n++;
   }
   return n;
@@ -536,28 +559,73 @@ function guias(F, rng, casas, cols) {
   return n;
 }
 
-// Guarda tubular das rampas da travessia alta (só com a travessia de concreto de map_corrego_hd.js, que descarta a mureta
-// autoral da rampa: ela flutuava 23 cm sobre a laje e acabava sem montante): corrimão a 0,81 m e barra a 0,44 m seguindo
-// pisoPass de |x| 5 ao pé, 7 montantes do piso ao corrimão com pé enferrujado (o último em |x| 13,52, o mesmo do shader), tampa
-// fechando o tubo em 13,56 — nada passa de 13,6 (pé da rampa) — e chapa de base sob os montantes do vão (os do shader, a cada
-// 1,4 m); z −11 ± 1,25, como a caixa autoral do vão. Mesma tinta do shader.
+// Guarda das rampas da travessia alta (só com a travessia de concreto de map_corrego_hd.js, que descarta a mureta autoral da
+// rampa): GRADE DE FERRO CHATO — corrimão chato 50 × 8 mm a 0,80–0,85, barra inferior a 0,10–0,14, barras verticais de 25 × 8 mm
+// a cada 14 cm e 7 montantes de 5 cm (o último em |x| 13,52, o mesmo do shader), seguindo pisoPass de |x| 5 ao pé; cinza-chumbo
+// com tinta azul descascada (por barra) e ferrugem nos 12 cm do pé. Sem placa de base aparafusada (lia como industrial). No vão
+// a mureta de bloco do shader ganha pingadeira de concreto de 16 × 5 cm. z −11 ± 1,25, como a caixa autoral.
 function guardaTravessia(F, rng) {
   let n = 0;
-  const TINTA = 0xbfa052, FERRO_PE = 0x4a2e1e;
+  const CHUMBO = 0x2e3136, AZUL = 0x27476a, FERRO_PE = 0x4a2e1e, L = PASS.x0 - PASS.x1, incl = Math.atan2(PASS.y, L), hip = Math.hypot(L - .14, PASS.y * (L - .14) / L);
+  const tinta = () => (rng() < .4 ? AZUL : CHUMBO);
   for (const lado of [-1, 1]) for (const dz of [-PASS.meiaL, PASS.meiaL]) {
-    const z = PASS.z + dz, P = (ax, h) => V(lado * ax, Math.max(0, pisoPass(lado * ax)) + h, z);
-    F.cor(TINTA, .9 + rng() * .2).tubo([P(PASS.x1 - .03, .81), P(PASS.x0 - .04, .81)], .045, 8).cor(TINTA, .85 + rng() * .2).tubo([P(PASS.x1 - .03, .44), P(PASS.x0 - .04, .44)], .03, 8);
-    F.cor(TINTA, .9).caixa(lado * (PASS.x0 - .04), .765, z, .04, .09, .09);
+    const z = PASS.z + dz, rz = -lado * incl, xm = lado * (PASS.x1 + PASS.x0) / 2, ym = pisoPass(xm);
+    F.cor(tinta(), .9 + rng() * .2).caixa(xm, ym + .80, z, hip, .06, .025, 0, 0, rz).cor(tinta(), .9 + rng() * .2).caixa(xm, ym + .10, z, hip, .06, .025, 0, 0, rz);
+    for (let ax = PASS.x1 + .15; ax < PASS.x0 - .1; ax += .20) {
+      const piso = pisoPass(lado * ax); F.cor(tinta(), .85 + rng() * .25).caixa(lado * ax, piso + .16, z, .04, .64, .025);
+    }
     for (let k = 0; k <= 6; k++) {
-      const ax = PASS.x1 + .05 + (PASS.x0 - PASS.x1 - .13) * k / 6;
-      F.cor(TINTA, .85 + rng() * .25).tubo([P(ax, .11), P(ax, .84)], .03, 8).cor(FERRO_PE, .9 + rng() * .2).tubo([P(ax, 0), P(ax, .11)], .032, 8);
+      const ax = PASS.x1 + .05 + (L - .13) * k / 6, piso = pisoPass(lado * ax);
+      F.cor(tinta(), .85 + rng() * .25).caixa(lado * ax, piso + .12, z, .05, .73, .05).cor(FERRO_PE, .9 + rng() * .2).caixa(lado * ax, piso, z, .052, .12, .052);
       n++;
     }
   }
-  for (const dz of [-PASS.meiaL, PASS.meiaL]) for (let k = -3; k <= 4; k++) F.cor(0x6a5a44, .9).caixa(k * 1.4 - .67, PASS.y, PASS.z + dz, .13, .012, .13);
+  for (const dz of [-PASS.meiaL, PASS.meiaL]) F.cor(0x6b6a64, .95).caixa(0, PASS.y + .9, PASS.z + dz, PASS.x1 * 2 + .02, .05, .16);
+  // Pilarete de concreto 20 × 20 × 0,95 arrematando a emenda mureta de bloco ↔ grade de ferro nas duas pontas do vão (|x| = 5).
+  for (const lado of [-1, 1]) for (const dz of [-PASS.meiaL, PASS.meiaL]) F.cor(0x8b8983, .95).caixa(lado * 5.03, PASS.y, PASS.z + dz, .2, .95, .2).cor(0x6b6a64).caixa(lado * 5.03, PASS.y + .95, PASS.z + dz, .24, .03, .24);
+  // Degraus de concreto no pé de cada rampa: 3 degraus de 46 × 30 cm (a inclinação 5,6/8,6 dá 0,30 de espelho por 0,46 de piso)
+  // sobrepostos à laje — o topo coincide com a rampa no lado de cima e sobra o espelho no de baixo. Sem colisão (a rampa autoral manda).
+  for (const lado of [-1, 1]) for (let i = 0; i < 3; i++) {
+    const x1 = PASS.x0 - .46 * i, yT = .3 * (i + 1);
+    F.cor(0x8a8880, .9 + i * .04).caixa(lado * (x1 - .23), 0, PASS.z, .46, yT, PASS.meiaL * 2 - .1).cor(0x5f5e58).caixa(lado * (x1 - .015), yT - .01, PASS.z, .03, .012, PASS.meiaL * 2 - .1);
+  }
   return n;
 }
-
+// Palafitas (map_corrego.js: corpo a 2,2 m sobre 4 pilares de 18 cm em ±0,4·w/±0,4·d, colisores girados com maxY 2,2): cada grupo
+// de 4 pilares vira PILOTIS de concreto de 28 cm com sapata, e VIGA DE TRANSIÇÃO de 26 × 35 cm ligando os pilotis sob o corpo —
+// a caixa sobre 4 palitos de 8 cm lia como maquete (`alto` 370,430; `parede` 440,400). Na face do canal (tapume de compensado em
+// x − s·(w/2 + 0,06), 3 painéis de d·0,62 girados ry + k·0,05, alturas 1,7/1,3/1,7) vão réguas de 4 cm (topo, pé, meio) e
+// cantoneira escura nas pontas. PALAFITAS = tabela da planta; ry medido nos colisores. A mais próxima de (5,5; −19) vai à cerâmica.
+const PALAFITAS = [[-5.4, -27, 4.4, 4.2, 2.8], [5.5, -19, 4.6, 4.4, 3.1], [-5.6, 18, 4.5, 4.0, 2.8], [5.3, 24, 4.3, 4.6, 3.2], [-5.2, 4.5, 4.4, 4.2, 3.0], [5.45, -34, 4.2, 4.0, 2.8]];
+function palafitas(F, rng, cols, ceram) {
+  let n = 0;
+  const pil = (cols || []).filter((c) => c.minY < .05 && Math.abs(c.maxY - 2.2) < .06).map(caixaDe).filter((k) => k.hx < .12 && k.hz < .12);
+  for (const [x, z, w, d] of PALAFITAS) {
+    // Sem os 4 colisores (planta diferente) a palafita vai na posição da tabela com ry = 0.
+    const meus = pil.filter((p) => Math.hypot(p.x - x, p.z - z) < 3.2), tem = meus.length >= 3;
+    const cs = tem ? meus[0].cs : 1, sn = tem ? meus[0].sn : 0, ry = Math.atan2(sn, cs), k = { x, z, cs, sn }, s = Math.sign(x);
+    const pes = tem ? meus : [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => ({ x: x + a * w * .4, z: z + b * d * .4 }));
+    for (const p of pes) F.cor(0x8d8b84, .92 + rng() * .12).caixa(p.x, 0, p.z, .28, 2.2, .28, ry).cor(0x7c7a73).caixa(p.x, 0, p.z, .5, .22, .5, ry);
+    // Viga perimetral 30 × 35 sob o corpo e PAREDE DE BLOCO até o chão no lado das casas (x + s·0,4·w, fora do passeio da beira):
+    // fecha a caixa por baixo; fiadas de 20 cm marcadas com junta clara. O lado do canal fica aberto (escoras + tapume autorais).
+    for (const [a, b, la, lb] of [[0, -d * .4, w * .8 + .30, .30], [0, d * .4, w * .8 + .30, .30], [-w * .4, 0, .30, d * .8 + .30], [w * .4, 0, .30, d * .8 + .30]]) {
+      const [vx, vz] = mundoDe(k, a, b); F.cor(0x86847d, .92 + rng() * .12).caixa(vx, 1.85, vz, la, .35, lb, ry);
+    }
+    { const [px, pz] = mundoDe(k, s * w * .4, 0), lp = d * .8 - .3;
+      F.cor(0x6a3a26, .9 + rng() * .2).caixa(px, 0, pz, .2, 1.85, lp, ry);
+      for (let yy = .2; yy < 1.8; yy += .2) F.cor(0x8a857a, .9).caixa(px, yy, pz, .21, .012, lp, ry); }
+    const tx = x - s * (w / 2 + .06);
+    for (let kk = -1; kk <= 1; kk++) {
+      const th = ry + kk * .05, c2 = Math.cos(th), s2 = Math.sin(th), h = (kk & 1) ? 1.7 : 1.3, len = d * .62, cz = z + kk * 1.2, af = -s * .065;
+      const cx = tx + af * c2, czf = cz - af * s2;
+      F.cor(0x4b3a28, .9 + rng() * .2).caixa(cx, 2.62, czf, .04, .04, len, th).caixa(cx, 2.6 + h - .04, czf, .04, .04, len, th).caixa(cx, 2.64, czf, .04, h - .08, .04, th);
+      for (const e of [-1, 1]) { const b = e * (len / 2 - .03); F.cor(0x3a3d42, .95).caixa(cx + b * s2, 2.6, czf + b * c2, .045, h, .045, th); }
+    }
+    if (ceram && Math.hypot(x - 5.5, z + 19) < 1) ceram.push({ x, z, cs, sn, ha: w / 2 + .9, hb: d / 2 + .5 });
+    n++;
+  }
+  return n;
+}
 // Pano pendurado em (cx, y, cz) com o varal na direção (dx, dz): lençol (listra opcional), camisa ou calça, em grade 4×3 com
 // bojo de 5–8 cm (mais embaixo e no meio, com uma dobra de 3 ondas) e normal média; dois pregadores no topo. `tipoFixo` força o
 // tipo (< 0,4 lençol) sem mudar o consumo do rng.
@@ -903,9 +971,11 @@ export function cenografiaCorrego(scene, opts = {}) {
   if (lig('postes') && lista.length) info.cabos = postes(F, W, rngDe(7717), lista, mundo?.ctfPoints);
   if (lig('postes')) info.cabosRua = postesRua(F, W, rngDe(6161), casas);
   if (lig('fachadas') && casas.length) info.fachadas = fachadas(F, W, rngDe(9311), casas, lista, relogios);
+  // `ceramicos` (array do kit): caixas orientadas que o shader da chapa pinta de telha cerâmica — palafita da pose `alto` primeiro, depois 1 telhado em 4.
+  if (lig('palafitas')) info.palafitas = palafitas(F, rngDe(8117), cols, opts.ceramicos);
   if (lig('lajes') && topo) Object.assign(info, lajes(F, W, rngDe(40123), casas, topo));
   if (lig('lajes')) info.mirante = mirante(F, W, rngDe(7177));
-  if (lig('telhados') && topo) { info.telhados = telhados(F, rngDe(50821), casas, topo, L); info.lastro = L.length; }
+  if (lig('telhados') && topo) { info.telhados = telhados(F, rngDe(50821), casas, topo, L, opts.ceramicos); info.lastro = L.length; }
   if (lig('canal')) { info.guia = guiaCanal(F, rngDe(5519)); info.esgoto = esgotoCanal(F, rngDe(5527)); }
   if (lig('margem')) info.margem = margem(F, rngDe(7331));
   if (lig('guias') && casas.length) info.guias = guias(F, rngDe(1933), casas, cols);
