@@ -401,10 +401,12 @@ function tijoloHD(m, U) {
     shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `${CABECA} { float hdY = hdAltura(vHdPos); vec2 hdQ = vec2(vHdPos.x + vHdPos.z, vHdPos.y); float hdS = vHdVar.x;
       vec4 hdA = texture2D(hdRuido, hdQ * 0.137 + hdS * 3.0), hdM = texture2D(hdRuido, hdQ * 0.83 + 0.37 + hdS * 7.0), hdM2 = hdMeio(hdQ, hdS);
       float hdCorpo = hdFaixaCorpo(hdY), hdFora = 1.0 - hdCorpo, hdTopo = vHdJs.y > 0.001 ? vHdJc.y + vHdJs.y - vHdPos.y : 1000.0;
-      // Batente (≤ 16 cm x ≤ 1,24 m) e empena de 20–50 cm de espessura com ≥ 3 m de altura e ≥ 5 m de comprimento (muros do beco: a
-      // face estreita lia como pilar de tijolo esticado): concreto 14 % mais escuro com lasca na aresta vertical da face vista, sem tijolo.
+      // Batente (≤ 16 cm x ≤ 1,24 m), empena de 20–50 cm de espessura com ≥ 3 m de altura e ≥ 5 m de comprimento e as moradias de
+      // tijolo dos becos (caixas com |x| 13,5–16 e z 6–15: parede de 0,62 x 2,4 m + pavimento de cima, a face de 2,4 m lia como
+      // empena de tijolo no beco): concreto 14 % mais escuro com lasca na aresta vertical da face vista, sem tijolo.
       vec3 hdGn = normalize(cross(dFdx(vHdPos), dFdy(vHdPos))); float hdFino = min(vHdJs.x, vHdJs.z), hdLargo = max(vHdJs.x, vHdJs.z);
-      float hdBat = step(0.001, vHdJs.y) * max(step(hdFino, 0.08) * step(hdLargo, 0.62), step(0.1, hdFino) * step(hdFino, 0.25) * step(1.5, vHdJs.y) * step(2.5, hdLargo));
+      float hdBeco = step(13.5, abs(vHdJc.x)) * step(abs(vHdJc.x), 16.0) * step(6.0, vHdJc.z) * step(vHdJc.z, 15.0);
+      float hdBat = step(0.001, vHdJs.y) * max(max(step(hdFino, 0.08) * step(hdLargo, 0.62), step(0.1, hdFino) * step(hdFino, 0.25) * step(1.5, vHdJs.y) * step(2.5, hdLargo)), hdBeco);
       if (hdBat > 0.5) { float hdDe = abs(hdGn.x) > abs(hdGn.z) ? vHdJs.z - abs(vHdPos.z - vHdJc.z) : vHdJs.x - abs(vHdPos.x - vHdJc.x);
         float hdChip = (1.0 - smoothstep(0.012, mix(0.03, 0.018, hdCorpo), hdDe + 0.02 * (hdM.b - 0.5))) * step(mix(0.72, 0.9, hdCorpo), hdM2.r) * hdVis(0.012, hdQ);
         vec3 hdCim = vec3(0.44, 0.43, 0.40) * (0.9 + 0.2 * hdM.g) * mix(mix(0.92, 1.08, hdA.r), 1.0, hdCorpo) * mix(0.95, 1.05, 0.5 * (hdM.r + hdM2.r));
@@ -419,7 +421,7 @@ function tijoloHD(m, U) {
       float hdMusgo = smoothstep(0.30, 0.03, hdY) * smoothstep(0.50, 0.70, hdM.a) * hdAltoBox();
       diffuseColor.rgb = mix(diffuseColor.rgb, dot(diffuseColor.rgb, ${LUMA}) * vec3(0.50, 0.66, 0.30), 0.55 * hdMusgo); }`);
     ganchos(shader); };
-  m.customProgramCacheKey = () => 'escadao-hd-tijolo6';
+  m.customProgramCacheKey = () => 'escadao-hd-tijolo7';
 }
 
 // Janela: o painel escuro do mapa vira caixilho + vidro do atlas (cor + altura no alfa), célula sorteada pela posição
@@ -531,20 +533,22 @@ function ferroHD(m, U) {
             diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.12, 0.12, 0.11) * (0.8 + 0.4 * hdN.r) * (1.0 + 0.6 * (1.0 - smoothstep(0.0, 0.005, abs(hdBx + hdS.x - 0.03)))), hdHg);
             // Ferrolho junto à borda (lado por caixa), cadeado de latão 6 x 8 cm (SDF com aro escuro e furo) sob a barra, alça em arco
             // de 4,8 cm que entra na barra e corrente em U do corpo do cadeado ao quadro (batente): fita contínua pela distância a 8
-            // segmentos da curva, elos de 2,4 cm alternando face (9 mm) e perfil (5 mm) com vão escuro de 1,5 mm; nenhuma ponta no ar.
+            // segmentos da curva, elos de 2,4 cm alternando face (9 mm) e perfil (5 mm) com vão escuro de 1,5 mm; o último elo entra na
+            // argola (Ø 2,4 cm, 3 mm) presa na borda da folha (hdCx 0,12 = face do quadro/batente): nenhuma ponta no ar.
             float hdCx = hdBx - (hdS.x - 0.12);
             float hdBar = step(hdS.x - 0.30, hdBx) * step(hdBx, hdS.x - 0.06) * step(abs(hdHb - 1.05), 0.016);
             vec2 hdCp = vec2(hdCx, hdHb - 0.975), hdAp = vec2(hdCx, hdHb - 1.02);
             float hdDc = length(max(abs(hdCp) - vec2(0.018, 0.030), 0.0)) - 0.012;
             float hdCorpoC = 1.0 - smoothstep(0.0, hdPxl, hdDc), hdAro = smoothstep(-0.006, -0.0015, hdDc), hdFuro = 1.0 - smoothstep(0.004, 0.004 + hdPxl, length(hdCp - vec2(0.0, -0.012)));
             float hdArco = (1.0 - smoothstep(0.0035, 0.0035 + hdPxl, abs(length(hdAp) - 0.024))) * step(0.0, hdAp.y);
-            vec2 hdCa = vec2(0.028, 0.985), hdCb = vec2(0.095, 1.03), hdPq = vec2(hdCx, hdHb); float hdDch = 1.0, hdSch = 0.0, hdLch = 0.0;
+            vec2 hdCa = vec2(0.028, 0.985), hdCb = vec2(0.102, 1.032), hdPq = vec2(hdCx, hdHb); float hdDch = 1.0, hdSch = 0.0, hdLch = 0.0;
             for (int i = 0; i < 8; i++) { float t0 = float(i) * 0.125, t1 = t0 + 0.125;
               vec2 a = mix(hdCa, hdCb, t0) - vec2(0.0, 0.36 * t0 * (1.0 - t0)), ab = mix(hdCa, hdCb, t1) - vec2(0.0, 0.36 * t1 * (1.0 - t1)) - a;
               float ln = length(ab), h = clamp(dot(hdPq - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0), dd = length(hdPq - a - ab * h);
               if (dd < hdDch) { hdDch = dd; hdSch = hdLch + h * ln; } hdLch += ln; }
             float hdElo = min(fract(hdSch / 0.024), 1.0 - fract(hdSch / 0.024)) * 0.024, hdWch = mix(0.0025, 0.0045, step(0.5, fract(hdSch / 0.048)));
             float hdChain = (1.0 - smoothstep(hdWch, hdWch + hdPxl, hdDch)) * (1.0 - hdCorpoC), hdVao = (1.0 - smoothstep(0.0008, 0.0015 + hdPxl, hdElo)) * hdChain;
+            float hdArg = 1.0 - smoothstep(0.003, 0.003 + hdPxl, abs(length(hdPq - vec2(0.112, 1.034)) - 0.009)); hdChain = max(hdChain, hdArg);
             diffuseColor.rgb *= 1.0 - 0.35 * (1.0 - smoothstep(0.0, 0.018, hdDc)) * (1.0 - hdCorpoC) - 0.25 * (1.0 - smoothstep(0.004, 0.012, hdDch)) * (1.0 - hdChain);
             diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.40, 0.38) * (0.8 + 0.4 * hdN.g) * (1.0 - 0.5 * hdVao), max(hdArco, hdChain));
             diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.15, 0.15, 0.14) * (0.8 + 0.4 * hdN.r), hdBar);
@@ -574,7 +578,7 @@ function ferroHD(m, U) {
             diffuseColor.rgb *= 0.82 + 0.36 * hdN.r; diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.26, 0.14, 0.08) * (0.7 + 0.5 * hdN.g), hdFerr); hdAlt = 0.001 * hdN.b; } }`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(mix(roughnessFactor, 0.62, hdPint), 0.95, hdFerr), mix(0.25, 0.7, hdSol), hdPor * (1.0 - hdFerr));')
       .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = hdBump(normal, -vViewPosition, hdAlt);'); };
-  m.customProgramCacheKey = () => 'escadao-hd-ferro7';
+  m.customProgramCacheKey = () => 'escadao-hd-ferro8';
 }
 
 // Chapa de zinco: tom por painel e ferrugem escorrida; o mapa (tex_zinco) e o UV ficam como estão. Régua fina (caixa com
@@ -604,21 +608,24 @@ function lixeiraHD(m, U) {
 }
 
 // Casa GLB casa_favela_tijolo (atlas cozido laranja vivo, esticado pela escala não uniforme do molde): nas faces verticais laranja
-// entra o mesmo tijolo baiano 19 x 14 dessaturado do tijoloHD (hdBaiano) projetado no mundo, com relevo da junta; o atlas só dá a
-// máscara. O resto do atlas (madeira, zinco, vidro) não muda; rugosidade do ORM continua.
+// entra o mesmo tijolo baiano 19 x 14 do tijoloHD (hdBaiano) projetado no mundo, mais 20 % dessaturado, com relevo da junta; o atlas
+// só dá a máscara (amostra com viés de mip +3: a junta clara do atlas não fura a máscara). O tijolo do atlas é escuro (sRGB ≈ 136,85,63):
+// em linear g − b fica em 0,03, por isso a máscara é por croma (≥ 0,13; madeira/porta 0,10, zinco 0,06) e matiz (g − b)/croma ≤ 0,26
+// (madeira 0,30). Nada do atlas multiplica o tijolo. O resto (madeira, zinco, vidro) não muda; rugosidade do ORM continua.
 function casaTijoloHD(m, U) {
   m.onBeforeCompile = (shader) => { comMundo(shader, U);
     shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `${CABECA}
       #ifdef USE_MAP
-      { vec4 hdT = texture2D(map, vMapUv); vec3 hdC = hdT.rgb;
-        float hdLar = smoothstep(0.14, 0.22, hdC.r - hdC.g) * step(0.05, hdC.g - hdC.b) * smoothstep(0.10, 0.16, hdC.r);
+      { vec4 hdT = texture2D(map, vMapUv); vec3 hdC = texture2D(map, vMapUv, 3.0).rgb;
+        float hdMx = max(hdC.r, max(hdC.g, hdC.b)), hdCh = hdMx - min(hdC.r, min(hdC.g, hdC.b));
+        float hdLar = step(hdC.g, hdC.r) * smoothstep(0.10, 0.145, hdCh) * smoothstep(0.285, 0.235, (hdC.g - hdC.b) / max(hdCh, 1e-4)) * smoothstep(0.5, 0.65, hdCh / max(hdMx, 1e-4));
         vec3 hdGn = normalize(cross(dFdx(vHdPos), dFdy(vHdPos))); float hdMask = hdLar * step(abs(hdGn.y), 0.5);
         vec2 hdQ = vec2(vHdPos.x + vHdPos.z, vHdPos.y) + 0.7; float hdCorpo = hdFaixaCorpo(hdAltura(vHdPos)), hdJ;
         vec4 hdA = texture2D(hdRuido, hdQ * 0.137 + 1.1), hdM = texture2D(hdRuido, hdQ * 0.83 + 2.96); vec4 hdBai = hdBaiano(hdQ, 0.37, hdCorpo, hdA, hdM, hdJ);
-        hdT.rgb = mix(hdC, hdBai.rgb, hdMask); hdAlt += hdBai.a * hdMask; hdRel = mix(1.0, 0.15, hdMask);
-        diffuseColor *= hdT; }
+        vec3 hdTij = mix(vec3(dot(hdBai.rgb, ${LUMA})), hdBai.rgb, 0.8);
+        diffuseColor.rgb = mix(diffuseColor.rgb * hdT.rgb, hdTij, hdMask); diffuseColor.a *= hdT.a; hdAlt += hdBai.a * hdMask; hdRel = mix(1.0, 0.15, hdMask); }
       #endif`).replace('#include <normal_fragment_maps>', NORMAL + ALTURA); };
-  m.customProgramCacheKey = () => 'escadao-hd-casa2';
+  m.customProgramCacheKey = () => 'escadao-hd-casa3';
 }
 
 // Cada malha (não instanciada) dos materiais do kit ganha centro e meia-medida da caixa em mundo (hdJc/hdJs) e

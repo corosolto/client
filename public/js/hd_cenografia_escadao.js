@@ -597,12 +597,24 @@ function vida(grupo, rng, topos, mat, vivo, mundo, criadas, W) {
   relogio(F, 1.95, H_TOP + 1.25, -23.3, 0, -1);
   F.cor(0x767978).tubo([V(1.9, H_TOP + 1.69, -23.355), V(1.9, H_TOP + 3.15, -23.355)], .016, 4);
   // Corrimão de cano no lado direito dos 3 lances centrais (x = 1,74, 6 cm dentro da borda; o autoral fica à esquerda): montantes
-  // verticais (eixo Y) de 3 cm a cada 4 degraus com o pé no piso REAL amostrado (groundHeightAt; a rampa média afundava 9 cm no degrau),
-  // cano de Ø 4 cm a 0,94 m e cano baixo a 0,5 m paralelos à rampa, verde-escuro lascado; sem colisão (nonSolidSurface).
-  for (const [z1, base] of [[14.0, 0], [6.52, 2.52], [-1.96, 5.04]]) { const z0 = z1 - 3.48, sx = 1.74;
+  // verticais (eixo Y) de 4 cm a cada 4 degraus com o pé no piso REAL amostrado (groundHeightAt; a rampa média afundava 9 cm no degrau),
+  // cano de Ø 4 cm a 0,94 m paralelo à rampa, verde-escuro lascado; sem colisão (nonSolidSurface). O cano baixo a 0,5 m só nos dois
+  // primeiros lances: no 3º (pose escada, visto de viés da P2) o par de canos paralelos lia como corrimão inclinado 13° para fora.
+  for (const [z1, base, baixo] of [[14.0, 0, 1], [6.52, 2.52, 1], [-1.96, 5.04, 0]]) { const z0 = z1 - 3.48, sx = 1.74;
     for (let i = 0; i <= 12; i += 4) { const z = z1 - i * .29 - .12, yr = base + 2.52 * Math.min(1, (z1 - z) / 3.48), yc = chao(sx, z), y = Number.isFinite(yc) && Math.abs(yc - yr) < .3 ? yc : yr;
-      F.cor(0x2f4a3a, .9 + .1 * (i % 8 ? 1 : 0)).caixa(sx, y, z, .03, base + .94 + 2.52 * (z1 - z) / 3.68 - y, .03).cor(0x6e6a62).caixa(sx, y, z, .09, .02, .09); }
-    F.cor(0x35543f).tubo([V(sx, base + .94, z1), V(sx, base + 2.52 + .94, z0 - .2)], .02, 5).cor(0x2f4a3a).tubo([V(sx, base + .5, z1), V(sx, base + 2.52 + .5, z0 - .2)], .014, 5); }
+      F.cor(0x2f4a3a, .9 + .1 * (i % 8 ? 1 : 0)).caixa(sx, y, z, .04, base + .94 + 2.52 * (z1 - z) / 3.68 - y, .04).cor(0x6e6a62).caixa(sx, y, z, .1, .02, .1); }
+    F.cor(0x35543f).tubo([V(sx, base + .94, z1), V(sx, base + 2.52 + .94, z0 - .2)], .02, 5);
+    if (baixo) F.cor(0x2f4a3a).tubo([V(sx, base + .5, z1), V(sx, base + 2.52 + .5, z0 - .2)], .014, 5); }
+  // Calçada de 1 m com meio-fio de 15 cm ao pé do prédio verde do bairro externo (face x = −20,5, z 23,4–29,6, fora dos limites
+  // e visto do spawn E; tapa os 5 cm entre o solo externo a −0,05 e a base do bloco), balde de plástico e caixa de feira de madeira
+  // encostados na parede. Tudo na malha fundida: 0 draw calls.
+  F.cor(0x8f8c83).caixa(-20.0, -.05, 26.5, 1.0, .2, 6.2).cor(0x74716a).caixa(-19.56, -.05, 26.5, .12, .2, 6.2).cor(0x9d9a90).caixa(-19.56, .13, 26.5, .12, .02, 6.2);
+  F.cor(0x1f3a6a).torno(-20.34, .15, 25.3, [[.02, 0], [.12, 0], [.145, .30], [.125, .30], [.11, .05]], 10)
+    .cor(0x2b2b2e).tubo([V(-20.34 - .13, .45, 25.3), V(-20.34, .56, 25.3), V(-20.34 + .13, .45, 25.3)], .004, 3);
+  { const cx = -20.29, cz = 27.4, ry = Math.PI / 2 + .12, cs = Math.cos(ry), sn = Math.sin(ry);
+    F.cor(0x4a3f33).caixa(cx, .15, cz, .50, .28, .34, ry);
+    for (const yy of [.17, .27, .37]) {
+      for (const s of [-1, 1]) F.cor(0xb39a72, .95 + .05 * s).caixa(cx + s * .17 * sn, yy, cz + s * .17 * cs, .52, .07, .02, ry).caixa(cx + s * .26 * cs, yy, cz - s * .26 * sn, .02, .07, .36, ry); } }
   const malha = new THREE.Mesh(F.geo(), mat); malha.name = 'hd-vida'; grupo.add(malha);
   // Placas pintadas à mão: empena leste do bar (x = -9, acima da faixa do corpo), ao lado da porta de enrolar do mirante e a
   // tabuleta de preços (0,62 x 0,46 m) entre a porta e o relógio da mercearia, a 1,55 m.
