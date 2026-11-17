@@ -72,7 +72,7 @@ async function ssr() {
   const { default: handler } = await import(pathToFileURL(entry).href);
   const real = globalThis.fetch;
   globalThis.fetch = async (a, i) => (String(a?.url ?? a).includes('/api/social') ? Response.json({ profile: { ...BASE, handle: 'kogos_fixture', url: '/u/kogos_fixture' } }) : real(a, i));
-  const r = await handler.fetch(new Request('https://www.corosolto.com.br/u/kogos_fixture', { headers: { 'x-forwarded-for': '127.0.0.1' } }));
+  const r = await handler.fetch(new Request('https://www.corosolto.com.br/u/kogos_fixture', { headers: { 'cf-connecting-ip': '127.0.0.1' } }));
   const html = await r.text();
   globalThis.fetch = real; process.chdir(ROOT);
   return { status: r.status, html };
