@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.151`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.152`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -287,6 +287,17 @@
 - A animação de recarga em terceira pessoa deixa de reiniciar ao terminar; o clipe ainda retoma quando uma reação de dano o interrompe.
 - As réguas de emote validam a composição exata dos 16 itens do menu, e os harnesses de snapshot injetam o catálogo v9 ao avaliar `netgame.js`.
 - Estados assados por personagem só entram quando não aumentam nenhum teto congelado de deformação; os offsets de pé e as catracas de chão são regenerados sobre o conjunto aprovado.
+
+## [2.1.0-alpha.152] — 2026-11-17
+
+### Mudado
+- hotfix: read the private audio pack with wrangler's bucket/key object path (#1397)
+- fix(eval): pin unversioned snapshot default to current v10 contract
+- docs: keep generated contribution blocks in English
+- docs(gen-docs): generate the root README/AGENTS/CONTRIBUTING blocks in English
+- fix(scripts): restore five eval scripts lost in the #1378 merge
+- docs: regenerate CONTRIBUTING blocks (stale on main since alpha.151)
+- fix(cf): read the private audio pack with wrangler's bucket/key object path
 
 ## [2.1.0-alpha.151] — 2026-11-17
 
