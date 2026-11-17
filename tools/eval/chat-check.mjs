@@ -459,6 +459,7 @@ async function cc4(cobra, { chat }) {
   cobra(rotuloDe({ h: 'K3F', nk: '<b>x</b>' }) === 'Anônimo #K3F' && rotuloDe({ h: 'K3F', nk: 'a'.repeat(33) }) === 'Anônimo #K3F'
     && rotuloDe({ h: 'K3F', nk: 'a'.repeat(32) }).startsWith('a'.repeat(32)),
     'CC4 rotuloDe revalida o nk com a regex do ticket; nk inválido vira anônimo');
+  cobra(rotuloDe({ h: 'K3F', nk: '比赛中的光环玩家' }).startsWith('比赛中的光环玩家'), 'CC4 rotuloDe preserva ideogramas chineses verificados');
   const st = storageFalso();
   const e = new ChatEstado({ convite: 'ABCD', meta, storage: st });
   cobra(e.ativo() === true && new ChatEstado({ convite: 'ABCD', meta: null }).ativo() === false

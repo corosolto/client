@@ -1,84 +1,87 @@
-# ROADMAP — próximos passos
+# ROADMAP — next steps
 
-> Atualizado em **13/10/2026** (`v2.1.0-alpha.69`). Este arquivo é a VISTA DE CIMA:
-> a ordem e o porquê. O detalhe de execução (TRILHA-V2 e planos por frente já
-> executados) saiu da árvore pública; as fichas de conteúdo vivo ficam no repo privado
-> (`../progress` → `archive/plans/`). Tarefa de entrada pra contribuidor é
-> [issue no GitHub](https://github.com/corosolto/client/issues)
-> + [`docs/issues/`](docs/issues/). Quando um item daqui fechar, ele sai daqui —
-> histórico é o git, não este arquivo.
+> Updated on **October 13, 2026** (`v2.1.0-alpha.69`). This file is the HIGH-LEVEL VIEW:
+> the order and the why. Execution details (TRILHA-V2 and plans for workstreams already
+> completed) have left the public tree; living content sheets live in the private repo
+> (`../progress` → `archive/plans/`). A good starting task for a contributor is a
+> [GitHub issue](https://github.com/corosolto/client/issues)
+> + [`docs/issues/`](docs/issues/). When an item here is completed, it leaves this file —
+> history lives in git, not here.
 
-## Agora (fecha o release v2)
+## Now (finishing the v2 release)
 
-1. **REPUBLICAR O PACOTE DE DECALQUES** — *bloqueia deploy*. O `decals-pack-v1`
-   tem **174** arquivos e o `DECAL_FILES` do textures.js pede **196**: os 22
-   `folha-*` (pixação, throw-up, stencil, lambe, personagem) nunca foram
-   republicados. Em produção eles dão 404 hoje — **513 das 4.671 peças de grafite
-   somem, 30% da Quebrada**. Quem achou foi a asserção do T1 no build limpo; antes
-   dela ninguém tinha como ver. O zip corrigido já monta com
-   `node -e` a partir de `public/img/decals` (196 arquivos, 9,4 MB). Falta: subir
-   como `decals-pack-v2` e apontar `scripts/fetch-decals.sh` pra ele. Enquanto não
-   subir, `npm run assert:assets` reprova o build — de propósito.
-   *(O manifest de áudio publicado também está 2 caminhos atrás: 306 contra 308.
-   Passa no piso de 250, então não bloqueia.)*
-2. **Paridade de grafite em produção** — o acervo é gitignored por procedência, então
-   prod depende do pacote acima. Caminho de longo prazo continua: gerar levas `or-*`
-   via OpenRouter (`../studio/tools/gen-image.mjs`) até aposentar o acervo baixado da web.
-   A cobertura procedural fechou em 07/08 (`graffiti_pass.js` + layout assado):
-   piscina 99,1% · ferrovelho 95,7% · loja H 89,6% · quebrada 88,7% · brasília 88,5%,
-   medido por `npm run eval:grafite`.
-3. **Aplicar a migration `013_feedback.sql` no Supabase de prod** — o form de
-   FEEDBACK do menu (semente da newsletter) responde "indisponível" até isso.
-4. **Blocos 2–7 da trilha, na ordem** — AI engineering (mutation testing, portão
-   por severidade, CI comentando placar), telemetria, canais, primeira impressão,
-   repo de colaborador, release. T25 (form de feedback) **já caiu em 07/08**;
-   T23 (captura mobile) e T28 (issues no GitHub) estão meio andados.
-   *(BOT8/BUG-03, que morava aqui, saiu: a correção do turno de duelo está no
-   código com medição — `game.js`, busca `BUG-03`.)*
+1. **REPUBLISH THE DECAL PACK** — *blocks deployment*. The `decals-pack-v1`
+   has **174** files, while `DECAL_FILES` in textures.js requests **196**: the 22
+   `folha-*` files (pixação tagging, throw-up, stencil, paste-up, character) were never
+   republished. They currently return 404 in production — **513 of the 4,671 graffiti
+   pieces disappear, 30% of the Quebrada map**. The T1 assertion in a clean build caught
+   this; before it, nobody had a way to see the problem. The corrected zip already builds
+   with `node -e` from `public/img/decals` (196 files, 9.4 MB). Remaining work: upload it
+   as `decals-pack-v2` and point `scripts/fetch-decals.sh` to it. Until it is uploaded,
+   `npm run assert:assets` fails the build — intentionally.
+   *(The published audio manifest is also 2 paths behind: 306 versus 308.
+   It passes the 250 floor, so this does not block the release.)*
+2. **Graffiti parity in production** — the collection is gitignored because of its
+   provenance, so production depends on the pack above. The long-term path remains:
+   generate `or-*` batches through OpenRouter (`tools/gen-image.mjs`) until the
+   web-downloaded collection can be retired. Procedural coverage was completed on August 7
+   (`graffiti_pass.js` + baked layout):
+   piscina 99.1% · ferrovelho 95.7% · loja H 89.6% · quebrada 88.7% · brasília 88.5%,
+   measured by `npm run eval:grafite`.
+3. **Apply migration `013_feedback.sql` to the production Supabase** — the menu's
+   FEEDBACK form (the seed for the newsletter) responds "unavailable" until this is done.
+4. **Blocks 2–7 of the track, in order** — AI engineering (mutation testing, severity
+   gate, CI commenting on scores), telemetry, channels, first impression, contributor
+   repo, release. T25 (feedback form) **already landed on August 7**;
+   T23 (mobile capture) and T28 (GitHub issues) are about halfway done.
+   *(BOT8/BUG-03, which used to live here, is gone: the duel-turn fix is in the
+   code with a measurement — `game.js`, search for `BUG-03`.)*
 
-## Depois do release
+## After the release
 
-- **Multiplayer** — beta no ar: servidores públicos e salas privadas por código de
-  convite (`public/js/net.js`, `transporte.js`, `netgame.js`). A frente aberta é
-  robustez de conexão e a ativação do chat de sala (backend).
-- **Dívidas do portão** ([`tools/eval/KNOWN-RED.json`](tools/eval/KNOWN-RED.json)) —
-  13 críticas conhecidas que não reprovam o CI mas continuam devidas:
-  enquadramento de viewmodel (VM1/3/9/12/16/18/19/20), antropometria do elenco
-  (CHR1/3/4), CTF1. Quitar uma → remover da lista (o portão avisa).
-- **Braços FP** — rig sem forma; padrão hoje é arma sozinha (`?hands=1` religa).
-- **Mobile/PWA** — beta instalável com controles de toque publicado
-  (`public/site.webmanifest`); validação em aparelhos reais e o HUD in-game em
-  retrato seguem abertos.
-- **Newsletter de verdade** — o funil: exportar `feedback where newsletter=true`,
-  escolher provedor, primeira edição (capturas em `newsletter/`, fora do git).
-- **Monetização** — doações + anúncios próprios + portais (CrazyGames/itch:
-  `frame-ancestors` já liberado, falta o pacote de submissão).
+- **Multiplayer** — beta is live: public servers and private rooms using invitation
+  codes (`public/js/net.js`, `transporte.js`, `netgame.js`). The open workstream is
+  connection robustness and enabling room chat (backend).
+- **Gate debts** ([`tools/eval/KNOWN-RED.json`](tools/eval/KNOWN-RED.json)) —
+  13 known critical issues that do not fail CI but remain outstanding:
+  viewmodel framing (VM1/3/9/12/16/18/19/20), cast anthropometry
+  (CHR1/3/4), CTF1. Pay one off → remove it from the list (the gate will warn you).
+- **FP arms** — shapeless rig; the current default is the weapon alone (`?hands=1` re-enables them).
+- **Mobile/PWA** — installable beta with touch controls published
+  (`public/site.webmanifest`); validation on real devices and the portrait in-game HUD
+  remain open.
+- **A real newsletter** — the funnel: export `feedback where newsletter=true`,
+  choose a provider, publish the first issue (captures in `newsletter/`, outside git).
+- **Monetization** — donations + our own ads + portals (CrazyGames/itch:
+  `frame-ancestors` is already allowed; the submission package is still needed).
 
-## Bloco 1 — FECHADO em 07/08
+## Block 1 — CLOSED on August 7
 
-T1, T2 e T3 entregues e provados. O que ficou de pé:
+T1, T2, and T3 delivered and verified. What is in place:
 
-- **T1** `npm run assert:assets` (`tools/eval/assets-check.mjs`) no `buildCommand` da
-  Vercel, entre os fetches e o build. Conta FOLHA DE STRING no manifest (o método
-  importa mais que o número: o mesmo arquivo dá 309 por item de lista e 9 por chave de
-  topo; por folha dá 308 no real e 62 no exemplo — piso 250). Decalques saem do módulo
-  importado em node, não de parse de linha, e com diagnóstico por classe (`or-*` do git
-  × acervo do pack). Provado com um zip SEM manifest servido em localhost: o
-  `fetch-audio.sh` diz "Pronto" e sai 0, e a régua reprova nomeando a linha 23.
-- **T2** `scripts/prune-dist.mjs` no fim do build: `models/fpvm` sai do `dist/client`
-  E do espelho `.vercel/output/static` (154,3 MB em cada). `dist/client` 625 → 488 MB.
-  Custo declarado: `?tripovm=1` e `?tvm=1` só valem em dev. `KEEP_FPVM=1` desliga.
-- **T3** feito em clone descartável (Vercel-símile), que é o que achou os dois defeitos
-  reais desta rodada: o pacote de decalques desatualizado (item 1 do "Agora") e o
-  atalho do `three` que o harness plantava FORA do projeto — um clone velho em
-  /tmp deixava o link pendurado e qualquer checkout novo nascia com as 150 réguas de
-  `tools/eval` quebradas, em silêncio.
+- **T1** `npm run assert:assets` (`tools/eval/assets-check.mjs`) in Vercel's
+  `buildCommand`, between the fetches and the build. It counts STRING SHEETS in the
+  manifest (the method matters more than the number: the same file yields 309 per list
+  item and 9 per top-level key; per sheet it yields 308 in the real manifest and 62 in the
+  example — floor 250). Decals come from the module imported in Node, not from line
+  parsing, with diagnostics by class (`or-*` from git × the pack collection). Proven with
+  a zip WITHOUT a manifest served on localhost: `fetch-audio.sh` says "Pronto" and exits
+  0, while the check fails and identifies line 23.
+- **T2** `scripts/prune-dist.mjs` at the end of the build: `models/fpvm` is removed from
+  `dist/client` AND from the `.vercel/output/static` mirror (154.3 MB in each).
+  `dist/client` went from 625 → 488 MB. Declared cost: `?tripovm=1` and `?tvm=1` only
+  work in dev. `KEEP_FPVM=1` disables this.
+- **T3** done in a disposable clone (Vercel-like), which is what found the two real
+  defects in this round: the outdated decal pack (item 1 under "Now") and the `three`
+  symlink that the harness planted OUTSIDE the project — an old clone in /tmp left the
+  link dangling, and any new checkout started with all 150 `tools/eval` checks silently
+  broken.
 
-## Como contribuir
+## How to contribute
 
-Comece por [`CONTRIBUTING.md`](CONTRIBUTING.md) e pelas
-[issues abertas](https://github.com/corosolto/client/issues) — cada uma tem
-arquivo, linha e critério de aceite. As de entrada estão espelhadas em
-[`docs/issues/`](docs/issues/). Regras que não se negociam:
-régua antes do conserto, mutação que prova a régua, nenhuma crítica verde vira
-vermelha (`npm run check:deploy`), e comentário explica o *porquê*.
+Start with [`CONTRIBUTING.md`](CONTRIBUTING.md) and the
+[open issues](https://github.com/corosolto/client/issues) — each one has a
+file, line, and acceptance criterion. Starter issues are mirrored in
+[`docs/issues/`](docs/issues/). Non-negotiable rules:
+a check before the fix, a mutation that proves the check, no critical check that was
+green may turn red (`npm run check:deploy`), and comments explain the *why*.

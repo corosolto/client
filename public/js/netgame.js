@@ -525,15 +525,20 @@ class Netcode {
         // Fim autoritativo separa ciclos apesar de perda/jitter; tolerância v9 de 0,1 s.
         // Game.t novo reancora sem zerar o tick da Room (docs/EMOTES-BR.md).
         const reloadEndT = snap.t + reloadIn;
-        const reloadEndAntes = ent._netStateTick == null || snap.t < ent._netReloadAtT
-          ? null : ent._netReloadEndT;
+        const clockRecuou = ent._netStateTick != null && snap.t < ent._netReloadAtT;
+        const reloadEndAntes = clockRecuou ? null : ent._netReloadEndT;
         const novoCicloReload = reloadIn > 0 && reloadEndAntes != null && reloadEndT - reloadEndAntes > 0.100001;
         if (novoCicloReload) ent._netReloadActive = false;
+        // Um relógio novo reancora a comparação do servidor, mas nunca alonga o prazo
+        // local do mesmo ciclo. Zero ou um fim autoritativo maior abrem outro ciclo.
         ent._netReloadEndT = reloadIn > 0
           ? reloadEndAntes == null || novoCicloReload ? reloadEndT : Math.min(reloadEndAntes, reloadEndT)
           : null;
         ent._netReloadAtT = snap.t;
-        ent._netReloadUntilMs = reloadIn > 0 ? nowMs + reloadIn * 1000 : 0;
+        const reloadUntilMs = nowMs + reloadIn * 1000;
+        ent._netReloadUntilMs = reloadIn > 0
+          ? (novoCicloReload ? reloadUntilMs : Math.min(ent._netReloadUntilMs || reloadUntilMs, reloadUntilMs))
+          : 0;
         ent._netEmote = e.alive && game.state === 'live' && emoteInfo(e.emote) ? e.emote : null;
         ent._netEmoteElapsed = Math.max(0, Number(e.emoteElapsed) || 0);
         ent._netStateAtMs = nowMs;

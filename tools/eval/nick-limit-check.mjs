@@ -30,7 +30,7 @@ const ler = (rel) => {
 const falhas = [];
 const cobra = (ok, msg) => { console.log(`  ${ok ? 'ok' : 'XX'}   ${msg}`); if (!ok) falhas.push(msg); };
 const W32 = 'W'.repeat(32), W33 = 'W'.repeat(33);
-const aceita = (re) => re.test(W32) && !re.test(W33) && re.test('ab') && !re.test('a') && !re.test('José') && !re.test('Ad min') && re.test('ru.ben_7-x');
+const aceita = (re) => re.test(W32) && !re.test(W33) && re.test('ab') && !re.test('a') && !re.test('José') && !re.test('Ad min') && re.test('ru.ben_7-x') && re.test('比赛中的光环玩家') && !re.test('Аdmin');
 
 const chat = ler('public/js/chat.js');
 const NICK_RE = eval(chat.match(/export const NICK_RE = (\/[^\n]+\/[a-z]*);/)?.[1] || 'null');
@@ -39,7 +39,7 @@ cobra(NICK_RE && aceita(NICK_RE), 'NL1 · NICK_RE do chat aceita 2..32, recusa 3
 const conta = ler('public/js/account-entry.js'), perfil = ler('public/js/community.js'), menu = ler('src/pages/index.astro'), cla = ler('src/components/ClanPage.astro');
 const padrao = (src, re) => { const m = src.match(re); return m && new RegExp(`^(?:${m[1].replace(/\\\\/g, '\\')})$`); };
 cobra(/nick\.maxLength=32;/.test(conta) && aceita(padrao(conta, /nick\.pattern='([^']+)'/) || /x^/), 'NL2 · conta nova (account-entry): maxLength 32 e pattern 2..32');
-cobra(/'2 a 32 letras, números, ponto, hífen ou _\.'/.test(conta), 'NL2 · conta nova diz "2 a 32"');
+cobra(/'2 a 32 letras, números, ideogramas chineses, ponto, hífen ou _\.'/.test(conta), 'NL2 · conta nova diz "2 a 32"');
 cobra(/input\(auth\.profile\.nick,32\)/.test(perfil) && aceita(padrao(perfil, /nick\.pattern='([^']+)'/) || /x^/), 'NL2 · trocar nick (comunidade): maxLength 32 e pattern 2..32');
 cobra(/empty\('2 a 32 caracteres:/.test(perfil) && /nick_invalid:'Use de 2 a 32 /.test(perfil), 'NL2 · perfil e erro nick_invalid dizem "2 a 32"');
 cobra(/id="nick-input" maxlength="32"/.test(menu), 'NL2 · nick local do menu (anônimo): maxlength 32');
