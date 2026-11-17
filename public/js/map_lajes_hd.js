@@ -182,6 +182,9 @@ const SUBS = { tijolo: { pe: .65, alto: .74, fundo: 'mix(0.012, -0.007, hdCr)', 
 // o.rebocoPe (?hdpe=0): rodapé de umidade/mofo/salitre (borda irregular ≤ 0,45 m, ≤ -18 % de luminância com a barra e a oclusão), remendo de massa fora da faixa do corpo, repintura com borda.
 // o.rebocoFam (?hdfam=0): família por CASA (hdTp = acabamento sorteado em marcaMiudos, ~1/3 chapisco, pintado e liso): chapisco de grão
 // grosso (±9 % de albedo, ganho médio ×1,09 e relevo 1,6), liso queimado (ganho ×0,97) com junta de desempenadeira (1,15 x 0,92 m, -14 %), pintado (×1,03) com repintura e borda de rolo clara.
+// Pintado: pastel (verde-água, azul, rosa) normalizado pela cor do material — a cor `diffuse` é quente (cream 0xc0b6a5, S ≈ 0,29 linear)
+// e o sol também, então um tom multiplicado direto só neutralizava o quente (S de tela 0,13 → 0,11, sem matiz legível). Medido em lajesol
+// (casas pintadas, mediana): S 0,13 (matiz 29°) → 0,19 (218°), luma 143 mantida.
 function rebocoHD(m, r, U, o) {
   m.onBeforeCompile = (shader) => { comMundo(shader, U, CONJ.reboco.metros, 'varying float vHdMi; varying float vHdCasa; uniform float hdMiCor; uniform float hdCru; uniform float hdGrao; uniform float hdParede;\n  vec3 hdFam(float t){ return vec3(step(t, 0.5), step(0.5, t) * step(t, 1.5), step(1.5, t) * step(t, 2.5)); }'); shader.uniforms.hdMiCor = { value: r.miudo ?? .8 }; shader.uniforms.hdCru = { value: r.cru || 0 }; shader.uniforms.hdGrao = { value: o.tijoloGrao ? .42 : 1 }; shader.uniforms.hdParede = { value: o.rebocoSombra ? 1 : 0 };
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 hdMi; varying float vHdMi; varying float vHdCasa;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHdMi = hdMi.x; vHdCasa = hdMi.y;');
@@ -203,9 +206,10 @@ function rebocoHD(m, r, U, o) {
       float hdF2 = texture2D(hdRuido, hdQ * 0.47 + hdCs * 2.0).a * 0.7 + hdGm * 0.3, hdW2 = max(fwidth(hdF2) * 1.2, 0.003);
       float hdC1 = smoothstep(0.50, 0.50 + hdW2, hdF2), hdC2 = smoothstep(0.64, 0.64 + hdW2, hdF2);
       float hdBorda = (max(0.0, 1.0 - abs(hdF2 - 0.50) / (hdW2 * 1.6)) + max(0.0, 1.0 - abs(hdF2 - 0.64) / (hdW2 * 1.6))) * hdV6 * (1.0 - 0.5 * hdLiso);
-      // Ondulação de sarrafeado/desempenadeira (30–60 cm): relevo de 0,6–1,8 cm e, como a face de costas para o sol só tem hemisfério
-      // (o relevo por normal não aparece), sombreado explícito pela inclinação vertical da onda (2ª leitura 6 cm acima), menor na faixa do corpo.
-      float hdOnd = texture2D(hdRuido, hdQ * 0.17 + hdCs * 9.0).a, hdOndY = texture2D(hdRuido, (hdQ + vec2(0.0, 0.06)) * 0.17 + hdCs * 9.0).a;
+      // Ondulação de sarrafeado/desempenadeira: faixas horizontais (célula ~2 m x 0,5 m) com relevo de 0,6–1,8 cm e, como a face de costas para o
+      // sol só tem hemisfério (o relevo por normal não aparece), sombreado explícito pela inclinação vertical (2ª leitura 6 cm acima). A diferença
+      // entre as duas leituras é de ±0,02–0,05 (ruído suave), por isso vai multiplicada por 16 e limitada a ±0,5 antes do ganho; menor na faixa do corpo.
+      vec2 hdOq = vec2(hdQ.x * 0.06, hdQ.y * 0.22) + hdCs * 9.0; float hdOnd = texture2D(hdRuido, hdOq).a, hdOndY = texture2D(hdRuido, hdOq + vec2(0.0, 0.0132)).a;
       hdAlt = hdV3 * (0.0006 + 0.0012 * hdChap) * hdGf + hdV9 * (0.001 * hdM.b - 0.004 * hdFuro + (0.001 + mix(0.003, 0.006, hdFamOn) * hdChap) * hdGr + 0.002 * hdSarr * hdRisco - 0.004 * hdBl * hdBk.a)
         + hdV2 * 0.006 * hdGm * (1.0 - 0.4 * hdLiso) - hdV6 * (0.004 * hdC1 + 0.003 * hdC2) * (1.0 - 0.5 * hdLiso)
         + hdFamOn * (0.018 * hdSarr + 0.012 * hdLiso + 0.006 * hdChap) * (hdOnd - 0.5);
@@ -216,10 +220,13 @@ function rebocoHD(m, r, U, o) {
       vec2 hdJg = vec2(hdQ.x / 1.15 + hdCs * 3.0, hdQ.y / 0.92), hdJf = abs(fract(hdJg) - 0.5);
       float hdJu = (1.0 - smoothstep(0.005, 0.009 + max(fwidth(hdQ.x), fwidth(hdQ.y)) * 1.5, min((0.5 - hdJf.x) * 1.15, (0.5 - hdJf.y) * 0.92))) * hdLiso * hdV9 * hdFamOn; hdTom *= 1.0 - 0.14 * hdJu; hdAlt -= 0.0025 * hdJu;
       vec3 hdReb = hdFino * hdTom * (0.98 + 0.03 * hdM.b) * (1.0 + hdFamOn * (0.03 + 0.06 * hdChap - 0.06 * hdLiso)) * (1.0 + 0.03 * hdV2 * (hdGm - 0.5)) * mix(min(mix(vec3(1.0), hdB / ${v3(CONJ.reboco.media)}, 0.10), vec3(1.03)) * mix(0.86, 1.05, hdA.r) * mix(0.91, 1.04, hdM.r) * (1.0 - 0.06 * hdLiso * smoothstep(0.4, 0.7, hdM.a)), vec3(0.955 + 0.03 * hdM.r), max(hdCorpo, vHdMi)) * mix(1.0, hdMiCor, vHdMi) * mix(1.0, mix(0.62, 0.2, vHdMi), hdCru);
-      // Família pintada: pastel de luminância igual (verde-água, azul, terracota) com S ≈ 0,25 antes do AgX; o reboco cream é quente e
-      // neutralizava o azul, por isso cada tom é normalizado a luma 1 e o azul leva mais croma.
-      hdReb *= mix(vec3(1.0), mix(vec3(0.78, 1.10, 0.95), mix(vec3(0.86, 0.97, 1.32), vec3(1.12, 0.97, 0.84), step(0.5, fract(hdCs * 17.1))), step(0.33, fract(hdCs * 7.7))), hdSarr * hdFamOn);
-      hdReb *= 1.0 - hdFamOn * (1.3 * hdSarr + 0.9 * hdLiso + 0.5 * hdChap) * (hdOndY - hdOnd) * mix(1.0, 0.6, hdCorpo);
+      // Família pintada: pastel de luminância igual (verde-água, azul, rosa). hdNeu tira o quente da cor do material (luma igual) e o tom entra
+      // com croma ×1,8: antes do AgX e do sol quente é o que sobra como S ≈ 0,17 ao sol e ≈ 0,25 à sombra na tela. Matizes longe do cream
+      // (29°): salmão/terracota (15°) some no quente do reboco e do sol — A/B ?hdfam=0 dava diferença média < 5 na parede pintada do beco.
+      vec3 hdNeu = dot(diffuse, ${LUMA}) / max(diffuse, vec3(0.02));
+      vec3 hdPas = mix(vec3(0.738, 1.128, 1.026), mix(vec3(0.824, 0.978, 1.596), vec3(1.205, 0.904, 0.954), step(0.5, fract(hdCs * 17.1))), step(0.33, fract(hdCs * 7.7)));
+      hdReb *= mix(vec3(1.0), hdNeu * mix(vec3(1.0), hdPas, 1.8), hdSarr * hdFamOn);
+      hdReb *= 1.0 - hdFamOn * (0.40 * hdSarr + 0.36 * hdLiso + 0.12 * hdChap) * clamp((hdOndY - hdOnd) * 16.0, -0.5, 0.5) * mix(1.0, 0.6, hdCorpo);
       float hdFina = texture2D(hdRuido, hdQ * 4.7 + hdCs * 3.0).b, hdMedia = texture2D(hdRuido, hdQ * 0.29 + hdCs * 1.7).g;
       float hdFaixa = hdFaixaCorpo(hdY), hdNvar = (hdFina - 0.5) * 0.16 + (hdGf - 0.5) * 0.07 + 1.18 * ((hdMedia - 0.5) * mix(0.22, 0.08, hdFaixa) + (hdA.r - 0.5) * mix(0.16, 0.05, hdFaixa));
       vec3 hdGn = normalize(cross(dFdx(vHdPos), dFdy(vHdPos))); float hdAresta = clamp((length(dFdx(hdGn)) + length(dFdy(hdGn))) * 2.5, 0.0, 1.0);
@@ -248,7 +255,7 @@ function rebocoHD(m, r, U, o) {
       hdAlt = mix(hdAlt, hdV9 * (0.007 * (1.0 - hdTj.a) + 0.0015 * hdFino) + hdV3 * 0.0008 * hdGf, hdCr) * (1.0 - 0.9 * vHdMi); hdRel = mix(1.0 + 0.6 * hdChap * hdFamOn - 0.5 * hdLiso - 0.2 * hdSarr, 0.7, hdCr) * (1.0 - 0.85 * vHdMi); hdRug = mix(mix(hdRug, mix(0.86, 1.0, hdTj.a), hdCr), 0.6, vHdMi);
       ${idade(o, SUBS.tijolo, o.rebocoPe, false)} }`);
     ganchos(shader); };
-  m.customProgramCacheKey = () => `lajes-hd-reboco69-${o.umidade}-${o.descasca}-${o.rebocoSombra}-${o.tijoloGrao}-${o.rebocoPe}-${o.rebocoFam}`;
+  m.customProgramCacheKey = () => `lajes-hd-reboco70-${o.umidade}-${o.descasca}-${o.rebocoSombra}-${o.tijoloGrao}-${o.rebocoPe}-${o.rebocoFam}`;
 }
 // Tijolo aparente: mesma textura e UV do mapa. Junta afundada (lida da saturação do texel), tom por fiada e por
 // trecho de tijolo, chapisco no pé e no alto. Na faixa do corpo sobra só a junta.
@@ -451,13 +458,18 @@ function tiraGrades(scene, mats, janelas) {
   for (const [o, t] of gemeos) { o.parent.add(t); o.visible = false; }
   return () => { for (const [o, t] of gemeos) { o.visible = true; t.removeFromParent(); t.geometry.dispose(); } };
 }
+// Acabamento por casa: a tabela ACAB garante ~1/3 de chapisco, pintado e liso (32 casas → 10/10/9 + 3 bloco); a ORDEM vem do hash do
+// centro da casa (não do índice do colisor). Semente 12.5 escolhida (busca sobre os centros reais dos colisores) para as poses do hd_lab verem
+// as três famílias: beco (casa da direita pintada), lajesol (central pintada, esquerda chapisco, fundo liso) e parede (CONSERTA-SE liso) —
+// com o índice ×7 o beco só via chapisco. Atenção: h3 é caótico, 5 cm no centro de uma casa trocam a ordem inteira.
 function marcaMiudos(scene, mats, cols) {
-  const marcadas = [], casas = cols.filter((c) => c.casa), ACAB = [0, 1, 2, 1, 0, 2, 3, 1, 2, 0];
+  const marcadas = [], casas = cols.filter((c) => c.casa), ACAB = [0, 1, 2, 1, 0, 2, 3, 1, 2, 0], acab = new Map();
+  casas.map((c) => [h3((c.minX + c.maxX) / 2, 12.5, (c.minZ + c.maxZ) / 2), c]).sort((p, q) => p[0] - q[0]).forEach(([, c], r) => acab.set(c, ACAB[r % 10]));
   porCaixa(scene, mats, (o, n, cada) => { if (o.geometry.attributes.hdMi) return;
     const a = new Float32Array(n * 2);
     cada((i, mn, mx, d) => { const cx = (mn[0] + mx[0]) / 2, cz = (mn[2] + mx[2]) / 2, c = casas.find((k) => cx > k.minX - .35 && cx < k.maxX + .35 && cz > k.minZ - .35 && cz < k.maxZ + .35);
       const mi = Math.max(d[0], d[1], d[2]) < .3 || Math.min(d[0], d[1], d[2]) < .02 ? 1 : 0, sorte = c ? h3((c.minX + c.maxX) / 2, 1.7, (c.minZ + c.maxZ) / 2) : h3(Math.round(cx / 7), 3.1, Math.round(cz / 7));
-      const s = ((c ? ACAB[(casas.indexOf(c) * 7) % 10] : Math.floor(sorte * 2.999)) + .05 + .9 * sorte) / 4;
+      const s = ((c ? acab.get(c) : Math.floor(sorte * 2.999)) + .05 + .9 * sorte) / 4;
       for (let k = i; k < i + 24; k++) { a[k * 2] = mi; a[k * 2 + 1] = s; } });
     o.geometry.setAttribute('hdMi', new THREE.BufferAttribute(a, 2)); marcadas.push(o.geometry); });
   return () => { for (const g of marcadas) g.deleteAttribute('hdMi'); };
