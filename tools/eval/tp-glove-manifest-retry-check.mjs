@@ -79,7 +79,7 @@ async function worker(config) {
   let mode = scenario.startsWith('recover-') ? scenario.slice(8)
     : ['persistent', 'stale', 'rearm-style', 'rearm-origin'].includes(scenario) ? 'http' : 'ok';
   const warn0 = console.warn;
-  const deadline = setTimeout(() => { console.error('INFRA: glove-manifest worker deadline'); process.exit(3); }, 45000);
+  const deadline = setTimeout(() => { console.error('INFRA: glove-manifest worker deadline'); process.exit(78); }, 45000);
   const row = (id, ok, detail) => result.rows.push({ id, ok: Boolean(ok), detail });
   const counts = () => ({ manifestCalls, targetLoads, tapCalls, warnings: warnings.length });
   try {

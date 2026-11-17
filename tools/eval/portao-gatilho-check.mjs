@@ -41,7 +41,7 @@
    Mutantes: tira-caminho (PG1), passo-novo (PG2), diff-aberto e quotepath-volta (PG3),
    portao-na-fila (PG5), sem-fetch/fetch-tarde/assert-sem-pack/fetch-ignorado/
    fetch-fora-gatilho, early-exit, errexit-desligado, heredoc, indent-escape e
-   shell-sem-errexit (PG6). Aplicação ausente/ambígua sai3; mutante sobrevivente sai4.
+   shell-sem-errexit (PG6). Aplicação ausente/ambígua sai78; mutante sobrevivente sai4.
    Uso: node tools/eval/portao-gatilho-check.mjs [--mutante=<nome>]
    ============================================================================ */
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -62,7 +62,7 @@ if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); proc
 
 function erroInstrumento(nome, detalhe) {
   console.error(`INSTRUMENTO ${nome}: ${detalhe}`);
-  process.exit(3);
+  process.exit(78);
 }
 function escaparRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 function substituirUma(texto, padrao, depois, nome) {

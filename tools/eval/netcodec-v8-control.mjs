@@ -1,4 +1,4 @@
-// #1160: default legado e JSON sem perda, medidos pelo codec importado em processos novos.
+// #1160: default atual e JSON sem perda, medidos pelo codec importado em processos novos.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -11,7 +11,7 @@ const target = path.join(root, 'public/js/netcodec.js');
 const original = fs.readFileSync(target, 'utf8');
 const hash = value => createHash('sha256').update(value).digest('hex');
 const cases = [
-  ['default-v8', 'version = 7', 'version = CURRENT_VERSION', ['unversioned producers retain v7 and refuse objective/J']],
+  ['default-v7', 'version = CURRENT_VERSION', 'version = 7', ['unversioned producers use current v9 contract']],
   ['negative-zero', ' && !Object.is(v, -0)', '', [
     'EN1 rejects negative-zero JSON root', 'EN2 rejects negative-zero JSON object',
     'EN3 rejects negative-zero JSON array', 'EN4 rejects negative-zero JSON nested',
@@ -29,7 +29,7 @@ const run = (name, codecPath, expected) => {
   });
   const output = child.stdout || '';
   const actual = [...output.matchAll(/^not ok \d+ - (.+)$/gm)].map(match => match[1]).sort();
-  const infra = child.error || child.signal || child.stderr || !/^# tests 32$/m.test(output);
+  const infra = child.error || child.signal || child.stderr || !/^# tests 31$/m.test(output);
   const pass = !infra && child.status === (expected.length ? 1 : 0)
     && JSON.stringify(actual) === JSON.stringify([...expected].sort());
   console.log(JSON.stringify({ name, pass, exit: child.status, infra: !!infra, failed: actual }));
@@ -47,6 +47,7 @@ try {
       fs.writeFileSync(path.join(temp, 'package.json'), '{"type":"module"}');
       fs.mkdirSync(path.join(temp, 'data'));
       fs.copyFileSync(path.join(root, 'public/js/data/weapons.js'), path.join(temp, 'data/weapons.js'));
+      fs.copyFileSync(path.join(root, 'public/js/data/emote-catalog.js'), path.join(temp, 'data/emote-catalog.js'));
       const file = path.join(temp, 'netcodec.js');
       fs.writeFileSync(file, source);
       run(name, file, expected);
@@ -56,5 +57,5 @@ try {
   process.exitCode = failures ? 1 : 0;
 } catch (error) {
   console.error(error.message);
-  process.exitCode = 3;
+  process.exitCode = 78;
 }

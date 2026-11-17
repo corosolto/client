@@ -23,8 +23,8 @@ const MAX_FAMILY_TRIANGLES = 8_000;
 const SPECIAL_BODY_IDS = Object.freeze([
   'character:camera-roxa', 'character:designer-ux', 'character:doidinho-bairro', 'character:lenda-lanhouse',
   'character:microfonildo', 'character:motoca-cachorro-loko', 'character:profeta-calcada', 'character:programador-virado',
-  'character:cuca', 'character:lobisomem', 'skin:lula-cyborg', 'skin:senador-drip', 'skin:zero-um-mandrake',
-  'character:mst', 'character:lampiao', 'character:mariabonita',
+  'character:cuca', 'character:lobisomem', 'skin:lobisomem-cyborg', 'skin:lula-cyborg', 'skin:lula-drip', 'skin:lula-mandrake',
+  'skin:senador-drip', 'skin:zero-um-mandrake', 'character:mst', 'character:lampiao', 'character:mariabonita',
 ]);
 const adapterByHash = new Map(Object.entries(URBAN_BODY_ADAPTERS));
 
@@ -122,7 +122,7 @@ function validate(data, {verifyFiles = true} = {}) {
   assert.deepEqual(evidence.sourceHashes, sourceHashes(), 'evidence source hashes are stale');
   assert.equal(report.consoleErrors.length, 0, 'browser console errors were captured');
   assert.deepEqual(report.views, ['front', 'threeQuarter']);
-  assert.deepEqual(report.summary, {catalogItems: 160, safeConcepts: 147, blockedPermissionNeeded: 13, bodiesObserved: 88, selectableBodies: 87, auxiliaryBodies: 1, bodyFitCandidates: 0, bodyFitUnassessed: 87, headwearDeferred: true, geometryFamiliesObserved: 34, certified: 0, mintSubmitted: false});
+  assert.deepEqual(report.summary, {catalogItems: 160, safeConcepts: 147, blockedPermissionNeeded: 13, bodiesObserved: 101, selectableBodies: 100, auxiliaryBodies: 1, bodyFitCandidates: 0, bodyFitUnassessed: 100, headwearDeferred: true, geometryFamiliesObserved: 34, certified: 0, mintSubmitted: false});
   rejectPromotion({catalog, batch, census, eyewear, report});
 
   const catalogById = new Map(catalog.items.map(item => [item.id, item]));
@@ -150,16 +150,16 @@ function validate(data, {verifyFiles = true} = {}) {
     }
   }
 
-  assert.equal(census.bodies.length, 88, 'body census coverage changed');
-  assert.equal(census.bodies.filter(body => body.fitProfile.status === 'unknown').length, 84, 'global census must remain unpromoted');
+  assert.equal(census.bodies.length, 101, 'body census coverage changed');
+  assert.equal(census.bodies.filter(body => body.fitProfile.status === 'unknown').length, 97, 'global census must remain unpromoted');
   assert.equal(census.bodies.filter(body => body.fitProfile.status === 'incompatible').length, 4, 'global census incompatibilities must remain unchanged');
   const selectableBodies = census.bodies.filter(body => body.sourceKind !== 'auxiliary');
   const auxiliaryBodies = census.bodies.filter(body => body.sourceKind === 'auxiliary');
-  assert.equal(selectableBodies.length, 87, 'selectable body census changed');
+  assert.equal(selectableBodies.length, 100, 'selectable body census changed');
   assert.deepEqual(auxiliaryBodies.map(body => body.bodyId), ['auxiliary:dollynho-dance'], 'unexpected auxiliary body');
-  assert.equal(adapterByHash.size, 16, 'special adapter registry changed');
+  assert.equal(adapterByHash.size, 19, 'special adapter registry changed');
   same(census.bodies.filter(body => adapterByHash.has(body.sourceSha256)).map(body => body.bodyId), SPECIAL_BODY_IDS, 'special adapters are not pinned to the diagnosed playable bodies');
-  assert.equal(report.bodies.length, 88, 'body evidence omitted a census body');
+  assert.equal(report.bodies.length, 101, 'body evidence omitted a census body');
   const bodiesById = new Map(census.bodies.map(body => [body.bodyId, body]));
   same(report.bodies.map(row => row.bodyId), bodiesById.keys(), 'body evidence IDs diverge from census');
   for (const [bodyIndex, row] of report.bodies.entries()) {
@@ -212,7 +212,7 @@ function validate(data, {verifyFiles = true} = {}) {
     }
   }
   assert.equal(report.bodies.filter(row => row.status === 'candidate').length, 0, 'user-rejected universal body candidates remained active');
-  assert.equal(report.bodies.filter(row => row.status === 'study-only').length, 87, 'selectable study coverage must be 87/87');
+  assert.equal(report.bodies.filter(row => row.status === 'study-only').length, 100, 'selectable study coverage must be 100/100');
   assert.deepEqual(report.bodies.filter(row => row.status === 'not-applicable').map(row => row.bodyId), ['auxiliary:dollynho-dance'], 'only the auxiliary may be not applicable');
 
   assert.equal(report.families.length, 34, 'family gallery coverage changed');
@@ -251,7 +251,7 @@ function validate(data, {verifyFiles = true} = {}) {
   }
 
   const bodySheets = new Set(report.bodies.map(row => row.evidence.sheet));
-  assert.equal(bodySheets.size, 4, '88 bodies must be split across four contact sheets');
+  assert.equal(bodySheets.size, 4, '101 bodies must fit in four contact sheets');
   const familySheets = new Set(report.families.map(row => row.evidence.sheet));
   const blockedSheets = new Set(report.blockedCards.map(row => row.evidence.sheet));
   assert.equal(familySheets.size, 1, 'family gallery screenshot missing');

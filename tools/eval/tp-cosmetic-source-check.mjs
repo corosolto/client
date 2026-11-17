@@ -42,7 +42,7 @@ async function worker(fixture, mutant) {
   const deadline = setTimeout(() => {
     console.error('Cosmetic fixture deadline');
     try { if (tmp) fs.rmSync(tmp, { recursive: true, force: true }); }
-    finally { process.exit(3); }
+    finally { process.exit(78); }
   }, 45000);
   try {
     out.sources = sources();

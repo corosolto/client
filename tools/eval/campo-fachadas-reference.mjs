@@ -612,7 +612,7 @@ const USAGE = `uso:
   --write-approved=<fonte7ca2.js>   gera tools/eval/fixtures/campo-fachadas-inventory.json (só se não existe)
   --verify-approved=<fonte7ca2.js>  regenera e confere serialização completa byte a byte com o fixture
   --validate                        carrega e valida o fixture lacrado default
-sem flag, flag desconhecida, duplicada ou opções extras: este uso (exit 2). Falhas explícitas: exit 3.`;
+sem flag, flag desconhecida, duplicada ou opções extras: este uso (exit 2). Não mediu: exit 78. Divergência medida: exit 1.`;
 
 async function runCLI(argv) {
   const single = (name) => argv.length === 1 && argv[0].startsWith(`${name}=`);
@@ -632,12 +632,12 @@ async function runCLI(argv) {
       return 0;
     }
     const src = argv[0].split('=').slice(1).join('=');
-    if (!existsSync(src)) { console.error(`fonte ausente: ${src}`); return 3; }
+    if (!existsSync(src)) { console.error(`fonte ausente: ${src}`); return 78; }
     if (isWrite && existsSync(DEFAULT_FIXTURE)) {
-      console.error(`fixture já existe — não sobrescreve: ${DEFAULT_FIXTURE}`); return 3;
+      console.error(`fixture já existe — não sobrescreve: ${DEFAULT_FIXTURE}`); return 78;
     }
     if (isVerify && !existsSync(DEFAULT_FIXTURE)) {
-      console.error(`verify sem fixture para conferir: ${DEFAULT_FIXTURE}`); return 3;
+      console.error(`verify sem fixture para conferir: ${DEFAULT_FIXTURE}`); return 78;
     }
     const data = await generateData(src);
     validateFixture(data);
@@ -646,7 +646,7 @@ async function runCLI(argv) {
       const fresh = serializeFixture(data);
       if (existing !== fresh) {
         console.error('verify: serialização diverge byte a byte do fixture existente');
-        return 3;
+        return 1;
       }
       console.log('verify: serialização idêntica byte a byte ao fixture existente');
       return 0;
@@ -657,7 +657,7 @@ async function runCLI(argv) {
     return 0;
   } catch (err) {
     console.error(`falha explícita: ${err.message}`);
-    return 3;
+    return 78;
   }
 }
 

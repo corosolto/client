@@ -1,5 +1,5 @@
 /* Wrapper do mutante de fluidez (#1179 P2-2): nominal verde + probe causal + cláusula
-   exata; crash/sinal/status 42 nunca é aceito. Exit: 0 ok · 1 RED semântico · 2 uso · 3 infra. */
+   exata; crash/sinal/status 42 nunca é aceito. Exit: 0 ok · 1 RED semântico · 2 uso · 78 infra. */
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -21,20 +21,20 @@ const run = (extra) => {
   const r = spawnSync(nodeBin, [CHECK, ...extra], { encoding: 'utf8', cwd: ROOT });
   return { status: r.status, signal: r.signal ?? null, stdout: r.stdout || '', stderr: r.stderr || '', erro: r.error?.message || null };
 };
-const infraRun = (tag, r) => { console.error(`infra: ${tag} não executou (${r.erro ?? `signal ${r.signal}`})\n${r.stderr.slice(-600)}`); process.exit(3); };
+const infraRun = (tag, r) => { console.error(`infra: ${tag} não executou (${r.erro ?? `signal ${r.signal}`})\n${r.stderr.slice(-600)}`); process.exit(78); };
 
 /* 1. nominal: tem que estar verde antes de o mutante dizer qualquer coisa */
 const nom = run([]);
 if (nom.erro || nom.signal !== null) infraRun('nominal', nom);
 if (nom.status === null || ![0, 1].includes(nom.status)) {
   console.error(`infra: nominal saiu com status inesperado ${nom.status}\n${nom.stderr.slice(-600)}`);
-  process.exit(3);
+  process.exit(78);
 }
 if (nom.status !== 0) {
   const medido = nom.stderr + nom.stdout;
   if (!medido.includes('AssertionError') || ![CLAUSULA_ACEL, ...OUTRAS].some((c) => medido.includes(c))) {
     console.error(`infra: nominal falhou antes de uma cláusula medida\n${medido.slice(-600)}`);
-    process.exit(3);
+    process.exit(78);
   }
   console.error(`RED semântico: nominal não verde\n${nom.stderr.slice(-600)}`);
   process.exit(1);
@@ -64,7 +64,7 @@ if (mut.erro || mut.signal !== null) infraRun('mutante', mut);
 const sem = mut.stdout + mut.stderr;
 if (mut.status === null || ![0, 1].includes(mut.status)) {
   console.error(`infra: mutante saiu com status inesperado ${mut.status} — nunca aceito como detecção\n${sem.slice(-600)}`);
-  process.exit(3);
+  process.exit(78);
 }
 if (mut.status === 0) {
   console.error('RED semântico: mutante sobreviveu (régua cega)\n' + mut.stdout.slice(-600));
@@ -73,7 +73,7 @@ if (mut.status === 0) {
 if (!sem.includes('AssertionError') || !sem.includes(CLAUSULA_ACEL) || OUTRAS.some((c) => sem.includes(c))) {
   if (!sem.includes('AssertionError') || ![CLAUSULA_ACEL, ...OUTRAS].some((c) => sem.includes(c))) {
     console.error(`infra: mutante falhou antes de uma cláusula medida\n${sem.slice(-600)}`);
-    process.exit(3);
+    process.exit(78);
   }
   console.error(`RED semântico: falha não é exatamente a cláusula de aceleração\n${sem.slice(-600)}`);
   process.exit(1);

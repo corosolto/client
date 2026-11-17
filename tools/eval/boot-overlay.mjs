@@ -1,4 +1,4 @@
-/* boot-overlay.mjs — helpers puros do overlay coerente do grafo local `public/js`. O gate (boot-orcamento-check.mjs) importa daqui; nada aqui toca browser nem disco além da leitura do grafo local. Contrato financeiro e taxonomia INFRA3 estão em docs/visual-consistency/BOOT-COHERENT-OVERLAY.md. */
+/* boot-overlay.mjs — helpers puros do overlay coerente do grafo local `public/js`. O gate (boot-orcamento-check.mjs) importa daqui; nada aqui toca browser nem disco além da leitura do grafo local. Contrato financeiro e taxonomia INFRA78 estão em docs/visual-consistency/BOOT-COHERENT-OVERLAY.md. */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 export const JS_EXCLUSOS = ['js/main.js', 'js/client-id.js', 'js/textures.js'];
 
 export class InfraError extends Error {
-  constructor(msg) { super(msg); this.code = 3; }
+  constructor(msg) { super(msg); this.code = 78; }
 }
 
 export function carregaModulosLocais(publicRoot) {
@@ -67,7 +67,7 @@ export function cargaOverlay(enc, payloadBytes) {
   return Math.max(validaEnc(enc), payloadBytes);
 }
 
-/* Trilha do request: erro de rede é INFRA3; pendência sem fim nem erro é legal
+/* Trilha do request: erro de rede é INFRA78; pendência sem fim nem erro é legal
    (termina depois do portão) e só fica registrada fora do ORC1. */
 export function confereTrilha(r) {
   if (r.erro) throw new InfraError(`request com erro: ${r.url} (${r.erro})`);
@@ -110,7 +110,7 @@ export function cancelaUi(r,e,base) {
   return e.canceled===true && e.errorText==='net::ERR_ABORTED' && !e.blockedReason && !e.corsErrorStatus
     && ['Other','Image'].includes(e.type) && u.origin===b.origin
     && (u.pathname==='/favicon.ico' || u.pathname==='/img/treta/coin-classic-saci.webp'
-      || (e.type==='Image' && u.pathname.startsWith('/img/') && r.recebidoResposta===0 && r.recebidoChunks===0));
+      || (e.type==='Image' && u.pathname==='/img/wall-10.webp' && r.recebidoResposta===0 && r.recebidoChunks===0));
 }
 export function prefixoRecebido(r) {
   return validaEnc(r.recebidoResposta)+validaEnc(r.recebidoChunks);
@@ -130,7 +130,7 @@ export function selfTest() {
     catch (e) { falhas.push(`${nome}: ${e.message}`); console.error(`FALHA  ${nome}: ${e.message}`); }
   };
   const eq = (a, b, msg = '') => { if (a !== b) throw new Error(`${msg} esperado ${b}, veio ${a}`); };
-  const lancaInfra = (fn) => { try { fn(); } catch (e) { if (e.code !== 3) throw new Error(`não foi INFRA3: ${e}`); return; } throw new Error('não lançou'); };
+  const lancaInfra = (fn) => { try { fn(); } catch (e) { if (e.code !== 78) throw new Error(`não foi INFRA78: ${e}`); return; } throw new Error('não lançou'); };
 
   t('cancelamento UI é estrito e prefixo não vira isenção',()=>{
     const r={url:'https://h/favicon.ico',recebidoResposta:123,recebidoChunks:456},e={canceled:true,errorText:'net::ERR_ABORTED',type:'Other'};
@@ -138,13 +138,22 @@ export function selfTest() {
     for(const bad of [{canceled:false},{errorText:'net::ERR_FAILED'},{type:'Script'},{blockedReason:'other'},{corsErrorStatus:{}}])eq(cancelaUi(r,{...e,...bad},'https://h'),false);
     eq(cancelaUi({...r,url:'https://evil/favicon.ico'},e,'https://h'),false);
     eq(cancelaUi({...r,url:'https://h/models/ambient/a.glb'},e,'https://h'),false);
-    const imagem={url:'https://h/img/wall-10.webp',recebidoResposta:0,recebidoChunks:0},eventoImagem={...e,type:'Image'};
+    const eventoImagem={...e,type:'Image'};
+    const moeda={url:'https://h/img/treta/coin-classic-saci.webp',recebidoResposta:0,recebidoChunks:0};
+    eq(cancelaUi(moeda,eventoImagem,'https://h'),true);
+    const imagem={url:'https://h/img/wall-10.webp',recebidoResposta:0,recebidoChunks:0};
     eq(cancelaUi(imagem,eventoImagem,'https://h'),true);
+    eq(cancelaUi({...imagem,url:'https://h/img/missing.webp'},eventoImagem,'https://h'),false);
     eq(cancelaUi({...imagem,recebidoResposta:1},eventoImagem,'https://h'),false);
     eq(cancelaUi({...imagem,recebidoChunks:1},eventoImagem,'https://h'),false);
     for(const x of [NaN,undefined,-1])lancaInfra(()=>prefixoRecebido({...r,recebidoChunks:x}));
     const row={...r,bytes:579,fim:10,erro:null};
     const n=somaCargas({ate:[row],isentas:new Set(),sobrepostos:new Map()});eq(n.total,579);eq(n.cargas.size,1);
+  });
+  t('mutante /img/missing.webp cancelada sem bytes não é isenta',()=>{
+    const r={url:'https://h/img/missing.webp',recebidoResposta:0,recebidoChunks:0};
+    const e={canceled:true,errorText:'net::ERR_ABORTED',type:'Image'};
+    eq(cancelaUi(r,e,'https://h'),false);
   });
   t('encoded 0 em extra novo cobra o payload servido', () => eq(cargaOverlay(0, 1234), 1234));
   t('encoded maior que payload vira o máximo', () => eq(cargaOverlay(5000, 1000), 5000));
@@ -165,13 +174,13 @@ export function selfTest() {
     });
     eq(total, 200);
   });
-  t('encoded negativo/NaN/ausente e payload inválido são INFRA3', () => { for(const x of [-1,NaN,undefined]) lancaInfra(()=>cargaOverlay(x,10)); for(const x of [-1,NaN,undefined]) lancaInfra(()=>cargaOverlay(0,x)); });
+  t('encoded negativo/NaN/ausente e payload inválido são INFRA78', () => { for(const x of [-1,NaN,undefined]) lancaInfra(()=>cargaOverlay(x,10)); for(const x of [-1,NaN,undefined]) lancaInfra(()=>cargaOverlay(0,x)); });
   t('mutante exige cláusula causal e nenhuma falha alheia',()=>{
     eq(aceitaMutante('fauna-cedo',['ORC3']),true);eq(aceitaMutante('fauna-cedo',['ORC1','ORC3']),true);eq(aceitaMutante('cartaz-ansioso',['ORC2']),true);
     eq(aceitaMutante('cartaz-ansioso',['ORC1','ORC2']),true);
     for(const nome of ['fauna-cedo','cartaz-ansioso'])for(const falhas of [[],['pageerror'],['ORC1'],['READY'],['READY','ORC3'],['ORC2','ORC3'],['ORC1','ORC3','unknown'],['ORC3','ORC3']])eq(aceitaMutante(nome,falhas),false);
   });
-  t('trilha com erro de rede é INFRA3', () => lancaInfra(() => confereTrilha({ url: 'u', bytes: 1, fim: 5, erro: 'net::ERR_FAILED' })));
+  t('trilha com erro de rede é INFRA78', () => lancaInfra(() => confereTrilha({ url: 'u', bytes: 1, fim: 5, erro: 'net::ERR_FAILED' })));
   t('request pendente fora do portão fica registrada e fora do ORC1', () => {
     const reqs = [
       { url: 'https://h/js/a.js', bytes: 50, fim: 10, erro: null },

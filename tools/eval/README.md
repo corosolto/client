@@ -37,6 +37,7 @@ com código 1 em falha crítica.
 | `lajes-cache-check.mjs` | Duas builds reais de Lajes: paridade dos buffers e da sequência RNG, colisores, navegação e oclusores; 49 geometrias compartilhadas nas 9162 caixas, descarte único e isolamento entre builds. | `npm run eval:lajes-cache` |
 | `map-rotation-check.mjs` | Sugestão inicial de mapa: link manda, escolha do carrossel fica, e quem não escolhe roda pelos 5 mapas. | `npm run eval:maprotate` |
 | `glb-peso-check.mjs` | GLB grande sem referência não entra em public/: todo .glb >10 MB precisa do stem citado em código/config tracked; mutante `bruto` planta 11 MB falso. Compra: os 162 MB de GLB PBR cru da Mint em `props/{caixa_dagua,trave_futebol,favela_house}/` sem nenhuma referência. | `npm run eval:glbpeso` |
+| `rig-census.mjs` | Censo de deformação de skin dos 74 corpos + 26 skins: skinning CPU (porte do teste de pose do Studio, PR #4) em 5 poses sintéticas + os clipes que o jogo roda (corpo: `anims/<id>.glb`→mixamo; skin: embutidos) em 8 instantes; alongamento de aresta/costas/mãos/costura. Tetos congelados por sha (`rig-census-tetos.json`) que só descem; GLB novo ou sha trocado no estrito 3,5×/2,5× (id legado que já passava do estrito usa o próprio teto); teto cravado nos bytes. Mutantes `teto-subiu`, `glb-novo-sem-teto-frouxo`, `pesos-trocados`, `clipe-ignorado`, `legado-reparado`. Compra: nada cobria alongamento de corpo inteiro das skins — o `eval:select` só sobe corpos e o `eval:pesos-braco-perna` (PR #1265) só o vazamento braço→perna. | `npm run eval:rig-census` |
 | `asset-rev-check.mjs` | Revisão por ARQUIVO dos binários pesados de `/models` e `/audio`: mapa `data/assetver.js` em dia com o disco, nenhum consumidor montando `?v=${VERSION}` na mão, bump de release que não mexe no asset não muda a URL, 1 byte trocado muda só a rev daquele arquivo, e asset fora do mapa cai no fallback de VERSION. Mutantes `versao-crua`, `rev-ignorada` e `mapa-defasado`. Compra: `/models` é immutable por 1 ano e a query era a VERSION, então todo release rebaixava o acervo inteiro — centenas de MB na WebView do app de loja, que não tem service worker. | `npm run eval:assetrev` |
 | `perfil-mobile-check.mjs` | Perfil mobile de qualidade (lane glm/peso): degrau inicial sem SSAO, sombra baixa, DPR ≤0,6 e mato ≤0,5; teto de textura min(1024, MAX_TEXTURE_SIZE); cadência de 60 FPS no jogo e 30 FPS no menu; degrau recuperado após reload. Cinco mutantes cobrem início, textura, memória, cadência e marcador automático. | `npm run eval:perfilmobile` |
 | `perfil-mobile-browser.mjs` | Integração real em Chrome Android emulado a 780×360: migra o `low` automático antigo, cobra DPR 0,6, 30/60 FPS por contexto, orçamento de efeitos, restauração do degrau após reload e precedência de uma escolha manual. | `npm run eval:perfilmobile:browser` |
@@ -151,7 +152,6 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | `mat_shade.py` | Sombreamento de material. |
 | `havan-planta.py` + `.png` | Planta baixa da Loja H. |
 | `p0-pix.py` | Comparação pixel a pixel da rodada P0. |
-| `vm_quake_measure.py` | Medição do look Quake 4 (o antecessor do look CS 1.6 atual). |
 
 ## 6. Infra
 
@@ -226,8 +226,15 @@ o que essas rodadas decidiram vivem no site/`main.js` e no `CHANGELOG.md`.
 Eram capturas de tuning de game feel; o que decidiram sobreviveu nos comentários
 de causa raiz do `game.js`/`springs.js` e no `CHANGELOG.md`.
 
-**Look Quake 4** (o projeto escolheu o look CS 1.6 na v3.2.0):
-`vm-quake-capture.mjs` · `vm-quake-scen.mjs` · `vm_quake_measure.py`
+**Aposentado — Look Quake 4** (movido para `tools/eval/aposentados/` em
+2026-11-13, issue #1085; o projeto escolheu o look CS 1.6 na v3.2.0):
+`vm-quake-capture.mjs` · `vm-quake-scen.mjs` · `vm_quake_measure.py`.
+A máscara A/B e a orientação do cano do primeiro sobrevivem nos comentários de
+`_vmFrame` e no `vm-mint-audit.mjs`; ADS, flash e recarga do segundo, nos
+contratos C8–C13 do `BAR-CONSISTENCIA.md`; as medidas de enquadramento do
+terceiro, no bloco de causa raiz do `_vmFrame` no `game.js`. A decisão e os
+valores históricos das duas famílias de look ficaram no `CHANGELOG.md` (3.1.0 e
+3.2.0).
 
 **Diagnósticos R2:** `r2_audit.py` · `r2_diag.py`
 

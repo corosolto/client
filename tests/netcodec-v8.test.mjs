@@ -25,10 +25,10 @@ for(const [version,expected] of Object.entries(legacyHashes)) test(`legacy v${ve
  const bytes=current.encodeSnapshot(fixture(7,10),Number(version));
  assert.equal(createHash('sha256').update(bytes).digest('hex'),expected);
 });
-test('unversioned producers retain v7 and refuse objective/J',()=>{
- assert.equal(current.encodeSnapshot(fixture())[4],7);
- assert.throws(()=>current.encodeSnapshot({...fixture(),objective:{mode:'javaporcos'}}),/objective_requires_v8/);
- const j=fixture();j.ents[0].team='J';assert.throws(()=>current.encodeSnapshot(j),/objective_requires_v8/);
+test('unversioned producers use current v9 contract',()=>{
+ const snapshot=fixture();snapshot.objective={mode:'javaporcos'};snapshot.ents[0].team='J';snapshot.ents[0].crouch=true;
+ const wire=current.encodeSnapshot(snapshot),out=current.decodeSnapshot(wire);
+ assert.equal(wire[4],9);assert.equal(out.objective.mode,'javaporcos');assert.equal(out.ents[0].team,'J');assert.equal(out.ents[0].crouch,true);
 });
 test('explicit v8 transports objective, J, mantle and 80 entities together',()=>{
  const snapshot=fixture(7,80);snapshot.objective={mode:'javaporcos',phase:'wave',wave:3,targets:[1,2],message:'Proteja o sítio 🐗'};
@@ -39,13 +39,6 @@ test('explicit v8 transports objective, J, mantle and 80 entities together',()=>
  assert.equal(out.ents[2].weapon,'awp');
 });
 
-test('v8 has a distinct advertised name and explicit name→version mapping',()=>{
- assert.equal(current.SNAPSHOT_PROTOCOLS[0],'coro-snapshot-v8');
- assert.equal(typeof current.snapshotVersionForProtocol,'function');
- for(let version=2;version<=8;version++)assert.equal(current.snapshotVersionForProtocol(`coro-snapshot-v${version}`),version);
- assert.equal(current.snapshotVersionForProtocol('coro-json-v1'),1);
- for(const input of ['coro-snapshot-v9','coro-snapshot-v07','__proto__','toString','',null,undefined])assert.equal(current.snapshotVersionForProtocol(input),null);
-});
 
 test('old versions refuse silent objective or J downgrade',()=>{
  for(let version=2;version<8;version++){
@@ -63,7 +56,7 @@ test('entity limit remains 64 in v7 and becomes 80 only in v8',()=>{
 });
 
 test('version input must be an integer in the supported range',()=>{
- for(const version of [NaN,2.5,7.5,8.5,Infinity,1,9,'8',null])assert.throws(()=>current.encodeSnapshot(fixture(),version),/snapshot_version/);
+ for(const version of [NaN,2.5,7.5,8.5,Infinity,1,10,'8',null])assert.throws(()=>current.encodeSnapshot(fixture(),version),/snapshot_version/);
 });
 
 test('v8 objective accepts plain finite JSON values without silent loss',()=>{

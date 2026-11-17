@@ -23,7 +23,7 @@
    Mutantes: bloco-longo, comentario-ingles e cauda-longa (`//` depois de código,
    o furo que o greptile achou no PR #209) injetam a violação e devem acender.
 
-   Uso: node tools/eval/comentario-check.mjs [--base=origin/main]
+   Uso: node tools/eval/comentario-check.mjs [--base=origin/staging]
         [--mutante=bloco-longo|comentario-ingles|cauda-longa]
    ============================================================================ */
 import { execFileSync } from 'node:child_process';
@@ -34,7 +34,13 @@ const mutante = arg('mutante');
 if (mutante && !['bloco-longo', 'comentario-ingles', 'cauda-longa'].includes(mutante)) {
   throw new Error(`mutante desconhecido: ${mutante}`);
 }
-const base = arg('base') || 'origin/main';
+/* PR de staging diffam contra origin/staging; main dava falso positivo (comentário da
+   staging visto como "novo"). Sem staging remoto o default segue main. */
+const baseExplicita = arg('base');
+let base = baseExplicita;
+if (!base) {
+  base = resolverBase('origin/staging').ok ? 'origin/staging' : 'origin/main';
+}
 
 const TETO_LINHAS = 2;
 const ZONAS = /^(public\/js\/|src\/)/;

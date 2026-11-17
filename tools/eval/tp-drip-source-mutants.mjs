@@ -168,5 +168,5 @@ async function main() {
 const invoked = process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
 if (invoked) {
   try { process.exitCode = await main(); }
-  catch (error) { console.error(JSON.stringify({ schema: 'tp-drip-source-mutants-result/1', ok: false, status: 'INFRA', error: error.message })); process.exitCode = 3; }
+  catch (error) { console.error(JSON.stringify({ schema: 'tp-drip-source-mutants-result/1', ok: false, status: 'INFRA', error: error.message })); process.exitCode = 78; }
 }

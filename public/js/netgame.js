@@ -6,34 +6,14 @@ import { WEAPONS, supDeCod, anguloDeDisparo } from './game.js';
 import { frase } from './i18n.js';
 import { preloadEyewearAssets } from './eyewear.js';
 import { preloadCosmeticAssets } from './glbchars.js';
+import { emoteInfo } from './data/emote-catalog.js';
+import { InterpolationClock, ensureEntityBuffer, pushEntitySample, sampleEntityBuffer } from './net-interpolation.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
 
-/* Insere a amostra NA ORDEM do tempo do servidor. Com WebSocket o snapshot nunca chega fora
-   de ordem; com datagrama, chega — e empurrar no fim faria o boneco andar para trás. */
-const RELOGIO_NOVO_MS = 1000;
 const PLAYER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function rosterPlayerId(entity, row) {
   return !entity?.bot && PLAYER_ID.test(row?.pid || '') ? row.pid : '';
-}
-function inserirAmostra(ent, t, e, semOrdem = false) {
-  const at = ent._bufAt, n = at.length;
-  ent._bufMantle ||= [];
-  let i = n;
-  if (!semOrdem) while (i > 0 && at[i - 1] > t) i--;
-  if (i > 0 && at[i - 1] === t) return;   // duplicado: datagrama repetido não vira amostra nova
-  if (i === n) {
-    at.push(t); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z);
-    ent._bufYaw.push(e.yaw); ent._bufPitch.push(e.pitch || 0);
-    ent._bufMantle.push(Number.isFinite(e.mantleF) ? e.mantleF : -1);
-  } else {
-    at.splice(i, 0, t); ent._bufX.splice(i, 0, e.x); ent._bufY.splice(i, 0, e.y); ent._bufZ.splice(i, 0, e.z);
-    ent._bufYaw.splice(i, 0, e.yaw); ent._bufPitch.splice(i, 0, e.pitch || 0);
-    ent._bufMantle.splice(i, 0, Number.isFinite(e.mantleF) ? e.mantleF : -1);
-  }
-  if (at.length > 10) {
-    at.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); ent._bufPitch.shift(); ent._bufMantle.shift();
-  }
 }
 
 class Netcode {
@@ -53,11 +33,11 @@ class Netcode {
     /* Buffer base ~2,4 snapshots; gaps repetidos ampliam até 140 ms para o remoto
        não congelar, e a rede estável volta ao atraso mínimo (BUG-87). */
     this.snapshotHz = Math.max(1, Number(net.meta?.snapshotHz) || 20);
-    this._baseInterpAtrasoMs = Math.max(75, Math.min(140, 2400 / this.snapshotHz));
-    this.interpAtrasoMs = this._baseInterpAtrasoMs;
+    this._interpolation = null;
     this._arrivalGaps = [];
     this._tAt = []; this._tT = [];   // chegada ↔ tempo-de-servidor dos últimos snapshots
-    this._offMs = null;               // chegada − t·1000 (mínimo da janela, deslizado) — BUG-118
+    this._remoteSample = { vx: 0, vz: 0, segYaw: null };
+    this._atualizarAtrasoCallback = (gapMs) => this._atualizarAtrasoInterpolacao(gapMs);
     // Predições indexadas pelo seq que o snapshot v4 reconhece. Arrays planos evitam objeto
     // por quadro no hot path; 180 entradas cobrem 3 s a 60 fps antes do fallback de desync.
     this._predSeq = []; this._predX = []; this._predY = []; this._predZ = [];
@@ -133,6 +113,29 @@ class Netcode {
 
   get espectador() { return this.net.espectador || this.net.yourEnt == null; }
 
+  // Campos históricos continuam mutáveis para as réguas e para os consumidores de apresentação.
+  _clock() {
+    if (!this._interpolation) {
+      this._interpolation = new InterpolationClock({
+        snapshotHz: this.snapshotHz,
+        now: () => this._now(),
+        ping: () => this.net.stats?.ping,
+      });
+      this._arrivalGaps = this._interpolation.arrivalGaps;
+      this._tAt = this._interpolation.arrivalTimes;
+      this._tT = this._interpolation.serverTimes;
+    }
+    return this._interpolation;
+  }
+  get interpAtrasoMs() { return this._clock().delayMs; }
+  set interpAtrasoMs(v) { this._clock().delayMs = v; }
+  get _baseInterpAtrasoMs() { return this._clock().baseDelayMs; }
+  get _offMs() { return this._clock().offsetMs; }
+  get _snapPrevT() { return this._interpolation?.previousServerTime; }
+  get _snapCurT() { return this._interpolation?.currentServerTime; }
+  get _snapArrPrev() { return this._interpolation?.previousArrivalTime; }
+  get _snapArrCur() { return this._interpolation?.currentArrivalTime; }
+
   // Relógio de parede do netcode — indireção para a régua fabricar jitter determinístico.
   _now() { return performance.now(); }
 
@@ -141,38 +144,16 @@ class Netcode {
      compensation) — é o que faz o tiro cair onde você VIU o alvo, e não onde ele já está. */
   renderTime() {
     // Mesmo relógio da interpolação (BUG-118): o rewind cai exatamente no que a tela mostrou.
-    const t = this._tT;
-    if (t.length) {
-      const rt = (this._relogioAgora() - this.interpAtrasoMs) / 1000;
-      return Math.min(t[t.length - 1], Math.max(t[0], rt));   // nunca à frente do último snapshot
-    }
+    if (this._tT.length) return this._clock().renderTime(this._snapCurT || 0, this._relogioAgora());
     return this._snapCurT || 0;
   }
 
   // Relógio do buffer dos remotos = tempo do SERVIDOR, não a chegada (BUG-118, KNOWN-BUGS.md).
   // Costura da régua: o mutante troca os dois pelo relógio de chegada.
-  _relogioSnap(snap, nowMs) { return Number.isFinite(snap.t) ? snap.t * 1000 : nowMs; }
-  _relogioAgora() { return this._offMs == null ? this._now() : this._now() - this._offMs; }
+  _relogioSnap(snap, nowMs) { return this._clock().snapshotTime(snap, nowMs); }
+  _relogioAgora() { return this._clock().serverNow(); }
 
-  _atualizarAtrasoInterpolacao(gapMs) {
-    if (!(gapMs > 0)) return;
-    if (gapMs >= 1000) {
-      this._arrivalGaps.length = 0;
-      this.interpAtrasoMs = this._baseInterpAtrasoMs;
-      return;
-    }
-    this._arrivalGaps.push(gapMs);
-    if (this._arrivalGaps.length > 30) this._arrivalGaps.shift();
-    if (this._arrivalGaps.length < 12) return;
-    const gaps = [...this._arrivalGaps].sort((a, b) => a - b);
-    const p90 = gaps[Math.floor((gaps.length - 1) * 0.9)];
-    // O servidor só rebobina 250 ms; 20 ms de margem cobrem fila e assimetria do RTT.
-    const rtt = Number(this.net.stats?.ping);
-    const teto = Number.isFinite(rtt) && rtt > 0 ? Math.max(this._baseInterpAtrasoMs, Math.min(140, 230 - rtt / 2)) : 140;
-    const alvo = Math.max(this._baseInterpAtrasoMs, Math.min(teto, p90 + 20));
-    const mudanca = alvo - this.interpAtrasoMs;
-    this.interpAtrasoMs += Math.max(-2, Math.min(5, mudanca));
-  }
+  _atualizarAtrasoInterpolacao(gapMs) { this._clock().updateDelay(gapMs); }
 
   /* Chamado pelo game._updatePlayer logo DEPOIS do _moveEntity (a predição já aconteceu na
      tela). Reconcilia com a pose autoritativa e manda o input pro servidor. */
@@ -212,6 +193,7 @@ class Netcode {
       shoot: !!this.game.mouseDown0, weapon: p.weapon,
       // INTENÇÃO de mirar (1 bit). Quem integra o `adsF` — e portanto a precisão — é o servidor.
       ads: !!p.scoped,
+      emote: this.game._emoteAtual || null,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
       // duração DESTE passo (teto do laço do navegador): o servidor integra o comando por ela,
       // e não pelo tick dele — senão o ack compara poses de instantes diferentes (BUG-152).
@@ -356,6 +338,7 @@ class Netcode {
     this.net.sendInput({
       ax: 0, az: 0, crouch: false, shift: false, jump: false,
       yaw: p.yaw, pitch: p.pitch, shoot: false, weapon: p.weapon,
+      emote: game._emoteAtual || null,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(), dtms: 1,
     });
     this._inputAt = now;
@@ -400,6 +383,7 @@ class Netcode {
       const bot = (vipValido && e.id === vipId && vipLocal) ? vipLocal : pega(e.team, e.id);
       if (!bot) continue;
       bot._remote = e.id; bot._netId = e.id;
+      bot._netStateTick = null;   // casamento novo não herda o relógio visual do corpo anterior
       bot.team = e.team;                      // o lado do corpo passa a ser o do servidor
       bot.name = e.bot ? `[BOT] ${e.name}` : e.name; bot._nomeServidor = e.name;
       bot._playerId = pid;
@@ -472,17 +456,7 @@ class Netcode {
     const nowMs = this._now();
     /* Tempos do LAG COMP: chegada ↔ tempo-de-servidor dos últimos snapshots. É desta tabela
        que o renderTime() deriva o instante do servidor que a tela está mostrando. */
-    this._snapPrevT = this._snapCurT; this._snapArrPrev = this._snapArrCur;
-    this._snapCurT = snap.t; this._snapArrCur = nowMs;
-    if (this._snapArrPrev != null) this._atualizarAtrasoInterpolacao(nowMs - this._snapArrPrev);
-    this._tAt.push(nowMs); this._tT.push(snap.t);
-    if (this._tAt.length > 10) { this._tAt.shift(); this._tT.shift(); }
-    // Offset local↔servidor = MÍNIMO da janela (atraso só aumenta chegada−t); desliza ≤ 4 ms
-    // por snapshot, e salto > 1 s é relógio novo (partida nova) — BUG-118.
-    let off = Infinity;
-    for (let i = 0; i < this._tAt.length; i++) { const o = this._tAt[i] - this._tT[i] * 1000; if (o < off) off = o; }
-    if (this._offMs == null || Math.abs(off - this._offMs) > 1000) this._offMs = off;
-    else this._offMs += Math.max(-4, Math.min(4, off - this._offMs));
+    this._clock().observe(snap, nowMs, this._atualizarAtrasoCallback);
 
     const primeiroSnap = this._tAt.length <= 1;   // no casamento inicial, alive true->false é estado herdado, não morte
     if (game.ctf && snap.ctf) this.applyCtfState(snap.ctf);
@@ -536,6 +510,35 @@ class Netcode {
         this._syncPlayerLoadout(e, ent);
         continue;
       }
+      // Estados v9 seguem o tick monotônico da Room; posições antigas ainda entram no buffer ordenado.
+      const estadoNovo = ent._netStateTick == null || snap.tick > ent._netStateTick;
+      if (estadoNovo) {
+        ent._netCrouch = !!e.crouch;
+        ent.crouchF = ent._netCrouch ? 1 : 0;
+        const reloadIn = e.alive ? Math.max(0, Number(e.reloadIn) || 0) : 0;
+        // Fim autoritativo separa ciclos apesar de perda/jitter; tolerância v9 de 0,1 s.
+        // Game.t novo reancora sem zerar o tick da Room (docs/EMOTES-BR.md).
+        const reloadEndT = snap.t + reloadIn;
+        const clockRecuou = ent._netStateTick != null && snap.t < ent._netReloadAtT;
+        const reloadEndAntes = clockRecuou ? null : ent._netReloadEndT;
+        const novoCicloReload = reloadIn > 0 && reloadEndAntes != null && reloadEndT - reloadEndAntes > 0.100001;
+        if (novoCicloReload) ent._netReloadActive = false;
+        // Um relógio novo reancora a comparação do servidor, mas nunca alonga o prazo
+        // local do mesmo ciclo. Zero ou um fim autoritativo maior abrem outro ciclo.
+        ent._netReloadEndT = reloadIn > 0
+          ? reloadEndAntes == null || novoCicloReload ? reloadEndT : Math.min(reloadEndAntes, reloadEndT)
+          : null;
+        ent._netReloadAtT = snap.t;
+        const reloadUntilMs = nowMs + reloadIn * 1000;
+        ent._netReloadUntilMs = reloadIn > 0
+          ? (novoCicloReload ? reloadUntilMs : Math.min(ent._netReloadUntilMs || reloadUntilMs, reloadUntilMs))
+          : 0;
+        ent._netEmote = e.alive && game.state === 'live' && emoteInfo(e.emote) ? e.emote : null;
+        ent._netEmoteElapsed = Math.max(0, Number(e.emoteElapsed) || 0);
+        ent._netStateAtMs = nowMs;
+        ent._netStateTick = snap.tick;
+      }
+      this._syncRemoteStates(ent);
       /* Interpolação contínua entre pacotes (reiniciar picota o boneco). Campos PLANOS de
          propósito: um {x,y,z} por ent × frequência de rede gera GC que trava o vsync. */
       if (ent._ipT1 == null) {
@@ -554,21 +557,11 @@ class Netcode {
       ent._ipSrvT = snap.t;
       const moveDt = Number.isFinite(srvDt) && srvDt > 0 ? srvDt : Math.max(0.001, (ent._ipT1 - ent._ipT0) / 1000);
       ent._netSpd = salto > 3 ? 0 : salto / Math.max(0.001, moveDt);   // alimenta a animação de andar
-      if (!ent._bufAt) {
-        ent._bufAt = []; ent._bufX = []; ent._bufY = []; ent._bufZ = [];
-        ent._bufYaw = []; ent._bufPitch = []; ent._bufMantle = [];
-      }
       /* BUFFER de amostras (BUG-87, KNOWN-BUGS.md): arrays planos, cap 10 (zero objeto no
          hot path). Teleporte esvazia — interpolar através de respawn varreria o mapa. */
-      const tBuf = this._relogioSnap(snap, nowMs), nb = ent._bufAt.length;
-      // recuo grande = partida nova; recuo curto é pacote fora de ordem (BUG-164). O
-      // `__mutOrdemAntiga` é gancho da régua game/netloop-check.mjs; zero em produção.
-      const recuo = this.__mutOrdemAntiga ? 0 : RELOGIO_NOVO_MS;
-      if (salto > 3 || (nb && tBuf < ent._bufAt[nb - 1] - recuo)) {
-        ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0;
-        ent._bufYaw.length = 0; ent._bufPitch.length = 0; ent._bufMantle.length = 0;
-      }
-      inserirAmostra(ent, tBuf, e, this.__mutOrdemAntiga);
+      ensureEntityBuffer(ent);
+      const tBuf = this._relogioSnap(snap, nowMs);
+      pushEntitySample(ent, tBuf, e, salto > 3, this.__mutOrdemAntiga);
       ent._netPitch = e.pitch || 0;
       // v5 manda CONTADOR (bandeira de um snapshot some com o pacote); v4 manda bandeira
       const atirou = e.fireN == null ? !!e.fire : (ent._fireNvisto != null && e.fireN !== ent._fireNvisto);
@@ -1013,6 +1006,49 @@ class Netcode {
     try { game.sfx.respawn(); } catch { /* ctx mudo */ }
   }
 
+  /* Os estados vivem na entidade, não no GLB: uma troca de malha no meio da ação
+     recebe o restante atual. O import só instala o driver; nunca inicia dança num
+     callback atrasado, que poderia ressuscitar uma intenção já cancelada. */
+  _syncRemoteStates(b) {
+    const ctrl = b.mesh?.isGLB && b.mesh.ctrl;
+    if (!ctrl) return;
+    const novo = b._netVisualCtrl !== ctrl;
+    if (novo) {
+      b._netVisualCtrl = ctrl;
+      b._netReloadActive = false;
+      b._netEmoteAppliedTick = null;
+    }
+    ctrl.setCrouch?.(b.alive && !!b._netCrouch);
+    if (!b.alive) {
+      ctrl.cancelReload?.(); ctrl.pararEmote?.();
+      b._netVisualCtrl = null;
+      return;
+    }
+    if (ctrl.dead) return;   // updateRemoteBot revive antes de reaplicar a vida nova
+    const agora = this._now();
+    const restante = Math.max(0, ((b._netReloadUntilMs || 0) - agora) / 1000);
+    if (restante > 0 && !b._netReloadActive) ctrl.reload?.(restante);
+    else if (restante === 0 && b._netReloadActive) ctrl.cancelReload?.();
+    b._netReloadActive = restante > 0;
+    const info = emoteInfo(b._netEmote);
+    if (!info || this.game.state !== 'live') {
+      ctrl.pararEmote?.(); b._netEmoteAppliedTick = null;
+      return;
+    }
+    if (!this.game._emoteMod) {
+      if (!b._netEmoteLoading) {
+        b._netEmoteLoading = true;
+        void this.game._emoteMods().finally(() => { b._netEmoteLoading = false; });
+      }
+      return;
+    }
+    if (b._netEmoteAppliedTick === b._netStateTick && !novo) return;
+    const elapsed = b._netEmoteElapsed + Math.max(0, agora - b._netStateAtMs) / 1000;
+    if (!info.laco && elapsed >= info.dur) ctrl.pararEmote?.();
+    else ctrl.emote?.(info.id, info.laco ? elapsed % info.dur : elapsed);
+    b._netEmoteAppliedTick = b._netStateTick;
+  }
+
   /* Render de um boneco REMOTO. Chamado pelo game._updateBot para corpos com `_remote`.
      Espelha a lógica de morte do _updateBot local. */
   updateRemoteBot(b, dt, positionOnly = false) {
@@ -1024,39 +1060,13 @@ class Netcode {
     if (b._bufAt && b._bufAt.length) {
       /* Renderiza o remoto `interpAtrasoMs` no PASSADO, interpolando no buffer: absorve o
          jitter que congelava o boneco a cada pacote atrasado (BUG-87). NUNCA extrapola. */
-      const at = b._bufAt, n = at.length;
-      const rAt = this._relogioAgora() - this.interpAtrasoMs;
-      let j, a = 0;
-      if (rAt <= at[0]) j = 0;
-      else if (rAt >= at[n - 1]) j = n - 1;
-      else {
-        j = n - 2;
-        while (j > 0 && at[j] > rAt) j--;
-        a = (rAt - at[j]) / Math.max(1, at[j + 1] - at[j]);
-      }
-      const k = a > 0 ? j + 1 : j;
-      b.pos.x = b._bufX[j] + (b._bufX[k] - b._bufX[j]) * a;
-      b.pos.y = b._bufY[j] + (b._bufY[k] - b._bufY[j]) * a;
-      b.pos.z = b._bufZ[j] + (b._bufZ[k] - b._bufZ[j]) * a;
-      let dy = b._bufYaw[k] - b._bufYaw[j]; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
-      b.yaw = b._bufYaw[j] + dy * a;
-      if (b._bufPitch) b._netPitch = b._bufPitch[j] + (b._bufPitch[k] - b._bufPitch[j]) * a;   // cabeça também sem degrau de 30 Hz
-      if (b._bufMantle) {
-        const m0 = b._bufMantle[j], m1 = b._bufMantle[k];
-        b.mantleF = m0 >= 0 && m1 >= 0 ? m0 + (m1 - m0) * a : (a < 0.5 ? m0 : m1);
-      }
-      const s = Math.min(j, n - 2);
-      if (s >= 0) {
-        const segS = Math.max(1, at[s + 1] - at[s]) / 1000;
-        vx = (b._bufX[s + 1] - b._bufX[s]) / segS; vz = (b._bufZ[s + 1] - b._bufZ[s]) / segS;
-        let ds = b._bufYaw[s + 1] - b._bufYaw[s]; while (ds > Math.PI) ds -= Math.PI * 2; while (ds < -Math.PI) ds += Math.PI * 2;
-        // yaw do meio do segmento, não o do instante: girando, o erro inverte o sinal do strafe. `__mutYawInstante` é gancho de mp-recuo-check.mjs
-        segYaw = this.__mutYawInstante ? null : b._bufYaw[s] + ds / 2;
-      }
+      const sample = sampleEntityBuffer(b, this._relogioAgora() - this.interpAtrasoMs, this._remoteSample);
+      vx = sample.vx; vz = sample.vz; segYaw = this.__mutYawInstante ? null : sample.segYaw;
     }
     if (positionOnly) { g.visible = false; return; }
     if (b.alive) {
       if (b._deadShown) { if (b.mesh.isGLB) b.mesh.ctrl.revive && b.mesh.ctrl.revive(); b._deadShown = false; b.deadT = 0; }
+      if (b.mesh.isGLB) this._syncRemoteStates(b);
       const corpoYaw = b._netBot === false ? b.yaw + Math.PI : b.yaw;   // humano remoto olhava pra trás
       g.position.copy(b.pos); g.rotation.set(0, corpoYaw, 0); g.visible = true;
       const spd = Math.min(6, b._netSpd || 0);
