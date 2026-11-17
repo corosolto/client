@@ -181,6 +181,7 @@ Cobertura: **4143 de 10207 linhas (41%)** do `game.js` têm dono declarado. O re
 | 2678 | `_radioUi()` | 10 |
 | 2688 | `_emoteToggle()` | 10 |
 | 2698 | `_emoteMods()` | 9 |
+| 2711 | `_emoteAnel()` | 4 |
 | 2707 | `_emoteUi()` | 20 |
 | 2727 | `_emoteClose()` | 6 |
 | 2733 | `_emotePick()` | 11 |
@@ -202,6 +203,8 @@ Cobertura: **4143 de 10207 linhas (41%)** do `game.js` têm dono declarado. O re
 | 2968 | `_resetPositions()` | 288 |
 | 3256 | `_checkCtfAlvo()` | 13 |
 | 3269 | `_checkPace()` | 13 |
+| 3292 | `_cerimoniaCorpos()` | 4 |
+| 3296 | `_retomarCorposDaCerimonia()` | 4 |
 | 3282 | `_endRound()` | 37 |
 | 3319 | `_roundWinnerVoice()` | 12 |
 | 3331 | `_fimDaPartida()` | 13 |
