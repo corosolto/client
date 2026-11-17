@@ -999,12 +999,11 @@
   },
   "homepage": "https://www.corosolto.com.br",
   "dependencies": {
-    "@astrojs/vercel": "^11.0.6",
     "@resvg/resvg-js": "^2.6.2",
     "@resvg/resvg-wasm": "^2.6.2",
     "@supabase/supabase-js": "^2.110.7",
     "@vercel/functions": "3.7.5",
-    "astro": "^7.1.1",
+    "astro": "^7.4.12",
     "sharp": "^0.35.3"
   },
   "private": true,
@@ -1018,6 +1017,7 @@
   },
   "devDependencies": {
     "@astrojs/cloudflare": "^14.3.4",
+    "@astrojs/vercel": "^11.0.6",
     "@gltf-transform/core": "^4.4.1",
     "@gltf-transform/extensions": "^4.4.1",
     "@gltf-transform/functions": "^4.4.1",

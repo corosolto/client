@@ -211,8 +211,7 @@ async function entrarNoLobby(page, anuncioEsperado) {
 const foto = (page, nome, mutante) => (mutante ? null : page.screenshot({ path: `${OUT}/${nome}.png` }));
 const vis = (page, sel) => page.evaluate((s) => { const e = document.querySelector(s); return !!e && e.checkVisibility?.() && e.getBoundingClientRect().width > 0; }, sel);
 
-/* alvo: sob mutante só sobem as sessões que medem a cláusula mirada (o job tem prazo de 30 min). */
-async function medir(mutante = '', alvo = '') {
+async function medir(mutante = '') {
   mkdirSync(OUT, { recursive: true });
   const r = [];
   const add = (id, ok, msg) => r.push({ id, ok: !!ok, msg });
