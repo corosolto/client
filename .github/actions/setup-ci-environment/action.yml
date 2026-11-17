@@ -1,20 +1,26 @@
 name: Shared pr-fast environment
-description: Restores the dependencies installed and the dist built by the setup job.
+description: >-
+  Restores the node_modules cached by package-lock.json and the dist built by the setup job
+  (public/ copies come back from this checkout, checked by sha256; see scripts/ci/dist-compartilhado.mjs).
 runs:
   using: composite
   steps:
     - name: Restore shared node_modules
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
       with:
         path: node_modules
-        key: pr-fast-node-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.run_id }}
+        key: pr-fast-node-v2-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
         fail-on-cache-miss: true
 
     - name: Download shared dist
       uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
       with:
-        name: pr-fast-dist-${{ github.run_id }}-${{ github.run_attempt }}
-        path: .
+        name: pr-fast-dist-${{ github.run_id }}
+        path: ${{ runner.temp }}/pr-fast-dist
+
+    - name: Rebuild shared dist from the artifact and this checkout
+      shell: bash
+      run: node scripts/ci/dist-compartilhado.mjs restaura "$RUNNER_TEMP/pr-fast-dist"
 
     - name: Validate shared environment
       shell: bash
@@ -23,3 +29,4 @@ runs:
         test -x node_modules/.bin/astro || { echo '::error::shared node_modules is incomplete'; exit 1; }
         test -f dist/client/index.html || { echo '::error::shared dist is incomplete'; exit 1; }
         test -d .vercel/output/functions || { echo '::error::shared Vercel functions are incomplete'; exit 1; }
+        test -f .vercel/output/static/index.html || { echo '::error::shared Vercel static mirror is incomplete'; exit 1; }
