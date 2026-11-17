@@ -96,7 +96,7 @@ const MUT = {
   'perfil-so-com-conta': ['VS1', ['visitante'], /\/js\/community\.js/, (t) => t.replace("const alvo=profileId || auth?.profile?.id || idConvidado();", 'const alvo=profileId || auth?.profile?.id;')],
   'login-na-tela-toda': ['VS1', ['visitante'], /\/js\/community\.js/, (t) => t.replace("&& tab==='profile' && !painelPedido)panel.open=false", "&& tab==='profile' && !painelPedido)panel.open=true")],
   'convite-sumido': ['VS1', ['visitante'], /\/js\/tp\/perfil\.js/, (t) => t.replace('if (d.visitante) v.append(convite());', '')],
-  'vazio-vira-legado': ['VS2', ['semperfil'], /\/js\/tp\/perfil\.js/, (t) => t.replace('d?.visitante === true)', 'false)')],
+  'vazio-vira-legado': ['VS2', ['semperfil'], /\/js\/tp\/perfil\.js/, (t) => t.replace('d?.visitante === true;', 'false;')],
   'vazio-zerado': ['VS2', ['semperfil'], /\/js\/tp\/perfil\.js/, (t) => t.replace("el('p', 'tp-perfil__vazio', tr('Abates, ranking", "trk('Abates', '0'), el('p', 'tp-perfil__vazio', tr('Abates, ranking")],
 };
 
