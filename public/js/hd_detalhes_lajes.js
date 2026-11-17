@@ -159,10 +159,30 @@ function madeiraVelha(P, r) {
   P.ret(.52, .452, .46, .022, '#3a3835', 1); P.ret(.56, .443, .04, .04, FER, 1); P.ret(.9, .443, .04, .04, FER, 1); P.ret(.93, .474, .03, .034, '#6a6560', 1); P.ret(.935, .486, .02, .018, '#2a2623', .6);
   P.so((C) => { const g = C.createLinearGradient(0, .82, 0, 1); g.addColorStop(0, 'rgba(22,18,14,0)'); g.addColorStop(1, 'rgba(22,18,14,.3)'); C.fillStyle = g; C.fillRect(0, .82, 1, .18); });
 }
+// Aço de enrolar: lâminas galvanizadas, metade de cima pintada (2º tom com luma -12 %) com transição em linha contínua (seno de baixa
+// frequência ±2 cm) e 2–3 lascas arredondadas de 8–15 cm; nada por pixel (o ruído do canvas ampliado virava blocos de 3 px na captura).
+// Ferrugem = um gradiente vertical contínuo nos 30 cm do pé, modulado por gradiente horizontal suave; fechadura preta com miolo a 0,9 m do piso.
 function enrolar(P, r) {
   P.ret(0, 0, 1, 1, '#50565a', .95);
-  for (let y = .012; y < .93; y += .043) { P.ret(.07, y, .86, .028, tom([134, 142, 146], .9 + r() * .16), .85); P.ret(.07, y + .028, .86, .015, '#666c70', .4); }
+  const tinta = r() < .5 ? [112, 126, 128] : [110, 120, 136], corte = .50 + r() * .06, fase = r() * 6.28, lascas = 2 + Math.floor(r() * 2);
+  for (let y = .012; y < .93; y += .043) { const g = .92 + r() * .12; P.ret(.07, y, .86, .028, tom([134, 142, 146], g), .85); P.ret(.07, y + .028, .86, .015, '#666c70', .4); }
+  P.so((C) => {
+    // Tinta: polígono da borda superior até a linha de corte senoidal (amplitude 0,01 = 2 cm); as lascas são elipses de galvanizado por cima.
+    C.save(); C.beginPath(); C.moveTo(0, 0); C.lineTo(1, 0);
+    for (let i = 40; i >= 0; i--) { const u = i / 40; C.lineTo(u, corte + .01 * Math.sin(u * 7.0 + fase) + .004 * Math.sin(u * 17.0 + fase * 2.0)); }
+    C.closePath(); C.clip();
+    for (let y = .012; y < .93; y += .043) { const g = .92 + r() * .12; C.fillStyle = tom(tinta, g); C.fillRect(.07, y, .86, .028); C.fillStyle = '#4e5a5a'; C.fillRect(.07, y + .028, .86, .015); }
+    C.restore();
+    for (let i = 0; i < lascas; i++) { const u = .12 + r() * .76, rx = .045 + r() * .04, ry = .02 + r() * .016, a = (r() - .5) * .5;
+      C.fillStyle = tom([134, 142, 146], .95 + r() * .1); C.beginPath(); C.ellipse(u, corte - .006 + r() * .012, rx, ry, a, 0, 6.3); C.fill();
+      C.fillStyle = 'rgba(102,108,112,.55)'; C.beginPath(); C.ellipse(u, corte - .006 + r() * .012, rx * .55, ry * .5, a, 0, 6.3); C.fill(); }
+    const gv = C.createLinearGradient(0, .78, 0, 1); gv.addColorStop(0, 'rgba(96,62,38,0)'); gv.addColorStop(.35, 'rgba(100,64,40,.2)'); gv.addColorStop(.75, 'rgba(84,54,32,.5)'); gv.addColorStop(1, 'rgba(62,40,24,.8)');
+    C.fillStyle = gv; C.fillRect(.07, .78, .86, .22);
+    const gh = C.createLinearGradient(.07, 0, .93, 0); gh.addColorStop(0, 'rgba(80,52,30,.35)'); gh.addColorStop(.3, 'rgba(80,52,30,0)'); gh.addColorStop(.62, 'rgba(80,52,30,.3)'); gh.addColorStop(1, 'rgba(80,52,30,.05)');
+    C.save(); C.globalAlpha = 1; C.fillStyle = gh; C.beginPath(); C.rect(.07, .84, .86, .16); C.fill(); C.restore();
+  });
   P.ret(.07, .955, .86, .03, '#3f4447', 1); for (const x of [.22, .72]) P.ret(x, .96, .07, .018, '#1d1f20', 1);
+  P.ret(.455, .545, .09, .036, '#1c1e1f', 1); P.ret(.49, .553, .02, .012, '#8c8f90', 1); P.ret(.4, .558, .05, .012, '#2c2f30', 1);
 }
 function ondulada(P, r) {
   P.ret(0, 0, 1, 1, '#45484a', .9);
