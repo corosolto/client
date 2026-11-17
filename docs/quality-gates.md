@@ -143,12 +143,27 @@ remoção de script, JSON inválido ou falha ao ler o diff executa `check:deploy
 só existe localmente: o CI nunca usa diff para pular testes.
 
 `check:fast` e `check:deploy` expandem `tools/eval/suites.mjs` com a sequência anterior preservada.
-Os 17 contratos visuais são distribuídos em seis jobs sem perda ou duplicação. O pai local
+Os 17 contratos visuais rodam uma vez cada, sem perda ou duplicação (PI4). O pai local
 `eval:operacao-flavio` continua sequencial e completo; no CI, os 50 mutantes de collider usam
-quatro shards disjuntos, com core, menu, online, integração, comportamento e escolta em jobs separados.
+quatro shards disjuntos, e core, menu, online, integração, comportamento e escolta são passos próprios.
+
+Distribuição do `pr-fast` (17/11/2026): `setup` instala e constrói uma vez; dez lotes de ~7 min
+(`reguas-e-site`, `mapas-e-site`, `invariantes-mapas`, `equipamento-tp-corpo`, `equipamento-tp-origem`,
+`economia-ak-hud`, `operacao-flavio`, `operacao-flavio-e-mantle`, `contratos-visuais-mapas`,
+`contratos-visuais-personagens`) mais o `soundscape` rodam em paralelo; `build` agrega e `dco` corre à
+parte. Antes eram 41 jobs atrás de um limite de 20 simultâneos na org, cada um pagando ~55 s fixos.
+Cada lote junta blocos `# ── <unidade>` inteiros, escolhidos pela duração medida (tempos por passo e o
+manifesto do `eval-duration-calibration`, que o pr-fast não lê: manifesto vencido não reprova PR).
+Todo passo de lote roda com `!cancelled() && deps ok`, então régua vermelha não esconde as seguintes.
+Rebalancear é mover bloco entre lotes e atualizar o dono no PI4 (`tools/eval/portao-inteiro-check.mjs`).
+`node_modules` vem de cache pela hash do `package-lock.json` (gravada depois do `npm ci`, antes do
+build); o artefato do dist leva só o que o checkout do consumidor não tem
+(`scripts/ci/dist-compartilhado.mjs`: espelho `.vercel/output/static` e cópias de `public/` são
+refeitos e conferidos por sha256). `cache-limpeza` preserva a cache do lock atual da main.
+
 O `soundscape` é um job obrigatório separado no `build`, então falha externa de áudio não invalida
 um agregado inteiro. Packs de assets usam cache por tag exata e checksum quando existir; os asserts
-nominais continuam obrigatórios. As invariantes são divididas por família e por mapa, sem separar
+nominais continuam obrigatórios. As invariantes rodam um processo por família e por mapa, sem separar
 produtor e consumidor de um `freshReport`. Sertão usa shards por IDs de check, nunca por qualidade.
 O runner grava `tools/eval/out/runner-latest.json` por execução e aceita `--jobs=2` apenas no core;
 o pre-push continua sequencial por padrão para não aumentar contenção na máquina local.

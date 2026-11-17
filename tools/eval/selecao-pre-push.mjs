@@ -25,6 +25,8 @@ const REGUAS_WORKFLOW = Object.freeze({
   '.github/workflows/csbrasil-bot-pr-classify.yml': Object.freeze([]),
   '.github/workflows/csbrasil-bot-build-fix.yml': Object.freeze([]),
   '.github/workflows/pr-gates.yml': Object.freeze(['eval:mergequeue']),
+  '.github/workflows/cache-limpeza.yml': Object.freeze([]),
+  '.github/workflows/eval-duration-calibration.yml': Object.freeze([]),
 });
 
 export function validarMapaWorkflows(mapa) {
