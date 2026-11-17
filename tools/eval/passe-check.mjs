@@ -43,9 +43,11 @@
                            e tenta de novo, outro erro para a fila; resumo somado da trilha.
    PS14 partida         · acompanharPartidaPasse guarda o XP de antes e liquida de novo duas vezes,
                            a segunda ~8 s depois (MP chega atrasado), sempre forçada.
-   PS15 festa-por-conta · tp/passe-festa.js (lido, sem DOM): troca de conta fecha a celebração e
-                           descarta o level-up e os avisos pendentes; novidade de outra conta é
-                           ignorada. No navegador: passe-browser.mjs, PB19.
+   PS15 festa-por-conta · tp/passe-festa.js EXECUTADO com o passe.js deste processo e o DOM mínimo
+                           (a tela tp/passe.js entra como dublê): level-up e aviso de missão da conta A
+                           ficam pendentes, a conta B entra e uma novidade velha da A chega; nada da A
+                           aparece. Celebração aberta fecha na troca. Controle positivo: sem troca, a
+                           celebração e o aviso aparecem. No navegador: passe-browser.mjs, PB19.
 
    Uso: node tools/eval/passe-check.mjs [--mutante=<id> [--espera-reprovar]]
      --espera-reprovar  sai 0 só se o mutante derrubar a cláusula que ele mira
@@ -100,6 +102,8 @@ const MUTANTES = {
   'festa-vaza-conta': ['PS15', 'public/js/tp/passe-festa.js', "  document.addEventListener('cs-account-change', esquecerConta);\n", '\n'],
   'festa-guarda-fila': ['PS15', 'public/js/tp/passe-festa.js', '  fila = null;\n  pendentes.length = 0;\n', '\n'],
   'novidade-de-outra-conta': ['PS15', 'public/js/tp/passe-festa.js', '    if (!conta || conta !== passeConta()) return;\n', '\n'],
+  'esquecer-cedo': ['PS15', 'public/js/tp/passe-festa.js', 'function esquecerConta() {\n  fila = null;', 'function esquecerConta() {\n  return;\n  fila = null;'],
+  'festa-aberta-fica': ['PS15', 'public/js/tp/passe-festa.js', '  if (festa?.open) festa.close();\n', '\n'],
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -121,38 +125,82 @@ const { criarPasseMock, xpAcumulado } = await import(dataUrl(ler('tools/eval/pas
 const AGORA = Date.parse('2026-11-20T15:00:00Z');
 Date.now = () => AGORA;
 
-/* ---------- DOM mínimo: o que passe.js e passe-anuncio.js tocam ---------- */
+/* ---------- DOM mínimo: o que passe.js, passe-anuncio.js e tp/passe-festa.js (PS15) tocam ---------- */
 const storage = new Map();
 let busca = '';
 /* MutationObserver mínimo: qualquer mudança de <dialog> (abrir, fechar, sair do DOM) avisa todos. */
 const observadores = new Set();
 globalThis.MutationObserver = class { constructor(cb) { this.cb = cb; } observe() { observadores.add(this); } disconnect() { observadores.delete(this); } };
 const mudou = () => queueMicrotask(() => { for (const o of [...observadores]) o.cb([]); });
+/* seletor simples: tag, #id, .classe, [data-x], [open] e :popover-open, com descendência por espaço */
+const camel = (s) => s.replace(/-(\w)/g, (_, c) => c.toUpperCase());
+function casa(n, parte) {
+  const m = parte.match(/^([a-z]+)?((?:[#.][\w-]+|\[[\w-]+(?:="[^"]*")?\]|:popover-open)*)$/i);
+  if (!m) throw new Error(`seletor não suportado no DOM mínimo: ${parte}`);
+  if (m[1] && n.tagName !== m[1].toUpperCase()) return false;
+  for (const [t] of m[2].matchAll(/[#.][\w-]+|\[[\w-]+(?:="[^"]*")?\]|:popover-open/g)) {
+    if (t[0] === '#' && n.id !== t.slice(1)) return false;
+    if (t[0] === '.' && !n.classList.contains(t.slice(1))) return false;
+    if (t === ':popover-open' && !n.popoverAberto) return false;
+    if (t[0] === '[') {
+      const [, k, v] = t.match(/^\[([\w-]+)(?:="([^"]*)")?\]$/);
+      const val = k === 'open' ? (n.open ? '' : null) : k.startsWith('data-') ? n.dataset[camel(k.slice(5))] : n.getAttribute(k);
+      if (val == null || (v !== undefined && String(val) !== v)) return false;
+    }
+  }
+  return true;
+}
+function busque(raiz, sel) {
+  const partes = sel.trim().split(/\s+/);
+  let atuais = [raiz];
+  for (const p of partes) atuais = [...new Set(atuais.flatMap((n) => n.todos().filter((d) => casa(d, p))))];
+  return atuais;
+}
 class No {
-  constructor(tag) { this.tagName = tag.toUpperCase(); this.children = []; this.attrs = {}; this.dataset = {}; this.ouvintes = {}; this.textContent = ''; this.open = false; this.parent = null; this.style = { setProperty() {} }; }
+  constructor(tag) { this.tagName = tag.toUpperCase(); this.children = []; this.attrs = {}; this.dataset = {}; this.ouvintes = {}; this.textContent = ''; this.open = false; this.parent = null; this.id = ''; this.className = ''; this.hidden = false;
+    const estilo = {}; this.style = { setProperty(k, v) { estilo[k] = String(v); }, getPropertyValue: (k) => estilo[k] ?? '', removeProperty(k) { delete estilo[k]; } }; }
+  get classList() {
+    const lista = () => this.className.split(/\s+/).filter(Boolean);
+    return { contains: (c) => lista().includes(c), add: (...c) => { this.className = [...new Set([...lista(), ...c])].join(' '); mudou(); },
+      remove: (...c) => { this.className = lista().filter((x) => !c.includes(x)).join(' '); mudou(); } };
+  }
+  set innerHTML(html) { this.children = []; for (const [, tag, at] of html.matchAll(/<(\w+)([^>]*)>/g)) { const n = new No(tag); n.className = at.match(/class="([^"]*)"/)?.[1] || ''; this.append(n); } }
   setAttribute(k, v) { this.attrs[k] = String(v); }
   getAttribute(k) { return this.attrs[k] ?? null; }
-  append(...xs) { for (const x of xs) { if (typeof x === 'string') this.textContent += x; else { x.parent = this; this.children.push(x); } } mudou(); }
+  removeAttribute(k) { delete this.attrs[k]; }
+  toggleAttribute(k, v) { if (v) this.attrs[k] = ''; else delete this.attrs[k]; }
+  append(...xs) { for (const x of xs) { if (typeof x === 'string') this.textContent += x; else { x.remove?.(); x.parent = this; this.children.push(x); } } mudou(); }
   appendChild(x) { this.append(x); return x; }
+  insertBefore(x, ref) { x.remove?.(); x.parent = this; const i = this.children.indexOf(ref); this.children.splice(i < 0 ? this.children.length : i, 0, x); mudou(); return x; }
+  replaceChildren(...xs) { for (const c of this.children) c.parent = null; this.children = []; this.append(...xs); }
   remove() { if (this.parent) this.parent.children = this.parent.children.filter((c) => c !== this); this.parent = null; mudou(); }
+  contains(n) { return n === this || this.todos().includes(n); }
+  matches(sel) { return casa(this, sel); }
+  querySelector(sel) { return busque(this, sel)[0] || null; }
+  querySelectorAll(sel) { return busque(this, sel); }
   addEventListener(t, f) { (this.ouvintes[t] ||= []).push(f); }
   dispara(t) { for (const f of this.ouvintes[t] || []) f({ preventDefault() {} }); }
   showModal() { this.open = true; mudou(); }
-  close() { this.open = false; mudou(); }
+  close() { if (!this.open) return; this.open = false; this.dispara('close'); mudou(); }
+  showPopover() { this.popoverAberto = true; }
+  hidePopover() { this.popoverAberto = false; }
   focus() { document.activeElement = this; }
   get isConnected() { let n = this; while (n.parent) n = n.parent; return n === document.body; }
   todos() { return this.children.flatMap((c) => [c, ...c.todos()]); }
   texto() { return [this.textContent, ...this.children.map((c) => c.texto())].join(' '); }
 }
+const ouvintesDoc = {};
 const document = {
   body: new No('body'), documentElement: { dataset: {} }, activeElement: null,
   createElement: (t) => new No(t),
-  querySelector(sel) {
-    if (sel === 'dialog[open]') return [this.body, ...this.body.todos()].find((n) => n.tagName === 'DIALOG' && n.open) || null;
-    throw new Error(`seletor não suportado no DOM mínimo: ${sel}`);
-  },
-  dispatchEvent(e) { if (e?.type === 'cs-passe-novidade') novidades.push(e.detail); return true; },
+  getElementById(id) { return this.body.todos().find((n) => n.id === id) || null; },
+  querySelector(sel) { return busque(this.body, sel)[0] || null; },
+  querySelectorAll(sel) { return busque(this.body, sel); },
+  addEventListener(t, f) { (ouvintesDoc[t] ||= []).push(f); },
+  dispatchEvent(e) { if (e?.type === 'cs-passe-novidade') novidades.push(e.detail); for (const f of ouvintesDoc[e?.type] || []) f(e); return true; },
 };
+globalThis.matchMedia = () => ({ matches: true, addEventListener() {} });   // movimento reduzido: contagens vão direto ao valor final
+globalThis.requestAnimationFrame = (f) => setTimeout(() => f(Date.now()), 0);
 globalThis.document = document;
 globalThis.CustomEvent = class { constructor(t, o) { this.type = t; this.detail = o?.detail; } };
 globalThis.localStorage = { getItem: (k) => (storage.has(k) ? storage.get(k) : null), setItem: (k, v) => storage.set(k, String(v)), removeItem: (k) => storage.delete(k) };
@@ -196,6 +244,16 @@ const anuncioFonte = ler('public/js/passe-anuncio.js')
   .replace("from './i18n.js'", `from '${pathToFileURL('public/js/i18n.js').href}'`)
   .replace("from './passe.js'", `from '${passeUrl}'`);
 const A = await import(dataUrl(anuncioFonte));
+/* tp/passe-festa.js com o MESMO passe.js (mesma URL de módulo, mesmo estado) e um dublê da tela do passe */
+const TELA_DUBLE = `let aberto = false;
+export const NOMES_MISSAO = { play_3: 'Jogar 3 partidas', win_10: 'Vencer 10 partidas', mp_10: 'Jogar 10 partidas multiplayer' };
+export const abrirPasse = () => { aberto = true; }; export const passeAberto = () => aberto; export const fecharPasse = () => { aberto = false; };
+export const premio = () => document.createElement('li'); export const elementoResumo = () => document.createElement('section');
+export const mensagemErro = (c) => String(c); export const numero = (n) => String(n);`;
+const festaFonte = ler('public/js/tp/passe-festa.js')
+  .replace("from '../i18n.js'", `from '${pathToFileURL('public/js/i18n.js').href}'`)
+  .replace("from '../passe.js'", `from '${passeUrl}'`)
+  .replace("from './passe.js'", `from '${dataUrl(TELA_DUBLE)}'`);
 const mainJs = ler('public/js/main.js');
 
 const falhas = [];
@@ -592,17 +650,52 @@ await clausula('PS14', 'partida: XP de antes guardado, duas liquidações força
   atrasosGet = [];
 });
 
-await clausula('PS15', 'festa-por-conta: nada da conta anterior chega na conta nova', async () => {
-  const festa = ler('public/js/tp/passe-festa.js');
-  const corpo = (nome) => { const i = festa.indexOf(`function ${nome}(`); assert.ok(i >= 0, `função ${nome} ausente`); return festa.slice(i, festa.indexOf('\n}\n', i)); };
-  const ligar = corpo('ligarFestaPasse'), esquecer = corpo('esquecerConta');
-  assert.match(ligar, /addEventListener\('cs-account-change', esquecerConta\)/, 'troca de conta não limpa a celebração pendente');
-  assert.match(esquecer, /fila = null;/, 'troca de conta mantém o level-up pendente da conta anterior');
-  assert.match(esquecer, /pendentes\.length = 0;/, 'troca de conta mantém os avisos de missão da conta anterior');
-  assert.match(esquecer, /festa\?\.open\) festa\.close\(\)/, 'troca de conta deixa a celebração da conta anterior aberta');
-  const novidade = ligar.slice(ligar.indexOf('PASSE_NOVIDADE'), ligar.indexOf('});', ligar.indexOf('PASSE_NOVIDADE')));
-  assert.match(novidade, /if \(!conta \|\| conta !== passeConta\(\)\) return;/, 'novidade de outra conta entra na fila');
-  assert.ok(novidade.indexOf('return;') < novidade.indexOf('fila ='), 'a fila é montada antes de conferir a conta');
+await clausula('PS15', 'festa-por-conta: troca de conta descarta level-up, avisos e celebração da conta anterior', async () => {
+  storage.clear(); storage.set('cs_lang', 'pt');
+  const F = await import(dataUrl(festaFonte));
+  const menu = document.createElement('div'); menu.id = 'main-menu'; document.body.append(menu);
+  F.ligarFestaPasse(); F.liberarFestaPasse();
+  const festa = () => document.getElementById('tp-passe-festa');
+  const avisos = () => document.querySelectorAll('.tp-passe-aviso').map((n) => n.dataset.missao);
+  const entra = async (id) => {   // o mesmo par do navegador: account-entry avisa, main.js troca a conta do passe
+    document.dispatchEvent(new CustomEvent('cs-account-change', { detail: id ? { authenticated: true, profile: { id } } : { authenticated: false } }));
+    await P.trocarContaPasse(id); await tick(5);
+  };
+  const { dia, semana } = P.periodoPasse(AGORA), todas = ['login', 'play_3', 'win_1', 'mp_1', 'days_5', 'win_10', 'mp_10'];
+  const memoriaVista = (id) => storage.set(`cs-passe-memoria:${id}:sessao-da-treta-s1`, JSON.stringify({ level: 15, xp: 0, dia, semana, diarias: todas, semanais: todas }));
+  /* controle positivo: no lobby, sem troca, a celebração da conta abre e o aviso de missão aparece */
+  mock = criarPasseMock({ autenticado: true, xp: xpAcumulado(10), claimed: [] });
+  await entra('conta-a');
+  assert.ok(festa()?.open && festa().dataset.para === '10', `controle: celebração da conta nova no nível 10 não abriu (${festa() ? 'fechada' : 'ausente'})`);
+  festa().close(); await tick(5);
+  mock.definir({ progresso: { play_3: 3 } });
+  await P.carregarPasse(); await tick(5);
+  assert.ok(!festa() && avisos().includes('play_3'), `controle: missão concluída sem aviso (${avisos()})`);
+  /* fora do lobby: level-up e missão da conta A ficam pendentes */
+  menu.classList.add('hidden');
+  storage.delete('cs-passe-memoria:conta-a:sessao-da-treta-s1');
+  mock = criarPasseMock({ autenticado: true, xp: xpAcumulado(10), claimed: [] });
+  await entra('conta-a');
+  mock.definir({ progresso: { win_10: 10 } });
+  await P.carregarPasse(); await tick(5);
+  assert.ok(!festa() && !avisos().includes('win_10'), 'fora do lobby a celebração ou o aviso da conta A já apareceu (cenário não montado)');
+  /* a conta B (nível já visto) entra; depois chega uma novidade velha da conta A */
+  memoriaVista('conta-b');
+  await entra('conta-b');
+  const nivel10 = P.passeEstado().levels.filter((l) => l.n <= 10);
+  document.dispatchEvent(new CustomEvent(P.PASSE_NOVIDADE, { detail: { conta: 'conta-a', subiu: { de: 0, para: 10, boasVindas: true, niveis: nivel10 },
+    missoes: [{ id: 'mp_10', progress: 10, goal: 10, done: true, xp: 500, coins: 0 }] } }));
+  menu.classList.remove('hidden'); await tick(5);
+  F.tentarFesta(); await tick(5);
+  assert.ok(!festa(), `a conta B viu a celebração da conta A (${festa()?.dataset.de} -> ${festa()?.dataset.para})`);
+  assert.ok(!avisos().includes('win_10') && !avisos().includes('mp_10'), `a conta B viu aviso de missão da conta A: ${avisos()}`);
+  /* celebração aberta fecha quando a conta troca */
+  storage.delete('cs-passe-memoria:conta-c:sessao-da-treta-s1');
+  await entra('conta-c');
+  assert.ok(festa()?.open, 'controle: celebração da conta C não abriu');
+  await entra(null);
+  assert.ok(!festa()?.open, 'logout deixou aberta a celebração da conta anterior');
+  menu.remove(); storage.clear(); storage.set('cs_lang', 'pt');
 });
 
 const alvo = MUT ? MUTANTES[MUT][0] : '';
