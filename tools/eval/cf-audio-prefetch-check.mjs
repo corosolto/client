@@ -28,20 +28,18 @@ set -euo pipefail
 [ "$1" = r2 ]; shift
 [ "$1" = object ]; shift
 [ "$1" = get ]; shift
-key="$1"; shift
-[ "$key" = audio-pack.zip ]
+# Mesma CLI do wrangler 4: o objeto é bucket/chave posicional; --bucket não existe e reprova.
+objeto="$1"; shift
+[ "$objeto" = corosolto-private/audio-pack.zip ]
 out=''
-bucket=''
 remote=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    --bucket=*) bucket="\${1#--bucket=}"; shift ;;
     --file) out="$2"; shift 2 ;;
     --remote) remote=1; shift ;;
     *) exit 64 ;;
   esac
 done
-[ "$bucket" = corosolto-private ]
 [ "$remote" = 1 ]
 [ -n "$out" ]
 cp "$FIXTURE_ZIP" "$out"

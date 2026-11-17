@@ -34,6 +34,7 @@ if (process.argv.includes('--mutantes')) {
     ['pool-global', 'deps: Praça carrega somente seus props declarados'],
     ['todos-explicitos', 'deps: mapas não auditados preservam pool e props locais'],
     ['sem-praca', 'deps: Praça carrega somente seus props declarados'],
+    ['menu-carrega-adiado', 'deps: Praça carrega somente seus props declarados'],
     ['sem-props-mapa', 'preload: dependências do mapa chegam ao carregador real'],
     ['sem-rebuild', 'rebuild: conclusão dos props reconstrói o fundo'],
     ['sem-troca', 'troca: mapa escolhido dispara carregamento do fundo'],
@@ -69,7 +70,9 @@ if (mutation) {
     'pool-global': [body, 'function menuProps(mapa) { return [...MAP_PROPS, ...(mapa.props || [])]; }\n'],
     'todos-explicitos': [body, 'function menuProps(mapa) { const props = mapa.props; return Array.isArray(props) ? props : MAP_PROPS; }\n'],
     // sem-praca: derruba o marcador propsComplete da Praça → ela voltaria a herdar o pool.
-    'sem-praca': ['return mapPropIds(mapa);', 'return mapPropIds({ props: mapa.props });'],
+    'sem-praca': ['return mapPropIds(mapa).filter((id) => !deferred.includes(id));', 'return mapPropIds({ props: mapa.props }).filter((id) => !deferred.includes(id));'],
+    // menu-carrega-adiado: ignora menuDeferredProps → o fundo do menu volta a baixar o Towner (ORC1).
+    'menu-carrega-adiado': ['const deferred = mapa.menuDeferredProps || [];', 'const deferred = [];'],
     'sem-props-mapa': ['preloadMapProps(menuProps(mapa))', 'preloadMapProps(MAP_PROPS)'],
     'sem-rebuild': ['return propsReady.then(() => {\n      rebuildCurrent();', 'return propsReady.then(() => {'],
     'sem-troca': ['setMapMode();\n  void loadMenuBackdrop();\n  renderMapScreen();', 'setMapMode();\n  renderMapScreen();'],
@@ -96,9 +99,14 @@ const fixture = () => {
   vm.runInContext(modoObjetivo + '\n' + block + '\n' + go, context);
   return { context, events, release };
 };
+/* menuDeferredProps (perf(boot) e8f2aa6c4, ORC1): o fundo do menu da Praça pula os props opcionais
+   pesados (o carrinho Towner, 707 kB), mas eles seguem DECLARADOS no mapa: a partida ainda os carrega. */
+const DEFERIDOS = MAPS.praca_poderes.menuDeferredProps || [];
+const PRACA_MENU = MAPS.praca_poderes.props.filter(id => !DEFERIDOS.includes(id));
 await check('deps: Praça carrega somente seus props declarados', () => {
   const { context } = fixture(); context.map = MAPS.praca_poderes;
-  sameIds(vm.runInContext('menuProps(map)', context), MAPS.praca_poderes.props);
+  sameIds(vm.runInContext('menuProps(map)', context), PRACA_MENU);
+  assert(DEFERIDOS.every(id => MAPS.praca_poderes.props.includes(id)), 'prop adiado do menu saiu da declaração do mapa: a partida não o carregaria');
 });
 await check('deps: mapas não auditados preservam pool e props locais', () => {
   const { context } = fixture();
@@ -116,7 +124,7 @@ await check('deps: getter legado é lido uma vez', () => {
 await check('preload: dependências do mapa chegam ao carregador real', async () => {
   const { context, events, release } = fixture(); const ready = vm.runInContext('loadMenuBackdrop()', context);
   const preload = events.find(event => event.kind === 'preload');
-  assert(preload, 'carregador foi chamado'); sameIds(preload.ids, MAPS.praca_poderes.props); release(); await ready;
+  assert(preload, 'carregador foi chamado'); sameIds(preload.ids, PRACA_MENU); release(); await ready;
 });
 await check('rebuild: conclusão dos props reconstrói o fundo', async () => {
   const { context, events, release } = fixture(); const ready = vm.runInContext('loadMenuBackdrop()', context);

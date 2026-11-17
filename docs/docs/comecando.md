@@ -52,7 +52,7 @@ esta página envelhecia no primeiro commit — ver
 | Scripts do arnês | 1075 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 94 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 27 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.1.0-alpha.151` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.1.0-alpha.152` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -280,7 +280,7 @@ E os dois quality gates, com a lista exata do que cada um roda — direto do `pa
 npm run check:fast   # node tools/eval/runner.mjs --suite=fast
 ```
 
-`package.json` tem **839 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
+`package.json` tem **844 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 

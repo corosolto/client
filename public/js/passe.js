@@ -73,31 +73,103 @@ async function pedir(body) {
   return out;
 }
 
-let estado = null, falhou = false, epoca = 0, carregando = null;
+let estado = null, falhou = false, epoca = 0, carregando = null, ultimoPedido = 0, conta = null, partida = null;
 const avisar = () => {
   try { document.dispatchEvent(new CustomEvent(PASSE_EVENTO, { detail: estado })); } catch { /* Node: sem document */ }
 };
 export const passeEstado = () => estado;
 export const passeFalhou = () => falhou;
 
-export function carregarPasse() {
-  if (carregando) return carregando;
-  const minha = epoca;
+/* forcar: o fim de partida precisa de uma liquidação NOVA (o GET liquida o XP da partida); devolver o
+   pedido em voo traria o status de antes da partida. O pedido mais novo manda: um antigo que chega
+   depois não sobrescreve. Forçado que falha mantém o status que já estava na tela (falha silenciosa). */
+export function carregarPasse({ forcar = false } = {}) {
+  if (carregando && !forcar) return carregando;
+  const minha = epoca, meu = ++ultimoPedido;
   const pedido = (async () => {
-    try {
-      const out = normalizarStatus(await pedir());
-      if (minha !== epoca) return estado;
-      estado = out; falhou = !out;
-    } catch {
-      if (minha !== epoca) return estado;
-      estado = null; falhou = true;
-    }
+    let out = null, erro = false;
+    try { out = normalizarStatus(await pedir()); } catch { erro = true; }
+    if (minha !== epoca || meu !== ultimoPedido) return estado;
+    if (forcar && estado && (erro || !out)) return estado;
+    estado = erro ? null : out; falhou = erro || !out;
     avisar();
+    notarNovidades();
     return estado;
   })().finally(() => { if (carregando === pedido) carregando = null; });
   carregando = pedido;
   return pedido;
 }
+
+/* Novidades do passe (subida de nível e missão concluída) saem do diff entre o último status que
+   ESTA conta viu nesta temporada (localStorage, vale entre sessões) e o status novo. O nível só
+   conta como visto quando a celebração aparece (marcarNivelVisto); missão feita conta na hora. */
+export const PASSE_NOVIDADE = 'cs-passe-novidade';
+export const PASSE_MEMORIA_CHAVE = 'cs-passe-memoria';
+export const PASSE_NIVEL_BOAS_VINDAS = 10;
+const DIA_SP = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' });
+/* Missões diárias renovam 00:00 de Brasília; semanais na segunda. Período diferente: nada estava feito. */
+export function periodoPasse(agora = Date.now()) {
+  const dia = DIA_SP.format(new Date(agora));
+  const d = new Date(`${dia}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return { dia, semana: d.toISOString().slice(0, 10) };
+}
+const chaveMemoria = (c) => `${PASSE_MEMORIA_CHAVE}:${c}:${PASSE_TEMPORADA}`;
+/* id de missão do servidor: login, play_3, win_10 (com sublinhado, ao contrário dos ids de recompensa) */
+const missoesFeitas = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string' && /^[a-z0-9_-]{1,64}$/.test(x)) : []);
+export function lerMemoriaPasse(c = conta) {
+  if (!c) return null;
+  try {
+    const m = JSON.parse(localStorage.getItem(chaveMemoria(c)) || 'null');
+    if (!m || inteiro(m.level) === null) return null;
+    return { level: Math.min(PASSE_NIVEIS, m.level), xp: inteiro(m.xp) ?? 0, dia: texto(m.dia), semana: texto(m.semana), diarias: missoesFeitas(m.diarias), semanais: missoesFeitas(m.semanais) };
+  } catch { return null; }
+}
+function gravarMemoria(c, m) {
+  try { localStorage.setItem(chaveMemoria(c), JSON.stringify(m)); } catch { /* sem storage: vale só esta visita */ }
+}
+/* Puro: memória anterior (null = primeira vez desta conta na temporada) + status -> novidades e a
+   memória nova. Primeira vez: o nível conta a partir de 0 (o presente de boas-vindas do nível 10
+   aparece) e nenhuma missão vira aviso, porque não se sabe quando ela foi feita. */
+export function novidadesPasse(mem, s, agora = Date.now()) {
+  if (!s?.authenticated) return null;
+  const { dia, semana } = periodoPasse(agora);
+  const de = mem ? Math.min(mem.level, s.level) : 0;
+  const subiu = s.level > de ? Object.freeze({
+    de, para: s.level, boasVindas: de === 0 && s.level >= PASSE_NIVEL_BOAS_VINDAS,
+    niveis: Object.freeze(s.levels.filter((l) => l.n > de && l.n <= s.level)),
+  }) : null;
+  const feitas = mem ? new Set([...(mem.dia === dia ? mem.diarias : []), ...(mem.semana === semana ? mem.semanais : [])]) : null;
+  const missoes = feitas ? [...s.daily, ...s.weekly].filter((q) => q.done && !feitas.has(q.id)) : [];
+  const memoria = { level: de, xp: s.xp, dia, semana, diarias: s.daily.filter((q) => q.done).map((q) => q.id), semanais: s.weekly.filter((q) => q.done).map((q) => q.id) };
+  return { subiu, missoes: Object.freeze(missoes), memoria };
+}
+function notarNovidades() {
+  if (!conta || !estado?.authenticated) return;
+  const n = novidadesPasse(lerMemoriaPasse(conta), estado);
+  gravarMemoria(conta, n.memoria);
+  if (!n.subiu && !n.missoes.length) return;
+  try { document.dispatchEvent(new CustomEvent(PASSE_NOVIDADE, { detail: { subiu: n.subiu, missoes: n.missoes, conta } })); } catch { /* Node: sem document */ }
+}
+/* A celebração apareceu: a partir daqui o diff conta do nível novo. */
+export function marcarNivelVisto(level) {
+  const m = lerMemoriaPasse(conta);
+  if (m && inteiro(level) !== null && level > m.level) gravarMemoria(conta, { ...m, level: Math.min(level, estado?.level ?? level) });
+}
+export const passeConta = () => conta;
+
+/* Fim de partida: o resultado vai para o servidor e o MP é ingerido pelo nó com atraso, então
+   liquida de novo duas vezes (≈4 s e ≈12 s). O marco guarda o XP de antes para a tela de resultado
+   mostrar quanto a partida rendeu. Sem conta, só pergunta de novo, como antes. */
+export const PASSE_ATRASOS_PARTIDA = Object.freeze([4000, 12000]);
+export function acompanharPartidaPasse({ atrasos = PASSE_ATRASOS_PARTIDA } = {}) {
+  if (!estado?.authenticated) { setTimeout(() => { void carregarPasse(); }, atrasos[0]); return null; }
+  const marco = Object.freeze({ xp: estado.xp, level: estado.level, epoca });
+  partida = marco;
+  for (const ms of atrasos) setTimeout(() => { if (partida === marco && epoca === marco.epoca) void carregarPasse({ forcar: true }); }, ms);
+  return marco;
+}
+export const passePartida = () => (partida && partida.epoca === epoca ? partida : null);
 
 /* Funil do painel (spec §6): dois eventos anônimos, agregados por dia no servidor. Mesma régua da
    loja Treta: sem consentimento de medição (window.__csPrivacy) não sai nada. */
@@ -107,9 +179,11 @@ export function registrarEventoPasse(event) {
   void pedir({ action: 'analytics', event }).catch(() => {});
 }
 
-/* Conta trocou (login, logout): esquece o status da conta anterior antes de perguntar de novo. */
-export function trocarContaPasse() {
-  epoca++; carregando = null; estado = null; falhou = false;
+/* Conta trocou (login, logout): esquece o status da conta anterior antes de perguntar de novo.
+   id: perfil da conta nova (cs-account-change); sem id não há memória de novidades. */
+export function trocarContaPasse(id = null) {
+  epoca++; carregando = null; estado = null; falhou = false; partida = null;
+  conta = typeof id === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(id) ? id : null;
   avisar();
   return carregarPasse();
 }
@@ -129,6 +203,57 @@ export async function resgatarNivel(level) {
   })().finally(() => { if (resgatando === pedido) resgatando = null; });
   resgatando = pedido; resgatandoChave = chave;
   return pedido;
+}
+
+/* RESGATAR TUDO: um POST por nível, EM SEQUÊNCIA (o servidor limita 30/min por conta). rate_limited
+   espera e tenta o mesmo nível de novo; outro erro para a fila e devolve o que já saiu. Um por vez:
+   o segundo clique recebe a mesma fila. Recompensas vêm da trilha do status, não do cliente. */
+export const PASSE_ESPACO_RESGATE_MS = 150;
+export const PASSE_ESPERA_LIMITE_MS = 2500;
+const dormir = (ms) => new Promise((ok) => setTimeout(ok, ms));
+let resgateTodos = null;
+export function resgatarTodos({ aoProgresso = () => {}, espera = dormir } = {}) {
+  if (resgateTodos) return resgateTodos;
+  if (!estado?.authenticated) return Promise.reject(new Error('account_required'));
+  const minha = epoca, fila = [...estado.claimable], trilha = estado.levels;
+  const resgatarComLimite = async (n) => {
+    for (let tentativa = 0; ; tentativa++) {
+      try { return await resgatarNivel(n); }
+      catch (e) { if (e.message !== 'rate_limited' || tentativa >= 3) throw e; await espera(PASSE_ESPERA_LIMITE_MS); }
+    }
+  };
+  const pedido = (async () => {
+    const niveis = [], premios = [];
+    let erro = null;
+    for (let i = 0; i < fila.length; i++) {
+      if (minha !== epoca) { erro = 'account_changed'; break; }
+      aoProgresso({ feitos: i, total: fila.length, nivel: fila[i] });
+      try {
+        const out = await resgatarComLimite(fila[i]);
+        if (!out) break;
+      } catch (e) { erro = e.message || 'passe_unavailable'; break; }
+      niveis.push(fila[i]);
+      premios.push(...(trilha.find((l) => l.n === fila[i])?.rewards || []));
+      if (i < fila.length - 1) await espera(PASSE_ESPACO_RESGATE_MS);
+    }
+    aoProgresso({ feitos: niveis.length, total: fila.length, nivel: null });
+    return { niveis, recompensas: resumirRecompensas(premios), erro };
+  })().finally(() => { if (resgateTodos === pedido) resgateTodos = null; });
+  resgateTodos = pedido;
+  return pedido;
+}
+export const resgatandoTodos = () => Boolean(resgateTodos);
+
+/* Recompensas somadas para o resumo: personagens e skins por id, T$ somado, maior bônus de XP. */
+export function resumirRecompensas(lista) {
+  const r = { personagens: [], skins: [], moedas: 0, boost: 0 };
+  for (const p of lista || []) {
+    if (p.kind === 'character' && !r.personagens.includes(p.id)) r.personagens.push(p.id);
+    else if (p.kind === 'weapon_skin' && !r.skins.includes(p.id)) r.skins.push(p.id);
+    else if (p.kind === 'coins') r.moedas += p.amount;
+    else if (p.kind === 'xp_boost') r.boost = Math.max(r.boost, p.amount);
+  }
+  return r;
 }
 
 /* Personagem do passe (`passe:{season, level}` em characters.js) só joga quando o inventário do

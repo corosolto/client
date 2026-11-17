@@ -12,7 +12,14 @@ import { criarPasseMock } from './passe-mock.mjs';
 
 const PORT = parseInt(process.argv[2] || '8123', 10);
 // PASSE_MOCK=conta|visitante: /api/passe sai do mock (passe-mock.mjs) até o backend do passe publicar.
-const passeMock = process.env.PASSE_MOCK ? criarPasseMock({ autenticado: process.env.PASSE_MOCK !== 'visitante' }) : null;
+// PASSE_MOCK_XP=16750 PASSE_MOCK_CLAIMED= (lista vazia ou "1,2"): conta no nível 10 com 10 resgates, como
+// depois da migration 096. POST /__passe-mock {xp, progresso} muda o servidor falso no meio da sessão
+// (XP de partida, missão concluída) para as capturas do pós-partida e da celebração.
+const passeMock = process.env.PASSE_MOCK ? criarPasseMock({
+  autenticado: process.env.PASSE_MOCK !== 'visitante',
+  ...(process.env.PASSE_MOCK_XP ? { xp: Number(process.env.PASSE_MOCK_XP) } : {}),
+  ...('PASSE_MOCK_CLAIMED' in process.env ? { claimed: process.env.PASSE_MOCK_CLAIMED.split(',').filter(Boolean).map(Number) } : {}),
+}) : null;
 const ROOT = 'public';
 const ASTRO = 'src/pages/index.astro';
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.glb': 'model/gltf-binary', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.wasm': 'application/wasm', '.txt': 'text/plain' };
@@ -66,6 +73,14 @@ const server = http.createServer(async (req, res) => {
     const rawPath = String(req.url).split(/[?#]/, 1)[0];
     if (rawPath.startsWith('/packs/')) return await serveStudioPack(req, res, { rawPath: rawPath.slice('/packs'.length) });
     const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+    if (passeMock && p === '/__passe-mock' && req.method === 'POST') {
+      let texto = '';
+      for await (const parte of req) texto += parte;
+      passeMock.definir(JSON.parse(texto || '{}'));
+      res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+      res.end(JSON.stringify(passeMock.status()));
+      return;
+    }
     if (passeMock && p === '/api/passe') {
       let texto = '';
       for await (const parte of req) texto += parte;
