@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.153`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.154`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -294,6 +294,14 @@
 - A animação de recarga em terceira pessoa deixa de reiniciar ao terminar; o clipe ainda retoma quando uma reação de dano o interrompe.
 - As réguas de emote validam a composição exata dos 16 itens do menu, e os harnesses de snapshot injetam o catálogo v9 ao avaliar `netgame.js`.
 - Estados assados por personagem só entram quando não aumentam nenhum teto congelado de deformação; os offsets de pé e as catracas de chão são regenerados sobre o conjunto aprovado.
+
+## [2.1.0-alpha.154] — 2026-11-17
+
+### Mudado
+- hotfix: keep static files out of the paid Cloudflare Worker path (#1411)
+- docs(changelog): static files out of the Worker
+- feat(cf): ship authored viewmodels as static assets fetched from R2 at deploy
+- fix(cf): keep static files out of the paid Worker path
 
 ## [2.1.0-alpha.153] — 2026-11-17
 
