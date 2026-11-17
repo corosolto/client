@@ -7,12 +7,17 @@
 # Repo verde, build verde, produção morta — nenhum portão media a interseção.
 # O probe é `tools/eval/prod-coherence.mjs` (leia o cabeçalho dele).
 #
-# DOIS GATILHOS:
+# TRÊS GATILHOS:
 #   · a cada 15 min, por workflow_dispatch — cache podre pode nascer a qualquer deploy.
-#     O relógio é o Worker vigia-cron (workers/vigia-cron/, runbook
-#     docs/runbooks/vigia-cron.md), não o `schedule` do GitHub: medido em 11/2026, o
-#     `*/15` daqui rodou 27 vezes em 7 dias contra 672 previstas (~4%) — o GitHub
-#     descarta disparo agendado sob carga e a produção ficava horas sem vigia;
+#     O relógio primário é o Worker vigia-cron (workers/vigia-cron/, runbook
+#     docs/runbooks/vigia-cron.md): medido em 11/2026, o `schedule` `*/15` daqui rodou
+#     27 vezes em 7 dias contra 672 previstas (~4%) — o GitHub descarta disparo agendado
+#     sob carga e a produção ficava horas sem vigia;
+#   · o mesmo `schedule` continua, como rede de segurança se o Worker cair ou o deploy
+#     dele falhar. Rodada em dobro é inofensiva: o probe só lê; o purge abaixo já roda a
+#     cada disparo (um a mais só esvazia de novo o mesmo prefixo); o aquecimento é só no
+#     deployment_status; o `prod-crash` repetido cai no concurrency por fingerprint do
+#     crash-fix.yml (dedupe da issue); fechar a issue já fechada não faz nada;
 #   · deployment_status success em production — a janela de risco é logo após
 #     publicar; aproveita e PURGA o edge (Fase 3: cinto e suspensório, ver
 #     scripts/cloudflare-setup.sh para a regra que segura /js/* por 1 mês).
@@ -23,6 +28,8 @@
 # repository_dispatch — é o caminho oficial entre workflows).
 name: prod-watch
 on:
+  schedule:
+    - cron: '*/15 * * * *'
   deployment_status:
   workflow_dispatch:
 

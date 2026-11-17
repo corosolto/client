@@ -1,13 +1,14 @@
 /* vigia-cron: o relógio do monitoramento (workers/vigia-cron/). O contrato que, quebrado,
    faria a vigilância parar SEM vermelho nenhum: cron do wrangler.toml sem alvo, alvo sem
    cron, workflow alvo sem workflow_dispatch (o GitHub responde 422 e ninguém olha o log do
-   Worker), schedule voltando ao workflow (rodada em dobro) e erro HTTP engolido. */
+   Worker), a rede de segurança (`schedule`) sumindo e erro HTTP engolido. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import worker from '../../../workers/vigia-cron/index.mjs';
 import { ALVOS, REF, disparaCron } from '../../../workers/vigia-cron/dispara.mjs';
+import { errosDoWorkflow } from '../../../workers/vigia-cron/contrato.mjs';
 
 const raiz = (p) => readFileSync(fileURLToPath(new URL(`../../../${p}`, import.meta.url)), 'utf8');
 const TOKENS = { GITHUB_TOKEN_CLIENT: 'tok-client-SENTINELA', GITHUB_TOKEN_BACKEND: 'tok-backend-SENTINELA' };
@@ -112,17 +113,27 @@ test('handler scheduled: lança em falha (o painel conta a invocação como erro
   }
 });
 
-test('workflows alvo do client aceitam workflow_dispatch sem input obrigatório e não têm mais schedule', () => {
+test('workflows alvo do client aceitam o dispatch do Worker e mantêm o schedule de rede de segurança', () => {
   for (const alvos of Object.values(ALVOS)) {
     for (const { repo, workflow } of alvos) {
       if (repo !== 'corosolto/client') continue;
       const s = raiz(`.github/workflows/${workflow}`);
+      assert.deepEqual(errosDoWorkflow(s), [], workflow);
       const on = /^on:\n([\s\S]*?)^\S/m.exec(s)?.[1] ?? '';
-      assert.match(on, /^ {2}workflow_dispatch:/m, `${workflow} sem workflow_dispatch: o dispatch do Worker leva 422`);
-      assert.doesNotMatch(on, /^ {2}schedule:/m, `${workflow} voltou a ter schedule: rodada em dobro`);
-      assert.doesNotMatch(on, /required: true/, `${workflow} tem input obrigatório que o Worker não manda`);
+      assert.match(on, /^ {2}schedule:/m, `${workflow} perdeu o schedule: sem ele, Worker fora do ar = vigilância parada`);
     }
   }
+});
+
+test('contrato do dispatch: reprova sem workflow_dispatch e com input obrigatório (vale também para o backend no deploy)', () => {
+  const base = "on:\n  push:\n    branches: [main]\n  workflow_dispatch:\n    inputs:\n      client_ref:\n        required: false\n\njobs: {}\n";
+  assert.deepEqual(errosDoWorkflow(base), []);
+  assert.match(errosDoWorkflow(base.replace('  workflow_dispatch:\n', '  repository_dispatch:\n')).join(), /sem workflow_dispatch/);
+  assert.match(errosDoWorkflow(base.replace('required: false', 'required: true')).join(), /input obrigatório/);
+  const deploy = raiz('.github/workflows/vigia-cron-deploy.yml');
+  const confere = deploy.indexOf('run: node workers/vigia-cron/confere-alvos.mjs');
+  assert.ok(confere > 0 && confere < deploy.indexOf(' deploy --config'), 'o deploy publica sem conferir os alvos da main (backend incluso)');
+  assert.match(raiz('workers/vigia-cron/confere-alvos.mjs'), /errosDoWorkflow/);
 });
 
 test('o deploy instala exatamente os segredos que ALVOS lê, sem ecoar valor', () => {
