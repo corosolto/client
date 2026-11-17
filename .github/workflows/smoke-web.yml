@@ -46,6 +46,7 @@ jobs:
     outputs:
       rodar: ${{ steps.filtro.outputs.rodar }}
       pronto: ${{ steps.rascunho.outputs.pronto }}
+      site: ${{ steps.site.outputs.site }}
     steps:
       - name: O PR está pronto para o smoke pesado?
         id: rascunho
@@ -91,6 +92,26 @@ jobs:
             echo "rodar=false" >> "$GITHUB_OUTPUT"
           else
             echo "rodar=true" >> "$GITHUB_OUTPUT"
+          fi
+      # O smoke-cf testa o preview do cf-preview. O cf-preview só constrói quando o PR
+      # toca o site, pelo MESMO filtro (scripts/ci/gatilho.mjs site): sem preview esperado
+      # o smoke-cf sai SKIPPED em vez de esperar 15 min por um comentário que não vem.
+      # Falha FECHADO: sem lista de arquivos, ou erro do gatilho, `site=true`.
+      - name: O PR toca o site (o cf-preview constrói preview)?
+        id: site
+        env:
+          EVENTO: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENTO" != "pull_request" ] || [ ! -f "$RUNNER_TEMP/arquivos.txt" ]; then
+            echo "site=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          node scripts/ci/gatilho.mjs site < "$RUNNER_TEMP/arquivos.txt" > "$RUNNER_TEMP/site.txt" \
+            || echo "rodar=true" > "$RUNNER_TEMP/site.txt"
+          if grep -qx 'rodar=false' "$RUNNER_TEMP/site.txt"; then
+            echo "site=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "site=true" >> "$GITHUB_OUTPUT"
           fi
 
   # DOIS JOBS EM PARALELO (14/10/2026). O roteiro desktop do chat de sala custa ~14,5 min
@@ -180,10 +201,12 @@ jobs:
             test-results
           if-no-files-found: ignore
 
-  # O preview é opcional enquanto a migração roda em paralelo com a Vercel.
+  # O preview é opcional enquanto a migração roda em paralelo com a Vercel. No PR, roda
+  # só quando o cf-preview constrói preview: a mesma condição do job `preview` de lá
+  # (site tocado, fora de draft, branch deste repositório).
   smoke-cf:
     needs: decide
-    if: (github.event_name == 'pull_request' && needs.decide.outputs.rodar == 'true' && needs.decide.outputs.pronto != 'false') || (github.event_name == 'workflow_dispatch' && inputs.host != '' && needs.decide.outputs.rodar == 'true')
+    if: (github.event_name == 'pull_request' && needs.decide.outputs.rodar == 'true' && needs.decide.outputs.pronto != 'false' && needs.decide.outputs.site != 'false' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && inputs.host != '' && needs.decide.outputs.rodar == 'true')
     continue-on-error: true
     runs-on: ubuntu-latest
     timeout-minutes: 30

@@ -39,8 +39,13 @@
    push e o smoke pesado (chat-desktop + smoke-cf) ~28; o `smoke` básico (5,5 min p50)
    reprovou em 10 dos 16 runs vermelhos do smoke-web, por isso é `leve` e fica no draft.
 
+   SITE (17/11/2026): o filtro "o PR toca o site?" do cf-preview mora aqui também
+   (SITE abaixo). O cf-preview decide se constrói o preview e o smoke-web decide se o
+   smoke-cf espera esse preview pela MESMA lista; antes eram dois filtros e o smoke-cf
+   esperava 15 min por um preview que o cf-preview tinha decidido não construir.
+
    Uso (CI):  git -c core.quotePath=false diff --no-renames --name-only -z BASE...HEAD \
-                | BASE=<sha> HEAD=<sha> node scripts/ci/gatilho.mjs <portao|smoke>
+                | BASE=<sha> HEAD=<sha> node scripts/ci/gatilho.mjs <portao|smoke|site>
    ============================================================================ */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -98,6 +103,38 @@ export const GATILHOS = {
     leves: ['smoke'],
   },
 };
+
+/* O que o build do preview Cloudflare (cf-preview.yml, `build:cf`) empacota. Sem
+   tratamento especial do package.json: qualquer mudança nele reconstrói o preview. */
+export const SITE = [
+  /^src\//,
+  /^public\//,
+  /^vercel\.json$/,
+  /^wrangler\.preview\.toml$/,
+  /^package\.json$/,
+  /^package-lock\.json$/,
+  /^astro\.config\.mjs$/,
+  /^middleware\.js$/,
+  /^scripts\/fetch-/,
+  /^scripts\/copy-wasm\.mjs$/,
+  /^scripts\/prune-dist\.mjs$/,
+  /^scripts\/aeo\.mjs$/,
+  /^tools\/gen-asset-rev\.mjs$/,
+  /^tools\/cf\//,
+  /^tools\/viewmodels\/prepare_precision_preview\.mjs$/,
+  /^tools\/audio\//,
+  /^tools\/strip-decal-bg\.mjs$/,
+  /^CHANGELOG\.md$/,
+];
+
+/* O preview é construído? Lista vazia constrói (sem saber o que mudou). */
+export function decidirSite(arquivos) {
+  const lista = arquivos.map((a) => a.trim()).filter(Boolean);
+  if (!lista.length) return { rodar: true, motivo: 'lista de arquivos vazia: sem saber o que mudou, preview roda' };
+  const casou = lista.find((a) => SITE.some((re) => re.test(a)));
+  if (casou) return { rodar: true, motivo: `${casou} toca o site: preview roda` };
+  return { rodar: false, motivo: `nenhum dos ${lista.length} arquivos toca o site: preview pula` };
+}
 
 /* `npm ci` roda estes do próprio pacote; o resto entra pelo pre/post de cada passo. */
 const CICLO_DE_VIDA = ['preinstall', 'install', 'postinstall', 'prepublish', 'preprepare', 'prepare', 'postprepare'];
@@ -179,14 +216,14 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const alvo = process.argv[2];
   let veredito;
   try {
-    if (!GATILHOS[alvo]) throw new Error(`alvo desconhecido: ${alvo || '(nenhum)'}`);
+    if (alvo !== 'site' && !GATILHOS[alvo]) throw new Error(`alvo desconhecido: ${alvo || '(nenhum)'}`);
     const arquivos = lerLista(readFileSync(0, 'utf8'));
     const lerPacote = (lado) => {
       const sha = process.env[lado];
       if (!sha) throw new Error(`${lado} ausente para comparar o package.json`);
       return execFileSync('git', ['show', `${sha}:package.json`], { encoding: 'utf8' });
     };
-    veredito = decidir(alvo, arquivos, lerPacote);
+    veredito = alvo === 'site' ? decidirSite(arquivos) : decidir(alvo, arquivos, lerPacote);
   } catch (e) {
     veredito = { rodar: true, motivo: `erro ao decidir (${e.message}): roda` };
   }

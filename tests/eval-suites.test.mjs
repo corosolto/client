@@ -401,6 +401,7 @@ const WORKFLOWS = [
   ['preview-bot.yml', []],
   ['portao-browser.yml', []],
   ['smoke-web.yml', []],
+  ['cf-preview.yml', []],
   ['autofix.yml', []],
 ];
 for (const [arquivo, extras] of WORKFLOWS) {

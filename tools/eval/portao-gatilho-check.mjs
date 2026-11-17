@@ -45,18 +45,25 @@
          GATILHOS[alvo].leves exige `pronto != 'false'` (saída ausente roda); job leve
          não olha o `pronto`.
 
+   PG8 · o filtro "toca o site?" é UM só (scripts/ci/gatilho.mjs SITE): o decide do
+         cf-preview e o do smoke-web chamam `gatilho.mjs site`, nenhum dos dois traz
+         filtro de caminho próprio, e o smoke-cf no PR exige `site != 'false'` e as
+         mesmas condições do job `preview` (fora de draft, branch deste repositório).
+         Sem isso o smoke-cf espera 15 min por preview que o cf-preview não constrói.
+
    Mutantes: tira-caminho (PG1), passo-novo (PG2), diff-aberto e quotepath-volta (PG3),
    portao-na-fila (PG5), sem-fetch/fetch-tarde/assert-sem-pack/fetch-ignorado/
    fetch-fora-gatilho, early-exit, errexit-desligado, heredoc, indent-escape e
    shell-sem-errexit (PG6), ready-sumiu, rascunho-aberto, pesado-no-rascunho e
-   leve-pulado (PG7). Aplicação ausente/ambígua sai78; mutante sobrevivente sai4.
+   leve-pulado (PG7), filtro-divergente, cf-sem-site e cf-de-fork (PG8). Aplicação
+   ausente/ambígua sai78; mutante sobrevivente sai4.
    Uso: node tools/eval/portao-gatilho-check.mjs [--mutante=<nome>]
    ============================================================================ */
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join, normalize } from 'node:path';
-import { GATILHOS, casa, decidir, scriptsUsados } from '../../scripts/ci/gatilho.mjs';
+import { GATILHOS, casa, decidir, decidirSite, scriptsUsados } from '../../scripts/ci/gatilho.mjs';
 
 const MUT = process.argv.find((a) => a.startsWith('--mutante='))?.slice('--mutante='.length) || '';
 const MUTANTES = {
@@ -67,6 +74,7 @@ const MUTANTES = {
   'early-exit': 'PG6', 'errexit-desligado': 'PG6', 'heredoc': 'PG6',
   'indent-escape': 'PG6', 'shell-sem-errexit': 'PG6',
   'ready-sumiu': 'PG7', 'rascunho-aberto': 'PG7', 'pesado-no-rascunho': 'PG7', 'leve-pulado': 'PG7',
+  'filtro-divergente': 'PG8', 'cf-sem-site': 'PG8', 'cf-de-fork': 'PG8',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -388,6 +396,36 @@ for (const [alvo, g] of Object.entries(GATILHOS)) {
       falhas.push(`PG7 ${g.workflow}: o job \`${nome}\` não exige \`needs.decide.outputs.pronto != 'false'\` — roda no draft ou pula com saída ausente`);
     }
   }
+}
+
+/* ---- PG8: um filtro só para "toca o site?" (cf-preview e smoke-cf) ---- */
+{
+  let cf = ler('.github/workflows/cf-preview.yml');
+  let sw = ler('.github/workflows/smoke-web.yml');
+  if (MUT === 'filtro-divergente') cf = substituirUma(cf, /node scripts\/ci\/gatilho\.mjs site < "\$RUNNER_TEMP\/arquivos\.txt" > "\$RUNNER_TEMP\/veredito\.txt"/, `{ grep -zEq '^(src/|public/)' "$RUNNER_TEMP/arquivos.txt" && echo rodar=true || echo rodar=false; } > "$RUNNER_TEMP/veredito.txt"`, MUT);
+  if (MUT === 'cf-sem-site') sw = substituirUma(sw, " && needs.decide.outputs.site != 'false'", '', MUT);
+  if (MUT === 'cf-de-fork') sw = substituirUma(sw, ' && github.event.pull_request.head.repo.full_name == github.repository', '', MUT);
+  const cfJobs = jobsDe(comandos(cf));
+  const swJobs = jobsDe(comandos(sw));
+  const cfDecide = cfJobs.decide || '';
+  if (!/node scripts\/ci\/gatilho\.mjs site\b/.test(cfDecide)) falhas.push('PG8 cf-preview.yml: o decide não chama `scripts/ci/gatilho.mjs site` — filtro do preview fora da fonte única');
+  if (/grep -[a-zA-Z]*E/.test(cfDecide)) falhas.push('PG8 cf-preview.yml: o decide traz filtro de caminho próprio (grep -E) — diverge do que o smoke-web espera');
+  if (!/grep -qx 'rodar=false'/.test(cfDecide)) falhas.push('PG8 cf-preview.yml: o pulo do preview não exige `rodar=false` exato');
+  const preview = cfJobs.preview || '';
+  for (const c of ["needs.decide.outputs.rodar == 'true'", 'github.event.pull_request.draft != true', 'github.event.pull_request.head.repo.full_name == github.repository']) {
+    if (!preview.includes(c)) falhas.push(`PG8 cf-preview.yml: o job \`preview\` perdeu \`${c}\` — o smoke-cf espelha esta condição`);
+  }
+  const swDecide = swJobs.decide || '';
+  if (!/^ {6}site: \$\{\{ steps\.site\.outputs\.site \}\}$/m.test(swDecide) || !/node scripts\/ci\/gatilho\.mjs site\b/.test(swDecide)) falhas.push('PG8 smoke-web.yml: o decide não exporta `site` de `scripts/ci/gatilho.mjs site`');
+  const seCf = (/^ {4}if:([^\n]*)$/m.exec(swJobs['smoke-cf'] || '') || [])[1] || '';
+  const ramoPr = seCf.split('||').find((r) => r.includes("github.event_name == 'pull_request'")) || '';
+  for (const c of ["needs.decide.outputs.site != 'false'", "needs.decide.outputs.pronto != 'false'", 'github.event.pull_request.head.repo.full_name == github.repository']) {
+    if (!ramoPr.includes(c)) falhas.push(`PG8 smoke-web.yml: o smoke-cf no PR não exige \`${c}\` — espera preview que o cf-preview não constrói`);
+  }
+  const casosSite = [[[], true], [['src/pages/index.astro'], true], [['CHANGELOG.md'], true], [['.github/workflows/smoke-web.yml', 'scripts/ci/gatilho.mjs'], false], [['tests/smoke/web-smoke.spec.js'], false]];
+  for (const [lista, esperado] of casosSite) if (decidirSite(lista).rodar !== esperado) falhas.push(`PG8 site ${JSON.stringify(lista)}: esperado rodar=${esperado}`);
+  const cli = (entrada) => spawnSync(process.execPath, ['scripts/ci/gatilho.mjs', 'site'], { input: entrada, encoding: 'utf8' }).stdout.trim();
+  if (cli('docs/x.md\0') !== 'rodar=false' || cli('public/js/a.js\0') !== 'rodar=true') falhas.push('PG8 a CLI `gatilho.mjs site` não decide como decidirSite');
 }
 
 /* ---- PG3: a CLI lê nome com acento cru (NUL) e na forma entre aspas do git ---- */
