@@ -69,6 +69,23 @@ function mutations() {
     expectStatus(result, 0, 'initial non-audio inventory check');
     console.log('AI1: post-rewrite JSON reference baseline passes.');
 
+    const v2 = readFileSync(manifestPath, 'utf8');
+    const atual = JSON.parse(v2);
+    const hashDe = (path) => createHash('sha256').update(readFileSync(join(fixture, 'public', ...path.split('/')))).digest('hex');
+    writeFileSync(manifestPath, `${JSON.stringify({
+      schema: 'asset-inventory-v1',
+      roots: atual.roots,
+      files: Object.fromEntries([...atual.referenced, ...Object.keys(atual.unreferenced)].sort().map((path) => [path, hashDe(path)])),
+      unreferenced: Object.keys(atual.unreferenced),
+    }, null, 2)}\n`);
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'a v1 manifest fails check until migrated');
+    assert.match(result.stderr, /is still asset-inventory-v1; run node tools\/gen-asset-inventory\.mjs to migrate it/);
+    expectStatus(runInventory(fixture), 0, 'generator migrates a v1 manifest');
+    assert.equal(readFileSync(manifestPath, 'utf8'), v2);
+    expectStatus(runInventory(fixture, ['--check']), 0, 'migrated manifest check');
+    console.log('AI1v1: a v1 manifest fails check, and generation migrates it to the same v2 with reviewed orphan hashes kept.');
+
     put(fixture, 'public/js/runtime.json', '{"hero":"models/props/json-only.glb"}\n');
     put(fixture, 'public/models/props/json-only.glb', 'json-runtime-reference');
     expectStatus(runInventory(fixture), 0, 'public/js JSON runtime reference generation');
