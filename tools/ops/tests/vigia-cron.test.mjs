@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import worker from '../../../workers/vigia-cron/index.mjs';
-import { ALVOS, REF, disparaCron } from '../../../workers/vigia-cron/dispara.mjs';
+import { ALVOS, REF, TEMPO_MAX_MS, disparaCron } from '../../../workers/vigia-cron/dispara.mjs';
 import { errosDoWorkflow } from '../../../workers/vigia-cron/contrato.mjs';
 
 const raiz = (p) => readFileSync(fileURLToPath(new URL(`../../../${p}`, import.meta.url)), 'utf8');
@@ -98,6 +98,28 @@ test('sucesso loga o status 204; segredo ausente e rede caída não chamam/derru
   const orfao = await disparaCron('5 * * * *', TOKENS, fetchFalso(204).fn);
   assert.equal(orfao[0].ok, false);
   assert.match(c.err().join('\n'), /cron sem alvo/);
+});
+
+test('API travada: o fetch leva teto (AbortSignal) e o aborto vira falha registrada, não invocação pendurada', async (t) => {
+  const c = capturaConsole(t);
+  assert.ok(TEMPO_MAX_MS > 0 && TEMPO_MAX_MS <= 30_000, `teto ${TEMPO_MAX_MS} ms`);
+  let sinal;
+  const travado = (url, init) => new Promise((_, rejeita) => {
+    sinal = init.signal;
+    init.signal.addEventListener('abort', () => rejeita(init.signal.reason));
+  });
+  const inicio = Date.now();
+  // AbortSignal.timeout usa timer unref no Node: sem algo ref'd o processo sairia antes do aborto.
+  const vivo = setInterval(() => {}, 1000);
+  t.after(() => clearInterval(vivo));
+  const r = await disparaCron('*/15 * * * *', TOKENS, travado, 50);
+  assert.ok(sinal instanceof AbortSignal, 'fetch sem signal');
+  assert.equal(r[0].ok, false);
+  assert.ok(Date.now() - inicio < 2000, 'o teto não abortou a chamada travada');
+  assert.match(c.err().join('\n'), /"workflow":"prod-watch\.yml".*rede: /);
+  const { fn, chamadas } = fetchFalso(204);
+  await disparaCron('*/15 * * * *', TOKENS, fn);
+  assert.ok(chamadas[0].init.signal instanceof AbortSignal, 'o caminho padrão também precisa do teto');
 });
 
 test('handler scheduled: lança em falha (o painel conta a invocação como erro) e resolve em 204', async (t) => {
