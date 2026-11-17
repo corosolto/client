@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.151`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.152`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -71,6 +71,8 @@
 
 ### Fixed
 - O runner local aceita até 16 MiB de saída por passo antes de classificar a execução: o gate browser da Operação Flávio aprovado gerava mais de 1 MiB e o `spawnSync` padrão devolvia `ENOBUFS`, bloqueando todo push como infraestrutura quebrada.
+- Cloudflare staging and production deploys stop failing at the private-audio prefetch (`✘ Unknown argument: bucket`, run 43999370211 on alpha.151): Wrangler 4 has no `--bucket` flag, the object is the positional `bucket/key`. `fetch-audio.sh` now calls `wrangler r2 object get "$bucket/$key"`, and `cf-audio-prefetch-check` fakes the real CLI contract (positional object path, unknown flags exit 64), so the old call fails the gate.
+- O cenário 3D do menu adia o Towner de 707 kB da Praça dos Três Poderes: o carrinho continua obrigatório e visível ao iniciar a partida, mas deixa de competir com os assets essenciais antes do portão da splash, devolvendo margem real ao ORC1 sem afrouxar o teto.
 - A queda do multiplayer contabiliza a sessão local antes de desmontar o jogo para reconexão, e o funil do convite de login respeita o consentimento no próprio emissor. As réguas de time acompanham os helpers de Javaporcos, a telemetria aceita o metadado completo de build e a inspeção pública ignora `llms.txt` somente quando ele não existe.
 - As réguas de movimento remoto agora capturam a velocidade lateral depois das mutações, e o portão móvel do passe espera o convite de login fechar antes de medir os 15 níveis sem rolagem horizontal.
 - O gate de acessórios injeta explicitamente o catálogo v9 ao executar `netgame.js` sem imports, e a matriz gerada do arsenal acompanha as linhas atuais de `game.js`; o `pre-push` volta a medir ambos em vez de parar com `V9_EMOTE_IDS` ausente ou documentação desatualizada.
@@ -287,6 +289,17 @@
 - A animação de recarga em terceira pessoa deixa de reiniciar ao terminar; o clipe ainda retoma quando uma reação de dano o interrompe.
 - As réguas de emote validam a composição exata dos 16 itens do menu, e os harnesses de snapshot injetam o catálogo v9 ao avaliar `netgame.js`.
 - Estados assados por personagem só entram quando não aumentam nenhum teto congelado de deformação; os offsets de pé e as catracas de chão são regenerados sobre o conjunto aprovado.
+
+## [2.1.0-alpha.152] — 2026-11-17
+
+### Mudado
+- hotfix: read the private audio pack with wrangler's bucket/key object path (#1397)
+- fix(eval): pin unversioned snapshot default to current v10 contract
+- docs: keep generated contribution blocks in English
+- docs(gen-docs): generate the root README/AGENTS/CONTRIBUTING blocks in English
+- fix(scripts): restore five eval scripts lost in the #1378 merge
+- docs: regenerate CONTRIBUTING blocks (stale on main since alpha.151)
+- fix(cf): read the private audio pack with wrangler's bucket/key object path
 
 ## [2.1.0-alpha.151] — 2026-11-17
 
