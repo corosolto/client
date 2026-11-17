@@ -1,0 +1,6 @@
+# Apex csbrasil.online -> www (tools/cf/virada.sh liga a rota `csbrasil.online/*` neste Worker).
+# Publicar: npx wrangler deploy --config tools/cf/apex/wrangler.toml
+name = "csb-apex"
+main = "worker.mjs"
+compatibility_date = "2026-11-09"
+workers_dev = false
