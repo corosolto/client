@@ -33,6 +33,16 @@
    PS10 bot-travado-fixado · o trecho REAL de main.js que monta a escalação da partida deixa de
                            fora o pin salvo de personagem travado; destravado pelo servidor, entra.
                            O ＋ recusado no seletor é medido no navegador (passe-browser.mjs, PB9).
+   PS11 forcado         · fim de partida pede liquidação NOVA: carregarPasse({forcar}) não devolve o
+                           pedido em voo, o pedido mais novo manda (o velho que chega depois não
+                           sobrescreve) e o forçado que falha mantém o status na tela.
+   PS12 novidades       · diff entre a memória da conta+temporada (localStorage) e o status: 0→10
+                           é o presente de boas-vindas, nível sobe uma vez por nível visto, missão
+                           feita avisa uma vez por período, e cada conta tem a própria memória.
+   PS13 resgatar-tudo   · um POST por nível, EM SEQUÊNCIA (nunca dois em voo), rate_limited espera
+                           e tenta de novo, outro erro para a fila; resumo somado da trilha.
+   PS14 partida         · acompanharPartidaPasse guarda o XP de antes e liquida de novo duas vezes,
+                           a segunda ~8 s depois (MP chega atrasado), sempre forçada.
 
    Uso: node tools/eval/passe-check.mjs [--mutante=<id> [--espera-reprovar]]
      --espera-reprovar  sai 0 só se o mutante derrubar a cláusula que ele mira
@@ -73,6 +83,17 @@ const MUTANTES = {
   'tela-sem-evento': ['PS6', 'public/js/tp/passe.js', "  registrarEventoPasse('open');\n", '\n'],
   'anuncio-desiste': ['PS9', 'public/js/passe-anuncio.js', '    await semDialogoAberto();\n', '    return null;\n'],
   'bot-travado-fixado': ['PS10', 'public/js/main.js', " && !personagemTravado(CHARACTERS.find((c) => c.id === id)));", ');'],
+  'forcado-devolve-voo': ['PS11', 'public/js/passe.js', 'if (carregando && !forcar) return carregando;', 'if (carregando) return carregando;'],
+  'pedido-velho-sobrescreve': ['PS11', 'public/js/passe.js', 'if (minha !== epoca || meu !== ultimoPedido) return estado;', 'if (minha !== epoca) return estado;'],
+  'forcado-apaga-status': ['PS11', 'public/js/passe.js', '    if (forcar && estado && (erro || !out)) return estado;\n', '\n'],
+  'diff-sem-nivel': ['PS12', 'public/js/passe.js', 'const subiu = s.level > de ?', 'const subiu = s.level > de && false ?'],
+  'missao-repete': ['PS12', 'public/js/passe.js', '.filter((q) => q.done && !feitas.has(q.id))', '.filter((q) => q.done)'],
+  'memoria-sem-conta': ['PS12', 'public/js/passe.js', 'const chaveMemoria = (c) => `${PASSE_MEMORIA_CHAVE}:${c}:${PASSE_TEMPORADA}`;', 'const chaveMemoria = () => `${PASSE_MEMORIA_CHAVE}:${PASSE_TEMPORADA}`;'],
+  'nivel-visto-cedo': ['PS12', 'public/js/passe.js', 'const memoria = { level: de,', 'const memoria = { level: s.level,'],
+  'resgatar-tudo-paralelo': ['PS13', 'public/js/passe.js', 'const out = await resgatarComLimite(fila[i]);', 'const out = resgatarComLimite(fila[i]).catch(() => null);'],
+  'resgatar-tudo-sem-limite': ['PS13', 'public/js/passe.js', "if (e.message !== 'rate_limited' || tentativa >= 3) throw e;", 'throw e;'],
+  'partida-sem-forcar': ['PS14', 'public/js/passe.js', 'void carregarPasse({ forcar: true }); }, ms);', 'void carregarPasse(); }, ms);'],
+  'partida-uma-vez': ['PS14', 'public/js/passe.js', 'PASSE_ATRASOS_PARTIDA = Object.freeze([4000, 12000]);', 'PASSE_ATRASOS_PARTIDA = Object.freeze([4000]);'],
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -87,7 +108,7 @@ const ler = (p) => {
 };
 const dataUrl = (fonte) => `data:text/javascript;base64,${Buffer.from(fonte).toString('base64')}`;
 /* o mock entra pelo mesmo caminho dos módulos do client: mutável pela própria régua (PS8) */
-const { criarPasseMock } = await import(dataUrl(ler('tools/eval/passe-mock.mjs')));
+const { criarPasseMock, xpAcumulado } = await import(dataUrl(ler('tools/eval/passe-mock.mjs')));
 
 /* Relógio fixo no meio da temporada (05/11/2026 a 10/01/2027): a régua mede comportamento, não a
    data em que roda. Vale para os módulos do client e para o mock, que leem Date.now(). */
@@ -124,7 +145,7 @@ const document = {
     if (sel === 'dialog[open]') return [this.body, ...this.body.todos()].find((n) => n.tagName === 'DIALOG' && n.open) || null;
     throw new Error(`seletor não suportado no DOM mínimo: ${sel}`);
   },
-  dispatchEvent() { return true; },
+  dispatchEvent(e) { if (e?.type === 'cs-passe-novidade') novidades.push(e.detail); return true; },
 };
 globalThis.document = document;
 globalThis.CustomEvent = class { constructor(t, o) { this.type = t; this.detail = o?.detail; } };
@@ -134,15 +155,31 @@ Object.defineProperty(globalThis, 'location', { configurable: true, get: () => (
 /* ---------- fetch ligado ao mock do contrato ---------- */
 let mock = criarPasseMock();
 const pedidos = [];
+const novidades = [];   // PASSE_NOVIDADE despachado por passe.js (subida de nível, missão feita)
 let atrasoPost = 0;   // resgate "em voo" para medir troca de conta no meio
+let atrasosGet = [];  // atraso de cada GET, na ordem; a resposta é a do servidor NO ENVIO
+let emVoo = 0, maxEmVoo = 0;   // resgates simultâneos (RESGATAR TUDO tem de ser em sequência)
+let respostaPost = null;       // (nº do POST, corpo) -> {status, body} para simular rate_limited/erro
+let falhaGet = false;
 globalThis.fetch = async (url, init = {}) => {
   const u = new URL(url, 'http://localhost');
   pedidos.push({ path: u.pathname, search: u.search, method: init.method || 'GET', body: init.body ?? null });
   if (u.pathname !== '/api/passe') return new Response('{"error":"not_found"}', { status: 404 });
   const conta = mock;   // o pedido pertence à conta que estava ativa quando saiu
-  if (init.method === 'POST' && atrasoPost) await new Promise((r) => setTimeout(r, atrasoPost));
-  const { status, body } = conta.handle(init.method || 'GET', init.body || '');
-  return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  if (init.method !== 'POST') {
+    if (falhaGet) throw new TypeError('fetch failed');
+    const { status, body } = conta.handle('GET', '');
+    const ms = atrasosGet.shift() || 0;
+    if (ms) await new Promise((r) => setTimeout(r, ms));
+    return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  }
+  emVoo++; maxEmVoo = Math.max(maxEmVoo, emVoo);
+  try {
+    if (atrasoPost) await new Promise((r) => setTimeout(r, atrasoPost));
+    const nPost = pedidos.filter((p) => p.method === 'POST').length;
+    const { status, body } = respostaPost?.(nPost, JSON.parse(init.body || '{}')) || conta.handle('POST', init.body || '');
+    return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  } finally { emVoo--; }
 };
 
 storage.set('cs_lang', 'pt');   // i18n.js lê o idioma no import: os textos medidos são os PT
@@ -428,6 +465,125 @@ await clausula('PS10', 'bot-travado-fixado: pin salvo de personagem travado fica
   await novaConta({ autenticado: true, xp: 1200, claimed: [] });
   await P.resgatarNivel(1);
   assert.deepEqual(escalados('caminhoneiro'), ['capitao-caveira', 'esquerdomacho'], 'destravado pelo servidor e o pin sumiu da partida');
+});
+
+const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
+const gets = () => pedidos.filter((p) => p.method === 'GET').length;
+
+await clausula('PS11', 'forcado: fim de partida liquida de novo, sem reaproveitar o pedido em voo', async () => {
+  await novaConta({ autenticado: true, xp: 2350, claimed: [] });
+  pedidos.length = 0;
+  atrasosGet = [60, 5];   // o pedido velho volta DEPOIS do forçado
+  const velho = P.carregarPasse();
+  assert.equal(P.carregarPasse(), velho, 'pedido normal com outro em voo não reaproveitou o pedido');
+  mock.definir({ xp: 2800 });   // a partida liquidou no servidor depois que o pedido velho saiu
+  const novo = P.carregarPasse({ forcar: true });
+  await Promise.all([velho, novo]);
+  assert.equal(gets(), 2, `forçado com pedido em voo fez ${gets()} GET (quer 2)`);
+  assert.equal(P.passeEstado()?.xp, 2800, `o pedido velho, que voltou depois, sobrescreveu o novo: xp ${P.passeEstado()?.xp}`);
+  falhaGet = true;
+  await P.carregarPasse({ forcar: true });
+  falhaGet = false;
+  assert.ok(P.passeEstado()?.xp === 2800 && !P.passeFalhou(), 'liquidação forçada que falhou apagou o status da tela');
+  atrasosGet = [];
+});
+
+await clausula('PS12', 'novidades: diff por conta+temporada (nível, boas-vindas, missão uma vez)', async () => {
+  const status = (opcoes) => P.normalizarStatus(criarPasseMock({ autenticado: true, claimed: [], ...opcoes }).status());
+  const s10 = status({ xp: xpAcumulado(10) });
+  const primeira = P.novidadesPasse(null, s10, AGORA);
+  assert.ok(primeira.subiu && primeira.subiu.de === 0 && primeira.subiu.para === 10 && primeira.subiu.boasVindas && primeira.subiu.niveis.length === 10,
+    `primeira vez no nível 10 sem presente de boas-vindas: ${JSON.stringify(primeira.subiu && { ...primeira.subiu, niveis: primeira.subiu.niveis.length })}`);
+  assert.deepEqual(primeira.missoes, [], 'primeira vez avisou missão feita antes de existir memória');
+  const vista = { ...primeira.memoria, level: 10 };
+  const s11 = status({ xp: xpAcumulado(11), progresso: { login: 1, play_3: 3, win_1: 1 } });
+  const depois = P.novidadesPasse(vista, s11, AGORA);
+  assert.ok(depois.subiu && depois.subiu.de === 10 && depois.subiu.para === 11 && !depois.subiu.boasVindas && depois.subiu.niveis.map((l) => l.n).join() === '11',
+    `10 -> 11 errado: ${JSON.stringify(depois.subiu && { ...depois.subiu, niveis: depois.subiu.niveis.map((l) => l.n) })}`);
+  assert.deepEqual(depois.missoes.map((q) => q.id), ['play_3'], `missão nova: ${depois.missoes.map((q) => q.id)} (quer só play_3)`);
+  const amanha = P.novidadesPasse({ ...depois.memoria, level: 11 }, s11, AGORA + 86400000);
+  assert.ok(!amanha.subiu && amanha.missoes.map((q) => q.id).sort().join() === 'login,play_3,win_1',
+    `dia novo: diárias feitas de novo têm de avisar (veio ${amanha.missoes.map((q) => q.id)})`);
+  assert.equal(P.novidadesPasse(null, status({ autenticado: false }), AGORA), null, 'visitante com novidade');
+  /* integrado: GET com conta -> PASSE_NOVIDADE, memória no localStorage desta conta */
+  storage.clear(); novidades.length = 0;
+  mock = criarPasseMock({ autenticado: true, xp: xpAcumulado(10), claimed: [] });
+  await P.trocarContaPasse('conta-a');
+  assert.ok(novidades.length === 1 && novidades[0].subiu?.para === 10 && novidades[0].subiu.boasVindas, `conta nova no nível 10: ${JSON.stringify(novidades)}`);
+  await P.carregarPasse();
+  assert.ok(novidades.length === 2 && novidades[1].subiu?.para === 10, 'celebração que não apareceu sumiu no GET seguinte (nível marcado visto antes da hora)');
+  P.marcarNivelVisto(10);
+  await P.carregarPasse();
+  assert.equal(novidades.length, 2, 'nível já visto celebrou de novo');
+  mock.definir({ progresso: { play_3: 3 } });
+  await P.carregarPasse();
+  assert.ok(novidades.length === 3 && !novidades[2].subiu && novidades[2].missoes.map((q) => q.id).join() === 'play_3', `missão concluída: ${JSON.stringify(novidades[2])}`);
+  await P.carregarPasse();
+  assert.equal(novidades.length, 3, 'a mesma missão avisou duas vezes');
+  await P.trocarContaPasse('conta-b');
+  assert.ok(novidades.length === 4 && novidades[3].subiu?.de === 0 && novidades[3].conta === 'conta-b', 'outra conta herdou a memória da primeira');
+  await P.trocarContaPasse();
+  assert.equal(novidades.length, 4, 'sem conta identificada saiu novidade');
+  storage.clear(); storage.set('cs_lang', 'pt');
+});
+
+await clausula('PS13', 'resgatar-tudo: em sequência, com rate limit, resumo da trilha', async () => {
+  await novaConta({ autenticado: true, xp: xpAcumulado(10), claimed: [] });
+  pedidos.length = 0; maxEmVoo = 0; atrasoPost = 15;
+  const esperas = [], progresso = [];
+  const espera = async (ms) => { esperas.push(ms); };
+  const a = P.resgatarTodos({ espera, aoProgresso: (p) => progresso.push(p) });
+  assert.equal(P.resgatarTodos({ espera }), a, 'segundo RESGATAR TUDO abriu outra fila');
+  const out = await a;
+  const niveis = pedidos.filter((p) => p.method === 'POST').map((p) => JSON.parse(p.body).level);
+  assert.equal(maxEmVoo, 1, `${maxEmVoo} resgates em voo ao mesmo tempo (quer 1)`);
+  assert.deepEqual(niveis, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], `ordem dos resgates: ${niveis}`);
+  assert.deepEqual(out.niveis, niveis, 'resumo não bate com os resgates');
+  assert.ok(out.recompensas.personagens.length === 20 && out.recompensas.skins.length === 10 && out.recompensas.moedas === 950 && out.recompensas.boost === 20,
+    `resumo: ${JSON.stringify({ ...out.recompensas, personagens: out.recompensas.personagens.length, skins: out.recompensas.skins.length })}`);
+  assert.ok(P.passeEstado().claimable.length === 0 && progresso.at(-1)?.feitos === 10, 'status ou progresso final errado');
+  /* rate_limited no 3º: espera o prazo e tenta o MESMO nível de novo */
+  await novaConta({ autenticado: true, xp: xpAcumulado(10), claimed: [] });
+  pedidos.length = 0; esperas.length = 0;
+  let limitou = false;
+  respostaPost = (n) => (n === 3 && !limitou ? (limitou = true, { status: 429, body: { error: 'rate_limited' } }) : null);
+  const comLimite = await P.resgatarTodos({ espera });
+  assert.ok(comLimite.niveis.length === 10 && !comLimite.erro && esperas.includes(P.PASSE_ESPERA_LIMITE_MS),
+    `rate_limited no meio: ${comLimite.niveis.length} níveis, erro ${comLimite.erro}, esperas ${esperas}`);
+  /* outro erro para a fila e devolve o que já saiu */
+  await novaConta({ autenticado: true, xp: xpAcumulado(10), claimed: [] });
+  pedidos.length = 0;
+  respostaPost = (n, corpo) => (corpo.level === 4 ? { status: 409, body: { error: 'season_closed' } } : null);
+  const parou = await P.resgatarTodos({ espera });
+  const tentados = pedidos.filter((p) => p.method === 'POST').map((p) => JSON.parse(p.body).level);
+  assert.ok(parou.niveis.join() === '1,2,3' && parou.erro === 'season_closed' && tentados.join() === '1,2,3,4', `erro no nível 4: ${JSON.stringify(parou)} tentados ${tentados}`);
+  respostaPost = null; atrasoPost = 0;
+  await novaConta({ autenticado: false, claimed: [] });
+  pedidos.length = 0;
+  await assert.rejects(P.resgatarTodos({ espera }), /account_required/);
+  assert.equal(pedidos.filter((p) => p.method === 'POST').length, 0, 'visitante mandou resgate');
+});
+
+await clausula('PS14', 'partida: XP de antes guardado, duas liquidações forçadas, a 2ª ~8 s depois', async () => {
+  const [a1, a2] = P.PASSE_ATRASOS_PARTIDA;
+  assert.ok(P.PASSE_ATRASOS_PARTIDA.length === 2 && a2 - a1 >= 7000 && a2 - a1 <= 10000, `atrasos ${P.PASSE_ATRASOS_PARTIDA} (quer 2, o segundo ~8 s depois do primeiro)`);
+  await novaConta({ autenticado: true, xp: 2350, claimed: [] });
+  pedidos.length = 0;
+  atrasosGet = [60];   // a 1ª liquidação ainda está em voo quando a 2ª sai
+  const marco = P.acompanharPartidaPasse({ atrasos: [5, 30] });
+  mock.definir({ xp: 2530 });
+  await tick(15);
+  mock.definir({ xp: 2650 });   // MP do nó chegou depois
+  await tick(120);
+  assert.ok(marco?.xp === 2350 && P.passePartida()?.xp === 2350, 'XP de antes da partida não ficou guardado');
+  assert.equal(gets(), 2, `${gets()} GET depois da partida (quer 2)`);
+  assert.equal(P.passeEstado()?.xp, 2650, `XP depois da partida ${P.passeEstado()?.xp} (quer 2650, a última liquidação)`);
+  await novaConta({ autenticado: false, claimed: [] });
+  pedidos.length = 0;
+  assert.equal(P.acompanharPartidaPasse({ atrasos: [5] }), null, 'visitante com marco de partida');
+  await tick(30);
+  assert.equal(gets(), 1, 'visitante: o fim de partida parou de perguntar ao servidor');
+  atrasosGet = [];
 });
 
 const alvo = MUT ? MUTANTES[MUT][0] : '';

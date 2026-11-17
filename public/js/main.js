@@ -12,7 +12,7 @@ import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
 import { clientUuid, getAnonId } from './client-id.js';
 import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
-import {carregarPasse,trocarContaPasse,personagemTravado as travadoNoPasse,nivelDoPersonagem,PASSE_EVENTO} from './passe.js';
+import {carregarPasse,trocarContaPasse,acompanharPartidaPasse,personagemTravado as travadoNoPasse,nivelDoPersonagem,PASSE_EVENTO} from './passe.js';
 import { passeDebugAtivo } from './passe-debug.js';
 /* QA local (passe-debug.js): só loopback + ?debug=1&passeDev=1 joga com o elenco do passe sem resgate. */
 const passeDev = passeDebugAtivo();
@@ -5776,11 +5776,12 @@ const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location
   tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
   document.addEventListener('cs-treta-inventory-change',refreshMenuEquipment);
   /* Passe Sessão da Treta: o GET com conta também registra o login do dia no servidor. Conta trocada
-     esquece o status anterior; fim de partida pergunta de novo depois que o resultado foi enviado. */
+     esquece o status anterior (o id do perfil separa a memória de novidades de cada conta); fim de
+     partida liquida de novo depois que o resultado foi enviado (acompanharPartidaPasse, passe.js). */
   if(!testMode){
     void carregarPasse();
-    document.addEventListener('cs-account-change',()=>{void trocarContaPasse();});
-    document.addEventListener('cs-match-end',()=>{setTimeout(()=>{void carregarPasse();},4000);});
+    document.addEventListener('cs-account-change',(e)=>{void trocarContaPasse(e.detail?.authenticated?e.detail.profile?.id:null);});
+    document.addEventListener('cs-match-end',()=>{acompanharPartidaPasse();});
   }
   document.addEventListener(PASSE_EVENTO,refreshMenuEquipment);
   // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.
