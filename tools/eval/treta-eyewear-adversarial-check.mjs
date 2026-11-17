@@ -4,6 +4,7 @@ import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 const repo=resolve(new URL('../..',import.meta.url).pathname);
 const THREE=await import(pathToFileURL(resolve(repo,'public/vendor/three.module.js')));
+const {emoteInfo,V9_EMOTE_IDS,V10_EMOTE_IDS}=await import(pathToFileURL(resolve(repo,'public/js/data/emote-catalog.js')));
 const read=p=>fs.readFileSync(resolve(repo,p),'utf8');
 const rawEye="const TRETA_ITEMS_ENABLED = true;\n"+read('public/js/eyewear.js').replace(/^import .*$/mg,'').replace(/export /g,'');
 const rawNet=read('public/js/netgame.js').replace(/^import .*$/mg,'').replace('export function makeNetcode','function makeNetcode');
@@ -34,7 +35,7 @@ async function headshot(source){
  assert.deepEqual(withEye,last,'eyewear must preserve same real hitscan result');assert.deepEqual(last,{damage:100,head:true});
 }
 async function cacheRetry(source){let calls=0,loads=0;const mod=eyeModule(source,async url=>{calls++;if(calls===1)throw Error('transient');return response(url);},class{async loadAsync(){loads++;return {scene:new THREE.Group()};}});await mod.preloadEyewearAssets(['test']);await mod.preloadEyewearAssets(['test']);assert.equal(calls,4);assert.equal(loads,1);}
-function netModule(source,pending){return new Function('THREE','byId','preloadCosmeticAssets','preloadEyewearAssets','setInterval',source+';return Netcode;')(THREE,id=>({id,name:id}),async()=>{},()=>pending,()=>0);}
+function netModule(source,pending){return new Function('THREE','byId','preloadCosmeticAssets','preloadEyewearAssets','setInterval','emoteInfo','V9_EMOTE_IDS','V10_EMOTE_IDS',source+';return Netcode;')(THREE,id=>({id,name:id}),async()=>{},()=>pending,()=>0,emoteInfo,V9_EMOTE_IDS,V10_EMOTE_IDS);}
 async function remap(source){
  let release;const pending=new Promise(r=>release=r),Netcode=netModule(source,pending);
  const bot={team:'B',def:{id:'capitao'},pos:new THREE.Vector3(),alive:true},applied=[];

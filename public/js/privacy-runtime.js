@@ -1,8 +1,15 @@
 /* Medição LIGADA por padrão (dono, 09/11/2026): só recusa gravada em `cs_privacy` desliga;
-   storage corrompido/antigo vale como padrão. Réguas: privacy-choice-check, privacy-ops-check. */
+   storage corrompido/antigo vale como padrão. Cloudflare Web Analytics só entra por este gate.
+   Réguas: privacy-choice-check, privacy-ops-check. */
 (function () {
   if (window.__csPrivacy) return;
   const VERSION='corosolto-analytics-v1',KEY='cs_privacy';
+  const CLOUDFLARE_TOKENS=Object.freeze({
+    'corosolto.com.br':'5f7f6c1ab01c4e2fb6b326dbab3e7197',
+    'www.corosolto.com.br':'5f7f6c1ab01c4e2fb6b326dbab3e7197',
+    'csbrasil.online':'b777fa448ebe48d8a635e74e9902be19',
+    'www.csbrasil.online':'b777fa448ebe48d8a635e74e9902be19',
+  });
   function choice() {
     try {
       const value=JSON.parse(localStorage.getItem(KEY) || 'null');
@@ -10,22 +17,35 @@
     } catch { return null; }
   }
   function allowed() { return choice()?.analytics!==false; }
-  let vercelLoaded=false;
-  function enableVercelAnalytics() {
-    if(vercelLoaded || !allowed() || /^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname))return;
-    vercelLoaded=true;
-    window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};
-    window.va('beforeSend',event=>{
-      if(!allowed())return null;
-      try{
-        const url=new URL(event.url);
-        url.search='';url.hash='';
-        if(url.pathname.startsWith('/u/'))url.pathname='/u/:perfil';
-        return {...event,url:url.toString()};
-      }catch{return null;}
-    });
+  function cloudflareToken() {
+    return CLOUDFLARE_TOKENS[location.hostname.toLowerCase()] || '';
+  }
+  let cloudflareLoaded=false,cloudflareScript=null;
+  function enableCloudflareAnalytics() {
+    const token=cloudflareToken();
+    if(!allowed() || !token)return;
+    window.__cfBeacon={token};
+    if(cloudflareLoaded){
+      // Se o módulo ainda não executou, restaura o token no mesmo elemento; nunca cria uma segunda instância.
+      cloudflareScript.dataset.cfBeacon=JSON.stringify({token});
+      return;
+    }
+    cloudflareLoaded=true;
     const script=document.createElement('script');
-    script.defer=true;script.src='/_vercel/insights/script.js';document.head.appendChild(script);
+    cloudflareScript=script;
+    script.type='module';
+    script.src='https://static.cloudflareinsights.com/beacon.min.js';
+    script.dataset.cfBeacon=JSON.stringify({token});
+    script.addEventListener('load',()=>{
+      if(!allowed())window.__cfBeacon=null;
+    });
+    document.head.appendChild(script);
+  }
+  function stopCloudflareAnalytics() {
+    // O beacon consulta este global antes de cada envio; anulá-lo preserva o fluxo atual.
+    window.__cfBeacon=null;
+    // Se o módulo ainda não executou, ele também não pode capturar um token válido.
+    if(cloudflareScript)cloudflareScript.dataset.cfBeacon='{"token":""}';
   }
   function clearOptionalStorage() {
     try { localStorage.removeItem('cs_acq');localStorage.removeItem('cs_ops_last');sessionStorage.removeItem('cs_session');sessionStorage.removeItem('cs_invite_landing'); } catch {}
@@ -37,15 +57,18 @@
     localStorage.setItem(KEY,JSON.stringify(value));
     if(!analytics)clearOptionalStorage();
     notify(value);
+    if(!analytics)stopCloudflareAnalytics();
     return value;
   }
   if(!allowed())clearOptionalStorage();
-  enableVercelAnalytics();
-  window.addEventListener('cs-privacy-change',enableVercelAnalytics);
+  enableCloudflareAnalytics();
+  window.addEventListener('cs-privacy-change',enableCloudflareAnalytics);
   window.addEventListener('storage',event=>{
     if(event.key!==KEY && event.key!==null)return;
+    const value=choice() || {version:VERSION,analytics:true};
     if(!allowed())clearOptionalStorage();
-    notify(choice() || {version:VERSION,analytics:true});
+    notify(value);
+    if(!allowed())stopCloudflareAnalytics();
   });
   window.__csPrivacy={allowed,choice,set};
 })();

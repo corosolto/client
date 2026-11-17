@@ -4,9 +4,12 @@ import { fileURLToPath } from 'node:url';
 const prova = fileURLToPath(new URL('./remotos3p-check.mjs', import.meta.url));
 const casos = [
   ['lateral-mudo', 'inclinação remota perdeu velocidade lateral'],
-  ['flinch-remoto-mudo', 'hit remoto não animou'],
+  ['flinch-remoto-mudo', 'headshot remoto não animou'],
+  ['flinch-remoto-sem-cabeca', 'headshot remoto não animou'],
   ['morte-sem-direcao', 'kill remoto perdeu direção'],
   ['saque-mudo', 'troca de arma remota não iniciou saque'],
+  ['cerimonia-online-muda', 'fim autoritativo online não iniciou cerimônia'],
+  ['cerimonia-reset-mudo', 'rodada online nova não encerrou a cerimônia'],
 ];
 for (const [mutante, mensagem] of casos) {
   const r = spawnSync(process.execPath, [prova], { env: { ...process.env, REMOTOS_MUTANTE: mutante }, encoding: 'utf8' });

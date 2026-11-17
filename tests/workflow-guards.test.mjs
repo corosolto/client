@@ -411,7 +411,15 @@ trap 'rmdir "$lock"' EXIT
   const runHook = (id) => new Promise((resolve) => {
     const child = spawn('/bin/bash', [join(ROOT, '.githooks/pre-push'), 'origin', 'unused'], {
       cwd: dir,
-      env: { PATH: bin, LOCK_ACQUIRED: acquired, LOCK_RUN_ID: id, LOCK_TRACE: trace, LOCK_SUFFIX: suffix },
+      env: {
+        PATH: bin,
+        LOCK_ACQUIRED: acquired,
+        LOCK_RUN_ID: id,
+        LOCK_TRACE: trace,
+        LOCK_SUFFIX: suffix,
+        CSBRASIL_PREPUSH_LEGACY_LOCK: join(dir, 'legacy.lock'),
+        CSBRASIL_PREPUSH_V2_LOCK: join(dir, 'v2.lock'),
+      },
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     child.stdin.end();
