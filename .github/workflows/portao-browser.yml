@@ -30,7 +30,11 @@ name: portao-browser
 on:
   push:
     branches: [main]
+  # Os três padrões + `ready_for_review`: o draft pula o portão (job `decide`, saída
+  # `pronto`) e o `gh pr ready` roda tudo no mesmo SHA. Sem `converted_to_draft` de
+  # propósito: voltar a draft não cancela o run pronto que já mede este SHA.
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -40,7 +44,9 @@ permissions:
 # `refs/heads/main` em todo push da main, um grupo só para a branch inteira, e o
 # portão LENTO era o mais penalizado (20 de 29 runs de push na main cancelados —
 # 45 min de render por software jogados fora e nenhum veredito). Por commit na
-# main, por PR no pull_request.
+# main, por PR no pull_request. Dentro do PR só os quatro `types` acima entram no
+# grupo: push novo cancela o run velho e o `ready_for_review` cancela o run do draft
+# (que só pulava); label, edição e volta a draft não disparam, então não matam o run pronto.
 concurrency:
   group: portao-browser-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
@@ -52,14 +58,33 @@ jobs:
   # scripts/ci/gatilho.mjs (fonte única, medida pela eval:portaogatilho) e o pulo
   # aparece como SKIPPED, que o check_automerge aceita. Falha FECHADO: push, dispatch,
   # erro de diff ou do gatilho = roda. Só `rodar=false` exato pula.
+  # RASCUNHO: a saída `pronto` é `false` só em `pull_request` com draft exatamente
+  # `true`; todo job abaixo exige `pronto != 'false'` (saída ausente = roda).
   decide:
+    # Nome próprio: o cf-preview e o smoke-web também têm um job `decide`. Este é o
+    # check que nasce na hora do `ready_for_review` e segura o PR até o portão novo.
+    name: portao-decide
     runs-on: ubuntu-latest
     # 15 e não 5: o checkout com histórico (filter blob:none) deste repo passou de 5 min
     # em runner lento e o job morria em "operation was canceled" antes de medir (PR #1130).
     timeout-minutes: 15
     outputs:
       rodar: ${{ steps.filtro.outputs.rodar }}
+      pronto: ${{ steps.rascunho.outputs.pronto }}
     steps:
+      - name: O PR está pronto para o portão?
+        id: rascunho
+        env:
+          EVENTO: ${{ github.event_name }}
+          RASCUNHO: ${{ github.event.pull_request.draft }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENTO" = "pull_request" ] && [ "$RASCUNHO" = "true" ]; then
+            echo "pronto=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=PR em rascunho::portão pulado; roda no gh pr ready (ready_for_review)"
+          else
+            echo "pronto=true" >> "$GITHUB_OUTPUT"
+          fi
       # Leve: só árvore e commits; os blobs vêm sob demanda (o package.json, se mudou).
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -95,7 +120,7 @@ jobs:
 
   portao-fauna:
     needs: decide
-    if: needs.decide.outputs.rodar == 'true'
+    if: needs.decide.outputs.rodar == 'true' && needs.decide.outputs.pronto != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -146,7 +171,7 @@ jobs:
 
   portao-armas:
     needs: decide
-    if: needs.decide.outputs.rodar == 'true'
+    if: needs.decide.outputs.rodar == 'true' && needs.decide.outputs.pronto != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -213,7 +238,7 @@ jobs:
 
   portao-controles:
     needs: decide
-    if: needs.decide.outputs.rodar == 'true'
+    if: needs.decide.outputs.rodar == 'true' && needs.decide.outputs.pronto != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -278,7 +303,7 @@ jobs:
   # passe fora de todo CI (estraga-codigo, PR #1302).
   portao-passe:
     needs: decide
-    if: needs.decide.outputs.rodar == 'true'
+    if: needs.decide.outputs.rodar == 'true' && needs.decide.outputs.pronto != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -330,7 +355,7 @@ jobs:
 
   portao-core:
     needs: decide
-    if: needs.decide.outputs.rodar == 'true'
+    if: needs.decide.outputs.rodar == 'true' && needs.decide.outputs.pronto != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -441,21 +466,24 @@ jobs:
             /tmp/treta-vitrine/**
           if-no-files-found: ignore
 
+  # O check único do portão: o ruleset exige este nome. O Sertão entra no `needs` porque
+  # matrix pulada não expande o nome (o check sai com a expressão crua da matrix), então
+  # `Sertão — criacao` não serve de check obrigatório.
   portao:
-    needs: [decide, portao-fauna, portao-armas, portao-controles, portao-core, portao-passe]
-    if: ${{ needs.decide.outputs.rodar == 'true' && !cancelled() }}
+    needs: [decide, portao-fauna, portao-armas, portao-controles, portao-core, portao-passe, sertao]
+    if: ${{ needs.decide.outputs.rodar == 'true' && needs.decide.outputs.pronto != 'false' && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Portão verde só se os cinco portões paralelos forem
+      - name: Portão verde só se os portões paralelos e o Sertão forem
         run: |
           STRING='''${{ toJson(needs) }}'''
-          python3 -c 'import json,sys; n=json.loads(sys.argv[1]); bad=[k+" terminou em "+v["result"] for k,v in sorted(n.items()) if v["result"]!="success"]; print("\n".join(bad) if bad else "portao: os 5 portões paralelos verdes"); sys.exit(bool(bad))' "$STRING"
+          python3 -c 'import json,sys; n=json.loads(sys.argv[1]); bad=[k+" terminou em "+v["result"] for k,v in sorted(n.items()) if v["result"]!="success"]; print("\n".join(bad) if bad else "portao: os portões paralelos e o Sertão verdes"); sys.exit(bool(bad))' "$STRING"
 
   sertao:
     name: Sertão — ${{ matrix.shard.nome }}
     needs: decide
-    if: needs.decide.outputs.rodar == 'true'
+    if: needs.decide.outputs.rodar == 'true' && needs.decide.outputs.pronto != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:

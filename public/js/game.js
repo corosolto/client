@@ -3432,7 +3432,8 @@ export class Game {
     } catch {}
     try {
       this.onMatchEnd?.({
-        won: mine, team: playerSide, mode: this._modeId(), character: this.playerDef.id,
+        /* personagem e skin capturados aqui, no fim da partida: o envio (recordMatchStats) usa só este retrato */
+        won: mine, team: playerSide, mode: this._modeId(), character: this.playerDef.id, skin: this.playerDef.skinId || null,
         kills: this.player.kills, deaths: this.player.deaths,
         headshots: this.player.headshots || 0, bestStreak: this.mk.best || 0,
         roundsP: this.roundsWon.E, roundsB: this.roundsWon.B,

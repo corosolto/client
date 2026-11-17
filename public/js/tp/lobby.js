@@ -1,6 +1,6 @@
 /* Treta Pop · 02 lobby, 18 mobile, 26 gire o celular. Carregado por tp/ligar.js só com ?ui=v3.
    Cada controle novo aciona um do hub (main.js): nenhum estado novo, nada simulado. Régua: tools/eval/ui-v3-lobby.mjs. */
-import { tr, LANG } from '../i18n.js';
+import { tr, frase, LANG } from '../i18n.js';
 import { VERSION } from '../version.js';
 import { tretaLoja, abrirTretaSkin } from '../treta-store.js';
 import { montarPlacar } from './ranking.js';
@@ -8,6 +8,7 @@ import { wallpaperJavaporcos } from '../javaporcos_apresentacao.js';
 import { anunciarJavaporcos } from '../javaporcos_novidade.js';
 import { montarPainelFlavio } from './flavio.js';
 import { abrirPasse } from './passe.js';
+import { ligarFestaPasse, liberarFestaPasse } from './passe-festa.js';
 import { passeEstado, passeFalhou, carregarPasse, PASSE_EVENTO } from '../passe.js';
 import { anunciarPasseNaVez } from '../passe-anuncio.js';
 import { abrirLoginPrompt } from '../login-prompt.js';
@@ -64,6 +65,8 @@ function montarAbas(header) {
     const b = no(a.href ? 'a' : 'button', 'tp-lobby-aba', tr(a.rotulo));
     b.dataset.tpAba = a.id;
     if (a.href) b.href = a.href; else { b.type = 'button'; b.addEventListener('click', a.ir); }
+    /* PASSE: selo pulsante com os níveis prontos para resgatar (claimable do servidor) */
+    if (a.id === 'passe') { const selo = no('span', 'tp-lobby-aba__selo tp-num'); selo.hidden = true; selo.setAttribute('aria-hidden', 'true'); b.appendChild(selo); }
     if (a.soComServidor) b.hidden = !passeEstado();
     nav.appendChild(b);
   }
@@ -83,11 +86,16 @@ function montarAbas(header) {
   if (filtros) new MutationObserver(marcar).observe(filtros, { attributes: true, subtree: true, attributeFilter: ['aria-pressed'] });
   addEventListener('resize', marcar);
   document.fonts?.ready.then(marcar);
-  document.addEventListener(PASSE_EVENTO, () => {
+  const passeAba = () => {
     const passe = nav.querySelector('[data-tp-aba="passe"]');
-    if (passe) passe.hidden = !passeEstado();
-    marcar();
-  });
+    if (!passe) return;
+    passe.hidden = !passeEstado();
+    const n = passeEstado()?.claimable.length || 0, selo = passe.querySelector('.tp-lobby-aba__selo');
+    if (selo) { selo.hidden = !n; selo.textContent = n ? String(n) : ''; }
+    if (n) passe.setAttribute('aria-label', frase('passeAbaResgatar', n)); else passe.removeAttribute('aria-label');
+  };
+  document.addEventListener(PASSE_EVENTO, () => { passeAba(); marcar(); });
+  passeAba();
   marcar();
 }
 
@@ -690,11 +698,13 @@ async function anunciarNovidades() {
 }
 
 export function ligar() {
+  ligarFestaPasse();
   const raiz = document.documentElement;
   const pronto = () => raiz.dataset.homeUi === 'hub' && $('hub-ui') && !$('hub-ui').hidden;
   const abrir = () => {
     montar();
-    void anunciarNovidades();
+    /* a celebração de nível do passe (tp/passe-festa.js) entra depois das novidades de entrada */
+    void anunciarNovidades().catch(() => {}).finally(liberarFestaPasse);
   };
   if (pronto()) { abrir(); return; }
   const espera = new MutationObserver(() => { if (pronto()) { espera.disconnect(); abrir(); } });
