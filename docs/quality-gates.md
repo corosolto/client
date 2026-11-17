@@ -32,6 +32,26 @@ As duas bases também exigem conversa de revisão resolvida e só aceitam merge 
 está desligado. Os comandos exatos estão no PR que introduziu o auto-merge nativo e na seção
 "Rollout" abaixo.
 
+## PR em draft: itere barato, peça os portões pesados no fim
+
+Abra a PR como draft (`gh pr create --draft`) enquanto ainda está iterando. Em draft rodam
+`pr-fast`, `dco`, os gates de PR e o `smoke` básico do `smoke-web` (~5,5 min, o job que mais
+reprova). O `portao-browser` inteiro (`portao-*`, `Sertão — *`, agregador `portao`) e os jobs
+pesados do `smoke-web` (`chat-desktop`, `smoke-cf`) saem **SKIPPED**: o check aparece, mas
+não roda. Isso economiza ~99 runner-min e 10 jobs por push (medido em 30 d).
+
+Quando o `pr-fast` estiver verde, rode `gh pr ready <número>`. O `ready_for_review` dispara
+`portao-browser` e `smoke-web` de novo no mesmo SHA, agora com tudo. Push em PR não-draft
+continua rodando tudo. Voltar para draft (`gh pr ready --undo`) não cancela o run que já está
+medindo o SHA, e o push seguinte em draft volta a pular o pesado.
+
+Draft nunca é mergeado: o `check_automerge.py` recusa `isDraft`, e o SKIPPED do draft não vale
+como aprovação. O run do `ready_for_review` cria na hora os checks `portao-decide` e
+`smoke-decide` (pendentes), e os portões pesados entram em seguida. O `decide` falha fechado:
+push, `workflow_dispatch`, erro de diff e saída ausente rodam tudo. Só `pull_request` com
+`draft == true` pula (régua `eval:portaogatilho`, PG7). Quais jobs ficam no draft é decidido
+em `GATILHOS.<alvo>.leves` (`scripts/ci/gatilho.mjs`).
+
 ## Labels
 
 - `safe-automerge`: só para PR pequena, reversível e fora de gameplay/backend

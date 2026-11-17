@@ -13,13 +13,12 @@ const PASSOS_CONHECIDOS = new Set([...SUITES.fast, ...SUITES.deploy]);
 const REGUAS_WORKFLOW = Object.freeze({
   '.github/workflows/ci.yml': Object.freeze(['eval:operacao-flavio', 'eval:release']),
   '.github/workflows/release.yml': Object.freeze(['eval:release']),
-  // Arquivo removido em 17/11/2026; recriá-lo precisa passar pelo RLS6 (nenhum deploy --prod em workflow).
-  '.github/workflows/deploy-prod.yml': Object.freeze(['eval:edgecache', 'eval:release']),
+  '.github/workflows/cf-prod-deploy.yml': Object.freeze(['eval:edgecache', 'eval:release']),
   '.github/workflows/prod-watch.yml': Object.freeze(['eval:edgecache', 'eval:wfpurge']),
-  '.github/workflows/preview-build.yml': Object.freeze([]),
-  '.github/workflows/preview-deploy.yml': Object.freeze([]),
   '.github/workflows/preview-bot.yml': Object.freeze([]),
   '.github/workflows/portao-browser.yml': Object.freeze([]),
+  '.github/workflows/smoke-web.yml': Object.freeze([]),
+  '.github/workflows/cf-preview.yml': Object.freeze([]),
   '.github/workflows/autofix.yml': Object.freeze([]),
   '.github/workflows/csbrasil-bot-automerge.yml': Object.freeze([]),
   '.github/workflows/csbrasil-bot-pr-classify.yml': Object.freeze([]),

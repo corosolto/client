@@ -11,18 +11,12 @@
  *
  * RLS5: uma falha do release local restaura os arquivos antes de sair.
  *
- * RLS6: produção na Vercel tem UM caminho: a integração Git na main, filtrada pelo
- *       ignoreCommand (RLS9). Nenhum workflow publica `vercel deploy --prod` — o fallback
- *       manual `deploy-prod.yml` falhou em todos os runs desde 11/08 (último em 18/10) e
- *       saiu em 17/11/2026; o hotfix é `gh workflow run release.yml`. O Worker `csb-prod`
- *       (Cloudflare) sai pelo `cf-prod-deploy.yml`, fora desta cláusula.
+ * RLS6: produção tem um único caminho automático, preso a push da `main` e ao SHA recebido.
  * RLS8: o push do bot não cancela o run que ainda publica o Release e avisa o backend.
- * RLS9: TREM DE RELEASE (13/10/2026). Produção só builda em commit `chore(release):`
- *       (vercel.json → ignoreCommand → scripts/ci/vercel-ignore.sh, executado aqui de
- *       verdade com as mensagens que importam). Desde 10/11 preview de PR NÃO builda
- *       (Cloudflare assumiu); staging/main/lote-* seguem buildando. 126 releases em 130
- *       merges era o motor do churn de bot; desde 14/10 o push na main só vira release se
- *       for de lote (RLS13/14).
+ * RLS9: TREM DE RELEASE (13/10/2026). O release só sai depois da `main` verde.
+ *       Na fase 6 da migração, a Vercel fica congelada como rollback dos 30 dias:
+ *       `vercel-ignore.sh` pula todo commit; o deploy real é o `cf-prod-deploy.yml`
+ *       protegido por push da main (RLS6).
  *
  * RLS10: GERADO VELHO NÃO TRAVA O TREM (13/10/2026, c2ca685). Dois PRs testados sobre bases
  *       diferentes mesclam limpo e deixam contagem velha na main; com o DOCS1 reprovando o push,
@@ -65,7 +59,7 @@
  *       na espera; sem push verde não sai; head `chore(release):` não sai. O bump usa CÓPIA
  *       IDÊNTICA da função antes do `pr_fast_verde` quando a main anda (RLS17 continua: só SHA verde).
  *
- * Mutações: --mutante=nome-antigo | semcreditos | semdco | semdocs | semrollback | deploy-duplo | deploy-yaml | sem-anims-deploy | cancelar-bot | ignora-sem-filtro | gerado-trava-trem | gerado-fora-do-pr | release-confere-so-estrutura | release-sem-modo | autoria-trava-trem | autoria-desligada | release-sem-arch | cron-de-volta | sem-dispatch | lote-ignorado | sem-rotulo | sem-filtro-lote | qualquer-merge | pr-aberto | concurrency-no-topo | sem-concurrency | grupo-sem-portao | bump-cancelavel | bump-mesmo-grupo | sem-aviso | loop | injecao | sem-retry | retry-infinito | push-forcado | publica-sem-conferir | sha-solto | falha-vira-verde | funcao-curta | sem-commit | cabeca-release-segue | prazo-longo | lote-sem-arvore | lote-sem-ci | lote-desligado.
+ * Mutações: --mutante=nome-antigo | semcreditos | semdco | semdocs | semrollback | deploy-duplo | deploy-yaml | sem-dispatch-prod | sem-anims-deploy | cancelar-bot | ignora-sem-filtro | gerado-trava-trem | gerado-fora-do-pr | release-confere-so-estrutura | release-sem-modo | autoria-trava-trem | autoria-desligada | release-sem-arch | cron-de-volta | sem-dispatch | lote-ignorado | sem-rotulo | sem-filtro-lote | qualquer-merge | pr-aberto | concurrency-no-topo | sem-concurrency | grupo-sem-portao | bump-cancelavel | bump-mesmo-grupo | sem-aviso | loop | injecao | sem-retry | retry-infinito | push-forcado | publica-sem-conferir | sha-solto | falha-vira-verde | funcao-curta | sem-commit | cabeca-release-segue | prazo-longo | lote-sem-arvore | lote-sem-ci | lote-desligado.
  */
 import { readFileSync, readdirSync, mkdtempSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -76,13 +70,13 @@ import { SUITES } from './suites.mjs';
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.split('=')[1];
 const arquivos = ['.github/workflows/release.yml', '.github/workflows/ci.yml'];
 let workflowRelease = readFileSync('.github/workflows/release.yml', 'utf8');
+let workflowDeploy = readFileSync('.github/workflows/cf-prod-deploy.yml', 'utf8');
 let workflowSources = readdirSync('.github/workflows')
   .filter((arquivo) => /\.ya?ml$/.test(arquivo))
   .map((arquivo) => [arquivo, readFileSync(`.github/workflows/${arquivo}`, 'utf8')]);
 const workflowsProd = () => workflowSources
-  .filter(([, source]) => /vercel\s+deploy[\s\S]{0,240}?--prod/.test(source))
+  .filter(([, source]) => /wrangler versions deploy/.test(source) && /wrangler\.prod\.toml/.test(source))
   .map(([arquivo]) => arquivo);
-const vercel = JSON.parse(readFileSync('vercel.json', 'utf8'));
 const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
 let scriptRelease = readFileSync('scripts/release.mjs', 'utf8');
 let comandos = arquivos.flatMap((arquivo) => readFileSync(arquivo, 'utf8')
@@ -118,8 +112,17 @@ const gatilhos = (workflow) => {
   for (let i = inicio + 1; i < linhas.length && (linhas[i] === '' || /^\s/.test(linhas[i])); i++) bloco.push(linhas[i]);
   return bloco.flatMap((linha) => linha.match(/^  ([\w-]+):/)?.slice(1) || []);
 };
-const validaCaminhoProd = () => vercel.git?.deploymentEnabled?.main === true
-  && workflowsProd().length === 0;
+const validaCaminhoProd = () => {
+  const eventos = gatilhos(workflowDeploy);
+  return eventos.join(',') === 'push,workflow_dispatch'
+    && workflowsProd().length === 1
+    && workflowsProd()[0] === 'cf-prod-deploy.yml'
+    && /^permissions:\n  contents: read\s*$/m.test(workflowDeploy)
+    && /^concurrency:\n  group: cf-prod-deploy\n  cancel-in-progress: true\s*$/m.test(workflowDeploy)
+    && /^\s+branches:\s*\[main\]\s*$/m.test(workflowDeploy)
+    && /^  workflow_dispatch:\n    inputs:\n      ref:\n(?:        [^\n]+\n)*?        required: true$/m.test(workflowDeploy)
+    && /^\s+ref:\s*\$\{\{\s*github\.event_name == 'workflow_dispatch' && inputs\.ref \|\| github\.sha\s*\}\}\s*$/m.test(workflowDeploy);
+};
 let caminhoProdUnico = validaCaminhoProd();
 let animacoesNoDeploy = ['anims:check', 'anims:merge:check'].every((passo) => SUITES.deploy.includes(passo));
 /* RLS8 — com o gatilho em todo push da main, concurrency no TOPO deixaria o merge de um PR
@@ -134,20 +137,20 @@ const validaConcorrenciaRelease = () => !/^concurrency:/m.test(workflowRelease)
   && blocoJob('bump-tag-release').includes(CONCORRENCIA_BUMP);
 let concorrenciaRelease = validaConcorrenciaRelease();
 
-/* RLS9 — o filtro roda de verdade: o que importa é o código de saída que a Vercel vê. */
+/* RLS9 — a Vercel fica congelada; o release continua esperando a main verde. */
 let scriptIgnora = (() => { try { return readFileSync('scripts/ci/vercel-ignore.sh', 'utf8'); } catch { return ''; } })();
 const saidaIgnora = (env, msg, ref = '') => spawnSync('bash', ['-c', scriptIgnora], {
   env: { PATH: process.env.PATH, VERCEL_ENV: env, VERCEL_GIT_COMMIT_MESSAGE: msg, VERCEL_GIT_COMMIT_REF: ref }, encoding: 'utf8',
 }).status;
 const validaTrem = () => {
-  const comandoOk = vercel.ignoreCommand === 'bash scripts/ci/vercel-ignore.sh';
-  const filtroOk = scriptIgnora !== ''
-    && saidaIgnora('production', 'chore(release): v9.9.9-alpha.1') === 1   // release builda
-    && saidaIgnora('production', 'feat: qualquer merge') === 0             // merge espera o trem
-    && saidaIgnora('preview', 'feat: qualquer PR') === 0                   // preview de PR é Cloudflare (fase 2)
-    && saidaIgnora('preview', 'feat: qualquer PR', 'staging') === 1;       // staging/main/lote seguem buildando
+  const vercelCongelada = scriptIgnora !== ''
+    && saidaIgnora('production', 'chore(release): v9.9.9-alpha.1') === 0
+    && saidaIgnora('production', 'feat: qualquer merge') === 0
+    && saidaIgnora('preview', 'feat: qualquer PR') === 0
+    && saidaIgnora('preview', 'feat: staging', 'staging') === 0;
   const esperaVerde = /gh run list[^\n]*--workflow ci\.yml/.test(workflowRelease) && /needs: embarque/.test(workflowRelease);
-  return comandoOk && filtroOk && esperaVerde;
+  const despachaBump = /gh workflow run cf-prod-deploy\.yml --ref main -f "ref=\$SHA"/.test(workflowRelease);
+  return vercelCongelada && esperaVerde && despachaBump;
 };
 let tremRelease = validaTrem();
 
@@ -280,7 +283,7 @@ const validaRetry = () => {
     && /^ {6}sha: \$\{\{ steps\.verde\.outputs\.sha \}\}/m.test(embarque)
     && /"completed success"\)[^\n]*sha=\$SHA/.test(embarque)
     && /APROVADO: \$\{\{ needs\.embarque\.outputs\.sha \}\}/.test(bump)
-    && /^ {6}actions: read/m.test(bump)
+    && /^ {6}actions: write/m.test(bump)
     && /git reset --hard "\$APROVADO"/.test(laco) && !/git reset --hard origin\/main/.test(laco)
     && /if \[ "\$CABECA" != "\$APROVADO" \]; then[\s\S]*?if ! (?:verde_por_lote "\$CABECA" && ! )?pr_fast_verde "\$CABECA"; then\n[^\n]*::error::[^\n]*\n[^\n]*exit 1[\s\S]*?APROVADO=\$CABECA/.test(laco)
     && /PRAZO=/.test(bump) && teto > 0 && teto <= 30;
@@ -474,8 +477,12 @@ if (mutante) {
     caminhoProdUnico = validaCaminhoProd();
   }
   else if (mutante === 'deploy-yaml') {
-    workflowSources.push(['segundo-deploy.yaml', 'steps:\n  - run: vercel deploy --prebuilt --prod']);
+    workflowSources.push(['segundo-deploy.yaml', 'steps:\n  - run: npx wrangler versions deploy fake@100 --config wrangler.prod.toml']);
     caminhoProdUnico = validaCaminhoProd();
+  }
+  else if (mutante === 'sem-dispatch-prod') {
+    workflowRelease = workflowRelease.replace('gh workflow run cf-prod-deploy.yml --ref main -f "ref=$SHA"', ':');
+    tremRelease = validaTrem();
   }
   else if (mutante === 'sem-anims-deploy') animacoesNoDeploy = false;
   else if (mutante === 'cancelar-bot') mutaRelease(/^      cancel-in-progress: .*$/m, '      cancel-in-progress: true');
@@ -586,10 +593,10 @@ console.log(`${creditos === total && total ? '✓' : '✗'} RLS2 notas com contr
 console.log(`${dco === totalCommits && totalCommits ? '✓' : '✗'} RLS3 commits automáticos com DCO: ${dco}/${totalCommits} caminhos`);
 console.log(`${docsOk === docsRelease.length ? '✓' : '✗'} RLS4 site de docs reconstruído e versionado: ${docsOk}/${docsRelease.length} caminhos`);
 console.log(`${rollbackRelease ? '✓' : '✗'} RLS5 falha local restaura a árvore de trabalho`);
-console.log(`${caminhoProdUnico ? '✓' : '✗'} RLS6 produção Vercel só pela integração Git na main; nenhum workflow faz vercel deploy --prod`);
+console.log(`${caminhoProdUnico ? '✓' : '✗'} RLS6 produção tem um único workflow, preso à main e ao SHA recebido`);
 console.log(`${animacoesNoDeploy ? '✓' : '✗'} RLS7 deploy valida manifesto e GLBs mesclados de animação`);
 console.log(`${concorrenciaRelease ? '✓' : '✗'} RLS8 embarque cancelável (lote novo cancela o velho), bump em grupo próprio e nunca cancelado, nada no topo`);
-console.log(`${tremRelease ? '✓' : '✗'} RLS9 produção só sai no commit de release, e o release só sai com a main verde`);
+console.log(`${tremRelease ? '✓' : '✗'} RLS9 Vercel fica congelada, o release espera a main verde e despacha o bump para o Workers`);
 console.log(`${geradosNoTrem ? '✓' : '✗'} RLS10 bloco gerado velho na main não trava o trem; o PR e o commit do release conferem`);
 console.log(`${lote.semCron ? '✓' : '✗'} RLS11 sem cron: release não sai por horário`);
 console.log(`${lote.dispatch ? '✓' : '✗'} RLS12 workflow_dispatch continua disparando o release`);

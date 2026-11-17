@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /* ============================================================================
-   cf-paridade-estatica-check.mjs — TODA REGRA DE vercel.json TEM CONTRAPARTE NO WORKERS
+   cf-paridade-estatica-check.mjs — TODA REGRA DE borda.json TEM CONTRAPARTE NO WORKERS
    ----------------------------------------------------------------------------
    POR QUE EXISTE
-   `public/_headers` e `public/_redirects` são gerados de `vercel.json` por
+   `public/_headers` e `public/_redirects` são gerados de `borda.json` por
    tools/cf/gen-headers-redirects.mjs; o Worker (src/cf/worker.ts) aplica o que o formato
    estático não expressa. Esta régua prova que nada da Vercel ficou para trás:
 
@@ -11,7 +11,7 @@
        aparece dentro dele; regra aproximada (grupo regex) vem marcada `# aproximado`.
    CP2 cada `redirect` sem `has`/`missing` e com source exato vira linha(s) no
        `_redirects` com o status certo; os com `has`/`missing` ficam na lista do Worker.
-   CP3 o motor do Worker (src/lib/regras-vercel.mjs) compila todo `source` e reproduz
+   CP3 o motor do Worker (src/lib/regras-borda.mjs) compila todo `source` e reproduz
        os redirects por query da home (`/?janela=...`) e os headers por rota.
    CP4 `_headers` tem no máximo 100 blocos e nenhuma linha passa de 2000 caracteres.
 
@@ -21,7 +21,7 @@
    Uso: node tools/eval/cf-paridade-estatica-check.mjs [--mutante=sem-header|sem-redirect]
    ============================================================================ */
 import { gerar, lerVercel, fonteParaPadrao } from '../cf/gen-headers-redirects.mjs';
-import { compilarHeader, compilarRedirect, headersPara, redirectPara } from '../../src/lib/regras-vercel.mjs';
+import { compilarHeader, compilarRedirect, headersPara, redirectPara } from '../../src/lib/regras-borda.mjs';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const mutante = arg('mutante');

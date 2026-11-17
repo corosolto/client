@@ -36,11 +36,11 @@ async function coletar() {
   const out = {};
   for (const [nome, sufixo] of Object.entries(PAGINAS)) {
     const url = nome === 'antigo' ? `${SITE}/u/${ID}/Abas%20Fixture` : `${SITE}/u/${HANDLE}${sufixo}`;
-    const r = await handler.fetch(new Request(url, { headers: { 'x-forwarded-for': '127.0.0.1' } }));
+    const r = await handler.fetch(new Request(url, { headers: { 'cf-connecting-ip': '127.0.0.1' } }));
     out[nome] = { status: r.status, html: await r.text() };
   }
   perfilAtual=SEM_HANDLE;
-  const semHandle=await handler.fetch(new Request(`${SITE}/u/${ID}/partidas`,{headers:{'x-forwarded-for':'127.0.0.1'}}));
+  const semHandle=await handler.fetch(new Request(`${SITE}/u/${ID}/partidas`,{headers:{'cf-connecting-ip':'127.0.0.1'}}));
   out.semHandle={status:semHandle.status,html:await semHandle.text()};
   globalThis.fetch = real;
   process.chdir(ROOT);

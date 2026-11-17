@@ -24,6 +24,9 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      # O filtro mora em scripts/ci/gatilho.mjs (SITE): o smoke-web lê a mesma lista
+      # para o smoke-cf não esperar um preview que este job decidiu não construir.
+      # Falha FECHADO: erro de diff ou do gatilho = preview roda; só `rodar=false` pula.
       - name: O PR toca o site?
         id: filtro
         env:
@@ -31,17 +34,17 @@ jobs:
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          if ! git -c core.quotePath=false diff --no-renames --name-only "$BASE...$HEAD" > "$RUNNER_TEMP/arquivos.txt"; then
+          if ! git -c core.quotePath=false diff --no-renames --name-only -z "$BASE...$HEAD" > "$RUNNER_TEMP/arquivos.txt"; then
             echo "rodar=true" >> "$GITHUB_OUTPUT"
             echo "diff indisponível: preview roda"
             exit 0
           fi
-          if grep -Eq '^(src/|public/|vercel\.json$|wrangler\.preview\.toml$|package\.json$|package-lock\.json$|astro\.config\.mjs$|middleware\.js$|scripts/fetch-|scripts/copy-wasm\.mjs$|scripts/prune-dist\.mjs$|scripts/aeo\.mjs$|tools/gen-asset-rev\.mjs$|tools/cf/|tools/viewmodels/prepare_precision_preview\.mjs$|tools/audio/|tools/strip-decal-bg\.mjs$|CHANGELOG\.md$)' "$RUNNER_TEMP/arquivos.txt"; then
-            echo "rodar=true" >> "$GITHUB_OUTPUT"
-            echo "site mudou: preview roda"
-          else
+          node scripts/ci/gatilho.mjs site < "$RUNNER_TEMP/arquivos.txt" > "$RUNNER_TEMP/veredito.txt" \
+            || echo "rodar=true" > "$RUNNER_TEMP/veredito.txt"
+          if grep -qx 'rodar=false' "$RUNNER_TEMP/veredito.txt"; then
             echo "rodar=false" >> "$GITHUB_OUTPUT"
-            echo "nenhum arquivo do site mudou: preview pula"
+          else
+            echo "rodar=true" >> "$GITHUB_OUTPUT"
           fi
 
   # O build recebe código do PR sem segredos. O deploy fica em cf-preview-deploy.yml.

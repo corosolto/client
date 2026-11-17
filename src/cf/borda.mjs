@@ -6,7 +6,7 @@ export const PREFIXO_VM = '/private-assets/viewmodels/';
 const PREFIXO_R2_VM = 'viewmodels/sha256/';
 
 // Domínio apex que a Vercel redirecionava (308) para o www pela config de domínio do projeto,
-// fora do vercel.json. Com a Worker Route no apex, o redirect passa a morar aqui.
+// fora do borda.json. Com a Worker Route no apex, o redirect passa a morar aqui.
 const APEX_PARA_WWW = new Map([['csbrasil.online', 'www.csbrasil.online']]);
 
 export function redirectDeHost(url) {

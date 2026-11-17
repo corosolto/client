@@ -115,6 +115,10 @@ export function criarPasseMock({
   }
   return {
     status, claim, handle, chamadas, creditos, eventos,
-    definir(campos) { if ('autenticado' in campos) autenticado = campos.autenticado; if ('xp' in campos) xp = campos.xp; },
+    definir(campos) {
+      if ('autenticado' in campos) autenticado = campos.autenticado;
+      if ('xp' in campos) xp = campos.xp;
+      if ('progresso' in campos) progresso = { ...progresso, ...campos.progresso };   // missão que o servidor deu como feita
+    },
   };
 }

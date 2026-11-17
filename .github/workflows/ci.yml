@@ -245,7 +245,7 @@ jobs:
         env:
           FILA_BASE: ${{ github.event.merge_group.base_sha || github.event.pull_request.base.sha || github.sha }}
         run: npm run eval:lixo
-      - name: Preview da Vercel só builda quando o site muda (com mutantes)
+      - name: Integração Vercel permanece congelada, sem build (com mutantes)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:vercelignore
       - name: Segredo de SSR é lido em runtime, não inlinado no build (com mutantes)
@@ -438,6 +438,11 @@ jobs:
       - name: SEO e links publicados (com mutações)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: |
+          # Fase 6: o build (adapter Cloudflare) carrega [vars] do wrangler.toml no build
+          # (loadWranglerEnv) — produção tem RANKING_ON=true e o prerender sai indexável.
+          # A régua de rotas compara contra process.env: espelhar produção aqui.
+          # O seo-check NÃO recebe a flag: o mutante AEO1 guarda o cenário flag=false
+          # (nenhuma página promete ranking) e precisa rodar nesse cenário.
           node tools/eval/seo-check.mjs
           node tools/eval/seo-check.mjs --mutate
           node tools/eval/canonical-host-check.mjs
@@ -454,14 +459,20 @@ jobs:
           node tools/eval/profile-socials-check.mjs --mutate
           node tools/eval/profile-achievements-check.mjs
           node tools/eval/profile-achievements-check.mjs --mutate
+          node tools/eval/match-skin-snapshot-check.mjs
+          for m in skin-do-jogo personagem-do-jogo sem-skin-no-fim partial-sem-skin; do
+            status=0
+            node tools/eval/match-skin-snapshot-check.mjs --mutante=$m || status=$?
+            if [ "$status" -ne 1 ]; then echo "::error::mutante $m da skin do fim da partida terminou com $status (quer 1)"; exit 1; fi
+          done
           node tools/eval/profile-views-display-check.mjs
           node tools/eval/profile-views-display-check.mjs --mutate
           node tools/eval/cla-ssr-check.mjs
           node tools/eval/cla-ssr-check.mjs --mutate
-          node tools/eval/rotas-check.mjs --dist
+          RANKING_ON=true node tools/eval/rotas-check.mjs --dist
           output=$(mktemp)
           status=0
-          node tools/eval/rotas-check.mjs --dist --mutante=robots >"$output" 2>&1 || status=$?
+          RANKING_ON=true node tools/eval/rotas-check.mjs --dist --mutante=robots >"$output" 2>&1 || status=$?
           cat "$output"
           if [ "$status" -eq 0 ]; then
             echo "::error::o mutante robots passou"

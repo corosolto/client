@@ -56,6 +56,11 @@ const familias = {
     'variante-no-container': 'FALHA escort-route-explicit-and-clear:',
     'variante-sem-no': 'FALHA escort-route-explicit-and-clear:',
     'variante-longe-da-escada': 'FALHA escort-route-explicit-and-clear:',
+    'fachada-torre': 'FALHA respawn-points-floor-solid-exit:',
+    'portal-fundo': 'FALHA decor-props-off-playable-floor:',
+    'coluna-fantasma': 'FALHA respawn-points-floor-solid-exit:',
+    'vidro-na-porta': 'FALHA respawn-points-floor-solid-exit:',
+    'piso-elevado': 'FALHA respawn-points-floor-solid-exit:',
   }],
   menu: ['operacao-flavio-menu-check.mjs', Object.fromEntries(
     ['preferencia', 'sem-objetivo', 'botoes-ativos', 'rotulo'].map(m => [m, 'FALHA menu-objective-operacao_flavio-ctf:']))],

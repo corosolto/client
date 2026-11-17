@@ -60,7 +60,7 @@ const IMMUTABLE = 'public, max-age=31536000, immutable';
 
 /* ---- SP3 (config) ---- */
 function headerTable() {
-  let vercel = JSON.parse(readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
+  let vercel = JSON.parse(readFileSync(path.join(ROOT, 'borda.json'), 'utf8'));
   if (MUT === 'sem-imutavel') {
     const before = vercel.headers.length;
     vercel = { ...vercel, headers: vercel.headers.filter((h) => !h.headers.some((x) => x.value === IMMUTABLE && h.source.includes('private-assets'))) };

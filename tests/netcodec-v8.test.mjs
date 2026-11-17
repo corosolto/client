@@ -26,9 +26,10 @@ for(const [version,expected] of Object.entries(legacyHashes)) test(`legacy v${ve
  assert.equal(createHash('sha256').update(bytes).digest('hex'),expected);
 });
 test('unversioned producers use current v10 contract',()=>{
- const snapshot=fixture();snapshot.objective={mode:'javaporcos'};snapshot.ents[0].team='J';snapshot.ents[0].crouch=true;
+ const snapshot=fixture();snapshot.objective={mode:'javaporcos'};snapshot.ents[0].team='J';snapshot.ents[0].crouch=true;snapshot.ents[0].emote='capoeira';
  const wire=current.encodeSnapshot(snapshot),out=current.decodeSnapshot(wire);
  assert.equal(wire[4],10);assert.equal(out.objective.mode,'javaporcos');assert.equal(out.ents[0].team,'J');assert.equal(out.ents[0].crouch,true);
+ assert.equal(out.ents[0].emote,'capoeira');
 });
 test('explicit v8 transports objective, J, mantle and 80 entities together',()=>{
  const snapshot=fixture(7,80);snapshot.objective={mode:'javaporcos',phase:'wave',wave:3,targets:[1,2],message:'Proteja o sítio 🐗'};

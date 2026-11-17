@@ -33,24 +33,24 @@ acceptance criteria; compare them with existing issues before opening another on
    (see `public/js/version.js`). The `pr-gates.yml` workflow rejects mismatches. Bumping
    the version is NO longer the PR's job: since 08/08, `release.yml` automatically bumps, tags, and
    publishes the GitHub Release — in BATCHES (since 14/10; on 13/10 it was 2×/day, and before that on every push).
-3. **Production ships in BATCHES, not on every merge** (14/10): Vercel's Git integration on `main`
-   is still the path (owner's decision on 08/08), but `ignoreCommand`
-   (`scripts/ci/vercel-ignore.sh`) only allows production builds on `chore(release):` commits.
-   Stack the PRs and close them in a batch PR: `release.yml` runs when a PR reaches `main`
-   with the `release` label or a `lote-*`, `claude/lote-*`, or `*/lote-*` branch, and only when
-   `pr-fast` is green on that merge. Regular PRs do not trigger a release. Batch PRs land via
-   **merge commit** (no squash or rebase): the `lote` job reads the PR associated with the commit that
-   reached `main`, and the merge commit is what points to the batch. `csbrasil-bot-daily-release`
-   creates or updates one `staging → main` PR per day at 12:17 UTC; safe PRs enter
-   `staging` through automerge. A hotfix uses the `hotfix:` title and a PR based on and targeting `main`:
-   the bot compares its ancestry with `main` and `staging`; any unpublished commit from
-   `staging` applies `needs-hotfix-review`, removes `safe-automerge`, and blocks the release. With
-   main-only ancestry, it receives `release` and starts the release train after a green merge. Manual dispatch
-   (`gh workflow run release.yml`) remains available as a fallback. Production deploys come from
-   `main` only (Vercel Git integration and `cf-prod-deploy.yml`); there is no manual deploy workflow.
-4. **Fork PRs get a diff classification, not a preview**: `cs-brasil-ai-bot` (`preview-bot.yml`)
-   classifies the fork diff without executing it when the PR is opened or reopened. In-repo PR
-   previews are Cloudflare (`cf-preview.yml`).
+3. **Production ships in BATCHES, not on every staging merge** (14/10): `cf-prod-deploy.yml`
+   publishes each protected `main` head to the `csb-prod` Worker. Vercel's Git integration stays
+   connected only as a frozen 30-day rollback origin; `scripts/ci/vercel-ignore.sh` skips every
+   Vercel build. Stack the PRs and close them in a batch PR: `release.yml` runs when a PR reaches
+   `main` with the `release` label or a `lote-*`, `claude/lote-*`, or `*/lote-*` branch, and only
+   when `pr-fast` is green on that merge. Batch PRs land via **merge commit** (no squash or rebase):
+   the `lote` job reads the PR associated with the commit that reached `main`, and the merge commit
+   is what points to the batch. `csbrasil-bot-daily-release` creates or updates one
+   `staging → main` PR per day at 12:17 UTC; safe PRs enter `staging` through automerge. A hotfix
+   uses the `hotfix:` title and a PR based on and targeting `main`: the bot compares its ancestry
+   with `main` and `staging`; any unpublished commit from `staging` applies
+   `needs-hotfix-review`, removes `safe-automerge`, and blocks the release. With main-only
+   ancestry, it receives `release` and starts the release train after a green merge. Manual
+   dispatch (`gh workflow run release.yml`) remains the release fallback; that workflow explicitly
+   dispatches `cf-prod-deploy.yml` for the bump commit.
+4. **Fork previews require human review**: `cs-brasil-ai-bot` (`preview-bot.yml`)
+   classifies the diff without executing it. A maintainer reviews the current SHA and applies
+   `preview-autorizado`; any push revokes the approval.
 5. **Local quality gates before opening**: `npm run check:fast` (seconds) and, if you changed
    the game, `npm run check:deploy` (the same gate run by the `pre-push` hook). A new
    quality-gate failure = PR sent back.

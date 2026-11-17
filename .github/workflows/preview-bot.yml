@@ -33,15 +33,16 @@ jobs:
           gh api "repos/$REPO/pulls/$PR/files" --paginate \
             --jq '.[] | .filename + " +" + (.additions|tostring) + " -" + (.deletions|tostring)' > /tmp/arquivos.txt
           TOTAL=$(gh api "repos/$REPO/pulls/$PR" --jq '.additions + .deletions')
-          PERIGO=$(grep -cE '^\.github/|^scripts/|^package(-lock)?\.json|^vercel\.json|^src/pages/api/|^supabase/|^\.env' /tmp/arquivos.txt || true)
+          PERIGO=$(grep -cE '^\.github/|^scripts/|^package(-lock)?\.json|^borda\.json|^src/pages/api/|^supabase/|^\.env' /tmp/arquivos.txt || true)
           if [ "$PERIGO" -gt 0 ] || [ "$TOTAL" -gt 3000 ]; then
             TEXTO="sensitive area or large diff; manual review is required"
           else
-            TEXTO="fork PR gets no preview URL: in-repo PR previews are Cloudflare (cf-preview.yml); Vercel preview is dispatch-only emergency"
+            TEXTO="fork PR gets no preview URL: in-repo PR previews are isolated in Cloudflare (cf-preview.yml)"
           fi
           gh pr comment "$PR" --repo "$REPO" --body "🤖 **cs-brasil-ai-bot**: $TEXTO."
 
-# O JOB `preview` SAIU DAQUI (22/08) e o par Vercel foi aposentado (10/11, fase 2):
-# o preview de PR é `cf-preview.yml` (Cloudflare). `preview-build.yml`/`preview-deploy.yml`
-# ficam só para emergência, por `workflow_dispatch`. Este arquivo ficou com a
-# classificação do diff, que continua útil.
+# O JOB `preview` SAIU DAQUI (22/08). Na fase 6, o par Vercel
+# `preview-build.yml`/`preview-deploy.yml` foi removido; preview de PR interno é
+# `cf-preview.yml` + `cf-preview-deploy.yml` (Cloudflare). Este arquivo ficou com a
+# classificação do diff, que continua útil. O label `preview-autorizado` não gatinga
+# nada desde 22/08; a revogação acima é só higiene até o label ser removido do repo.

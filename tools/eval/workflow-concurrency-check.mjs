@@ -39,9 +39,9 @@ const DIR = path.join(ROOT, '.github/workflows');
 const IDENTIFICA_PR = /pull_request\.number|inputs\.pr_number|workflow_run\.pull_requests\[0\]\.number|workflow_run\.head_branch/;
 
 const POR_PR = [
-  'ci.yml', 'portao-browser.yml', 'preview-build.yml', 'ui-regression.yml',
+  'ci.yml', 'portao-browser.yml', 'ui-regression.yml',
   'autofix.yml', 'csbrasil-bot-pr-classify.yml',
-  'smoke-web.yml', 'pr-gates.yml', 'csbrasil-bot-automerge.yml', 'preview-deploy.yml',
+  'smoke-web.yml', 'pr-gates.yml', 'csbrasil-bot-automerge.yml',
 ];
 const NUNCA_CANCELA = ['ops-diag.yml', 'crash-fix.yml'];
 
@@ -59,7 +59,6 @@ function ler(arquivo) {
   let fonte = readFileSync(path.join(DIR, arquivo), 'utf8');
   if (mutante === 'sem-concurrency' && arquivo === 'smoke-web.yml') fonte = fonte.replace(/^concurrency:\s*\n(?: {2}\S[^\n]*\n?)+/m, '');
   if (mutante === 'sem-cancel' && arquivo === 'pr-gates.yml') fonte = fonte.replace(/^( {2}cancel-in-progress:).*$/m, '$1 false');
-  if (mutante === 'grupo-global' && arquivo === 'preview-deploy.yml') fonte = fonte.replace(/^( {2}group:).*$/m, '$1 preview-deploy');
   if (mutante === 'classificador-autocancela' && arquivo === 'csbrasil-bot-pr-classify.yml') {
     fonte = fonte.replace(/^( {2}cancel-in-progress:).*$/m, '$1 true');
   }

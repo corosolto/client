@@ -17,12 +17,12 @@
    EC2 · anti-vacuidade: /js/ continua declarado em alguma cache rule com
          `cache: true` — apagar a regra deixaria o TTL ao gosto do default da
          zona, que é justamente o estado sem dono que comprou o BUG-39.
-   EC3 · o caminho de produção que sobrou purga o prefixo /js/ do edge: o
-         prod-watch.yml, que roda depois do deploy da Vercel (o `deploy-prod.yml`
-         manual saiu em 17/11/2026), pulando sem erro quando CF_API_TOKEN não existe.
-   EC4 · o prod-watch purga /models/skins/manifest.json. Essa URL é mutável, mas cai
-         na regra de /models/ com TTL de um mês; sem purge a release publica GLBs que
-         a loja não consegue descobrir.
+   EC3 · o deploy de produção no Workers (cf-prod-deploy.yml) purga /js/ depois
+         de promover a versão, pulando sem erro quando CF_API_TOKEN não existe —
+         o mesmo contrato do purge do crash-fix.yml.
+   EC4 · cf-prod-deploy e prod-watch purgam /models/skins/manifest.json. Essa URL
+         é mutável, mas cai na regra de /models/ com TTL de um mês; sem purge a
+         release publica GLBs que a loja não consegue descobrir.
 
    Uso: node tools/eval/edge-cache-check.mjs [--mutante=<nome>]
    ============================================================================ */
@@ -33,7 +33,8 @@ const MUTANTES = {
   'ttl-mes': 'EC1',
   'js-na-midia': 'EC1',
   'sem-regra-js': 'EC2',
-  'sem-purge-watch': 'EC3',
+  'sem-purge-deploy': 'EC3',
+  'sem-manifest-deploy': 'EC4',
   'sem-manifest-watch': 'EC4',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
@@ -45,6 +46,7 @@ if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); proc
 const ALVO_TTL_JS = 600;
 
 let setup = readFileSync('scripts/cloudflare-setup.sh', 'utf8');
+let cfProd = readFileSync('.github/workflows/cf-prod-deploy.yml', 'utf8');
 let prodWatch = readFileSync('.github/workflows/prod-watch.yml', 'utf8');
 
 const mutate = (texto, antes, depois, nome) => {
@@ -61,9 +63,12 @@ if (MUT === 'js-na-midia') setup = mutate(setup,
 if (MUT === 'sem-regra-js') setup = mutate(setup,
   /,?\s*\{\s*\n\s*"ref": "assets_js"[\s\S]*?\n    \}/,
   '', 'sem-regra-js');
-if (MUT === 'sem-purge-watch') prodWatch = mutate(prodWatch,
-  '"www.corosolto.com.br/js/",',
-  '', 'sem-purge-watch');
+if (MUT === 'sem-purge-deploy') cfProd = mutate(cfProd,
+  /\n      - name: purge do edge[\s\S]*$/,
+  '\n', 'sem-purge-deploy');
+if (MUT === 'sem-manifest-deploy') cfProd = mutate(cfProd,
+  'www.corosolto.com.br/models/skins/manifest.json',
+  'www.corosolto.com.br/models/skins/manifest-ausente.json', 'sem-manifest-deploy');
 if (MUT === 'sem-manifest-watch') prodWatch = mutate(prodWatch,
   'www.corosolto.com.br/models/skins/manifest.json',
   'www.corosolto.com.br/models/skins/manifest-ausente.json', 'sem-manifest-watch');
@@ -95,26 +100,30 @@ if (!heredoc) {
   }
 }
 
-/* EC3 · purge do /js/ no caminho de produção, com o guard de secret que o wfsecret exige. */
-const temPurge = /purge_cache/.test(prodWatch)
-  && /www\.corosolto\.com\.br\/js\//.test(prodWatch)
-  && /CF_API_TOKEN/.test(prodWatch);
+/* EC3 · purge depois da promoção no Workers, com o guard de secret que o wfsecret exige. */
+const temPurge = /versions deploy/.test(cfProd)
+  && /purge_cache/.test(cfProd)
+  && /www\.corosolto\.com\.br\/js\//.test(cfProd)
+  && /CF_API_TOKEN/.test(cfProd);
 if (!temPurge) {
-  falhas.push('EC3 prod-watch.yml não purga o prefixo /js/ do edge (guardado por CF_API_TOKEN) depois do deploy');
+  falhas.push('EC3 cf-prod-deploy.yml promove produção sem purgar o prefixo /js/ do edge (guardado por CF_API_TOKEN)');
 }
 
 /* EC4 · o caminho de produção limpa o manifesto mutável preso no TTL de /models/. */
 const MANIFESTO = /www\.corosolto\.com\.br\/models\/skins\/manifest\.json/;
-if (!(/purge_cache/.test(prodWatch) && MANIFESTO.test(prodWatch))) {
-  falhas.push('EC4 manifesto de skins não é purgado pelo prod-watch.yml — catálogo pode ficar velho por um mês');
+const purgeManifestoProd = /purge_cache/.test(cfProd) && MANIFESTO.test(cfProd);
+const purgeManifestoGit = /purge_cache/.test(prodWatch) && MANIFESTO.test(prodWatch);
+if (!purgeManifestoProd || !purgeManifestoGit) {
+  const faltam = [!purgeManifestoProd && 'cf-prod-deploy.yml', !purgeManifestoGit && 'prod-watch.yml'].filter(Boolean);
+  falhas.push(`EC4 manifesto de skins não é purgado por ${faltam.join(' e ')} — catálogo pode ficar velho por um mês`);
 }
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) {
   console.log(`  \x1b[32m✓\x1b[0m EC1 nenhuma cache rule segura /js/ no edge acima de ${ALVO_TTL_JS}s`);
   console.log('  \x1b[32m✓\x1b[0m EC2 /js/ continua declarado numa cache rule com cache:true');
-  console.log('  \x1b[32m✓\x1b[0m EC3 prod-watch purga /js/ do edge (pulado sem CF_API_TOKEN, nunca vermelho por secret)');
-  console.log('  \x1b[32m✓\x1b[0m EC4 prod-watch purga o manifesto mutável de skins');
+  console.log('  \x1b[32m✓\x1b[0m EC3 deploy no Workers purga /js/ do edge depois da promoção');
+  console.log('  \x1b[32m✓\x1b[0m EC4 cf-prod-deploy e prod-watch purgam o manifesto mutável de skins');
 }
 if (MUT && !falhas.length) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);

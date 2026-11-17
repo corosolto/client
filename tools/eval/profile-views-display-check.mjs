@@ -80,7 +80,7 @@ async function coletar() {
       if (url.includes('/api/social')) { pedidos.push(`${metodo} ${url}`); return Response.json({ profile: perfil }); }
       return real(alvo, init);
     };
-    const r = await handler.fetch(new Request(`https://www.corosolto.com.br/u/${HANDLE}`, { headers: { 'x-forwarded-for': '127.0.0.1' } }));
+    const r = await handler.fetch(new Request(`https://www.corosolto.com.br/u/${HANDLE}`, { headers: { 'cf-connecting-ip': '127.0.0.1' } }));
     base.ssr[nome] = { status: r.status, html: await r.text(), pedidos };
   }
   globalThis.fetch = real;
