@@ -120,9 +120,11 @@ function peitoril(P) {
 // Ar-condicionado de janela (caixa 55 x 38 cm no canto inferior direito do vão, grelha, pingadeira escura) sobre o correr de vidro liso.
 function arCondicionado(P, r) {
   P.ret(.52, .50, .44, .40, '#b8bab6', 1); P.ret(.535, .515, .41, .37, '#9ea09c', .95);
-  for (let y = .54; y < .84; y += .028) P.ret(.55, y, .25, .012, '#6d6f6b', .9);
+  // r24: grelha com lâminas recuadas (altura 0,55, 3 px de sombra e 1 px de fio claro) em vez de traços rasos; gotejo fino (1 cm) sob a pingadeira.
+  for (let y = .54; y < .84; y += .028) { P.ret(.55, y, .25, .012, '#4e504d', .55); P.ret(.55, y + .011, .25, .004, '#c4c6c2', .95); }
   P.ret(.82, .54, .10, .30, '#86888a', .95); P.ret(.845, .60, .05, .05, '#2b2d2e', 1);
-  P.so((C) => { C.fillStyle = 'rgba(40,36,30,.35)'; C.fillRect(.56, .90, .36, .02 + r() * .03); C.fillStyle = 'rgba(0,0,0,.25)'; C.fillRect(.52, .88, .44, .02); });
+  P.so((C) => { C.fillStyle = 'rgba(40,36,30,.35)'; C.fillRect(.56, .90, .36, .02 + r() * .03); C.fillStyle = 'rgba(0,0,0,.25)'; C.fillRect(.52, .88, .44, .02);
+    C.fillStyle = 'rgba(46,42,36,.42)'; C.fillRect(.60 + r() * .2, .92, .012, .08); });
 }
 // 9 tipos numa grade 3x3; o shader escolhe a célula pelo hash da posição do vão.
 export const JANELA_TIPOS = ['correr de alumínio, vidro liso', 'correr de alumínio com ar-condicionado de janela', 'basculante de ferro', 'veneziana', 'vitrô de ferro com grade em losango',
@@ -173,13 +175,16 @@ function enrolar(P, r) {
   P.ret(0, 0, 1, 1, '#50565a', .95);
   // Dois tons com luma ±20 % (galvanizado 150/158/162 ≈ 156; tinta 84/98/104 ou 80/92/118 ≈ 95): a 3 m o par 141/123 lia como chapa uniforme cinza-azul.
   const tinta = r() < .5 ? [84, 98, 104] : [80, 92, 118], corte = .50 + r() * .06, fase = r() * 6.28, lascas = 2 + Math.floor(r() * 2);
-  for (let y = .012; y < .93; y += .043) { const g = .92 + r() * .12; P.ret(.07, y, .86, .028, tom([150, 158, 162], g), .85); P.ret(.07, y + .028, .86, .015, '#666c70', .4); }
+  // r24: cada lâmina com sombra escura na dobra de baixo (altura 0,3 = recuo no relevo) e fio claro no topo; 3 amassados nos 40 cm do pé (v ≥ 0,8),
+  // retângulos 10–18 cm mais escuros e recuados (altura 0,5) com borda de baixo clara.
+  for (let y = .012; y < .93; y += .043) { const g = .92 + r() * .12; P.ret(.07, y, .86, .028, tom([150, 158, 162], g), .85); P.ret(.07, y + .001, .86, .004, tom([176, 184, 188], g), .9); P.ret(.07, y + .028, .86, .015, '#3e4347', .3); P.ret(.07, y + .039, .86, .004, '#585e62', .5); }
+  for (let i = 0; i < 3; i++) { const u = .12 + r() * .7, v = .80 + r() * .12, w = .05 + r() * .04, h = .03 + r() * .025; P.ret(u, v, w, h, '#454b4f', .5); P.ret(u, v + h - .006, w, .006, '#8a9094', .7); }
   P.so((C) => {
     // Tinta: polígono da borda superior até a linha de corte senoidal (amplitude 0,01 = 2 cm); as lascas são elipses de galvanizado por cima.
     C.save(); C.beginPath(); C.moveTo(0, 0); C.lineTo(1, 0);
     for (let i = 40; i >= 0; i--) { const u = i / 40; C.lineTo(u, corte + .01 * Math.sin(u * 7.0 + fase) + .004 * Math.sin(u * 17.0 + fase * 2.0)); }
     C.closePath(); C.clip();
-    for (let y = .012; y < .93; y += .043) { const g = .92 + r() * .12; C.fillStyle = tom(tinta, g); C.fillRect(.07, y, .86, .028); C.fillStyle = '#4e5a5a'; C.fillRect(.07, y + .028, .86, .015); }
+    for (let y = .012; y < .93; y += .043) { const g = .92 + r() * .12; C.fillStyle = tom(tinta, g); C.fillRect(.07, y, .86, .028); C.fillStyle = tom(tinta, g * 1.2); C.fillRect(.07, y + .001, .86, .004); C.fillStyle = '#2f3638'; C.fillRect(.07, y + .028, .86, .011); C.fillStyle = '#46504f'; C.fillRect(.07, y + .039, .86, .004); }
     C.restore();
     for (let i = 0; i < lascas; i++) { const u = .12 + r() * .76, rx = .045 + r() * .04, ry = .02 + r() * .016, a = (r() - .5) * .5;
       C.fillStyle = tom([150, 158, 162], .95 + r() * .1); C.beginPath(); C.ellipse(u, corte - .006 + r() * .012, rx, ry, a, 0, 6.3); C.fill();

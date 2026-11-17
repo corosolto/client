@@ -24,12 +24,11 @@ const REGRAS = {
   rose: { reboco: true, cru: 1, cor: 0xe6dcd6, relevo: 1.3 },
   sage: { reboco: true, cor: 0xaea698, relevo: 1.3 },
   adobe: { reboco: true, cor: 0xb6ac9c, relevo: 1.3 },
-  concrete: { concreto: [2.3, .69, 99], cor: 0xb4ab9c, relevo: 1.9, piso: [.195, .170, .148], amb: [4.2, 4.05, 3.75] },
+  concrete: { concreto: [2.3, .69, 99], cor: 0xc6bcac, relevo: 1.9, piso: [.195, .170, .148], amb: [4.2, 4.05, 3.75] },
   brick: { tijolo: true, cor: 0xd8c4bc, relevo: 1.3, rugosidade: .9 },
   ground: { concreto: [2.0, .655, .3], cor: 0xbdbdba, relevo: 1.6, piso: [.47, .41, .30], amb: [2.0, 1.63, 1.14] },
   paving: { concreto: [2.0, .665, .3], cor: 0xc2c2c1, relevo: 1.6, piso: [.47, .41, .30], amb: [2.0, 1.63, 1.14] },
-  timber: { madeira: true },
-  zinc: { chapa: true, cor: 0x8e8d88, relevo: .5, metal: .3, rugosidade: .72 },
+  zinc: { chapa: true, cor: 0x8e8d88, relevo: 1.0, metal: .3, rugosidade: .72 },
   recess: { cor: 0x10181c, rugosidade: .3, janela: true },
   tank: { rugosidade: .42 },
   steel: { aco: true, rugosidade: .62, metal: .2 },
@@ -274,15 +273,21 @@ function rebocoHD(m, r, U, o) {
         float hdS1 = fract(hdCs * 7.3), hdS2 = fract(hdCs * 11.7), hdLin = 2.10 + 0.05 * hdA.g + 0.02 * hdM.b + 0.015 * hdFamOn * step(0.5, fract(hdQ.x / 0.23 + hdCs)), hdLb = 0.40 + 0.02 * (hdM.a - 0.5);
         float hdRep = max(step(0.55, hdS1), hdSarr * hdFamOn) * smoothstep(hdLin - 0.01, hdLin + 0.01, hdY) * hdLiv, hdBar = step(0.62, hdS2) * (1.0 - smoothstep(hdLb - 0.01, hdLb + 0.01, hdY)) * hdLiv;
         // A barra pintada cobre a umidade: juntas, barra (-12 %) e umidade residual ficam dentro dos -18 %.
-        float hdRod = (1.0 - smoothstep(0.12, 0.42, hdY + 0.10 * (hdM.a - 0.5))) * hdLiv * (1.0 - 0.7 * hdBar);
         // Casa alvo das poses parede/laje (face x = -5,2 do quarto do miolo, z -16..-7): as três famílias entram por posição de mundo —
         // mofo mais fechado no pé (< 0,45 m) e escorrido do topo (cinta 2,95 → 2,12 m, colunas de 3–25 cm); o remendo largo só pelo sorteio por célula.
         float hdAlvo = step(abs(vHdPos.x + 5.2), 0.3) * step(2.95, vHdPos.y) * step(abs(vHdPos.z + 11.5), 4.5) * hdLiv;
-        float hdMofo = hdRod * smoothstep(0.46 - 0.14 * hdAlvo, 0.62 - 0.14 * hdAlvo, hdGm * 0.5 + hdM.g * 0.5), hdSal = smoothstep(0.18, 0.30, hdY) * (1.0 - smoothstep(0.36, 0.45, hdY)) * smoothstep(0.48, 0.60, hdA.g) * hdLiv;
+        // r24: na parede alvo o rodapé de mofo sobe a 0,45 m cheio (a pose parede só vê o pé a partir de hdY 0,44 no canto direito do quadro).
+        float hdRod = (1.0 - smoothstep(0.12 + 0.14 * hdAlvo, 0.42 + 0.04 * hdAlvo, hdY + 0.10 * (hdM.a - 0.5))) * hdLiv * (1.0 - 0.7 * hdBar);
+        float hdMofo = hdRod * smoothstep(0.46 - 0.18 * hdAlvo, 0.62 - 0.18 * hdAlvo, hdGm * 0.5 + hdM.g * 0.5), hdSal = smoothstep(0.18, 0.30, hdY) * (1.0 - smoothstep(0.36, 0.45, hdY)) * smoothstep(0.48, 0.60, hdA.g) * hdLiv;
         hdReb = hdUmido(hdReb, 0.26 * hdRod) * (1.0 - 0.06 * hdRod);
-        hdReb = mix(hdReb, hdReb * vec3(0.72, 0.90, 0.55) * (0.95 + 0.1 * hdM.r), (0.55 + 0.2 * hdAlvo) * hdMofo);
+        hdReb = mix(hdReb, hdReb * mix(vec3(0.72, 0.90, 0.55), vec3(0.60, 0.80, 0.44), hdAlvo) * (0.95 + 0.1 * hdM.r), (0.55 + 0.35 * hdAlvo) * hdMofo);
         { float hdEscT = hdAlvo * smoothstep(2.12, 2.30, hdY) * smoothstep(0.42, 0.62, texture2D(hdRuido, vec2(hdQ.x * 0.9, hdQ.y * 0.06) + 0.3).r) * (0.55 + 0.45 * smoothstep(2.3, 2.9, hdY));
           hdReb = hdUmido(hdReb, 0.6 * hdEscT) * (1.0 - 0.30 * hdEscT); }
+        // r24: dois escorridos de calha na parede alvo (z ≈ -13,1 e -10,7, no quadro da pose parede): 28 cm e -32 % acima de 2,1 m, afinando a 10 cm
+        // e -10 % na faixa do corpo (detalhe fino permitido), esfumados entre 0,9 e 1,6 m.
+        { float hdE1 = abs(hdQ.x + 18.3 + 0.03 * (hdM.g - 0.5)), hdE2 = abs(hdQ.x + 15.9 + 0.03 * (hdM.a - 0.5)), hdEw = fwidth(hdQ.x) * 1.5, hdAlto = smoothstep(2.05, 2.30, hdY);
+          float hdLg = mix(0.05, 0.14, hdAlto), hdEsc2 = hdAlvo * max(1.0 - smoothstep(hdLg * 0.6, hdLg + hdEw, hdE1), 0.8 * (1.0 - smoothstep(hdLg * 0.5, hdLg * 0.8 + hdEw, hdE2))) * smoothstep(0.9, 1.6, hdY) * step(hdY, 2.97) * (0.7 + 0.3 * hdM.b);
+          hdReb = hdUmido(hdReb, 0.6 * hdEsc2) * (1.0 - mix(0.10, 0.32, hdAlto) * hdEsc2); }
         hdReb = mix(hdReb, vec3(dot(hdReb, ${LUMA})) * 1.10 + 0.04, 0.6 * hdSal);
         // Remendo de massa nova: célula de 1,8 x 0,8 m (≈ 1 m² visível) acima de 2,12 m ou abaixo de 0,52 m, cinza-claro neutro (+10 % de luma, sem o quente do reboco).
         float hdRy = hdY > 1.3 ? (hdY - 2.12) / 0.8 : (hdY - 0.52) / 0.8, hdOk = (hdY > 1.3 ? step(2.12, hdY) : step(hdY, 0.52)) * (1.0 - hdBandaP(vHdPos));
@@ -311,7 +316,7 @@ function rebocoHD(m, r, U, o) {
       hdAlt = mix(hdAlt, hdV9 * (0.007 * (1.0 - hdTj.a) + 0.0015 * hdFino) + hdV3 * 0.0008 * hdGf, hdCr) * (1.0 - 0.9 * vHdMi); hdRel = mix((1.0 + 0.24 * hdChapR * hdFamOn - 0.5 * hdLiso - 0.2 * hdSarr) * (1.0 - 0.35 * hdChap * hdLisoM), 0.7, hdCr) * (1.0 - 0.85 * vHdMi); hdRug = mix(mix(hdRug, mix(0.86, 1.0, hdTj.a), hdCr), 0.6, vHdMi);
       ${idade(o, SUBS.tijolo, o.rebocoPe, false, { k: 'hdSobre', cor: 'hdNeu * mix(vec3(1.0), hdPasV, 1.8) * 0.9' })} }`);
     ganchos(shader); };
-  m.customProgramCacheKey = () => `lajes-hd-reboco75-${o.umidade}-${o.descasca}-${o.rebocoSombra}-${o.tijoloGrao}-${o.rebocoPe}-${o.rebocoFam}-${o.rebocoBorda}`;
+  m.customProgramCacheKey = () => `lajes-hd-reboco76-${o.umidade}-${o.descasca}-${o.rebocoSombra}-${o.tijoloGrao}-${o.rebocoPe}-${o.rebocoFam}-${o.rebocoBorda}`;
 }
 // Tijolo aparente: mesma textura e UV do mapa. Junta afundada (lida da saturação do texel), tom por fiada e por
 // trecho de tijolo, chapisco no pé e no alto. Na faixa do corpo sobra só a junta.
@@ -348,12 +353,19 @@ function tijoloHD(m, U, o) {
         float hdRp = smoothstep(0.54, 0.54 + hdRpW, hdRpM) * hdRpZ, hdRpB = (smoothstep(0.515, 0.54, hdRpM) - smoothstep(0.54, 0.54 + hdRpW, hdRpM)) * hdRpZ;
         vec3 hdEmb = ${EMBOCO} * (0.9 + 0.2 * hdMic.r) * (0.96 + 0.08 * hdA.r);
         diffuseColor.rgb = mix(diffuseColor.rgb, hdEmb, hdRp) * (1.0 - 0.18 * hdRpB); hdAlt = mix(hdAlt, 0.0008 * hdMic.b, hdRp) + 0.004 * hdRp; hdRel *= 1.0 - 0.8 * hdRp; hdRug = mix(hdRug, 1.0, hdRp);
-        float hdRow = floor(vMapUv.y * 10.29), hdCol = floor(vMapUv.x * 6.9 + 0.5 * mod(hdRow, 2.0)), hdTjH = hdH(vec2(hdCol, hdRow) + 0.37);
-        float hdTjS = step(0.83, hdTjH) * (1.0 - hdJ) * hdPerto * (1.0 - hdRp);
-        diffuseColor.rgb *= mix(1.0, mix(0.80, 1.16, step(0.93, hdTjH)), hdTjS); }
+        // r24: tom por tijolo em 3 degraus (-7 / 0 / +7 %, célula 29 x 19,3 cm — miúdo, entra na faixa do corpo), 5 % de tijolos lascados (canto inferior
+        // com face escura e recuada) e 7 % de juntas com argamassa que vazou (massa clara 1 cm sobre a borda do tijolo).
+        float hdRow = floor(vMapUv.y * 10.29), hdCol = floor(vMapUv.x * 6.9 + 0.5 * mod(hdRow, 2.0)), hdTjH = hdH(vec2(hdCol, hdRow) + 0.37), hdTjH2 = hdH(vec2(hdRow, hdCol) + 0.91);
+        float hdTjS = step(0.83, hdTjH) * (1.0 - hdJ) * hdPerto * (1.0 - hdRp), hdTj3 = floor(hdTjH2 * 2.999) - 1.0;
+        vec2 hdTjF = vec2(fract(vMapUv.x * 6.9 + 0.5 * mod(hdRow, 2.0)), fract(vMapUv.y * 10.29));
+        float hdLasca = step(0.95, hdTjH) * smoothstep(0.40, 0.25, hdTjF.x + hdTjF.y * 0.8 + 0.12 * (hdMic.a - 0.5)) * (1.0 - hdJ) * hdPerto * (1.0 - hdRp);
+        float hdVaza = step(0.93, hdTjH2) * smoothstep(0.10, 0.04, min(hdTjF.x, 1.0 - hdTjF.x) * 0.29) * (1.0 - hdJ) * hdPerto * (1.0 - hdRp);
+        diffuseColor.rgb *= mix(1.0, mix(0.80, 1.16, step(0.93, hdTjH)), hdTjS) * (1.0 + 0.07 * hdTj3 * hdPerto * (1.0 - hdJ)) * (1.0 - 0.38 * hdLasca);
+        diffuseColor.rgb = mix(diffuseColor.rgb, hdMassa * 1.45, 0.8 * hdVaza);
+        hdAlt -= 0.006 * hdLasca; hdAlt += 0.003 * hdVaza; }
       ${idade(o, o.tijoloGrao ? SUBS.chapiscoAcab : SUBS.chapisco)} }`);
     ganchos(shader); };
-  m.customProgramCacheKey = () => `lajes-hd-tijolo68-${o.umidade}-${o.descasca}-${o.tijoloGrao}`;
+  m.customProgramCacheKey = () => `lajes-hd-tijolo69-${o.umidade}-${o.descasca}-${o.tijoloGrao}`;
 }
 // Concreto serve piso e parede (orientação pela derivada da posição, constante por triângulo); chão e concreto
 // dividem o programa. hdPisoP = (lado da placa, limiar da poça, altura máxima com poça).
@@ -403,10 +415,15 @@ function chapaHD(m, U, o) {
         // que segura a telha (sem isso a borda vista de perto e uma fita lisa flutuando).
         vec3 hdGz = normalize(cross(dFdx(vHdPos), dFdy(vHdPos))); float hdBordaZ = hdChapaVar * smoothstep(0.45, 0.25, abs(hdGz.y)), hdRel = 1.0 - hdBordaZ;
         diffuseColor.rgb *= mix(1.0, 0.78, hdChapaVar * smoothstep(-0.15, -0.75, hdGz.y));
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.17, 0.125, 0.09) * (0.7 + 0.6 * hdCh2.g) * (0.85 + 0.3 * hdCh.b), hdBordaZ);`)
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.17, 0.125, 0.09) * (0.7 + 0.6 * hdCh2.g) * (0.85 + 0.3 * hdCh.b), hdBordaZ);
+        // r24: onda de zinco (passo 7,6 cm ao longo de x, 4 mm de relevo + ±9 % de albedo, some com a distância) nas faces horizontais — a cobertura
+        // da laje vista de baixo e as marquises de janela liam como chapa lisa. Vinco de 2 cm no beiral (borda da chapa) por relevo.
+        float hdOnZ = (0.5 + 0.5 * sin(vHdPos.x * 82.67)) * smoothstep(0.02, 0.006, fwidth(vHdPos.x)) * smoothstep(0.25, 0.6, abs(hdGz.y)) * (1.0 - hdBordaZ);
+        diffuseColor.rgb *= 1.0 + hdChapaVar * (0.18 * hdOnZ - 0.09);
+        float hdAltZ = hdChapaVar * 0.004 * hdOnZ;`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 1.0, hdBordaZ);')
-      .replace('#include <normal_fragment_maps>', NORMAL); };
-  m.customProgramCacheKey = () => `lajes-hd-chapa34-${o.chapaVariacao}`;
+      .replace('#include <normal_fragment_maps>', NORMAL + '\nnormal = hdBump(normal, -vViewPosition, hdAltZ);'); };
+  m.customProgramCacheKey = () => `lajes-hd-chapa35-${o.chapaVariacao}`;
 }
 
 // Aço do mapa (`steel`: grades, corrimão, postes, batentes — o painel verde-escuro constante da pose `beco` é este material em sombra):
@@ -707,12 +724,14 @@ export function aplicaLajesHD(scene, renderer, opts = {}) {
   // Portas: tipo e tinta sorteados pela posição; grade e corrimão ficam no aço liso. PORTA_FIXA força o tipo nas duas portas da pose `beco` que
   // o sorteio deixava chapa + madeira: a da direita (x 0,9; z 15,5) vira aço de enrolar e a seguinte da mesma parede (z 9,8) chapa de ferro com postigo de grade.
   const PORTA_FIXA = hdq.get('hdportafixa') === '0' ? [] : [[.905, 15.515, 4], [.905, 9.765, 0]];
-  const trocas = []; let cadeados = null;
+  const trocas = [], vergas = []; let cadeados = null;
   if (opts.portas !== false && portas.length) {
-    const atlas = atlasPortas(), mats = new Map(), v = new THREE.Vector3(); criadas.push(atlas);
+    const atlas = atlasPortas(), mats = new Map(), v = new THREE.Vector3(), bb = new THREE.Box3(); criadas.push(atlas);
     for (const p of portas) { p.getWorldPosition(v); const fixa = PORTA_FIXA.find(([x, z]) => Math.abs(v.x - x) < .05 && Math.abs(v.z - z) < .05);
       const tipo = fixa ? fixa[2] : Math.floor(h3(v.x, v.y, v.z) * 5), tinta = Math.floor(h3(v.z, v.x, 7) * TINTAS_PORTA.length), k = tipo * 10 + tinta;
       if (!mats.has(k)) { const m = new THREE.MeshStandardMaterial({ map: atlas, metalness: .1, roughness: .8, name: 'hd-porta' }); portaHD(m, tipo, new THREE.Color(TINTAS_PORTA[tinta])); m.userData.hdTipo = tipo; mats.set(k, m); criadas.push(m); }
+      // Porta de madeira velha (tipo 2) do beco central ganha verga de concreto na cenografia (hd-fachada): caixa do vão em mundo + normal da fachada.
+      if (tipo === 2 && p.userData.facadeNormal && Math.abs(v.x) < 1.2) { bb.setFromObject(p); vergas.push({ x: (bb.min.x + bb.max.x) / 2, z: (bb.min.z + bb.max.z) / 2, y: bb.max.y, w: Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z), nx: p.userData.facadeNormal[0], nz: p.userData.facadeNormal[2] }); }
       trocas.push([p, p.material]); p.material = mats.get(k); }
     // Cadeado (5,5 cm) pendurado na trava desenhada no atlas (u ao longo da folha, v do piso): argola da madeira, porta-cadeado da chapa,
     // furo do trilho do enrolar. Encostado à folha (≤ 1 cm) e só nas duas portas que a pose `beco` (hd_lab: -2, 0, 17) vê a menos de 3,5 m; ?hdcadeado=0 tira.
@@ -746,7 +765,7 @@ export function aplicaLajesHD(scene, renderer, opts = {}) {
   if (oCen && q.get('hdcaixa') === '0') oCen.caixas = false;
   if (oCen && q.get('hdvaral') === '0') oCen.varal = false;
   if (oCen && !comLoja) oCen.loja = false;
-  const cen = oCen ? cenografiaLajes(scene, { ...oCen, janelas: janelas.janelas, ruido: U.hdRuido, evita }) : null;
+  const cen = oCen ? cenografiaLajes(scene, { ...oCen, janelas: janelas.janelas, ruido: U.hdRuido, evita, vergas }) : null;
   // ?hdsol=1: sol alinhado ao beco (faixa de sol no chão do beco; em troca as fachadas da laje ficam em sombra).
   const desfazLuz = opts.luz === false ? () => {} : luzLajes(scene, U, { ...(q.get('hdsol') === '1' ? { solDir: [.24, .8, -.55] } : {}), nuvens: !!oCen && oCen.nuvens !== false, ...(opts.luz || {}) });
   return { alvos: [...porNome.keys()].filter((n) => REGRAS[n]), portas: portas.length, cenografia: cen, janelas: janelas.janelas.length, pichacao: pixo?.info, reflexos: cubos, cobertura: cob, desliga() {
