@@ -17,14 +17,16 @@
          jura medir job ausente vira verde calada.
    CL2 · job que mescla a main num PR baixa os blobs: com `blob:none` o merge busca
          blob sob demanda e o servidor recusa ("not our ref"); medido no autofix, 14/10.
+   CL3 · o prepare do Steam usa exatamente o commit cuja run de build foi validada;
+         checkout no default branch mistura artefato e ferramenta de revisões diferentes.
 
-   Mutantes: checkout-pesado (tira o filtro do dco), registro-orfao, merge-sem-blob.
+   Mutantes: checkout-pesado, registro-orfao, merge-sem-blob, steam-source-default.
    Uso: node tools/eval/workflow-checkout-check.mjs [--mutante=<nome>]
    ============================================================================ */
 import { readFileSync, existsSync } from 'node:fs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = { 'checkout-pesado': 'CL1', 'registro-orfao': 'CL0', 'merge-sem-blob': 'CL2' };
+const MUTANTES = { 'checkout-pesado': 'CL1', 'registro-orfao': 'CL0', 'merge-sem-blob': 'CL2', 'steam-source-default': 'CL3' };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 const REGISTRO = {
@@ -110,9 +112,23 @@ for (const [arquivo, jobs] of Object.entries(MESCLAM)) {
     }
   }
 }
+{
+  let fonte = readFileSync('.github/workflows/steam-preflight.yml', 'utf8');
+  if (MUT === 'steam-source-default') fonte = fonte.replace(/\n\s+ref: \$\{\{ inputs\.source_commit \}\}/, '');
+  const prepare = corpos(fonte).prepare;
+  if (!prepare) falhas.push('CL0 steam-preflight.yml: o job `prepare` não existe');
+  else {
+    const cos = checkouts(prepare);
+    medidos += cos.length;
+    if (cos.length !== 1 || !cos[0].some((l) => /^ref:\s*\$\{\{\s*inputs\.source_commit\s*\}\}\s*$/.test(l))) {
+      falhas.push('CL3 steam-preflight.yml: o checkout de `prepare` não usa `inputs.source_commit`');
+    }
+  }
+}
+
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
-if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m CL os ${medidos} checkouts dos jobs que só leem histórico ou poucos arquivos são leves`);
+if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m CL os ${medidos} checkouts medidos preservam custo, merge e identidade da fonte`);
 if (MUT && !falhas.length) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);
   falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso (MC1)

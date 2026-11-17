@@ -1,243 +1,250 @@
-# AGENTS.md — porta de entrada
+# AGENTS.md — entry point
 
-Você acabou de chegar num repositório onde **documentação errada é o defeito mais caro que
-existe**. Este arquivo não repete o que já está escrito em outro lugar: ele diz **as regras
-que valem antes da primeira linha de código** e **para onde ir** para cada assunto.
+You have just arrived at a repository where **incorrect documentation is the most expensive
+defect there is**. This file does not repeat what is already written elsewhere: it states **the
+rules that apply before the first line of code** and **where to go** for each topic.
 
-Se você se pegar escrevendo aqui um fato que já mora em outro arquivo, pare e escreva um
-link. Já foram encontrados quatro lugares diferentes com o mesmo número escrito à mão, todos
-desatualizados. Duplicar é criar o quinto.
+If you catch yourself writing a fact here that already lives in another file, stop and write a
+link instead. Four different places have already been found with the same manually written
+number, all of them outdated. Duplicating it creates a fifth.
 
 ---
 
 
-## Antes de escrever régua ou mexer em asset: `docs/LICOES.md` (em `../progress`)
+## Before writing a quality bar or touching an asset: `docs/LICOES.md` (in `../progress`)
 
-14 lições, cada uma com o caso real e o número que a comprou. Elas existem porque
-sem esse arquivo todo agente novo redescobre os mesmos buracos — e paga de novo.
+14 lessons, each with the real-world case and the number that paid for it. They exist because
+without this file every new agent rediscovers the same pitfalls — and pays for them again.
 
-Atalhos por tarefa:
-- **escrever régua** → lições 1-4 e a skill `regua`
-- **mexer em asset ou build** → 5, 11, 12, 14
-- **gerar arte com pessoa real** → 9
-- **portão VERDE e o dono dizendo que está errado** → 1 e 3 (o caso mais importante
-  desta base, e o mais mal resolvido)
+Shortcuts by task:
+- **writing a quality bar** → lessons 1-4 and the `regua` skill
+- **touching an asset or build** → 5, 11, 12, 14
+- **generating art featuring a real person** → 9
+- **a GREEN gate while the owner says it is wrong** → 1 and 3 (the most important
+  case in this codebase, and the least well resolved)
 
-## O que é este projeto
+## What this project is
 
-FPS de navegador em **Three.js vanilla, zero build**, em `public/`, servido por um site
-**Astro com SSR** na raiz (`src/`), com **Supabase** para ranking e telemetria. Sátira
-cultural brasileira, jogável num link, sem instalar nada.
+A browser FPS built with **vanilla Three.js, zero build**, in `public/`, served by an
+**Astro site with SSR** at the root (`src/`), with **Supabase** for rankings and telemetry.
+A satire of Brazilian culture, playable through a link, with nothing to install.
 
-A v1 chegou a mil jogadores por dia com gráfico nível Minecraft. A v2 persegue a
-**jogabilidade, a uniformidade e a animação do CS 1.6** — o alvo é **consistência**, não
-fidelidade de CoD. O dono se chama Ruben, responde em português, joga em **3:2** e revisa
-olhando screenshot. **Ele acerta com mais frequência do que a métrica:** quando ele diz que
-algo está errado e o quality gate está verde, o defeito é do quality gate.
+v1 reached a thousand players per day with Minecraft-level graphics. v2 pursues the
+**gameplay, consistency, and animation of CS 1.6** — the target is **consistency**, not
+CoD-level fidelity. The owner's name is Ruben; he answers in Portuguese, plays at **3:2**, and
+reviews by looking at screenshots. **He is right more often than the metrics:** when he says
+something is wrong and the quality gate is green, the defect is in the quality gate.
 
-## As duas zonas
+## The two zones
 
-<!-- BEGIN:GERADO:zonas — não edite à mão, rode `npm run docs` -->
+<!-- BEGIN:GERADO:zonas — do not edit manually; run `npm run docs` -->
 
-| Zona | O que é | Tamanho medido | Regra |
+| Zone | What it is | Measured size | Rule |
 |---|---|---|---|
-| `public/` | o **jogo** | 209 arquivos `.js`, 82.325 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
-| `src/` | o **site** | 30 páginas `.astro`, 5 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
-| `tools/` | o **arnês** | 1029 scripts em `tools/eval/`, 91 em `tools/` | node puro: sobe o jogo real sem browser |
+| `public/` | the **game** | 215 `.js` files, 83,954 lines · vendored Three.js `r160` | Raw ES modules, **zero build**, no runtime dependencies |
+| `src/` | the **site** | 30 `.astro` pages, 5 `/api` routes · Astro `^7.1.1` | Frameworks are welcome; `service_role` only on the server |
+| `tools/` | the **harness** | 1050 scripts in `tools/eval/`, 93 in `tools/` | Plain Node: starts the real game without a browser |
 
-**Não existe `public/index.html`.** O HTML do jogo é `src/pages/index.astro`, servido na rota `/`. Servir `public/` estaticamente entrega os arnêses visuais, **não o jogo** — é a pegadinha que custa a primeira hora de todo mundo.
+**There is no `public/index.html`.** The game's HTML is `src/pages/index.astro`, served at the `/` route. Serving `public/` statically delivers the visual harnesses, **not the game** — this is the trap that costs everyone their first hour.
 
-> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git ls-files 'src/pages/**/*.astro' 'src/pages/api/*.ts' public/index.html`
+> Block generated by `node tools/gen-docs.mjs`. Source: `git ls-files 'src/pages/**/*.astro' 'src/pages/api/*.ts' public/index.html`
 
 <!-- END:GERADO:zonas -->
 
-**`public/` não pode ganhar dependência de runtime nem passo de build.** Isso não é
-conservadorismo: é o que permite `tools/eval/harness.mjs` subir a classe `Game` real em node
-puro em segundos — que é o que faz o quality gate existir. Um bundler no meio quebraria a régua
-junto com a portabilidade. Three.js é vendorizado em `public/vendor/`; não adicione CDN.
+**`public/` must not gain runtime dependencies or a build step.** This is not
+conservatism: it is what allows `tools/eval/harness.mjs` to start the real `Game` class in
+plain Node within seconds — which is what makes the quality gate possible. A bundler in the
+middle would break the quality bar along with portability. Three.js is vendored in
+`public/vendor/`; do not add a CDN.
 
-**Roteamento de geração de asset (regra do dono, 19/08/2026; música em 20/08/2026):
-Mint é SÓ para 3D** (models, props, personagens, rig/animação); **toda arte 2D sai pelo
-OpenRouter** (`../studio/tools/gen-image.mjs`, no repositório público Coro Solto Studio (`corosolto/studio`); chave só do `.env`); **música NÃO é Mint — sai pelo
-OpenRouter** (`/audio/speech` e cia., mesma chave) ou outro provedor dedicado. O pipeline
-de animação do Mint é humanoid-only, o GPT de imagem entrega 2D com mais base no real
-(medido nos lotes da v2.1, pixos SP×RJ) e a música do Mint não agradou. Fauna continua
-preferindo Quaternius/CC0 com procedência em `FONTE.md` antes de qualquer geração paga.
+**Asset-generation routing (owner's rule, 08/19/2026; music on 08/20/2026):
+Mint is ONLY for 3D** (models, props, characters, rigging/animation); **all 2D art goes through
+OpenRouter** (`tools/gen-image.mjs`, key only in `.env`); **music is NOT Mint — it goes through
+OpenRouter** (`/audio/speech` and similar, same key) or another dedicated provider. Mint's
+animation pipeline is humanoid-only, the image GPT produces 2D work more grounded in reality
+(measured across the v2.1 batches, SP×RJ pixos — Brazilian graffiti tags), and Mint's music was
+not well received. For fauna, Quaternius/CC0 remains preferred, with provenance recorded in
+`FONTE.md` before any paid generation.
 
-**Mexeu em `public/js/*.js`? Preserve o cache-bust por conteúdo** — o import map de
-`src/pages/index.astro` e o arnês usam o manifesto recursivo de `scripts/module-cache.mjs`.
-`public/js/version.js` continua sincronizado com `package.json` pelo release.
+**Touched `public/js/*.js`? Preserve content-based cache busting** — the import map in
+`src/pages/index.astro` and the harness use the recursive manifest from
+`scripts/module-cache.mjs`. `public/js/version.js` remains synchronized with `package.json`
+by the release process.
 
-O porquê completo de cada regra da fronteira está em
+The full rationale for each boundary rule is in
 [`docs/docs/stack.md`](docs/docs/stack.md).
 
 ---
 
-## As leis da casa
+## The house rules
 
-Não são estilo. Cada uma custou dias; os casos completos estão em
+These are not matters of style. Each one cost days; the complete cases are in
 [`docs/docs/quality-gates.md`](docs/docs/quality-gates.md).
 
-**Comentários no código têm orçamento quase zero.** Não narre o que a linha faz nem cole o
-histórico da investigação. Só comente uma invariante, compatibilidade ou risco que os nomes não
-consigam expressar, em no máximo duas linhas, apontando para a issue ou doc quando precisar de
-contexto. Evidência, antes/depois e cronologia ficam em `KNOWN-BUGS.md` ou `docs/`.
+**Code comments have an almost zero budget.** Do not narrate what a line does or paste the
+investigation history. Comment only on an invariant, compatibility requirement, or risk that
+the names cannot express, in at most two lines, pointing to the issue or doc when context is
+needed. Evidence, before/after comparisons, and chronology belong in `KNOWN-BUGS.md` or `docs/`.
 
-**1 · Régua antes do conserto.** Escreva a medição, prove que ela **reprova** o estado atual,
-só então conserte. Intenção que não vira invariante é otimizada para fora: uma rodada levou o
-quality gate de 16/21 para 19/21 sem afrouxar um teto sequer e foi reprovada, porque para fechar
-duas invariantes destruiu em silêncio uma decisão estética que nenhuma régua codificava.
+**1 · Quality bar before the fix.** Write the measurement, prove that it **fails** the current
+state, and only then fix it. Intent that does not become an invariant gets optimized away: one
+round took the quality gate from 16/21 to 19/21 without loosening a single threshold and was
+rejected, because closing two invariants silently destroyed an aesthetic decision that no
+quality bar encoded.
 
-**2 · Teto sem procedência é opinião.** Todo número novo cita **arquivo de referência +
-pixel medido + o script que reproduz**. Três dias foram gastos perseguindo dois números
-asseridos que a referência contradizia. O padrão de qualidade desta base é a docstring de
-`tools/eval/ref-measure.py` — leia antes de propor qualquer teto.
+**2 · A threshold without provenance is an opinion.** Every new number cites the **reference
+file + measured pixel + script that reproduces it**. Three days were spent chasing two asserted
+numbers that the reference contradicted. The quality standard for this codebase is the docstring
+in `tools/eval/ref-measure.py` — read it before proposing any threshold.
 
-**3 · Toda invariante vem com a mutação que a faz ficar vermelha.** Um quality gate que não se mexe
-quando você quebra o código de propósito está cego. Caso real: um mutante que desfazia
-inteiramente a correção do enquadramento passava **20/22 VERDE**, porque a invariante lia a
-*declaração* de uma constante e não o *uso*. Outros três buracos iguais foram achados depois.
-Se ela não morde, ela não existe.
+**3 · Every invariant comes with the mutation that turns it red.** A quality gate that does not
+react when you deliberately break the code is blind. Real case: a mutant that completely undid
+the framing fix passed **20/22 GREEN**, because the invariant read the *declaration* of a
+constant rather than its *use*. Three more identical holes were found later.
+If it does not bite, it does not exist.
 
-**4 · Gere a figura e OLHE.** Número sem imagem já enganou este projeto quatro vezes. Se a
-mudança é visível, capture, olhe, e **descreva o que você viu** — não o que você esperava
-ver.
+**4 · Generate the image and LOOK at it.** Numbers without images have already misled this
+project four times. If the change is visible, capture it, look at it, and **describe what you
+saw** — not what you expected to see.
 
-**Corolário que vale para você especificamente: quem constrói nunca dá a nota.** Um agente
-lê o próprio resultado através da justificativa que ele mesmo construiu. Antes de considerar
-uma frente pronta, rode um crítico adversarial com contexto limpo. O ciclo inteiro está em
-[`docs/docs/instrumentacao-ai.md`](docs/docs/instrumentacao-ai.md) e em
+**A corollary that applies specifically to you: the builder never assigns the grade.** An agent
+reads its own result through the justification it constructed. Before considering a workstream
+complete, run an adversarial critic with clean context. The full cycle is in
+[`docs/docs/instrumentacao-ai.md`](docs/docs/instrumentacao-ai.md) and
 `.claude/skills/gauntlet-fps/SKILL.md`.
 
-**Vai consertar um defeito? As quatro leis acima viram passo a passo na skill `bug-hunt`**
-(`.claude/skills/bug-hunt/SKILL.md`), com o caso real de cada uma e o fluxo operacional —
-onde registrar, em que ordem rodar o quality gate, e como reportar o que **não** foi verificado.
-Ela vale para agente e para gente. Como a `gauntlet-fps`, ela nasceu aqui e vive em
-`.claude/skills/` porque `.agents/skills/` é gitignored (skill de terceiro, fixada por hash).
+**Going to fix a defect? The four rules above become a step-by-step process in the `bug-hunt`
+skill** (`.claude/skills/bug-hunt/SKILL.md`), with the real case behind each one and the
+operational workflow — where to record findings, the order in which to run the quality gate,
+and how to report what was **not** verified. It applies to agents and humans alike. Like
+`gauntlet-fps`, it was created here and lives in `.claude/skills/` because `.agents/skills/`
+is gitignored (third-party skill, pinned by hash).
 
-**PR title and description MUST be written in English.** A regra vale para humanos e bots;
-o workflow `pr-language.yml` executa `scripts/ci/pr_language.py` em abertura, edição e push.
-Detalhes do processo e o template ficam em [`CONTRIBUTING.md`](CONTRIBUTING.md).
+**PR title and description MUST be written in English.** This rule applies to humans and bots;
+the `pr-language.yml` workflow runs `scripts/ci/pr_language.py` on opening, editing, and push.
+Process details and the template are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-**Todo commit leva o trailer `Agent:`** (ex.: `Agent: Kimi Code`; humano leva
-`Agent: humano`) — é o que sustenta o "cada commit diz qual" do README. Você não
-digita: o `.githooks/prepare-commit-msg` preenche pela assinatura do ambiente, e
-`AGENTE="Claude Code (Opus 5)"` tem precedência quando você quer nomear o modelo.
-O `commit-msg` **recusa** commit sem o trailer e commit acima de 15 arquivos ou
-800 linhas sem um `Commit-grande:` dizendo por quê. A convenção completa, com a
-medição que comprou o teto, mora em `CONTRIBUTING.md`.
+**Every commit carries the `Agent:` trailer** (e.g., `Agent: Kimi Code`; humans use
+`Agent: humano`) — this is what supports the README's "every commit says which one." You do not
+type it: `.githooks/prepare-commit-msg` fills it in from the environment signature, and
+`AGENTE="Claude Code (Opus 5)"` takes precedence when you want to name the model.
+`commit-msg` **rejects** commits without the trailer and commits touching more than 15 files or
+800 lines without a `Commit-grande:` explaining why. The complete convention, including the
+measurement that justified the limit, lives in `CONTRIBUTING.md`.
 
 ---
 
-## Onde está cada coisa
+## Where everything is
 
-Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai.
+One topic, one file. If you need the information, this is where you start.
 
-| Você quer… | Vá para | Observação |
+| You want… | Go to | Note |
 |---|---|---|
-| o estado de hoje e os ledgers internos | repo irmão `../progress` (clone ao lado do client) | `STATUS.md`, `HANDOFF.md`, `KNOWN-BUGS.md`, `QUALITY-SCORE.md`, `PROMPT.md`, `SCRIPTS.md` — bug com evidência continua sendo `KNOWN-BUGS.md` + invariante |
-| **índice símbolo→linha do `game.js`** e a tabela de conflito | [`tools/eval/ARCH.md`](tools/eval/ARCH.md) | **GERADO** (`npm run arch`) — leia **antes** de tocar em `game.js` |
-| o que cada script do arnês mede | [`tools/eval/README.md`](tools/eval/README.md) | inclui quais estão obsoletos |
-| a régua visual vigente | [`tools/eval/BAR-CONSISTENCIA.md`](tools/eval/BAR-CONSISTENCIA.md) | **tem precedência** sobre a `BAR.md` |
-| para onde o projeto vai | [`ROADMAP.md`](ROADMAP.md) | a vista de cima |
-| o plano de release, degrau a degrau | `../progress` → `archive/plans/08-RELEASE-PROFISSIONAL.md` | histórico: o corte defendido, não o estado atual |
-| como abrir um PR que passa | [`CONTRIBUTING.md`](CONTRIBUTING.md) | linha editorial, higiene, processo |
-| investigar e consertar um defeito | [`.claude/skills/bug-hunt/SKILL.md`](.claude/skills/bug-hunt/SKILL.md) | as leis viram passo a passo, com o caso real de cada uma |
-| criar personagem, mapa ou asset novo | [`.claude/skills/csbrasil/SKILL.md`](.claude/skills/csbrasil/SKILL.md) | pipeline com 6 portões; ficha validada por `npm run spec:check` |
-| criar ou trocar viewmodel pela fábrica | [`.claude/skills/fabrica-armas/SKILL.md`](.claude/skills/fabrica-armas/SKILL.md) | ficha, zona de contato, build, QA e crítico cego |
-| revisar asset gerado (nota de fora) | [`.claude/skills/asset-review/SKILL.md`](.claude/skills/asset-review/SKILL.md) | crítico adversarial de contexto limpo — quem constrói não dá a nota |
-| limitar contexto, Graphify e Serena | [`docs/docs/instrumentacao-ai.md#orçamento-de-contexto-por-tarefa`](docs/docs/instrumentacao-ai.md#orçamento-de-contexto-por-tarefa) | um assunto, uma tarefa; checkpoint antes de trocar |
-| skills nativas visíveis pra todo agente | `npm run skills:sync` | symlink `.agents/skills/` → `.claude/skills/`; `skills:check` no `check:fast` |
-| podar over-engineering de um diff; entrevistar antes de codar | `.agents/skills/` (`ponytail-review`, `grill-me`, `handoff`, `to-spec`) | terceiras, gitignored, fixadas por hash — fontes em `.agents/skills/THIRD-PARTY.md` |
-| a documentação de dev inteira | [`docs/docs/`](docs/docs/) | site Docusaurus; os `.md` internos (IDEAS, QUALITY, relatórios) vivem no repo irmão `../progress` |
-| por que uma decisão de arquitetura é como é | [`docs/adr/`](docs/adr/) | ADRs curtas: contexto, decisão e consequências. O histórico de sessão antigo continua fora da árvore pública |
-| fronteira de segurança do backend | [`docs/seguranca.md`](docs/seguranca.md) | leia antes de mexer em `/api/*` ou `supabase/` |
-| **diagnosticar produção, recuperar e reverter** | [`docs/runbooks/operacao-autonoma.md`](docs/runbooks/operacao-autonoma.md) | `npm run ops:diag`: causa provável, evidência, impacto e próximo passo; "tecnicamente verde" ≠ "pronto para lançamento" |
-| tarefas boas de primeira contribuição | [`docs/issues/`](docs/issues/) | uma por arquivo, com critério de aceite |
-| por que uma decisão antiga é como é | `../progress` → `archive/docs/historico/` | arquivo morto: **não** descreve o estado atual |
+| today's status and internal ledgers | sibling repo `../progress` (clone next to the client) | `STATUS.md`, `HANDOFF.md`, `KNOWN-BUGS.md`, `QUALITY-SCORE.md`, `PROMPT.md`, `SCRIPTS.md` — a bug with evidence still belongs in `KNOWN-BUGS.md` + an invariant |
+| **`game.js` symbol→line index** and the conflict table | [`tools/eval/ARCH.md`](tools/eval/ARCH.md) | **GENERATED** (`npm run arch`) — read it **before** touching `game.js` |
+| what each harness script measures | [`tools/eval/README.md`](tools/eval/README.md) | includes which ones are obsolete |
+| the current visual quality bar | [`tools/eval/BAR-CONSISTENCIA.md`](tools/eval/BAR-CONSISTENCIA.md) | **takes precedence** over `BAR.md` |
+| where the project is going | [`ROADMAP.md`](ROADMAP.md) | the high-level view |
+| the release plan, step by step | `../progress` → `archive/plans/08-RELEASE-PROFISSIONAL.md` | historical: the recommended cut, not the current state |
+| how to open a PR that passes | [`CONTRIBUTING.md`](CONTRIBUTING.md) | editorial policy, hygiene, process |
+| investigate and fix a defect | [`.claude/skills/bug-hunt/SKILL.md`](.claude/skills/bug-hunt/SKILL.md) | the rules become a step-by-step process, with the real case behind each one |
+| create a character, map, or new asset | [`.claude/skills/csbrasil/SKILL.md`](.claude/skills/csbrasil/SKILL.md) | pipeline with 6 gates; specification validated by `npm run spec:check` |
+| create or replace a viewmodel through the factory | [`.claude/skills/fabrica-armas/SKILL.md`](.claude/skills/fabrica-armas/SKILL.md) | specification, contact zone, build, QA, and blind critic |
+| review a generated asset (external grade) | [`.claude/skills/asset-review/SKILL.md`](.claude/skills/asset-review/SKILL.md) | adversarial critic with clean context — the builder does not assign the grade |
+| limit context, Graphify, and Serena | [`docs/docs/instrumentacao-ai.md#orçamento-de-contexto-por-tarefa`](docs/docs/instrumentacao-ai.md#orçamento-de-contexto-por-tarefa) | one topic, one task; checkpoint before switching |
+| native skills visible to every agent | `npm run skills:sync` | symlink `.agents/skills/` → `.claude/skills/`; `skills:check` in `check:fast` |
+| prune over-engineering from a diff; interview before coding | `.agents/skills/` (`ponytail-review`, `grill-me`, `handoff`, `to-spec`) | third-party, gitignored, pinned by hash — sources in `.agents/skills/THIRD-PARTY.md` |
+| the complete developer documentation | [`docs/docs/`](docs/docs/) | Docusaurus site; internal `.md` files (IDEAS, QUALITY, reports) live in the sibling repo `../progress` |
+| why an architecture decision is the way it is | [`docs/adr/`](docs/adr/) | Short ADRs: context, decision, and consequences. Old session history remains outside the public tree |
+| backend security boundary | [`docs/seguranca.md`](docs/seguranca.md) | read before touching `/api/*` or `supabase/` |
+| **diagnose production, recover, and roll back** | [`docs/runbooks/operacao-autonoma.md`](docs/runbooks/operacao-autonoma.md) | `npm run ops:diag`: likely cause, evidence, impact, and next step; "technically green" ≠ "ready to release" |
+| good first contribution tasks | [`docs/issues/`](docs/issues/) | one per file, with acceptance criteria |
+| why an old decision is the way it is | `../progress` → `archive/docs/historico/` | dead archive: does **not** describe the current state |
 
 ---
 
-## O quality gate, e a ordem que importa
+## The quality gate, and the order that matters
 
-<!-- BEGIN:GERADO:scripts — não edite à mão, rode `npm run docs` -->
+<!-- BEGIN:GERADO:scripts — do not edit manually; run `npm run docs` -->
 
 ```bash
 npm run check:fast   # node tools/eval/runner.mjs --suite=fast
 ```
 
-`package.json` tem **806 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
+`package.json` has **827 scripts**; the reason for each one lives in `SCRIPTS.md` (migrated from
+the `//name` keys on 08/18/2026) — that is where the rationale is.
 
-> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
+> Block generated by `node tools/gen-docs.mjs`. Source: `node -p "Object.keys(require('./package.json').scripts)"`
 
 <!-- END:GERADO:scripts -->
 
-> ### `npm run eval:vm` roda ANTES de `invariants.mjs`. Sempre.
+> ### `npm run eval:vm` runs BEFORE `invariants.mjs`. Always.
 >
-> As invariantes de viewmodel **leem** o `tools/eval/vm_mint_audit.json` que o `eval:vm`
-> **escreve**. Rodar as invariantes com esse JSON velho mede o viewmodel de ontem e
-> **inventa vermelha**: com o JSON em `V0=80°` contra o `game.js` em `V0=42°`, a VM5 acusava
-> **26/26 armas fora**; depois de regenerar, **3/26**. `eval:invariants` não entra em
-> nenhum `check:*`: o cuidado é para quando você chamar `node tools/eval/invariants.mjs` na mão.
-> É o **BUG-02** do `KNOWN-BUGS.md` (em `../progress`).
+> The viewmodel invariants **read** the `tools/eval/vm_mint_audit.json` that `eval:vm`
+> **writes**. Running the invariants with a stale JSON measures yesterday's viewmodel and
+> **invents failures**: with the JSON at `V0=80°` against `game.js` at `V0=42°`, VM5 reported
+> **26/26 weapons out of bounds**; after regeneration, **3/26**. `eval:invariants` is not part of
+> any `check:*`: this caution applies when you invoke `node tools/eval/invariants.mjs` manually.
+> This is **BUG-02** in `KNOWN-BUGS.md` (in `../progress`).
 
-O `check:fast` usa `tools/eval/runner.mjs`: **todos os passos rodam mesmo quando um deles
-fica vermelho**, e o código de saída só é decidido no placar final. Isso evita que um defeito
-conhecido esconda um quality gate novo. Leia a entrada `check:fast` do `SCRIPTS.md` (em `../progress`) antes de acrescentar um passo.
+`check:fast` uses `tools/eval/runner.mjs`: **every step runs even when one of them fails**, and
+the exit code is decided only by the final score. This prevents a known defect from hiding a new
+quality gate. Read the `check:fast` entry in `SCRIPTS.md` (in `../progress`) before adding a step.
 
-**O placar do quality gate não mora neste arquivo, e não deve morar em nenhum outro além de um.**
-Quantas invariantes passam **não é derivável do fonte** — depende de qual insumo existe na
-máquina. O número vive colado de uma execução real no cabeçalho do `KNOWN-BUGS.md` (em `../progress`).
-
----
-
-## Concorrência: quando paralelizar e quando não
-
-**Sistema interconectado se mexe sequencialmente, por um agente só.** Arma + mão + animação
-+ ADS + mira + HUD são um sistema: fan-out paralelo nele já produziu **13 regressões numa
-única rodada**.
-
-Fora desse sistema, o paralelismo é seguro **e medido** — desde que as frentes tenham faixas
-de linha disjuntas:
-
-- A partição é declarada por **símbolo**, nunca por linha (`tools/gen-arch.mjs`), e o script
-  resolve símbolo → linha a cada execução. A tabela de conflito resultante está em
-  [`tools/eval/ARCH.md`](tools/eval/ARCH.md). **Consulte antes de editar.**
-- Em `game.js`, **edite por trecho — nunca sobrescreva o arquivo inteiro.** Uma ferramenta
-  que reescreve o arquivo apaga o trabalho de quem está na outra faixa, agora.
-- `constructor()`, `update()` e `_dom()` são **zona vermelha, append-only**: qualquer frente
-  pode precisar deles. Acrescente no fim; não reorganize.
-- **Um único agente roda browser.** Duas capturas headless em paralelo derrubam o boot e
-  produzem "countdown travado" que parece bug e é carga.
-
-Mecanismo completo: [`docs/docs/arquitetura.md`](docs/docs/arquitetura.md).
+**The quality gate score does not live in this file, and it must not live anywhere else except
+one place.** How many invariants pass **cannot be derived from the source** — it depends on
+which inputs exist on the machine. The number lives next to a real run in the header of
+`KNOWN-BUGS.md` (in `../progress`).
 
 ---
 
-## Vetos do dono
+## Concurrency: when to parallelize and when not to
 
-Estes não se negociam. Se você acha que um deles está errado, **traga a medição** — não o
-contorne.
+**Interconnected systems are changed sequentially, by a single agent.** Weapon + hand +
+animation + ADS + crosshair + HUD are one system: parallel fan-out across it has already produced
+**13 regressions in a single round**.
 
-- **Não reduza o número de armas no chão.** *"não pode deixar todas, porque é a única forma
-  do usuário escolher armas — hoje não temos menu de compra."*
-- **Não afrouxe teto de invariante para fechar placar.** Se achar que um teto está errado,
-  meça na referência e **mostre o pixel**.
-- **`AUD1` tem que ficar verde.** É a invariante que garante que o auditor mede o que o jogo
-  desenha. Foi ela que pegou o quality gate mentindo. Se você mexer no caminho do viewmodel,
-  **estenda a `AUD1` junto e prove com mutação**.
-- **Nada de asset com copyright, nada de pessoa real, nada de gore.** É linha editorial e é
-  proteção contra takedown — ver [`CONTRIBUTING.md`](CONTRIBUTING.md). A única exceção a
-  pessoa real é a caricatura satírica de figura política pública, com as regras de lá.
-- **Segredo nunca no git.** `service_role` e `.env` só na Vercel.
+Outside that system, parallelism is safe **and measured** — provided the workstreams have
+disjoint line ranges:
+
+- The partition is declared by **symbol**, never by line (`tools/gen-arch.mjs`), and the script
+  resolves symbol → line on every run. The resulting conflict table is in
+  [`tools/eval/ARCH.md`](tools/eval/ARCH.md). **Consult it before editing.**
+- In `game.js`, **edit by section — never overwrite the entire file.** A tool that rewrites the
+  file erases the work of whoever is in the other range, right now.
+- `constructor()`, `update()`, and `_dom()` are **red-zone, append-only**: any workstream may
+  need them. Append at the end; do not reorganize.
+- **Only one agent runs the browser.** Two parallel headless captures break boot and produce a
+  "frozen countdown" that looks like a bug but is actually load.
+
+Full mechanism: [`docs/docs/arquitetura.md`](docs/docs/arquitetura.md).
 
 ---
 
-## Como não estragar esta documentação
+## Owner's vetoes
 
-**Número derivável do código não se escreve à mão em lugar nenhum deste repositório.** Ele
-vira bloco gerado por `node tools/gen-docs.mjs`, entre marcadores, e `npm run docs:check`
-(dentro do `check:fast`) reprova quando ele diverge da árvore.
+These are non-negotiable. If you think one of them is wrong, **bring the measurement** — do not
+work around it.
+
+- **Do not reduce the number of weapons on the ground.** *"you cannot remove any of them,
+  because that is the only way users can choose weapons — today we do not have a buy menu."*
+- **Do not loosen an invariant threshold to improve the score.** If you think a threshold is
+  wrong, measure the reference and **show the pixel**.
+- **`AUD1` must stay green.** It is the invariant that ensures the auditor measures what the
+  game renders. It is what caught the quality gate lying. If you touch the viewmodel path,
+  **extend `AUD1` alongside it and prove it with a mutation**.
+- **No copyrighted assets, no real people, no gore.** This is editorial policy and protection
+  against takedowns — see [`CONTRIBUTING.md`](CONTRIBUTING.md). The only exception to the real
+  person rule is a satirical caricature of a public political figure, subject to the rules there.
+- **Secrets never go into git.** `service_role` and `.env` belong only in Vercel.
+
+---
+
+## How not to ruin this documentation
+
+**A number derivable from code must never be written manually anywhere in this repository.**
+It becomes a block generated by `node tools/gen-docs.mjs`, between markers, and `npm run
+docs:check` (inside `check:fast`) fails when it diverges from the tree.
 
 ```bash
 npm run docs          # regenera todos os blocos
@@ -245,10 +252,10 @@ npm run docs:check    # sai 1 se algum estiver velho — é o que roda no qualit
 npm run arch          # regenera o índice e a tabela de conflito do game.js
 ```
 
-Precisa de um número que ainda não é gerado? **Estenda o gerador** e ponha o marcador. Se
-não der para gerar, escreva a frase **sem o número** — ou cite o comando que o produz. Esta
-é a regra que existe porque um `SKILL.md` afirmava 3.234 linhas de `game.js` quando o arquivo
-já tinha o dobro; corrigir à mão dura exatamente um commit.
+Need a number that is not generated yet? **Extend the generator** and add the marker. If it
+cannot be generated, write the sentence **without the number** — or cite the command that
+produces it. This rule exists because a `SKILL.md` claimed `game.js` had 3,234 lines when the
+file already had twice as many; a manual correction lasts exactly one commit.
 
-E o resto — o porquê, a decisão, o caso que gerou a regra — é conhecimento humano, mora em
-**um** arquivo só, e os outros apontam para ele.
+Everything else — the why, the decision, the case that produced the rule — is human knowledge,
+lives in **one** file only, and the others point to it.
