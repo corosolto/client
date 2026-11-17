@@ -20,8 +20,9 @@ name: csbrasil-bot-automerge
 #   os checks ficam verdes; evento perdido deixa a head SEM `politica-merge`, e contexto
 #   exigido ausente segura o merge (falha fechada). O sweep do classify cobre PR de fork;
 # - `pull_request_target`: duplicava o classify em todo evento.
-# Resolver conversa não dispara Actions (não há gatilho `pull_request_review_thread`); se
-# a última ação foi resolver conversa: `gh workflow run csbrasil-bot-automerge.yml -f pr_number=N`.
+# Resolver conversa não dispara Actions (não há gatilho `pull_request_review_thread`), por
+# isso conversa aberta não entra no `politica-merge`: quem a segura é a regra nativa de
+# conversa resolvida, exigida no ruleset antes de o bot armar (docs/quality-gates.md).
 on:
   workflow_dispatch:
     inputs:

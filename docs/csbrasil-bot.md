@@ -75,17 +75,19 @@ aprovação humana definida nos quality gates antes de entrar em `staging`.
   próprio bot aplica não reclassifica: o classify que a aplicou já despacha o automerge.
 - O automerge publica o commit status `politica-merge` na head e só então arma ou desarma o
   auto-merge nativo. Estados e lista de checks exigidos: `docs/quality-gates.md`.
-- PR individual só arma com `safe-automerge`, `reviewDecision=APPROVED`, nenhuma conversa aberta
-  e nenhuma pendência do estraga-codigo. Gameplay, backend e workflows não entram nesse caminho.
+- PR individual só arma com `safe-automerge`, `reviewDecision=APPROVED` e nenhuma pendência do
+  estraga-codigo. Conversa aberta é segurada pela regra nativa de conversa resolvida, que o bot
+  exige no ruleset antes de armar. Gameplay, backend e workflows não entram nesse caminho.
 - Armar usa `expectedHeadOid` com o SHA avaliado; push novo deixa a head sem `politica-merge` até
   o próximo run. Merge direto usa `--match-head-commit` e só acontece com o critério completo
-  (rollup inteiro verde, deduplicado pelo run mais novo, estado `CLEAN`).
+  (rollup inteiro verde, deduplicado pelo run mais novo, contextos exigidos presentes, zero
+  conversa aberta, estado `CLEAN`).
 - O workflow executa somente comandos fixos: `check_automerge.py` decide e `automerge_merge.py`
   contém a guarda, o status e o argv de armar/mergear. Não há heredoc executável entre os
   selftests e a operação; o AF4 rejeita qualquer chamada adicional ou alteração da sequência.
 - A PR oficial `staging → main` usa o caminho `release-batch`: exige `estragacodigo-resolved`
   sem `CHANGES_REQUESTED`, não exige `reviewDecision=APPROVED`, e continua bloqueada por
-  conversa aberta, draft e pelas labels `needs-human-gameplay`, `needs-human-backend` e
+  draft e pelas labels `needs-human-gameplay`, `needs-human-backend` e
   `needs-hotfix-review`. Se a API truncar a lista de arquivos, classificação e automerge calculam
   `origin/main...origin/staging` via Git e exigem que `origin/staging` seja o `headRefOid`
   avaliado; sem diff completo verificado, não há merge.

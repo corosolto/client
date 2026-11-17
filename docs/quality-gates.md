@@ -55,10 +55,10 @@ publica o commit status `politica-merge` na head e arma ou desarma o auto-merge 
 
 `politica-merge` vale para merge de GENTE também (o ruleset exige):
 
-- `failure`: `needs-estragacodigo-resolution` sem `estragacodigo-resolved`,
-  `needs-hotfix-review`, ou conversa de revisão aberta;
+- `failure`: `needs-estragacodigo-resolution` sem `estragacodigo-resolved`, ou
+  `needs-hotfix-review`;
 - `pending`: `needs-human-gameplay`/`needs-human-backend` (decisão do dono, que mergeia como
-  bypass actor), draft, ou insumo que não deu para ler (lista de arquivos, conversas);
+  bypass actor), draft, ou lista de arquivos que não deu para verificar;
 - `success`: nenhum bloqueio. Com "auto-merge armed" na descrição quando o bot armou.
 
 O bot arma o auto-merge só para:
@@ -68,9 +68,14 @@ O bot arma o auto-merge só para:
 - a PR oficial `staging → main` com label `release` e `estragacodigo-resolved`, sem
   `CHANGES_REQUESTED`.
 
-Quando surge bloqueio (label, conversa, review), o status sai ANTES do desarme: mesmo se o
-desarme falhar, o contexto exigido fora do verde segura o merge nativo. Head nova não tem
+Quando surge bloqueio (label, review), o status sai ANTES do desarme: mesmo se o desarme
+falhar, o contexto exigido fora do verde segura o merge nativo. Head nova não tem
 `politica-merge` até o bot rodar, e contexto exigido ausente também segura.
+
+Conversa de revisão aberta NÃO entra no `politica-merge`: resolver conversa não dispara
+Actions, então um `failure` por conversa ficaria preso depois da resolução. Quem segura é a
+regra nativa de conversa resolvida, que o GitHub reavalia sozinho; por isso o bot só arma
+quando o ruleset da base tem essa regra.
 
 Não entra no automerge de PR individual:
 
@@ -89,13 +94,11 @@ merge commit e nunca apaga `staging`.
 Merge DIRETO do bot (`gh pr merge --merge --match-head-commit`) só acontece com o critério
 completo: rollup inteiro verde (deduplicado pelo run mais novo), cada contexto da tabela acima
 PRESENTE e verde (ausente não é verde; `politica-merge` fica de fora porque é o que o bot
-publica), base `main` ou `staging` e estado `CLEAN`. Isso vale quando o GitHub recusa armar
-porque o PR já está limpo, ou enquanto o ruleset da base não exige todos os contextos da tabela
-e a resolução de conversas. Sem os settings, então, o bot nunca arma e nunca mergeia sem esse
-critério.
-
-Resolver conversa não dispara Actions. Se a última ação num PR foi resolver conversa,
-reavalie com `gh workflow run csbrasil-bot-automerge.yml -f pr_number=<N>`.
+publica), zero conversa aberta (o bot é bypass actor e passaria por cima da regra nativa),
+base `main` ou `staging` e estado `CLEAN`. Isso vale quando o GitHub recusa armar porque o PR
+já está limpo ou porque `allow_auto_merge` está desligado, ou enquanto o ruleset da base não
+exige todos os contextos da tabela e a resolução de conversas. Sem os settings, então, o bot
+nunca arma e nunca mergeia sem esse critério.
 
 ## Rollout
 

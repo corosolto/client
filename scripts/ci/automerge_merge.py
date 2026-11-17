@@ -33,8 +33,11 @@ mutation($id: ID!) {
   disablePullRequestAutoMerge(input: {pullRequestId: $id}) { pullRequest { autoMergeRequest { mergeMethod } } }
 }
 """
-# O GitHub recusa armar PR que já pode entrar agora ("Pull request is in clean status").
+# O GitHub recusa armar PR que já pode entrar agora ("Pull request is in clean status") e
+# repositório com `allow_auto_merge` desligado. Os dois caem no critério do merge direto;
+# qualquer outro erro do GraphQL continua fatal.
 JA_LIMPO = re.compile(r"\b(clean|unstable|has_hooks) status\b", re.IGNORECASE)
+SEM_AUTO_MERGE = re.compile(r"auto[ -]?merge is not allowed", re.IGNORECASE)
 REVIEW_THREADS_RULE = '<required review thread resolution>'
 
 
@@ -140,6 +143,8 @@ def selftest() -> int:
         POLICY_CONTEXT, 'portao-decide', 'portao', 'smoke-decide', 'smoke', 'chat-desktop']
     assert JA_LIMPO.search('GraphQL: Pull request Pull request is in clean status (enablePullRequestAutoMerge)')
     assert not JA_LIMPO.search('GraphQL: Pull request Auto merge is not allowed for this repository')
+    assert SEM_AUTO_MERGE.search('GraphQL: Pull request Auto merge is not allowed for this repository (enablePullRequestAutoMerge)')
+    assert not SEM_AUTO_MERGE.search('GraphQL: Could not resolve to a node with the global id')
     print('AUTOMERGE-MERGE selftest ok: live policy, status before arm, native arm only with full ruleset, merge commit')
     return 0
 
@@ -228,9 +233,14 @@ def main() -> int:
                             f"head `{head_oid[:12]}`). GitHub merges when the required checks pass.")
             print('auto-merge armed')
             return 0
-        if not JA_LIMPO.search(armou.stderr + armou.stdout):
+        erro = armou.stderr + armou.stdout
+        if JA_LIMPO.search(erro):
+            print('GitHub reports the PR as already mergeable; falling back to the full direct-merge criteria')
+        elif SEM_AUTO_MERGE.search(erro):
+            print('::notice title=Auto-merge nativo desligado::allow_auto_merge=false no repositório; '
+                  'só merge direto com o critério completo')
+        else:
             raise RuntimeError(f'enablePullRequestAutoMerge failed: {armou.stderr.strip()}')
-        print('GitHub reports the PR as already mergeable; falling back to the full direct-merge criteria')
     else:
         print(f"::notice title=Auto-merge nativo inativo::ruleset de {current['baseRefName']} não exige "
               f"{', '.join(faltam)}; só merge direto com rollup inteiro verde")

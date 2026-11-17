@@ -138,10 +138,8 @@ def decide(pr: dict) -> dict:
         policy = ("failure", "estraga-codigo findings unresolved (needs-estragacodigo-resolution)")
     elif "needs-hotfix-review" in labels:
         policy = ("failure", "hotfix ancestry needs review (needs-hotfix-review)")
-    elif not threads_desconhecidas and threads > 0:
-        policy = ("failure", f"{threads} unresolved review conversation(s)")
-    elif threads_desconhecidas or (lista_incompleta and pr.get("full_diff_verified") is not True):
-        policy = ("pending", "policy inputs unknown (review threads or file list); re-run the bot")
+    elif lista_incompleta and pr.get("full_diff_verified") is not True:
+        policy = ("pending", "policy inputs unknown (file list); re-run the bot")
     elif human_labels:
         policy = ("pending", f"owner decision required ({', '.join(sorted(human_labels))}); no auto-merge")
     elif pr.get("isDraft", False):
@@ -164,11 +162,17 @@ def decide(pr: dict) -> dict:
     }
     exigidos = [c for c in REQUIRED_CONTEXTS.get(pr.get("baseRefName"), ()) if c != POLICY_CONTEXT]
     required_green = bool(exigidos) and all(contexto in verdes for contexto in exigidos)
+    # Conversa aberta NÃO entra no status: resolver conversa não dispara Actions, e um
+    # `failure` por conversa ficaria preso depois da resolução. Quem segura conversa aberta
+    # é a regra nativa `required_review_thread_resolution` (o bot só arma quando a base a
+    # exige, ver automerge_merge.missing_contexts), que o GitHub reavalia sozinho. O merge
+    # DIRETO, que não passa pela regra nativa, exige zero conversa aberta e contagem lida.
     eligible = (
         auto_merge
         and pr.get("mergeStateStatus") in {"CLEAN", "HAS_HOOKS"}
         and checks_green
         and required_green
+        and not threads_desconhecidas and threads == 0
         and (not hotfix_main or release_batch or hotfix_verified)
     )
     if auto_merge:
@@ -395,8 +399,10 @@ def selftest() -> int:
          com(labels=[{"name": "safe-automerge"}, {"name": "needs-estragacodigo-resolution"}]), False, "failure"),
         ("needs-hotfix-review: vermelho",
          com(labels=[{"name": "needs-hotfix-review"}]), False, "failure"),
-        ("conversa aberta: vermelho", com(unresolvedReviewThreads=2), False, "failure"),
-        ("conversas não contadas: pendente", com(unresolvedReviewThreads=None), False, "pending"),
+        ("conversa aberta não pinta o status: a regra nativa segura e reavalia sozinha",
+         com(unresolvedReviewThreads=2), True, "success"),
+        ("conversas não contadas não travam o status (só o merge direto)",
+         com(unresolvedReviewThreads=None), True, "success"),
         ("gameplay: pendente, decisão do dono",
          com(labels=[{"name": "needs-human-gameplay"}]), False, "pending"),
         ("draft: pendente", com(isDraft=True), False, "pending"),
