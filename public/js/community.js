@@ -97,11 +97,12 @@ if(root) {
     await refresh();await render();
   }
   const names={first_kill:'Primeiro abate',ten_kills:'Dez abates na conta',first_win:'Primeira vitória',one_hour:'Uma hora de arena ativa'};
-  /* Conquistas de contagem seguem os totais que o próprio perfil mostra (histórico preservado + confirmadas).
+  /* Conquistas de contagem seguem os totais que o próprio perfil mostra (histórico preservado + confirmadas) e somam
+     abate e tempo do bloco `solo` (só aqui: medalha não é ponto de ranking; payload sem `solo` soma zero).
      O banco só grava player_achievement quando ingere rodada verificada, então quem jogou antes do corte ficava sem nada.
      Hora de arena usa só o tempo confirmado: o tempo antigo contava menu e AFK. Data só aparece quando o servidor manda. */
   function profileAchievements(p){
-    const kills=Number(p.kills) || 0,wins=Math.max(Number(p.round_wins) || 0,Number(p.legacy_wins ?? p.wins) || 0),active=Number(p.verified_play_seconds ?? 0) || 0;
+    const solo=p.solo && typeof p.solo==='object'?p.solo:{},kills=(Number(p.kills) || 0)+(Number(solo.kills) || 0),wins=Math.max(Number(p.round_wins) || 0,Number(p.legacy_wins ?? p.wins) || 0),active=(Number(p.verified_play_seconds ?? 0) || 0)+(Number(solo.solo_play_seconds) || 0);
     const derived={first_kill:kills>=1,ten_kills:kills>=10,first_win:wins>=1,one_hour:active>=3600};
     const saved=new Map((p.achievements || []).filter(a=>Object.prototype.hasOwnProperty.call(names, a?.key)).map(a=>[a.key,a]));
     return Object.keys(names).filter(k=>saved.has(k) || derived[k]).map(k=>({key:k,at:saved.get(k)?.at || null,source:saved.has(k)?'server':'history'}));
@@ -151,7 +152,7 @@ if(root) {
     /* euConvidado: é o perfil do próprio convidado (cs_anon). Não vira "dono": sem conta não há edição nem configuração. */
     const own=auth?.profile?.id===p.id,euConvidado=!auth?.authenticated && p.id===idConvidado();
     // Treta Pop (public/js/tp/perfil.js) redesenha o perfil com estes dados; sem ?ui=v3 nada muda.
-    if(document.documentElement?.dataset?.ui==='v3')root.tpPerfilDados={p,own,aba:profileAba,conta:state?.profile,visitante:!auth?.authenticated};
+    if(document.documentElement?.dataset?.ui==='v3')root.tpPerfilDados={p,own,aba:profileAba,conta:state?.profile,visitante:!auth?.authenticated,provisorio:!accountSettled};
     const c=card(p.nick),identity=el('div','','social-identity');
     const badge=accountVerifiedBadge(p.account_verified);if(badge)c.querySelector('h2').append(badge);
     if(p.avatar_url){const image=el('img','','social-avatar');image.src=p.avatar_url;image.alt=`Avatar de ${p.nick}`;image.width=76;image.height=76;image.referrerPolicy='no-referrer';identity.append(image);}
@@ -202,8 +203,9 @@ if(root) {
     const secPartidas=el('section','','social-profile-section');secPartidas.append(el('h3','Preferências na arena'));
     const favorites=el('ul','','social-list');for(const f of activityVisible && Array.isArray(p.favorites)?p.favorites:[]){const grupo=f.faction?(GROUP_LABEL[f.faction]||f.faction):'Grupo/time não registrado';favorites.append(el('li',`${f.map} · ${f.mode} · ${f.character || 'Personagem não registrado'} · ${grupo} (${f.rounds} rodadas)`));}secPartidas.append(favorites.length?favorites:empty(noActivity));
     secPartidas.append(el('h3','Rodadas recentes'));
-    // Solo vem do aparelho do jogador e não é conferido pelo nó: sem o rótulo a lista passa por verificada.
-    for(const h of activityVisible && Array.isArray(p.history)?p.history:[])secPartidas.append(empty(`${date(h.started_at)} · ${h.map} · ${h.mode} · ${h.kills} abates / ${h.deaths} mortes${h.source==='client_solo_unverified'?' · Solo, não vale ranking':''}${h.complete?'':' · encerrada antes do placar'}`));
+    // Solo vem do aparelho do jogador: com a conta elegível (solo.counts_for_ranking) conta 0,5× no ranking geral; sem ela é só "Solo".
+    const soloRotulo=p.solo?.counts_for_ranking===true?' · Solo · conta 0,5× no ranking geral':' · Solo';
+    for(const h of activityVisible && Array.isArray(p.history)?p.history:[])secPartidas.append(empty(`${date(h.started_at)} · ${h.map} · ${h.mode} · ${h.kills} abates / ${h.deaths} mortes${h.source==='client_solo_unverified'?soloRotulo:''}${h.complete?'':' · encerrada antes do placar'}`));
     if(!activityVisible || !p.history?.length)secPartidas.append(empty(noActivity));
     if(activityVisible)c.append(secPartidas);else c.append(empty(noActivity));
     // Abas do perfil (/u/<perfil>/<aba>) só para o dono logado. Visitante vê o perfil público inteiro, sem abas.
@@ -287,7 +289,7 @@ if(root) {
     if(r.own)content.append(empty(`Sua posição: #${r.own.position} · ${r.own.points} pontos.`));
     const wrap=el('div','','social-table-wrap');wrap.append(rankingTable(r.players,{teams:true,offset:rankingOffset,careerOnly:true}));content.append(wrap,empty('Patentes usam os pontos acumulados da carreira e permanecem iguais ao trocar de período ou modo.'));
     if(!r.players.length)content.append(empty('Nenhum jogador encontrado nesse ranking.'));
-    const pages=el('div','','social-actions');if(rankingOffset>0)pages.append(button('ANTERIOR',async()=>{rankingOffset=Math.max(0,rankingOffset-25);await render();}));if(rankingOffset+25<r.total)pages.append(button('PRÓXIMA',async()=>{rankingOffset+=25;await render();}));content.append(pages,empty('Solo: 1 ponto por abate confirmado. MP: 2 pontos quando o servidor confirma contas distintas juntas na rodada. O placar geral preserva o histórico anterior; filtros e pontos de Time E/Time B usam apenas partidas confirmadas após a atualização. O time é o da partida.'));
+    const pages=el('div','','social-actions');if(rankingOffset>0)pages.append(button('ANTERIOR',async()=>{rankingOffset=Math.max(0,rankingOffset-25);await render();}));if(rankingOffset+25<r.total)pages.append(button('PRÓXIMA',async()=>{rankingOffset+=25;await render();}));content.append(pages,empty('Placar geral: abate solo vale 0,5 ponto; MP vale 2 pontos quando o servidor confirma contas distintas juntas na rodada. O placar geral preserva o histórico anterior; semana, 30 dias, filtros e pontos de Time E/Time B usam apenas partidas confirmadas após a atualização. O time é o da partida.'));
   }
   const openTretaQuests=()=>{
     document.querySelector('[data-hub-tab=loja]')?.click();
@@ -382,7 +384,12 @@ if(root) {
     mountAccountIntegrations(c,auth,loginConfig,message);void mountProfilePreferences(c,{auth,message});
     c.append(el('h3','Jogadores bloqueados'));const blocks=Array.isArray(state?.blocks)?state.blocks:[];for(const b of blocks)c.append(empty(b.nick),button('DESBLOQUEAR',()=>action('unblock',b.id)));if(!blocks.length)c.append(empty('Nenhum jogador bloqueado.'));content.append(c);return true;
   }
-  async function render(){const version=++loadVersion;root.dataset.view=tab;painelDaConta();if(tab!=='profile' || !profileId){viewingOther=false;syncPrivateTabs();}content.replaceChildren();content.setAttribute('aria-busy','true');for(const b of document.querySelectorAll('.social-tabs button')){const on=b.dataset.tab===tab;b.setAttribute('aria-selected',String(on));b.setAttribute('tabindex',on?'0':'-1');if(on)content.setAttribute('aria-labelledby',b.id);}try{let shown=true;if(tab==='profile'){const alvo=profileId || auth?.profile?.id || idConvidado();if(!auth?.authenticated)content.append(faixaVisitante());if(alvo)await showProfile(alvo,version).catch(e=>{if(profileId || auth?.profile || e.message!=='not_found')throw e;semPerfil();});else semPerfil();}else if(tab==='friends')showFriends();else if(tab==='ranking')await showRanking(version);else if(tab==='notifications')await showCentral(version);else if(tab==='feed')showFeed();else if(tab==='settings'){let settingsProfile=state?.profile;if(!settingsProfile && auth?.profile)try{({profile:settingsProfile}=await api(`/api/social?action=profile&id=${encodeURIComponent(auth.profile.id)}`));}catch{}shown=showSettings(settingsProfile);}return shown;}catch(e){message(errors[e.message] || 'Perfil privado ou indisponível.');content.append(empty('Não foi possível carregar esta tela.'),button('TENTAR DE NOVO',render));return false;}finally{if(version===loadVersion)content.setAttribute('aria-busy','false');}}
+  async function render(){const version=++loadVersion;root.dataset.view=tab;painelDaConta();if(tab!=='profile' || !profileId){viewingOther=false;syncPrivateTabs();}
+    /* Treta Pop: o perfil já desenhado nem sai do DOM enquanto o mesmo alvo recarrega (sair e voltar reinicia a animação de entrada e pisca);
+       outro alvo ou outra aba limpa tudo. */
+    const tpAlvo=UI_V3 && tab==='profile'?String(profileId || auth?.profile?.id || idConvidado()):null,tp=tpAlvo!==null?content.querySelector?.(':scope > .tp-perfil'):null,manter=tp && tp.dataset.alvo===tpAlvo?tp:null;if(UI_V3)root.tpPerfilAlvo=tpAlvo;
+    if(manter){for(const n of [...content.childNodes])if(n!==manter)n.remove();}else content.replaceChildren();
+    content.setAttribute('aria-busy','true');for(const b of document.querySelectorAll('.social-tabs button')){const on=b.dataset.tab===tab;b.setAttribute('aria-selected',String(on));b.setAttribute('tabindex',on?'0':'-1');if(on)content.setAttribute('aria-labelledby',b.id);}try{let shown=true;if(tab==='profile'){const alvo=profileId || auth?.profile?.id || idConvidado();if(!auth?.authenticated)content.append(faixaVisitante());if(alvo)await showProfile(alvo,version).catch(e=>{if(profileId || auth?.profile || e.message!=='not_found')throw e;semPerfil();});else semPerfil();}else if(tab==='friends')showFriends();else if(tab==='ranking')await showRanking(version);else if(tab==='notifications')await showCentral(version);else if(tab==='feed')showFeed();else if(tab==='settings'){let settingsProfile=state?.profile;if(!settingsProfile && auth?.profile)try{({profile:settingsProfile}=await api(`/api/social?action=profile&id=${encodeURIComponent(auth.profile.id)}`));}catch{}shown=showSettings(settingsProfile);}return shown;}catch(e){message(errors[e.message] || 'Perfil privado ou indisponível.');content.append(empty('Não foi possível carregar esta tela.'),button('TENTAR DE NOVO',render));return false;}finally{if(version===loadVersion)content.setAttribute('aria-busy','false');}}
   async function bootNow(){accountSettled=false;message('Carregando a turma…');const accountLoads=Promise.allSettled([loadAccount(),loadAuthOptions()]);if(profileId)await render();const [accountResult,configResult]=await accountLoads;accountSettled=true;auth=accountResult.status==='fulfilled'?accountResult.value:null;state=null;if(configResult.status==='fulfilled')loginConfig=configResult.value;let accountError=accountResult.status==='rejected'?accountResult.reason:null;if(auth?.profile){acceptAccount(auth);try{await api('/api/social',presenca());}catch{}}try{await refresh();await completePendingFriend();}catch(e){accountError=e;}renderAccount();const shown=await render();if(shown)message(accountError && tab!=='profile'?(errors[accountError.message] || 'Sua conta não respondeu; o perfil público continua disponível.'):'');}
   async function boot(){if(!bootPromise)bootPromise=bootNow().finally(()=>{bootPromise=null;});return bootPromise;}
   /* Aba da comunidade no CAMINHO (/comunidade/amigos), mesma tabela de public/js/rotas.js

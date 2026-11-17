@@ -3,8 +3,10 @@ import {preloadWeapons,weaponModel} from './weapons.js';
 import {preloadWeaponSkinCandidate} from './weapon-skins.js';
 
 export class WeaponSkinStage {
-  constructor(host) {
+  /* autoRotate (prévia do passe): gira sozinho enquanto ninguém arrasta; movimento reduzido para. */
+  constructor(host,{autoRotate=false}={}) {
     this.host=host;this.disposed=false;this.dragging=false;this.lastX=0;this.lastY=0;
+    this.autoRotate=autoRotate && !matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.scene=new THREE.Scene();this.camera=new THREE.PerspectiveCamera(30,1,.01,100);
     this.renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
     this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
@@ -20,7 +22,7 @@ export class WeaponSkinStage {
     canvas.addEventListener('pointerup',()=>{this.dragging=false;});
     this.resize=()=>{if(this.disposed)return;const {width,height}=host.getBoundingClientRect();this.renderer.setSize(Math.max(1,width),Math.max(1,height),false);this.camera.aspect=width/Math.max(1,height);if(this.radius){const distance=this.radius*3.6;this.camera.position.set(distance,distance*.16,distance*.08);this.camera.lookAt(0,0,0);}this.camera.updateProjectionMatrix();this.renderer.render(this.scene,this.camera);};
     this.observer=new ResizeObserver(this.resize);this.observer.observe(host);
-    this.renderer.setAnimationLoop(()=>{if(!this.disposed && !document.hidden)this.renderer.render(this.scene,this.camera);});
+    this.renderer.setAnimationLoop(()=>{if(this.disposed || document.hidden)return;if(this.autoRotate && !this.dragging && this.model)this.model.rotation.y+=.008;this.renderer.render(this.scene,this.camera);});
   }
   async load(weaponId,skinId) {
     const started=performance.now();
