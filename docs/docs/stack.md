@@ -18,8 +18,8 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
 | Jogo | ES modules vanilla, **zero build** | 218 arquivos |
-| Site | **Astro** com SSR | `^7.1.1` |
-| Hospedagem | adapter **Vercel** | `null` |
+| Site | **Astro** com SSR | `^7.4.12` |
+| Hospedagem | adapter **Cloudflare Workers** | `^14.3.4` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
 | Browser nas réguas | **Playwright** | `^1.62.1` |
 | Pipeline de GLB | **gltf-transform** | `^4.4.1` |
@@ -28,7 +28,7 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Esta documentação | **Docusaurus** | `3.10.2` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **225** importam Playwright, **116** importam gltf-transform e **17** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Cloudflare Workers saem de `package.json` + `astro.config.mjs` + `wrangler.jsonc` + `borda.json`. Dos scripts de `tools/`, **225** importam Playwright, **116** importam gltf-transform e **17** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
