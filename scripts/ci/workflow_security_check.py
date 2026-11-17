@@ -211,6 +211,9 @@ def supply_failures(workflows: dict[Path, str]) -> list[str]:
         for ref in re.findall(r'npm i -g vercel@([^\s]+)', source):
             if not re.fullmatch(r'\d+\.\d+\.\d+', ref):
                 errors.append(f'{path}: vercel@{ref} não está preso a versão')
+        for ref in re.findall(r'wrangler@(\d+\.\d+\.\d+|[^\s"\']+)', source):
+            if not re.fullmatch(r'\d+\.\d+\.\d+', ref):
+                errors.append(f'{path}: wrangler@{ref} não está preso a versão')
     return errors
 
 
@@ -294,6 +297,7 @@ def _ler(p: Path) -> str:
 
 def selftest(source: str) -> list[str]:
     build, deploy = _ler(BUILD), _ler(DEPLOY)
+    cf_build, cf_deploy = _ler(CF_BUILD), _ler(CF_DEPLOY)
     separacao = {
         'compila-com-segredo': (build + '\n        env:\n          X: ${{ secrets.VERCEL_TOKEN }}\n', deploy),
         'compila-segredo-em-scalar': (build + '\n      - run: |\n          echo # ${{ secrets.TOKEN }}\n', deploy),
@@ -330,11 +334,11 @@ def selftest(source: str) -> list[str]:
         name for name, mutated in mutations.items()
         if antigo_vivo and not (preview_failures(mutated) + supply_failures({WORKFLOW: mutated}))
     ]
-    # Fornecimento (action e CLI presas) vale sempre, e o alvo passou a ser os dois
-    # arquivos novos: um tem as actions, o outro tem a CLI da Vercel.
+    # Fornecimento (action e CLI presas) vale sempre; os alvos são os workflows CF
+    # que herdaram o papel: cf-preview (actions) e cf-preview-deploy (CLI do wrangler).
     fornecimento = {
-        'action-mutável': (BUILD, re.sub(r'actions/checkout@[0-9a-f]{40}', 'actions/checkout@v4', build)),
-        'cli-mutável': (DEPLOY, re.sub(r'vercel@\d+\.\d+\.\d+', 'vercel@latest', deploy)),
+        'action-mutável': (CF_BUILD, re.sub(r'actions/checkout@[0-9a-f]{40}', 'actions/checkout@v4', cf_build)),
+        'cli-mutável': (CF_DEPLOY, re.sub(r'wrangler@\d+\.\d+\.\d+', 'wrangler@latest', cf_deploy)),
     }
     missed += [n for n, (alvo, mutado) in fornecimento.items() if not supply_failures({alvo: mutado})]
     ci = Path('.github/workflows/ci.yml')
@@ -385,10 +389,14 @@ def main() -> int:
     source = WORKFLOW.read_text(encoding='utf-8')
     workflows = read_workflows()
     errors = (preview_failures(source)
-              + separacao_failures(_ler(BUILD), _ler(DEPLOY))
               + cloudflare_failures(_ler(CF_BUILD), _ler(CF_DEPLOY), _ler(SMOKE_WEB))
               + supply_failures(workflows)
               + merge_group_failures(workflows))
+    # Fase 6 (docs/runbooks/MIGRACAO-CLOUDFLARE.md): o par Vercel saiu do repo — o
+    # deploy é o Workers (cf-prod-deploy). Se alguém o devolver, reabre o contrato
+    # de separação antes de religar qualquer build lá.
+    if BUILD.exists() or DEPLOY.exists():
+        errors.append('preview-build.yml/preview-deploy.yml voltaram — fase 6 aposenta o par Vercel')
     if errors:
         for error in errors:
             print(f'WFS FAIL: {error}')

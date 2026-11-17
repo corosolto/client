@@ -2,13 +2,13 @@
 // o que `_headers`/`_redirects` não cobrem (redirect por query e headers de resposta SSR), servir o
 // viewmodel privado do R2 e guardar no caches.default o que a rota marca com `s-maxage`.
 import astro from '@astrojs/cloudflare/entrypoints/server';
-import vercelJson from '../../vercel.json';
+import bordaJson from "../../borda.json";
 import manifestoVm from '../../tools/viewmodels/vm-assets.manifest.json';
-import { compilarHeader, compilarRedirect, headersPara, redirectPara } from '../lib/regras-vercel.mjs';
+import { compilarHeader, compilarRedirect, headersPara, redirectPara } from '../lib/regras-borda.mjs';
 import { PREFIXO_VM, indiceViewmodels, politicaCache, redirectDeHost, ttlBorda, viewmodelDoBucket } from './borda.mjs';
 
-const REDIRECTS = vercelJson.redirects.map(compilarRedirect);
-const HEADERS = vercelJson.headers.map(compilarHeader);
+const REDIRECTS = bordaJson.redirects.map(compilarRedirect);
+const HEADERS = bordaJson.headers.map(compilarHeader);
 const VIEWMODELS = indiceViewmodels(manifestoVm);
 
 // Default da Vercel em resposta SSR sem cache-control; mantido para a CDN se comportar igual.

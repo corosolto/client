@@ -114,7 +114,7 @@ async function coletar() {
   }
   const ssr = {};
   for (const origem of [CANONICO, ANTIGO]) for (const rota of [...ROTAS_SSR, ROTA_PERFIL, '/sitemap.xml']) {
-    const r = await handler.fetch(new Request(`${origem}${rota}`, { headers: { 'x-forwarded-for': '127.0.0.1' } }));
+    const r = await handler.fetch(new Request(`${origem}${rota}`, { headers: { 'cf-connecting-ip': '127.0.0.1' } }));
     ssr[`${origem}${rota}`] = { rota, status: r.status, corpo: await r.text(), location: r.headers.get('location') };
   }
   globalThis.fetch = fetchReal;

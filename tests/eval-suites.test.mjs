@@ -19,7 +19,7 @@ import { selecionarPorArquivos, validarMapaWorkflows } from '../tools/eval/selec
  * 42749663123 — "339 !== 338"). */
 const BASELINE_SHA256 = {
   fast: '05c5d2027a8229f379a4556ee991daf1bc0e9f45b04ee3515d4e458259d6bfdf',
-  deploy: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d',
+  deploy: '97c0ba3d2ba2a738f14a87865e0c96af7eeabd500136463e566adf6b6b6ee316',
 };
 const FIXTURE_BASELINE = 'tests/fixtures/eval-suites-baseline.json';
 const BASELINE = JSON.parse(readFileSync(new URL(`../${FIXTURE_BASELINE}`, import.meta.url), 'utf8'));
@@ -429,10 +429,8 @@ test('lock real vence uma seleção segura de package.json', () => {
 const WORKFLOWS = [
   ['ci.yml', ['eval:operacao-flavio', 'eval:release']],
   ['release.yml', ['eval:release']],
-  ['deploy-prod.yml', ['eval:edgecache', 'eval:release']],
+  ['cf-prod-deploy.yml', ['eval:edgecache', 'eval:release']],
   ['prod-watch.yml', ['eval:edgecache', 'eval:wfpurge']],
-  ['preview-build.yml', []],
-  ['preview-deploy.yml', []],
   ['preview-bot.yml', []],
   ['portao-browser.yml', []],
   ['smoke-web.yml', []],

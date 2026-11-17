@@ -141,4 +141,4 @@ console.log(`  ${AMAR}1.${OFF} publique quando quiser:`);
 console.log(`     git push origin main && git push origin v${nova}\n`);
 console.log(`  A tag dispara o job \`release\` do ci.yml, que cria o GitHub Release a partir`);
 console.log(`  do CHANGELOG. Ela NÃO deploya: a produção sai da \`main\` pela integração Git`);
-console.log(`  da Vercel (vercel.json, \`deploymentEnabled.main\`). A tag é o marco, não o gatilho.\n`);
+console.log(`  da Vercel (borda.json, \`deploymentEnabled.main\`). A tag é o marco, não o gatilho.\n`);

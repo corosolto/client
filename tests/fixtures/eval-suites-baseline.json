@@ -380,7 +380,6 @@
     "docs:check",
     "media:check",
     "eval:assetfetch",
-    "eval:vercelbuild",
     "menuwalls:check",
     "anims:check",
     "anims:merge:check",

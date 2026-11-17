@@ -2,7 +2,7 @@
 /* ============================================================================
    gen-asset-rev.mjs — REVISÃO POR ARQUIVO DOS BINÁRIOS PESADOS (/models, /audio)
    ----------------------------------------------------------------------------
-   O CASO: `vercel.json` serve `/models/(.*)` com `max-age=31536000, immutable`.
+   O CASO: `borda.json` serve `/models/(.*)` com `max-age=31536000, immutable`.
    Com cache immutable quem invalida é a URL, e a URL dos GLB carregava
    `?v=${VERSION}` — a versão do RELEASE. O projeto solta vários releases por dia,
    então toda publicação trocava a query de TODOS os ~1,3 mil binários de uma vez
