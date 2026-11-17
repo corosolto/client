@@ -94,7 +94,7 @@ architecture): `cd docs && npm install && npm start` → <http://localhost:3000/
 | 3D engine (WebGL) | **Three.js**, vendored | `r160` |
 | Game | Vanilla ES modules, **zero build** | 218 files |
 | Site | **Astro** with SSR | `^7.1.1` |
-| Hosting | **Vercel** adapter | `^11.0.6` |
+| Hosting | **Vercel** adapter | `null` |
 | Database | **Managed Postgres** (RLS; private schema, outside the repo) | `^2.110.7` |
 | Browser in test harnesses | **Playwright** | `^1.62.1` |
 | GLB pipeline | **gltf-transform** | `^4.4.1` |

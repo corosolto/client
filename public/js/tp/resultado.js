@@ -97,6 +97,7 @@ function montar() {
       <div class="tp-res__stats"></div>
       <div class="tp-res__medalhas"></div>
       <div class="tp-res__fase2" hidden></div>
+      <div class="tp-painel tp-res__passe" hidden aria-live="polite"></div>
       <div class="tp-res__acoes">
       <button type="button" class="tp-btn tp-btn--primario tp-res__jogar"><span class="tp-ital"></span><kbd>ENTER</kbd></button>
       <p class="tp-res__proximo" hidden></p>
@@ -105,7 +106,8 @@ function montar() {
       <button type="button" class="tp-btn tp-res__partilha"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12M7 8l5-5 5 5"/></svg><span class="tp-res__longo"></span><span class="tp-res__curto"></span></button>
       </div>
     </div>`;
-  /* Fase 2 (XP, quests e T$): o espaço existe, mas só aparece quando o backend mandar o número. */
+  /* Fase 2 (XP, quests e T$): o espaço existe, mas só aparece quando o backend mandar o número.
+     .tp-res__passe é do passe Sessão da Treta: tp/passe-festa.js preenche com o XP que a partida rendeu. */
   const f2 = raiz.querySelector('.tp-res__fase2');
   for (const [k, rotulo] of [['xp', 'Experiência'], ['quests', 'Quests'], ['moedas', 'TRETA$ ganhos']]) {
     const s = el('section', 'tp-painel tp-res__f2');

@@ -12,7 +12,7 @@ import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
 import { clientUuid, getAnonId } from './client-id.js';
 import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
-import {carregarPasse,trocarContaPasse,personagemTravado as travadoNoPasse,nivelDoPersonagem,PASSE_EVENTO} from './passe.js';
+import {carregarPasse,trocarContaPasse,acompanharPartidaPasse,personagemTravado as travadoNoPasse,nivelDoPersonagem,PASSE_EVENTO} from './passe.js';
 import { passeDebugAtivo } from './passe-debug.js';
 /* QA local (passe-debug.js): só loopback + ?debug=1&passeDev=1 joga com o elenco do passe sem resgate. */
 const passeDev = passeDebugAtivo();
@@ -473,7 +473,8 @@ function rebuildMenuBackdrop(mapa) {
   ajustarAnisotropia(menuScene, settings.quality);
 }
 function menuProps(mapa) {
-  return mapPropIds(mapa);
+  const deferred = mapa.menuDeferredProps || [];
+  return mapPropIds(mapa).filter((id) => !deferred.includes(id));
 }
 let _menuLoadSeq = 0;
 async function loadMenuBackdrop() {
@@ -2006,7 +2007,9 @@ function sendMatchEvent(result) {
     sessionId: getSessionId(), eventId: _matchEventId, version: versaoComOrigem(VERSION),
     ...telemetryGameContext, ...sinaisDeBuild(),
     map: currentMap, mode: modoTelemetria(g), weaponMode: settings.wpnMode || 'all',
-    character: currentChar, team: g.arena ? g.player.team : g.playerTeam,
+    /* O corpo que jogou, não o do lobby (currentChar muda no lobby e no MP); a skin vai à parte para o perfil mostrar o retrato dela. */
+    character: g.playerDef?.id || g.playerCharId || currentChar, skin: g.playerDef?.skinId || null,
+    team: g.arena ? g.player.team : g.playerTeam,
     faction: g.playerFaction || currentFaction,
     result: result || 'quit',
     kills: p.kills || 0, deaths: p.deaths || 0, headshots: p.headshots || 0,
@@ -3998,7 +4001,8 @@ function partialPayload() {
     uid: getAnonId(), nick, token: getToken(), won: false, kills: p.kills, deaths: p.deaths,
     headshots: p.headshots || 0, bestStreak: g.mk.best || 0, rounds, team: g.playerTeam,
     faction: g.playerFaction || currentFaction,
-    seconds: Math.round(g.time), character: currentChar, mode: modoEfetivoAtual(),
+    seconds: Math.round(g.time), character: g.playerDef?.id || g.playerCharId || currentChar, skin: g.playerDef?.skinId || null,
+    mode: modoEfetivoAtual(),
   };
 }
 addEventListener('beforeunload', (e) => {
@@ -4074,7 +4078,7 @@ async function recordMatchStats(s) {
       uid: getAnonId(), nick, token: getToken(), won: s.won, kills: s.kills, deaths: s.deaths,
       headshots: s.headshots, bestStreak: s.bestStreak,
       rounds: s.roundsP + s.roundsB, team: s.team, faction: currentFaction, seconds: s.seconds || 0,
-      character: s.character, mode: modoEfetivoAtual(),
+      character: s.character, skin: s.skin || null, mode: modoEfetivoAtual(),
     });
     if (!res) submitNote('ranking global indisponível');
     else if (res.error) submitNote(res.message || traduErroSubmit(res.error));
@@ -5777,11 +5781,12 @@ const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location
   tretaStoreReady=Promise.resolve(initTretaStore({skipPrompt:Boolean(inspectionScreen || testMode || params.get('sala') || perfilCompartilhado),onEquipped:skin=>{currentChar=skin.character;const def=CHARACTERS.find(c=>c.id===currentChar);currentTeam=ladoValido(def,currentTeam);currentFaction=currentTeam;localStorage.setItem('csbr-home-character',currentChar);localStorage.setItem('csbr-home-side',currentTeam);syncHomeCharacter();hubNavigate({personagem:currentChar},true);}}));
   document.addEventListener('cs-treta-inventory-change',refreshMenuEquipment);
   /* Passe Sessão da Treta: o GET com conta também registra o login do dia no servidor. Conta trocada
-     esquece o status anterior; fim de partida pergunta de novo depois que o resultado foi enviado. */
+     esquece o status anterior (o id do perfil separa a memória de novidades de cada conta); fim de
+     partida liquida de novo depois que o resultado foi enviado (acompanharPartidaPasse, passe.js). */
   if(!testMode){
     void carregarPasse();
-    document.addEventListener('cs-account-change',()=>{void trocarContaPasse();});
-    document.addEventListener('cs-match-end',()=>{setTimeout(()=>{void carregarPasse();},4000);});
+    document.addEventListener('cs-account-change',(e)=>{void trocarContaPasse(e.detail?.authenticated?e.detail.profile?.id:null);});
+    document.addEventListener('cs-match-end',()=>{acompanharPartidaPasse();});
   }
   document.addEventListener(PASSE_EVENTO,refreshMenuEquipment);
   // Vitrine SKINS NOVAS: o módulo só baixa quando a loja responde com skin à venda.

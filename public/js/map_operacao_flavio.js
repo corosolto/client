@@ -51,6 +51,12 @@ const MEDIDA_REAL = {
   // 1,44 m agachado, 3 = 2,16 m em pé), 12 tris com o detalhe assado em textura.
   onibus_patio: [10.5, 3.3, 2.6],
   caixote_carga: [1.6, 0.72, 0.8],
+  // Módulos de fachada são PELE da parede: escala uniforme pelo maior lado fazia do módulo
+  // uma torre de 16×13×8,6 m sem colisor atravessando a fachada norte e as portas x=±17
+  // (bots nasciam e entravam por ela, afundados no rodapé). Frente na proporção nativa,
+  // profundidade = parede de 0,28 m + 3 cm por face: a parede é o colisor.
+  terminal_fachada: [10.85, 8.77, 0.34],
+  terminal_portal: [6, 5.77, 0.34],
 };
 // O ônibus vem girado 18,4° no GLB (caixa mínima dos vértices): o giro é assado na malha, senão a
 // escala por eixo cisalha e a caixa rápida do three (nó girado) deixa o render menor que o colisor.
@@ -390,7 +396,9 @@ export function buildOperacaoFlavio(scene, T = {}) {
   for (const lateral of lateraisTerminal) paredeZ(lateral.nome, lateral.x, lateral.z, lateral.d, lateral.portas);
   bloco('faixa-fachada-sul', 0, 2.9, -52.18, 58, 0.58, 0.16, mats.marinho, false);
   bloco('faixa-fachada-norte', 0, 2.9, -15.82, 58, 0.58, 0.16, mats.marinho, false);
-  for (const x of [-26, -18, -10, 10, 18, 26]) {
+  // Vidraça só no trecho cego entre as portas: a de x=±18 cruzava o vão da porta lateral
+  // (montante e vidro dentro da passagem) e a de ±26 fica sob o módulo de fachada.
+  for (const x of [-10, 10]) {
     bloco('montante-vidro-terminal', x, 1.65, -15.72, 0.18, 3.1, 0.18, mats.marinho, false);
     bloco('janela-terminal', x, 1.75, -15.69, 7.3, 1.7, 0.05, mats.vidro, false, false);
   }
@@ -416,9 +424,11 @@ export function buildOperacaoFlavio(scene, T = {}) {
     // atravessando o campo da câmera (achado do gauntlet na captura do pátio).
     for (const lado of [-3.2, 3.2]) bloco('fita-fila', lado, 0.95, z, 4.6, 0.06, 0.06, mats.laranja, false, false);
   }
-  bloco('portico-controle', 0, 3.9, -13, 25, 0.36, 0.7, mats.marinho, false);
-  bloco('coluna-portico-oeste', -12.2, 2, -13, 0.5, 4, 0.7, mats.marinho, false);
-  bloco('coluna-portico-leste', 12.2, 2, -13, 0.5, 4, 0.7, mats.marinho, false);
+  // Colunas sólidas fora das vielas internas (x=±12) e do nó (±12,5;-13): render-only em ±12,2,
+  // o bot nascia e passava dentro delas.
+  bloco('portico-controle', 0, 3.9, -13, 27.7, 0.36, 0.7, mats.marinho, false);
+  bloco('coluna-portico-oeste', -13.6, 2, -13, 0.5, 4, 0.7, mats.marinho);
+  bloco('coluna-portico-leste', 13.6, 2, -13, 0.5, 4, 0.7, mats.marinho);
 
   // Hangar aeronáutico: estrutura azul, pórticos aparentes e piso técnico amarelo.
   bloco('parede-hangar-oeste', -36, 3.6, 35, 0.5, 7.2, 28, mats.hangar);
@@ -727,10 +737,12 @@ export function buildOperacaoFlavio(scene, T = {}) {
   placaEmbarque.position.set(PORTA_EMBARQUE.x + 0.4, 4.3, PORTA_EMBARQUE.z);
   placaEmbarque.raycast = () => {}; placaEmbarque.userData.nonSolidSurface = true;
   root.add(placaEmbarque);
+  // Módulo encostado na quina: termina na ombreira da porta x=±17 (17 + 1,15 = 18,15).
+  const xModuloFachada = fachadaNorte.w / 2 - MEDIDA_REAL.terminal_fachada[0] / 2;
   const equipamentos = [
-    ['terminal_fachada', -18, -15.82, 16, 0, 16, 5, 1, false],
-    ['terminal_fachada', 18, -15.82, 16, 0, 16, 5, 1, false],
-    ['terminal_portal', 0, -52.15, 6, Math.PI, 5, 4, 2, false],
+    real('terminal_fachada', -xModuloFachada, fachadaNorte.z, 0, false),
+    real('terminal_fachada', xModuloFachada, fachadaNorte.z, 0, false),
+    real('terminal_portal', 0, fachadaSul.z, Math.PI, false),
     // Dois módulos reais de check-in na pegada do antigo balcão de 7 m (marcha afinada nela);
     // balcão de 1,25 m não esconde em pé: plantas de 1,8 m escondem os slots (±6;-22,3).
     real('balcao_recepcao', -8.15, -19, 0),

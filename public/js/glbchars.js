@@ -1480,10 +1480,16 @@ class CharController {
     const a = this.actions[an], b = this.actions[bn];
     if (!a) return false;
     if (this._locoA !== a || this._locoB !== (b || null)) {
-      if (this.cur && this.cur !== this._locoA && this.cur !== this._locoB) this.cur.fadeOut(FADE);
-      if (this._locoA) this._locoA.fadeOut(FADE);
-      if (this._locoB) this._locoB.fadeOut(FADE);
+      /* Clipe que JÁ toca na locomoção (no par anterior ou como estado único) segue com a
+         fase e o fade dele; só entra do zero quem não estava tocando. Andando reto, a
+         lateral é ±0 de ruído e cai dos dois lados da fronteira de setor: o par trocava
+         (run|strafe_right) ↔ (strafe_left|run) a cada quadro e o reset() devolvia o run ao
+         quadro 0 com peso de fade-in — bot deslizando parado na pose (Operação Flávio). */
+      const vivos = this._locoA ? [this._locoA, this._locoB] : [this.cur];
+      if (this.cur && !vivos.includes(this.cur)) this.cur.fadeOut(FADE);
+      for (const x of vivos) if (x && x !== a && x !== b) x.fadeOut(FADE);
       for (const action of b ? [a, b] : [a]) {
+        if (vivos.includes(action) && action.isRunning()) continue;
         action.reset(); action.setLoop(THREE.LoopRepeat, Infinity); action.enabled = true; action.fadeIn(FADE).play();
       }
       this._locoA = a; this._locoB = b || null; this._locoAName = an; this._locoBName = b ? bn : null;
@@ -1522,16 +1528,24 @@ class CharController {
   _to(name, once = false, restart = true) {
     const a = this.actions[name];
     if (!a || (this.cur === a && !this._locoA && !this._locoB)) return;
-    if (this._locoA) this._locoA.fadeOut(FADE);
-    if (this._locoB) this._locoB.fadeOut(FADE);
+    // Sair do par 8-way para um clipe que já toca nele (fallback sem strafe, LOD≥2) segue a
+    // fase: reiniciar ali congelava o ciclo de pernas a cada troca de setor.
+    const herda = !once && (a === this._locoA || a === this._locoB) && a.isRunning();
+    if (this._locoA && this._locoA !== a) this._locoA.fadeOut(FADE);
+    if (this._locoB && this._locoB !== a) this._locoB.fadeOut(FADE);
     this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
     if (a !== this.actions.jump) this.jumping = false;
-    if (restart) {
-      a.reset();
-      a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
-      a.clampWhenFinished = once;
+    // O par escreve `weight` (1−mix / mix): sem devolver 1, o clipe voltava com o peso velho
+    // do par (até 0) e o resto do esqueleto ia para a pose de ligação.
+    a.weight = 1;
+    if (!herda) {
+      if (restart) {
+        a.reset();
+        a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
+        a.clampWhenFinished = once;
+      }
+      a.enabled = true; a.fadeIn(FADE); a.play();
     }
-    a.enabled = true; a.fadeIn(FADE); a.play();
     if (this.cur && this.cur !== a) this.cur.fadeOut(FADE);
     this.cur = a;
     this.curName = name;   // nome do estado atual — o clamp de frente do mount lê daqui
@@ -1686,6 +1700,10 @@ class CharController {
     const a = this.actions.jump;
     a.reset(); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = false;
     a.enabled = true; a.fadeIn(0.08).play();
+    // Larga o par 8-way inteiro (como shoot): membro em fade-out não pode ser "herdado" depois.
+    if (this._locoA && this._locoA !== this.cur) this._locoA.fadeOut(0.08);
+    if (this._locoB && this._locoB !== this.cur) this._locoB.fadeOut(0.08);
+    this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
     if (this.cur && this.cur !== a) this.cur.fadeOut(0.08);
     this.cur = a;
   }
