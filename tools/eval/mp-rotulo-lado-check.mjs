@@ -60,6 +60,8 @@ const outro = (s) => (s === 'E' ? 'B' : 'E');
 const { CHARACTERS } = H;
 const { ladosDe, podeNoLado } = await import(pathToFileURL(path.join(RAIZ, 'public/js/characters.js')).href);
 const { resolvePlayerSide } = await import(pathToFileURL(path.join(RAIZ, 'public/js/net.js')).href);
+const { ehMapaJavaporcos } = await import(pathToFileURL(path.join(RAIZ, 'public/js/maps.js')).href);
+const { nomeTimeJavaporcos } = await import(pathToFileURL(path.join(RAIZ, 'public/js/javaporcos_apresentacao.js')).href);
 
 /* ── fontes, com o mutante aplicado em memória ─────────────────────────────────── */
 let mainSrc = fs.readFileSync(path.join(RAIZ, 'public/js/main.js'), 'utf8');
@@ -75,13 +77,13 @@ if (MUT === 'rotulo-categoria') {
     "_teamTag(side) { const f = this._factionOf(side); return f === 'U' ? 'TRB' : f === 'C' ? 'PLH' : f === 'F' ? 'FNK' : f === 'M' ? 'MIT' : f === 'E' ? 'E' : 'B'; }", 'game.js');
   gameSrc = troca(gameSrc, "const f = String(side || '').toLowerCase();", "const f = String(this._factionOf(side) || '').toLowerCase();", 'game.js');
   gameSrc = troca(gameSrc, "const crest = (side) => String(side || 'E').toLowerCase();", "const crest = (side) => String(this._factionOf(side) || 'E').toLowerCase();", 'game.js');
-  mainSrc = troca(mainSrc, "a.textContent = tr(FACTION_NAME[currentTeam] || '');", "a.textContent = tr(FACTION_NAME[currentFaction] || '');", 'main.js');
+  mainSrc = troca(mainSrc, "nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'E') || FACTION_NAME[currentTeam]", "nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'E') || FACTION_NAME[currentFaction]", 'main.js');
   mainSrc = troca(mainSrc, ": def ? tr(FACTION_NAME[corpo.team] || corpo.team) :", ": def ? tr(FACTION_NAME[def.team] || def.team) :", 'main.js');
 }
 if (MUT === 'maos-lado') mainSrc = troca(mainSrc, 'if (!online) faction = side;', 'faction = side;', 'main.js');
 let netSrc = fs.readFileSync(path.join(RAIZ, 'public/js/netgame.js'), 'utf8');
 if (MUT === 'bandeira-categoria') netSrc = troca(netSrc, 'const fac = pt.owner || null;', 'const fac = pt.owner ? game._factionOf(pt.owner) : null;', 'netgame.js');
-if (MUT === 'chip-inimigo-faccao') mainSrc = troca(mainSrc, "b.textContent = tr(FACTION_NAME[ladoDele] || '');", "b.textContent = tr(FACTION_NAME[currentEnemyFaction] || '');", 'main.js');
+if (MUT === 'chip-inimigo-faccao') mainSrc = troca(mainSrc, "nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'B') || FACTION_NAME[ladoDele]", "nomeTimeJavaporcos(ehMapaJavaporcos(currentMap) ? 'horde' : '', 'B') || FACTION_NAME[currentEnemyFaction]", 'main.js');
 
 /* O Game mutado mora numa cópia IRMÃ do game.js (mesma pasta, então os imports relativos
    resolvem) que some no fim. Sem mutante de game.js, o Game é o do harness. */
@@ -107,10 +109,11 @@ const pega = (re, nome) => {
 // FACTION_NAME sai do registro de facções (public/js/factions.js), como no main.js.
 const { FACTIONS } = await import('../../public/js/factions.js');
 const FACTION_NAME = new Function('FACTIONS', `${pega(/^(const FACTION_NAME = \{[^\n]*\};)$/m, 'FACTION_NAME')}\nreturn FACTION_NAME;`)(FACTIONS);
-const identidade = new Function('CHARACTERS', 'charId', 'team', 'online', 'enemyFaction', 'currentEnemyFaction', 'podeNoLado', 'ladosDe', 'resolvePlayerSide',
+const identidade = new Function('CHARACTERS', 'charId', 'team', 'online', 'enemyFaction', 'currentEnemyFaction', 'podeNoLado', 'ladosDe', 'resolvePlayerSide', 'ehMapaJavaporcos', 'currentMap',
   `${pega(/\n(  const charDef = CHARACTERS\.find\(c => c\.id === charId\) \|\| \{\};\n[\s\S]*?\n  const enemyFac = [^\n]*\n)/, 'a decisão de lado/facção do _startGame')}
   return { faction, side, enemyFac };`);
 const chip = new Function('a', 'b', 'tr', 'FACTION_NAME', 'PALETA', 'currentFaction', 'currentEnemyFaction', 'currentTeam',
+  'nomeTimeJavaporcos', 'ehMapaJavaporcos', 'currentMap', 'settings',
   pega(/if \(mapName && currentEnemyFaction\) \{\n([\s\S]*?)\n\s*vs\.classList\.remove/, 'o chip versus da tela de carregamento'));
 const cartao = new Function('espectador', 'def', 'corpo', 'tr', 'FACTION_NAME',
   `${pega(/\n(\s*const detalhe = [\s\S]*?;)\n/, 'o subtítulo do cartão de identidade MP')}\nreturn detalhe;`);
@@ -123,7 +126,7 @@ function partida({ def, team, online, inimigoDoServidor = null, ctf = false }) {
   // online: o servidor mandou o lado `team` e o inimigo é a faccao do outro lado ("E"/"B"),
   // ou a letra que um servidor futuro mandar (`inimigoDoServidor`)
   const enemyFaction = online ? (inimigoDoServidor || outro(team)) : undefined;
-  const id = identidade(CHARACTERS, def.id, team, online, enemyFaction, null, podeNoLado, ladosDe, resolvePlayerSide);
+  const id = identidade(CHARACTERS, def.id, team, online, enemyFaction, null, podeNoLado, ladosDe, resolvePlayerSide, ehMapaJavaporcos, 'praca_poderes');
   H.seedRandom(12345);
   globalThis.__els = {};
   const g = new Game({
@@ -139,7 +142,7 @@ function partida({ def, team, online, inimigoDoServidor = null, ctf = false }) {
   const brasoesPlacar = [...placar.matchAll(/img\/brasoes\/([a-z])\.png/g)].map((m) => m[1]);
   const nomesPlacar = [...placar.matchAll(/<span class="sb-team-name">([^<]*)<\/span>/g)].map((m) => m[1]);
   const a = { textContent: '', style: {} }, b = { textContent: '', style: {} };
-  chip(a, b, tr, FACTION_NAME, PALETA, id.faction, id.enemyFac, id.side);
+  chip(a, b, tr, FACTION_NAME, PALETA, id.faction, id.enemyFac, id.side, nomeTimeJavaporcos, ehMapaJavaporcos, 'praca_poderes', { javaporcos: { times: 2 } });
   const corpo = { id: 1, char: def.id, team: id.side };
   const sub = cartao(false, def, corpo, tr, FACTION_NAME);
   const lado = id.side, slot = (s) => (s === 'E' ? 'P' : 'B');

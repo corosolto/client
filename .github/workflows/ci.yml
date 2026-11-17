@@ -194,6 +194,8 @@ jobs:
         run: npm run eval:envruntime
       - name: Allowlist de divergências conhecidas do staging Cloudflare
         run: npm run eval:cfallowlist
+      - name: Borda Cloudflare — cache, viewmodel do R2 e apex (com mutantes)
+        run: npm run eval:cfborda
       - name: Wrapper de portal embeda o site (frame-ancestors, UTM, pointer-lock)
         run: npm run eval:portalembed
       # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
@@ -895,6 +897,9 @@ jobs:
           name: equipamento-corpo-tempos-${{ github.run_id }}
           path: tools/eval/out/equipamento-corpo.json
           if-no-files-found: warn
+      - name: Emotes de captura no runtime e no roster inteiro (99 corpos e skins)
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: node tools/eval/runner.mjs eval:emotes-mocap eval:emotes-roster
 
   equipamento-tp-origem:
     runs-on: ubuntu-latest
