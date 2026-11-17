@@ -19,6 +19,7 @@ const REGUAS_WORKFLOW = Object.freeze({
   '.github/workflows/preview-deploy.yml': Object.freeze([]),
   '.github/workflows/preview-bot.yml': Object.freeze([]),
   '.github/workflows/portao-browser.yml': Object.freeze([]),
+  '.github/workflows/smoke-web.yml': Object.freeze([]),
   '.github/workflows/autofix.yml': Object.freeze([]),
 });
 
