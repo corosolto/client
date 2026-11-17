@@ -3,8 +3,8 @@
      PB1 anúncio: abre uma vez por versão no lobby, com a arte da temporada; com conta o CTA leva à tela.
      PB2 tela (desktop 1536×1024): 15 níveis × 5 recompensas, XP, missões; RESGATAR NÍVEL 1 manda só
          {action:'claim', level:1}, o nível vira RESGATADO e o bônus de XP aparece.
-     PB3 visitante no celular deitado (844×390): CTA do anúncio abre o convite de login (login-prompt.js);
-         a tela do passe cabe sem rolar na horizontal e não tem botão de resgate.
+     PB3 visitante no celular deitado (844×390): CTA abre o convite de login; depois de fechar,
+         a aba PASSE mostra 15 níveis sem rolagem horizontal nem resgate, com CTA para entrar.
      PB5 funil do painel: com medição permitida sai modal_view e open, uma vez cada; com a recusa
          gravada em cs_privacy não sai nenhum evento.
      PB6 resposta lenta: /api/passe respondendo em 7 s (depois de qualquer prazo curto) ainda abre o anúncio.
@@ -276,7 +276,8 @@ async function medir(mutante = '') {
     await page.waitForTimeout(800);
     const login = await page.evaluate(() => ({ aberto: !!document.getElementById('login-prompt')?.open, titulo: document.getElementById('login-prompt-title')?.textContent || '' }));
     await foto(page, 'login-celular-visitante', mutante);
-    await page.evaluate(() => document.getElementById('login-prompt-close')?.click());
+    await page.click('#login-prompt-close');
+    await page.waitForFunction(() => !document.getElementById('login-prompt')?.open, null, { timeout: 3000 });
     await page.click('[data-tp-aba="passe"]').catch(() => {});
     await page.waitForSelector('#tp-passe[open] .tp-passe-nivel', { timeout: 10000 }).catch(() => {});
     const tela = await page.evaluate(() => {

@@ -60,8 +60,8 @@ fontes acima.
 
 ## Limites declarados (o que NÃO está entregue)
 
-1. **Disponibilidade depende do nó.** O snapshot v9 publica a dança dos humanos,
-   além de postura/recarga de humanos e bots; nós v8 não têm esses estados públicos.
+1. **Disponibilidade depende do nó.** O snapshot v10 publica os 16 emotes; v9 publica
+   somente os oito procedurais, e v8 não tem postura/recarga/emote públicos.
    A porta visual de produção continua fechada até o aceite do dono (seção abaixo).
 2. **Sem polegar.** O rig não tem osso de dedo (só `Curl_L`/`Curl_R` de fechamento de
    mão). Não existe joinha possível: o gesto entregue chama **Salve** porque é isso que o
@@ -72,8 +72,8 @@ fontes acima.
    qualidade sem mudar nada do que está aqui: o controlador aceita os dois.
 4. **Classificação indicativa.** A `sarrada no ar` é gesto de quadril. Está estilizada,
    mas é decisão do dono mantê-la no catálogo público, restringi-la ou removê-la — lojas
-   de aplicativo olham isso. A ordem de `public/js/data/emote-catalog.js` é o contrato
-   binário v9: não remover nem reordenar IDs numa versão já publicada.
+   de aplicativo olham isso. A ordem de `public/js/data/emote-catalog.js` é contrato
+   binário: v9 congela 1–8 e v10 acrescenta 9–16; nunca reordenar IDs publicados.
 
 ## Como se dança
 
@@ -83,11 +83,12 @@ fontes acima.
 | Partida | tecla **T** abre a roda; **1-8** ou clique escolhe; **T**/**ESC** fecha; a câmera sai da 1ª pessoa e afasta 1,5 m pra você se ver |
 | Sair | andar, atirar, trocar de arma, levar dano ou morrer derruba o passo na hora |
 
-## Estados remotos de terceira pessoa (v9)
+## Estados remotos de terceira pessoa (v9/v10)
 
 O catálogo leve mantém a ordem `passinho`, `samba`, `ginga`, `frevo`, `forro`,
-`quadradinho`, `sarrada`, `salve`. O input manda a intenção atual como string ou `null`
-em cada passo e no heartbeat de pausa. A autoridade do servidor decide início,
+`quadradinho`, `sarrada`, `salve`, seguida pelos oito IDs capturados. A v9 termina em
+`salve`; a v10 publica o catálogo inteiro. O input manda a intenção atual como string ou
+`null` em cada passo e no heartbeat de pausa. A autoridade do servidor decide início,
 cancelamento e duração; a câmera local e a roda continuam nos caminhos existentes.
 
 `Netcode.applySnapshot` recebe agachamento, segundos restantes de recarga, ID da dança
@@ -155,3 +156,147 @@ Sketchfab/Mixamo: ossos `mixamorig:LeftArm_09`, malha própria, **0 de 18** osso
 com o rig do jogo. É a causa dos "braços quebrados" anotados em `game.js`, e o
 `SOURCES.md` do próprio projeto diz que redistribuir o asset cru não é permitido — só o
 derivado retargetado. Fica registrado aqui; remover ou retargetar é decisão do dono.
+
+## Emotes de captura: capoeira, breakdance e gestos (09/11)
+
+O limite 3 acima ("procedural, não mocap") vale para os 8 passos de dentro da roda. Desde
+09/11 a roda tem um **anel de fora** com 8 emotes de captura, convertidos do Mixamo para o
+esqueleto meshy-28 com QA aprovada nos rigs de prova (`emotes-mocap.SOURCES.md` lista o ID
+de cada clipe no catálogo de conversão). FBX bruto não entra no repositório. Só o clipe
+derivado entra, que é o uso permitido.
+
+| Id (rede) | Nome | Clipe | Reprodução | Reserva procedural | Desbloqueio |
+|---|---|---|---|---|---|
+| 9 `capoeira` | Ginga | `mixamo/capoeira-pack/capoeira` | laço, 3,43 s | `ginga` | **base** |
+| 10 `meia_lua` | Meia-lua de frente | `mixamo/capoeira-pack/meia-lua-de-frente` | laço, 2,47 s | `ginga` | passe |
+| 11 `bencao` | Bênção | `mixamo/capoeira-pack/bencao` | laço, 1,37 s | `ginga` | passe |
+| 12 `uprock` | Uprock | `mixamo/breakdance-pack/breakdance-uprock` | laço, 2,10 s | `passinho` | passe |
+| 13 `freeze` | Freeze | `mixamo/breakdance-pack/breakdance-freeze-var-2` | uma vez, 4,87 s | `passinho` | passe |
+| 14 `continencia` | Continência | `mixamo/loose/salute` | laço, 2,83 s | `salve` | passe |
+| 15 `marra` | Marra | `mixamo/gestures-pack-basic/being-cocky` | laço, 2,87 s | `salve` | passe |
+| 16 `comemoracao` | Comemoração | `mixamo/gestures-pack-basic/happy-hand-gesture` | laço, 2,73 s | `salve` | **base** |
+
+Laço ou uma vez vem do campo `loop` do catálogo de conversão, que mede a costura do clipe.
+A **Ginga** de captura convive com a `ginga` procedural: os anéis são diferentes e o id
+também.
+
+**Pack e custo.** `public/models/anims/emotes-mocap.glb` tem **304.768 bytes** (239.972
+em gzip) com 8 clipes. É gerado por `node tools/build-emotes-mocap-pack.mjs
+--library=<biblioteca>/index.json`, que usa a mesma mescla do `extras.glb`
+(`tools/anim-pack.mjs`; o `extras.glb` regenerado saiu byte a byte idêntico). O jogo só
+baixa o pack no **primeiro emote de clipe** e baixa uma vez por sessão. Dança procedural,
+boot e construção de corpo não pedem nada.
+
+**Corpo inteiro, retargetado por corpo.** O controlador toca o clipe como estado de corpo
+inteiro, com fade de 0,16 s, e suspende mira de cabeça e pitch de coluna enquanto ele
+manda. O pack está no esqueleto de referência; no primeiro emote de cada personagem o
+`glbchars.js` monta uma cópia do clipe para o repouso daquele corpo (`emoteClipDoCorpo`,
+a convenção do `tools/retarget-glb.mjs` em runtime, sem byte novo de asset):
+
+- **Rotação.** Coluna, pernas e ombro recebem o delta de mundo do clipe sobre o próprio
+  repouso; braço, antebraço e mão, a rotação de mundo absoluta da referência. Copiar a
+  rotação local da referência, como antes, tombava o tronco: o `Hips` dela repousa a 30°
+  em X. No roster, o erro mediano de direção de osso contra o clipe assado por corpo caiu
+  de 35,1° para 14,2° (p90 de 112,8° para 29,5°). Braço em delta deixava 44 de 792 clipes
+  com estica acima de 1,1× o assado; absoluto, 12.
+- **Chão por contato.** Por quadro, o ponto mais baixo da malha fica na altura que o osso
+  mais baixo da referência tem sobre o repouso dela, escalada pela altura de quadril. Com a
+  referência em pé, quem assenta é o pé, e o resto do corpo só não atravessa o chão. No
+  freeze, quem apoia é a mão. Os pontos de apoio são os extremos da malha em 26 direções
+  por osso, com os 4 pesos do skinning. O `Curl_*` da mão fechada entra vivo.
+- **Apêndice.** Cauda ou capa que o auto-skin pendurou a mais de uma altura de quadril do
+  osso que a carrega não sustenta o corpo: cuca (1,61, na perna), lobisomem cyborg (1,48,
+  na coxa) e proerd (1,43, no quadril). O pé fica no chão e a cauda atravessa. Antes, essa
+  cauda erguia o corpo até 88 cm.
+- **Cápsula.** O deslocamento horizontal do `Hips` é medido do eixo do grupo, não do
+  repouso do quadril. Quando passa do raio do jogador (0,38 m, o `_collide(p.pos, 0.38)`
+  do `game.js`), o horizontal do clipe inteiro encolhe junto. A meia-lua da referência
+  viaja 0,97 m; no corpo, o quadril fica em 0,379 m. O pé desliza em vez de o corpo
+  atravessar a parede.
+
+**Escolha medida: retarget em runtime × emote assado por corpo.** O assado por corpo da
+anim-conv (QA por rig) custaria 20.718.444 bytes nos 99 corpos e skins (11.120.764 em
+gzip; mediana de 208.976 bytes por corpo baixado), contra 0 byte novo no runtime. O pack
+único de 304.768 bytes continua sendo o único download. O assado também não traz cápsula
+(quadril até 1,60 m) nem contato: tirando a cápsula, ele reprova em 7 dos 99 itens.
+O runtime reprova em 5 dos 99 no critério estrito, e esses 5 são resíduos documentados
+abaixo.
+
+**Regras herdadas.** A arma some como nos procedurais. Andar, atirar, trocar de arma,
+levar dano, morrer e a cerimônia de fim de rodada cancelam. O `freeze` termina sozinho;
+os laços seguem até o jogador sair. Em LOD≥2 o clipe não toca: o corpo fica no idle com
+a coreografia de reserva. Ao voltar para perto, o clipe retoma na fase certa. A reserva
+procedural também cobre o download do pack e uma falha dele.
+
+**Rede.** A v9 continua congelada nos 8 emotes procedurais de #1266. A v10 preserva
+os mesmos bytes 1–8 e acrescenta os ids 9–16. `V9_EMOTE_IDS` e `V10_EMOTE_IDS`
+separam os contratos no encoder e decoder; o input normal e o heartbeat escolhem o
+catálogo pela versão negociada. Assim uma conexão v9 nunca recebe um ID novo, enquanto
+uma conexão v10 transmite o emote capturado e sua fase. `ctrl.emote(id, elapsed)`
+reaplica a fase remota sem reiniciar clipe ou rampa quando a deriva fica abaixo de 0,25 s.
+
+**Risco de rollout.** O backend deve ser publicado primeiro com o codec v10 e continuar
+codificando v9/v8 por conexão. O cliente prefere v10 e cai para v9/v8; no fallback v9
+ele filtra apenas 9–16, sem derrubar a partida. O decoder v9 trata bytes acima do
+catálogo congelado como `null`, mas o encoder v9 nunca os emite. Mudar apenas o catálogo
+não libera replicação: a versão negociada continua sendo a autoridade.
+
+**Desbloqueio.** O campo `desbloqueio` (`'base'` | `'passe'`) existe para o passe de
+temporada travar depois. Hoje nada é travado; a roda só marca **PASSE**. Ficam na base
+**Ginga** e **Comemoração**. A Ginga é o movimento-raiz da capoeira e a versão de captura
+da dança que todo mundo já tem. A Comemoração é um gesto curto e neutro para celebrar a
+rodada. Vão para o passe os golpes e acrobacias (Meia-lua, Bênção, Uprock, Freeze) e os
+gestos de atitude (Marra, Continência). Sem campo explícito, o emote é `'base'`, como os
+8 procedurais.
+
+**Como se dança.** **Shift+1–8** ou clique no anel de fora. 1–8 continuam no anel de
+dentro.
+
+**Réguas.** O `npm run eval:emotes-mocap` tem 16 cláusulas e 8 mutantes:
+`emote-mocap-mudo`, `arma-visivel-no-emote`, `emote-nao-cancela`, `id-renumerado`,
+`quadril-fora-da-capsula` (EMM12: quadril a 1,147 m do eixo), `rotacao-local` (EMM13:
+coluna a 16,9° do idle) e `lobby-sem-clipe` (EMM11: o DANÇAR do lobby registra o driver
+sem `clipe` e cai na reserva procedural) e `travessao-no-titulo` (EMM0c: `—` no `nome`/`origem`, que viram o title dos botões). O `npm run eval:emotes-roster` toca os 8 clipes nos 74 corpos e
+nas 25 skins aprovadas pelo runtime real. Em 16 instantes por clipe, ele skinna a malha na
+CPU e cobra:
+
+- piso de −6 cm;
+- vértice mais baixo a até 12 cm do chão nos clipes em pé;
+- pé mais baixo a até 20 cm;
+- quadril dentro da cápsula;
+- estica até max(3,5; 1,1× o pior clipe de jogo do corpo; 1,1× o clipe assado no mesmo
+  corpo).
+
+O estica do assado fica congelado em `tools/eval/emotes-mocap-roster-ref.json`, porque o
+assado mora fora do repo; `--assado=<legacy-out> --congela` o remede. A régua tem 4
+mutantes: `rotacao-local`, `capsula-aberta`, `sem-contato` e `curl-ignorado`. Roda em
+cerca de 30 s e entra no CI no job `equipamento-tp`. O `eval:emotepartida` ganhou o
+**EP7**, que cobre a partida real: Shift+1 toca a Ginga de captura com clipe, arma
+guardada e um único pedido do pack, e andar derruba a dança. Ele também ganhou o mutante
+`captura-sem-shift`. O `eval:emotes` mede só os procedurais.
+
+**Prova visual.** As folhas têm 8 quadros nas vistas de frente, 3/4 e perfil, num palco
+com o anel da cápsula. Ficam em `artifacts/emotes-mocap/<corpo>__<emote>.jpg`, local e
+fora do git, para Ginga, Freeze e Meia-lua nestes corpos:
+
+- Canarinho, mascote;
+- Zumbi, o quadril mais alto do roster (0,95 m);
+- lobisomem cyborg, skin;
+- cuca, de perna dobrada e cauda;
+- proerd;
+- fluxo, no resíduo de estica.
+
+Antes, a folha cobria Capitão e Gotinha em partida local. O roteiro de captura fica fora
+do repositório.
+
+**Limites.** Resíduos medidos e travados na régua (o teto só desce):
+
+- **Estica acima de 1,1× o assado:** ancap na ginga, 10,99 contra 6,89 (o ancap já
+  estica 8,39 em jogo); fluxo na ginga, 5,17 contra 4,31, e na bênção, 3,94 contra 3,41.
+  Os dois divergem do assado na coxa, de 31° a 57°. Na folha do fluxo não aparece.
+- **Apêndice atravessando o chão:** cuca até 71,6 cm, lobisomem cyborg até 46,3 cm e
+  proerd até 31,1 cm na bênção. O conserto é de pesos no Studio. O cuca nem é jogável, e o
+  idle dele já afunda 49 cm.
+
+A hitbox de cabeça acompanha o osso, como nos procedurais. A porta de produção
+(`EMOTES_ENABLED`) continua fechada.
