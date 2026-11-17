@@ -1,6 +1,9 @@
 # Teto de 10 GB por repositório: passar dele faz o GitHub despejar por LRU, e o build
 # fica lento sem erro. Guarda os 3 caches mais recentes do main (o mais novo serve de
-# restore-key às PRs) e descarta o resto. Ver docs/quality-gates.md.
+# restore-key às PRs) e descarta o resto. O node_modules do pr-fast é exceção nos dois
+# sentidos: a entrada do package-lock.json ATUAL da main nunca sai (todo PR com o mesmo
+# lock a restaura), e qualquer outra `pr-fast-node-` da main é velha e sai sempre (lock
+# antigo ou o esquema por run_id de antes de 17/11/2026). Ver docs/quality-gates.md.
 name: cache-limpeza
 
 on:
@@ -33,17 +36,33 @@ jobs:
           for id in $ids; do gh api -X DELETE "repos/$REPO/actions/caches/$id" && n=$((n+1)); done
           echo "apagados $n cache(s) de $REF"
 
-      - name: poda do main (guarda os 3 mais recentes)
+      # Só o package-lock.json: a chave em uso é a hash dele (mesma expressão do ci.yml).
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        if: github.event_name != 'pull_request'
+        with:
+          ref: main
+          sparse-checkout: package-lock.json
+          sparse-checkout-cone-mode: false
+
+      - name: poda do main (guarda os 3 mais recentes e o node_modules em uso)
         if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
+          NODE_EM_USO: pr-fast-node-v2-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
         run: |
           set -euo pipefail
+          # Sem lock a hash sai vazia e a chave "em uso" não casaria com nada: aí não poda.
+          case "$NODE_EM_USO" in *-) echo "::error::package-lock.json ausente; poda abortada"; exit 1;; esac
           antes=$(gh api "repos/$REPO/actions/cache/usage" --jq '.active_caches_size_in_bytes')
-          # Ordena por último acesso e descarta do 4º em diante.
+          # Ordena por último acesso; fora o node_modules em uso, descarta do 4º em diante
+          # e toda pr-fast-node- que não é a em uso.
           ids=$(gh api --paginate "repos/$REPO/actions/caches?per_page=100&sort=last_accessed_at&direction=desc" \
-                --jq '[.actions_caches[] | select(.ref=="refs/heads/main")] | .[3:] | .[].id')
+                --jq '.actions_caches[] | select(.ref=="refs/heads/main") | "\(.id) \(.key)"' |
+                awk -v em_uso="$NODE_EM_USO" '
+                  $2 == em_uso { next }
+                  index($2, "pr-fast-node-") == 1 { print $1; next }
+                  { n++; if (n > 3) print $1 }')
           n=0
           for id in $ids; do gh api -X DELETE "repos/$REPO/actions/caches/$id" && n=$((n+1)); done
           # Órfãos: ref de PR que já não está aberta.

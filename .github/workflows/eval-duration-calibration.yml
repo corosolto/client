@@ -60,11 +60,11 @@ jobs:
           path: tools/eval/out/durations.json
           if-no-files-found: error
           retention-days: 14
-      - name: Cache duration manifest for sharded jobs
+      - name: Cache duration manifest for local sharding
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
-        # Contrato v1 compartilhado com ci.yml: a chave é endereçada pelo
-        # conteúdo e o prefixo estável restaura a calibração mais recente.
-        # run_id/run_attempt não podem entrar aqui: são runs independentes.
+        # O pr-fast não lê este manifesto (lotes fixos no ci.yml; ver docs/quality-gates.md):
+        # ele serve ao `runner.mjs --shard` e a rebalancear os lotes. A chave é endereçada
+        # pelo conteúdo; run_id/run_attempt não entram: são runs independentes.
         with:
           path: tools/eval/out/durations.json
           key: eval-durations-v1-${{ hashFiles('tools/eval/out/durations.json') }}
