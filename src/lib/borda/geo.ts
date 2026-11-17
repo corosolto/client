@@ -1,5 +1,5 @@
-// Geo confiável da borda: `#borda` escolhe Vercel ou Cloudflare sem misturar
-// o PoP ao visitante quando há cabeçalhos das duas plataformas.
+// Geo confiável da borda: única borda Cloudflare (fase 6); o ramo x-vercel-ip resta
+// só para fixtures de régua e dev local, sem misturar o PoP ao visitante.
 export interface GeoDaBorda {
   country: string | null;
   city: string | null;
