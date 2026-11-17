@@ -46,11 +46,11 @@ acceptance criteria; compare them with existing issues before opening another on
    the bot compares its ancestry with `main` and `staging`; any unpublished commit from
    `staging` applies `needs-hotfix-review`, removes `safe-automerge`, and blocks the release. With
    main-only ancestry, it receives `release` and starts the release train after a green merge. Manual dispatch
-   (`gh workflow run release.yml`) remains available as a fallback. The manual tag path
-   (`deploy-prod.yml`) also remains available as a fallback.
-4. **Fork previews require human review**: `cs-brasil-ai-bot` (`preview-bot.yml`)
-   classifies the diff without executing it. A maintainer reviews the current SHA and applies
-   `preview-autorizado`; any push revokes the approval.
+   (`gh workflow run release.yml`) remains available as a fallback; production is the Vercel Git
+   integration building the `chore(release):` commit on `main` (there is no manual deploy workflow).
+4. **Fork PRs get a diff classification, not a preview**: `cs-brasil-ai-bot` (`preview-bot.yml`)
+   classifies the fork diff without executing it when the PR is opened or reopened. In-repo PR
+   previews are Cloudflare (`cf-preview.yml`).
 5. **Local quality gates before opening**: `npm run check:fast` (seconds) and, if you changed
    the game, `npm run check:deploy` (the same gate run by the `pre-push` hook). A new
    quality-gate failure = PR sent back.

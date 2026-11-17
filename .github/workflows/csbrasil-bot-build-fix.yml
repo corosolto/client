@@ -1,9 +1,14 @@
 name: csbrasil-bot-build-fix
 
 on:
+  # `branches-ignore` filtra pela head do run do pr-fast: o `claim` abaixo já rejeita
+  # `main` e `staging` (head_branch != ...), então esses runs só nasciam para sair
+  # skipped (50 dos 461 pr-fast de 10–16/11: push na main + PR de lote staging→main).
+  # Conclusão (failure) não é filtrável no gatilho; o resto continua no `if:`.
   workflow_run:
     workflows: [pr-fast]
     types: [completed]
+    branches-ignore: [main, staging]
 
 permissions:
   actions: read
