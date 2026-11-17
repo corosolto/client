@@ -12,7 +12,7 @@
    Modo dist (padrão; lê .vercel/output/static e/ou dist/client, ou --dist=<dir>):
      SP1 toda entrada do manifesto existe no publicado com bytes e SHA-256 iguais
      SP2 nada fora do manifesto sob private-assets/viewmodels (vazamento de intermediário)
-     SP3 vercel.json, avaliado com a semântica da Vercel (@vercel/routing-utils):
+     SP3 borda.json, avaliado pelo matcher compartilhado do Worker:
          GLB sai model/gltf-binary; imutável exatamente onde cachePolicyFor manda;
          CSP permite connect-src 'self' e img-src blob:; buildCommand baixa antes do build
    Modo URL (--url=https://preview…): cada entrada responde 200 com bytes, SHA-256,
@@ -29,12 +29,12 @@
    ============================================================================ */
 import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { ROOT, cachePolicyFor, contentTypeFor, listTree, readManifest, sha256File } from '../../scripts/vm-assets.mjs';
+import { compilarHeader, headersPara } from '../../src/lib/regras-borda.mjs';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=').slice(1).join('=');
 const MUT = arg('mutante');
@@ -60,26 +60,22 @@ const IMMUTABLE = 'public, max-age=31536000, immutable';
 
 /* ---- SP3 (config) ---- */
 function headerTable() {
-  let vercel = JSON.parse(readFileSync(path.join(ROOT, 'borda.json'), 'utf8'));
+  let borda = JSON.parse(readFileSync(path.join(ROOT, 'borda.json'), 'utf8'));
   if (MUT === 'sem-imutavel') {
-    const before = vercel.headers.length;
-    vercel = { ...vercel, headers: vercel.headers.filter((h) => !h.headers.some((x) => x.value === IMMUTABLE && h.source.includes('private-assets'))) };
-    mutApplied(vercel.headers.length < before, 'sem-imutavel');
+    const before = borda.headers.length;
+    borda = { ...borda, headers: borda.headers.filter((h) => !h.headers.some((x) => x.value === IMMUTABLE && h.source.includes('private-assets'))) };
+    mutApplied(borda.headers.length < before, 'sem-imutavel');
   }
-  let getTransformedRoutes;
-  try { ({ getTransformedRoutes } = createRequire(import.meta.url)('@vercel/routing-utils')); } catch {
-    check(false, 'SP3', 'avaliar vercel.json', '@vercel/routing-utils ausente (dependência do @astrojs/vercel) — sem ele a régua não sabe medir; `npm ci`');
+  let headers;
+  try {
+    headers = borda.headers.map(compilarHeader);
+  } catch (error) {
+    check(false, 'SP3', 'borda.json válido', error.message);
     return null;
   }
-  const res = getTransformedRoutes({ headers: vercel.headers });
-  if (res.error) { check(false, 'SP3', 'vercel.json válido', res.error.message); return null; }
-  const routes = res.routes.filter((r) => r.headers);
   return {
-    vercel,
     headersFor(p) {
-      const h = {};
-      for (const r of routes) if (new RegExp(r.src).test(p)) for (const [k, v] of Object.entries(r.headers)) h[k.toLowerCase()] = v;
-      return h;
+      return Object.fromEntries(headersPara(headers, p));
     },
   };
 }
@@ -102,14 +98,15 @@ function checkConfig() {
     const erros = checkHeaders(t.headersFor(`${manifest.servedRoot}/${f.path}`), f);
     if (erros.length) ruins.push(`${f.path}: ${erros.join(', ')}`);
   }
-  check(!ruins.length, 'SP3', `cabeçalhos do vercel.json para ${files.length} assets`, ruins.length ? `${ruins.length} errados (ex.: ${ruins.slice(0, 3).join(' | ')})` : `${files.filter((f) => cachePolicyFor(f.path) === 'immutable').length} imutáveis, resto revalida`);
+  check(!ruins.length, 'SP3', `cabeçalhos do borda.json para ${files.length} assets`, ruins.length ? `${ruins.length} errados (ex.: ${ruins.slice(0, 3).join(' | ')})` : `${files.filter((f) => cachePolicyFor(f.path) === 'immutable').length} imutáveis, resto revalida`);
   const csp = t.headersFor(`${manifest.servedRoot}/${files[0].path}`)['content-security-policy'] || '';
   const dir = (name) => (new RegExp(`${name}([^;]*)`).exec(csp) || [])[1] || '';
   check(/'self'/.test(dir('connect-src')) && /blob:/.test(dir('img-src')) && /'self'/.test(dir('img-src')),
     'SP3', "CSP deixa o GLTFLoader buscar same-origin e decodificar textura em blob:", csp ? '' : 'sem CSP');
-  const build = t.vercel.buildCommand || '';
+  const build = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')).scripts?.['build:cf'] || '';
   const iFetch = build.indexOf('scripts/fetch-viewmodels.sh');
-  check(iFetch >= 0 && iFetch < build.indexOf('npm run build'), 'SP3', 'buildCommand baixa o viewmodel antes do build', build.slice(0, 120));
+  const iBuild = build.indexOf('ADAPTER=cloudflare npm run build');
+  check(iFetch >= 0 && iFetch < iBuild, 'SP3', 'build:cf baixa o viewmodel antes do build', build.slice(0, 120));
 }
 
 /* ---- SP4 (vínculo URL↔bytes) ---- */
