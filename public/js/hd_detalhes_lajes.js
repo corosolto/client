@@ -145,26 +145,45 @@ function esquadria(P) {
 }
 function madeiraVelha(P, r) {
   P.ret(0, 0, 1, 1, '#2a2622', .1);
-  for (let i = 0; i < 6; i++) { const x = .008 + i * .166, w = .158, g = .82 + r() * .32; P.ret(x, .006 + r() * .01, w, .988, tom([134, 122, 106], g), .6);
+  // Cada tábua com tom próprio (2–3 tons: cru, cinza-lavado, mel) e rodapé de tinta velha (0–60 cm, fora da faixa do corpo) descascando por tábua.
+  const TONS = [[134, 122, 106], [118, 114, 104], [146, 126, 100]], tinta = r() < .5 ? [96, 118, 112] : [104, 112, 128];
+  for (let i = 0; i < 6; i++) { const x = .008 + i * .166, w = .158, g = .84 + r() * .28, base = TONS[Math.floor(r() * 2.999)]; P.ret(x, .006 + r() * .01, w, .988, tom(base, g), .6);
     P.so((C) => { for (let k = 0; k < 70; k++) { C.fillStyle = `rgba(${r() < .7 ? '44,36,28' : '188,176,156'},${.10 + r() * .2})`; C.fillRect(x + r() * w, r(), .0025 + r() * .004, .05 + r() * .35); }
       for (let k = 0; k < 60; k++) { const y = Math.pow(r(), 1.7) * .9; C.fillStyle = `rgba(${112 + r() * 20 | 0},${124 + r() * 16 | 0},${118 + r() * 16 | 0},${.35 + r() * .35})`; C.fillRect(x + r() * (w - .012), y, .003 + r() * .007, .03 + r() * .11); }
+      const y0 = .70 + r() * .04; C.fillStyle = `rgba(${tinta.join(',')},${.55 + r() * .25})`; C.fillRect(x + .004, y0, w - .008, 1 - y0);
+      for (let k = 0; k < 14; k++) { C.fillStyle = `rgba(${base.join(',')},${.5 + r() * .5})`; C.fillRect(x + .01 + r() * (w - .05), y0 - .01 + r() * .12, .01 + r() * .035, .006 + r() * .03); }
       if (r() < .5) { C.fillStyle = 'rgba(30,24,18,.75)'; C.beginPath(); C.ellipse(x + w * (.3 + r() * .4), .15 + r() * .7, .012, .009, 0, 0, 6.3); C.fill(); } }); }
-  for (const y of [.1, .5, .87]) { P.ret(0, y, 1, .045, '#746a5a', .95); P.ret(0, y + .045, 1, .006, '#1c1611', .3);
-    for (let i = 0; i < 6; i++) P.ret(.008 + i * .166 + .07, y + .017, .012, .008, '#2a2420', 1); }
-  P.ret(.74, .455, .2, .014, '#a79f8c', 1); P.ret(.83, .447, .03, .03, FER, 1);
+  // Travessas de 4,6 cm (metade da antiga) com parafuso em cada tábua; trava de ferro chato com suporte e argola de cadeado.
+  for (const y of [.1, .5, .87]) { P.ret(0, y, 1, .022, '#6e6454', .95); P.ret(0, y + .022, 1, .005, '#1c1611', .3);
+    for (let i = 0; i < 6; i++) { const x = .008 + i * .166 + .072; P.ret(x, y + .006, .012, .011, '#2a2420', 1); P.ret(x + .003, y + .008, .005, .004, '#8a857c', 1); } }
+  P.ret(.52, .452, .46, .022, '#3a3835', 1); P.ret(.56, .443, .04, .04, FER, 1); P.ret(.9, .443, .04, .04, FER, 1); P.ret(.93, .474, .03, .034, '#6a6560', 1); P.ret(.935, .486, .02, .018, '#2a2623', .6);
   P.so((C) => { const g = C.createLinearGradient(0, .82, 0, 1); g.addColorStop(0, 'rgba(22,18,14,0)'); g.addColorStop(1, 'rgba(22,18,14,.3)'); C.fillStyle = g; C.fillRect(0, .82, 1, .18); });
-}
-function ondulada(P, r) {
-  P.ret(0, 0, 1, 1, '#45484a', .9);
-  for (let i = 0; i < 9; i++) [[0, '#7c8083', .35], [.025, '#a4a8aa', .9], [.05, '#8e9294', .7], [.075, '#5c6063', .15]].forEach(([dx, c, a]) => P.ret(.05 + i * .1 + dx, .025, .0255, .95, c, a));
-  P.ret(0, .49, 1, .022, '#45484a', 1);
-  P.so((C) => { for (let i = 0; i < 70; i++) { const y = Math.pow(r(), .45); C.fillStyle = `rgba(${92 + r() * 18 | 0},${64 + r() * 14 | 0},${40 + r() * 10 | 0},${.18 + r() * .4})`; C.fillRect(.05 + r() * .9, y * .97, .01 + r() * .05, (.01 + r() * .06) * (1 + y)); } });
-  P.ret(.06, .5, .07, .035, '#a89a52', 1);
 }
 function enrolar(P, r) {
   P.ret(0, 0, 1, 1, '#50565a', .95);
   for (let y = .012; y < .93; y += .043) { P.ret(.07, y, .86, .028, tom([134, 142, 146], .9 + r() * .16), .85); P.ret(.07, y + .028, .86, .015, '#666c70', .4); }
   P.ret(.07, .955, .86, .03, '#3f4447', 1); for (const x of [.22, .72]) P.ret(x, .96, .07, .018, '#1d1f20', 1);
+}
+function ondulada(P, r) {
+  P.ret(0, 0, 1, 1, '#45484a', .9);
+  for (let i = 0; i < 9; i++) [[0, '#7c8083', .35], [.025, '#a4a8aa', .9], [.05, '#8e9294', .7], [.075, '#5c6063', .15]].forEach(([dx, c, a]) => P.ret(.05 + i * .1 + dx, .025, .0255, .95, c, a));
+  P.ret(0, .49, 1, .022, '#45484a', 1);
+  // Tinta de baixo (verde ou vermelho desbotado, S ≈ 0,25) aparecendo rasgada só fora da faixa do corpo (acima de 1,9 m e abaixo de 0,45 m):
+  // cachos de elipses de raio irregular, nunca retângulo.
+  const fundo = r() < .5 ? [96, 110, 90] : [118, 90, 84];
+  P.so((C) => {
+    for (let i = 0; i < 16; i++) { const alto = r() < .4, x0 = .06 + r() * .88, y0 = alto ? .01 + r() * .045 : .80 + r() * .17;
+      for (let k = 0; k < 5; k++) { C.fillStyle = `rgba(${fundo.join(',')},${.22 + r() * .3})`; C.beginPath();
+        C.ellipse(x0 + (r() - .5) * .05, y0 + (r() - .5) * .025, .006 + r() * .022, .004 + r() * .012, r() * 3.14, 0, 6.3); C.fill(); } }
+    // Ferrugem de base: gradiente contínuo de 1 m (0 em 1,03 m) até -25 % de luminância no pé, por onda e seguindo a corrugação.
+    for (let i = 0; i < 9; i++) for (let k = 0; k < 4; k++) { const x = .05 + i * .1 + k * .025, a = [.6, .3, .4, .75][k] * (.75 + r() * .4), g = C.createLinearGradient(0, .50, 0, 1);
+      g.addColorStop(0, 'rgba(96,62,38,0)'); g.addColorStop(.45, `rgba(100,64,40,${(a * .22).toFixed(2)})`); g.addColorStop(.8, `rgba(84,54,32,${(a * .6).toFixed(2)})`); g.addColorStop(1, `rgba(62,40,24,${a.toFixed(2)})`); C.fillStyle = g; C.fillRect(x, .50, .0255, .50); }
+    // Escorrido fino (0,5–1 cm) só na metade de baixo, nascendo das arestas das ondas abaixo de 0,8 m e sumindo no pé: nada de mancha na faixa do corpo.
+    for (let i = 0; i < 14; i++) { const x = .05 + Math.floor(r() * 9) * .1 + (r() < .5 ? .0 : .05), y0 = .60 + r() * .2, len = .08 + r() * .22, g = C.createLinearGradient(0, y0, 0, y0 + len);
+      g.addColorStop(0, `rgba(92,60,36,${(.3 + r() * .3).toFixed(2)})`); g.addColorStop(1, 'rgba(92,60,36,0)'); C.fillStyle = g; C.fillRect(x, y0, .006 + r() * .005, len); }
+    const g = C.createLinearGradient(0, .93, 0, 1); g.addColorStop(0, 'rgba(40,32,26,0)'); g.addColorStop(1, 'rgba(40,32,26,.55)'); C.fillStyle = g; C.fillRect(0, .93, 1, .07);
+  });
+  P.ret(.06, .5, .07, .035, '#a89a52', 1);
 }
 export const PORTA_TIPOS = ['chapa de ferro com frisos e postigo de vidro canelado com grade', 'esquadria de alumínio', 'madeira velha com tramela', 'chapa ondulada com ferrugem', 'aço de enrolar'];
 export function atlasPortas() {
