@@ -71,6 +71,7 @@
 
 ### Fixed
 - A queda do multiplayer contabiliza a sessão local antes de desmontar o jogo para reconexão, e o funil do convite de login respeita o consentimento no próprio emissor. As réguas de time acompanham os helpers de Javaporcos, a telemetria aceita o metadado completo de build e a inspeção pública ignora `llms.txt` somente quando ele não existe.
+- As réguas de movimento remoto agora capturam a velocidade lateral depois das mutações, e o portão móvel do passe espera o convite de login fechar antes de medir os 15 níveis sem rolagem horizontal.
 - O gate de acessórios injeta explicitamente o catálogo v9 ao executar `netgame.js` sem imports, e a matriz gerada do arsenal acompanha as linhas atuais de `game.js`; o `pre-push` volta a medir ambos em vez de parar com `V9_EMOTE_IDS` ausente ou documentação desatualizada.
 - Os sweeps agendados dos bots agora paginam todos os PRs abertos via GraphQL, fazem essa leitura de inventário com o `github.token` somente leitura em vez do PAT de escrita, recalculam ancestralidade e contagem de commits no grafo Git em vez de confiar no JSON recebido, e tratam o exit `78` dos mutantes cegos como falha de infraestrutura, com regressões explícitas.
 - CI/release: o `pre-push` não apaga uma trava substituída, e gates sem evidência editorial/material encerram como não medidos (78), nunca verde.
