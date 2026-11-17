@@ -5,7 +5,7 @@
 .tp-lobby-aba[hidden]{display:none}
 .tp-lobby-aba[data-tp-aba="passe"]{position:relative}
 /* Selo da aba PASSE: níveis prontos para resgatar, com um anel que pulsa */
-.tp-lobby-aba__selo{position:absolute;top:2px;right:-14px;display:grid;place-items:center;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;
+.tp-lobby-aba__selo{position:absolute;top:-2px;right:-22px;display:grid;place-items:center;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;
   border-radius:999px;background:var(--tp-lima);color:var(--tp-lima-tinta);font:800 12px/1 var(--tp-num);letter-spacing:0;pointer-events:none}
 .tp-lobby-aba__selo[hidden]{display:none}
 .tp-lobby-aba__selo::after{content:'';position:absolute;inset:-4px;border-radius:inherit;border:2px solid var(--tp-lima);opacity:0;
@@ -220,9 +220,10 @@
   background:radial-gradient(70% 60% at 50% 40%,var(--tp-palco-musgo),var(--tp-asfalto) 75%);color:var(--tp-tinta-1);font:500 var(--tp-fs-ui)/1.3 var(--tp-ui)}
 .tp-passe-festa[open]{display:grid;place-items:center}
 .tp-passe-festa::backdrop{background:rgba(9,7,4,.9)}
-.tp-passe-festa__raios{position:absolute;left:50%;top:38%;width:160vmax;height:160vmax;margin:-80vmax 0 0 -80vmax;pointer-events:none;opacity:.5;
+/* raios e confete fixos na tela: não contam no overflow e a celebração só rola se o conteúdo pedir */
+.tp-passe-festa__raios{position:fixed;left:50%;top:38%;width:160vmax;height:160vmax;margin:-80vmax 0 0 -80vmax;pointer-events:none;opacity:.5;
   background:repeating-conic-gradient(rgba(180,217,46,.16) 0 7deg,transparent 7deg 18deg);animation:tp-passe-giro 40s linear infinite}
-.tp-passe-festa__confete{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.tp-passe-festa__confete{position:fixed;inset:0;overflow:hidden;pointer-events:none}
 .tp-passe-festa__confete>i{position:absolute;top:0;left:calc(4% + var(--i) * 5.2%);width:10px;height:16px;border-radius:2px;background:var(--tp-lima);opacity:0;
   animation:tp-passe-confete 2.6s cubic-bezier(.2,.6,.4,1) calc(var(--i) * 70ms) both}
 .tp-passe-festa__confete>i:nth-child(3n){background:var(--tp-ambar)}

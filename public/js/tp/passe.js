@@ -228,7 +228,7 @@ function cartaoNivel(l, s) {
     pe.appendChild(b);
   } else {
     const trava = no('span', 'tp-passe-nivel__trava');
-    trava.innerHTML = ICONE_CADEADO;
+    if (estado === 'travado') trava.innerHTML = ICONE_CADEADO;
     trava.append(no('span', '', estado === 'alcancado' ? tr('ALCANÇADO') : s.authenticated ? frase('passeFaltaXp', numero(Math.max(0, l.xp - s.xp))) : tr('ENTRE PARA LIBERAR')));
     pe.appendChild(trava);
   }
