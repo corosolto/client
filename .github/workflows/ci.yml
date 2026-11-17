@@ -438,6 +438,10 @@ jobs:
       - name: SEO e links publicados (com mutações)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: |
+          # Fase 6: o build (adapter Cloudflare) carrega [vars] do wrangler.toml no build
+          # (loadWranglerEnv) — produção tem RANKING_ON=true e o prerender sai indexável.
+          # A régua de rotas compara contra process.env: espelhar produção aqui.
+          export RANKING_ON=true
           node tools/eval/seo-check.mjs
           node tools/eval/seo-check.mjs --mutate
           node tools/eval/canonical-host-check.mjs
