@@ -349,12 +349,12 @@ function medir() {
      sigla dava "não nomeia a licença" justamente para o arquivo canônico: falso negativo com
      cara de fato, que é o mesmo defeito de novo, um degrau abaixo. */
   const LICENCAS_CONHECIDAS = [
-    { titulo: /GNU AFFERO GENERAL PUBLIC LICENSE/i, sigla: 'AGPL-3.0', longo: 'GNU Affero General Public License, versão 3', mencao: /\bAGPL(-3\.0)?\b|GNU AFFERO GENERAL PUBLIC LICENSE|agpl-3\.0/i },
+    { titulo: /GNU AFFERO GENERAL PUBLIC LICENSE/i, sigla: 'AGPL-3.0', longo: 'GNU Affero General Public License, version 3', mencao: /\bAGPL(-3\.0)?\b|GNU AFFERO GENERAL PUBLIC LICENSE|agpl-3\.0/i },
     /* O `(?<![a-z])` não é enfeite: sem ele, `gpl-3.0` casa DENTRO de `AGPL-3.0` (e a URL da
        FSF no JSON-LD é minúscula), e a GPL aparecia citada em toda superfície que só fala de
        AGPL. Sigla que é sufixo de outra sigla precisa de âncora à esquerda. */
-    { titulo: /GNU GENERAL PUBLIC LICENSE/i, sigla: 'GPL-3.0', longo: 'GNU General Public License, versão 3', mencao: /(?<![a-z])GPL-3\.0\b|(?<!AFFERO )GNU GENERAL PUBLIC LICENSE/i },
-    { titulo: /GNU LESSER GENERAL PUBLIC LICENSE/i, sigla: 'LGPL-3.0', longo: 'GNU Lesser General Public License, versão 3', mencao: /\bLGPL(-3\.0)?\b|GNU LESSER GENERAL PUBLIC LICENSE/i },
+    { titulo: /GNU GENERAL PUBLIC LICENSE/i, sigla: 'GPL-3.0', longo: 'GNU General Public License, version 3', mencao: /(?<![a-z])GPL-3\.0\b|(?<!AFFERO )GNU GENERAL PUBLIC LICENSE/i },
+    { titulo: /GNU LESSER GENERAL PUBLIC LICENSE/i, sigla: 'LGPL-3.0', longo: 'GNU Lesser General Public License, version 3', mencao: /\bLGPL(-3\.0)?\b|GNU LESSER GENERAL PUBLIC LICENSE/i },
     { titulo: /Mozilla Public License/i, sigla: 'MPL-2.0', longo: 'Mozilla Public License 2.0', mencao: /\bMPL-2\.0\b|Mozilla Public License/i },
     { titulo: /Apache License/i, sigla: 'Apache-2.0', longo: 'Apache License 2.0', mencao: /\bApache-2\.0\b|Apache License/i },
     { titulo: /BSD 3-Clause/i, sigla: 'BSD-3-Clause', longo: 'BSD 3-Clause', mencao: /\bBSD-3-Clause\b/i },
@@ -362,15 +362,17 @@ function medir() {
        e menção de licença falsa é ruído que ninguém confere duas vezes. */
     { titulo: /\bMIT License\b/i, sigla: 'MIT', longo: 'MIT License', mencao: /\bMIT\b/ },
   ];
+  /* Rótulos em inglês: o único consumidor é o bloco `licenca_pontos` do CONTRIBUTING.md,
+     que é inglês (BLOCOS_RAIZ). Idem `longo`, `cmdNome` e `cmd` da licença. */
   const SUPERFICIES = [
-    ['licença canônica', 'LICENSE'],
-    ['badge + seção de licenças', 'README.md'],
-    ['termo que o contribuidor aceita', 'CONTRIBUTING.md'],
-    ['rodapé do site', 'src/layouts/Layout.astro'],
-    ['JSON-LD do jogo', 'src/pages/index.astro'],
-    ['página `/sobre`', 'src/pages/sobre.astro'],
-    ['`llms.txt` (resposta para LLM)', 'public/llms.txt'],
-    ['rodapé desta documentação', 'docs/docusaurus.config.js'],
+    ['canonical license', 'LICENSE'],
+    ['badge + license section', 'README.md'],
+    ['term accepted by the contributor', 'CONTRIBUTING.md'],
+    ['site footer', 'src/layouts/Layout.astro'],
+    ['game JSON-LD', 'src/pages/index.astro'],
+    ['`/sobre` page', 'src/pages/sobre.astro'],
+    ['`llms.txt` (LLM response)', 'public/llms.txt'],
+    ['footer of this documentation', 'docs/docusaurus.config.js'],
   ];
   /* O cabeçalho é o TÍTULO da licença, e ele pode ocupar mais de uma linha (o texto oficial
      da AGPL quebra em "GNU AFFERO GENERAL PUBLIC LICENSE" / "Version 3, 19 November 2007").
@@ -427,8 +429,8 @@ function medir() {
        mora no `CONTRIBUTING.md`. */
     /* Sem crase aqui dentro: o rodapé já embrulha este texto em crase, e crase aninhada
        vira markdown quebrado nas duas pontas (GitHub e Docusaurus). */
-    cmdNome: 'título lido do texto do LICENSE, conferido contra o campo license do package.json',
-    cmd: 'grep -n dos nomes de licença conhecidos, nas superfícies declaradas em tools/gen-docs.mjs',
+    cmdNome: 'title read from the LICENSE text, checked against the license field in package.json',
+    cmd: 'grep -n of known license names, on the surfaces declared in tools/gen-docs.mjs',
   };
   f.issues = {
     escritas: glob('docs/issues', (x) => /^\d+-.*\.md$/.test(x)).length,
@@ -470,52 +472,6 @@ const BLOCOS = {
     `| Tarefas de entrada escritas | ${f.issues.escritas} | \`git ls-files 'docs/issues/[0-9]*.md' \\| wc -l\` |`,
     `| Versão | \`${f.versao.jogo}\` | \`public/js/version.js\`${f.versao.concordam ? ' e `package.json` (batem)' : ' — **DIVERGE do `package.json`: `' + f.versao.pacote + '`**'} |`,
     rodape('o comando da coluna direita de cada linha'),
-  ].join('\n'),
-
-  /* AS DUAS ZONAS (mais o arnês). É a primeira coisa que um agente precisa saber antes de
-     escrever uma linha, e é a que mais gente escreve à mão errado — por isso os dois lados
-     da fronteira vêm MEDIDOS. O porquê de cada regra é conhecimento humano e mora na doc;
-     aqui só o tamanho e a regra em uma linha. */
-  zonas: (f) => [
-    '| Zona | O que é | Tamanho medido | Regra |',
-    '|---|---|---|---|',
-    `| \`public/\` | o **jogo** | ${v(f.jogo.arquivos)} arquivos \`.js\`, ${v(num(f.jogo.linhas))} linhas · Three.js \`${f.stack.three}\` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |`,
-    `| \`src/\` | o **site** | ${v(f.site.paginas)} páginas \`.astro\`, ${v(f.site.apis)} rotas \`/api\` · Astro \`${f.stack.astro}\` | framework é bem-vindo; \`service_role\` só no servidor |`,
-    `| \`tools/\` | o **arnês** | ${v(f.portao.scriptsEval)} scripts em \`tools/eval/\`, ${v(f.portao.scriptsTools)} em \`tools/\` | node puro: sobe o jogo real sem browser |`,
-    '',
-    f.site.indexHtml
-      ? '⚠️ **Existe `public/index.html`** — o que contradiz a doc, que afirma o contrário em várias páginas. Confira quem serve o quê antes de acreditar em qualquer das duas.'
-      : '**Não existe `public/index.html`.** O HTML do jogo é `src/pages/index.astro`, servido na rota `/`. ' +
-        'Servir `public/` estaticamente entrega os arnêses visuais, **não o jogo** — é a pegadinha que custa a primeira hora de todo mundo.',
-    rodape(f.site.cmd),
-  ].join('\n'),
-
-  /* AS SUPERFÍCIES DA LICENÇA — todo arquivo que REPETE o nome da licença e por isso muda
-     JUNTO com ela. Duas listas escritas à mão já tentaram enumerar isto (README.md e
-     `docs/historico/plans/08 §3`) e as duas esquecem lugares reais. A lista de superfícies é decisão
-     humana (vive no topo deste script); ONDE cada uma nomeia a licença é medido. */
-  licenca_pontos: (f) => [
-    `| Superfície | Arquivo | Onde diz \`${f.licenca.atual || '?'}\` |`,
-    '|---|---|---|',
-    /* Contagem, não número de linha: o número desloca a cada inserção acima e desatualiza
-       o bloco sozinho. A régua afirma que a superfície NOMEIA a licença — e isso não
-       depende de onde o texto caiu no arquivo. */
-    ...f.licenca.superficies.map((s) => `| ${s.rotulo} | \`${s.arquivo}\` | ${
-      !s.existe ? '**arquivo não existe**'
-        : s.linhas.length ? `${s.linhas.length}×`
-          : '— (não nomeia a licença)'}  |`),
-    '',
-    `**${f.licenca.superficies.reduce((a, s) => a + s.linhas.length, 0)} ocorrências** de ` +
-    `\`${f.licenca.atual}\` em **${f.licenca.superficies.filter((s) => s.linhas.length).length}** das ` +
-    `${f.licenca.superficies.length} superfícies declaradas. Trocar a licença é mudar **todas elas no mesmo commit**: ` +
-    'metade trocada é pior que nenhuma, porque cada arquivo passa a responder uma coisa diferente para quem pergunta.',
-    '',
-    f.licenca.outrasMencoes.length
-      ? `**Outros nomes de licença citados nessas superfícies:** ${f.licenca.outrasMencoes.map((m) => `\`${m.nome}\` em \`${m.arquivo}\` (${m.linhas.length}×)`).join(', ')}. ` +
-        'Citar não é declarar — essas linhas são histórico da migração ou crédito a dependência de terceiro. ' +
-        `A regra continua a mesma: **só o \`LICENSE\` declara**, e hoje ele diz \`${f.licenca.atual}\`.`
-      : 'Nenhuma superfície cita outro nome de licença.',
-    rodape(f.licenca.cmd),
   ].join('\n'),
 
   /* Regras de partida, lidas das constantes. */
@@ -685,23 +641,6 @@ const BLOCOS = {
     rodape(f.pessoas.cmd),
   ].join('\n'),
 
-  /* Licença — a resposta correta é a que está no arquivo LICENSE, e só ela. */
-  /* SEM link markdown para `LICENSE`: um link relativo `(LICENSE)` funciona no GitHub e
-     é LINK QUEBRADO no Docusaurus (`onBrokenLinks: 'throw'` derruba o build), porque
-     `LICENSE` não é uma rota do site. O mesmo bloco vive nos dois lugares, então ele só
-     pode conter markdown que sobrevive aos dois renderizadores. */
-  /* Sem nome identificado o bloco DIZ que não sabe. A versão anterior interpolava `null` e
-     seguia — e é assim que uma página publicada passa três dias afirmando a licença errada. */
-  licenca: (f) => [
-    f.licenca.nome
-      ? `O código está sob **${f.licenca.nome}** (${f.licenca.nomeLongo}) — é o que vale hoje, e a ` +
-        'fonte é o arquivo `LICENSE` na raiz do repositório. Nenhum outro arquivo tem autoridade sobre isso.'
-      : '⚠️ **A licença não foi identificada.** O `LICENSE` da raiz não casa com nenhum nome conhecido do ' +
-        '`tools/gen-docs.mjs`. Enquanto isso não for resolvido, esta página **não responde** qual é a licença — ' +
-        'leia o arquivo `LICENSE` direto no repositório.',
-    rodape(f.licenca.cmdNome),
-  ].join('\n'),
-
   /* Validação dos ponteiros arquivo:linha escritos à mão na prosa. Um ponteiro que aponta
      para além do fim do arquivo é a versão barata do mesmo defeito que este script combate. */
   ponteiros: () => {
@@ -831,6 +770,159 @@ const BLOCOS_EN = {
   pessoas: (f) => [`**${f.pessoas.humanos} human author identities** sign commits in this branch: ${f.pessoas.nomes.map((n) => `\`${n}\``).join(', ')}. Automated identities are excluded. A Git author name is not necessarily one unique person.`, rodapeEn(f.pessoas.cmd)].join('\n'),
 };
 
+/* ── RAIZ EM INGLÊS: README.md, AGENTS.md e CONTRIBUTING.md ─────────────────────
+   Desde 2b79e814f (16/11) as três páginas da raiz são inglesas, e os blocos gerados
+   delas foram traduzidos À MÃO sem traduzir este gerador: `npm run docs` os reescrevia
+   em português e o release seguinte (alpha.150/151) de fato reescreveu. A redação é a da
+   tradução da raiz, não a de BLOCOS_EN (o site em inglês tem frases próprias); o rodapé
+   do README diz "Generated by", o de AGENTS/CONTRIBUTING "Block generated by", como a
+   tradução publicou. Os blocos só da raiz (`zonas`, `licenca`, `licenca_pontos`) moram
+   só aqui; os que o site PT também usa continuam em BLOCOS. */
+const rodapeReadme = (cmd) => `\n> Generated by \`node tools/gen-docs.mjs\`. Source: \`${cmd}\`\n`;
+const BLOCOS_RAIZ = {
+  numeros: (f) => [
+    '| What | How much | Where to check |',
+    '|---|---:|---|',
+    `| Game code | ${numEn(f.jogo.linhas)} lines in ${f.jogo.arquivos} files | \`git ls-files public/js/*.js \\| xargs wc -l\` |`,
+    `| \`game.js\` | **${numEn(f.jogo.porArquivo['game.js'])}** lines | \`wc -l public/js/game.js\` |`,
+    `| \`main.js\` | ${numEn(f.jogo.porArquivo['main.js'])} lines | \`wc -l public/js/main.js\` |`,
+    `| Weapons with GLB | ${f.assets.armas} | \`git ls-files 'public/models/weapons/*.glb' \\| wc -l\` |`,
+    `| Character GLBs | ${f.assets.personagens} | \`git ls-files 'public/models/characters/*.glb' \\| wc -l\` |`,
+    `| GLB props | ${f.assets.props} | \`git ls-files 'public/models/props/*.glb' \\| wc -l\` |`,
+    `| Versioned animation clips | ${numEn(f.assets.anims)} | \`git ls-files public/models/anims \\| wc -l\` |`,
+    `| Playable characters | ${f.elenco.total}, in ${f.elenco.faccoes} groups | \`CHARACTERS\` array in \`characters.js\` |`,
+    `| Maps in the menu | ${f.mapas.total} | \`MAPS\` minus \`MAPAS_PARADOS\` |`,
+    `| Visual harnesses in HTML | ${f.portao.arnesesHtml} | \`git ls-files 'public/*.html' \\| wc -l\` |`,
+    `| Harness scripts | ${f.portao.scriptsEval} | \`git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \\| wc -l\` |`,
+    `| Pipeline scripts | ${f.portao.scriptsTools} | \`git ls-files 'tools/*.mjs' \\| wc -l\` |`,
+    `| Written starter tasks | ${f.issues.escritas} | \`git ls-files 'docs/issues/[0-9]*.md' \\| wc -l\` |`,
+    `| Version | \`${f.versao.jogo}\` | \`public/js/version.js\`${f.versao.concordam ? ' and `package.json` (matching)' : ' — **DIFFERS from `package.json`: `' + f.versao.pacote + '`**'} |`,
+    rodapeReadme('the command in each row\'s right-hand column'),
+  ].join('\n'),
+
+  /* Mesmo recorte de 3 colunas do bloco PT (cabe no Docusaurus a 1200 px). */
+  stack: (f) => [
+    '| Layer | Tool | Version |',
+    '|---|---|---|',
+    `| 3D engine (WebGL) | **Three.js**, vendored | \`${f.stack.three}\` |`,
+    `| Game | Vanilla ES modules, **zero build** | ${v(f.jogo.arquivos)} files |`,
+    `| Site | **Astro** with SSR | \`${f.stack.astro}\` |`,
+    `| Hosting | **Vercel** adapter | \`${f.stack.adapter}\` |`,
+    `| Database | **Managed Postgres** (RLS; private schema, outside the repo) | \`${f.stack.supabase}\` |`,
+    `| Browser in test harnesses | **Playwright** | \`${f.stack.playwright}\` |`,
+    `| GLB pipeline | **gltf-transform** | \`${f.stack.gltfTransform}\` |`,
+    `| Mesh compression | **meshoptimizer** | \`${f.stack.meshopt}\` |`,
+    `| Imaging (build and API) | **sharp** · **resvg** | \`${f.stack.sharp}\` · \`${f.stack.resvg}\` |`,
+    `| This documentation | **Docusaurus** | \`${f.stack.docusaurus}\` |`,
+    `| CI runtime | **Node** | \`${f.stack.node}\` |`,
+    '',
+    'Three.js comes from `public/vendor/three.module.js` (**no CDN, no npm at runtime**). ' +
+    'Astro and Vercel come from `package.json` + `astro.config.mjs` + `vercel.json`. ' +
+    `Of the scripts in \`tools/\`, **${v(f.pipeline.playwright)}** import Playwright, ` +
+    `**${v(f.pipeline.gltf)}** import gltf-transform and **${v(f.pipeline.meshopt)}** import meshoptimizer.`,
+    rodapeReadme('dependencies/devDependencies in package.json · REVISION in public/vendor/three.module.js'),
+  ].join('\n'),
+
+  regras: (f) => [
+    '| Rule | Value | Constant |',
+    '|---|---|---|',
+    `| Groups · characters | ${f.elenco.faccoes} · ${f.elenco.total} (${Object.entries(f.elenco.porFaccao).sort().map(([k, n]) => `${k} ${n}`).join(' · ')}) | \`CHARACTERS\` |`,
+    `| Maps in the menu | ${f.mapas.total} — ${f.mapas.emRodadas} open in rounds, **${f.mapas.emCaptura} in capture** | \`MAPS\` minus \`MAPAS_PARADOS\` |`,
+    `| Respawn | ${f.regras.respawn} s | \`RESPAWN_DELAY\` |`,
+    `| Round | ${f.regras.roundTime} s, ${f.regras.roundsToWin} wins | \`ROUND_TIME\` / \`ROUNDS_TO_WIN\` |`,
+    /* Alvo da captura = todas as bandeiras do mapa: ver o comentário do `regras` em BLOCOS. */
+    `| Capture | target = **all flags on the map**, ${f.regras.ctfRounds} rounds (${f.regras.ctfMatchTime} s safety net) | \`capsToWin = ctfPts.length\` / \`CTF_ROUNDS_TO_WIN\` |`,
+    `| Health regeneration | **${f.regras.regenLigado === false ? 'OFF — `?regen=1` re-enables it' : 'ON by default'}** | \`REGEN\` |`,
+    `| Ranking / \`/u/\` pages | **${f.regras.rankingOn ? 'ON' : 'OFF — controlled by a flag, can be restored in one line'}** | \`RANKING_ON\` in \`src/lib/site.ts\` |`,
+    rodapeReadme('constants in public/js/game.js · RANKING_ON in src/lib/site.ts'),
+  ].join('\n'),
+
+  mapas: (f) => [
+    '| Id | Menu name | Opens in | File in `public/js/` | Lines |',
+    '|---|---|---|---|---:|',
+    ...f.mapas.registrados.map((m) => {
+      const arq = m.arquivo;
+      return `| \`${m.id}\` | ${m.nome} | ${m.ctf ? '**capture**' : 'rounds'} | \`${arq || '—'}\` | ${arq ? v(numEn(linhas('public/js/' + arq))) : '—'} |`;
+    }),
+    '',
+    `**${f.mapas.total} maps in the menu** — ${f.mapas.emRodadas} open in rounds and ${f.mapas.emCaptura} in capture. ` +
+    '`ctfMode` **opens** the map in capture mode, but does not lock it: the player can switch in the menu (this is `MOD1`). ' +
+    `There are ${f.mapas.arquivosNoDisco} \`map_*.js\` files in \`public/js/\`; maps in \`MAPAS_PARADOS\` are left out of the menu.`,
+    rodapeReadme('MAPS object minus MAPAS_PARADOS in public/js/maps.js'),
+  ].join('\n'),
+
+  /* Licença — a resposta correta é a que está no arquivo LICENSE, e só ela. */
+  /* SEM link markdown para `LICENSE`: um link relativo `(LICENSE)` funciona no GitHub e
+     é LINK QUEBRADO no Docusaurus (`onBrokenLinks: 'throw'` derruba o build), porque
+     `LICENSE` não é uma rota do site. Só markdown que sobrevive aos dois renderizadores. */
+  /* Sem nome identificado o bloco DIZ que não sabe. A versão anterior interpolava `null` e
+     seguia — e é assim que uma página publicada passa três dias afirmando a licença errada. */
+  licenca: (f) => [
+    f.licenca.nome
+      ? `The code is licensed under **${f.licenca.nome}** (${f.licenca.nomeLongo}) — this is the license in effect today, and the ` +
+        'source of truth is the `LICENSE` file at the repository root. No other file has authority over this.'
+      : '⚠️ **The license could not be identified.** The root `LICENSE` does not match any name known to ' +
+        '`tools/gen-docs.mjs`. Until this is resolved, this page **does not say** which license applies — ' +
+        'read the `LICENSE` file directly in the repository.',
+    rodapeReadme(f.licenca.cmdNome),
+  ].join('\n'),
+
+  /* AS DUAS ZONAS (mais o arnês). É a primeira coisa que um agente precisa saber antes de
+     escrever uma linha, e é a que mais gente escreve à mão errado — por isso os dois lados
+     da fronteira vêm MEDIDOS. O porquê de cada regra é conhecimento humano e mora na doc;
+     aqui só o tamanho e a regra em uma linha. */
+  zonas: (f) => [
+    '| Zone | What it is | Measured size | Rule |',
+    '|---|---|---|---|',
+    `| \`public/\` | the **game** | ${v(f.jogo.arquivos)} \`.js\` files, ${v(numEn(f.jogo.linhas))} lines · vendored Three.js \`${f.stack.three}\` | Raw ES modules, **zero build**, no runtime dependencies |`,
+    `| \`src/\` | the **site** | ${v(f.site.paginas)} \`.astro\` pages, ${v(f.site.apis)} \`/api\` routes · Astro \`${f.stack.astro}\` | Frameworks are welcome; \`service_role\` only on the server |`,
+    `| \`tools/\` | the **harness** | ${v(f.portao.scriptsEval)} scripts in \`tools/eval/\`, ${v(f.portao.scriptsTools)} in \`tools/\` | Plain Node: starts the real game without a browser |`,
+    '',
+    f.site.indexHtml
+      ? '⚠️ **`public/index.html` exists** — which contradicts the docs, which say otherwise on several pages. Check what serves what before trusting either one.'
+      : '**There is no `public/index.html`.** The game\'s HTML is `src/pages/index.astro`, served at the `/` route. ' +
+        'Serving `public/` statically delivers the visual harnesses, **not the game** — this is the trap that costs everyone their first hour.',
+    rodapeEn(f.site.cmd),
+  ].join('\n'),
+
+  scripts: (f) => [
+    '```bash',
+    `npm run check:fast   # ${f.scripts.checkFast}`,
+    '```',
+    '',
+    `\`package.json\` has **${v(f.scripts.total)} scripts**; the reason for each one lives in \`SCRIPTS.md\` (migrated from the \`//name\` keys on 08/18/2026) — that is where the rationale is.`,
+    rodapeEn(f.scripts.cmd),
+  ].join('\n'),
+
+  /* AS SUPERFÍCIES DA LICENÇA — todo arquivo que REPETE o nome da licença e por isso muda
+     JUNTO com ela. Duas listas escritas à mão já tentaram enumerar isto (README.md e
+     `docs/historico/plans/08 §3`) e as duas esquecem lugares reais. A lista de superfícies é decisão
+     humana (vive no topo deste script); ONDE cada uma nomeia a licença é medido. */
+  licenca_pontos: (f) => [
+    `| Surface | File | Where it says \`${f.licenca.atual || '?'}\` |`,
+    '|---|---|---|',
+    /* Contagem, não número de linha: o número desloca a cada inserção acima e desatualiza
+       o bloco sozinho. A régua afirma que a superfície NOMEIA a licença — e isso não
+       depende de onde o texto caiu no arquivo. */
+    ...f.licenca.superficies.map((s) => `| ${s.rotulo} | \`${s.arquivo}\` | ${
+      !s.existe ? '**file does not exist**'
+        : s.linhas.length ? `${s.linhas.length}×`
+          : '— (does not name the license)'}  |`),
+    '',
+    `**${f.licenca.superficies.reduce((a, s) => a + s.linhas.length, 0)} occurrences** of ` +
+    `\`${f.licenca.atual}\` across **${f.licenca.superficies.filter((s) => s.linhas.length).length}** of the ` +
+    `${f.licenca.superficies.length} declared surfaces. Changing the license means changing **all of them in the same commit**: ` +
+    'changing only half is worse than changing none, because each file would give a different answer to the same question.',
+    '',
+    f.licenca.outrasMencoes.length
+      ? `**Other license names mentioned on these surfaces:** ${f.licenca.outrasMencoes.map((m) => `\`${m.nome}\` in \`${m.arquivo}\` (${m.linhas.length}×)`).join(', ')}. ` +
+        'Mentioning is not declaring — these lines are migration history or credits for third-party dependencies. ' +
+        `The rule remains the same: **only \`LICENSE\` declares the license**, and today it says \`${f.licenca.atual}\`.`
+      : 'No surface mentions another license name.',
+    rodapeEn(f.licenca.cmd),
+  ].join('\n'),
+};
+
 /* ═══════════════════════════════════════════════════════════ MOTOR
    Acha os marcadores nos arquivos, reescreve o miolo, preserva o resto. */
 
@@ -841,16 +933,13 @@ const BLOCOS_EN = {
    O contrato agora é dos dois lados — o conteúdo é gerado E o lugar é declarado. */
 const COLOCACAO = {
   versao_atual: ['CHANGELOG.md'],
-  numeros: ['README.md', 'docs/docs/comecando.md'],
-  regras: ['README.md', 'docs/docs/comecando.md'],
-  mapas: ['README.md', 'docs/docs/comecando.md', 'docs/docs/colaborar.md'],
+  numeros: ['docs/docs/comecando.md'],
+  regras: ['docs/docs/comecando.md'],
+  mapas: ['docs/docs/comecando.md', 'docs/docs/colaborar.md'],
   scripts: ['docs/docs/comecando.md'],
-  zonas: ['AGENTS.md'],
-  stack: ['README.md', 'docs/docs/stack.md'],
+  stack: ['docs/docs/stack.md'],
   assets: ['docs/docs/stack.md'],
   skills: ['docs/docs/stack.md'],
-  licenca: ['README.md'],
-  licenca_pontos: ['CONTRIBUTING.md'],
   arquivos: ['docs/docs/arquitetura.md'],
   ponteiros: ['docs/docs/arquitetura.md'],
   invariantes: ['docs/docs/quality-gates.md'],
@@ -887,9 +976,22 @@ const COLOCACAO_EN = {
   invariantes: ['docs/i18n/en/docusaurus-plugin-content-docs/current/quality-gates.md'],
   pessoas: ['docs/i18n/en/docusaurus-plugin-content-docs/current/colaborar.md'],
 };
+/* A raiz (README/AGENTS/CONTRIBUTING) é inglesa: arquivo listado aqui não pode estar em
+   COLOCACAO, senão as duas localizações reescrevem o mesmo marcador. */
+const COLOCACAO_RAIZ = {
+  numeros: ['README.md'],
+  stack: ['README.md'],
+  regras: ['README.md'],
+  mapas: ['README.md'],
+  licenca: ['README.md'],
+  zonas: ['AGENTS.md'],
+  scripts: ['AGENTS.md'],
+  licenca_pontos: ['CONTRIBUTING.md'],
+};
 const LOCALIZACOES = [
   { prefixo: '', blocos: BLOCOS, colocacao: COLOCACAO },
   { prefixo: 'en:', blocos: BLOCOS_EN, colocacao: COLOCACAO_EN },
+  { prefixo: 'raiz:', blocos: BLOCOS_RAIZ, colocacao: COLOCACAO_RAIZ },
 ];
 const ARQUIVOS_ALVO = [...new Set(LOCALIZACOES.flatMap((l) => Object.values(l.colocacao).flat()))];
 
@@ -948,7 +1050,8 @@ function aplicar(fatos) {
   const semLugar = [];
   const faltando = [];                                                          // colocação declarada, marcador ausente
   const semBloco = [];
-  const semClasse = Object.keys(BLOCOS).filter((nome) => !['volatil', 'misto', 'estrutural', 'autoria'].includes(CLASSE[nome]));
+  const semClasse = [...new Set(LOCALIZACOES.flatMap((l) => Object.keys(l.blocos)))]
+    .filter((nome) => !['volatil', 'misto', 'estrutural', 'autoria'].includes(CLASSE[nome]));
   for (const local of LOCALIZACOES) {
     for (const nome of Object.keys(local.blocos)) if (!local.colocacao[nome]) semLugar.push(local.prefixo + nome);
     for (const [nome, arqs] of Object.entries(local.colocacao)) {
