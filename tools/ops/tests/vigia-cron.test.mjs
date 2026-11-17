@@ -134,5 +134,7 @@ test('o deploy instala exatamente os segredos que ALVOS lê, sem ecoar valor', (
   }
   assert.match(s, /wrangler@[\d.]+ deploy --config workers\/vigia-cron\/wrangler\.toml --secrets-file/);
   assert.match(s, /- 'workers\/vigia-cron\/\*\*'/);
+  const teste = s.indexOf('run: node --test tools/ops/tests/vigia-cron.test.mjs');
+  assert.ok(teste > 0 && teste < s.indexOf(' deploy --config'), 'o deploy publica sem rodar este contrato antes (o ops:test não roda no pr-fast)');
   assert.doesNotMatch(s, /echo[^\n]*\$\{?GITHUB_TOKEN_/, 'deploy ecoa token');
 });
