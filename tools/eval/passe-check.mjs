@@ -43,6 +43,9 @@
                            e tenta de novo, outro erro para a fila; resumo somado da trilha.
    PS14 partida         · acompanharPartidaPasse guarda o XP de antes e liquida de novo duas vezes,
                            a segunda ~8 s depois (MP chega atrasado), sempre forçada.
+   PS15 festa-por-conta · tp/passe-festa.js (lido, sem DOM): troca de conta fecha a celebração e
+                           descarta o level-up e os avisos pendentes; novidade de outra conta é
+                           ignorada. No navegador: passe-browser.mjs, PB19.
 
    Uso: node tools/eval/passe-check.mjs [--mutante=<id> [--espera-reprovar]]
      --espera-reprovar  sai 0 só se o mutante derrubar a cláusula que ele mira
@@ -94,6 +97,9 @@ const MUTANTES = {
   'resgatar-tudo-sem-limite': ['PS13', 'public/js/passe.js', "if (e.message !== 'rate_limited' || tentativa >= 3) throw e;", 'throw e;'],
   'partida-sem-forcar': ['PS14', 'public/js/passe.js', 'void carregarPasse({ forcar: true }); }, ms);', 'void carregarPasse(); }, ms);'],
   'partida-uma-vez': ['PS14', 'public/js/passe.js', 'PASSE_ATRASOS_PARTIDA = Object.freeze([4000, 12000]);', 'PASSE_ATRASOS_PARTIDA = Object.freeze([4000]);'],
+  'festa-vaza-conta': ['PS15', 'public/js/tp/passe-festa.js', "  document.addEventListener('cs-account-change', esquecerConta);\n", '\n'],
+  'festa-guarda-fila': ['PS15', 'public/js/tp/passe-festa.js', '  fila = null;\n  pendentes.length = 0;\n', '\n'],
+  'novidade-de-outra-conta': ['PS15', 'public/js/tp/passe-festa.js', '    if (!conta || conta !== passeConta()) return;\n', '\n'],
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -584,6 +590,19 @@ await clausula('PS14', 'partida: XP de antes guardado, duas liquidações força
   await tick(30);
   assert.equal(gets(), 1, 'visitante: o fim de partida parou de perguntar ao servidor');
   atrasosGet = [];
+});
+
+await clausula('PS15', 'festa-por-conta: nada da conta anterior chega na conta nova', async () => {
+  const festa = ler('public/js/tp/passe-festa.js');
+  const corpo = (nome) => { const i = festa.indexOf(`function ${nome}(`); assert.ok(i >= 0, `função ${nome} ausente`); return festa.slice(i, festa.indexOf('\n}\n', i)); };
+  const ligar = corpo('ligarFestaPasse'), esquecer = corpo('esquecerConta');
+  assert.match(ligar, /addEventListener\('cs-account-change', esquecerConta\)/, 'troca de conta não limpa a celebração pendente');
+  assert.match(esquecer, /fila = null;/, 'troca de conta mantém o level-up pendente da conta anterior');
+  assert.match(esquecer, /pendentes\.length = 0;/, 'troca de conta mantém os avisos de missão da conta anterior');
+  assert.match(esquecer, /festa\?\.open\) festa\.close\(\)/, 'troca de conta deixa a celebração da conta anterior aberta');
+  const novidade = ligar.slice(ligar.indexOf('PASSE_NOVIDADE'), ligar.indexOf('});', ligar.indexOf('PASSE_NOVIDADE')));
+  assert.match(novidade, /if \(!conta \|\| conta !== passeConta\(\)\) return;/, 'novidade de outra conta entra na fila');
+  assert.ok(novidade.indexOf('return;') < novidade.indexOf('fila ='), 'a fila é montada antes de conferir a conta');
 });
 
 const alvo = MUT ? MUTANTES[MUT][0] : '';

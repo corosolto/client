@@ -3,7 +3,7 @@
    conta+temporada no localStorage) e do marco de fim de partida (acompanharPartidaPasse); nada aqui
    pede XP nem decide nível. Régua: tools/eval/passe-browser.mjs (PB12-PB15). */
 import { tr, frase } from '../i18n.js';
-import { passeEstado, resgatarTodos, resgatandoTodos, marcarNivelVisto, passePartida, progressoNivel, resumirRecompensas,
+import { passeEstado, passeConta, resgatarTodos, resgatandoTodos, marcarNivelVisto, passePartida, progressoNivel, resumirRecompensas,
   PASSE_EVENTO, PASSE_NOVIDADE } from '../passe.js';
 import { abrirPasse, passeAberto, fecharPasse, premio, elementoResumo, mensagemErro, numero, NOMES_MISSAO } from './passe.js';
 
@@ -32,6 +32,8 @@ function contar(el, de, para, ms, formato = String) {
 }
 
 /* ---------- celebração de nível ---------- */
+/* fila: o level-up pendente, sempre com a conta dona (detail.conta do PASSE_NOVIDADE). Conta trocada
+   descarta a fila, os avisos e a celebração aberta: nada de uma conta aparece para outra. */
 let festa = null, fila = null, liberada = false;
 
 function montarFesta() {
@@ -191,18 +193,31 @@ function limparResultado() {
   raiz.hidden = true; raiz.replaceChildren(); delete raiz.dataset.ganho; raiz.style.removeProperty('--p-atual');
 }
 
+/* Conta trocou (login, logout): celebração aberta fecha, level-up e avisos pendentes da conta anterior
+   somem, e o bloco do resultado (marco de partida da conta anterior) também. */
+function esquecerConta() {
+  fila = null;
+  pendentes.length = 0;
+  if (festa?.open) festa.close();
+  if (avisos) { avisos.replaceChildren(); try { avisos.hidePopover(); } catch { /* já fechado */ } }
+  limparResultado();
+}
+
 let ligado = false;
 export function ligarFestaPasse() {
   if (ligado) return;
   ligado = true;
   document.addEventListener(PASSE_NOVIDADE, (e) => {
-    const { subiu, missoes } = e.detail || {};
-    if (subiu) fila = fila ? { ...subiu, de: Math.min(fila.de, subiu.de), boasVindas: fila.boasVindas || subiu.boasVindas,
-      niveis: subiu.de <= fila.de ? subiu.niveis : [...fila.niveis, ...subiu.niveis.filter((l) => !fila.niveis.some((x) => x.n === l.n))] } : subiu;
-    for (const q of missoes || []) if (!pendentes.some((x) => x.id === q.id)) pendentes.push(q);
+    const { subiu, missoes, conta } = e.detail || {};
+    if (!conta || conta !== passeConta()) return;
+    if (fila && fila.conta !== conta) fila = null;
+    if (subiu) fila = fila ? { ...subiu, conta, de: Math.min(fila.de, subiu.de), boasVindas: fila.boasVindas || subiu.boasVindas,
+      niveis: subiu.de <= fila.de ? subiu.niveis : [...fila.niveis, ...subiu.niveis.filter((l) => !fila.niveis.some((x) => x.n === l.n))] } : { ...subiu, conta };
+    for (const q of missoes || []) if (!pendentes.some((x) => x.id === q.id)) pendentes.push({ ...q, conta });
     mostrarMissoes();
     tentarFesta();
   });
+  document.addEventListener('cs-account-change', esquecerConta);
   document.addEventListener(PASSE_EVENTO, blocoResultado);
   document.addEventListener('cs-match-end', limparResultado);
   /* lobby de volta, resultado na tela, <dialog> fechado: tenta de novo o que ficou na fila. Observa só

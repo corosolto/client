@@ -30,6 +30,8 @@
          aria-live), e só ela.
      PB18 pós-partida: na tela de resultado, "+N XP do passe" com a liquidação de ~4 s e de novo com a
          de ~12 s (MP ingerido com atraso).
+     PB19 conta trocada: level-up da conta A enfileirado (um <dialog> segura a celebração); a conta B
+         entra antes de abrir e não vê a celebração, os níveis nem as recompensas da A.
    Uso (servidor próprio; um navegador por vez):
      node tools/eval/serve.mjs 9431 &
      BASE=http://127.0.0.1:9431 tools/eval/with-browser-lock.sh node tools/eval/passe-browser.mjs [--mutantes]
@@ -83,6 +85,7 @@ const MUTANTES = {
   'missao-repete': ['PB17', /\/js\/passe\.js/, (t) => t.replace('.filter((q) => q.done && !feitas.has(q.id))', '.filter((q) => q.done)')],
   'partida-uma-vez': ['PB18', /\/js\/passe\.js/, (t) => t.replace('Object.freeze([4000, 12000])', 'Object.freeze([4000])')],
   'pos-partida-sem-bloco': ['PB18', /\/js\/tp\/passe-festa\.js/, (t) => t.replace('  document.addEventListener(PASSE_EVENTO, blocoResultado);\n', '\n')],
+  'festa-vaza-conta': ['PB19', /\/js\/tp\/passe-festa\.js/, (t) => t.replace("  document.addEventListener('cs-account-change', esquecerConta);\n", '\n')],
 };
 
 /* Conta da régua (o /api/social-auth abaixo) e a memória de novidades dela (passe.js): por padrão o
@@ -558,6 +561,35 @@ async function medir(mutante = '') {
     add('PB18', /\+180 XP do passe/.test(primeira) && /\+300 XP do passe/.test(segunda.texto) && Number(segunda.p) > 0 && segunda.vivo === 'polite',
       `resultado: 1ª liquidação "${primeira.slice(0, 60)}"; 2ª "${segunda.texto.slice(0, 60)}", barra --p=${segunda.p}`);
     add('PB0@festa', !erros.length, erros.length ? `erros de página: ${erros.join(' | ')}` : 'sem erro de página');
+    await ctx.close();
+  }
+  /* Sessão J: a conta A sobe de nível com a celebração presa atrás de outro <dialog>; a conta B entra
+     antes de ela abrir. B (nível 10 já visto) não pode ver nada da A. */
+  if (quer('PB19')) {
+    const mock = mockNoAr({ autenticado: true, xp: 16750, claimed: [] });
+    const { page, ctx, erros } = await abrir({ w: 1280, h: 720, mock, mutante, anuncioVisto: true });
+    const memoria = (conta, level) => page.evaluate(({ conta, level }) => {
+      const dia = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+      const d = new Date(`${dia}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+      const todas = ['login', 'play_3', 'win_1', 'mp_1', 'days_5', 'win_10', 'mp_10'];
+      localStorage.setItem(`cs-passe-memoria:${conta}:sessao-da-treta-s1`, JSON.stringify({ level, xp: 0, dia, semana: d.toISOString().slice(0, 10), diarias: todas, semanais: todas }));
+    }, { conta, level });
+    const entra = (id) => page.evaluate((id) => document.dispatchEvent(new CustomEvent('cs-account-change', { detail: { authenticated: true, profile: { id, nick: 'Regua' } } })), id);
+    await page.evaluate(() => { const d = document.createElement('dialog'); d.id = 'regua-trava'; document.body.append(d); d.showModal(); });
+    await memoria(CONTA, 0);   // A: primeira vez na temporada, o nível 10 ainda não foi visto
+    await entra(CONTA);
+    await page.waitForTimeout(2000);
+    const presa = await page.evaluate(() => !document.getElementById('tp-passe-festa')?.open);
+    await memoria('regua-conta-b', 10);   // B: nível 10 já visto
+    await entra('regua-conta-b');
+    await page.waitForTimeout(2000);
+    await page.evaluate(() => { const d = document.getElementById('regua-trava'); d.close(); d.remove(); });
+    await page.waitForTimeout(1500);
+    const depois = await page.evaluate(() => { const d = document.getElementById('tp-passe-festa'); return { aberta: !!d?.open, de: d?.dataset.de || '', para: d?.dataset.para || '' }; });
+    await foto(page, 'conta-trocada-sem-festa', mutante);
+    add('PB19', presa && !depois.aberta,
+      `celebração da conta A ${presa ? 'presa atrás do diálogo' : 'ABRIU antes da troca (cenário não montado)'}; conta B entrou: ${depois.aberta ? `VIU A CELEBRAÇÃO DA A (${depois.de} -> ${depois.para})` : 'nenhuma celebração'}`);
+    add('PB0@conta', !erros.length, erros.length ? `erros de página: ${erros.join(' | ')}` : 'sem erro de página');
     await ctx.close();
   }
   return r;
