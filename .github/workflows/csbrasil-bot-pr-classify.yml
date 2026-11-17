@@ -318,7 +318,9 @@ jobs:
       # Política de merge DEPOIS das labels: o automerge (workflow_dispatch, versão do
       # default branch) lê o estado que este run acabou de escrever, publica
       # `politica-merge` e arma/desarma o auto-merge nativo. É o único gatilho dele.
+      # PR fechado (label/edição depois do merge) não tem política a decidir.
       - name: Reavalia a política de merge
+        if: github.event.pull_request.state != 'closed'
         run: gh workflow run csbrasil-bot-automerge.yml --repo "$GITHUB_REPOSITORY" -f pr_number="$PR_NUMBER"
 
   # Reclassifica os PRs abertos pelo caminho que TEM secret. Idempotente: o classify
