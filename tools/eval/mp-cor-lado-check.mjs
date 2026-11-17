@@ -52,6 +52,7 @@ const { ladosDe, podeNoLado } = await imp('characters.js');
 const { resolvePlayerSide } = await imp('net.js');
 const { makeNetcode } = await imp('netgame.js');
 const { PALETA, ESPELHO } = await imp('paleta.js');
+const { ehMapaJavaporcos } = await imp('maps.js');
 const outro = (s) => (s === 'E' ? 'B' : 'E');
 const AMBAR = '#ffb44d';   // inimigo revelado no radar (game.js _updateRadar)
 
@@ -81,7 +82,7 @@ if (gameSrc !== gameOrig) {
 const mainSrc = fs.readFileSync(path.join(RAIZ, 'public/js/main.js'), 'utf8');
 const m = /\n(  const charDef = CHARACTERS\.find\(c => c\.id === charId\) \|\| \{\};\n[\s\S]*?\n  const enemyFac = [^\n]*\n)/.exec(mainSrc);
 if (!m) { console.error('REPROVA (mp-cor-lado-check) — não achei a decisão de lado/facção do _startGame no main.js'); process.exit(1); }
-const identidade = new Function('CHARACTERS', 'charId', 'team', 'online', 'enemyFaction', 'currentEnemyFaction', 'podeNoLado', 'ladosDe', 'resolvePlayerSide',
+const identidade = new Function('CHARACTERS', 'charId', 'team', 'online', 'enemyFaction', 'currentEnemyFaction', 'podeNoLado', 'ladosDe', 'resolvePlayerSide', 'ehMapaJavaporcos', 'currentMap',
   `${m[1]}\n  return { faction, side, enemyFac };`);
 
 /* ── cores RGB ────────────────────────────────────────────────────────────────── */
@@ -99,7 +100,7 @@ const difMatiz = (a, b) => { const d = Math.abs(matiz(a) - matiz(b)); return Mat
 /* ── uma partida, medindo cada ponto que pinta com a cor do time ─────────────── */
 const textures = H.initTextures();
 function partida({ def, team, online, espelho = false }) {
-  const id = identidade(CHARACTERS, def.id, team, online, online ? outro(team) : undefined, null, podeNoLado, ladosDe, resolvePlayerSide);
+  const id = identidade(CHARACTERS, def.id, team, online, online ? outro(team) : undefined, null, podeNoLado, ladosDe, resolvePlayerSide, ehMapaJavaporcos, 'praca_poderes');
   H.seedRandom(12345);
   globalThis.__els = {};
   const g = new Game({

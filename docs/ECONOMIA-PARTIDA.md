@@ -149,8 +149,9 @@ O contrato abaixo foi implementado nos dois lados:
 
 - **Nó** (`corosolto/backend`, `game/room.js`): toda sala nasce com a loja ligada
   (`meta.economia: 1` no welcome; kill-switch `MP_ECONOMIA=0`). Estado por slot
-  (`_carteira`, `_compraAte`, `_desarmado`), crédito de abate e de rodada, recompra dos
-  bots (`compraDoBot`/`equipamentoDoBot`), drop da comprada na morte pelo `_kill` do jogo
+  (`_carteira`, `_compraAte`, `_desarmado`), crédito de abate, de rodada e de captura CTF
+  (`recompensaObjetivo` uma vez para cada corpo dentro do anel), recompra dos bots
+  (`compraDoBot`/`equipamentoDoBot`) e drop da comprada na morte pelo `_kill` do jogo
   (flag `_economiaPartida`), pedido `compra` validado com `motivoRecusa` (zona, tempo,
   saldo, posse, assinatura) com teto de 1 pedido/100 ms, resposta `compra-ok`/`compra-nack`
   e reboque v8 do snapshot (saldo, janela, colete/capacete/flash do próprio slot).

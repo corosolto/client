@@ -4,6 +4,9 @@
 # Cache de build: o zip fica em node_modules/.cache/csb-packs/ (a Vercel guarda a pasta
 # entre builds) sob chave URL+sha; sem a pasta (máquina local) o script baixa como antes.
 set -e
+PREFETCH_R2=0
+if [ "${1:-}" = "--prefetch-r2" ]; then PREFETCH_R2=1; shift; fi
+[ "$#" -eq 0 ] || { echo "uso: scripts/fetch-audio.sh [--prefetch-r2]" >&2; exit 2; }
 cd "$(dirname "$0")/.."
 
 # URL do zip do pacote. Configure pela env AUDIO_PACK_URL ou edite aqui
@@ -12,7 +15,7 @@ cd "$(dirname "$0")/.."
 # (decisão do dono: nenhum título legível em URL/zip). Fecha o BUG-19
 # (produção servia o pack de julho e todo som novo dava 404).
 URL="${AUDIO_PACK_URL:-https://github.com/corosolto/client/releases/download/audio-pack-v9/audio-pack.zip}"
-DEST="public/audio"
+DEST="${AUDIO_DEST:-public/audio}"
 AUTH_ARGS=()
 PACOTE_PRIVADO=0
 
@@ -23,7 +26,17 @@ case "$URL" in
     AUTH_ARGS=(-H "Authorization: Bearer ${BLOB_READ_WRITE_TOKEN}")
     PACOTE_PRIVADO=1
     ;;
+  # Cópia do pack privado no R2 (bucket corosolto-private): lida pelo wrangler com o token
+  # do deploy (CLOUDFLARE_API_TOKEN/CF_API_TOKEN + CLOUDFLARE_ACCOUNT_ID). Formato r2://bucket/chave.
+  r2://*/*)
+    : "${AUDIO_PACK_SHA256:?AUDIO_PACK_SHA256 ausente para verificar o pacote privado de audio}"
+    PACOTE_PRIVADO=1
+    ;;
 esac
+[ "$PREFETCH_R2" != 1 ] || [[ "$URL" == r2://* ]] || {
+  echo "--prefetch-r2 exige AUDIO_PACK_URL r2://..." >&2
+  exit 2
+}
 
 # O manifest que o jogo consome precisa de `mapSoundscapes` para todo mapa do
 # `maps.js` — sem isso o `world.sound` de cada mapa aponta pros `audio/ambiente/*`
@@ -44,14 +57,14 @@ prepara_ambiencia() {
   [ "$PACOTE_PRIVADO" = 1 ] || node tools/audio/ensure-map-soundscapes.mjs
 }
 
-if [ -f "$DEST/manifest.json" ] && [ "${VERCEL:-}" != "1" ]; then
+if [ "$PREFETCH_R2" != 1 ] && [ -f "$DEST/manifest.json" ] && [ "${VERCEL:-}" != "1" ]; then
   prepara_ambiencia
   echo "audio/ já configurado — nada a fazer."
   exit 0
 fi
 mkdir -p "$DEST"
-CACHE_DIR="node_modules/.cache/csb-packs"
-if [ "${VERCEL:-}" = "1" ]; then mkdir -p "$CACHE_DIR"; fi
+CACHE_DIR="${AUDIO_CACHE_DIR:-node_modules/.cache/csb-packs}"
+if [ "${VERCEL:-}" = "1" ] || [ "$PREFETCH_R2" = 1 ]; then mkdir -p "$CACHE_DIR"; fi
 # Chave = sha256 de (digest + URL inteira): URL longa não trunca nem colide com outra de prefixo igual.
 CACHE_ZIP="$CACHE_DIR/audio-$(printf '%s' "${AUDIO_PACK_SHA256:-}${URL}" | shasum -a 256 | cut -d' ' -f1).zip"
 confere_sha() {
@@ -63,10 +76,29 @@ if [ -f "$CACHE_ZIP" ] && confere_sha "$CACHE_ZIP"; then
 else
   rm -f "$CACHE_ZIP"
   echo "Baixando pacote de áudio de: $URL"
-  curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL \
-    "${AUTH_ARGS[@]}" "$URL" -o /tmp/csbrasil-audio.zip
+  if [[ "$URL" == r2://* ]]; then
+    rm -f /tmp/csbrasil-audio.zip
+    objeto="${URL#r2://}"
+    bucket="${objeto%%/*}"
+    key="${objeto#*/}"
+    if [ -z "$bucket" ] || [ -z "$key" ] || [ "$key" = "$objeto" ]; then
+      echo "AUDIO_PACK_URL R2 inválida: esperado r2://bucket/chave" >&2
+      exit 1
+    fi
+    CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-${CF_API_TOKEN:-}}" \
+      npx --no-install wrangler r2 object get "$key" --bucket="$bucket" --file /tmp/csbrasil-audio.zip --remote
+  else
+    curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL \
+      "${AUTH_ARGS[@]}" "$URL" -o /tmp/csbrasil-audio.zip
+  fi
   confere_sha /tmp/csbrasil-audio.zip
   if [ -d "$CACHE_DIR" ]; then cp /tmp/csbrasil-audio.zip "$CACHE_ZIP"; fi
+fi
+if [ "$PREFETCH_R2" = 1 ]; then
+  unzip -o -q /tmp/csbrasil-audio.zip -d "$DEST/"
+  [ -f "$DEST/manifest.json" ] || { echo "Pacote privado sem manifest.json" >&2; exit 1; }
+  echo "Pacote privado preparado no cache e extraído em $DEST: $CACHE_ZIP"
+  exit 0
 fi
 unzip -o -q /tmp/csbrasil-audio.zip -d "$DEST/"
 [ -f "$DEST/manifest.json" ] || cp "$DEST/manifest.example.json" "$DEST/manifest.json"
