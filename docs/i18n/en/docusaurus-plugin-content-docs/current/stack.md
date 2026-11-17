@@ -21,7 +21,7 @@ from `package.json`, `docs/package.json` and the vendored Three.js itself.
 |---|---|---|
 | 3D engine (WebGL) | **Three.js**, vendored | `r160` |
 | Game | vanilla ES modules, **zero build** | 218 files |
-| Site | **Astro** with SSR | `^7.1.1` |
+| Site | **Astro** with SSR | `^7.4.12` |
 | Hosting | **Vercel** adapter | `^11.0.6` |
 | Database | **managed Postgres** (RLS; private schema) | `^2.110.7` |
 | Browser checks | **Playwright** | `^1.62.1` |
