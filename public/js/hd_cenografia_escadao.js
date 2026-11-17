@@ -2,7 +2,8 @@
 // (|x| > 34 ou z fora de -46..52), itens de laje só em topo ≥ 2,6 m acima do piso jogável, fachada com saliência ≤ 12 cm (verga de
 // tijolo sobre os portões, relógio e eletroduto do beco oeste), postes novos fora de bounds (|x| = 19,3, entre o muro e o bairro) ou
 // vestindo os postes autorais de 16 cm (seção 22 cm) com nó de fiação nos do mirante, cabos e varais ≥ 2,4 m acima do piso
-// (travessias dos becos ≥ 3,7 m: cruzam de roldana a roldana), props de calçada < 0,8 m encostados em parede. Tudo sai em desliga().
+// (travessias dos becos ≥ 3,7 m: cruzam de roldana a roldana), props de calçada < 0,8 m encostados em parede, corrimão de cano à
+// direita dos 3 lances centrais (x 1,74, 6 cm dentro da borda). Tudo sai em desliga().
 import * as THREE from 'three';
 import { preloadMapProps, PropBatch } from './mapprops.js';
 import { soltaAoSubir } from './hd_cenografia_lajes.js';
@@ -60,12 +61,12 @@ function fundidor() {
   return F;
 }
 const catenaria = (A, B, barriga, n = 10) => { const pts = []; for (let i = 0; i <= n; i++) { const t = i / n, p = new THREE.Vector3().lerpVectors(A, B, t); p.y -= barriga * 4 * t * (1 - t); pts.push(p); } return pts; };
-// Cabos em fita: cinza-chumbo (0x3a3c3e e vizinhos) a 75 % contra o céu; preto puro de 1 px virava "corrente" pontilhada.
+// Cabos em fita: cinza-chumbo (0x3a3c3e e vizinhos), opacos; preto puro de 1 px virava "corrente" pontilhada.
 const ESCURO = 0x3a3c3e, CHUMBO2 = 0x34363a, TELECOM = 0x303234, QUENTE = 0x3e3a36, FERRO = 0x26221f;
 
 // Fios: fita virada para a câmera (2 vértices por ponto, abertos no vertex shader) com largura real perto e piso de 2·FIO_PX px
-// longe (tubo de 1 cm a 30 m virava linha pontilhada que cintila); borda com 1 px de alfa (premultiplicado, sem escrever
-// profundidade) e opacidade 0,75. Um draw call, sem luz: técnica do Córrego (fiosHD).
+// longe (tubo de 1 cm a 30 m virava linha pontilhada que cintila). Opaca e com profundidade (a 75 % o feixe de 7 cabos do relógio
+// fundia com a parede = cabo fantasma). Um draw call, sem luz: técnica do Córrego (fiosHD).
 const FIO_PX = 1.2;
 function fiador() {
   const pos = [], dir = [], lado = [], cor = [], idx = [], c = new THREE.Color();
@@ -93,7 +94,7 @@ function fiador() {
 }
 // hdRes = tamanho do buffer de desenho (atualizado em onBeforeRender, sem alocar): a escada de qualidade muda o pixel ratio.
 function materialFio(res) {
-  const mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, name: 'hd-fios', transparent: true, premultipliedAlpha: true, depthWrite: false, opacity: .75 });
+  const mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, name: 'hd-fios' });
   mat.onBeforeCompile = (s) => {
     s.uniforms.hdRes = res;
     s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute vec3 hdDir; attribute float hdLado; uniform vec2 hdRes; varying vec2 vHdBorda;')
@@ -105,11 +106,9 @@ function materialFio(res) {
         float hdPx = max(${FIO_PX.toFixed(2)}, abs(hdLado) * projectionMatrix[1][1] * hdRes.y * 0.5 / max(hdC.w, 0.05));
         vHdBorda = vec2(sign(hdLado), hdPx);
         gl_Position.xy += vec2(-hdT.y, hdT.x) * sign(hdLado) * hdPx * 2.0 / hdRes * hdC.w; }`);
-    // Alfa cai no último pixel da meia-largura (vHdBorda.y px): borda macia sem borrar o cabo visto de perto.
-    s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vHdBorda;')
-      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.a *= clamp((1.0 - abs(vHdBorda.x)) * vHdBorda.y, 0.0, 1.0);');
+    s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vHdBorda;');
   };
-  mat.customProgramCacheKey = () => 'hd-fios-escadao2';
+  mat.customProgramCacheKey = () => 'hd-fios-escadao3';
   return mat;
 }
 
@@ -252,6 +251,8 @@ function telhados(grupo, rng, topos, mat, mede) {
     const x = t.cx + paraDentro * Math.max(0, w / 2 - 1.2), z = t.cz + lado * Math.max(0, d / 2 - 1.2), azul = rng() < .68, pe = mede(x, z, t.y) - t.y;
     caixaDagua(F, x, t.y, z, rng, azul, pe);
     if (n % 3 === 0) { const ax = t.cx - paraDentro * Math.max(0, w / 2 - .6), az = t.cz - lado * Math.max(0, d / 2 - .6); antena(F, ax, mede(ax, az, t.y), az, rng); }
+    // Vergalhões de espera em toda laje ≥ 2 m, no canto oposto à caixa d'água (0,4 m da borda); as largas (> 3 m) sorteiam uma 2ª no meio.
+    if (w > 2) { const ex = t.cx - paraDentro * Math.max(0, w / 2 - .4), ez = t.cz - lado * Math.max(0, d / 2 - .4); esperas(F, ex, mede(ex, ez, t.y), ez, rng); }
     if (rng() < .3 && w > 3) { const ex = t.cx + (rng() - .5) * w * .5, ez = t.cz - lado * Math.max(0, d / 2 - .4); esperas(F, ex, mede(ex, ez, t.y), ez, rng); }
   }
   if (F.tris()) { const malha = new THREE.Mesh(F.geo(), mat); malha.name = 'hd-telhados'; grupo.add(malha); }
@@ -403,15 +404,29 @@ function noDeFiacao(F, W, p, rng) {
   return 21;
 }
 // Beco oeste, parede da pose (face x = −13,9, frente de z 10,4): o único trecho livre fica sob a veneziana (z 9,4–10,4, até 2,41 m).
-// Relógio a 1,55 m (0,65 m acima da rampa), eletroduto galvanizado descendo enterrado e um pedaço curto subindo até uma caixa de
-// passagem encostada no peitoril (2,41 m); os 3 fios do gato entram nessa caixa. Sem rng: o sorteio da fachada não muda.
-function becoOeste(F) {
+// Relógio a 1,55 m (0,65 m acima da rampa) com visor de medidor (disco claro, ponteiro, 3 dígitos), eletroduto galvanizado descendo
+// enterrado e um pedaço curto subindo até uma caixa de passagem encostada no peitoril (2,41 m); 3 fios do gato entram nessa caixa e
+// 7 cabos em fita saem dela sob o peitoril (2,3–2,4 m) até uma roldana na pilastra de z 9,29, sobem colados a ela e cruzam a fachada a
+// 3,9 m (acima da veneziana e do portão) até a pilastra de z 11,51. Fio de extensão laranja desce do relógio e corre pelo pé da parede
+// até os caixotes no pé do portão (z 11,0). Sem rng: o sorteio da fachada não muda.
+function becoOeste(F, W, chao) {
   const x = -13.9, z = 9.75, y = 1.55;
   relogio(F, x, y, z, 1, 0);
+  F.cor(0xd9d7cc).torno(x + .11, y + .27, z, [[.03, 0], [.03, .006]], 10).cor(0x1a1b1d).caixa(x + .118, y + .27, z + .012, .004, .028, .004, 0, 0, .6)
+    .cor(0xf0efe8).caixa(x + .11, y + .12, z, .006, .024, .07).cor(0x1a1b1d).caixa(x + .115, y + .125, z - .02, .002, .014, .009).caixa(x + .115, y + .125, z, .002, .014, .009).caixa(x + .115, y + .125, z + .02, .002, .014, .009);
   F.cor(0x767978).tubo([V(x + .055, y - .02, z - .06), V(x + .055, .55, z - .06)], .016, 4).tubo([V(x + .055, y + .44, z + .06), V(x + .055, 2.31, z + .06)], .016, 4);
   F.cor(0x4a4c4e).caixa(x + .035, 2.31, z + .06, .07, .10, .12);
   F.cor(0x3a3d3f).caixa(x + .04, 1.0, z - .06, .06, .035, .09).caixa(x + .04, 2.2, z + .06, .06, .035, .09);
   for (let k = 0; k < 3; k++) { const a = z - .06 + k * .04; F.cor(k % 2 ? 0x15161a : 0x2a2420).tubo([V(x + .05, 2.32, a + .06), V(x + .085 + .02 * Math.sin(k * 2.0), 2.2, a + .01), V(x + .08, y + .46, a), V(x + .08, y + .37, a)], .006, 3); }
+  const R1 = roldana(F, x + .065, 2.36, 9.22, 1, 0, .03), R2 = roldana(F, x + .065, 3.9, 9.22, 1, 0, .03), R3 = roldana(F, x + .065, 3.95, 11.55, 1, 0, .03);
+  for (let k = 0; k < 7; k++) { const c = k % 2 ? ESCURO : CHUMBO2, r = .006 + .002 * (k % 2), dz = .012 * (k - 3), dy = .014 * (k % 4);
+    W.cor(c).cabo(V(x + .06, 2.33 + .01 * k, z + .02 + .014 * k), V(R1.x, R1.y + dy, R1.z + dz), .03 + .01 * (k % 3), r).cabo(V(R1.x + .004 * k, R1.y + dy, R1.z + dz), V(R2.x + .004 * k, R2.y + dy, R2.z + dz), 0, r)
+      .cabo(V(R2.x, R2.y + dy, R2.z + dz), V(R3.x, R3.y + dy, R3.z + dz), .10 + .03 * (k % 3), r); }
+  // Fio de extensão: sai pela base do relógio, pende 25 cm, corre pelo pé da parede (3 cm acima do chão) até o pé do portão.
+  const pts = [V(x + .09, y + .02, z + .10), V(x + .12, y - .25, z + .14), V(x + .10, chao(x + .1, z + .3) + .03, z + .3)];
+  for (let zz = z + .5; zz <= 11.05; zz += .25) pts.push(V(x + .08 + .02 * Math.sin(zz * 7.0), chao(x + .1, zz) + .025, zz));
+  pts.push(V(x + .25, chao(x + .25, 11.05) + .12, 11.05)); F.cor(0xb8552a).tubo(pts, .005, 3);
+  F.cor(0xe8e5dc).caixa(x + .25, chao(x + .25, 11.05) + .10, 11.05, .06, .035, .09, 0.3);
 }
 function duploT(F, x, z, base, topo, rot, rng) {
   const h = topo - base, cs = Math.cos(rot), sn = Math.sin(rot);
@@ -457,7 +472,7 @@ function postes(grupo, rng, mundo, mat, W) {
   for (const [a, b, barriga] of TRAVESSIAS) { const ux = Math.sign(b[0] - a[0]), uz = ux ? 0 : Math.sign(b[2] - a[2]);
     for (let n = 0; n < 2; n++) { fios++; W.cor(n ? ESCURO : QUENTE).cabo(roldana(F, a[0], a[1] + n * .10, a[2], ux, uz), roldana(F, b[0], b[1] + n * .10, b[2], -ux, -uz), barriga * (1 + .15 * n), .008); } }
   padrao(F, W, -2.8, 25.175, iso(por.A, -.7)); fios += 6;
-  fios += noDeFiacao(F, W, por.I, rng) + noDeFiacao(F, W, por.H, rng); becoOeste(F);
+  fios += noDeFiacao(F, W, por.I, rng) + noDeFiacao(F, W, por.H, rng); becoOeste(F, W, chao); fios += 21;
   const malha = new THREE.Mesh(F.geo(), mat); malha.name = 'hd-postes'; grupo.add(malha);
   return { postes: POSTES.length, fios };
 }
@@ -512,11 +527,14 @@ function toldo(F, rng, x0, x1, z, dz, yAlto, cores) {
   F.cor(0x5a5c5e).tubo([V(x0, yBaixo, z + dz * prof), V(x1, yBaixo, z + dz * prof)], .018, 4).tubo([V(x0, yAlto, z), V(x0, yBaixo, z + dz * prof)], .016, 4).tubo([V(x1, yAlto, z), V(x1, yBaixo, z + dz * prof)], .016, 4)
     .tubo([V(x0 + .15, yBaixo - .02, z + dz * prof), V(x0 + .15, yAlto - 1.0, z + dz * .02)], .014, 4).tubo([V(x1 - .15, yBaixo - .02, z + dz * prof), V(x1 - .15, yAlto - 1.0, z + dz * .02)], .014, 4);
 }
-// Porta de enrolar fechada (réguas de 8,5 cm, guias, capa de 12 cm) na face -z de uma parede; pé enferrujado, puxador no centro.
+// Porta de enrolar fechada na face -z de uma parede: lâminas contínuas de passo 8 cm de mundo (corpo 6,5 cm + lábio de 1,5 cm 25 % mais
+// claro, 6 mm à frente: a quebra de tom lê de longe), azul-aço desbotado (S ≈ 0,2 antes do AgX) com tom por lâmina ±4 %, sujeira
+// escurecendo os 35 cm de baixo e ferrugem crescente nos 40 cm (com respingo), guias em U de 7 cm, capa de 12 cm, puxador no centro.
 function portaDeEnrolar(F, rng, x0, x1, y0, z, alto) {
   const cx = (x0 + x1) / 2, w = x1 - x0; let i = 0;
-  for (let y = y0 + .02; y < y0 + alto - .08; y += .085, i++) F.cor(i < 3 ? 0x4a3f36 : 0x55606a, (i % 2 ? .92 : 1.04) * (.95 + rng() * .1)).caixa(cx, y, z - .02, w, .08, .025);
-  F.cor(0x3f4448).caixa(x0 - .03, y0, z - .035, .06, alto + .1, .06).caixa(x1 + .03, y0, z - .035, .06, alto + .1, .06).caixa(cx, y0 + alto, z - .06, w + .14, .22, .12);
+  for (let y = y0 + .02; y < y0 + alto - .08; y += .08, i++) { const ferr = Math.max(0, 1 - (y - y0) / .42) * (.6 + rng() * .4), suj = Math.max(0, 1 - (y - y0) / .35), t = (.96 + rng() * .08) * (1 - .22 * suj), cor = ferr > .35 ? 0x5a4634 : 0x58646f;
+    F.cor(cor, t * (1 - .25 * ferr)).caixa(cx, y, z - .02, w, .065, .025).cor(cor, t * 1.25 * (1 - .2 * ferr)).caixa(cx, y + .065, z - .026, w, .015, .031); }
+  F.cor(0x3f4448).caixa(x0 - .035, y0, z - .04, .07, alto + .1, .07).caixa(x1 + .035, y0, z - .04, .07, alto + .1, .07).caixa(cx, y0 + alto, z - .06, w + .14, .22, .12);
   F.cor(0x1e1f21).caixa(cx, y0 + .35, z - .045, .26, .03, .03);
 }
 // Placas pintadas à mão (texto genérico, sem marca): um canvas com uma linha por placa, tábua azul-escuro com letras tortas.
@@ -554,6 +572,7 @@ const PROPS = [
   ['cadeira_plastico', 12.9, 31.1, .78, .3], ['cadeira_plastico', -14.55, 29.2, .78, -2.7], ['cadeira_plastico', -11.3, 29.15, .78, 2.9],
   ['caixa_papelao', -17.3, 35.5, .42, .5], ['caixa_papelao', -17.0, 34.9, .38, -.9], ['caixote_madeira', 17.2, 24.8, .30, .2],
   ['cadeira_plastico', -13.3, 11.45, .78, -1.4], ['botijao_gas', 13.4, 11.3, .58, .7],
+  ['caixote_madeira', -13.55, 11.0, .30, .25], ['caixote_madeira', -13.55, 11.0, .30, -.15, .30], ['caixote_madeira', -13.5, 10.55, .30, .4],
   ['caixote_madeira', -2.7, -0.95, .30, .15], ['caixote_madeira', -2.7, -0.95, .30, -.2, .30], ['botijao_gas', -3.3, -1.0, .58, 1.1],
   ['cadeira_plastico', 1.25, -23.75, .78, 2.9], ['caixote_madeira', -2.05, -23.8, .30, .2], ['caixote_madeira', -2.05, -23.8, .30, -.4, .30], ['botijao_gas', 0.55, -23.72, .58, .4],
 ];
@@ -577,6 +596,13 @@ function vida(grupo, rng, topos, mat, vivo, mundo, criadas, W) {
   toldo(F, rng, -1.9, .4, -23.32, -1, H_TOP + 3.05, [0xa33a2e, 0xd8d2c0]);
   relogio(F, 1.95, H_TOP + 1.25, -23.3, 0, -1);
   F.cor(0x767978).tubo([V(1.9, H_TOP + 1.69, -23.355), V(1.9, H_TOP + 3.15, -23.355)], .016, 4);
+  // Corrimão de cano no lado direito dos 3 lances centrais (x = 1,74, 6 cm dentro da borda; o autoral fica à esquerda): montantes
+  // verticais (eixo Y) de 3 cm a cada 4 degraus com o pé no piso REAL amostrado (groundHeightAt; a rampa média afundava 9 cm no degrau),
+  // cano de Ø 4 cm a 0,94 m e cano baixo a 0,5 m paralelos à rampa, verde-escuro lascado; sem colisão (nonSolidSurface).
+  for (const [z1, base] of [[14.0, 0], [6.52, 2.52], [-1.96, 5.04]]) { const z0 = z1 - 3.48, sx = 1.74;
+    for (let i = 0; i <= 12; i += 4) { const z = z1 - i * .29 - .12, yr = base + 2.52 * Math.min(1, (z1 - z) / 3.48), yc = chao(sx, z), y = Number.isFinite(yc) && Math.abs(yc - yr) < .3 ? yc : yr;
+      F.cor(0x2f4a3a, .9 + .1 * (i % 8 ? 1 : 0)).caixa(sx, y, z, .03, base + .94 + 2.52 * (z1 - z) / 3.68 - y, .03).cor(0x6e6a62).caixa(sx, y, z, .09, .02, .09); }
+    F.cor(0x35543f).tubo([V(sx, base + .94, z1), V(sx, base + 2.52 + .94, z0 - .2)], .02, 5).cor(0x2f4a3a).tubo([V(sx, base + .5, z1), V(sx, base + 2.52 + .5, z0 - .2)], .014, 5); }
   const malha = new THREE.Mesh(F.geo(), mat); malha.name = 'hd-vida'; grupo.add(malha);
   // Placas pintadas à mão: empena leste do bar (x = -9, acima da faixa do corpo), ao lado da porta de enrolar do mirante e a
   // tabuleta de preços (0,62 x 0,46 m) entre a porta e o relógio da mercearia, a 1,55 m.
