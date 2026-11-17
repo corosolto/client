@@ -3,10 +3,14 @@ import argparse
 import hashlib
 import json
 import os
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PureWindowsPath
 import re
 import stat
 import tempfile
+
+def _vdf_path(path):
+    return str(path).replace('\\', '\\\\')
+
 
 
 def prepare(content, output, launch, platform, app_id, depot_id):
@@ -15,11 +19,15 @@ def prepare(content, output, launch, platform, app_id, depot_id):
     content, output = Path(content).resolve(), Path(output).resolve()
     if not content.is_dir() or output == content or content in output.parents:
         raise ValueError('Build deve existir; saída precisa ficar fora do conteúdo do depot.')
-    if any(c in str(content) + str(output) + launch for c in '\n\r"\\'):
-        raise ValueError('Paths com quebra de linha, aspas ou barra invertida não são aceitos no VDF.')
-    relative = PurePosixPath(launch)
-    if relative.is_absolute() or '..' in relative.parts or not relative.parts:
+    if any(c in str(content) + str(output) + launch for c in '\n\r"'):
+        raise ValueError('Paths com quebra de linha ou aspas não são aceitos no VDF.')
+    host_relative = Path(launch)
+    windows_relative = PureWindowsPath(launch)
+    if (host_relative.is_absolute() or host_relative.anchor or windows_relative.drive or windows_relative.root
+            or '..' in host_relative.parts or '..' in windows_relative.parts or not windows_relative.parts):
         raise ValueError('Executável precisa ser um path relativo dentro da build.')
+    relative = Path(*windows_relative.parts)
+    launch_path = windows_relative.as_posix()
     files = []
     for directory, dirs, names in os.walk(content, followlinks=False):
         for name in dirs + names:
@@ -40,13 +48,16 @@ def prepare(content, output, launch, platform, app_id, depot_id):
                 for chunk in iter(lambda: stream.read(1024 * 1024), b''):
                     digest.update(chunk)
             files.append({'path': path.relative_to(content).as_posix(), 'size': path.stat().st_size, 'sha256': digest.hexdigest()})
-    executable = content / relative
+    executable = (content / relative).resolve()
+    if executable != content and content not in executable.parents:
+        raise ValueError('Executável precisa permanecer dentro da build.')
     if not executable.is_file():
         raise ValueError('Executável desktop ausente. HTML/ZIP web não é build desktop.')
     with executable.open('rb') as stream:
         magic = stream.read(4)
     accepted = {'windows': magic[:2] == b'MZ', 'linux': magic == b'\x7fELF',
-                'macos': magic in (b'\xcf\xfa\xed\xfe', b'\xfe\xed\xfa\xcf', b'\xca\xfe\xba\xbe', b'\xbe\xba\xfe\xca')}
+                'macos': magic in (b'\xcf\xfa\xed\xfe', b'\xfe\xed\xfa\xcf', b'\xce\xfa\xed\xfe',
+                                   b'\xfe\xed\xfa\xce', b'\xca\xfe\xba\xbe', b'\xbe\xba\xfe\xca')}
     if platform not in accepted or not accepted[platform]:
         raise ValueError('Cabeçalho do executável não corresponde à plataforma. Não certifica execução ou assinatura.')
     if platform != 'windows' and not os.access(executable, os.X_OK):
@@ -61,7 +72,7 @@ def prepare(content, output, launch, platform, app_id, depot_id):
         if not stat.S_ISREG(mode):
             raise ValueError(f'Saída {name} precisa ser um arquivo comum: links ou destinos especiais são recusados para preservar o alvo apontado.')
     manifest = {'schema': 1, 'state': 'prepared_only', 'platform': platform, 'app_id': app_id,
-                'depot_id': depot_id, 'launch_path': launch, 'files': sorted(files, key=lambda f: f['path']),
+                'depot_id': depot_id, 'launch_path': launch_path, 'files': sorted(files, key=lambda f: f['path']),
                 'uploaded': False, 'live': False, 'native_runtime_tested': False,
                 'limits': ['Header check is not a launch/signing/notarization test.', 'Steam account/AppID/depot ownership not verified.', 'No Steam login, upload or publication executed.']}
     _atomic_write(output / 'manifest.json', json.dumps(manifest, indent=2) + '\n')
@@ -70,8 +81,8 @@ def prepare(content, output, launch, platform, app_id, depot_id):
  "AppID" "{app_id}"
  "Desc" "CORO SOLTO prepared preview"
  "Preview" "1"
- "ContentRoot" "{content}"
- "BuildOutput" "{output / 'steam-output'}"
+ "ContentRoot" "{_vdf_path(content)}"
+ "BuildOutput" "{_vdf_path(output / 'steam-output')}"
  "Depots" {{ "{depot_id}" {{ "FileMapping" {{ "LocalPath" "*" "DepotPath" "." "recursive" "1" }} }} }}
 }}
 '''

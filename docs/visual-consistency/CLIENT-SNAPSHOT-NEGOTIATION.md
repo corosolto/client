@@ -5,7 +5,8 @@ formatos anteriores. O transporte recusa seleção ausente ou fora dessa lista.
 O NetClient aceita somente v8/v9 e exige que `welcome.protocolVersion` e
 `partida.protocolVersion` correspondam ao subprotocolo selecionado pelo transporte.
 Uma seleção legada anterior à v8 não pode carregar objetivo, facção J ou economia.
-Produtores sem negociação explícita continuam no default v7.
+Produtores sem negociação explícita usam o formato canônico atual, v9. Produtores
+negociados passam explicitamente a versão selecionada para preservar compatibilidade.
 
 WebTransport pede `CLIENT_SNAPSHOT_PROTOCOL` (v9) em `sp`; o getter do transporte
 identifica esse pedido. Se o gateway/nó ainda não suporta v9, o fallback WebSocket
