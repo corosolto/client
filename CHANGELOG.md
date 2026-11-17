@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.152`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.153`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -293,6 +293,73 @@
 - A animação de recarga em terceira pessoa deixa de reiniciar ao terminar; o clipe ainda retoma quando uma reação de dano o interrompe.
 - As réguas de emote validam a composição exata dos 16 itens do menu, e os harnesses de snapshot injetam o catálogo v9 ao avaliar `netgame.js`.
 - Estados assados por personagem só entram quando não aumentam nenhum teto congelado de deformação; os offsets de pé e as catracas de chão são regenerados sobre o conjunto aprovado.
+
+## [2.1.0-alpha.153] — 2026-11-17
+
+### Mudado
+- fix(ci): restore staging gates and keep root docs in English (#1395)
+- chore: back-merge main (release 2.1.0-alpha.151) into staging (#1391)
+- fix(ci): keep verbose gates measurable (#1389)
+- docs(cf): record the production cutover to Workers (#1398)
+- ci(pr-fast): same steps in 10 lots, lockfile node_modules cache, lean dist artifact (#1390)
+- fix(anim3p): bots no longer glide with frozen legs (8-way pair restarted every frame) (#1400)
+- fix(flavio): respawns no longer clip through a doorless wall and sink under the floor (#1401)
+- fix(profile): stop flashing, show map thumbnails, honest solo badges, medal and rank dialogs, real character skins (#1393)
+- feat(pass): 5×3 grid, 3D preview, level-up celebration, post-match XP, claim all and lobby badge (#1394)
+- ci(gates): skip heavy browser gates on draft PRs, run them on ready_for_review (#1386)
+- release: batch 2026-11-17 (pm): Operação Flávio bot fixes, battle pass UI, profile fixes (#1402)
+- fix(deps): clear the 12 high production advisories blocking DEP1 (#1406)
+- release: batch 2026-11-17 (evening): unblock DEP1 so the release train can tag (#1410)
+- fix(deps): clear the 12 high production advisories blocking DEP1
+- test(menuprops): the Praça menu backdrop skips menuDeferredProps
+- test(perfil): surviving skin mutant exits 3, MS3 gets a partialPayload mutant
+- test(passe-check): PS15 runs tp/passe-festa.js instead of reading it
+- test(passe-browser): exact-module mutants that must apply, served-count verdict, tolerant waits
+- test(perfil): AC3 mutant anchors to the new arena-hour derivation
+- fix(perfil): submit-match sends the skin captured at match end, not the live one
+- ci(smoke-cf): skip when cf-preview builds no preview, one shared site filter
+- perf(boot): defer the optional Towner menu prop
+- test(flavio): cover the pre-pack straight run and _to inheritance
+- test(tpbackpedal): only clips entering a new 8-way pair restart
+- fix(flavio): facade modules become wall skins, doors and alleys clear
+- test(flavio): sweep every respawn point for floor, solids and exit route
+- docs(changelog): bot legs animate again while moving
+- fix(anim3p): keep locomotion clips alive across 8-way pair changes
+- test(flavio): measure bot leg locomotion in the real Operação Flávio game
+- docs(cf): record the production cutover to Workers on 2026-11-17
+- docs: refresh the English contribution block
+- fix(ci): keep verbose gates measurable
+- test(netcodec): track current v10 default
+- fix(passe-ui): account change drops the pending level-up and mission toasts
+- fix(scripts): restore five eval scripts lost in the #1378 merge
+- test(passe): régua do navegador não cai em mutante e PB13 mede sobreposição real
+- fix(perfil): last-character card label in a footer band, face uncovered
+- docs(gen-docs): generate the root README/AGENTS/CONTRIBUTING blocks in English
+- test(perfil): vazio-vira-legado mutant follows the rewritten montar guard
+- docs(arch): regenerate the game.js index for staging
+- fix(scripts): restore five eval scripts lost in the #1378 merge
+- docs(arch): regenerate the game.js index for staging
+- docs(arch): regenerate the game.js index for staging
+- test(perfil): ui-v3-perfil covers no-flash, map thumbs, medals, rank ladder and solo seal
+- docs(quality-gates): describe the pr-fast lots, cache and lean dist
+- ci(cache-limpeza): keep the node_modules cache of the current main lockfile
+- ci(pr-fast): run the same steps in 10 lots with a lockfile cache and a lean dist
+- fix(scripts): restore five eval scripts lost in the #1378 merge
+- fix(scripts): restore five eval scripts lost in the #1378 merge
+- test(passe-browser): drop the horizontal-scroll reset, allow --mutantes=ids
+- docs(changelog): pass grid, 3D preview, claim-all, level-up and post-match XP
+- test(passe-browser): level-10 account sessions PB12-PB18 with biting mutants
+- fix(passe-ui): badge clear of the tab label, celebration without scrollbar, lock only on locked
+- docs(quality-gates): document the draft-then-ready flow
+- ci(prepush): map smoke-web.yml to the core suite
+- ci(gates): skip heavy browser gates on draft PRs
+- fix(perfil): keep the drawn profile attached while the same target re-renders
+- fix(perfil): no flash on re-render, map thumbs, truthful solo seal, medals and rank modals
+- fix(perfil): match event sends the character actually played and its skin
+- feat(passe-ui): level-up overlay, mission toast, post-match XP and lobby badge
+- style(passe): Treta Pop grid, hover lift, state glow, preview, celebration and badge
+- feat(passe-ui): grid track, 3D reward preview and claim-all on the pass screen
+- feat(passe): forced settle, per-account novelty diff and sequential claim-all
 
 ## [2.1.0-alpha.152] — 2026-11-17
 
