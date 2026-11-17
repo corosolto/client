@@ -174,7 +174,7 @@ if (MUT === 'commit-guardado-sem-trailer') wf = wf.replace(/(\|\| git commit[\s\
    e os dois mutantes de trailer estavam cegos — foi assim que o commit "regenera bloco
    derivado" saiu sem `Agent:` e o dco reprovou a PR #448 (issue #450). */
 const recortarChamadas = (texto) =>
-  [...texto.matchAll(/^[^\S\n]*(?:if !? ?)?(?:[^\n#]*?(?:\|\||&&|;)[^\S\n]*)?git (?:commit|merge)(?:[^\n]*\\\n)*[^\n]*/gm)]
+  [...texto.matchAll(/^[^\S\n]*(?:if !? ?)?(?:[^\n#]*?(?:\|\||&&|;)[^\S\n]*)?git (?:commit|merge)(?![\w-])(?:[^\n]*\\\n)*[^\n]*/gm)]
     .map((m) => m[0])
     .filter((t) => !/--abort/.test(t))                      // abortar não cria commit
     .filter((t) => !/^[^\S\n]*["']/.test(t));               // linha de string de `--body`: citação, não chamada
