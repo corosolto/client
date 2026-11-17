@@ -105,6 +105,17 @@ def selftest() -> int:
     assert POLICY_CONTEXT in missing_contexts('staging', [regra(*[c for c in REQUIRED_CONTEXTS['staging'] if c != POLICY_CONTEXT])])
     assert missing_contexts('feature/x', [regra(*REQUIRED_CONTEXTS['main'])])
     assert missing_contexts('main', [{'type': 'pull_request'}]) == list(REQUIRED_CONTEXTS['main'])
+    # Formato real de GET repos/corosolto/client/rules/branches/main (17/11/2026): a resposta é
+    # um ARRAY de regras ativas, cada uma com a origem do ruleset; não há envelope `rules`.
+    real = json.loads(
+        '[{"type":"deletion","ruleset_source_type":"Repository","ruleset_source":"corosolto/client",'
+        '"ruleset_id":19116007},{"parameters":{"do_not_enforce_on_create":false,"required_status_checks":'
+        '[{"context":"build"},{"context":"dco"},{"context":"versao-bumpada"},{"context":"ratchet"},'
+        '{"context":"english"},{"context":"hotfix-ancestry"}],"strict_required_status_checks_policy":false},'
+        '"ruleset_id":19116007,"ruleset_source":"corosolto/client","ruleset_source_type":"Repository",'
+        '"type":"required_status_checks"}]')
+    assert missing_contexts('main', real) == [
+        POLICY_CONTEXT, 'portao-decide', 'portao', 'smoke-decide', 'smoke', 'chat-desktop']
     assert JA_LIMPO.search('GraphQL: Pull request Pull request is in clean status (enablePullRequestAutoMerge)')
     assert not JA_LIMPO.search('GraphQL: Pull request Auto merge is not allowed for this repository')
     print('AUTOMERGE-MERGE selftest ok: live policy, status before arm, native arm only with full ruleset, merge commit')
