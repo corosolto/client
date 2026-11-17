@@ -401,6 +401,8 @@ const WORKFLOWS = [
   ['preview-bot.yml', []],
   ['portao-browser.yml', []],
   ['autofix.yml', []],
+  ['cache-limpeza.yml', []],
+  ['eval-duration-calibration.yml', []],
 ];
 for (const [arquivo, extras] of WORKFLOWS) {
   test(`workflow mapeado ${arquivo} seleciona core e suas réguas`, () => {
