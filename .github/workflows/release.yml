@@ -16,9 +16,10 @@
 # o push do bot não re-dispara nem este workflow nem o build do ci.yml — não existe loop.
 # (A Vercel tem webhook próprio e VAI buildar o commit de bump.)
 #
-# Deploy de produção NÃO passa por aqui: decisão do dono (08/08) é manter o auto-deploy
-# da Vercel na main. O fallback manual por tag (`deploy-prod.yml`) falhou em todos os
-# runs desde 11/08 e saiu em 17/11/2026; hotfix é `gh workflow run release.yml`.
+# Deploy de produção NÃO passa por aqui: a Vercel publica pela integração Git na main
+# (decisão do dono, 08/08) e o Worker `csb-prod` pelo `cf-prod-deploy.yml`. O fallback
+# manual por tag (`deploy-prod.yml`) falhou em todos os runs desde 11/08 e saiu em
+# 17/11/2026; hotfix é `gh workflow run release.yml`.
 #
 # TREM DE RELEASE (13/10/2026, autorizado pelo dono): era um release por push na main —
 # 126 releases para 130 merges em 30 dias. Cada um reescrevia README/AGENTS/ARCH/docs,

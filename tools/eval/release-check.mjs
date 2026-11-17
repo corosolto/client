@@ -11,10 +11,11 @@
  *
  * RLS5: uma falha do release local restaura os arquivos antes de sair.
  *
- * RLS6: produção tem UM caminho: a integração Git da Vercel na main, filtrada pelo
+ * RLS6: produção na Vercel tem UM caminho: a integração Git na main, filtrada pelo
  *       ignoreCommand (RLS9). Nenhum workflow publica `vercel deploy --prod` — o fallback
  *       manual `deploy-prod.yml` falhou em todos os runs desde 11/08 (último em 18/10) e
- *       saiu em 17/11/2026; o hotfix é `gh workflow run release.yml`.
+ *       saiu em 17/11/2026; o hotfix é `gh workflow run release.yml`. O Worker `csb-prod`
+ *       (Cloudflare) sai pelo `cf-prod-deploy.yml`, fora desta cláusula.
  * RLS8: o push do bot não cancela o run que ainda publica o Release e avisa o backend.
  * RLS9: TREM DE RELEASE (13/10/2026). Produção só builda em commit `chore(release):`
  *       (vercel.json → ignoreCommand → scripts/ci/vercel-ignore.sh, executado aqui de
@@ -585,7 +586,7 @@ console.log(`${creditos === total && total ? '✓' : '✗'} RLS2 notas com contr
 console.log(`${dco === totalCommits && totalCommits ? '✓' : '✗'} RLS3 commits automáticos com DCO: ${dco}/${totalCommits} caminhos`);
 console.log(`${docsOk === docsRelease.length ? '✓' : '✗'} RLS4 site de docs reconstruído e versionado: ${docsOk}/${docsRelease.length} caminhos`);
 console.log(`${rollbackRelease ? '✓' : '✗'} RLS5 falha local restaura a árvore de trabalho`);
-console.log(`${caminhoProdUnico ? '✓' : '✗'} RLS6 produção tem um caminho só (Vercel Git na main) e nenhum workflow faz deploy --prod`);
+console.log(`${caminhoProdUnico ? '✓' : '✗'} RLS6 produção Vercel só pela integração Git na main; nenhum workflow faz vercel deploy --prod`);
 console.log(`${animacoesNoDeploy ? '✓' : '✗'} RLS7 deploy valida manifesto e GLBs mesclados de animação`);
 console.log(`${concorrenciaRelease ? '✓' : '✗'} RLS8 embarque cancelável (lote novo cancela o velho), bump em grupo próprio e nunca cancelado, nada no topo`);
 console.log(`${tremRelease ? '✓' : '✗'} RLS9 produção só sai no commit de release, e o release só sai com a main verde`);
