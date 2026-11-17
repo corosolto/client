@@ -14,12 +14,15 @@
      FP2-rodada     · rodada com ataque (combate, recuo, strafe, LOD pela câmera do jogador).
      FP3-reta-ruido · um bot real andando reto pelo _updateBot, lateral ±1e-7 m/s de ruído.
      FP4-lod-longe  · o mesmo bot de lado perto da câmera e depois correndo a >45 m (LOD 2).
+     FP5-reta-sem-pack · FP3 sem os clipes do extras.glb (antes do pack chegar): o lado
+                    vazio cai no fallback `_to` do clipe base.
    Por bot com pernas pedidas (banda _mvHigh do jogo): peso efetivo somado ≥ 0,85 em ≥ 95 %
    dos quadros (resto = pose de ligação), fase do clipe dominante avançando ≥ 60 % do tempo
    esperado (dt × timeScale) e coxa (LeftUpLeg) girando ≥ 0,25 rad por metro andado.
    Mutantes (cada um devolve UMA metade do defeito e tem de reprovar):
-     reset-no-par · `_setLocoPar` volta a reiniciar o clipe que já toca no par  → FP1, FP2, FP3
-     peso-velho   · `_to` não devolve weight=1 ao clipe que saiu do par          → FP4
+     reset-no-par · `_setLocoPar` volta a reiniciar o clipe que já toca no par
+     peso-velho   · `_to` não devolve weight=1 ao clipe que saiu do par
+     to-reinicia  · `_to` volta a reiniciar o clipe base que já tocava no par
    Uso: node tools/eval/operacao-flavio-pernas-check.mjs [--mutante=…|--mutantes] */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -33,12 +36,17 @@ const MUTANTES = {
   'reset-no-par': {
     antes: '        if (vivos.includes(action) && action.isRunning()) continue;\n',
     depois: '',
-    reprova: ['FP1-marcha', 'FP2-rodada', 'FP3-reta-ruido'],
+    reprova: ['FP1-marcha', 'FP2-rodada', 'FP3-reta-ruido', 'FP5-reta-sem-pack'],
   },
   'peso-velho': {
     antes: '    a.weight = 1;\n',
     depois: '',
     reprova: ['FP4-lod-longe'],
+  },
+  'to-reinicia': {
+    antes: 'const herda = !once && (a === this._locoA || a === this._locoB) && a.isRunning();',
+    depois: 'const herda = false;',
+    reprova: ['FP5-reta-sem-pack'],
   },
 };
 if (process.argv.includes('--mutantes')) {
@@ -251,6 +259,21 @@ await check('FP4-lod-longe', async () => {
   const r = veredito(m);
   assert.ok(r, 'bot roteirizado não pediu pernas');
   assert.ok(m.lods.has(2), `LOD 2 não exercitado: ${[...m.lods].join('/')}`);
+  assert.ok(r.ok, r.txt);
+  return [r.txt];
+});
+await check('FP5-reta-sem-pack', async () => {
+  // Antes do extras.glb chegar (ou sem ele): o setor do lado vazio cai no fallback `_to`
+  // do clipe base, o outro volta ao par (run|—) — alternando a cada quadro na reta.
+  const g = novoJogo(9); const bot = botRoteiro(g);
+  for (const b of g.bots) if (b !== bot) { b.alive = false; b.respawnAt = Infinity; }
+  const ctrl = bot.mesh.ctrl;
+  for (const k of Object.keys(ctrl.actions)) if (/^(strafe_|walk_back|run_back)/.test(k)) delete ctrl.actions[k];
+  ctrl._requestExtras = () => {};
+  const v = 3.2 * DT;
+  const m = roteiro(g, bot, [{ quadros: 240, inicio: (c) => ({ x: c.x + 4, z: c.z + 6, yaw: 0 }), mov: (i) => [(i % 2 ? 1 : -1) * 1e-7 * DT, v] }]);
+  const r = veredito(m);
+  assert.ok(r, 'bot roteirizado não pediu pernas');
   assert.ok(r.ok, r.txt);
   return [r.txt];
 });
