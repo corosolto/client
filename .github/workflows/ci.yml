@@ -441,7 +441,8 @@ jobs:
           # Fase 6: o build (adapter Cloudflare) carrega [vars] do wrangler.toml no build
           # (loadWranglerEnv) — produção tem RANKING_ON=true e o prerender sai indexável.
           # A régua de rotas compara contra process.env: espelhar produção aqui.
-          export RANKING_ON=true
+          # O seo-check NÃO recebe a flag: o mutante AEO1 guarda o cenário flag=false
+          # (nenhuma página promete ranking) e precisa rodar nesse cenário.
           node tools/eval/seo-check.mjs
           node tools/eval/seo-check.mjs --mutate
           node tools/eval/canonical-host-check.mjs
@@ -468,10 +469,10 @@ jobs:
           node tools/eval/profile-views-display-check.mjs --mutate
           node tools/eval/cla-ssr-check.mjs
           node tools/eval/cla-ssr-check.mjs --mutate
-          node tools/eval/rotas-check.mjs --dist
+          RANKING_ON=true node tools/eval/rotas-check.mjs --dist
           output=$(mktemp)
           status=0
-          node tools/eval/rotas-check.mjs --dist --mutante=robots >"$output" 2>&1 || status=$?
+          RANKING_ON=true node tools/eval/rotas-check.mjs --dist --mutante=robots >"$output" 2>&1 || status=$?
           cat "$output"
           if [ "$status" -eq 0 ]; then
             echo "::error::o mutante robots passou"
