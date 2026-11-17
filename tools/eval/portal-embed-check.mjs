@@ -39,7 +39,7 @@ function check(vercelJson, wrappers) {
   }
 }
 
-const vercel = read('vercel.json');
+const vercel = read('borda.json');
 const wrappers = Object.fromEntries(readdirSync(new URL('tools/portal/', root), { withFileTypes: true })
   .filter((e) => e.isDirectory()).map((e) => [e.name, read(`tools/portal/${e.name}/index.html`)]));
 assert.ok(Object.keys(wrappers).length, 'nenhum wrapper em tools/portal/');

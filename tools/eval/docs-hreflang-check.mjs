@@ -65,9 +65,9 @@ if (!BUILD) {
   }
   checa('DH1', traduzidas.length > 0 && divergem.length === 0,
     `${traduzidas.length} docs traduzidos com o mesmo slug em pt e en`,
-    `${divergem.join('\n         ')}\n         tire o slug: do .md em docs/i18n/en e redirecione a URL EN antiga em vercel.json`);
+    `${divergem.join('\n         ')}\n         tire o slug: do .md em docs/i18n/en e redirecione a URL EN antiga em borda.json`);
 
-  const vercel = JSON.parse(readFileSync(join(RAIZ, 'vercel.json'), 'utf8'));
+  const vercel = JSON.parse(readFileSync(join(RAIZ, 'borda.json'), 'utf8'));
   if (MUTANTE === 'sem-redirect') {
     const antes = vercel.redirects.length;
     vercel.redirects = vercel.redirects.filter((r) => !r.source.startsWith('/docs/'));
@@ -84,7 +84,7 @@ if (!BUILD) {
   const perdidas = publicadas.filter((u) => !atuais.has(u) && !atuais.has(destino.get(u)));
   checa('DH2', perdidas.length === 0,
     `${publicadas.length} URLs publicadas (sitemaps versionados + ${ANTIGAS_EN.length} EN antigas) servidas ou redirecionadas para página que existe`,
-    `viram 404: ${perdidas.join(', ')}: falta redirect em vercel.json ou o destino não existe`);
+    `viram 404: ${perdidas.join(', ')}: falta redirect em borda.json ou o destino não existe`);
 } else {
   const html = arquivos(BUILD).filter((p) => p.endsWith('.html') && !p.endsWith('404.html'));
   const quebrados = [];

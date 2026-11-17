@@ -106,7 +106,7 @@ const LEGADO = [
 
 // RT3: simula o casamento de redirects da Vercel (has/missing de query, primeiro que casa).
 {
-  const vercel = JSON.parse(readFileSync('vercel.json', 'utf8'));
+  const vercel = JSON.parse(readFileSync('borda.json', 'utf8'));
   let redirects = vercel.redirects;
   if (MUT === 'redirect') {
     const i = redirects.findIndex((r) => r.destination === '/jogar/multiplayer/privado');

@@ -100,7 +100,7 @@ const mutacoes = {
   'origem-errada': [ORIGEM, `'${CDN}'`, "'https://assets.corosolto.com'", ['R19a:', 'R19b:', 'R19c:', 'R19d:']],
   'origem-ignorada': [RES, 'new URL(studioPackUrl(pin.manifestUrl), baseHref())', 'new URL(pin.manifestUrl, baseHref())', ['R19b:', 'R19c:']],
   'origem-sempre-cdn': [ORIGEM, "return !host || HOST_LOCAL.test(host) ? '' : STUDIO_PACK_CDN_ORIGIN;", 'return STUDIO_PACK_CDN_ORIGIN;', ['R19a:']],
-  'csp-sem-origem': ['vercel.json', `connect-src 'self' https: ${CDN} `, "connect-src 'self' ", ['R19d:']],
+  'csp-sem-origem': ['borda.json', `connect-src 'self' https: ${CDN} `, "connect-src 'self' ", ['R19d:']],
 };
 if (mutante && !mutacoes[mutante]) throw new Error(`mutante desconhecido: ${mutante}`);
 if (process.argv.includes('--mutantes')) {
@@ -122,7 +122,7 @@ let base = ROOT;
 if (mutante) {
   const [alvo, de, para] = mutacoes[mutante];
   base = join(temporario, 'repo');
-  for (const rel of [RES, SRV, SKELETON, ORIGEM, 'vercel.json', 'public/js/version.js', 'public/js/data/content-releases.js']) {
+  for (const rel of [RES, SRV, SKELETON, ORIGEM, 'borda.json', 'public/js/version.js', 'public/js/data/content-releases.js']) {
     mkdirSync(dirname(join(base, rel)), { recursive: true });
     copyFileSync(join(ROOT, rel), join(base, rel));
   }
@@ -556,7 +556,7 @@ try {
   }
   {
     // CSP: a mesma regra do navegador para connect-src (fetch do resolvedor).
-    const vercel = JSON.parse(readFileSync(join(base, 'vercel.json'), 'utf8'));
+    const vercel = JSON.parse(readFileSync(join(base, 'borda.json'), 'utf8'));
     const csps = (vercel.headers || []).flatMap((r) => (r.headers || []).filter((h) => h.key === 'Content-Security-Policy').map((h) => h.value));
     if (!csps.length) falha('R19d: vercel.json sem Content-Security-Policy');
     const origem = new URL(O.STUDIO_PACK_CDN_ORIGIN);
