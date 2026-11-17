@@ -35,8 +35,11 @@ permissions:
 # BUG-68: um review com N comentários dispara N gatilhos NO MESMO SEGUNDO; os
 # runs paralelos leem a lista antes de qualquer um postar e cada um publica o
 # seu (PR #348: 5 idênticos mesmo com dedupe). Serializa por PR: 1 run vivo.
+# Label posta pelo PRÓPRIO bot não reclassifica (o job abaixo pula), mas o run pulado
+# ainda nasceria no grupo do PR e, pendente, cancelaria o run pendente de um evento real
+# (o GitHub mantém um só pendente por grupo). Por isso ele ganha grupo próprio.
 concurrency:
-  group: pr-classify-${{ github.event.pull_request.number || inputs.pr_number }}
+  group: pr-classify-${{ github.event.pull_request.number || inputs.pr_number }}${{ (github.event_name == 'pull_request_target' && (github.event.action == 'labeled' || github.event.action == 'unlabeled') && github.actor == 'csbrasil-BOT') && format('-rotulo-do-bot-{0}', github.run_id) || '' }}
   cancel-in-progress: ${{ github.actor != 'csbrasil-BOT' }}
 
 jobs:
@@ -46,11 +49,17 @@ jobs:
   # de vermelho um PR cujo autor não tem o que consertar. Medido em 11 dos 14 PRs de fork
   # dos últimos 29 - e em 0 dos 15 de casa. O run de `pull_request_target` do MESMO commit
   # passa e é ele que vale; para o resto, o sweep de meia em meia hora cobre.
+  # Label que o próprio bot aplicou não é insumo novo: o classify que a aplicou já
+  # decidiu com ela e despachou o automerge no fim. Reclassificar só multiplicava runs
+  # (cada label do bot = 1 classify + 1 automerge; 66% dos classify saíam cancelados).
   classify:
     if: >-
-      github.event_name == 'pull_request_target' ||
+      (github.event_name == 'pull_request_target' ||
       github.event_name == 'workflow_dispatch' ||
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository) &&
+      !(github.event_name == 'pull_request_target' &&
+      (github.event.action == 'labeled' || github.event.action == 'unlabeled') &&
+      github.actor == 'csbrasil-BOT')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -306,6 +315,11 @@ jobs:
           subprocess.run(['gh', 'api', '-X', 'POST', f"repos/${{ github.repository }}/issues/{os.environ['PR_NUMBER']}/comments", '--input', '-'],
                          input=json.dumps({'body': body}), text=True, check=True)
           PY
+      # Política de merge DEPOIS das labels: o automerge (workflow_dispatch, versão do
+      # default branch) lê o estado que este run acabou de escrever, publica
+      # `politica-merge` e arma/desarma o auto-merge nativo. É o único gatilho dele.
+      - name: Reavalia a política de merge
+        run: gh workflow run csbrasil-bot-automerge.yml --repo "$GITHUB_REPOSITORY" -f pr_number="$PR_NUMBER"
 
   # Reclassifica os PRs abertos pelo caminho que TEM secret. Idempotente: o classify
   # dedupe rótulo e comentário, então rodar de novo não polui o PR.

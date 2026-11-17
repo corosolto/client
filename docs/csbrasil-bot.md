@@ -8,7 +8,7 @@ integração e organização de releases.
 - triagem e sweep de issues
 - classificação de PR, assignee e canal de release
 - reparo de falhas do `pr-fast` com Codex
-- automerge de PRs elegíveis
+- política de merge (`politica-merge`) e auto-merge nativo de PRs elegíveis
 - PR diária de release `staging → main`
 - comentários de classificação e sugestão de duplicatas de `crash-auto`
 - bootstrap de draft PR a partir de issue elegível via `/bot-fix`
@@ -26,8 +26,9 @@ integração e organização de releases.
   `needs-hotfix-review`, remove `safe-automerge` e bloqueia o merge. Uma branch baseada em
   `staging` não é promovida automaticamente porque isso poderia publicar commits não relacionados.
 - `release.yml` publica após o merge verde de uma PR com `release`. O dispatch manual continua
-  disponível como fallback. Além das labels, o automerge exige o check `hotfix-ancestry` verde
-  na head atual; fetch falho ou check ausente/vermelho impede o merge mesmo com labels antigas.
+  disponível como fallback. Além das labels, o ruleset exige o check `hotfix-ancestry` verde
+  na head atual (o merge direto do bot também confere); check ausente/vermelho impede o merge
+  mesmo com labels antigas.
 
 ## Release diária
 
@@ -36,8 +37,8 @@ integração e organização de releases.
 1. compara `origin/main..origin/staging`;
 2. não faz nada quando não há commits novos;
 3. cria ou atualiza uma única PR `staging → main`, em inglês e com label `release`;
-4. deixa o `csbrasil-bot-automerge` mergear por merge commit quando checks e revisões estiverem
-   verdes, sem apagar `staging`;
+4. deixa o `csbrasil-bot-automerge` armar o auto-merge nativo (merge commit) quando a política
+   permite; o GitHub mergeia quando os checks exigidos ficam verdes, sem apagar `staging`;
 5. deixa o `release.yml` existente validar a `main`, aplicar o bump, tagar e publicar.
 
 Gameplay, render, mapas, personagens, backend, ranking e anti-cheat continuam exigindo a
@@ -68,23 +69,31 @@ aprovação humana definida nos quality gates antes de entrar em `staging`.
 
 ## Merge e revisão
 
-- PR individual precisa de `safe-automerge`, `reviewDecision=APPROVED`, checks verdes, estado
-  mergeável e nenhuma pendência do estraga-codigo. Gameplay, backend e workflows não entram nesse caminho.
-- Todo merge usa `--match-head-commit` com o SHA avaliado; push entre decisão e merge aborta em
-  vez de publicar código não verificado.
-- O workflow executa somente comandos fixos: `check_automerge.py` injeta `GITHUB_REPOSITORY` na
-  decisão e `automerge_merge.py` contém a guarda e o argv do merge. Não há heredoc executável
-  entre os selftests e a operação; o AF4 rejeita qualquer chamada adicional ou alteração da sequência.
+- Gatilho único do `csbrasil-bot-automerge`: `workflow_dispatch`, disparado pelo
+  `csbrasil-bot-pr-classify` no fim de cada classificação (push, labels de gente, base, draft,
+  review e comentário de review) e pelo sweep dele. Roda a versão do default branch. Label que o
+  próprio bot aplica não reclassifica: o classify que a aplicou já despacha o automerge.
+- O automerge publica o commit status `politica-merge` na head e só então arma ou desarma o
+  auto-merge nativo. Estados e lista de checks exigidos: `docs/quality-gates.md`.
+- PR individual só arma com `safe-automerge`, `reviewDecision=APPROVED`, nenhuma conversa aberta
+  e nenhuma pendência do estraga-codigo. Gameplay, backend e workflows não entram nesse caminho.
+- Armar usa `expectedHeadOid` com o SHA avaliado; push novo deixa a head sem `politica-merge` até
+  o próximo run. Merge direto usa `--match-head-commit` e só acontece com o critério completo
+  (rollup inteiro verde, deduplicado pelo run mais novo, estado `CLEAN`).
+- O workflow executa somente comandos fixos: `check_automerge.py` decide e `automerge_merge.py`
+  contém a guarda, o status e o argv de armar/mergear. Não há heredoc executável entre os
+  selftests e a operação; o AF4 rejeita qualquer chamada adicional ou alteração da sequência.
 - A PR oficial `staging → main` usa o caminho `release-batch`: exige `estragacodigo-resolved`
-  sem `CHANGES_REQUESTED`, não exige `reviewDecision=APPROVED`, e continua bloqueada por checks
-  vermelhos, conflito, draft e pelas labels `needs-human-gameplay`, `needs-human-backend` e
+  sem `CHANGES_REQUESTED`, não exige `reviewDecision=APPROVED`, e continua bloqueada por
+  conversa aberta, draft e pelas labels `needs-human-gameplay`, `needs-human-backend` e
   `needs-hotfix-review`. Se a API truncar a lista de arquivos, classificação e automerge calculam
   `origin/main...origin/staging` via Git e exigem que `origin/staging` seja o `headRefOid`
   avaliado; sem diff completo verificado, não há merge.
 - Rollup vazio ou desconhecido não conta como verde.
 - `npm run eval:workflowguards` faz parse estrutural dos workflows e comprova, com mutantes, que
-  todo merge ocorre depois da decisão de elegibilidade no mesmo job e que os passos com token do
-  bot ficam inertes com aviso quando o segredo não existe. O guard roda em FAST, DEPLOY, CORE e CI.
+  todo merge ocorre depois da decisão de elegibilidade no mesmo job, que os passos com token do
+  bot ficam inertes com aviso quando o segredo não existe e que o automerge só acorda por
+  `workflow_dispatch`. O guard roda em FAST, DEPLOY, CORE e CI.
 - Crash automático gera sugestão de duplicata; fechamento continua humano.
 
 ## Secrets

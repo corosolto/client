@@ -1,16 +1,28 @@
 name: csbrasil-bot-automerge
 
+# AUTO-MERGE NATIVO (17/11/2026). Este workflow não espera check nenhum: publica o
+# commit status `politica-merge` na head e arma/desarma o auto-merge nativo do GitHub
+# (merge commit). Quem espera os checks é o ruleset da base, que exige `politica-merge`
+# junto com os portões (docs/quality-gates.md). Medido em 30 dias antes da troca (18/10 a
+# 17/11): 6.016 runs deste workflow, 2.938 cancelados, 3.550 vindos do fan-in de
+# `workflow_run` de 5 workflows, o resto de cada label e do cron de 30 min — e 0 dos 60
+# PRs mergeados de 10 a 17/11 foram por ele.
+#
+# GATILHO ÚNICO: `workflow_dispatch`, disparado pelo `csbrasil-bot-pr-classify` no fim de
+# cada classificação (e pelo sweep dele, via classify). O classify já escuta tudo de que a
+# política depende — push (head nova), labels de gente, base, draft→pronto, review
+# enviado/descartado e comentário de review — e despacha DEPOIS de aplicar as próprias
+# labels, então a política nunca lê label velha. O dispatch roda a versão do default
+# branch, nunca a do PR. Saíram:
+# - `workflow_run` de pr-fast/smoke-web/pr-gates/pr-language/hotfix-ancestry-gate: o
+#   nativo espera os checks exigidos; o bot não precisa ver ninguém terminar;
+# - `schedule` (sweep de 30 min): o status é por SHA e o nativo mergeia sozinho quando
+#   os checks ficam verdes; evento perdido deixa a head SEM `politica-merge`, e contexto
+#   exigido ausente segura o merge (falha fechada). O sweep do classify cobre PR de fork;
+# - `pull_request_target`: duplicava o classify em todo evento.
+# Resolver conversa não dispara Actions (não há gatilho `pull_request_review_thread`); se
+# a última ação foi resolver conversa: `gh workflow run csbrasil-bot-automerge.yml -f pr_number=N`.
 on:
-  pull_request_target:
-    types: [labeled, unlabeled, synchronize, reopened, ready_for_review]
-  # Reavalia quando o CI TERMINA. Antes só olhava no label/sync — com os checks ainda
-  # pendentes `check_rollup_ok` dava falso e ninguém olhava de novo depois do verde,
-  # então o `pronto-pra-merge` quase nunca acendia.
-  workflow_run:
-    workflows: [pr-fast, smoke-web, pr-gates, pr-language, hotfix-ancestry-gate]
-    types: [completed]
-  schedule:
-    - cron: '13,43 * * * *'
   workflow_dispatch:
     inputs:
       pr_number:
@@ -19,35 +31,23 @@ on:
         type: number
 
 permissions:
-  actions: write
-  contents: write
-  pull-requests: write
+  contents: read
 
-# Uma avaliação por PR de cada vez, e a mais nova é a que vale (status mais recente).
-# EXCEÇÃO no `labeled`: o próprio job põe `pronto-pra-merge` com o PAT, e isso dispara
-# um run `labeled` na hora. Se ele cancelasse o run em andamento, o cancelamento cairia
-# entre a etiqueta e o comentário. O run `labeled` então espera na fila em vez de matar.
-# push na main (workflow_run sem PR) cai no run_id e não agrupa com ninguém.
+# Uma avaliação por PR; a mais nova vale. Cancelar no meio é seguro: o status sai antes
+# de armar/desarmar, e o run seguinte refaz a decisão inteira.
 concurrency:
-  group: automerge-${{ github.event.pull_request.number || inputs.pr_number || github.event.workflow_run.pull_requests[0].number || github.run_id }}
-  cancel-in-progress: ${{ github.event.action != 'labeled' }}
+  group: automerge-${{ inputs.pr_number }}
+  cancel-in-progress: true
 
 jobs:
-  # A GUARDA DO TOKEN É PASSO, NÃO JOB (14/10/2026). Era um job `bot-token` só para ler o
-  # secret: um runner a mais em cada disparo, e este workflow dispara em label, sync,
-  # ready_for_review e a cada pr-fast que termina. Sem o PAT o job continua verde e
+  # A GUARDA DO TOKEN É PASSO, NÃO JOB (14/10/2026). Sem o PAT o job continua verde e
   # pulando, com o mesmo aviso (WSEC2 cobra a guarda e o `if:` de cada passo seguinte).
   automerge:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # workflow_run de push na main (ou de fork, que não traz número de PR) não tem PR para olhar.
-    if: >-
-      (github.event_name != 'workflow_run' && github.event_name != 'schedule') ||
-      ((github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'pull_request_target') &&
-      github.event.workflow_run.pull_requests[0].number)
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
-      PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number || github.event.workflow_run.pull_requests[0].number }}
+      PR_NUMBER: ${{ inputs.pr_number }}
     steps:
       - name: Guarda do token do bot
         run: |
@@ -72,6 +72,11 @@ jobs:
       - name: Fetch PR status
         if: env.pular != '1'
         run: gh pr view "$PR_NUMBER" --json title,body,assignees,isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,latestReviews,reviewRequests,files,changedFiles,baseRefName,baseRefOid,headRefName,headRefOid,headRepository > /tmp/automerge.json
+      - name: Count unresolved review conversations
+        if: env.pular != '1'
+        run: |
+          python3 scripts/ci/pr_threads.py --selftest
+          python3 scripts/ci/pr_threads.py --inject /tmp/automerge.json "$PR_NUMBER"
       - name: Attest complete Git evidence
         if: env.pular != '1'
         run: |
@@ -96,107 +101,17 @@ jobs:
           mv /tmp/automerge-attested.json /tmp/automerge.json
       - name: Check eligibility
         if: env.pular != '1'
-        # O autoteste roda ANTES da decisão: este script mescla sem humano no
+        # O autoteste roda ANTES da decisão: este script decide merge sem humano no
         # caminho, e portão quebrado que passa calado aqui mescla PR vermelho.
         run: |
           python3 scripts/ci/check_automerge.py --selftest
           python3 scripts/ci/check_automerge.py < /tmp/automerge.json > /tmp/automerge-result.json
       # O dono autorizou merge automático em 09/11/2026: PR segura entra na base
       # classificada; o lote oficial staging→main entra por merge commit, sem apagar staging.
+      # Publica `politica-merge` e só então arma/desarma o auto-merge nativo; merge direto
+      # só com o critério completo antigo (ver scripts/ci/automerge_merge.py).
       - name: Merge when eligible
         if: env.pular != '1'
         run: |
           python3 scripts/ci/automerge_merge.py --selftest
           python3 scripts/ci/automerge_merge.py
-      - name: Record evaluated state for sweep debounce
-        if: env.pular != '1'
-        continue-on-error: true
-        run: |
-          python3 scripts/ci/bot_sweep.py --selftest
-          python3 - <<'PY'
-          import json, os, subprocess
-          from scripts.ci.bot_sweep import BOT_AUTHORS, PREFIX, encode_state
-          repo = os.environ['GITHUB_REPOSITORY']
-          number = os.environ['PR_NUMBER']
-          body = encode_state('automerge', json.load(open('/tmp/automerge.json')))
-          pages = json.loads(subprocess.check_output([
-              'gh', 'api', '--paginate', '--slurp',
-              f'repos/{repo}/issues/{number}/comments?per_page=100',
-          ], text=True))
-          comments = [comment for page in pages for comment in page]
-          mine = [
-              comment for comment in comments
-              if (comment.get('user') or {}).get('login', '').lower() in BOT_AUTHORS
-              and PREFIX + 'automerge:' in (comment.get('body') or '')
-          ]
-          for extra in mine[1:]:
-              subprocess.run([
-                  'gh', 'api', '-X', 'DELETE', f"repos/{repo}/issues/comments/{extra['id']}",
-              ], check=False)
-          if mine:
-              subprocess.run([
-                  'gh', 'api', '-X', 'PATCH', f"repos/{repo}/issues/comments/{mine[0]['id']}",
-                  '--input', '-',
-              ], input=json.dumps({'body': body}), text=True, check=True)
-          else:
-              subprocess.run([
-                  'gh', 'api', '-X', 'POST', f'repos/{repo}/issues/{number}/comments', '--input', '-',
-              ], input=json.dumps({'body': body}), text=True, check=True)
-          PY
-
-  sweep:
-    if: github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      actions: write
-      pull-requests: read
-    env:
-      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
-      REPO: ${{ github.repository }}
-    steps:
-      - name: Guard bot token
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "pular=1" >> "$GITHUB_ENV"
-            echo "::warning title=Bot inerte::CSBRASIL_BOT_TOKEN nao configurado — o sweep de automerge esta pulando."
-          fi
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        if: env.pular != '1'
-        with:
-          sparse-checkout: scripts/ci
-      - name: Reevaluate changed open safe or release PRs
-        if: env.pular != '1'
-        run: |
-          python3 scripts/ci/bot_sweep.py --selftest
-          GH_TOKEN="${{ github.token }}" python3 scripts/ci/bot_sweep.py --list-open "$REPO" > /tmp/automerge-sweep.json
-          python3 - <<'PY'
-          import json, os, subprocess
-          from scripts.ci.bot_sweep import should_dispatch
-          repo = os.environ['REPO']
-          candidates = [
-              pr for pr in json.load(open('/tmp/automerge-sweep.json'))
-              if {'safe-automerge', 'release'}.intersection(
-                  label.get('name') for label in pr.get('labels') or []
-              )
-          ]
-          for pr in candidates:
-              number = pr['number']
-              try:
-                  pages = json.loads(subprocess.check_output([
-                      'gh', 'api', '--paginate', '--slurp',
-                      f'repos/{repo}/issues/{number}/comments?per_page=100',
-                  ], text=True))
-                  comments = [comment for page in pages for comment in page]
-              except subprocess.CalledProcessError:
-                  comments = []  # Sem estado legível, reavalia em vez de suprimir.
-              if not should_dispatch(pr, comments, 'automerge'):
-                  print(f'PR #{number}: unchanged base/head/labels/rollup/reviews; skipping automerge')
-                  continue
-              result = subprocess.run([
-                  'gh', 'workflow', 'run', 'csbrasil-bot-automerge.yml',
-                  '--repo', repo, '-f', f'pr_number={number}',
-              ], check=False)
-              if result.returncode:
-                  print(f'::warning::could not reevaluate PR #{number}')
-          PY

@@ -49,16 +49,15 @@ test('Dev Container Dockerfile resolves from its configuration directory', () =>
   assert.ok(existsSync(dockerfile));
 });
 
-test('AF4 accepts live revalidation, one executable merge, and sweep state recording', (t) => {
+test('AF4 accepts live revalidation, one executable merge, and dispatch-only automerge', (t) => {
   const dir = fixture(t);
   const workflow = parse(readFileSync(join(dir, '.github/workflows/csbrasil-bot-automerge.yml'), 'utf8'));
   const steps = workflow.jobs.automerge.steps;
   const mergeIndex = steps.findIndex((step) => step.name === 'Merge when eligible');
   const merge = steps[mergeIndex];
-  const recordIndex = steps.findIndex((step) => step.name === 'Record evaluated state for sweep debounce');
-  assert.ok(mergeIndex >= 0 && recordIndex > mergeIndex);
+  assert.equal(mergeIndex, steps.length - 1);
   assert.equal(merge.run.trim(), 'python3 scripts/ci/automerge_merge.py --selftest\npython3 scripts/ci/automerge_merge.py');
-  assert.match(steps[recordIndex].run, /encode_state\('automerge', json\.load\(open\('\/tmp\/automerge\.json'\)\)\)/);
+  assert.deepEqual(Object.keys(workflow.on), ['workflow_dispatch']);
   assert.equal(run(AUTOFIX_CHECK, dir).status, 0);
   assert.equal(run(SECRET_CHECK, dir).status, 0);
 });
@@ -122,28 +121,20 @@ for (const forma of ['echo', 'comment']) {
   });
 }
 
-for (const job of ['automerge', 'sweep']) {
-  test(`WSEC2 rejects a missing token guard in ${job}`, (t) => {
-    const dir = fixture(t);
-    mutateAutomerge(dir, (workflow) => {
-      assert.match(workflow.jobs[job].steps[0].run, /GH_TOKEN/);
-      workflow.jobs[job].steps.shift();
-    });
-    assertGuardFailure(run(SECRET_CHECK, dir), 'WSEC2');
+test('WSEC2 rejects a missing token guard in automerge', (t) => {
+  const dir = fixture(t);
+  mutateAutomerge(dir, (workflow) => {
+    assert.match(workflow.jobs.automerge.steps[0].run, /GH_TOKEN/);
+    workflow.jobs.automerge.steps.shift();
   });
-}
+  assertGuardFailure(run(SECRET_CHECK, dir), 'WSEC2');
+});
 
-for (const token of ['missing', 'bot-pat']) {
-  test(`WSEC2 rejects automerge metadata with ${token} read credentials`, (t) => {
+for (const gatilho of ['workflow_run', 'schedule', 'pull_request_target']) {
+  test(`WSEC2 rejects automerge woken by ${gatilho}`, (t) => {
     const dir = fixture(t);
     mutateAutomerge(dir, (workflow) => {
-      const step = workflow.jobs.sweep.steps.find((item) => item.run?.includes('python3 scripts/ci/bot_sweep.py --list-open'));
-      assert.ok(step);
-      const before = step.run;
-      step.run = token === 'missing'
-        ? step.run.replace('GH_TOKEN="${{ github.token }}" ', '')
-        : step.run.replace('${{ github.token }}', '${{ secrets.CSBRASIL_BOT_TOKEN }}');
-      assert.notEqual(step.run, before);
+      workflow.on[gatilho] = gatilho === 'schedule' ? [{ cron: '13,43 * * * *' }] : { types: ['completed'] };
     });
     assertGuardFailure(run(SECRET_CHECK, dir), 'WSEC2');
   });
