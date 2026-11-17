@@ -84,13 +84,14 @@ function vitro(P, r) {
   for (let k = -5; k <= 6; k++) { P.linha(k * .2, 0, k * .2 + 1, 1, .009, FER, 1); P.linha(k * .2 + 1, 0, k * .2, 1, .009, FER, 1); }
   for (const e of [.012, .988]) { P.linha(e, 0, e, 1, .024, FER, 1); P.linha(0, e, 1, e, .024, FER, 1); }
 }
-function tijolos(P, r) {
-  P.ret(0, 0, 1, 1, '#8d8980', .35);
+// Vão fechado com bloco de cimento: cinza, nunca cor de tijolo (a célula cai na faixa do corpo e leria como remendo de tijolo).
+function blocos(P, r) {
+  P.ret(0, 0, 1, 1, '#7d7a74', .35);
   const h = .158, w = .262; let l = 0;
   for (let y = .012; y < 1; y += h + .018, l++) for (let x = -(l % 2) * w * .5 - .01; x < 1; x += w + .016) {
-    const g = .8 + r() * .38, yy = y + (r() - .5) * .008;
-    P.ret(x, yy, w, h, tom([150, 90, 66], g), .75);
-    for (let k = 1; k < 6; k++) P.ret(x, yy + k * h / 6, w, .006, tom([116, 68, 52], g), .6);
+    const g = .84 + r() * .3, yy = y + (r() - .5) * .008;
+    P.ret(x, yy, w, h, tom([132, 130, 124], g), .75);
+    P.ret(x + w * .18, yy + h * .22, w * .22, h * .56, tom([112, 110, 104], g), .6); P.ret(x + w * .6, yy + h * .22, w * .22, h * .56, tom([112, 110, 104], g), .6);
   }
   for (let i = 0; i < 44; i++) P.ret(r(), r(), .02 + r() * .06, .008 + r() * .02, '#9a968c', .85);
 }
@@ -118,10 +119,10 @@ function peitoril(P) {
 }
 // 9 tipos numa grade 3x3; o shader escolhe a célula pelo hash da posição do vão.
 export const JANELA_TIPOS = ['correr de alumínio, vidro liso', 'correr de alumínio, vidro canelado, folha aberta', 'basculante de ferro', 'veneziana', 'vitrô de ferro com grade em losango',
-  'vão fechado com tijolo baiano', 'vão fechado com madeirite e tábua', 'lençol por dentro e ventilador', 'correr remendada com papelão, barras retas, vaso e garrafa'];
+  'vão fechado com bloco de cimento', 'vão fechado com madeirite e tábua', 'lençol por dentro e ventilador', 'correr remendada com papelão, barras retas, vaso e garrafa'];
 export function atlasJanelas() {
   const P = par(), r = rngDe(4471);
-  [() => correr(P, r), () => correr(P, r, { fantasia: true, aberta: true }), () => basculante(P), () => veneziana(P, r), () => vitro(P, r), () => tijolos(P, r), () => madeirite(P, r), () => cortina(P),
+  [() => correr(P, r), () => correr(P, r, { fantasia: true, aberta: true }), () => basculante(P), () => veneziana(P, r), () => vitro(P, r), () => blocos(P, r), () => madeirite(P, r), () => cortina(P),
     () => { correr(P, r, { papelao: true }); barras(P); peitoril(P); }]
     .forEach((f, k) => P.celula((k % 3) * CEL, Math.floor(k / 3) * CEL, CEL, CEL, () => { f(); suja(P, r, 26); }));
   return funde(P, 'hd-janelas');
@@ -174,21 +175,67 @@ export function atlasPortas() {
 
 // Pichação. [arquivo em /img/decals, altura no atlas (px), tinta de uma cor só ou null, categoria]
 // `reto` = pixo reto paulista (alto da empena, preto ou branco); `xarpi` = assinatura carioca de traço único.
-const PRETO = '#141414', ARTE = [['or-graf-coro', 300, null, 'graf'], ['or-graf-treta', 300, null, 'graf'], ['or-mitico-mural', 380, null, 'graf'], ['or-stencil-capivara', 220, PRETO, 'estencil'], ['or-stencil-pomba', 220, PRETO, 'estencil'],
+// Tinta "preta" é cinza-escuro (#363430 nas frases): preta pura saía p5 = 9 na captura; o desbote irregular vem de gasta() + falhas().
+const PRETO = '#2a2927', ARTE = [['or-graf-coro', 300, null, 'graf'], ['or-graf-treta', 300, null, 'graf'], ['or-mitico-mural', 380, null, 'graf'], ['or-stencil-capivara', 220, PRETO, 'estencil'], ['or-stencil-pomba', 220, PRETO, 'estencil'],
   ...['telha', 'varal', 'tijolo', 'escada', 'reboco', 'ladeira', 'telhado', 'quintal', 'muro', 'travessa', 'esquina', 'janela', 'laje', 'morro', 'antena', 'andaime'].map((n) => [`or-pixo-sp-${n}`, 270, PRETO, 'reto']),
   ...['subida', 'colina', 'encosta', 'alto', 'fundo', 'lua'].map((n, i) => [`or-pixo-rj-${n}`, n === 'lua' ? 200 : 100, i % 3 === 1 ? '#1b3a80' : PRETO, 'xarpi'])];
-export const FRASES = [['VENDE-SE', 'GELO', '#1c1c1c'], ['DISK GÁS', '', '#1d3f8a'], ['CONSERTA-SE', 'FOGÃO', '#1c1c1c'], ['PROIBIDO', 'JOGAR LIXO', '#1c1c1c'], ['GELADINHO', 'R$1', '#1f6a3a'], ['DEUS É FIEL', '', '#1d3f8a'], ['LAVA JATO', '', '#1d3f8a'], ['NÃO', 'ESTACIONE', '#1c1c1c'], ['ÁGUA E GÁS', 'ENTREGA', '#1d3f8a'], ['CUIDADO', 'CÃO BRAVO', '#1c1c1c']];
-const FONTE = '"Arial Narrow", "Helvetica Neue", Arial, sans-serif', NA = 2048;
-// Letra pintada à mão: cada letra com giro, altura e peso de pincel próprios.
+export const FRASES = [['VENDE-SE', 'GELO', '#363430'], ['DISK GÁS', '', '#1d3f8a'], ['CONSERTA-SE', 'FOGÃO', '#363430'], ['PROIBIDO', 'JOGAR LIXO', '#363430'], ['GELADINHO', 'R$1', '#1f6a3a'], ['DEUS É FIEL', '', '#1d3f8a'], ['LAVA JATO', '', '#1d3f8a'], ['NÃO', 'ESTACIONE', '#363430'], ['ÁGUA E GÁS', 'ENTREGA', '#1d3f8a'], ['CUIDADO', 'CÃO BRAVO', '#363430']];
+const NA = 2048;
+// Alfabeto de letrista em traço (caixa 10 x 14, linha de base em 14): sem fonte do sistema, condensado, sem serifa.
+// Acentos vêm da decomposição NFD (agudo U+0301, til U+0303, cedilha U+0327) e entram como traço extra.
+const O_ = [[3, 0], [7, 0], [10, 3], [10, 11], [7, 14], [3, 14], [0, 11], [0, 3], [3, 0]];
+const P_ = [[0, 14], [0, 0], [7, 0], [10, 3], [10, 5], [7, 8], [0, 8]];
+const S_ = [[10, 3], [7, 0], [3, 0], [0, 3], [0, 5], [3, 7], [7, 7], [10, 9], [10, 11], [7, 14], [3, 14], [0, 11]];
+const GLIFOS = {
+  A: [[[0, 14], [5, 0], [10, 14]], [[2, 9.5], [8, 9.5]]], B: [[[0, 0], [0, 14]], [[0, 0], [7, 0], [9, 2], [9, 5], [7, 7], [0, 7]], [[0, 7], [8, 7], [10, 9], [10, 12], [8, 14], [0, 14]]],
+  C: [[[10, 3], [8, 0.5], [3, 0], [0, 3], [0, 11], [3, 14], [8, 13.5], [10, 11]]], D: [[[0, 0], [0, 14]], [[0, 0], [6, 0], [10, 4], [10, 10], [6, 14], [0, 14]]],
+  E: [[[10, 0], [0, 0], [0, 14], [10, 14]], [[0, 7], [8, 7]]], F: [[[10, 0], [0, 0], [0, 14]], [[0, 7], [8, 7]]],
+  G: [[[10, 3], [8, 0.5], [3, 0], [0, 3], [0, 11], [3, 14], [8, 14], [10, 11], [10, 8], [5, 8]]], H: [[[0, 0], [0, 14]], [[10, 0], [10, 14]], [[0, 7], [10, 7]]],
+  I: [[[2, 0], [2, 14]]], J: [[[10, 0], [10, 11], [8, 14], [3, 14], [0, 11]]], K: [[[0, 0], [0, 14]], [[10, 0], [0, 8]], [[3, 6], [10, 14]]], L: [[[0, 0], [0, 14], [10, 14]]],
+  M: [[[0, 14], [0, 0], [5, 8], [10, 0], [10, 14]]], N: [[[0, 14], [0, 0], [10, 14], [10, 0]]], O: [O_], P: [P_], Q: [O_, [[6, 10], [10, 14.5]]], R: [P_, [[4, 8], [10, 14]]], S: [S_],
+  T: [[[0, 0], [10, 0]], [[5, 0], [5, 14]]], U: [[[0, 0], [0, 11], [3, 14], [7, 14], [10, 11], [10, 0]]], V: [[[0, 0], [5, 14], [10, 0]]], W: [[[0, 0], [2.5, 14], [5, 4], [7.5, 14], [10, 0]]],
+  X: [[[0, 0], [10, 14]], [[10, 0], [0, 14]]], Y: [[[0, 0], [5, 7], [10, 0]], [[5, 7], [5, 14]]], Z: [[[0, 0], [10, 0], [0, 14], [10, 14]]],
+  0: [O_], 1: [[[1, 3], [4, 0], [4, 14]]], 2: [[[0, 3], [3, 0], [7, 0], [10, 3], [10, 5], [0, 14], [10, 14]]], 3: [[[0, 0], [10, 0], [5, 6], [10, 9], [10, 11], [7, 14], [3, 14], [0, 12]]],
+  4: [[[8, 14], [8, 0], [0, 10], [10, 10]]], 5: [[[10, 0], [0, 0], [0, 6], [7, 6], [10, 9], [10, 11], [7, 14], [3, 14], [0, 12]]], 6: [[[9, 0], [3, 0], [0, 4], [0, 11], [3, 14], [7, 14], [10, 11], [10, 9], [7, 6], [0, 7]]],
+  7: [[[0, 0], [10, 0], [4, 14]]], 8: [[[3, 7], [0, 4], [0, 3], [3, 0], [7, 0], [10, 3], [10, 4], [7, 7], [3, 7], [0, 10], [0, 11], [3, 14], [7, 14], [10, 11], [10, 10], [7, 7]]],
+  9: [[[10, 7], [3, 7], [0, 4], [0, 3], [3, 0], [7, 0], [10, 3], [10, 10], [7, 14], [1, 14]]],
+  '-': [[[1, 7.5], [9, 7.5]]], '·': [[[4.5, 7], [5.5, 7]]], '$': [S_, [[5, -1], [5, 15]]], '!': [[[5, 0], [5, 9.5]], [[5, 12.5], [5, 14]]],
+  '\u0301': [[[4, -4.5], [7, -2]]], '\u0303': [[[1, -3], [3.5, -4.5], [6.5, -2.5], [9, -4]]], '\u0327': [[[5, 14], [6, 15.5], [4, 16.5]]],
+};
+const LARG = { I: 4, 1: 6, '-': 10, '·': 6, '!': 6, ' ': 5 };
+// Letra pintada à mão: pincel redondo com duas passadas desencontradas, altura e giro por letra, escorrido e falha.
 function letreiro(g, r, texto, x, y, larg, px, cor) {
-  g.font = `900 ${px}px ${FONTE}`; g.textBaseline = 'middle'; g.textAlign = 'left'; g.fillStyle = cor;
-  const total = [...texto].reduce((s, ch) => s + g.measureText(ch).width * 1.04, 0), k = Math.min(1, larg / total); let cx = x + (larg - total * k) / 2;
-  for (const ch of texto) { const w = g.measureText(ch).width * 1.04 * k; g.save(); g.translate(cx + w / 2, y + (r() - .5) * px * .08); g.rotate((r() - .5) * .07); g.scale(k * (.94 + r() * .1), .92 + r() * .16);
-    g.textAlign = 'center'; g.fillText(ch, 0, 0); g.restore(); cx += w; }
+  const letras = [...texto.normalize('NFD')].reduce((l, ch) => { if (GLIFOS[ch] && ch.charCodeAt(0) < 0x300) l.push({ ch, acentos: [] }); else if (ch === ' ') l.push({ ch: ' ', acentos: [] }); else if (GLIFOS[ch] && l.length) l[l.length - 1].acentos.push(ch); return l; }, []);
+  const e = px / 14, cond = .68, avanco = (ch) => ((LARG[ch] ?? 10) + 4.5) * e * cond;
+  const total = letras.reduce((s, l) => s + avanco(l.ch), 0), k = Math.min(1, larg / total); let cx = x + (larg - total * k) / 2;
+  g.save(); g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = cor; g.fillStyle = cor;
+  for (const l of letras) {
+    const w = avanco(l.ch) * k; if (l.ch !== ' ') {
+      const esc = .9 + r() * .18, giro = (r() - .5) * .06, sub = (r() - .5) * px * .07, pincel = px * (.105 + r() * .03);
+      g.save(); g.translate(cx + w / 2, y + sub); g.rotate(giro); g.scale(k * cond * e, esc * e); g.translate(-(LARG[l.ch] ?? 10) / 2, -7);
+      const tracos = [...GLIFOS[l.ch], ...l.acentos.flatMap((a) => GLIFOS[a])];
+      for (const [passo, alfa, dx, dy] of [[1, 1, 0, 0], [.72, .55, .35 * (r() - .5), .45 * (r() - .5)]]) {
+        g.lineWidth = pincel * passo / (e * Math.min(k * cond, esc)); g.globalAlpha = alfa; g.beginPath();
+        for (const t of tracos) t.forEach(([px0, py0], i) => { const jx = px0 + dx + (r() - .5) * .35, jy = py0 + dy + (r() - .5) * .35; if (i) g.lineTo(jx, jy); else g.moveTo(jx, jy); });
+        g.stroke();
+      }
+      // Escorrido: tinta demais no pé de algumas letras.
+      if (r() < .3) { const sx = (LARG[l.ch] ?? 10) * r(), h = 2 + r() * r() * 9; g.globalAlpha = .55; g.lineWidth = .9; g.beginPath(); g.moveTo(sx, 13.5); g.lineTo(sx + (r() - .5) * .6, 14 + h); g.stroke(); g.globalAlpha = .8; g.beginPath(); g.arc(sx, 14 + h, .7, 0, 6.3); g.fill(); }
+      g.restore(); }
+    cx += w;
+  }
+  g.restore();
 }
+export const pintaLetreiro = letreiro;
 function gasta(g, r, x, y, w, h, n) {
   g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip(); g.globalCompositeOperation = 'destination-out';
   for (let i = 0; i < n; i++) { g.fillStyle = `rgba(0,0,0,${.15 + r() * .5})`; g.fillRect(x + r() * w, y + r() * h, 1 + r() * w * .06, 1 + r() * 2.5); }
+  g.restore();
+}
+// Falha de pincel seco: riscos horizontais finos que tiram tinta, mais no pé das letras.
+function falhas(g, r, x, y, w, h, n) {
+  g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip(); g.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < n; i++) { const yy = y + h * (1 - r() * r()); g.fillStyle = `rgba(0,0,0,${.25 + r() * .6})`; g.fillRect(x + r() * w, yy, 12 + r() * w * .12, .8 + r() * 1.6); }
   g.restore();
 }
 function montaAtlas(imgs) {
@@ -198,8 +245,12 @@ function montaAtlas(imgs) {
       const t = tela(w, h), tg = t.getContext('2d'); tg.drawImage(im, 0, 0, w, h); tg.globalCompositeOperation = 'source-in'; tg.fillStyle = tinta; tg.fillRect(0, 0, w, h); g.drawImage(t, x, y); t.width = t.height = 0; } }); });
   FRASES.forEach(([a, b, cor], i) => itens.push({ id: `frase${i}`, cat: 'frase', w: 520, h: 132, pinta(x, y) {
     if (b) { letreiro(g, r, a, x + 8, y + 36, 504, 58, cor); letreiro(g, r, b, x + 8, y + 96, 504, 62, cor); } else letreiro(g, r, a, x + 8, y + 68, 504, 84, cor);
-    gasta(g, r, x, y, 520, 132, 60); } }));
-  itens.push({ id: 'fogao', cat: 'fixa', w: 800, h: 112, pinta(x, y) { letreiro(g, r, 'CONSERTA-SE FOGÃO', x + 10, y + 64, 780, 76, '#1c1c1c'); gasta(g, r, x, y, 800, 112, 40); } });
+    gasta(g, r, x, y, 520, 132, 60); falhas(g, r, x, y, 520, 132, 70); } }));
+  itens.push({ id: 'fogao', cat: 'fixa', w: 800, h: 112, pinta(x, y) { letreiro(g, r, 'CONSERTA-SE FOGÃO', x + 10, y + 64, 780, 76, '#363430'); gasta(g, r, x, y, 800, 112, 70); falhas(g, r, x, y, 800, 112, 120); } });
+  // Placa do mercadinho pintada direto no reboco: fundo amarelo-ocre irregular e letras verde-escuras à mão, sem marca.
+  itens.push({ id: 'mercadinho', cat: 'fixa', w: 920, h: 104, pinta(x, y) { g.fillStyle = 'rgba(196,172,88,.92)'; g.fillRect(x + 3, y + 3, 914, 98);
+    for (let i = 0; i < 9; i++) { g.fillStyle = `rgba(150,130,60,${.12 + r() * .18})`; g.fillRect(x + 3 + r() * 880, y + 3, 10 + r() * 60, 98); }
+    letreiro(g, r, 'MERCADINHO 2 IRMÃOS', x + 22, y + 58, 876, 70, '#1e4a2a'); gasta(g, r, x, y, 920, 104, 90); falhas(g, r, x, y, 920, 104, 60); } });
   itens.push({ id: 'reclame', cat: 'reclame', w: 684, h: 252, pinta(x, y) { g.fillStyle = 'rgba(206,190,104,.94)'; g.fillRect(x + 4, y + 4, 676, 244); g.strokeStyle = 'rgba(29,63,138,.95)'; g.lineWidth = 7; g.strokeRect(x + 14, y + 14, 656, 224);
     letreiro(g, r, 'MATERIAL DE CONSTRUÇÃO', x + 28, y + 68, 628, 60, '#1d3f8a'); letreiro(g, r, 'AREIA · PEDRA · CIMENTO', x + 28, y + 140, 628, 50, '#1c1c1c'); letreiro(g, r, 'ENTREGA NA LAJE', x + 28, y + 202, 628, 46, '#1d3f8a');
     gasta(g, r, x, y, 684, 252, 500); } });
@@ -218,7 +269,8 @@ const PAREDES = new Set(['cream', 'ochre', 'rose', 'sage', 'adobe', 'brick', 'co
 const MEDIDAS = { xarpi: [1.2, 1.7, 1.2, 1.8], frase: [1.7, 2.2, 2.25, 2.5], estencil: [.8, 1.1, 0, 0], reclame: [2.7, 3.1, 0, 0] }, CHEIA = new Set(['frase', 'reclame', 'graf']);
 // Decalques colados à parede (1 cm), sem colisão. Cada lugar é conferido com raios a cada 12 cm de altura e 22 cm
 // de largura, com 4 cm de folga: cinta, viga ou pilar no caminho recusa o lugar. Na faixa do corpo só entra xarpi.
-export function pichacoes(scene, mundo, U, evita = [], janelas = []) {
+// opts.loja: placa pintada do mercadinho na fachada de entorno 41 (x = -14,85), entre o toldo (2,60 m) e a cinta do andar (2,95 m).
+export function pichacoes(scene, mundo, U, evita = [], janelas = [], opts = {}) {
   let vivo = true, malha = null, tex = null, mat = null; const info = { n: 0, usados: [] };
   const carrega = (nome) => new Promise((ok) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = `/img/decals/${nome}.png`; });
   Promise.all(ARTE.map(([nome]) => carrega(nome))).then((imgs) => {
@@ -255,8 +307,10 @@ export function pichacoes(scene, mundo, U, evita = [], janelas = []) {
     const fila = []; for (const it of itens) { if (it.cat === 'esc' || it.cat === 'graf' || it.cat === 'fixa') continue; fila.push(it); if (it.cat !== 'estencil') fila.push(it); }
     for (let i = fila.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [fila[i], fila[j]] = [fila[j], fila[i]]; }
     const postas = [], perto = (f, d) => postas.some((p) => Math.hypot(p.x - f.x, p.z - f.z) < d && Math.abs(p.b - f.b) < 1);
-    const fogao = itens.find((q) => q.id === 'fogao');
-    if (fogao) for (const z of [-12.9, -12.3, -13.5, -11.7, -14.1]) if (cola(fogao, -5.2, 5.19, z, -1, 0, 2.5, 2.5 * fogao.h / fogao.w, 2)) { postas.push({ x: -5.2, z, b: 3.1 }); break; }
+    const fogao = itens.find((q) => q.id === 'fogao'), merc = opts.loja ? itens.find((q) => q.id === 'mercadinho') : null;
+    // Letreiro fixo com op 1,25: passa pelo desbote em mancha do shader (op 2 saía chapado).
+    if (fogao) for (const z of [-12.9, -12.3, -13.5, -11.7, -14.1]) if (cola(fogao, -5.2, 5.19, z, -1, 0, 2.5, 2.5 * fogao.h / fogao.w, 1.25)) { postas.push({ x: -5.2, z, b: 3.1 }); break; }
+    if (merc) for (const z of [-9.85, -9.6, -10.1]) if (cola(merc, -14.85, 2.76, z, 1, 0, 2.3, 2.3 * merc.h / merc.w, 1.25)) { postas.push({ x: -14.85, z, b: 0 }); info.mercadinho = z; break; }
     // Grafite grande primeiro, em parede alta (acima de 2,1 m), antes que o resto ocupe o lugar.
     for (const it of itens.filter((q) => q.cat === 'graf')) achou: for (const f of faces) { if (f.teto < f.b + 4 || perto(f, 4)) continue;
       for (const esc of [1, .8, .62]) { const w = (3.0 + r() * .5) * esc, h = w * it.h / it.w;
@@ -267,7 +321,7 @@ export function pichacoes(scene, mundo, U, evita = [], janelas = []) {
         if (it.cat === 'reto') { h = (1.0 + r() * .4) * esc; w = h * asp; ys.push(f.teto - .5 - h / 2, f.teto - .95 - h / 2); if (f.b < 1) ys.push(2.92 - h / 2); }
         else { w = (m[0] + r() * (m[1] - m[0])) * esc; h = w / asp; ys.push(m[2] ? f.b + m[2] + r() * (m[3] - m[2]) : f.b + 2.15 + r() * .3 + h / 2); }
         for (const yc of ys) { if (yc + h / 2 > f.teto - .1 || yc - h / 2 < f.b + (it.cat === 'xarpi' ? .9 : 1.95)) continue;
-          if (!cola(it, f.x, yc, f.z, f.nx, f.nz, w, h, CHEIA.has(it.cat) ? 2 : .92 + r() * .08)) continue;
+          if (!cola(it, f.x, yc, f.z, f.nx, f.nz, w, h, it.cat === 'frase' ? 1.3 : CHEIA.has(it.cat) ? 2 : .92 + r() * .08)) continue;
           fila.splice(k, 1); postas.push(f);
           // Pixo reto anda em fileira: tenta mais dois nomes na mesma altura, lado a lado.
           if (it.cat === 'reto') { let lado = w / 2; for (let q = 0; q < 2; q++) { const j = fila.findIndex((o) => o.cat === 'reto'); if (j < 0) break; const o = fila[j], w2 = h * o.w / o.h, s = lado + .14 + w2 / 2;
