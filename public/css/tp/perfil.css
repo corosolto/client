@@ -49,8 +49,18 @@
 :root[data-ui="v3"] .tp-perfil .tp-perfil__nivel{font:700 15px/1 var(--tp-ui)}
 .tp-patente{display:inline-flex;align-items:center;padding:5px 10px;border-radius:6px;color:var(--tp-asfalto);font:800 15px/1 var(--tp-ui);
   background:linear-gradient(160deg,var(--tp-tinta-1),var(--tp-rar-comum))}
-.tp-patente[data-tier="bronze"]{background:linear-gradient(160deg,color-mix(in srgb,var(--tp-rar-lendario) 55%,var(--tp-tinta-1)),color-mix(in srgb,var(--tp-rar-lendario) 60%,var(--tp-asfalto)))}
-.tp-patente[data-tier="gold"]{background:linear-gradient(160deg,var(--tp-ambar),color-mix(in srgb,var(--tp-ambar) 55%,var(--tp-asfalto)))}
+.tp-patente[data-tier="bronze"],.tp-emblema[data-tier="bronze"]{background:linear-gradient(160deg,color-mix(in srgb,var(--tp-rar-lendario) 55%,var(--tp-tinta-1)),color-mix(in srgb,var(--tp-rar-lendario) 60%,var(--tp-asfalto)))}
+.tp-patente[data-tier="gold"],.tp-emblema[data-tier="gold"]{background:linear-gradient(160deg,var(--tp-ambar),color-mix(in srgb,var(--tp-ambar) 55%,var(--tp-asfalto)))}
+/* Patente + nível no topo: um botão só, metálico pela faixa, que abre a escada de patentes. */
+:root[data-ui="v3"] .tp-perfil .tp-patente-botao{position:relative;display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:4px 12px 4px 4px;border-radius:10px;overflow:hidden;
+  border:1px solid var(--tp-borda-forte);background:rgba(9,7,4,.55);color:var(--tp-tinta-1);font:inherit;letter-spacing:0;text-transform:none;cursor:pointer;
+  transition:border-color var(--tp-d-rapido),transform var(--tp-d-rapido) var(--tp-ease-saida)}
+:root[data-ui="v3"] .tp-perfil .tp-patente-botao .tp-patente{padding:9px 12px;border-radius:7px;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 0 rgba(0,0,0,.25)}
+.tp-patente-botao::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.22) 48%,transparent 62%);transform:translateX(-110%)}
+.tp-patente-botao:hover::after,.tp-patente-botao:focus-visible::after{transform:translateX(110%);transition:transform .7s var(--tp-ease-saida)}
+:root[data-ui="v3"] .tp-perfil .tp-patente-botao:hover{border-color:var(--tp-lima);transform:translateY(calc(-1px * var(--tp-mov)))}
+:root[data-ui="v3"] .tp-perfil .tp-patente-botao:focus-visible{outline:2px solid var(--tp-tinta-1);outline-offset:3px}
+.tp-patente-botao__seta{font:800 20px/1 var(--tp-ui);color:var(--tp-lima)}
 .tp-perfil__inicial{display:grid;place-items:center;background:var(--tp-elevado);color:var(--tp-tinta-2)}
 
 /* Tela 11: cartão público + vitrine/números + atividade, e a edição ao lado. */
@@ -91,7 +101,22 @@
 .tp-perfil__destaque--vazio{border:1px dashed rgba(255,255,255,.18)}
 :root[data-ui="v3"] .tp-perfil .tp-perfil__destaque-rotulo{position:relative;z-index:1;padding:0 8px;font-size:15px;line-height:1.05;text-align:center}
 .tp-perfil__destaque--personagem .tp-perfil__destaque-rotulo,.tp-perfil__destaque--mapa .tp-perfil__destaque-rotulo{position:absolute;left:8px;right:8px;bottom:8px;padding:0;text-align:left}
-.tp-perfil__selo-grande{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:var(--tp-lima);color:var(--tp-lima-tinta);font-size:28px;font-weight:800}
+/* Selos de medalha: conquistada brilha em lima com aro âmbar; bloqueada fica apagada, com o anel mostrando o progresso. */
+.tp-medalha{--p:0;position:relative;flex:none;display:grid;place-items:center;width:44px;height:44px;box-sizing:border-box;border-radius:50%;color:var(--tp-tinta-3);
+  background:radial-gradient(circle,var(--tp-elevado) 0 58%,transparent 60%),conic-gradient(var(--tp-tinta-3) calc(var(--p) * 1turn),rgba(255,255,255,.1) 0)}
+.tp-medalha svg{position:relative;z-index:1;width:54%;height:54%;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.tp-medalha[data-estado="travada"] svg{opacity:.55}
+.tp-medalha[data-estado="ganha"]{overflow:hidden;color:var(--tp-lima-tinta);background:radial-gradient(circle at 34% 28%,var(--tp-lima-claro),var(--tp-lima) 55%,color-mix(in srgb,var(--tp-lima) 50%,var(--tp-asfalto)));
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--tp-ambar) 75%,transparent),0 0 16px color-mix(in srgb,var(--tp-lima) 45%,transparent)}
+.tp-medalha[data-estado="ganha"]::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.6) 50%,transparent 62%);transform:translateX(-120%)}
+:is(.tp-perfil__destaque--medalha,.tp-perfil__medalha):is(:hover,:focus-visible) .tp-medalha[data-estado="ganha"]::after,.tp-pmodal[open] .tp-medalha[data-estado="ganha"]::after{animation:tp-medalha-brilho .9s .15s var(--tp-ease-saida) both}
+@keyframes tp-medalha-brilho{from{transform:translateX(-120%)}to{transform:translateX(120%)}}
+.tp-medalha--grande{width:72px;height:72px}
+:root[data-ui="v3"] .tp-perfil .tp-perfil__destaque--medalha{width:100%;padding:12px 8px;border:1px solid rgba(180,217,46,.35);color:var(--tp-tinta-1);font:inherit;letter-spacing:0;text-transform:none;cursor:pointer;
+  background:radial-gradient(120% 90% at 50% 0%,color-mix(in srgb,var(--tp-lima) 14%,var(--tp-fundo)),var(--tp-fundo));transition:border-color var(--tp-d-rapido)}
+:root[data-ui="v3"] .tp-perfil .tp-perfil__destaque--medalha:hover{border-color:var(--tp-lima)}
+:root[data-ui="v3"] .tp-perfil .tp-perfil__destaque--medalha:focus-visible{outline:2px solid var(--tp-tinta-1);outline-offset:2px}
+.tp-perfil__medalhas-fila{display:grid;grid-template-columns:repeat(2,44px);gap:8px}
 .tp-perfil__trk{display:flex;flex-direction:column;gap:2px;min-width:0;padding:12px 14px;border-radius:10px;background:var(--tp-fundo)}
 :root[data-ui="v3"] .tp-perfil .tp-perfil__trk-num{font-size:26px;font-weight:800;white-space:nowrap}
 :root[data-ui="v3"] .tp-perfil .tp-perfil__trk-texto{font:800 18px/1.1 var(--tp-ui);overflow-wrap:anywhere}
@@ -109,13 +134,23 @@
 .tp-perfil__evento-texto{display:flex;flex-direction:column;gap:2px;line-height:1.2;min-width:0}
 :root[data-ui="v3"] .tp-perfil .tp-perfil__evento-texto b{font:800 15px/1.2 var(--tp-ui)}
 :root[data-ui="v3"] .tp-perfil .tp-perfil__evento-texto small{font:600 13px/1.2 var(--tp-ui);color:var(--tp-tinta-3)}
-.tp-perfil__marca{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:8px;background:var(--tp-elevado);font-size:22px}
+/* Miniatura do mapa da partida, com o resultado (V/D) como selo no canto; sem prévia, o selo grande ocupa o quadro. */
+.tp-perfil__marca{position:relative;flex:none;display:grid;place-items:center;width:64px;height:44px;border-radius:8px;overflow:hidden;background:var(--tp-elevado);font-size:22px}
 .tp-perfil__marca[data-resultado="win"]{background:color-mix(in srgb,var(--tp-ganho) 62%,var(--tp-asfalto))}
 .tp-perfil__marca[data-resultado="loss"]{background:color-mix(in srgb,var(--tp-esq) 58%,var(--tp-asfalto))}
-/* Origem da linha: âmbar (atenção, não resultado) separa solo não verificado de rodada confirmada. */
-.tp-carreira__m[data-origem="solo"],.tp-perfil__evento[data-origem="solo"]{box-shadow:inset 3px 0 0 var(--tp-ambar)}
-.tp-selo-solo{display:inline-block;margin-left:8px;padding:1px 6px;border-radius:4px;background:var(--tp-elevado);
-  border:1px solid var(--tp-ambar);color:var(--tp-ambar);font:800 11px/1.45 var(--tp-ui);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.tp-perfil__marca-mapa{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tp-perfil__marca[data-mapa]::after{content:'';position:absolute;inset:0;background:linear-gradient(140deg,rgba(9,7,4,0) 40%,rgba(9,7,4,.7))}
+.tp-perfil__marca[data-mapa][data-resultado="win"]{outline:2px solid var(--tp-ganho);outline-offset:-2px}
+.tp-perfil__marca[data-mapa][data-resultado="loss"]{outline:2px solid var(--tp-esq);outline-offset:-2px}
+.tp-perfil__marca-letra{position:relative;z-index:1}
+.tp-perfil__marca[data-mapa] .tp-perfil__marca-letra{position:absolute;right:3px;bottom:3px;display:grid;place-items:center;min-width:20px;height:20px;padding:0 3px;box-sizing:border-box;
+  border-radius:5px;background:var(--tp-elevado);color:var(--tp-tinta-1);font-size:14px;line-height:1;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.tp-perfil__marca[data-mapa][data-resultado="win"] .tp-perfil__marca-letra{background:var(--tp-ganho);color:var(--tp-asfalto)}
+.tp-perfil__marca[data-mapa][data-resultado="loss"] .tp-perfil__marca-letra{background:var(--tp-esq);color:var(--tp-tinta-1)}
+/* Origem da linha: solo conta 0,5× no ranking geral. Selo informativo em lima (não é alerta), com a faixa lateral da mesma cor. */
+.tp-carreira__m[data-origem="solo"],.tp-perfil__evento[data-origem="solo"]{box-shadow:inset 3px 0 0 color-mix(in srgb,var(--tp-lima) 70%,transparent)}
+.tp-selo-solo{display:inline-block;margin-left:8px;padding:1px 6px;border-radius:4px;background:color-mix(in srgb,var(--tp-lima) 12%,var(--tp-elevado));
+  border:1px solid color-mix(in srgb,var(--tp-lima) 45%,transparent);color:var(--tp-lima);font:800 11px/1.45 var(--tp-ui);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
 
 .tp-perfil__editar{position:sticky;top:12px;display:flex;flex-direction:column;gap:14px;padding:20px;border-radius:12px;border-color:rgba(180,217,46,.35)}
 :root[data-ui="v3"] .tp-perfil .tp-perfil__editar .tp-perfil__cab h3{font-size:30px}
@@ -156,13 +191,19 @@
 :root[data-ui="v3"] .tp-perfil .tp-carreira__compartilhar{height:48px;font-size:15px}
 .tp-carreira__partidas,.tp-carreira__cla{display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:12px;min-width:0}
 :root[data-ui="v3"] .tp-perfil .tp-carreira__partidas h3{font-size:28px}
-.tp-carreira__m{display:grid;grid-template-columns:44px minmax(0,1fr) 76px auto;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;background:var(--tp-fundo)}
+.tp-carreira__m{display:grid;grid-template-columns:64px minmax(0,1fr) 76px auto;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;background:var(--tp-fundo)}
 :root[data-ui="v3"] .tp-perfil .tp-carreira__m b{font-size:16px}
 :root[data-ui="v3"] .tp-perfil .tp-carreira__m small{font-size:14px}
 :root[data-ui="v3"] .tp-perfil .tp-carreira__kd{font-size:15px;font-weight:800;white-space:nowrap}
 :root[data-ui="v3"] .tp-perfil .tp-carreira__quando{font:600 13px/1.2 var(--tp-ui);color:var(--tp-tinta-3);text-align:right}
 .tp-carreira__med-rotulo{margin-top:8px}
-:root[data-ui="v3"] .tp-perfil .tp-perfil__medalha{padding:6px 10px;border-radius:999px;background:var(--tp-fundo);border:1px solid rgba(180,217,46,.4);font:800 14px/1.2 var(--tp-ui)}
+.tp-perfil__medalhas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+:root[data-ui="v3"] .tp-perfil .tp-perfil__medalha{display:flex;align-items:center;gap:10px;min-width:0;min-height:56px;padding:6px 10px 6px 6px;border-radius:12px;border:1px solid var(--tp-borda);
+  background:var(--tp-fundo);color:var(--tp-tinta-2);font:800 14px/1.15 var(--tp-ui);letter-spacing:0;text-transform:none;text-align:left;cursor:pointer;transition:border-color var(--tp-d-rapido)}
+:root[data-ui="v3"] .tp-perfil .tp-perfil__medalha[data-estado="ganha"]{color:var(--tp-tinta-1);border-color:rgba(180,217,46,.4)}
+:root[data-ui="v3"] .tp-perfil .tp-perfil__medalha:hover{border-color:var(--tp-lima)}
+:root[data-ui="v3"] .tp-perfil .tp-perfil__medalha:focus-visible{outline:2px solid var(--tp-tinta-1);outline-offset:2px}
+.tp-perfil__medalha-nome{min-width:0;overflow-wrap:anywhere}
 .tp-carreira__cla{gap:12px}
 .tp-carreira__cla-cab{display:flex;align-items:center;gap:12px}
 .tp-carreira__brasao{flex:none;display:grid;place-items:center;width:56px;height:56px;border-radius:12px;color:var(--tp-asfalto);font-size:20px;
@@ -204,11 +245,71 @@
   .tp-perfil__atividade{grid-template-columns:minmax(0,1fr)}
   .tp-perfil__destaque{height:132px}
   .tp-carreira__hero{height:220px}
+  .tp-perfil__medalhas-fila{grid-template-columns:repeat(4,34px);gap:6px}
+  .tp-perfil__medalhas-fila .tp-medalha{width:34px;height:34px}
 }
 @media (pointer:coarse){
   :root[data-ui="v3"] .tp-perfil :is(.tp-aba,.tp-perfil__link,.tp-perfil__rede,.tp-perfil__chip,.tp-carreira__membro-nick,.tp-perfil__input){min-height:44px}
   :root[data-ui="v3"] .tp-perfil :is(.tp-aba,.tp-perfil__link,.tp-carreira__membro-nick){display:inline-flex;align-items:center}
   :root[data-ui="v3"] .tp-perfil .tp-perfil__check{min-height:44px}
 }
-@media(prefers-reduced-motion:reduce){:root[data-ui="v3"] .tp-perfil,.tp-perfil__arte{animation:none}}
-:root[data-ui="v3"][data-motion="reduzido"] .tp-perfil,:root[data-ui="v3"][data-motion="reduzido"] .tp-perfil__arte{animation:none}
+/* Remontagem com dados novos (ou volta de um recarregamento): sem a entrada animada, que piscaria a tela. */
+:root[data-ui="v3"] .tp-perfil[data-troca],:root[data-ui="v3"] .tp-perfil[data-troca] .tp-perfil__arte{animation:none}
+.tp-perfil__avatar[data-recorte="skin"],.tp-perfil__foto-atual[data-recorte="skin"]{object-position:50% 4%}
+
+/* Modais do perfil (medalhas e escada de patentes): <dialog> no body, fora do .tp-perfil. */
+.tp-pmodal{width:min(780px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - 24px);margin:auto;padding:0;border:0;background:none;color:var(--tp-tinta-1);overflow:visible}
+.tp-pmodal::backdrop{background:rgba(9,7,4,.86)}
+.tp-pmodal__caixa{box-sizing:border-box;max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:16px;padding:24px 28px 28px;
+  border-radius:16px;border:1px solid var(--tp-borda-forte);background:radial-gradient(700px 300px at 90% -10%,var(--tp-palco-musgo),transparent 70%),var(--tp-painel);
+  box-shadow:0 30px 80px rgba(0,0,0,.6);font:500 15px/1.35 var(--tp-ui);text-align:left;scrollbar-width:thin;scrollbar-color:var(--tp-elevado) transparent}
+.tp-pmodal[open] .tp-pmodal__caixa{animation:tp-pmodal-entra var(--tp-d-painel,280ms) var(--tp-ease-saida,ease-out) both}
+@keyframes tp-pmodal-entra{from{opacity:0;transform:translateY(calc(16px * var(--tp-mov,1))) scale(calc(1 - .03 * var(--tp-mov,1)))}to{opacity:1;transform:none}}
+.tp-pmodal__cab{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.tp-pmodal__titulos{display:flex;flex-direction:column;gap:6px;min-width:0}
+.tp-pmodal__titulo{margin:0;font-size:var(--tp-fs-tela,36px);color:var(--tp-tinta-1)}
+.tp-pmodal__fechar{flex:none;width:44px;height:44px;border-radius:8px;border:1px solid var(--tp-borda-forte);background:rgba(255,255,255,.06);color:var(--tp-tinta-1);font:700 18px/1 var(--tp-ui);cursor:pointer}
+.tp-pmodal__fechar:hover{border-color:var(--tp-lima)}
+.tp-pmodal__fechar:focus-visible{outline:2px solid var(--tp-tinta-1);outline-offset:2px}
+.tp-pmodal__resumo{margin:0;font:800 14px/1 var(--tp-ui);letter-spacing:.1em;text-transform:uppercase;color:var(--tp-lima)}
+.tp-pmodal__nota{margin:0;color:var(--tp-tinta-3);font:600 13px/1.4 var(--tp-ui)}
+.tp-pmodal__pe{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 12px;font:700 14px/1.2 var(--tp-ui)}
+.tp-pmodal__estado{color:var(--tp-tinta-3);font:700 13px/1.2 var(--tp-ui)}
+.tp-pmodal__barra{height:8px}
+.tp-pmodal__medalhas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0;padding:0;list-style:none}
+.tp-pmodal__medalha{display:flex;gap:16px;align-items:flex-start;padding:16px;border-radius:12px;background:var(--tp-fundo);border:1px solid var(--tp-borda)}
+.tp-pmodal__medalha[data-estado="ganha"]{border-color:rgba(180,217,46,.4);background:linear-gradient(160deg,color-mix(in srgb,var(--tp-lima) 10%,var(--tp-fundo)),var(--tp-fundo))}
+.tp-pmodal__medalha[data-estado="ganha"] .tp-pmodal__estado{color:var(--tp-ganho)}
+.tp-pmodal__medalha-texto{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tp-pmodal__medalha-nome{margin:0;font-size:24px;line-height:1}
+.tp-pmodal__desc{margin:0;color:var(--tp-tinta-2);font-weight:600}
+.tp-pmodal__criterio{font:800 12px/1.2 var(--tp-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--tp-tinta-3)}
+.tp-emblema{display:inline-grid;place-items:center;min-width:44px;height:30px;padding:0 8px;box-sizing:border-box;border-radius:7px;color:var(--tp-asfalto);font:800 14px/1 var(--tp-ui);letter-spacing:.05em;
+  background:linear-gradient(160deg,var(--tp-tinta-1),var(--tp-rar-comum));box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 0 rgba(0,0,0,.25)}
+.tp-emblema--grande{min-width:104px;height:68px;border-radius:12px;font-size:26px}
+.tp-pmodal__patente{display:flex;align-items:center;gap:18px}
+.tp-pmodal__patente-texto{display:flex;flex-direction:column;gap:8px;min-width:0;font:700 15px/1.2 var(--tp-ui);color:var(--tp-tinta-2)}
+.tp-pmodal__patente-nome{margin:0;font-size:44px;color:var(--tp-tinta-1)}
+.tp-pmodal__rumo{display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-radius:12px;background:var(--tp-fundo);border:1px solid var(--tp-borda)}
+/* Escada de baixo para cima (General no topo); a leitura segue a ordem da lista, de Soldado a General. */
+.tp-pmodal__escada{display:flex;flex-direction:column-reverse;gap:6px;margin:0;padding:0;list-style:none}
+.tp-pmodal__degrau{display:grid;grid-template-columns:76px minmax(0,1fr) auto;align-items:center;gap:12px;padding:8px 12px;border-radius:10px;background:var(--tp-fundo);border:1px solid transparent}
+.tp-pmodal__degrau .tp-emblema{min-width:76px}
+.tp-pmodal__degrau[data-estado="proxima"]{opacity:.55}
+.tp-pmodal__degrau[data-estado="atual"]{border-color:var(--tp-lima);background:color-mix(in srgb,var(--tp-lima) 12%,var(--tp-fundo));box-shadow:0 0 22px color-mix(in srgb,var(--tp-lima) 22%,transparent)}
+.tp-pmodal__degrau-texto{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tp-pmodal__degrau-texto b{font:800 16px/1.15 var(--tp-ui)}
+.tp-pmodal__degrau-texto span{font-size:13px;color:var(--tp-tinta-3)}
+.tp-pmodal__degrau-tag{font:800 12px/1 var(--tp-ui);letter-spacing:.1em;color:var(--tp-lima)}
+.tp-pmodal__degrau[data-estado="feita"] .tp-pmodal__degrau-tag{color:var(--tp-ganho);font-size:16px}
+@media (max-width:640px){
+  .tp-pmodal__caixa{padding:18px}
+  .tp-pmodal__medalhas{grid-template-columns:minmax(0,1fr)}
+  .tp-pmodal__patente-nome{font-size:34px}
+}
+@media(prefers-reduced-motion:reduce){
+  :root[data-ui="v3"] .tp-perfil,.tp-perfil__arte,.tp-pmodal[open] .tp-pmodal__caixa,.tp-medalha::after{animation:none!important}
+  .tp-patente-botao::after{display:none}
+}
+:root[data-ui="v3"][data-motion="reduzido"] :is(.tp-perfil,.tp-perfil__arte,.tp-pmodal[open] .tp-pmodal__caixa),:root[data-ui="v3"][data-motion="reduzido"] .tp-medalha::after{animation:none!important}
+:root[data-ui="v3"][data-motion="reduzido"] .tp-patente-botao::after{display:none}
