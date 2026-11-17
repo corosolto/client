@@ -18,6 +18,7 @@ export function liga() {
       poe(); await new Promise((ok) => setTimeout(ok, 600)); poe(); await new Promise((ok) => setTimeout(ok, 350)); poe();
       return [p.pos.x, p.pos.y, p.pos.z].map((n) => +n.toFixed(2));
     },
+    fixa(nome) { const v = (VISTAS[g._mapId] || {})[nome] || nome; const p = g.player; p.pos.set(v[0], v[1], v[2]); p.yaw = v[3]; p.pitch = v[4]; p.vel.set(0, 0, 0); p.grounded = true; try { p.recoilP = 0; } catch {} },
     async conta() {
       r.info.autoReset = false; r.info.reset();
       await new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)));
