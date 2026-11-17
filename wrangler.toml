@@ -2,7 +2,7 @@
 # Só é lido com `ADAPTER=cloudflare`; o build padrão continua na Vercel.
 name = "csb-spike"
 main = "src/cf/worker.ts"
-compatibility_date = "2026-11-08"
+compatibility_date = "2026-11-09"
 # nodejs_compat: node:crypto/node:net das libs do proxy e `process.env` populado com [vars] e secrets.
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true

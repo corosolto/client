@@ -3,7 +3,7 @@
 # Segredos: os de produção menos X_PIXEL_TOKEN, para staging não mandar conversão ao X.
 name = "csb-staging"
 main = "dist/server/entry.mjs"
-compatibility_date = "2026-11-08"
+compatibility_date = "2026-11-09"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 preview_urls = true
