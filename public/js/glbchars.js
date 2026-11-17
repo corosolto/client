@@ -24,6 +24,7 @@ import { weaponModel, preloadWeapons, ONE_HANDED, gripPoints } from './weapons.j
 import { mountEyewear } from './eyewear.js';
 import { gloveSkinStyle } from './data/glove-skin-definitions.js';
 import { solveCCDIK } from './handik.js';
+import { marcarRef, refsDoCorpo, REFS_PADRAO } from './anim-speed-ref.js';
 import { CHARACTER_RELEASES, STUDIO_CHARACTER_STATES, characterRelease } from './data/content-releases.js';
 import { resolveStudioCharacter, StudioCharacterError } from './studio-character.js';
 import { studioSkeletonMismatch } from './studio-skeleton.js';
@@ -121,9 +122,10 @@ const ANIM_DIR = qp.get('animdir') || 'models/anims/mixamo';   // pack Mixamo ri
 const TARGET_HEIGHT = parseFloat(qp.get('charh')) || 1.72;      // meters (match box silhouette)
 // Per-clip natural ground speed (m/s) that plants the feet at timeScale 1, MEASURED from
 // each clip's real foot stride (tools: iktest HARNESS.measureStride / tools/eval/mixamo-measure.mjs).
-const WALK_REF   = parseFloat(qp.get('wref')) || 0.84;
-const RUN_REF    = parseFloat(qp.get('rref')) || 2.08;
-const CROUCH_REF = parseFloat(qp.get('cref')) || 0.75;
+const WALK_REF   = parseFloat(qp.get('wref')) || REFS_PADRAO.walk;
+const RUN_REF    = parseFloat(qp.get('rref')) || REFS_PADRAO.run;
+const CROUCH_REF = parseFloat(qp.get('cref')) || REFS_PADRAO.crouchwalk;
+const REFS_GLOBAIS = Object.freeze({ walk: WALK_REF, walk1h: WALK_REF, run: RUN_REF, crouchwalk: CROUCH_REF });
 const FACING_OFFSET = (parseFloat(qp.get('charface')) || 0) * Math.PI / 180; // yaw fix if model faces -Z
 // FASE 3: clamp de segurança da correção de pitch da cabeça (malha fechada, ~28°).
 // (O antigo HEAD_UP fixo foi removido: ele acumulava rotação quando o mixer não
@@ -851,16 +853,17 @@ export async function preloadCharacterAssets(ids, opts = {}) {
       try { mesclado = (await loadGLB(assetUrl(`models/anims/${id}.glb`))).animations; }
       catch (e) { /* fallback: per-estado */ }
     }
+    const refs = (_idx && _idx.refs && _idx.refs[id]) || {};
     await Promise.all([...STATES, ...OPT_STATES].map(async (s) => {
       if (disponiveis && !disponiveis.includes(s)) return;   // não pede o que o build sabe que não existe
       if (mesclado) {
         const c = mesclado.find((a) => a.name === s);
-        if (c) { set[s] = c; return; }
+        if (c) { set[s] = c; marcarRef(c, refs[s]); return; }
         if (disponiveis) return;  // mesclado em dia (manifesto) e sem o clipe: compartilhado
       }
       try {
         const g = await loadGLB(assetUrl(`models/anims/${id}/${s}.glb`));
-        if (g.animations[0]) { g.animations[0].name = s; set[s] = g.animations[0]; }
+        if (g.animations[0]) { g.animations[0].name = s; set[s] = g.animations[0]; marcarRef(set[s], refs[s]); }
       } catch (e) { /* fallback: clipe compartilhado */ }
     }));
     _clipsByChar[id] = set;
@@ -1370,6 +1373,8 @@ class CharController {
        alinhamento de bind que já estava certo em todos os 44. */
     this.charId = charId; this.bodyId = bodyId; this.model = model || null;
     this._footBase = model ? model.position.y : 0;
+    // Ref por clipe × escala do modelo (anim-speed-ref.js); clipe sem ref usa a global.
+    this.refs = refsDoCorpo(actions, model ? model.scale.x : 0, REFS_GLOBAIS);
     this.cur = null; this.dead = false; this.shooting = false; this.crouch = false; this.jumping = false;
     this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0; this._porte1hK = 0;
     this._flinchT = 0; this._flinchDur = 0; this._flinchDir = null; this._fireT = 0; this._fireDur = 0;
@@ -1496,7 +1501,7 @@ class CharController {
     if (this.lod < 2 && (back || Math.abs(lateral) > 0.25)) this._requestExtras();
     const base = this._loco === 'walk' && usaClipe1h && this.actions.walk1h ? 'walk1h' : this._loco;
     const variante = (nome) => this.oneHanded && this.actions[`${nome}_pistol`] ? `${nome}_pistol` : nome;
-    const costas = this._loco === 'run' ? 'run_back' : 'walk_back';
+    const costas = this._loco === 'run' && !(this.oneHanded && this.actions.walk_back_pistol) ? 'run_back' : 'walk_back';
     if (this.lod >= 2 || (back && !this.actions[variante(costas)])) {
       this._to(back ? (usaClipe1h && this.actions.walk1h ? 'walk1h' : 'walk') : base);
       return;
@@ -1819,10 +1824,11 @@ class CharController {
       // Per-clip cycle rate = ground speed / that clip's measured natural speed, so the
       // feet plant instead of ice-skating. clamp keeps it from looking frantic/frozen.
       const rate = (ref) => Math.max(0.45, Math.min(3.0, speed / ref));
-      if (this.actions.run) this.actions.run.timeScale = rate(RUN_REF);
-      if (this.actions.walk) this.actions.walk.timeScale = back ? -rate(WALK_REF) : rate(WALK_REF);
-      if (this.actions.walk1h) this.actions.walk1h.timeScale = back ? -rate(WALK_REF) : rate(WALK_REF);
-      if (this.actions.crouchwalk) this.actions.crouchwalk.timeScale = rate(CROUCH_REF);
+      const refs = this.refs;
+      if (this.actions.run) this.actions.run.timeScale = rate(refs.run);
+      if (this.actions.walk) this.actions.walk.timeScale = back ? -rate(refs.walk) : rate(refs.walk);
+      if (this.actions.walk1h) this.actions.walk1h.timeScale = back ? -rate(refs.walk1h) : rate(refs.walk1h);
+      if (this.actions.crouchwalk) this.actions.crouchwalk.timeScale = rate(refs.crouchwalk);
       for (const nome of ['strafe_left', 'strafe_right', 'strafe_left_pistol', 'strafe_right_pistol']) {
         if (this.actions[nome]) this.actions[nome].timeScale = rate(nome.endsWith('_pistol') ? 1.8 : 1.53);
       }

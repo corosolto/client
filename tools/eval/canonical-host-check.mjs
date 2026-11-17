@@ -13,7 +13,8 @@
            backend interceptado), pedidos no handler SSR pelo host novo e pelo antigo, idem
            (hreflang só onde a página é indexável; o perfil exige 200, canonical e og:image)
      CH3 · robots.txt e llms.txt anunciam o host decidido
-     CH4 · nenhum arquivo de texto publicado cita o host antigo
+     CH4 · nenhum texto publicado aponta para o host antigo; chaves exatas do beacon legado
+           em js/privacy-runtime.js são configuração operacional, não URL de navegação/conteúdo
      CH5 · a comunidade do jogo recebe o host decidido (`#community[data-site]`)
 
    Uso: npm run build && node tools/eval/canonical-host-check.mjs [--mutate]
@@ -30,6 +31,9 @@ const ANTIGO = 'https://www.csbrasil.online';
 const HOST_ANTIGO = /csbrasil\.online|csbrasil\.vercel\.app/;
 const NOSSO = /^https?:\/\/(?:(?:www\.)?(?:csbrasil\.online|corosolto\.com\.br)|csbrasil\.vercel\.app)(?:[/:?#]|$)/i;
 const noHost = (u) => u === CANONICO || u?.startsWith(CANONICO + '/');
+const semChavesDoBeaconLegado = (arquivo, texto) => arquivo === 'js/privacy-runtime.js'
+  ? texto.replace(/(['"])(?:www\.)?csbrasil\.online\1\s*:/g, '')
+  : texto;
 const CHAVE = ['index.html', 'armas/index.html', 'mapas/index.html', 'personagens/index.html', 'como-jogar/index.html', 'sobre/index.html', 'changelog/index.html', 'docs/index.html', 'docs/en/index.html'];
 const TEXTO = /\.(html|txt|xml|json|md|webmanifest|js|mjs|css|svg)$/;
 const MUTATE = process.argv.includes('--mutate');
@@ -162,8 +166,10 @@ const CASOS = [
     if (!llms.includes(`Site: ${CANONICO}`)) return `llms.txt não declara "Site: ${CANONICO}"`;
     return null;
   }],
-  ['CH4 · nenhum texto publicado cita o host antigo', (b) => {
-    const achados = Object.entries(b.arquivos).filter(([, t]) => HOST_ANTIGO.test(t)).map(([f]) => f);
+  ['CH4 · nenhum texto publicado aponta para o host antigo', (b) => {
+    const achados = Object.entries(b.arquivos)
+      .filter(([arquivo, texto]) => HOST_ANTIGO.test(semChavesDoBeaconLegado(arquivo, texto)))
+      .map(([arquivo]) => arquivo);
     for (const [url, { corpo }] of Object.entries(b.ssr)) if (HOST_ANTIGO.test(corpo)) achados.push(`SSR ${url}`);
     return achados.length ? `${achados.length} arquivo(s) com o host antigo, ex.: ${achados.slice(0, 5).join(', ')}` : null;
   }],
@@ -194,6 +200,7 @@ if (MUTATE) {
     ['CH2', 'rota SSR volta ao host antigo', (b) => ({ ...b, ssr: Object.fromEntries(Object.entries(b.ssr).map(([r, v]) => [r, { ...v, corpo: troca(v.corpo) }])) })],
     ['CH3', 'robots.txt volta ao host antigo', (b) => ({ ...b, arquivos: { ...b.arquivos, 'robots.txt': troca(b.arquivos['robots.txt']) } })],
     ['CH4', 'llms-full.txt cita o host antigo', (b) => ({ ...b, arquivos: { ...b.arquivos, 'llms-full.txt': (b.arquivos['llms-full.txt'] || '') + `\n${ANTIGO}/\n` } })],
+    ['CH4', 'privacy runtime publica URL no host antigo', (b) => ({ ...b, arquivos: { ...b.arquivos, 'js/privacy-runtime.js': `${b.arquivos['js/privacy-runtime.js']}\nconst legacyUrl = "${ANTIGO}/tracking";` } })],
     ['CH5', 'comunidade volta ao host antigo', (b) => ({ ...b, arquivos: { ...b.arquivos, 'index.html': b.arquivos['index.html'].replace(`data-site="${CANONICO}"`, `data-site="${ANTIGO}"`) } })],
   ];
   let cegas = 0;

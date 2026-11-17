@@ -23,11 +23,13 @@
      --mutante=morto-dancando o abate não derruba o passo  -> EP4
      --mutante=camera-perto   câmera não afasta            -> EP5
      --mutante=captura-sem-shift  Shift+N cai no anel procedural -> EP7
+     --mutante=menu-composicao troca um procedural por captura sem mudar o total -> EP1
 
    Uso: BASE=http://127.0.0.1:9351 node tools/eval/emote-partida-check.mjs
    ============================================================================ */
 import { execSync, spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { EMOTE_IDS } from '../../public/js/data/emote-catalog.js';
 
 const BASE_EXTERNA = process.env.BASE;
 const PORTA = process.env.PORTA || '9352';
@@ -37,7 +39,7 @@ const ESPERADO = {
   // acoplamentos reais e declarados: sem roda nada toca, e sem 3a pessoa nao ha
   // distancia de camera pra medir.
   'tecla-morta': ['EP1', 'EP2', 'EP3', 'EP5', 'EP7'], 'camera-colada': ['EP2', 'EP5', 'EP7'], 'anda-dancando': ['EP3', 'EP7'],
-  'morto-dancando': ['EP4'], 'camera-perto': ['EP5'], 'porta-aberta': ['EP6'],
+  'morto-dancando': ['EP4'], 'camera-perto': ['EP5'], 'porta-aberta': ['EP6'], 'menu-composicao': ['EP1'],
   'passo-congelado': ['EP2'], 'corpo-sem-tick': ['EP2', 'EP7'], 'captura-sem-shift': ['EP7'],
 };
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
@@ -91,6 +93,7 @@ if (MUT === 'camera-perto') await reescreve(/\/js\/game\.js/, (t) => t.replace('
 if (MUT === 'passo-congelado') await reescreve(/\/js\/glbchars\.js/, (t) => t.replace('this._emoteT += dt;', 'this._emoteT += 0;'));
 if (MUT === 'corpo-sem-tick') await reescreve(/\/js\/game\.js/, (t) => t.replace('tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, back, lateral);', 'void dt;'));
 if (MUT === 'captura-sem-shift') await reescreve(/\/js\/game\.js/, (t) => t.replace('this._emoteAnel(e.shiftKey)', 'this._emoteAnel(false)'));
+if (MUT === 'menu-composicao') await reescreve(/\/js\/data\/emote-catalog\.js/, (t) => t.replace("{ id: 'passinho',", "{ id: 'capoeira',"));
 
 await page.goto(`${BASE}/?${PARTIDA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 240000 });
@@ -280,8 +283,8 @@ await browser.close();
 const r = [];
 const cobra = (id, ok, texto) => r.push({ id, ok, texto });
 
-cobra('EP1', abriu.aberta && abriu.visivel && abriu.itens.length === 16 && !fechouEsc.aberta,
-  `EP1 · tecla T abre a roda com ${abriu.itens.length} passos (${abriu.itens.slice(0, 3).join(', ')}… ${abriu.itens.slice(8, 10).join(', ')}…) e ESC fecha`);
+cobra('EP1', abriu.aberta && abriu.visivel && JSON.stringify(abriu.itens) === JSON.stringify(EMOTE_IDS) && !fechouEsc.aberta,
+  `EP1 · tecla T abre a roda com os ${EMOTE_IDS.length} passos na ordem exata (${abriu.itens.slice(0, 3).join(', ')}… ${abriu.itens.slice(8, 10).join(', ')}…) e ESC fecha`);
 
 cobra('EP7', captura.dancando.emote === 'capoeira' && captura.dancando.cur === 'emote_capoeira'
   && captura.dancando.clipe && captura.dancando.armaGuardada && pedidosPack === 1

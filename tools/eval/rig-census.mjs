@@ -58,6 +58,7 @@
 
    USO: node tools/eval/rig-census.mjs            # o portão (CI + check:fast)
         node tools/eval/rig-census.mjs --regen    # congela/recongela os tetos
+        node tools/eval/rig-census.mjs --diagnostico-base # mostra qual clipe sobe cada teto
         node tools/eval/rig-census.mjs --mutacoes # testa a régua contra mutantes
    ============================================================================ */
 import { NodeIO } from '@gltf-transform/core';
@@ -427,7 +428,7 @@ function carregaTetos() {
 }
 
 /** Verifica UM GLB medido contra os tetos. Devolve as falhas (vazio = verde). */
-function verificaItem(item, medido, tetos) {
+function verificaItem(item, medido, tetos, tolerancia = TOLERANCIA_RUIDO) {
   const falhas = [];
   const teto = tetos.tetos?.[item.id];
   const descreve = (grupo, chave, valor, porque) => {
@@ -462,11 +463,11 @@ function verificaItem(item, medido, tetos) {
     for (const grupo of ['sinteticas', 'clips']) for (const chave of CHAVES_METRICAS) {
       const m = medido.metricas[grupo]?.[chave], t = teto.metricas?.[grupo]?.[chave];
       if (m?.valor == null || t == null) continue;
-      if (m.valor > t * TOLERANCIA_RUIDO) descreve(grupo, chave, `${m.valor}×`, `> teto congelado ${t}× (sha confere) — o GLB piorou ou o teto está velho; melhoria real se congela com --regen`);
-      else if (t > m.valor * TOLERANCIA_RUIDO) descreve(grupo, chave, `${m.valor}×`, `mas o teto diz ${t}× — teto cravado nos bytes: subir número no arquivo não trava em nada`);
+      if (m.valor > t * tolerancia) descreve(grupo, chave, `${m.valor}×`, `> teto congelado ${t}× (sha confere) — o GLB piorou ou o teto está velho; melhoria real se congela com --regen`);
+      else if (t > m.valor * tolerancia) descreve(grupo, chave, `${m.valor}×`, `mas o teto diz ${t}× — teto cravado nos bytes: subir número no arquivo não trava em nada`);
     }
     const be = medido.metricas.bindErro, tb = teto.metricas?.bindErro;
-    if (tb != null && be > tb * TOLERANCIA_RUIDO + 1e-4) falhas.push(`${item.id}: erro de bind ${be} m > congelado ${tb} m (sha confere) — IBM/skin piorou`);
+    if (tb != null && be > tb * tolerancia + 1e-4) falhas.push(`${item.id}: erro de bind ${be} m > congelado ${tb} m (sha confere) — IBM/skin piorou`);
     return falhas;
   }
   // sha diferente = GLB trocado: estrito (ou o teto legado do id, se já passava
@@ -475,10 +476,10 @@ function verificaItem(item, medido, tetos) {
   for (const grupo of ['sinteticas', 'clips']) for (const chave of CHAVES_METRICAS) {
     const m = medido.metricas[grupo]?.[chave], t = teto.metricas?.[grupo]?.[chave];
     if (m?.valor == null || t == null) continue;
-    if (m.valor > t * TOLERANCIA_RUIDO) descreve(grupo, chave, `${m.valor}×`, `> teto do id ${t}× — GLB trocou de sha (${teto.sha256.slice(0, 8)}→${item.sha.slice(0, 8)}) e piorou; teto só desce (--regen só se TODA métrica melhorou)`);
+    if (m.valor > t * tolerancia) descreve(grupo, chave, `${m.valor}×`, `> teto do id ${t}× — GLB trocou de sha (${teto.sha256.slice(0, 8)}→${item.sha.slice(0, 8)}) e piorou; teto só desce (--regen só se TODA métrica melhorou)`);
   }
   const be = medido.metricas.bindErro, tb = teto.metricas?.bindErro;
-  if (tb != null && be > tb * TOLERANCIA_RUIDO + 1e-4) falhas.push(`${item.id}: erro de bind ${be} m > teto do id ${tb} m — GLB trocou de sha e o bind piorou; teto só desce`);
+  if (tb != null && be > tb * tolerancia + 1e-4) falhas.push(`${item.id}: erro de bind ${be} m > teto do id ${tb} m — GLB trocou de sha e o bind piorou; teto só desce`);
   return falhas;
 }
 
@@ -527,23 +528,23 @@ function tetosDaBase() {
 // Portão principal.
 // ---------------------------------------------------------------------------
 
-async function rodaCenso() {
+async function rodaCenso({ diagnosticoBase = false } = {}) {
   const t0 = performance.now();
   const itens = await enumeraCenso();
-  const tetos = existsSync(ARQ_TETOS) ? carregaTetos() : { tetos: {} };
+  const base = tetosDaBase();
+  const tetos = diagnosticoBase ? base : existsSync(ARQ_TETOS) ? carregaTetos() : { tetos: {} };
   const falhas = [];
   let sobreEstrito = 0;
+  if (!tetos) falhas.push('tetos: base autoritativa indisponível — use checkout com histórico completo; sem base, um PR poderia inflar teto junto com o GLB');
   for (const item of itens) {
     item.sha = sha256(readFileSync(join(ROOT, item.caminho)));
     let medido;
     try { medido = await medeItem(item); } catch (e) { falhas.push(e.message); continue; }
-    falhas.push(...verificaItem(item, medido, tetos));
+    falhas.push(...verificaItem(item, medido, tetos || { tetos: {} }, diagnosticoBase ? 1 : TOLERANCIA_RUIDO));
     const piorao = Math.max(medido.metricas.sinteticas.maxEdge?.valor ?? 1, medido.metricas.clips.maxEdge?.valor ?? 1);
     if (piorao > ESTRITO.maxEdge) sobreEstrito += 1;
   }
-  const base = tetosDaBase();
-  if (!base) falhas.push('tetos: base autoritativa indisponível — use checkout com histórico completo; sem base, um PR poderia inflar teto junto com o GLB');
-  else falhas.push(...diffTetos(base, tetos, new Set(itens.map((i) => i.id))));
+  if (!diagnosticoBase && base) falhas.push(...diffTetos(base, tetos, new Set(itens.map((i) => i.id))));
   return { itens, falhas, sobreEstrito, durou: ((performance.now() - t0) / 1000).toFixed(1) };
 }
 
@@ -762,7 +763,7 @@ const args = process.argv.slice(2);
 if (args.includes('--mutacoes')) await mutacoes();
 else if (args.includes('--regen')) await regen();
 else {
-  const { falhas, sobreEstrito, durou, itens } = await rodaCenso();
+  const { falhas, sobreEstrito, durou, itens } = await rodaCenso({ diagnosticoBase: args.includes('--diagnostico-base') });
   const corpos = itens.filter((i) => i.tipo === 'corpo').length, skins = itens.length - corpos;
   if (falhas.length) {
     console.error(`censo rig: ${falhas.length} problema(s) em ${corpos} corpos + ${skins} skins (${durou} s):`);

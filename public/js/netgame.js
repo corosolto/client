@@ -1079,9 +1079,9 @@ class Netcode {
       const spd = Math.min(6, b._netSpd || 0);
       const fwdYaw = segYaw == null ? corpoYaw : (b._netBot === false ? segYaw + Math.PI : segYaw);
       const fwd = vx * Math.sin(fwdYaw) + vz * Math.cos(fwdYaw);
-      // Mesmo eixo lateral do jogador local (game.js): com yaw 0, +X é lateral positiva.
-      // O sinal invertido trocava strafe_left/strafe_right e inclinava o remoto ao contrário.
-      const lat = vx * Math.cos(fwdYaw) - vz * Math.sin(fwdYaw);
+      // Mesmo eixo do controlador 3P: lateral positiva é a direita visual do corpo (−X local).
+      // Para humano remoto, fwdYaw já inclui π; a projeção continua usando o yaw do segmento.
+      const lat = vz * Math.sin(fwdYaw) - vx * Math.cos(fwdYaw);
       if (b.mesh.isGLB) {
         const distCam = Math.hypot(b.pos.x - game.camera.position.x, b.pos.z - game.camera.position.z);
         b.mesh.ctrl.lod = distCam > 45 ? 2 : (distCam > 25 ? 1 : 0);

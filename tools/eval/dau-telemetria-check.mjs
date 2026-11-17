@@ -150,8 +150,8 @@ else {
   cobra(!new URL(ruim).searchParams.has('csha') && new URL(ruim).searchParams.getAll('team').length === 1,
     `DT6 NetClient aceita csha que não é hex (${ruim})`);
   cobra(/csha: String\(window\.__CS_BUILD\?\.sha \|\| ''\)/.test(main), 'DT6 main.js não passa o build do navegador ao NetClient');
-  cobra(/import\.meta\.env\.VERCEL_GIT_COMMIT_SHA/.test(astro) && /window\.__CS_BUILD = \{ sha: GIT_SHA \}/.test(astro),
-    'DT6 index.astro não publica o commit do deploy em window.__CS_BUILD');
+  cobra(/import\.meta\.env\.VERCEL_GIT_COMMIT_SHA/.test(astro) && /window\.__CS_BUILD = \{ sha: GIT_SHA, version: V \}/.test(astro),
+    'DT6 index.astro não publica o commit e a versão do deploy em window.__CS_BUILD');
 }
 
 if (falhas.length) {

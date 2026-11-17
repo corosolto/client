@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.pull_requests[0].number != null
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.pull_requests[0].number != null && (github.event.workflow_run.pull_requests[0].base.ref == 'staging' || github.event.workflow_run.pull_requests[0].base.ref == 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -79,6 +79,8 @@ jobs:
             echo "::error::CF_WORKERS_TOKEN/CF_API_TOKEN ausente ou sem Workers Scripts:Edit"
             exit 1
           fi
+          bash tools/cf/bootstrap-worker.sh csb-preview
+          npx --yes wrangler@4.158.0 triggers deploy --config wrangler.preview.toml
           npx --yes wrangler@4.158.0 versions upload \
             --config wrangler.preview.toml \
             --name csb-preview \

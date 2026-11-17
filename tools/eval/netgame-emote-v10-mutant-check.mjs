@@ -28,10 +28,12 @@ try {
     env: { ...process.env, NETGAME_UNDER_TEST: pathToFileURL(modulePath).href },
   });
   if (run.error) throw run.error;
+  const falhas = run.stdout.split(/\r?\n/).filter((line) => /^not ok \d+ - /.test(line));
   assert.equal(run.status, 1, `${run.stdout}\n${run.stderr}`);
-  assert.match(run.stdout, /not ok 1 - v10 sends a capture emote in live input and paused heartbeat/);
-  assert.doesNotMatch(run.stdout, /not ok 2 - v9 fallback/);
-  console.log('PASS NET-EMOTE-V10: restaurar o filtro v9 perde o emote capturado nos dois inputs');
+  assert.deepEqual(falhas, [
+    'not ok 1 - v10 sends a capture emote in live input and paused heartbeat',
+  ], `${run.stdout}\n${run.stderr}`);
+  console.log('PASS NET-EMOTE-V10: restaurar o filtro v9 perde só o emote capturado nos dois inputs');
 } finally {
   fs.rmSync(temp, { recursive: true });
 }

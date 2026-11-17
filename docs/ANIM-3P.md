@@ -221,25 +221,23 @@ O contrato é `npm run eval:postura` (`tools/eval/postura-check.mjs`), no `check
 | PS5 | cotovelo 55°..150° | faixa humana; censo p05=79,8 p95=135,8 |
 | PS6 | tremor ≤0,035 alturas/quadro correndo | quem passa mede ≤0,028; reprovados 0,039–0,075 |
 
-**Dívida, não perdão.** Os casos restantes estão em `DIVIDA` dentro da régua, visíveis no
-veredito: personagem NOVO que quebrar reprova o CI; entrada da lista que for consertada e não
-removida também reprova ("dívida paga: tire da lista"). A lista encolhe, nunca cresce escondido.
-Os três antigos casos de tremor (`lobisomem`, `mariabonita`, `lampiao`) passaram na medição de
-09/11/2026 após a revisão do idle de faca e saíram da lista. Exceção de CORPO (não de defeito)
+**Dívida, não perdão.** O censo de 23/10 tinha 11 personagens/cláusula fora do contrato; desde 09/11 restam 3. Eles
+estão em `DIVIDA` dentro da régua, visível no veredito: personagem NOVO que quebrar reprova
+o CI; entrada da lista que for consertada e não removida também reprova ("dívida paga:
+tire da lista"). A lista encolhe, nunca cresce escondido. Exceção de CORPO (não de defeito)
 também é declarada com motivo: `dollynho`, `gotinha`, `et`, `canarinho` — mascotes.
 
 A fila de revisão, com o que cada um quebra hoje:
 
 | Personagem | Cláusula | Medida | Caminho de conserto |
 |---|---|---|---|
-| `adjim`, `ancap`, `cadequinha`, `metaleiro` | PS3 arma na altura da cabeça | −0,008..0,017 | pose no rig ou clipe próprio |
-| `bonzo` | PS3 + PS5 cotovelo 42° | — | re-rig (o overlay balona a malha dele) |
+| `ancap` | PS3 arma na altura da cabeça | 0,017 | pose no rig ou clipe próprio |
+| `bonzo` | PS3 + PS5 cotovelo 30° | 0,025 | re-rig (o overlay balona a malha dele) |
 | `canarinho` | PS5 cotovelo 43° | — | mascote de braço-toco: decisão editorial |
-| `marina-silva` | PS4 mão na arma de 1 mão | 0,017–0,046 | pose no rig |
 
-Os três de tremor são os mesmos corpos que o `EMOTES-BR.md` já apontava por dependerem do
-pack de animação compartilhado: o tremor está no CLIPE, não no mount — consertar é re-autorar
-ou filtrar, e cada um desses caminhos é decisão de custo, não de parâmetro.
+Pagas em 09/11 pelos estados assados do Studio (ver "Estados assados por estado"): o tremor de
+`lobisomem`, `mariabonita` e `lampiao` (era do clipe compartilhado), a arma na altura da cabeça
+de `adjim`, `cadequinha` e `metaleiro` e a mão solta na arma de 1 mão da `marina-silva`.
 
 ## Rodada 31/10 — gauntlet do lote #1171
 
@@ -251,6 +249,30 @@ Histórico e causa dos fixes desta rodada (o código aponta pra cá; comentário
 - **Guarda extra de alcance do IK — retirada na integração #1188**: o wrapper de95% ignorava o offset mundial da palma e puxava para dentro alvos ainda alcançáveis. O teto das referências subia de0,675/23,6 para0,689/28,6. O `solveCCDIK` mantém sua proteção mundial com palma, reserva0,98 e passo angular máximo0,6; as quatro chamadas preservam seus alvos. A retirada não acrescenta limite anatômico de junta.
 - **Tint 3P (`TINT_3P`)**: capa do Juiz "esbranquiçada demais" — a textura do robe é clara de fábrica (PBR verde em 74/74). Multiplicador 0x98a3c6 no material da toga; crivo final na contact sheet.
 - **Morrer no meio da recarga**: `die()` cancela reload/flinch/lean/pitch. O envelope `reloadK` não era guardado por `dead` e o mergulho do tronco (spine k*0.20 pra trás) continuava sobre o clipe death clampado: o "cadáver se debatendo pra trás" do dono. Medido: reloadK 0 no cadáver.
+
+## Estados assados por estado (09/11)
+
+Os 74 BODIES legados trocam clipe ESTADO a ESTADO pelos assados do Studio (`legacy-out/<id>/_baked`),
+pela regra aprovada pelo dono: o novo substitui quando não cria reprovação nova no QA do Studio,
+não piora mais de 10% num check que já reprovava, e stretch marcado `[rig]` não conta
+(`tools/eval/baked-states-metrics.mjs`). Estado que não passa mantém o clipe atual; a decisão de
+cada um fica em `tools/eval/baked-states.json` e a régua é `eval:estadosassados`.
+
+- **Arquivo publicado**: o `_baked/<estado>.glb` float, sem meshopt — é o que o `qa-uncompressed.json`
+  mediu e o `GLTFLoader` do jogo lê sem decoder. O pack `<id>.glb` continua saindo do `merge-anims.mjs`.
+- **Velocidade**: o clipe assado anda na passada do próprio corpo (`extras.clip.rootMotion.speed`,
+  m/s na escala do GLB). O `gen-anim-manifest.mjs` copia esse valor para `index.json` (`refs`), o
+  `glbchars.js` marca o clipe (`anim-speed-ref.js`) e o controlador usa `ref × escala do modelo` no
+  `rate()`. Clipe sem ref — retarget antigo, skin com clipe próprio, estado no compartilhado — segue
+  nas globais `WALK_REF`/`RUN_REF`/`CROUCH_REF`. Sem isso, a caminhada assada (1,6 m/s natural)
+  rodaria quase 2× rápido demais com a ref global de 0,84 m/s.
+- **Pés**: `foot-offsets.json` é regenerado (`node tools/eval/char-probe.mjs && npm run feet`); os
+  clipes trocados já plantam o pé, então a correção por clipe cai onde o assado entrou.
+- **Veto de runtime**: estado que passa a regra do QA mas reprova régua do jogo já existente mantém
+  o clipe atual, com a régua e o número na evidência. Hoje só `canarinho/idle1h`
+  (`eval:postura` COTOVELO 41,8°, faixa 55°–150°, com pistol/knife).
+- **Corpos que usavam o compartilhado** (`cuca`, `gilbomes`): ao ganhar pasta própria, os estados
+  mantidos entram como cópia byte a byte de `mixamo/<estado>.glb`, para a pasta ter os 8 clipes base.
 
 ## Estados extras com pack compartilhado (09/11/2026)
 
