@@ -4,6 +4,7 @@
      PB2 tela (desktop 1536×1024): 15 níveis × 5 recompensas, XP, missões; RESGATAR NÍVEL 1 manda só
          {action:'claim', level:1}, o nível vira RESGATADO e o bônus de XP aparece.
      PB3 visitante no celular deitado (844×390): CTA abre o convite de login; depois de fechar,
+         o convite do bônus de cadastro (/api/treta chegando depois) não reabre na mesma visita, e
          a aba PASSE mostra 15 níveis sem rolagem horizontal nem resgate, com CTA para entrar.
      PB5 funil do painel: com medição permitida sai modal_view e open, uma vez cada; com a recusa
          gravada em cs_privacy não sai nenhum evento.
@@ -61,6 +62,7 @@ const MUTANTES = {
   'premio-sem-poster': ['PB8', /\/js\/tp\/passe\.js/, (t) => t.replace('  if (!skin?.poster) {\n', '  if (true) {\n')],
   'bot-travado-fixado': ['PB9', /\/js\/main\.js/, (t) => t.replace('if (!ehPin && personagemTravado(def)) {', 'if (false) {')],
   'anuncio-desiste': ['PB10', /\/js\/passe-anuncio\.js/, (t) => t.replace('    await semDialogoAberto();\n', '    return null;\n')],
+  'convite-volta': ['PB3', /\/js\/login-prompt\.js/, (t) => t.replace('    markSeen();dialog.showModal();\n', '    dialog.showModal();\n')],
 };
 
 /* Personagem do passe ainda fora do roster deste branch (o faction-pipeline monta a facção):
@@ -68,7 +70,7 @@ const MUTANTES = {
 const INJETA_PERSONAGEM = (t) => t.replace('export const CHARACTERS = [',
   "export const CHARACTERS = [\n  { id: 'capitao-caveira', team: 'E', name: 'Capitão Caveira', passe: { season: 'sessao-da-treta-s1', level: 1 },\n    blurb: 'Personagem do passe (régua).', pal: { skin: 0xe8b98a, shirt: 0x222222, pants: 0x222222, hair: 0x111111, boots: 0x111111 } },");
 
-async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mutante = '', personagem = null, anuncioVisto = false, recusaMedicao = false, atrasoMs = 0, flavio = false, posterQuebrado = '', auto = false }) {
+async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mutante = '', personagem = null, anuncioVisto = false, recusaMedicao = false, atrasoMs = 0, flavio = false, posterQuebrado = '', auto = false, seguraTreta = false }) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: toque, isMobile: toque, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   page.setDefaultTimeout(15000);
@@ -97,6 +99,19 @@ async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mu
     const { status, body } = mock.handle(req.method(), req.postData() || '');
     await r.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
   });
+  /* seguraTreta: o GET /api/treta (bônus de cadastro, que abre o convite do visitante com nick salvo)
+     sai de um fixo e só responde quando a régua solta, em vez de correr contra a rede até o backend. */
+  let soltar;
+  const solta = new Promise((ok) => { soltar = ok; }), entregas = [];
+  if (seguraTreta) await page.route((u) => u.pathname === '/api/treta', (r) => {
+    if (r.request().method() !== 'GET') return r.fallback();
+    const entrega = solta.then(() => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ authenticated: false, currency: 'TRETA$', catalog: [],
+      campaign: { id: 'regua', starts_at: new Date(Date.now() - 5 * DIA).toISOString(), ends_at: new Date(Date.now() + 60 * DIA).toISOString(),
+        email_reward: 10000, referral_reward: 100, sp_reward: 10, mp_reward: 25, daily_match_cap: 250, referral_cap: 10, signup_bonus: 10000 } }) }));
+    entregas.push(entrega);
+    return entrega;
+  });
+  const soltaTreta = async () => { soltar(); await Promise.all(entregas); };
   await page.route((u) => u.pathname === '/api/social-auth', async (r) => {
     const u = new URL(r.request().url());
     if (r.request().method() !== 'GET') return r.fulfill({ status: 400, contentType: 'application/json', body: '{"error":"bad_request"}' });
@@ -123,7 +138,7 @@ async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mu
   await page.waitForFunction(() => !document.getElementById('splash-enter')?.classList.contains('hidden'), null, { timeout: 90000 }).catch(() => {});
   await page.waitForTimeout(1200);
   await entrarNoLobby(page, flavio ? 'flavio' : !anuncioVisto);
-  return { page, ctx, posts, eventos, erros, gets };
+  return { page, ctx, posts, eventos, erros, gets, soltaTreta };
 }
 
 /* Sai do splash e espera o status do passe (aba PASSE visível). O anúncio sai depois que o lobby
@@ -142,13 +157,15 @@ async function entrarNoLobby(page, anuncioEsperado) {
 const foto = (page, nome, mutante) => (mutante ? null : page.screenshot({ path: `${OUT}/${nome}.png` }));
 const vis = (page, sel) => page.evaluate((s) => { const e = document.querySelector(s); return !!e && e.checkVisibility?.() && e.getBoundingClientRect().width > 0; }, sel);
 
-async function medir(mutante = '') {
+/* alvo: sob mutante só sobem as sessões que medem a cláusula mirada (o job tem prazo de 30 min). */
+async function medir(mutante = '', alvo = '') {
   mkdirSync(OUT, { recursive: true });
   const r = [];
   const add = (id, ok, msg) => r.push({ id, ok: !!ok, msg });
+  const roda = (...alvos) => !alvo || alvos.includes(alvo);
 
   /* Sessão A: desktop, conta com 2.350 XP e nada resgatado. */
-  {
+  if (roda('PB1', 'PB2', 'PB4', 'PB5', 'PB8')) {
     const mock = mockNoAr({ autenticado: true, xp: 2350, claimed: [] });
     const { page, ctx, posts, eventos, erros } = await abrir({ mock, mutante, posterQuebrado: 'arma-02' });
     const anuncio = await page.evaluate(() => {
@@ -229,9 +246,9 @@ async function medir(mutante = '') {
   }
 
   /* Sessão B: celular deitado, visitante. */
-  {
+  if (roda('PB3', 'PB5')) {
     const mock = mockNoAr({ autenticado: false, claimed: [] });
-    const { page, ctx, posts, eventos, erros } = await abrir({ w: 844, h: 390, toque: true, conta: false, mock, mutante, recusaMedicao: true });
+    const { page, ctx, posts, eventos, erros, soltaTreta } = await abrir({ w: 844, h: 390, toque: true, conta: false, mock, mutante, recusaMedicao: true, seguraTreta: true });
     const anuncio = await page.evaluate(() => ({ aberto: !!document.getElementById('passe-anuncio')?.open, cta: document.querySelector('#passe-anuncio [data-passe-cta]')?.textContent || '' }));
     await foto(page, 'anuncio-celular-visitante', mutante);
     if (anuncio.aberto) await page.click('#passe-anuncio [data-passe-cta]');
@@ -239,7 +256,13 @@ async function medir(mutante = '') {
     const login = await page.evaluate(() => ({ aberto: !!document.getElementById('login-prompt')?.open, titulo: document.getElementById('login-prompt-title')?.textContent || '' }));
     await foto(page, 'login-celular-visitante', mutante);
     await page.click('#login-prompt-close');
-    await page.waitForFunction(() => !document.getElementById('login-prompt')?.open, null, { timeout: 3000 });
+    const fechou = await page.waitForFunction(() => !document.getElementById('login-prompt')?.open, null, { timeout: 3000 }).then(() => true, () => false);
+    /* Só agora chega o bônus de cadastro (/api/treta): o convite decide (cs-pos-partida) sem reabrir atrás do do passe. */
+    await page.evaluate(() => document.addEventListener('cs-pos-partida', () => { window.__reguaConviteDecidiu = true; }, { once: true }));
+    await soltaTreta();
+    await page.waitForFunction(() => window.__reguaConviteDecidiu || document.getElementById('login-prompt')?.open, null, { timeout: 8000 }).catch(() => {});
+    const convite = await page.evaluate(() => ({ decidiu: !!window.__reguaConviteDecidiu, voltou: document.getElementById('login-prompt')?.open ? document.getElementById('login-prompt-title')?.textContent || '?' : '' }));
+    if (convite.voltou) await page.click('#login-prompt-close').catch(() => {});
     await page.click('[data-tp-aba="passe"]').catch(() => {});
     await page.waitForSelector('#tp-passe[open] .tp-passe-nivel', { timeout: 10000 }).catch(() => {});
     const tela = await page.evaluate(() => {
@@ -250,15 +273,16 @@ async function medir(mutante = '') {
     await foto(page, 'passe-celular-visitante', mutante);
     await page.click('[data-resgatar]', { timeout: 1500 }).catch(() => {});
     await page.waitForTimeout(500);
-    add('PB3', anuncio.aberto && anuncio.cta === 'ENTRAR E JOGAR O PASSE' && login.aberto && /passe/.test(login.titulo) && tela.aberta && tela.larguraOk && tela.niveis === 15 && tela.resgates === 0 && tela.entrar && posts.length === 0,
-      `anúncio ${anuncio.aberto ? `"${anuncio.cta}"` : 'NÃO ABRIU'}; login ${login.aberto ? `"${login.titulo}"` : 'NÃO ABRIU'}; tela ${tela.aberta ? 'aberta' : 'FECHADA'}, ${tela.niveis} níveis, ${tela.larguraOk ? 'sem rolagem lateral' : 'ROLA NA HORIZONTAL'}, ${tela.resgates} botão(ões) de resgate, ENTRAR ${tela.entrar ? 'presente' : 'ausente'}; resgates ${posts.length}`);
+    add('PB3', anuncio.aberto && anuncio.cta === 'ENTRAR E JOGAR O PASSE' && login.aberto && /passe/.test(login.titulo) && fechou && convite.decidiu && !convite.voltou
+      && tela.aberta && tela.larguraOk && tela.niveis === 15 && tela.resgates === 0 && tela.entrar && posts.length === 0,
+      `anúncio ${anuncio.aberto ? `"${anuncio.cta}"` : 'NÃO ABRIU'}; login ${login.aberto ? `"${login.titulo}"` : 'NÃO ABRIU'} ${fechou ? 'fechou' : 'NÃO FECHOU'}; bônus de cadastro depois: ${convite.voltou ? `convite VOLTOU "${convite.voltou}"` : convite.decidiu ? 'convite não voltou' : 'convite NÃO DECIDIU'}; tela ${tela.aberta ? 'aberta' : 'FECHADA'}, ${tela.niveis} níveis, ${tela.larguraOk ? 'sem rolagem lateral' : 'ROLA NA HORIZONTAL'}, ${tela.resgates} botão(ões) de resgate, ENTRAR ${tela.entrar ? 'presente' : 'ausente'}; resgates ${posts.length}`);
     add('PB5@recusa', eventos.length === 0, `funil com recusa gravada: ${eventos.length ? `SAIU ${JSON.stringify(eventos)}` : 'nenhum evento'}`);
     add('PB0@celular', !erros.length, erros.length ? `erros de página: ${erros.join(' | ')}` : 'sem erro de página');
     await ctx.close();
   }
 
   /* Sessão C: celular deitado, conta; Sessão D: seletor com o personagem travado e o id salvo no navegador. */
-  {
+  if (!mutante) {
     const mock = mockNoAr({ autenticado: true, xp: 6400, claimed: [1, 2] });
     const { page, ctx } = await abrir({ w: 844, h: 390, toque: true, mock, mutante, anuncioVisto: true });
     await page.click('[data-tp-aba="passe"]').catch(() => {});
@@ -267,7 +291,7 @@ async function medir(mutante = '') {
     await foto(page, 'passe-celular', mutante);
     await ctx.close();
   }
-  {
+  if (roda('PB4', 'PB7', 'PB9')) {
     const mock = mockNoAr({ autenticado: true, xp: 400, claimed: [] });
     const { page, ctx } = await abrir({ mock, mutante, personagem: 'capitao-caveira', anuncioVisto: true });
     const lobby = await page.evaluate(() => document.getElementById('hub-character-name')?.textContent || '');
@@ -319,7 +343,7 @@ async function medir(mutante = '') {
     await ctx.close();
   }
   /* Sessão E: servidor lento, o anúncio espera a resposta em vez de desistir. */
-  {
+  if (roda('PB6')) {
     const mock = mockNoAr({ autenticado: true, xp: 2350, claimed: [] });
     const { page, ctx } = await abrir({ mock, mutante, atrasoMs: 7000 });
     const aberto = await page.evaluate(() => !!document.getElementById('passe-anuncio')?.open);
@@ -327,7 +351,7 @@ async function medir(mutante = '') {
     await ctx.close();
   }
   /* Sessão F: 1º acesso de verdade, o anúncio da Operação Flávio abre antes do passe. */
-  {
+  if (roda('PB10')) {
     const mock = mockNoAr({ autenticado: false, claimed: [] });
     const { page, ctx, erros } = await abrir({ mock, mutante, conta: false, flavio: true });
     await page.waitForTimeout(2500);   // o status do passe já chegou: o passe está na fila, não na tela
@@ -369,7 +393,7 @@ async function medir(mutante = '') {
 let sair = 0;
 if (process.argv.includes('--mutantes')) {
   for (const [mut, [alvo]] of Object.entries(MUTANTES)) {
-    const rs = (await medir(mut)).filter((x) => x.id === alvo || x.id.startsWith(`${alvo}@`));
+    const rs = (await medir(mut, alvo)).filter((x) => x.id === alvo || x.id.startsWith(`${alvo}@`));
     const morde = rs.some((x) => !x.ok);
     if (!morde) sair = 1;
     const c = rs.find((x) => !x.ok) || rs[0] || { msg: 'cláusula não medida' };
