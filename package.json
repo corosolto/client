@@ -1012,6 +1012,7 @@
   },
   "devDependencies": {
     "@astrojs/cloudflare": "^14.3.4",
+    "@astrojs/vercel": "^11.0.6",
     "@gltf-transform/core": "^4.4.1",
     "@gltf-transform/extensions": "^4.4.1",
     "@gltf-transform/functions": "^4.4.1",
