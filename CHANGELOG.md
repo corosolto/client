@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.148`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.150`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -270,6 +270,357 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.1.0-alpha.150] — 2026-11-17
+
+### Mudado
+- fix(ci): harden asset and robots evidence gates (#1358)
+- test(ci): enforce structured bot workflow guards (#1328)
+- fix: keep installed single-player playable offline (#1350)
+- fix(ci): preserve devcontainer and image cancellation guards (#1355)
+- ci: build once and share browser environments (#1322)
+- feat(net): extract lobby and interpolation resilience (#1326)
+- chore: reconcile main hotfixes into staging (#1351)
+- chore(eval): retire Quake 4 probes (#1360)
+- CI: use canonical npm lockfile and pin action digests with Renovate (#1233)
+- ci: unify release attestation and debounce bot sweeps (#1325)
+- fix(profile): record solo presence and send weapon mode (#1330)
+- fix(audio): unlock AudioContext on deep links, filter character voices, and reanchor checks (#1295)
+- ci: standardize local environment with CI (#1323)
+- fix(personagens): repeso do roster — virilha, sovaco e cauda (profeta-calcada, bolsonaro-mandrake) (#1270)
+- fix(ci): read PR metadata with repository token (#1363)
+- feat(pass): replace temporary bars with Creepypasta artwork (#1364)
+- docs: add PR and issue queue skill (#1361)
+- feat: add verified local Studio pack installs (#1225)
+- fix(ops): read current ranking flag and exclude ad noise (#1362)
+- fix: rebind missing respawn countdown (#1366)
+- fix: distinguish blind and unmeasured verdict exits (#1367)
+- fix(rig): fit donor elbow and wrist joints to the mesh (#1253)
+- feat(steam): add manifest and no-upload preflight (#1102)
+- fix(skins): keep Lula sleeves weighted to the arms (#1265)
+- fix(ci): close release gate evidence gaps (#1370)
+- feat(network): publish crouch, reload, and emotes in snapshot v9 (#1266)
+- refactor(studio): move content production to Studio (#1221)
+- docs: align queue skill pre-push exception (#1369)
+- eval(rig): census deformation across 100 GLBs (#1274)
+- fix(bot): harden release review gates (#1379)
+- Merge hotfix: translate documentation to English (#1382)
+- fix(net): close release review findings (#1381)
+- fix(release): harden Steam preparation (#1380)
+- fix(gameplay): playtest feedback - smoke, CTF minimap, ammo, economy (#1376)
+- release: daily batch 2026-11-14 (#1368)
+- docs(i18n): translate main documentation to English
+- fix(net): keep reload deadlines monotonic
+- fix(steam): normalize Windows launch paths portably
+- fix(net): close release review findings
+- fix(bot): scope sweep inventory token
+- fix(release): harden Steam preparation
+- fix(ci): harden release review gates
+- fix(gameplay): playtest feedback - smoke, CTF minimap, ammo, economy
+- fix(items): propagate head incompatibilities
+- fix(ci): compact urban fit evidence
+- fix(ci): scope automerge metadata reads
+- fix(ci): wait for the lockf fallback
+- fix(ci): harden paginated metadata sweeps
+- fix(smoke): preserve local fixture transport
+- docs: record HTTPS smoke fixture
+- fix(smoke): use TLS fixture on HTTPS previews
+- fix(ci): validate legacy lock timestamp portability
+- fix(ci): validate legacy lock process age
+- fix(ci): isolate kernel lock from legacy path
+- fix(ci): preserve writer credentials and lock ownership
+- fix(docs): rebuild integrated route bundle
+- fix(ci): validate legacy lock timestamp portability
+- fix(ci): validate legacy lock process age
+- fix(ci): isolate kernel lock from legacy path
+- fix(ci): preserve writer credentials and lock ownership
+- fix(docs): remove generated merge markers
+- fix(docs): remove generated merge markers
+- fix(ci): validate legacy lock timestamp portability
+- fix(ci): validate legacy lock process age
+- fix(ci): isolate kernel lock from legacy path
+- fix(ci): preserve writer credentials and lock ownership
+- fix(ci): close release gate evidence gaps
+- fix(ci): close release gate evidence gaps
+- fix(eval): enforce grip and legacy ceilings
+- fix(studio): refresh urban body evidence
+- docs: scope pre-push exception to PREPUSH only
+- docs: align queue skill pre-push exception
+- test(assets): refresh rig evidence manifests
+- test(ops): expect inconclusive exit 78
+- fix(eval): share mutation verdict taxonomy
+- test(ci): detect inverted classifier cancellation
+- docs(weapons): refresh generated matrix anchors
+- fix(eval): preserve visual blind verdicts
+- chore(steam): remove PR handoff artifact
+- fix(respawn): tolerate missing overlay DOM
+- fix(ci): prevent classifier self-cancellation
+- fix(eval): classify remaining verdict exits
+- docs(pr-maintenance): expand original branch
+- docs(pr-maintenance): close operational gaps
+- fix(evidence): restore current P90 hash
+- test: atualize contrato do banner Creepypasta
+- fix(rig): ratchet legacy hand ceilings
+- test(ci): reject mixed metadata writes
+- test(ci): reject mixed classifier token use
+- test(ci): prove classifier token split
+- test(net): align negotiation gate with current harness
+- fix(rig): separar mãos não mensuráveis dos aprovados
+- fix(ci): grant metadata token read permissions
+- fix(rig): reject two weight regressions
+- chore(studio): remove handoff artifact from pack PR
+- test(net): exercise rejected websocket selection
+- fix(rig): keep measuring the visible hand
+- fix(steam): limit artifact workflow to Windows
+- test(rig): fail closed on thresholds and cubic clips
+- fix(ci): use repository token for PR metadata reads
+- fix(ops): keep third-party stripping inside one script
+- docs(eval): correct skin weight mutant count
+- test: expect infrastructure proofs to carry EX_CONFIG
+- docs(pr-maintenance): rescan history before merge
+- docs(pr-maintenance): reject dirty reusable lanes
+- docs(pr-maintenance): fail closed on publication and gates
+- docs(pr-maintenance): pin reviewed base before merge
+- docs(pr-maintenance): revalidate PR body before merge
+- docs(pr-maintenance): guard default-branch PR bodies
+- fix(skins): preserve charvideo and refresh asset inventory
+- docs(pr-maintenance): fail closed when history cannot be read
+- docs(pr-maintenance): fence closing-keyword guard
+- docs(pr-maintenance): fail closed across fork and issue flows
+- fix(studio-pack): lease locks when process identity is unavailable
+- docs(pr-maintenance): separate base and head remotes
+- test(vm): wait explicitly for authored secondary
+- fix(studio): distinguish reused lock owner PIDs
+- fix(skill): fail closed on queue identity checks
+- fix(skill): reserve crash issue closure for humans
+- fix(studio): verify lock inode at publish
+- fix(skill): capture queue head before lane setup
+- fix(studio): pin lock candidate parent
+- fix(skill): pin queue operations to reviewed targets
+- fix(ops): keep browser gate closure local
+- fix(studio): publish install locks atomically
+- fix(studio): close install reservation crash windows
+- docs: pin queue merges to reviewed heads
+- fix(studio): recover interrupted pack installs
+- fix(studio): harden pack promotion races
+- feat: troque arte do passe por Creepypasta
+- fix(audio): preserve voice batches and serialize pushes
+- fix(profile): deduplicate account presence pulses
+- fix(ci): scope Renovate pinning to actions
+- fix(eval): execute account presence guard contract
+- test(telemetry): remove duplicate settings fixture
+- fix(studio): restore complete visual critic vocabulary
+- fix(gates): harden pre-push lock and diff fallback
+- test(passe): skip suppressed announcement wait
+- fix(eval): parse nested account session blocks
+- fix: cover every map mutant application failure
+- fix: distinguish blind and unmeasured mutant exits
+- fix(bot): revalidate automerge before merge
+- fix(studio): keep visual critic agent discoverable
+- fix(ops): support current ranking flag and exclude ad noise
+- docs: add PR and issue queue skill
+- fix(bot): fingerprint every merge eligibility input
+- fix(eval): provide weapon mode to telemetry sandbox
+- fix(eval): inspect nested account session callback
+- chore(eval): retire Quake 4 probes
+- fix: rebind missing respawn countdown
+- fix(pwa): cache BotBrain weights offline
+- fix(devcontainer): resolve Dockerfile beside config
+- fix(ci): require documented robots mutant evidence
+- fix(ci): require robots mutant evidence
+- test(ci): verify Dev Container Dockerfile resolution
+- test(ci): scope duration cache fallback assertion
+- fix(eval): restrict canceled image exemption
+- fix(ci): select Dev Container Dockerfile explicitly
+- test(ci): bind merge ordering to validated head
+- fix(ci): run structured guards after failures
+- fix(eval): remove avatar click in mutation
+- fix(devcontainer): resolve Dockerfile from build context
+- fix(ci): keep sweep recording non-fatal after merge
+- fix(ci): keep post-merge bookkeeping non-fatal
+- fix(ci): close adversarial merge and container gaps
+- docs: regenerate weapon matrix anchors
+- fix(ci): require exact push sweep condition
+- fix(eval): verify WebM container format
+- docs: refresh weapon matrix source links
+- docs(net): condense extracted parity comments
+- fix(eval): reject missing image cancellations
+- Mantém recursos tardios disponíveis offline
+- Preserva contrato do manifesto de módulos
+- docs: regenerate integrated weapon matrix
+- Endurece gerações do cache offline
+- Valida PWA offline contra o site real
+- Habilita single-player offline na PWA
+- test: cover pass discovery in auto mode
+- docs: keep faction provenance off the public site
+- test(net): preserve protocol negotiation after staging merge
+- fix(ci): validate pass gate browser executable
+- fix(ci): reuse browser setup for pass gate
+- test(ci): preserve dispose mutant detection
+- fix(net): harden interpolation edge cases
+- fix(ci): expect dispose mutation to fail
+- docs: shorten the family URL comment
+- docs: shorten Studio character comments
+- docs: shorten the extra-clips release comment
+- fix(ci): classify zero-byte image aborts as UI cancellations
+- fix(ci): isolate the pass announcement from the lobby gate
+- fix(ci): accept deploy extras and refresh weapon matrix
+- fix(ci): serve the pass through its boot mock
+- fix(ci): tolerate the known Node 26 register warning
+- docs: keep new runtime comments within two lines
+- fix(ci): recognize typeset merge assignments
+- fix(ci): accept repeated Bash assignment options
+- fix(ci): accept options on Bash merge assignments
+- fix(ci): expand Bash declaration merge endpoints
+- fix(ci): resolve merge payload aliases to a fixed point
+- fix(ci): expand annotated merge payload assignments
+- fix(ci): reject GraphQL merges and invalid permission shorthands
+- fix(ci): move automerge execution into canonical scripts
+- fix(ci): close remaining automerge guard bypasses
+- fix(game): preserve puff identity during cleanup
+- fix(game): preserve puff identity during cleanup
+- fix(game): preserve puff identity during cleanup
+- fix(game): preserve puff identity during cleanup
+- fix(game): make puff disposal idempotent
+- fix(game): make puff disposal idempotent
+- fix(game): make puff disposal idempotent
+- test(ci): bind merges to the eligibility verdict
+- fix(bot): complete classification and automerge snapshots
+- fix(ci): version shared artifacts by run attempt
+- fix(game): dispose per-game puff during landing cleanup
+- fix(game): dispose per-game puff during landing cleanup
+- fix(game): dispose per-game puff during landing cleanup
+- fix(bot): complete sweep state and dispose per-game puff
+- test(ci): compare full runner aggregator tokens
+- test(ci): compare full runner aggregator tokens
+- test(ci): compare full runner aggregator tokens
+- test(ci): compare full runner aggregator tokens
+- fix(ci): accept the Cloudflare preview comment author
+- fix(ci): accept the Cloudflare preview comment author
+- fix(bot): fingerprint PR title and body changes
+- fix(game): keep shared puff alive during landing cleanup
+- fix(game): keep shared puff alive during landing cleanup
+- fix(game): keep shared puff alive during landing cleanup
+- fix(game): keep shared puff alive during landing cleanup
+- test(ci): allow explicit eval steps after suite aggregators
+- test(ci): allow explicit eval steps after suite aggregators
+- test(ci): allow explicit eval steps after suite aggregators
+- test(net): cover reconnect success and final warning
+- test(net): cover the eight-second grenade fallback
+- test(ci): allow explicit eval steps after suite aggregators
+- fix(ci): accept the Cloudflare preview comment author
+- fix(ci): share Vercel output and harden release parsing
+- test(ci): require an executable automerge decision
+- test(ci): scope AF4 flags to each merge invocation
+- test(net): remove source-distance assertion from side coverage
+- fix(ci): make robots mutation failure shellcheck-safe
+- test(net): close the accepted socket in reconnect smoke
+- fix(perfil): conta logada que só joga alimenta posse solo e last_active; modo de arma viaja
+- fix(bot): revalidate changed eligibility inputs
+- fix(ci): make shared setup gates merge-safe
+- test(net): stabilize reconnect smoke and protocol fixture
+- fix(ci): reject malformed merge queue permissions
+- fix(bot): recognize fallback sweep comment author
+- fix(net): clamp reordered interpolation window
+- test(ci): reject squash on continued merge lines
+- fix(ci): validate Astro client output in shared environment
+- ci: recompute attested diff evidence
+- test(ci): allow runner fixture time for added core guard
+- Use writable Playwright browser cache
+- test(ci): enforce structured bot workflow guards
+- test(ci): add shared structured YAML loader
+- feat(audio): roteiro do lote Creepypasta (batch 1, 14 personagens)
+- feat(net): extract interpolation clock and buffer
+- feat(net): extract lobby and reconnect handling
+- ci: consume shared release attestation
+- ci: add shared release attestation and sweep state
+- ci: build once and share browser environments
+- fix(rig): registrar advisory da régua RM4
+- fix(rig): corrigir pesos de mão do elenco
+- fix(ci): alinhar geo ao contrato UIR20
+- test(vm): deixar mutante sem prime alcançar a troca
+- fix(rig): fechar excecoes legadas com advisory
+- fix(rig): isolar asserção RM2 do mutante
+- fix(gates): comentario compara contra staging; roteiro e gerador do lote 2 dos Míticos
+- fix(rig): medir distância perpendicular sem dupla projeção
+- test(rede): contrato transporte → codec volta à régua executando net.js e transporte.js reais
+- test(ci): add Cloudflare preview fixture
+- fix(evidencia): teto da pegada tem um dono e fora do contrato prova a violação
+- fix(evidencia): idle da camera-roxa sai do contrato de pegada com o motivo
+- fix(evidencia): GLB antigo dos Lula vem do histórico, não de origin/main
+- eval(rig): GLB legado acima do estrito usa o próprio teto na troca de sha
+- eval(rig): eval:rigmaos na suite fast depois do merge da staging
+- eval(rig): censo de rig na suite fast, padrão do #1265
+- test(rede): WebSocket falso só seleciona protocolo oferecido
+- test(suites): restaura catraca da sequência e declara rede3p como passo novo
+- docs(rede): regra de compatibilidade adiante dos IDs de emote
+- fix(rede): emote de catálogo mais novo vira sem emote no decoder v9
+- fix(personagens): pose-skin amostra CUBICSPLINE com Hermite do glTF
+- chore(evidencia): medidas e folhas do roster vão para o studio-assets
+- chore(evidencia): folhas e medidas dos Lula vão para o studio-assets
+- docs(evidencia): folhas dos Lula recapturadas com os GLBs enviados
+- docs(evidencia): medidas.json dos Lula com os bytes enviados e rasgo por pose
+- test(eval): régua de pesos mede o rasgo em cm por pose e congela o pose test
+- test(rede): remove regex de ticket coberta por execucao real
+- docs(rede): aponta contrato da recarga sem duplicar explicacao
+- fix(rede): reconhece ciclos de recarga sob perda de pacotes
+- Restaure mutantes e renove ticket no fallback WT
+- test(eval): tp-drip-source rebaseia manifesto e seleção de luvas do repeso
+- fix(personagens): repesa camera-roxa (sovaco e virilha em degradê)
+- fix(personagens): repesa doidinho-bairro (preenchimento harmônico curto)
+- fix(build): declare cloudflare adapter dependencies
+- fix(ci): restore suite contracts
+- fix(skins): lula-mandrake e lula-cyborg colam as peças no repeso (colar=0,01)
+- test(eval): régua de pesos barra rasgo entre peças coladas (mutante cola-solta)
+- eval(rig): censo de rig no check:fast e no pr-fast, com docs
+- eval(rig): censo de deformação de skin — porte do teste de pose do Studio
+- feat(personagens): R11 colar — peça colada anda junto no repeso
+- fix(personagens): R7 ancora no osso distal, não no mais pesado
+- feat(personagens): R7 cadeia — virilha fora das duas coxas, sovaco fora de Spine02
+- fix(personagens): solda do repeso enxerga par vizinho a ≤ 1e-5 m
+- feat(personagens): repeso ganha virilha, sovaco/pescoço e cauda (R7–R9)
+- feat(personagens): R11 colar — peça colada anda junto no repeso
+- docs(changelog): destrave de áudio, pool do Lobisomem, réguas e trava do pre-push
+- fix(audio): rosnado do Lobisomem só pelo Lobisomem; pre-push serializado por máquina
+- fix(audio): destrava o AudioContext no 1º gesto e atualiza réguas presas no passado
+- docs: registrar correção do pre-push
+- fix(ci): restore local pre-push selector
+- docs(evidencia): antes × depois do repeso do roster e medidas por GLB
+- fix(personagens): repesa profeta-calcada (virilha e sovaco em degradê)
+- fix(skins): repesa bolsonaro-mandrake (sovaco fora de Spine02, 0 vazamento)
+- fix(personagens): R7 ancora no osso distal, não no mais pesado
+- feat(personagens): R7 cadeia — virilha fora das duas coxas, sovaco fora de Spine02
+- test(rede): rejeite mutantes sobre base nominal vermelha
+- test(rede): declare v8 nas fixtures de taxa de rede
+- fix(personagens): solda do repeso enxerga par vizinho a ≤ 1e-5 m
+- feat(personagens): repeso ganha virilha, sovaco/pescoço e cauda (R7–R9)
+- docs: regenera lista do check:fast com eval:pesos-braco-perna
+- test(rede): adapte consumidores e provas ao contrato v9
+- docs(evidencia): antes × depois do repeso dos Lula em 3ª pessoa com AK
+- fix(charvideo): ?pose=shoot e ?pose=walkfire seguram o gatilho
+- docs: atualize blocos gerados para a regua de rede 3p
+- fix(rede): preserve estados contra datagramas antigos e pausa
+- test(rede): fixa ids binarios dos oito emotes entre releases
+- ci(rede): cobra codec v9 e animacao remota com mutantes
+- feat(animacao): aplica postura recarga e emotes dos snapshots remotos
+- feat(rede): adiciona protocolo v9 para estados de terceira pessoa
+- test(eval): régua de vazamento braço→perna em todo GLB de personagem e skin
+- fix(skins): repesa os três Lula para a manga não seguir a perna
+- feat(personagens): ferramenta que repesa só JOINTS_0/WEIGHTS_0 de skin meshy-28
+- test(rig): régua da mão mede os 74 GLB reais do elenco
+- docs(rig): números do lote30 sem contar mascote sem mão medível
+- test(rig): régua de mão em lâmina com skinning em CPU e mutantes
+- fix(rig): rig-from-donor encaixa cotovelo e punho na malha
+- chore(ci): add Renovate pinning action digests
+- chore(ci): npm canonical lockfile, drop bun.lock
+- docs: record genuine Lajes candidate verification
+- docs: refresh generated weapon matrix links
+- feat: verify and install Studio asset packs
+- Point production workflows to the public Studio
+- Studio: separa ferramentas de producao do client
+- docs(steam): registra bloqueio do envio e nova base
+- fix(steam): protege saidas e recusa arquivos especiais no preflight
+- feat: preparar manifesto e preflight Steam sem upload
 
 ## [2.1.0-alpha.148] — 2026-11-13
 
