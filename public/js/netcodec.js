@@ -165,8 +165,8 @@ const integer = (value, max, name) => {
   return n;
 };
 
-// Produtores sem negociação explícita continuam no formato canônico v7.
-export function encodeSnapshot(snapshot, version = 7) {
+// Produtores sem negociação explícita usam o formato canônico atual.
+export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
   if (!snapshot || snapshot.type !== 'snapshot') throw new TypeError('snapshot_required');
   if (!Number.isInteger(version) || version < 2 || version > CURRENT_VERSION) throw new TypeError('snapshot_version');
   const ents = Array.isArray(snapshot.ents) ? snapshot.ents : [];
