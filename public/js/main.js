@@ -4077,7 +4077,7 @@ async function recordMatchStats(s) {
       uid: getAnonId(), nick, token: getToken(), won: s.won, kills: s.kills, deaths: s.deaths,
       headshots: s.headshots, bestStreak: s.bestStreak,
       rounds: s.roundsP + s.roundsB, team: s.team, faction: currentFaction, seconds: s.seconds || 0,
-      character: s.character, skin: game?.playerDef?.skinId || null, mode: modoEfetivoAtual(),
+      character: s.character, skin: s.skin || null, mode: modoEfetivoAtual(),
     });
     if (!res) submitNote('ranking global indisponível');
     else if (res.error) submitNote(res.message || traduErroSubmit(res.error));

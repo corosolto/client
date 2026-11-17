@@ -597,6 +597,12 @@ jobs:
           node tools/eval/profile-socials-check.mjs --mutate
           node tools/eval/profile-achievements-check.mjs
           node tools/eval/profile-achievements-check.mjs --mutate
+          node tools/eval/match-skin-snapshot-check.mjs
+          for m in skin-do-jogo personagem-do-jogo sem-skin-no-fim; do
+            status=0
+            node tools/eval/match-skin-snapshot-check.mjs --mutante=$m || status=$?
+            if [ "$status" -ne 1 ]; then echo "::error::mutante $m da skin do fim da partida terminou com $status (quer 1)"; exit 1; fi
+          done
           node tools/eval/profile-views-display-check.mjs
           node tools/eval/profile-views-display-check.mjs --mutate
           node tools/eval/cla-ssr-check.mjs
