@@ -139,8 +139,8 @@ A hand-written numeric index becomes outdated with the first commit; this is the
 
 ```
 STATUS.md              estado de hoje (leia primeiro)
-astro.config.mjs       Astro + adapter Vercel · `site` COM www (canonical)
-vercel.json            build, headers de segurança (CSP…) e cache
+astro.config.mjs       Astro + adapter Cloudflare · `site` COM www (canonical)
+borda.json             fonte de redirects, headers de segurança (CSP…) e cache
 src/
   layouts/Layout.astro shell do site: nav, footer, CSS global, JSON-LD base
   lib/site.ts          nome, host, descrições e @id de JSON-LD (fonte única)

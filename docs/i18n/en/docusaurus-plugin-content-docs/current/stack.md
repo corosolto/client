@@ -72,9 +72,9 @@ post-processing and a querystring kill-switch for every risky change (`?bloom=0`
 `?ao=0`, `?fxaa=0`, `?water=0`). Every graphics change that requires extra rendering has to
 declare its measured cost.
 
-### `src/` — the SITE: Astro with SSR on Vercel {#src-the-site}
+### `src/` — the SITE: Astro with SSR on Cloudflare Workers {#src-the-site}
 
-The site is [Astro](https://astro.build) with the Vercel adapter. `astro.config.mjs` is set to
+The site is [Astro](https://astro.build) with the Cloudflare adapter. `astro.config.mjs` is set to
 `output: 'static'` **with adapter**, and the routes that need a server opt in with
 `export const prerender = false` one by one — the case of `/ranking`, `/u/*`,
 `/sitemap.xml` and all the `/api/*` routes.
@@ -83,8 +83,8 @@ Here a framework is welcome. The rules that apply:
 
 - the Supabase `service_role` lives **server-side only** and never reaches the browser;
 - `site` in `astro.config.mjs` is **with `www`**, and every canonical comes from there;
-- `vercel.json` carries the security headers (CSP, HSTS, nosniff, Referrer-Policy,
-  Permissions-Policy) and the CDN cache.
+- `borda.json` is the source for security headers (CSP, HSTS, nosniff, Referrer-Policy,
+  Permissions-Policy) and CDN cache rules.
 
 And the gotcha that costs everyone their first hour: **`src/pages/index.astro` IS the
 game**, served at the `/` route. There is no `public/index.html`.
