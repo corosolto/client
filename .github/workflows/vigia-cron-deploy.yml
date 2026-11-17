@@ -4,7 +4,8 @@
 # prod-watch (`*/15`) rodou 27 vezes em 7 dias contra 672 previstas; sync-nodes do
 # backend (`*/30`) 22 contra 336. O Worker em workers/vigia-cron/ tem os Cron Triggers
 # e dispara o workflow_dispatch de prod-watch.yml, ops-diag.yml e backend/sync-nodes.yml
-# (leia o cabeçalho de workers/vigia-cron/index.mjs). Runbook:
+# (leia o cabeçalho de workers/vigia-cron/index.mjs). O `schedule` dos workflows alvo fica
+# como rede de segurança caso o Worker caia ou este deploy falhe. Runbook:
 # docs/runbooks/vigia-cron.md.
 #
 # Segredos: o Worker recebe os tokens do GitHub NA MESMA versão do deploy
@@ -67,6 +68,14 @@ jobs:
           [ -n "$GITHUB_TOKEN_CLIENT" ] || { echo "::error::CSBRASIL_BOT_TOKEN ausente: o Worker não dispara prod-watch nem ops-diag"; falta=1; }
           [ -n "$GITHUB_TOKEN_BACKEND" ] || { echo "::error::BACKEND_DISPATCH_TOKEN ausente: o Worker não dispara o sync-nodes do backend"; falta=1; }
           exit "$falta"
+      # O teste acima só lê o client. Os alvos de verdade são os YAML da `main` de cada repo,
+      # com o token que o Worker vai usar: backend sem workflow_dispatch ou com input
+      # obrigatório levaria 422 a cada 30 min sem ninguém ver.
+      - name: Alvos na main aceitam o dispatch (workers/vigia-cron/confere-alvos.mjs)
+        env:
+          GITHUB_TOKEN_CLIENT: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+          GITHUB_TOKEN_BACKEND: ${{ secrets.BACKEND_DISPATCH_TOKEN }}
+        run: node workers/vigia-cron/confere-alvos.mjs
       - name: Publica vigia-cron (código, crons e segredos numa versão só)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}

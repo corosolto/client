@@ -9,8 +9,9 @@
    buraco.
 
    Este Worker só tem Cron Triggers (wrangler.toml ao lado). Cada cron dispara,
-   pela API, o `workflow_dispatch` dos workflows que antes tinham `schedule`:
-   o trabalho continua no GitHub Actions; só o relógio mudou de lugar.
+   pela API, o `workflow_dispatch` dos workflows agendados (o `schedule` deles fica como
+   rede de segurança, docs/runbooks/vigia-cron.md); o trabalho continua no GitHub
+   Actions, só o relógio primário mudou de lugar.
 
    Segredos (instalados pelo .github/workflows/vigia-cron-deploy.yml):
      GITHUB_TOKEN_CLIENT  ← CSBRASIL_BOT_TOKEN   (Actions: write em corosolto/client)

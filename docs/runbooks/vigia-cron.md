@@ -9,10 +9,23 @@ em 11/2026:
 | `client/ops-diag.yml` | minuto 17 de toda hora | 240 | 32 (~13%) | 10 dias |
 | `backend/sync-nodes.yml` | a cada 30 min | 336 | 22 (~7%) | 7 dias |
 
-A vigilância de produção ficava horas sem olhar o edge e ninguém via o buraco. O relógio saiu
-do GitHub e foi para um Worker da Cloudflare com Cron Triggers, que dispara o
-`workflow_dispatch` desses workflows (`POST /repos/<repo>/actions/workflows/<arquivo>/dispatches`
-com `{"ref":"main"}`). O trabalho continua no GitHub Actions; só o relógio mudou.
+A vigilância de produção ficava horas sem olhar o edge e ninguém via o buraco. O relógio
+primário agora é um Worker da Cloudflare com Cron Triggers, que dispara o `workflow_dispatch`
+desses workflows (`POST /repos/<repo>/actions/workflows/<arquivo>/dispatches` com
+`{"ref":"main"}`). O trabalho continua no GitHub Actions; só o relógio mudou.
+
+## Rede de segurança: o `schedule` fica
+
+`prod-watch.yml` e `ops-diag.yml` mantêm o `schedule` de sempre. Se o Worker cair ou o deploy
+dele falhar, o cron do GitHub (que ainda dispara ~4–13% das vezes) continua batendo. Quando os
+dois disparam no mesmo tique, a rodada em dobro é inofensiva:
+
+- `prod-watch`: o probe só lê. O purge do edge já roda a cada disparo, então um a mais só
+  esvazia de novo o mesmo prefixo. O aquecimento só roda no `deployment_status`. Um
+  `prod-crash` repetido cai no `concurrency` por fingerprint do `crash-fix.yml`, e fechar uma
+  issue já fechada não faz nada.
+- `ops-diag`: a diagnose só lê. O `concurrency: ops-diag` (sem cancelamento) enfileira a
+  segunda rodada, e a issue é uma por incêndio (a segunda comenta ou fecha a mesma).
 
 ## Onde mora
 
@@ -20,9 +33,15 @@ com `{"ref":"main"}`). O trabalho continua no GitHub Actions; só o relógio mud
   no módulo principal).
 - `workers/vigia-cron/dispara.mjs`: mapa cron → workflow (`ALVOS`) e o disparo.
 - `workers/vigia-cron/wrangler.toml`: os Cron Triggers (UTC), sem rota nem URL pública.
-- `tools/ops/tests/vigia-cron.test.mjs` (roda no `ops:test`): crons do `wrangler.toml` = chaves
-  de `ALVOS`, cada cron dispara o workflow certo com o token certo, erro HTTP vai para o log sem
-  o token, workflows alvo do client têm `workflow_dispatch` e não têm mais `schedule`.
+- `workers/vigia-cron/contrato.mjs`: o que um workflow alvo precisa ter para o dispatch dar 204
+  (`workflow_dispatch`, nenhum input obrigatório).
+- `tools/ops/tests/vigia-cron.test.mjs` (roda no `ops:test` e no deploy): crons do
+  `wrangler.toml` = chaves de `ALVOS`, cada cron dispara o workflow certo com o token certo,
+  erro HTTP vai para o log sem o token, e os alvos do client cumprem o contrato e mantêm o
+  `schedule`.
+- `workers/vigia-cron/confere-alvos.mjs` (no deploy, antes de publicar): lê da `main` de cada
+  repo, pela API e com o token do Worker, todos os workflows alvo (inclusive o
+  `backend/sync-nodes.yml`) e reprova se algum não cumprir o contrato.
 - `.github/workflows/vigia-cron-deploy.yml`: publica em push na `main` que toca a pasta, ou
   manualmente (`gh workflow run vigia-cron-deploy.yml -R corosolto/client --ref main`).
 
@@ -57,7 +76,7 @@ npx wrangler tail vigia-cron
 |---|---|---|
 | `"status":401` | token revogado ou expirado | renove o PAT e rode `vigia-cron-deploy` de novo |
 | `"status":403` / `"status":404` | token sem Actions: write no repo | ajuste o escopo do PAT (tabela acima) |
-| `"status":422` | workflow sem `workflow_dispatch` na `main` ou input obrigatório | o teste do `ops:test` cobre o client; no backend, confira o YAML |
+| `"status":422` | workflow sem `workflow_dispatch` na `main` ou input obrigatório | o `confere-alvos.mjs` barra o deploy nesse caso; se o YAML mudou depois do deploy, conserte o workflow ou rode o deploy de novo para ver o erro |
 | `segredo … ausente` | deploy sem o secret | cadastre o secret no repo e rode o deploy |
 | `cron sem alvo` | `wrangler.toml` e `ALVOS` divergiram | o `ops:test` reprova isso no PR |
 

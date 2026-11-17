@@ -16,13 +16,17 @@
 # comenta na que já está aberta. Verde (0) fecha a issue aberta. Inconclusivo (78: rede
 # do runner) fica só no log — não é verde nem vermelho.
 #
-# AGENDA: de hora em hora (minuto 17, UTC), por workflow_dispatch vindo do Worker
-# vigia-cron (workers/vigia-cron/, runbook docs/runbooks/vigia-cron.md). O `schedule`
-# do GitHub saiu porque descarta disparo sob carga: medido em 11/2026, o `17 * * * *`
-# daqui rodou 32 vezes em 10 dias contra 240 previstas (~13%), e o prod-watch `*/15`
-# 27 de 672 em 7 dias.
+# AGENDA: de hora em hora (minuto 17, UTC). O relógio primário é o Worker vigia-cron
+# (workers/vigia-cron/, runbook docs/runbooks/vigia-cron.md), que chama o workflow_dispatch:
+# medido em 11/2026, o `schedule` daqui rodou 32 vezes em 10 dias contra 240 previstas
+# (~13%), porque o GitHub descarta disparo agendado sob carga. O `schedule` fica como rede
+# de segurança se o Worker cair. Rodada em dobro é inofensiva: a diagnose só lê, o
+# `concurrency` abaixo (sem cancelamento) enfileira a segunda, e a issue é UMA por
+# incêndio (a segunda comenta ou fecha a mesma).
 name: ops-diag
 on:
+  schedule:
+    - cron: '17 * * * *'
   workflow_dispatch:
 
 permissions:
