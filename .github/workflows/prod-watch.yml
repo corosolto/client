@@ -8,7 +8,11 @@
 # O probe é `tools/eval/prod-coherence.mjs` (leia o cabeçalho dele).
 #
 # DOIS GATILHOS:
-#   · cron a cada 15 min — cache podre pode nascer a qualquer deploy;
+#   · a cada 15 min, por workflow_dispatch — cache podre pode nascer a qualquer deploy.
+#     O relógio é o Worker vigia-cron (workers/vigia-cron/, runbook
+#     docs/runbooks/vigia-cron.md), não o `schedule` do GitHub: medido em 11/2026, o
+#     `*/15` daqui rodou 27 vezes em 7 dias contra 672 previstas (~4%) — o GitHub
+#     descarta disparo agendado sob carga e a produção ficava horas sem vigia;
 #   · deployment_status success em production — a janela de risco é logo após
 #     publicar; aproveita e PURGA o edge (Fase 3: cinto e suspensório, ver
 #     scripts/cloudflare-setup.sh para a regra que segura /js/* por 1 mês).
@@ -19,8 +23,6 @@
 # repository_dispatch — é o caminho oficial entre workflows).
 name: prod-watch
 on:
-  schedule:
-    - cron: '*/15 * * * *'
   deployment_status:
   workflow_dispatch:
 

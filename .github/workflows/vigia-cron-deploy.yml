@@ -1,0 +1,78 @@
+# vigia-cron-deploy — publica o Worker que é o RELÓGIO do monitoramento.
+#
+# Por que existe: o `schedule` do GitHub descarta disparo sob carga. Medido em 11/2026:
+# prod-watch (`*/15`) rodou 27 vezes em 7 dias contra 672 previstas; sync-nodes do
+# backend (`*/30`) 22 contra 336. O Worker em workers/vigia-cron/ tem os Cron Triggers
+# e dispara o workflow_dispatch de prod-watch.yml, ops-diag.yml e backend/sync-nodes.yml
+# (leia o cabeçalho de workers/vigia-cron/index.mjs). Runbook:
+# docs/runbooks/vigia-cron.md.
+#
+# Segredos: o Worker recebe os tokens do GitHub NA MESMA versão do deploy
+# (`--secrets-file` com referências ${VAR} que o wrangler expande do ambiente do passo);
+# o valor nunca vai para disco, log nem argumento de linha de comando.
+#   GITHUB_TOKEN_CLIENT  ← CSBRASIL_BOT_TOKEN     (Actions: write em corosolto/client)
+#   GITHUB_TOKEN_BACKEND ← BACKEND_DISPATCH_TOKEN (Actions: write em corosolto/backend)
+name: vigia-cron-deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/vigia-cron/**'
+      - '.github/workflows/vigia-cron-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Deploy no meio não morre por causa de outro disparo: o seguinte espera.
+concurrency:
+  group: vigia-cron-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # O Worker é um arquivo: não baixa a árvore de 1,8 GiB para publicá-lo.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout: workers/vigia-cron
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Confere conta e segredos
+        env:
+          ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CF_WORKERS_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          GITHUB_TOKEN_CLIENT: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+          GITHUB_TOKEN_BACKEND: ${{ secrets.BACKEND_DISPATCH_TOKEN }}
+        run: |
+          set -euo pipefail
+          falta=0
+          [ -n "$ACCOUNT_ID" ] || { echo "::error::Configure CLOUDFLARE_ACCOUNT_ID em Actions Variables"; falta=1; }
+          [ -n "$CF_WORKERS_TOKEN" ] || { echo "::error::Configure CF_WORKERS_TOKEN com Workers Scripts:Edit em Actions Secrets"; falta=1; }
+          [ -n "$GITHUB_TOKEN_CLIENT" ] || { echo "::error::CSBRASIL_BOT_TOKEN ausente: o Worker não dispara prod-watch nem ops-diag"; falta=1; }
+          [ -n "$GITHUB_TOKEN_BACKEND" ] || { echo "::error::BACKEND_DISPATCH_TOKEN ausente: o Worker não dispara o sync-nodes do backend"; falta=1; }
+          exit "$falta"
+      - name: Publica vigia-cron (código, crons e segredos numa versão só)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          GITHUB_TOKEN_CLIENT: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+          GITHUB_TOKEN_BACKEND: ${{ secrets.BACKEND_DISPATCH_TOKEN }}
+        run: |
+          set -euo pipefail
+          SEGREDOS="$RUNNER_TEMP/vigia-cron.env"
+          # Aspas simples: o arquivo guarda a REFERÊNCIA, o wrangler expande do ambiente.
+          # shellcheck disable=SC2016
+          printf '%s\n' 'GITHUB_TOKEN_CLIENT=${GITHUB_TOKEN_CLIENT}' 'GITHUB_TOKEN_BACKEND=${GITHUB_TOKEN_BACKEND}' > "$SEGREDOS"
+          npx --yes wrangler@4.158.0 deploy --config workers/vigia-cron/wrangler.toml --secrets-file "$SEGREDOS"
+          {
+            echo "### vigia-cron publicado"
+            echo "Crons: \`$(grep -E '^crons' workers/vigia-cron/wrangler.toml)\`"
+            echo "Logs: \`npx wrangler tail vigia-cron\`"
+          } >> "$GITHUB_STEP_SUMMARY"
