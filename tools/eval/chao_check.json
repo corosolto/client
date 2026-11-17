@@ -1,48 +1,48 @@
 {
-  "gerado": "2026-10-07T05:42:03.349Z",
+  "gerado": "2026-11-15T20:08:57.582Z",
   "instrumento": "buildCharacterModel + skinning em node, 60 Hz, quadro 200-260, 1 vértice em 3",
   "bandaIdle": 0.015,
   "folga": 0.01,
   "personagens": {
     "esquerdomacho": {
       "idle": -0.0008,
-      "crouch": 0.0001,
+      "crouch": -0.0022,
       "death": -0.0552
     },
     "sindicato": {
-      "idle": 0.0073,
-      "crouch": -0.0004,
-      "death": -0.0671
+      "idle": -0.0026,
+      "crouch": -0.004,
+      "death": 0
     },
     "mst": {
-      "idle": -0.0007,
-      "crouch": -0.0002,
-      "death": -0.12
+      "idle": 0,
+      "crouch": -0.0044,
+      "death": 0
     },
     "doutora": {
-      "idle": -0.0007,
-      "crouch": -0.0002,
+      "idle": 0.0001,
+      "crouch": 0,
       "death": -0.1921
     },
     "mistico": {
       "idle": 0.0042,
-      "crouch": -0.0001,
+      "crouch": -0.0025,
       "death": -0.0477
     },
     "caminhoneiro": {
       "idle": 0.0046,
-      "crouch": -0.0001,
-      "death": -0.0784
+      "crouch": 0,
+      "death": 0
     },
     "sertanejo": {
       "idle": -0.004,
-      "crouch": -0.0001,
+      "crouch": 0,
       "death": -0.153
     },
     "coach": {
       "idle": 0.0056,
-      "crouch": 0.0008,
-      "death": -0.0136
+      "crouch": -0.0042,
+      "death": -0.0024
     },
     "gotinha": {
       "idle": -0.004,
@@ -51,8 +51,8 @@
     },
     "farialimer": {
       "idle": 0.0065,
-      "crouch": -0.001,
-      "death": -0.0369
+      "crouch": -0.0021,
+      "death": 0.0051
     },
     "bombado": {
       "idle": -0.0066,
@@ -61,47 +61,47 @@
     },
     "hipster": {
       "idle": -0.0007,
-      "crouch": -0.0002,
-      "death": -0.0243
+      "crouch": 0,
+      "death": 0
     },
     "dollynho": {
-      "idle": -0.0041,
-      "crouch": -0.0081,
+      "idle": -0.0047,
+      "crouch": -0.0044,
       "death": -0.1221
     },
     "et": {
-      "idle": -0.0038,
-      "crouch": -0.0081,
-      "death": -0.1282
+      "idle": -0.0033,
+      "crouch": -0.0002,
+      "death": 0.004
     },
     "ancap": {
-      "idle": -0.0008,
+      "idle": 0.0001,
       "crouch": -0.0001,
       "death": -0.3598
     },
     "canarinho": {
       "idle": 0.0109,
-      "crouch": -0.3678,
-      "death": -0.7484
+      "crouch": -0.0722,
+      "death": 0
     },
     "proerd": {
-      "idle": -0.0011,
+      "idle": 0.0093,
       "crouch": -0.4313,
       "death": -0.7771
     },
     "bonzo": {
-      "idle": 0.0073,
-      "crouch": -0.0005,
-      "death": -0.1265
+      "idle": -0.0083,
+      "crouch": -0.0051,
+      "death": 0
     },
     "palhacomal": {
-      "idle": 0.0005,
-      "crouch": -0.0384,
-      "death": -0.0561
+      "idle": -0.0093,
+      "crouch": -0.0008,
+      "death": 0.0045
     },
     "jozo": {
       "idle": -0.0001,
-      "crouch": -0.0001,
+      "crouch": 0,
       "death": -0.0935
     },
     "adjim": {
@@ -111,63 +111,63 @@
     },
     "esbirro": {
       "idle": -0.0035,
-      "crouch": -0.0049,
+      "crouch": -0.0045,
       "death": -0.0835
     },
     "titica": {
       "idle": 0.001,
-      "crouch": -0.0001,
-      "death": -0.07
+      "crouch": -0.0046,
+      "death": 0
     },
     "padati": {
-      "idle": -0.0017,
-      "crouch": -0.0005,
-      "death": -0.1292
+      "idle": -0.0099,
+      "crouch": -0.0043,
+      "death": 0.002
     },
     "padata": {
-      "idle": -0.0007,
-      "crouch": -0.0031,
-      "death": -0.0605
+      "idle": 0,
+      "crouch": -0.0051,
+      "death": 0.0057
     },
     "cadequinha": {
-      "idle": -0.0075,
-      "crouch": -0.0062,
+      "idle": -0.0051,
+      "crouch": -0.005,
       "death": -0.0959
     },
     "emo": {
-      "idle": -0.0016,
-      "crouch": -0.0013,
-      "death": -0.0291
+      "idle": -0.0021,
+      "crouch": -0.0012,
+      "death": 0.0108
     },
     "blackmetal": {
       "idle": -0.0002,
-      "crouch": -0.0002,
-      "death": -0.0369
+      "crouch": -0.0022,
+      "death": 0
     },
     "metaleiro": {
       "idle": 0.0019,
-      "crouch": -0.0002,
-      "death": -0.0613
+      "crouch": -0.0024,
+      "death": 0
     },
     "punk": {
-      "idle": -0.0028,
-      "crouch": -0.0005,
+      "idle": -0.0049,
+      "crouch": -0.005,
       "death": -0.1615
     },
     "skatista": {
       "idle": 0.0065,
-      "crouch": -0.0025,
+      "crouch": -0.0024,
       "death": -0.0617
     },
     "clubber": {
       "idle": 0.0008,
-      "crouch": -0.0002,
+      "crouch": -0.0008,
       "death": -0.0606
     },
     "rapper": {
-      "idle": -0.0012,
-      "crouch": 0.0005,
-      "death": -0.0573
+      "idle": -0.0014,
+      "crouch": -0.0011,
+      "death": 0
     },
     "reggae": {
       "idle": 0.007,
@@ -180,14 +180,14 @@
       "death": -0.028
     },
     "mandrake": {
-      "idle": -0.0002,
-      "crouch": -0.0047,
-      "death": -0.0444
+      "idle": 0,
+      "crouch": -0.0018,
+      "death": 0
     },
     "raul": {
-      "idle": 0.0002,
-      "crouch": -0.0037,
-      "death": -0.0598
+      "idle": -0.004,
+      "crouch": -0.0024,
+      "death": 0.0012
     },
     "oakley": {
       "idle": 0.0029,
@@ -196,37 +196,37 @@
     },
     "criarj": {
       "idle": -0.0045,
-      "crouch": -0.0001,
-      "death": -0.0671
+      "crouch": -0.0021,
+      "death": 0.0003
     },
     "chave": {
-      "idle": 0.004,
-      "crouch": -0.0059,
-      "death": -0.0425
+      "idle": -0.0041,
+      "crouch": -0.001,
+      "death": 0
     },
     "funkraiz": {
-      "idle": -0.001,
-      "crouch": -0.0011,
-      "death": -0.0638
+      "idle": 0.0093,
+      "crouch": -0.0008,
+      "death": -0.0018
     },
     "trapfunk": {
       "idle": 0.0026,
-      "crouch": -0.0129,
+      "crouch": 0.0003,
       "death": -0.0968
     },
     "fluxo": {
       "idle": 0.0022,
-      "crouch": -0.0001,
+      "crouch": -0.0007,
       "death": -0.0706
     },
     "ostentacao": {
-      "idle": 0.0027,
-      "crouch": -0.0007,
+      "idle": -0.0027,
+      "crouch": -0.0006,
       "death": -0.0571
     },
     "lobisomem": {
-      "idle": 0,
-      "crouch": -0.1158,
+      "idle": -0.0006,
+      "crouch": 0.0064,
       "death": -0.4518
     },
     "mariabonita": {
@@ -236,88 +236,238 @@
     },
     "lampiao": {
       "idle": 0,
-      "crouch": 0.0004,
+      "crouch": -0.0042,
       "death": -0.0565
     },
     "bandeirante": {
-      "idle": 0,
-      "crouch": 0,
-      "death": -0.3494
+      "idle": -0.0032,
+      "crouch": -0.0042,
+      "death": 0
     },
     "boto": {
-      "idle": 0,
-      "crouch": 0,
-      "death": -0.0342
+      "idle": -0.004,
+      "crouch": -0.0027,
+      "death": 0.0023
     },
     "zumbi": {
       "idle": 0,
       "crouch": 0,
-      "death": -0.0475
+      "death": 0.0173
     },
     "curupira": {
       "idle": 0,
-      "crouch": 0,
+      "crouch": -0.0025,
       "death": -0.3079
     },
     "saci": {
       "idle": 0,
-      "crouch": 0.0013,
-      "death": -0.3484
+      "crouch": -0.0034,
+      "death": 0
     },
     "caipora": {
       "idle": 0,
       "crouch": 0,
-      "death": -0.0706
+      "death": 0
     },
     "julia-zanatta": {
       "idle": 0.0086,
-      "crouch": 0.0012,
+      "crouch": 0,
       "death": 0
     },
     "marina-silva": {
       "idle": 0.0024,
-      "crouch": 0.0042,
+      "crouch": 0,
       "death": 0.0023
     },
     "barbudo": {
-      "idle": -0.0012,
-      "crouch": -0.0058,
+      "idle": 0.0001,
+      "crouch": -0.0045,
       "death": 0
     },
     "capitao": {
-      "idle": -0.0006,
-      "crouch": 0.0013,
+      "idle": 0.0001,
+      "crouch": 0.0015,
       "death": 0.0012
     },
     "dama": {
-      "idle": 0.0059,
-      "crouch": -0.0001,
+      "idle": -0.0112,
+      "crouch": 0.0005,
       "death": 0
     },
     "professor": {
-      "idle": -0.0006,
-      "crouch": -0.005,
+      "idle": 0.0001,
+      "crouch": -0.0006,
       "death": 0
     },
     "senador": {
-      "idle": -0.0009,
-      "crouch": -0.0005,
+      "idle": 0,
+      "crouch": 0,
       "death": 0
     },
     "ministro": {
-      "idle": -0.0017,
+      "idle": -0.0004,
       "crouch": -0.0012,
       "death": 0.0044
     },
     "deputado": {
-      "idle": -0.0008,
-      "crouch": -0.005,
+      "idle": -0.0001,
+      "crouch": -0.001,
       "death": 0
     },
     "juiz": {
-      "idle": -0.0015,
+      "idle": -0.0007,
+      "crouch": -0.0036,
+      "death": 0
+    },
+    "capitao-caveira": {
+      "idle": -0.0039,
+      "crouch": -0.0028,
+      "death": 0.0198
+    },
+    "teletreco-sinal-fraco": {
+      "idle": -0.0002,
+      "crouch": -0.0059,
+      "death": 0
+    },
+    "bebe-reborn": {
+      "idle": -0.0001,
+      "crouch": -0.0035,
+      "death": 0
+    },
+    "chupa-cabra": {
+      "idle": -0.0001,
+      "crouch": -0.0024,
+      "death": 0
+    },
+    "teletreco-antenao": {
+      "idle": -0.0031,
+      "crouch": 0,
+      "death": 0
+    },
+    "assombracao-lanhouse": {
+      "idle": -0.0001,
+      "crouch": -0.0013,
+      "death": 0.0128
+    },
+    "dracula": {
+      "idle": -0.0001,
+      "crouch": -0.3116,
+      "death": -0.0214
+    },
+    "boneca-da-cristaleira": {
+      "idle": -0.0031,
+      "crouch": -0.0001,
+      "death": 0
+    },
+    "satanista-talkshow": {
+      "idle": -0.0014,
+      "crouch": -0.3375,
+      "death": -0.1344
+    },
+    "clovis-fora-do-ar": {
+      "idle": -0.0002,
+      "crouch": -0.0045,
+      "death": 0
+    },
+    "teletreco-chiadinho": {
+      "idle": -0.0001,
+      "crouch": 0.0007,
+      "death": 0.0001
+    },
+    "bicho-do-bueiro": {
+      "idle": -0.0001,
+      "crouch": -0.0022,
+      "death": 0
+    },
+    "coronel-arrego": {
+      "idle": -0.0049,
+      "crouch": -0.0001,
+      "death": 0
+    },
+    "sorridente-onibus": {
+      "idle": -0.0034,
+      "crouch": -0.0027,
+      "death": -0.0004
+    },
+    "bebezao-de-feira": {
+      "idle": -0.0023,
+      "crouch": -0.0033,
+      "death": 0.0021
+    },
+    "boneco-falante-87": {
+      "idle": -0.0031,
+      "crouch": -0.0005,
+      "death": 0
+    },
+    "padre-parapsicologo": {
+      "idle": -0.0007,
+      "crouch": 0.0257,
+      "death": 0
+    },
+    "muro-de-caco": {
+      "idle": -0.001,
+      "crouch": -0.0029,
+      "death": 0.0182
+    },
+    "teletreco-fora-do-ar": {
+      "idle": 0.0011,
+      "crouch": -0.001,
+      "death": 0
+    },
+    "coelho-pascoa-shopping": {
+      "idle": -0.0006,
+      "crouch": -0.0064,
+      "death": 0
+    },
+    "pm-arrego": {
+      "idle": -0.0046,
       "crouch": -0.0002,
       "death": 0
+    },
+    "nanica": {
+      "idle": -0.0003,
+      "crouch": -0.003,
+      "death": 0
+    },
+    "roqueiro-mistico-70": {
+      "idle": -0.0097,
+      "crouch": -0.0048,
+      "death": 0
+    },
+    "profeta-auditorio": {
+      "idle": -0.0015,
+      "crouch": -0.0027,
+      "death": 0.0026
+    },
+    "bicheiro-barracao": {
+      "idle": 0.0001,
+      "crouch": -0.0031,
+      "death": 0
+    },
+    "prata": {
+      "idle": 0,
+      "crouch": 0.0002,
+      "death": 0
+    },
+    "dom-pedro-i": {
+      "idle": -0.0014,
+      "crouch": -0.0022,
+      "death": 0.0011
+    },
+    "tiradentes": {
+      "idle": -0.0006,
+      "crouch": -0.0029,
+      "death": 0
+    },
+    "corisco": {
+      "idle": -0.0001,
+      "crouch": -0.0018,
+      "death": 0
+    },
+    "vlad": {
+      "idle": -0.0012,
+      "crouch": -0.1376,
+      "death": -0.0915
     }
   }
 }

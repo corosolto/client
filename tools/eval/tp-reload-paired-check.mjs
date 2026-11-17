@@ -54,8 +54,8 @@ if (mutant) {
   const condition = mutant === 'apos-tiro' ? 'this.shooting' : mutant === 'apos-corrida' ? "this._loco === 'run'" : 'true';
   once('reload(dur) {', `reload(dur) { this.__residuoTeste = (${condition});`);
   if (mutant === 'nao-finito') once('this.mixer.update(dt);', 'this.mixer.update(dt); if (this.__residuoTeste && this._reloadDur === 0) this.group.position.x = NaN;');
-  else once('this.reloadK = this._reloadDur > 0 ? Math.sin(Math.PI * Math.min(1, this._reloadT / this._reloadDur)) : 0;',
-    'this.reloadK = this._reloadDur > 0 ? Math.sin(Math.PI * Math.min(1, this._reloadT / this._reloadDur)) : (this.__residuoTeste ? 0.9 : 0);');
+  else once('this.reloadK = !this._reloadClip && this._reloadDur > 0 ? Math.sin(Math.PI * Math.min(1, this._reloadT / this._reloadDur)) : 0;',
+    'this.reloadK = !this._reloadClip && this._reloadDur > 0 ? Math.sin(Math.PI * Math.min(1, this._reloadT / this._reloadDur)) : (this.__residuoTeste ? 0.9 : 0);');
 }
 source = source.replace(/from (['"])([^'"\n]+)\1/g, (all, quote, spec) => {
   const file = spec === 'three' ? path.join(root, 'public/vendor/three.module.js')

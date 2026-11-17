@@ -83,11 +83,15 @@ test('fast adds staging, Studio, rig checks, season-pass and production-crash ch
   assert.ok(SUITES.fast.includes('eval:pesos-braco-perna'));
   assert.ok(SUITES.fast.includes('eval:rigmaos'));
   assert.ok(SUITES.fast.includes('eval:shareorigin'));
+  assert.ok(SUITES.fast.includes('eval:estados3p'));
+  assert.ok(SUITES.fast.includes('eval:rede3p'));
+  assert.ok(SUITES.fast.includes('eval:emotes-mocap'));
 
   assert.ok(SUITES.fast.includes('eval:vm-enquadramento-placar'));
   assert.ok(SUITES.fast.includes('eval:pintura-fabrica'));
   assert.ok(SUITES.fast.includes('eval:passe'));
   assert.ok(SUITES.fast.includes('eval:packpublish'));
+  assert.ok(SUITES.fast.includes('eval:cfborda'));
   assert.ok(SUITES.fast.includes('eval:prodcrash'));
   assert.ok(SUITES.deploy.includes('eval:dispose'));
 });
@@ -97,7 +101,7 @@ test('release de personagem do Studio entra na fast logo depois do characterkit'
   assert.equal(SUITES.fast[i + 1], 'eval:studiochar');
 });
 
-test('rede3p roda uma vez no fast', () => {
+test('rede3p permanece uma vez no fast integrado', () => {
   assert.equal(SUITES.fast.filter((passo) => passo === 'eval:rede3p').length, 1);
 });
 
