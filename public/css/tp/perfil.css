@@ -101,6 +101,12 @@
 .tp-perfil__destaque--vazio{border:1px dashed rgba(255,255,255,.18)}
 :root[data-ui="v3"] .tp-perfil .tp-perfil__destaque-rotulo{position:relative;z-index:1;padding:0 8px;font-size:15px;line-height:1.05;text-align:center}
 .tp-perfil__destaque--personagem .tp-perfil__destaque-rotulo,.tp-perfil__destaque--mapa .tp-perfil__destaque-rotulo{position:absolute;left:8px;right:8px;bottom:8px;padding:0;text-align:left}
+/* Último personagem: retrato preso no topo (o rosto fica livre) e o texto numa faixa no rodapé, sobre um degradê escuro. */
+.tp-perfil__destaque--personagem img{object-position:50% 0}
+.tp-perfil__destaque--personagem::after{background:linear-gradient(180deg,rgba(9,7,4,0) 50%,rgba(9,7,4,.78) 72%,rgba(9,7,4,.95))}
+:root[data-ui="v3"] .tp-perfil .tp-perfil__destaque-faixa{position:absolute;left:0;right:0;bottom:0;z-index:1;display:flex;flex-direction:column;gap:4px;padding:8px 10px 10px;text-align:left}
+:root[data-ui="v3"] .tp-perfil .tp-perfil__destaque-mini{font-size:10px;line-height:1;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tp-tinta-2)}
+:root[data-ui="v3"] .tp-perfil .tp-perfil__destaque-nome{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:17px;line-height:1;color:var(--tp-tinta-1)}
 /* Selos de medalha: conquistada brilha em lima com aro âmbar; bloqueada fica apagada, com o anel mostrando o progresso. */
 .tp-medalha{--p:0;position:relative;flex:none;display:grid;place-items:center;width:44px;height:44px;box-sizing:border-box;border-radius:50%;color:var(--tp-tinta-3);
   background:radial-gradient(circle,var(--tp-elevado) 0 58%,transparent 60%),conic-gradient(var(--tp-tinta-3) calc(var(--p) * 1turn),rgba(255,255,255,.1) 0)}

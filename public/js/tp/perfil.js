@@ -424,11 +424,13 @@ export function ligar() {
         if (reserva) i.onerror = () => { i.onerror = () => i.remove(); i.src = reserva; };
         t.append(i);
       }
-      t.append(el('span', 'tp-perfil__destaque-rotulo tp-disp', rotulo));
+      t.append(typeof rotulo === 'string' ? el('span', 'tp-perfil__destaque-rotulo tp-disp', rotulo) : rotulo);
       return t;
     };
-    const c = personagemDe(p);
-    g.append(c ? destaque('tp-perfil__destaque--personagem', `${tr('Último personagem')} · ${c.nome}`, c.hero || c.arte, c.hero && c.reserva)
+    /* Personagem: faixa no rodapé (rótulo pequeno em cima, nome embaixo) sobre um degradê, sem cobrir o rosto. */
+    const c = personagemDe(p), faixa = c && el('span', 'tp-perfil__destaque-rotulo tp-perfil__destaque-faixa');
+    if (c) faixa.append(el('span', 'tp-rotulo tp-perfil__destaque-mini', tr('Último personagem')), el('span', 'tp-disp tp-perfil__destaque-nome', c.nome));
+    g.append(c ? destaque('tp-perfil__destaque--personagem', faixa, c.hero || c.arte, c.hero && c.reserva)
       : destaque('tp-perfil__destaque--vazio', tr(own ? 'Personagem aparece depois da primeira rodada confirmada' : 'Último personagem não compartilhado')));
     /* Medalhas à vista: os quatro selos (conquistada brilha, bloqueada mostra o progresso) e o clique abre a lista inteira. */
     const m = medalhas(p), ganhas = m.filter((x) => x.ok).length, med = el('button', 'tp-perfil__destaque tp-perfil__destaque--medalha');
