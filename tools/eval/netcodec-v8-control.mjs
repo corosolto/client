@@ -11,7 +11,7 @@ const target = path.join(root, 'public/js/netcodec.js');
 const original = fs.readFileSync(target, 'utf8');
 const hash = value => createHash('sha256').update(value).digest('hex');
 const cases = [
-  ['default-v7', 'version = CURRENT_VERSION', 'version = 7', ['unversioned producers use current v9 contract']],
+  ['default-v7', 'version = CURRENT_VERSION', 'version = 7', ['unversioned producers use current v10 contract']],
   ['negative-zero', ' && !Object.is(v, -0)', '', [
     'EN1 rejects negative-zero JSON root', 'EN2 rejects negative-zero JSON object',
     'EN3 rejects negative-zero JSON array', 'EN4 rejects negative-zero JSON nested',
