@@ -22,6 +22,8 @@ const REGUAS_WORKFLOW = Object.freeze({
   '.github/workflows/preview-bot.yml': Object.freeze([]),
   '.github/workflows/portao-browser.yml': Object.freeze([]),
   '.github/workflows/autofix.yml': Object.freeze([]),
+  '.github/workflows/cache-limpeza.yml': Object.freeze([]),
+  '.github/workflows/eval-duration-calibration.yml': Object.freeze([]),
 });
 
 export function validarMapaWorkflows(mapa) {
