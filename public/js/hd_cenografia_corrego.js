@@ -430,14 +430,20 @@ function nosDeSaco(F, rng) {
     for (const e of [-1, 1]) F.cor(cor, 1.2).caixa(x + Math.cos(g) * e * .08 * s, y + .14 * s, z - Math.sin(g) * e * .08 * s, .2 * s, .012, .09 * s, g, 0, e * .55);
   }
   // No lugar dos dois sacos que somem: sacolas de mercado (branco sujo, azul; 12 lados e achatadas — com 7 liam como poliedro),
-  // papelão dobrado encostado e seis tijolos quebrados, dois deles sobre o papelão deitado.
+  // papelão dobrado encostado e seis tijolos (19 × 9 × 9), dois deles sobre o papelão deitado: 3 inteiros, 2 com o canto
+  // quebrado (caixa curta + lasca de meia espessura sobrepostas) e 1 meio tijolo com a quebra em degrau; tudo na malha fundida.
   for (const [x, z, s, cor] of [[-17.3, -3.2, .2, 0xb8b6ad], [-17.05, -3.45, .17, 0x2f4a7a], [-17.6, -3.75, .19, 0xc2bfb3]]) {
     const g = rng() * 6.28; F.cor(cor, .9 + rng() * .2).torno(x, 0, z, [[s * .55, 0], [s * 1.1, s * .28], [s * 1.05, s * .62], [s * .5, s * .88], [s * .14, s * 1.0], [s * .11, s * 1.12]], 12, g);
     F.cor(cor, .95).caixa(x + Math.cos(g) * s * .3, s * 1.1, z + Math.sin(g) * s * .3, s * .25, .01, s * .12, g);
   }
   F.cor(0x7a6a50, .9).caixa(-18.1, 0, -3.3, .62, .42, .03, 1.1, -.28, 0).cor(0x6e6049).caixa(-18.3, 0, -3.6, .5, .02, .4, .4).cor(0x8a7a60).caixa(-18.0, .02, -3.9, .44, .02, .34, 1.9);
-  for (const [x, y, z, w] of [[-17.55, 0, -2.45, .19], [-17.75, 0, -2.3, .11], [-17.4, 0, -2.2, .09], [-17.95, 0, -2.6, .14], [-18.32, .02, -3.52, .17], [-18.05, .04, -3.95, .12]])
-    F.cor([0x7a4a34, 0x8a5540][Math.floor(rng() * 2)], .9 + rng() * .2).caixa(x, y, z, w, .09, .09, rng() * 3);
+  for (const [x, y, z, tipo] of [[-17.55, 0, -2.45, 1], [-17.75, 0, -2.3, 2], [-17.4, 0, -2.2, 0], [-17.95, 0, -2.6, 1], [-18.32, .02, -3.52, 0], [-18.05, .04, -3.95, 0]]) {
+    const g = rng() * 3, cs = Math.cos(g), sn = Math.sin(g);   // eixo do comprimento = (cs, −sn) no mundo (giro ry = g)
+    F.cor([0x7a4a34, 0x8a5540][Math.floor(rng() * 2)], .9 + rng() * .2);
+    if (tipo === 0) F.caixa(x, y, z, .19, .09, .09, g);
+    else if (tipo === 2) F.caixa(x, y, z, .10, .09, .09, g).caixa(x + cs * .06, y, z - sn * .06, .025, .07, .05, g);
+    else F.caixa(x - cs * .025, y, z + sn * .025, .14, .09, .09, g).caixa(x + sn * .0225, y, z + cs * .0225, .19, .09, .045, g);
+  }
   return SACOS_AUTORAIS.length;
 }
 // Guia de sarjeta: canaleta de 30 cm junto à fachada (a faixa úmida é do shader do chão) fechada por guia de concreto de
@@ -477,17 +483,18 @@ function guias(F, rng, casas, cols) {
 
 // Guarda tubular das rampas da travessia alta (só com a travessia de concreto de map_corrego_hd.js, que descarta a mureta
 // autoral da rampa: ela flutuava 23 cm sobre a laje e acabava sem montante): corrimão a 0,81 m e barra a 0,44 m seguindo
-// pisoPass de |x| 5 ao pé em 13,6, 7 montantes do piso ao corrimão com pé enferrujado, tampa na ponta do corrimão e chapa de
-// base sob os montantes do vão (os do shader, a cada 1,4 m); z −11 ± 1,25, como a caixa autoral do vão. Mesma tinta do shader.
+// pisoPass de |x| 5 ao pé, 7 montantes do piso ao corrimão com pé enferrujado (o último em |x| 13,52, o mesmo do shader), tampa
+// fechando o tubo em 13,56 — nada passa de 13,6 (pé da rampa) — e chapa de base sob os montantes do vão (os do shader, a cada
+// 1,4 m); z −11 ± 1,25, como a caixa autoral do vão. Mesma tinta do shader.
 function guardaTravessia(F, rng) {
   let n = 0;
   const TINTA = 0xbfa052, FERRO_PE = 0x4a2e1e;
   for (const lado of [-1, 1]) for (const dz of [-PASS.meiaL, PASS.meiaL]) {
     const z = PASS.z + dz, P = (ax, h) => V(lado * ax, Math.max(0, pisoPass(lado * ax)) + h, z);
-    F.cor(TINTA, .9 + rng() * .2).tubo([P(PASS.x1 - .03, .81), P(PASS.x0, .81)], .045, 8).cor(TINTA, .85 + rng() * .2).tubo([P(PASS.x1 - .03, .44), P(PASS.x0, .44)], .03, 8);
-    F.cor(TINTA, .9).caixa(lado * PASS.x0, .765, z, .04, .09, .09);
+    F.cor(TINTA, .9 + rng() * .2).tubo([P(PASS.x1 - .03, .81), P(PASS.x0 - .04, .81)], .045, 8).cor(TINTA, .85 + rng() * .2).tubo([P(PASS.x1 - .03, .44), P(PASS.x0 - .04, .44)], .03, 8);
+    F.cor(TINTA, .9).caixa(lado * (PASS.x0 - .04), .765, z, .04, .09, .09);
     for (let k = 0; k <= 6; k++) {
-      const ax = PASS.x1 + .05 + (PASS.x0 - PASS.x1 - .1) * k / 6;
+      const ax = PASS.x1 + .05 + (PASS.x0 - PASS.x1 - .13) * k / 6;
       F.cor(TINTA, .85 + rng() * .25).tubo([P(ax, .11), P(ax, .84)], .03, 8).cor(FERRO_PE, .9 + rng() * .2).tubo([P(ax, 0), P(ax, .11)], .032, 8);
       n++;
     }
