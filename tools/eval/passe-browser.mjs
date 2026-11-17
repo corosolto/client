@@ -239,7 +239,6 @@ async function medir(mutante = '') {
       `"${tela.resgatar}" -> nível 1 ${depois.n1}; bônus "${depois.boost}"; resgates ${JSON.stringify(posts)}; próximo "${depois.proximo}"; aviso "${depois.aviso}"`);
     add('PB5', JSON.stringify(eventos) === '["modal_view","open"]' && JSON.stringify(mock.eventos) === '["modal_view","open"]',
       `funil com medição permitida: ${JSON.stringify(eventos)} (quer modal_view e open, uma vez cada)`);
-    await page.evaluate(() => { document.querySelector('.tp-passe__niveis').scrollLeft = 0; });
     await foto(page, 'passe-desktop', mutante);
     /* PB4: depois do resgate o servidor lista o personagem: o seletor escolhe */
     await page.click('.tp-passe__fechar');
@@ -562,8 +561,10 @@ async function medir(mutante = '') {
 }
 
 let sair = 0;
-if (process.argv.includes('--mutantes')) {
-  for (const [mut, [alvo]] of Object.entries(MUTANTES)) {
+/* --mutantes roda todos; --mutantes=a,b só os nomeados (diagnóstico de um mutante) */
+const pedidos = (process.argv.find((a) => a.startsWith('--mutantes=')) || '').split('=')[1]?.split(',').filter(Boolean) || [];
+if (process.argv.some((a) => a === '--mutantes' || a.startsWith('--mutantes='))) {
+  for (const [mut, [alvo]] of Object.entries(MUTANTES).filter(([m]) => !pedidos.length || pedidos.includes(m))) {
     const rs = (await medir(mut)).filter((x) => x.id === alvo || x.id.startsWith(`${alvo}@`));
     const morde = rs.some((x) => !x.ok);
     if (!morde) sair = 1;
