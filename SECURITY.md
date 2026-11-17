@@ -1,60 +1,60 @@
-# Modelo de segurança — CORO SOLTO: Treta Suprema
+# Security model — CORO SOLTO: Treta Suprema
 
-## A verdade técnica primeiro
+## The technical truth first
 
-Este é um jogo **sem servidor autoritativo** (por enquanto): a partida roda
-100% no browser do jogador. Isso significa que **o client é, por definição,
-não-confiável** — um atacante com um trainer (edição de memória/JS, como o da
-screenshot do pentester) consegue god mode, speed, autoshot etc. no PRÓPRIO
-jogo dele. **Nenhum anti-cheat client-side para isso** — é teatro de
-obfuscação, e nós não fazemos teatro.
+This is a game **without an authoritative server** (for now): matches run
+100% in the player's browser. This means that **the client is, by definition,
+untrusted** — an attacker with a trainer (memory/JS editing, like the one in
+the pentester's screenshot) can get god mode, speed, autoshot, etc. in their OWN
+game. **No client-side anti-cheat can stop this** — it is obfuscation theater,
+and we do not do theater.
 
-O que dá pra defender de verdade hoje é a **integridade do ranking** — e é
-aí que concentrarmos tudo: validação estatística e moderação no servidor.
+What we can genuinely defend today is **ranking integrity** — and that is
+where we focus everything: statistical validation and server-side moderation.
 
-A fix real é o multiplayer autoritativo (fase futura), onde o servidor
-testemunha as kills. Até lá, as camadas abaixo.
+The real fix is authoritative multiplayer (a future phase), where the server
+witnesses kills. Until then, we use the layers below.
 
-## Camadas ativas
+## Active layers
 
-1. **Token por nick** (UUID no navegador) — impede roubo de nick/stats alheios.
-2. **Rate limit por nick** (90s) e **por IP** (60s + 200 partidas/dia, via
-   `submit_log`) — contra floods e nick-hopping.
-3. **Tetos absolutos** — 150 kills/deaths, streak 30, 1500s por partida.
-4. **Consistência física (anti-trainer)**:
-   - kills ≤ 45 por round (respawn de 2,2s torna mais impossível);
-   - ≥ 80s por round (speed hack não produz partida instantânea).
-5. **Flags automáticas** — tentativa implausível = +1 flag; **3 flags = sai
-   do ranking sozinho** (`players.hidden`).
-6. **Registro com rate limit** (10/min por IP) contra nick-farming.
-7. **RLS em todas as tabelas**; escrita só via RPC validado; `service_role`
-   key existe apenas nas env vars da Vercel.
-8. **Sem segredos no client** — a anon key é pública por design. Mas RLS sozinha
-   não bastava: ela filtra LINHAS, não COLUNAS, e não cobre `execute` de função.
-   Ver 9 e 10.
-9. **`players.token` fechado por privilégio de coluna** (migration 011 §1). Até
-   a v2 a anon key lia `select=nick,token` do ranking inteiro — que é
-   exatamente o par que o `submit_match` valida. O ranking era forjável com um
-   `curl`.
-10. **Nenhum RPC é chamável pela anon key** (migration 011 §4). Toda função do
-    Postgres nasce com `execute` pra PUBLIC e o PostgREST publica cada uma em
-    `/rest/v1/rpc/<nome>`: dava pra chamar `_flag` três vezes e esconder
-    qualquer jogador do ranking, sem token nenhum.
-11. **Rate limit durável no Postgres** (migration 011 §3). O limite em `Map` de
-    memória de lambda não sobrevive a cold start — ver `docs/seguranca.md` §3.
-12. **Anti-SSRF** em toda URL que o servidor busca (`src/lib/safe-url.ts`).
-13. **Headers de segurança** no `vercel.json`: CSP, nosniff, Referrer-Policy,
+1. **Token per nickname** (UUID in the browser) — prevents theft of other players' nicknames/stats.
+2. **Rate limit per nickname** (90s) and **per IP** (60s + 200 matches/day, via
+   `submit_log`) — protects against floods and nick-hopping.
+3. **Absolute caps** — 150 kills/deaths, streak of 30, 1,500s per match.
+4. **Physical consistency (anti-trainer)**:
+   - kills ≤ 45 per round (the 2.2s respawn makes anything higher impossible);
+   - ≥ 80s per round (a speed hack cannot produce an instant match).
+5. **Automatic flags** — an implausible attempt = +1 flag; **3 flags = automatic
+   removal from the ranking** (`players.hidden`).
+6. **Rate-limited registration** (10/min per IP) against nick-farming.
+7. **RLS on every table**; writes only through validated RPCs; the `service_role`
+   key exists only in Vercel environment variables.
+8. **No secrets in the client** — the anon key is public by design. But RLS alone
+   was not enough: it filters ROWS, not COLUMNS, and does not cover function
+   `execute`. See 9 and 10.
+9. **`players.token` restricted by column privilege** (migration 011 §1). Until
+   v2, the anon key could read `select=nick,token` for the entire ranking — which
+   is exactly the pair that `submit_match` validates. The ranking could be forged
+   with a single `curl`.
+10. **No RPC is callable by the anon key** (migration 011 §4). Every Postgres
+    function is created with `execute` for PUBLIC, and PostgREST publishes each one
+    at `/rest/v1/rpc/<nome>`: anyone could call `_flag` three times and hide any
+    player from the ranking, without any token.
+11. **Durable rate limiting in Postgres** (migration 011 §3). A limit stored in a
+    lambda's in-memory `Map` does not survive a cold start — see `docs/seguranca.md` §3.
+12. **Anti-SSRF** on every URL fetched by the server (`src/lib/safe-url.ts`).
+13. **Security headers** in `vercel.json`: CSP, nosniff, Referrer-Policy,
     Permissions-Policy, HSTS.
 
-## LGPD / privacidade
+## LGPD (Brazil's data protection law) / privacy
 
-- `submit_log` guarda IP + nick + timestamp **apenas** para segurança
-  operacional (anti-abuso), com **retenção máxima de 7 dias**. A promessa agora
-  tem job: `public.purge_submit_log(7)`, agendada diariamente no `pg_cron`
-  (migration 011 §2). Até a v2 essa retenção não era aplicada por nada.
-- Geo no mapa é nível cidade (header da Vercel), IP nunca é persistido.
+- `submit_log` stores IP + nickname + timestamp **only** for operational
+  security (anti-abuse), with a **maximum retention of 7 days**. This promise now
+  has a job: `public.purge_submit_log(7)`, scheduled daily in `pg_cron`
+  (migration 011 §2). Until v2, nothing enforced this retention.
+- Map geolocation is city-level (Vercel header); the IP is never persisted for it.
 
-## Moderação (SQL pronto)
+## Moderation (ready-to-use SQL)
 
 ```sql
 -- esconder um jogador do ranking
@@ -67,33 +67,34 @@ select nick, flagged_count, hidden from players where flagged_count > 0 order by
 select * from submit_log where ip = '1.2.3.4' order by created_at desc limit 50;
 ```
 
-## O que NÃO fazemos (de propósito)
+## What we deliberately do NOT do
 
-- Assinatura/HMAC de payload no client — para scripts de `curl` ingênuos, mas
-  qualquer trainer extrai o segredo do JS. Custo sem benefício real.
-- Anti-cheat client-side (detecção de devtools, debugger traps) — bypassado
-  em minutos por quem usa trainer. Não vale a manutenção.
+- Payload signing/HMAC in the client — stops naive `curl` scripts, but any
+  trainer can extract the secret from the JS. Cost without real benefit.
+- Client-side anti-cheat (devtools detection, debugger traps) — bypassed in
+  minutes by anyone using a trainer. Not worth the maintenance.
 
-## Roadmap de segurança
+## Security roadmap
 
-- **Multiplayer autoritativo** (fase futura): servidor valida kills/dano —
-  o único fix completo contra trainer.
-- Sessões de partida assinadas pelo servidor (partida só conta se iniciada e
-  encerrada com o servidor observando).
+- **Authoritative multiplayer** (future phase): the server validates kills/damage —
+  the only complete fix against trainers.
+- Server-signed match sessions (a match only counts if started and ended with
+  the server observing).
 
 ---
 
-## Detalhamento técnico
+## Technical details
 
-`docs/seguranca.md` tem, para cada furo fechado nesta release: onde estava
-(`arquivo:linha`), o que fecha, como testar, e o que **não** foi resolvido.
+`docs/seguranca.md` documents, for each vulnerability closed in this release:
+where it was (`arquivo:linha`), what closes it, how to test it, and what has **not**
+been resolved.
 
-## Reportando uma vulnerabilidade
+## Reporting a vulnerability
 
-**Não abra issue pública.** Mande para o e-mail do mantenedor no perfil do
-GitHub (<https://github.com/rubenmarcus>) com: o que dá pra fazer, o passo a
-passo mínimo pra reproduzir, e o impacto que você enxerga. Sem prazo de
-divulgação combinado, por favor não publique antes da correção.
+**Do not open a public issue.** Email the maintainer at the address on their
+GitHub profile (<https://github.com/rubenmarcus>) with: what an attacker can do,
+the minimum steps to reproduce it, and the impact you see. Unless a disclosure
+timeline has been agreed upon, please do not publish before the fix.
 
-Este é um projeto de fãs sem programa de bug bounty — mas todo reporte válido
-entra nos créditos, se você quiser.
+This is a fan project with no bug bounty program — but every valid report will
+be included in the credits, if you wish.
