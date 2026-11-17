@@ -1,6 +1,7 @@
 /* Treta Pop · 16 servidores. Carregado por tp/ligar.js só com ?ui=v3. */
 import { tr } from '../i18n.js';
-import { NOS, sondarNos } from '../net.js';
+import { NOS } from '../nos.js';
+import { sondarNos } from '../nos-rede.js';
 import { VERSION } from '../version.js';
 import { mapPreviewPoster } from '../escadao_preview.js';
 import { previewRevision } from '../amazonia_map_preview.js';

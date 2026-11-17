@@ -27,7 +27,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const MUTANTES = ['sem-concurrency', 'sem-cancel', 'grupo-global', 'deploy-cancela', 'deploy-sem-concurrency'];
+const MUTANTES = ['sem-concurrency', 'sem-cancel', 'grupo-global', 'classificador-autocancela', 'classificador-inverte-operador', 'deploy-cancela', 'deploy-sem-concurrency'];
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 if (mutante && !MUTANTES.includes(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
 
@@ -60,6 +60,12 @@ function ler(arquivo) {
   if (mutante === 'sem-concurrency' && arquivo === 'smoke-web.yml') fonte = fonte.replace(/^concurrency:\s*\n(?: {2}\S[^\n]*\n?)+/m, '');
   if (mutante === 'sem-cancel' && arquivo === 'pr-gates.yml') fonte = fonte.replace(/^( {2}cancel-in-progress:).*$/m, '$1 false');
   if (mutante === 'grupo-global' && arquivo === 'preview-deploy.yml') fonte = fonte.replace(/^( {2}group:).*$/m, '$1 preview-deploy');
+  if (mutante === 'classificador-autocancela' && arquivo === 'csbrasil-bot-pr-classify.yml') {
+    fonte = fonte.replace(/^( {2}cancel-in-progress:).*$/m, '$1 true');
+  }
+  if (mutante === 'classificador-inverte-operador' && arquivo === 'csbrasil-bot-pr-classify.yml') {
+    fonte = fonte.replace("github.actor != 'csbrasil-BOT'", "github.actor == 'csbrasil-BOT'");
+  }
   if (mutante === 'deploy-cancela' && arquivo === 'deploy-prod.yml') fonte = fonte.replace(/^( {2}cancel-in-progress:).*$/m, '$1 true');
   if (mutante === 'deploy-sem-concurrency' && arquivo === 'deploy-prod.yml') fonte = fonte.replace(/^concurrency:\s*\n(?: {2}\S[^\n]*\n?)+/m, '');
   return fonte;
@@ -74,6 +80,10 @@ for (const arquivo of POR_PR.filter((a) => existsSync(path.join(DIR, a)))) {
   if (!c) { falhas.push(`WC1 ${arquivo} sem \`concurrency\` no topo: push novo no PR deixa o run velho rodando`); continue; }
   if (!IDENTIFICA_PR.test(c.grupo)) falhas.push(`WC1 ${arquivo} agrupa por \`${c.grupo}\`, que não identifica o PR`);
   if (!c.cancela || c.cancela === 'false') falhas.push(`WC1 ${arquivo} não cancela o run velho do mesmo PR (cancel-in-progress: ${c.cancela || 'ausente'})`);
+}
+const classifier = concorrencia(ler('csbrasil-bot-pr-classify.yml'));
+if (!/github\.actor\s*!=\s*['"]csbrasil-BOT['"]/.test(classifier?.cancela || '')) {
+  falhas.push('WC3 csbrasil-bot-pr-classify.yml deixa evento de label do próprio bot cancelar o run que publicou a label');
 }
 for (const arquivo of NUNCA_CANCELA.filter((a) => existsSync(path.join(DIR, a)))) {
   const c = concorrencia(ler(arquivo));
@@ -90,5 +100,5 @@ if (falhas.length) {
   console.error(`\x1b[31mWORKFLOW-CONCURRENCY ${falhas.length} VERMELHA(S)\x1b[0m${mutante ? ` (mutante=${mutante})` : ''}`);
   process.exitCode = 1;
 } else {
-  console.log(`\x1b[32mWORKFLOW-CONCURRENCY verde: ${POR_PR.length} workflows de PR cancelam o run velho, ${NUNCA_CANCELA.length} nunca cancelam\x1b[0m`);
+  console.log(`\x1b[32mWORKFLOW-CONCURRENCY verde: ${POR_PR.length} workflows de PR cancelam runs velhos sem autocancelar o classifier; ${NUNCA_CANCELA.length} nunca cancelam\x1b[0m`);
 }

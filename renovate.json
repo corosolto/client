@@ -1,0 +1,14 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "schedule": ["after 9am and before 11am every monday"],
+  "timezone": "America/Sao_Paulo",
+  "labels": ["renovate"],
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "pins de actions",
+      "commitMessageSuffix": " (D6 ci-lens)"
+    }
+  ]
+}

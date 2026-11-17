@@ -174,15 +174,24 @@ const ctrl = built.ctrl;
 let t = 0;
 let activePose = POSE0;
 
+/* shoot e walkfire só existem enquanto o controlador está ATIRANDO (o update() do
+   jogo volta para idle quando `shooting` cai, e walkfire ainda exige movimento).
+   Para esses dois a página mantém o gatilho apertado e, no walkfire, o passo de
+   caminhada — sem isso ?pose=shoot e ?pose=walkfire renderizavam o idle. */
 function aplicaPose(s) {
   activePose = s || 'idle';
-  if (ctrl._to) ctrl._to(activePose);
+  const atirando = activePose === 'shoot' || activePose === 'walkfire';
+  if (atirando && ctrl.shoot) ctrl.shoot();
+  else if (ctrl._to) ctrl._to(activePose);
 }
 function avanca(dt) {
-  const moving = activePose === 'walk' || activePose === 'run' ? 1 : 0;
+  const atirando = activePose === 'shoot' || activePose === 'walkfire';
+  const moving = activePose === 'walk' || activePose === 'run' || activePose === 'walkfire' ? 1 : 0;
   if (ctrl) {
-    ctrl.update(dt, moving, false, activePose === 'run' ? 2 : (moving ? 1 : 0));
-    if (activePose !== 'idle' && ctrl.curName !== activePose && ctrl._to) ctrl._to(activePose);
+    if (atirando && ctrl.shoot && !ctrl.shooting) ctrl.shoot();
+    const speed = activePose === 'run' ? 2 : (activePose === 'walkfire' ? 1.3 : (moving ? 1 : 0));
+    ctrl.update(dt, moving, false, speed);
+    if (!atirando && activePose !== 'idle' && ctrl.curName !== activePose && ctrl._to) ctrl._to(activePose);
   }
   if (SPIN) built.group.rotation.y = Math.PI + THREE.MathUtils.degToRad(YAW0 + SPIN * t);
   built.group.updateMatrixWorld(true);

@@ -60,8 +60,21 @@ const selfUrl = abs(rota ? rota.caminho : '/');
 const V = pkg.version;
 // Commit do deploy (Vercel expõe no build); o multiplayer grava o build do navegador com ele.
 const GIT_SHA = /^[a-f0-9]{40}$/.test(import.meta.env.VERCEL_GIT_COMMIT_SHA || '') ? import.meta.env.VERCEL_GIT_COMMIT_SHA : '';
-declare const __MANIFESTO_JS__: { modules: string[]; revision: string };
-const { modules: MODULOS, revision: JS_REV } = __MANIFESTO_JS__;
+declare const __MANIFESTO_JS__: {
+  modules: string[];
+  revision: string;
+  vendorModules: string[];
+  vendorRevision: string;
+};
+const {
+  modules: MODULOS,
+  revision: JS_REV,
+  vendorModules: VENDOR_MODULES,
+  vendorRevision: VENDOR_REV,
+} = __MANIFESTO_JS__;
+const OFFLINE_VENDOR = JSON.stringify(VENDOR_MODULES.map((module) => `/vendor/${module}?v=${V}-${VENDOR_REV}`));
+declare const __PWA_REV__: string;
+const PWA_REV = __PWA_REV__;
 const IMPORTMAP = JSON.stringify({
   imports: {
     three: `./vendor/three.module.js?v=${V}`,
@@ -747,6 +760,7 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
 </script>
 <!-- Todo módulo local precisa passar pelo import map versionado. -->
 <script type="importmap" is:inline set:html={IMPORTMAP}></script>
+<script id="offline-core-modules" type="application/json" is:inline set:html={OFFLINE_VENDOR}></script>
 <!-- Contagem agregada sem identificador: carrega sozinha, antes do grafo do main.js, para contar quem desiste no download. -->
 <script type="module" async src={`/js/contagem.js?v=${V}-${JS_REV}`} is:inline></script>
 <link rel="stylesheet" href={`/map-preview.css?v=${V}-${JS_REV}`} />
@@ -1884,10 +1898,10 @@ if (document.documentElement.dataset.ui === 'v3') TP_CSS.arquivos.forEach(functi
 <script is:inline>
   window.__CS_LANG_READY__ = new Promise((resolve) => window.addEventListener('cs-lang-ready', resolve, { once: true }));
 </script>
+<script type="module" src={`/js/pwa-install.js?v=${PWA_REV}`} data-pwa-rev={PWA_REV} is:inline></script>
 <script type="module" src={`/js/ops.js?v=${V}-${JS_REV}`} is:inline></script>
 <script type="module" src={`/js/site-links.js?v=${V}-${JS_REV}`} is:inline></script>
 <script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1;window.__CS_BOOT_SRC=this.src"></script>
 <script type="module" src={`/js/gameplay-recorder.js?v=${V}-${JS_REV}`} is:inline></script>
-<script type="module" src={`/js/pwa-install.js?v=${V}-${JS_REV}`} is:inline></script>
 </body>
 </html>

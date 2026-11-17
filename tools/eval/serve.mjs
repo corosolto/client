@@ -35,18 +35,24 @@ const startAstro = async manifest => {
     server: { strictPort: true, ws: { host: '127.0.0.1', clientPort: port } },
   } });
 };
-const initial = moduleCacheManifest();
-let revision = initial.revision;
+const completeModuleManifest = () => {
+  const main = moduleCacheManifest();
+  const vendor = moduleCacheManifest('public/vendor');
+  return { ...main, vendorModules: vendor.modules, vendorRevision: vendor.revision };
+};
+const initial = completeModuleManifest();
+let revision = `${initial.revision}:${initial.vendorRevision}`;
 let astro = await startAstro(initial);
 let refresh = null;
 async function currentRenderer() {
   if (refresh) await refresh;
-  const manifest = moduleCacheManifest();
-  if (manifest.revision !== revision) {
+  const manifest = completeModuleManifest();
+  const nextRevision = `${manifest.revision}:${manifest.vendorRevision}`;
+  if (nextRevision !== revision) {
     refresh = (async () => {
       await astro.stop();
       astro = await startAstro(manifest);
-      revision = manifest.revision;
+      revision = nextRevision;
     })();
     try { await refresh; } finally { refresh = null; }
   }

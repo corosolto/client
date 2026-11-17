@@ -271,13 +271,13 @@ const filho = (qs, args, rowsEsperadas) => {
 };
 {
   const k = filho('?flash=0', ['--modo=killswitch'], 3);
-  if (k.infra) { console.error(`infra: ${k.infra}`); process.exit(3); }
+  if (k.infra) { console.error(`infra: ${k.infra}`); process.exit(78); }
   check('?flash=0 remove a flash', k.failed.length === 0 && k.total === 3, { failed: k.failed });
   const d = filho('?debug=1&flashes=2', ['--modo=debug', '--espera=2'], 1);
-  if (d.infra) { console.error(`infra: ${d.infra}`); process.exit(3); }
+  if (d.infra) { console.error(`infra: ${d.infra}`); process.exit(78); }
   check('?debug=1&flashes=2 dá 2 por rodada', d.failed.length === 0, { failed: d.failed });
   const n = filho('?flashes=2', ['--modo=debug', '--espera=0'], 1);
-  if (n.infra) { console.error(`infra: ${n.infra}`); process.exit(3); }
+  if (n.infra) { console.error(`infra: ${n.infra}`); process.exit(78); }
   check('?flashes=2 sem debug não dá nada', n.failed.length === 0, { failed: n.failed });
 }
 

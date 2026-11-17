@@ -40,7 +40,8 @@ const child = (cwd, legacy = false) => new Promise((resolve, reject) => {
   proc.on('close', (code, signal) => {
     try {
       assert.equal(signal, null); assert.equal(code, 0, stderr);
-      assert.equal(stderr, '');
+      const semAvisoRuntime = stderr.replace(/^\(node:\d+\) \[DEP0205\] DeprecationWarning: `module\.register\(\)` is deprecated\. Use `module\.registerHooks\(\)` instead\.\n\(Use `node --trace-deprecation ...` to show where the warning was created\)\n?/, '');
+      assert.equal(semAvisoRuntime, '');
       assert.deepEqual(JSON.parse(stdout), { sameThree: true, loader: true });
       resolve();
     } catch (error) { reject(error); }

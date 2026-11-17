@@ -14,7 +14,7 @@ const file = (path) => existsSync(path) ? readFileSync(path, 'utf8') : '';
 const audio = file('public/js/audio.js');
 const game = file('public/js/game.js');
 const main = file('public/js/main.js');
-const manifest = file('tools/gen-audio-manifest.mjs');
+const installer = file('tools/audio/fab-game-local.mjs');
 const generator = file('tools/gen-character-voices.mjs');
 const sourcePath = 'content/voice-lines.json';
 const data = existsSync(sourcePath) ? JSON.parse(file(sourcePath)) : { characters: {} };
@@ -114,13 +114,16 @@ if (MUT_RELEASE_HASH) {
 // O JSON servido já tinha sido corrigido, mas specs/0002 continuou contendo a fala
 // rejeitada e poderia reintroduzi-la ao gerar os outros sete integrantes. O contrato
 // editorial cobre também as duas fontes que dirigem a produção, não só o runtime.
+let fonteEditorialAusente = false;
 for (const [index, path] of [
   'specs/0002-novas-faccoes/spec.md',
   'plans/19-NOVAS-FACCOES-VERTICAL-SLICES.md',
 ].entries()) {
   const original = file(path);
   if (!original) {
-    failures.push(`${path}: fonte editorial ausente`);
+    fonteEditorialAusente = true;
+    if (MUT_SPEC_STIGMA && index === 0) failures.push(`${path}: fonte editorial ausente — mutante não medido`);
+    else console.log(`  PULOU ${path}: fonte editorial fora deste checkout; contrato não pode ficar verde`);
     continue;
   }
   const text = MUT_SPEC_STIGMA && index === 0 ? `${original}\nEu avisei ontem amanhã!\n` : original;
@@ -133,7 +136,7 @@ const clauses = [
   ['VOICE2 seleção dispara voz do personagem', /characterVoice\(c\.id,\s*'select'/.test(main)],
   ['VOICE3 kill usa attacker.def.id', /characterVoice\(attacker\.def\?\.id,\s*'kill'/.test(game)],
   ['VOICE4 rádio usa playerCharId e b.def.id', /characterVoice\(this\.playerCharId,\s*'radio'/.test(game) && /characterVoice\(b\.def\?\.id,\s*'radio'/.test(game)],
-  ['VOICE5 manifest varre characters/', /characterVoice/.test(manifest) && /audio[^\n]*characters|characters[^\n]*audio/i.test(manifest)],
+  ['VOICE5 instalador varre characters/<id>/<evento>/ do staging aprovado', /characters\/\$\{id\}\/\$\{event\}\//.test(installer) && /characterVoice: selectedCharacterVoices/.test(installer)],
   ['VOICE6 gerador tem dry-run e não sobrescreve sem force', /--dry-run/.test(generator) && /--force/.test(generator)],
 ];
 globalThis.location ||= { search: '' };
@@ -151,4 +154,9 @@ if (failures.length) {
   failures.forEach((failure) => console.error(`✗ ${failure}`));
   process.exit(1);
 }
+if (fonteEditorialAusente) {
+  console.error('CHARACTER-VOICE NÃO MEDIDO: fontes editoriais ausentes');
+  process.exit(78);
+}
+
 console.log(`CHARACTER-VOICE ✓ ${ids.length} personagens × 8 falas + runtime/fallback/gerador${VERIFY_OUTPUTS ? ` + ${RELEASE ? 'release aprovado' : 'generated/escuta pendente'}/licença/SHA/manifest/recibos` : ''}`);

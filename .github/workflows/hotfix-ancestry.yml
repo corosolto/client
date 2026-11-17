@@ -43,8 +43,9 @@ jobs:
           python-version: '3.13'
       - name: Require main-only ancestry for hotfixes targeting main
         run: |
-          gh pr view "$PR_NUMBER" --json title,labels,baseRefName > /tmp/hotfix-ancestry-pr.json
+          gh pr view "$PR_NUMBER" --json title,labels,baseRefName,baseRefOid,headRefName,headRefOid,headRepository > /tmp/hotfix-ancestry-pr.json
           python3 scripts/ci/release_policy.py --selftest
+          python3 scripts/ci/pr_attestation.py --selftest
           python3 - <<'PY'
           import json, os, subprocess, sys
           pr = json.load(open('/tmp/hotfix-ancestry-pr.json'))
@@ -54,30 +55,19 @@ jobs:
           if not channel['hotfix'] or pr.get('baseRefName') != 'main':
               print('Not a hotfix targeting main; ancestry gate does not apply.')
               raise SystemExit(0)
-          number = os.environ['PR_NUMBER']
-          subprocess.run(['git', 'fetch', 'origin', 'main:refs/remotes/origin/main', 'staging:refs/remotes/origin/staging'], check=True)
-          head_ref = f'refs/remotes/origin/pr/{number}'
-          subprocess.run([
-              'git', 'fetch', 'origin', f'refs/pull/{number}/head:{head_ref}',
-          ], check=True)
-          head = subprocess.check_output([
-              'git', 'rev-list', f'origin/main..{head_ref}',
-          ], text=True).splitlines()
-          staging = subprocess.check_output([
-              'git', 'rev-list', 'origin/main..origin/staging',
-          ], text=True).splitlines()
-          main_is_ancestor = subprocess.run([
-              'git', 'merge-base', '--is-ancestor', 'origin/main', head_ref,
-          ], check=False).returncode == 0
-          result = json.loads(subprocess.check_output([
-              'python3', 'scripts/ci/release_policy.py', '--ancestry',
-          ], input=json.dumps({
-              'head_commits': head,
-              'staging_commits': staging,
-              'main_is_ancestor': main_is_ancestor,
-          }), text=True))
-          if not result['hotfix_main_only']:
+          payload = {
+              'pr': pr,
+              'pr_number': int(os.environ['PR_NUMBER']),
+              'expected_repository': os.environ['GITHUB_REPOSITORY'],
+          }
+          attestation = json.loads(subprocess.check_output([
+              'python3', 'scripts/ci/pr_attestation.py', '--emit',
+          ], input=json.dumps(payload), text=True))
+          validated = json.loads(subprocess.check_output([
+              'python3', 'scripts/ci/pr_attestation.py', '--apply',
+          ], input=json.dumps(dict(payload, attestation=attestation)), text=True))
+          if not validated['hotfix_main_only']:
               print('::error::Hotfix must contain the current main as ancestor and no unpublished staging commits. Rebase only the urgent fix onto main.')
               sys.exit(1)
-          print('Hotfix ancestry is main-only.')
+          print('Hotfix ancestry is main-only; complete diff and head/base OIDs are attested.')
           PY

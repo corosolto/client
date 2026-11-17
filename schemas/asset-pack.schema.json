@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://studio.corosolto.com.br/schemas/asset-pack-v1.json",
+  "title": "Coro Solto Studio Asset Pack",
+  "type": "object",
+  "required": ["schemaVersion", "kind", "id", "version", "source", "files"],
+  "$defs": {
+    "packagePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*\\\\)[^\\u0000]+$"
+    },
+    "packagePathList": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/packagePath" }
+    }
+  },
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "kind": { "enum": ["map", "character", "viewmodel", "skin"] },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "source": {
+      "type": "object",
+      "required": ["revision", "provenance"],
+      "properties": {
+        "revision": { "type": "string", "minLength": 7 },
+        "provenance": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256", "bytes"],
+        "properties": {
+          "path": { "$ref": "#/$defs/packagePath" },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "bytes": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    "geometry": { "$ref": "#/$defs/packagePathList" },
+    "textures": { "$ref": "#/$defs/packagePathList" },
+    "lods": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z0-9][a-z0-9-]*$" },
+      "additionalProperties": { "$ref": "#/$defs/packagePathList" }
+    },
+    "collision": { "$ref": "#/$defs/packagePathList" },
+    "navigation": { "$ref": "#/$defs/packagePathList" },
+    "spawns": { "$ref": "#/$defs/packagePathList" },
+    "regions": { "$ref": "#/$defs/packagePathList" },
+    "budgets": { "type": "object" },
+    "previews": { "type": "array", "items": { "type": "string" } },
+    "evidence": { "type": "array", "items": { "type": "string" } }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "kind": { "const": "map" } },
+        "required": ["kind"]
+      },
+      "then": {
+        "required": ["geometry", "textures", "lods", "collision", "navigation", "spawns", "regions", "previews"],
+        "properties": {
+          "geometry": { "$ref": "#/$defs/packagePathList" },
+          "textures": { "$ref": "#/$defs/packagePathList" },
+          "collision": { "$ref": "#/$defs/packagePathList" },
+          "navigation": { "$ref": "#/$defs/packagePathList" },
+          "spawns": { "$ref": "#/$defs/packagePathList" },
+          "regions": { "$ref": "#/$defs/packagePathList" },
+          "lods": {
+            "type": "object",
+            "required": ["low"],
+            "properties": { "low": { "$ref": "#/$defs/packagePathList" } }
+          },
+          "previews": { "$ref": "#/$defs/packagePathList" },
+          "evidence": { "$ref": "#/$defs/packagePathList" }
+        }
+      }
+    }
+  ]
+}

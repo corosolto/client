@@ -2697,12 +2697,13 @@ export class Game {
   }
   async _emoteMods() {
     if (this._emoteMod) return this._emoteMod;
-    try {
-      const mod = await import('./emotes.js');
+    if (this._emoteLoading) return this._emoteLoading;
+    this._emoteLoading = import('./emotes.js').then((mod) => {
       setEmoteDriver({ pose: mod.poseEmote, duracao: mod.emoteDuracao, laco: mod.emoteLaco });
       this._emoteMod = mod;
       return mod;
-    } catch { return null; }
+    }).catch(() => null).finally(() => { this._emoteLoading = null; });
+    return this._emoteLoading;
   }
   _emoteUi(mod) {
     const m = this.el.emoteWheel;
@@ -4751,7 +4752,7 @@ export class Game {
       this._abortarArmaNaMorte();   // recarga e arremesso morrem com o jogador (GRM3/GRM4)
       this._unequipNade();
       this._resetKillSequence();
-      this.el.respawn.classList.remove('hidden');
+      this.el.respawn?.classList.remove('hidden');
       this.sfx.death(ent.def?.id);
     } else {
       ent.target = null; ent.deadT = 0;
@@ -7405,7 +7406,8 @@ export class Game {
     if (!p.alive) {
       const left = p.respawnAt - this.time;
       // VIP jogador da Operação Flávio não renasce (respawnAt = Infinity): sem "Infinity" na tela.
-      this.el.respawnCount.textContent = Number.isFinite(left) ? Math.max(0, left).toFixed(1) : '—';
+      const respawnCount = this.el.respawnCount || (this.el.respawnCount = document.getElementById('respawn-count'));
+      if (respawnCount) respawnCount.textContent = Number.isFinite(left) ? Math.max(0, left).toFixed(1) : '—';
       this._deathFeedback(dt);
       this._tpDeath(dt);   // corpo TP cai (item: "boneco não caía morto")
       /* Online o _respawnPlayer é no-op (revive vem do snapshot): seguir morto mantém a
@@ -8183,7 +8185,7 @@ export class Game {
     }
     if (this._compra && ![p.primary, p.secondary, 'knife'].includes(p.weapon)) this._switchWeapon(p.secondary || 'pistol');
     this.camera.rotation.z = 0;
-    this.el.respawn.classList.add('hidden');
+    this.el.respawn?.classList.add('hidden');
     this.sfx.respawn();
     this._checkArenaWin();
   }
@@ -10226,7 +10228,7 @@ export class Game {
     this.el.emoteWheel?.classList.add('hidden'); this.emoteOpen = false;
     this.el.mkBanner.classList.remove('show');
     this.el.scope.classList.remove('on');
-    this.el.respawn.classList.add('hidden');
+    this.el.respawn?.classList.add('hidden');
     this.el.reloadNote.classList.add('hidden');
     this.el.banner.classList.add('hidden');
     this.el.lockHint.classList.add('hidden');
@@ -10244,11 +10246,12 @@ export class Game {
     for (const t of this._texLocais || []) t.dispose();
     this._texLocais = null;
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
-    /* Partículas de pouso são donas do material; o puff permanece compartilhado. A textura
-       (uTex) nasce via _texLocal e já caiu no laço de _texLocais acima: descartá-la aqui
-       de novo dava dispose duplo (eval:landing-impact exige exatamente 1). */
+    // Partículas de pouso são donas do material; a textura já pertence a _texLocais.
+    const puffFx = this.puffFx;
+    puffFx?.points?.material?.dispose();
+    this.puffFx = null;
     for (const fx of this._landingFxSystems || []) {
-      if (fx === this.puffFx) continue;
+      if (fx === puffFx) continue;
       fx.points?.material?.dispose();
     }
     this._landingFxSystems = [];

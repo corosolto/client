@@ -6,6 +6,10 @@ Atualizado em 18/10/2026. Branch `codex/mobile-entry-20261018`, criada de `origi
 
 Fazer uma pessoa nova conseguir abrir, entender, jogar e repetir CORO SOLTO no celular. Primeiro, web/PWA e APK Android de teste devem passar na mesma partida em aparelho real: menu e imagens legíveis, controles touch, partida concluída, retorno, reconexão, FPS e travamentos medidos. Depois, oferecer escolha clara entre jogar como convidado e criar conta, explicando o que fica salvo neste aparelho e o que acompanha a conta. A versão de loja é outra decisão; o APK de teste pode ser distribuído sem Play Store depois de build assinado e QA.
 
+## PWA instalada e jogo offline
+
+A PWA deve manter uma partida single-player jogável quando o aparelho perde a conexão. O service worker da raiz guarda a página do jogo, o mapa padrão Praça dos Três Poderes e os recursos estáticos que a instalação carregou; cada uso online atualiza esse conjunto e acrescenta os mapas e assets visitados. O fallback offline não transforma recursos de servidor em dados locais: multiplayer, conta, ranking, loja e telemetria continuam dependentes da rede, sem impedir a simulação local com bots.
+
 ## Feedback recebido e leitura atual
 
 - Relato literal do jogador, sem captura da tela do jogo nem aparelho identificado: “vi algumas falhas”; “Seria melhor uma versão pré alfa pra celular Android APK puro mesmo”; “Também seria interessante se a pessoa quiser criar um loguin e ter o save game local”; “Na tela do celular tá uma zona as imagens”. A imagem recebida mostra a conversa, não a tela defeituosa. O dono informou que ainda não tem os dados de aparelho/captura.
