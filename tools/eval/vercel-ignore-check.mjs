@@ -14,10 +14,10 @@
      VI3  produção `chore(release):`        -> 0 (pula; deploy é o cf-prod-deploy)
      VI4  o fonte não contém caminho de build (`exit 1`)
 
-   MUTANTE (`--mutate`):
-     builda-de-novo   injeta `exit 1` de produção no script -> VI1..VI3 reprovariam
-                      o skip; aqui a régua reprova o mutante porque o script mutado
-                      devolve 1 nos três cenários.
+   MUTANTES (`--mutate`):
+     builda-de-novo         religa `exit 1` de produção -> VI3 reprova
+     caminho-nao-coberto   injeta um desvio por branch fora dos cenários -> VI4 reprova
+     build-sem-borda       remove `check:borda` do build Cloudflare -> VI5 reprova
 
    Uso: node tools/eval/vercel-ignore-check.mjs [--mutate | --mutante=<nome>]
    ============================================================================ */
@@ -29,7 +29,8 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SCRIPT = join(ROOT, 'scripts', 'ci', 'vercel-ignore.sh');
-const MUTANTES = ['builda-de-novo'];
+const PACKAGE = join(ROOT, 'package.json');
+const MUTANTES = ['builda-de-novo', 'caminho-nao-coberto', 'build-sem-borda'];
 const arg = (nome) => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=')[1] || '';
 const mutante = arg('mutante');
 if (mutante && !MUTANTES.includes(mutante)) { console.error(`mutante desconhecido: ${mutante}`); process.exit(2); }
@@ -46,17 +47,48 @@ if (process.argv.includes('--mutate')) {
   process.exit(0);
 }
 
-// VI4: nada no fonte pode ligar um build na Vercel.
+// VI4: o script fica deliberadamente trivial. Qualquer comando além de configurar o shell,
+// informar o operador e sair 0 volta a abrir um caminho de build e exige outro contrato.
 let fonte = readFileSync(SCRIPT, 'utf8');
 const muta = (de, para) => {
   if (!fonte.includes(de)) { console.error(`MUTANTE NÃO APLICOU: ${mutante} (âncora ausente)`); process.exit(2); }
   fonte = fonte.replace(de, para);
 };
+if (mutante === 'caminho-nao-coberto') {
+  muta('exit 0', 'if [ "${VERCEL_GIT_COMMIT_REF:-}" = "branch-nao-medida" ]; then exit 1; fi\nexit 0');
+}
+
+let falhas = 0;
+const executaveis = fonte.split('\n').map((linha) => linha.trim()).filter((linha) => linha && !linha.startsWith('#'));
+const foraDoContrato = executaveis.filter((linha) => !/^set -eu$|^echo(?:\s+.*)?$|^exit 0$/.test(linha));
+if (foraDoContrato.length || executaveis.filter((linha) => linha === 'exit 0').length !== 1) {
+  console.error(`VI4: REPROVADO — caminho de build no fonte: ${foraDoContrato.join(' | ') || 'saída final ambígua'}`);
+  falhas++;
+}
+
+// VI5: todo artefato Cloudflare passa pelo portão de borda antes do workflow publicar.
+const pacote = JSON.parse(readFileSync(PACKAGE, 'utf8'));
+if (mutante === 'build-sem-borda') {
+  const atual = pacote.scripts?.['build:cf'] || '';
+  if (!atual.endsWith(' && npm run check:borda')) {
+    console.error('MUTANTE NÃO APLICOU: build-sem-borda (âncora ausente)');
+    process.exit(2);
+  }
+  pacote.scripts['build:cf'] = atual.slice(0, -' && npm run check:borda'.length);
+}
+if (!pacote.scripts?.['build:cf']?.endsWith(' && npm run check:borda')) {
+  console.error('VI5: REPROVADO — build:cf não termina em check:borda');
+  falhas++;
+}
 
 const CENARIOS = [
+  { nome: 'VI4 development', env: { VERCEL_ENV: 'development', VERCEL_GIT_COMMIT_REF: 'branch-nao-medida', VERCEL_GIT_COMMIT_MESSAGE: 'feat: mudança local' } },
   { nome: 'VI1 preview de PR', env: { VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'fix/minha-treta', VERCEL_GIT_COMMIT_MESSAGE: 'fix: treta' } },
   { nome: 'VI2 staging', env: { VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'staging', VERCEL_GIT_COMMIT_MESSAGE: 'merge staging' } },
+  { nome: 'VI2 main comum', env: { VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'main', VERCEL_GIT_COMMIT_MESSAGE: 'fix: produção' } },
+  { nome: 'VI2 lote', env: { VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'lote-release', VERCEL_GIT_COMMIT_MESSAGE: 'release batch' } },
   { nome: 'VI3 produção release', env: { VERCEL_ENV: 'production', VERCEL_GIT_COMMIT_REF: 'main', VERCEL_GIT_COMMIT_MESSAGE: 'chore(release):' } },
+  { nome: 'VI3 produção comum', env: { VERCEL_ENV: 'production', VERCEL_GIT_COMMIT_REF: 'main', VERCEL_GIT_COMMIT_MESSAGE: 'fix: produção' } },
 ];
 
 const roda = (script, env) => {
@@ -72,7 +104,6 @@ const roda = (script, env) => {
   }
 };
 
-let falhas = 0;
 for (const c of CENARIOS) {
   const status = roda(fonte, c.env);
   if (status !== 0) { console.error(`${c.nome}: REPROVADO — script saiu ${status} (deveria pular, 0)`); falhas++; }
