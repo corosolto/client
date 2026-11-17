@@ -6,6 +6,12 @@ protege o senador Zero Um durante a fuga do escritório até um avião; o outro
 time precisa interromper a evacuação. O personagem jogável `senador`, já
 existente no elenco como Zero Um, representa Flávio dentro da sátira do jogo.
 
+Composição: N×N **mais** o VIP. O lado B leva N escoltas e Flávio como corpo a
+mais (`elencoDaEscolta` em `game.js`); o VIP não é vaga de gente
+(`_objectiveNpc`), então a sala N×N do multiplayer tem N vagas nos dois lados.
+Quem escolhe Zero Um no B offline é o próprio VIP e ganha N escoltas bot.
+Régua: `eval:operacao-flavio-vaga` (cliente) e `game/flavio-room-check.mjs` (backend).
+
 ## Local real
 
 Composição original inspirada em aeroportos executivos brasileiros: bloco

@@ -464,13 +464,31 @@ function sireneEmergencia(sfx) {
 // Zero Um escolhido no time B é o próprio VIP (só offline: online o elenco é do servidor).
 export const jogadorEhVip = (lado, personagem, vipDef) => lado === 'B' && Boolean(vipDef?.id) && personagem === vipDef.id;
 
-// Elenco offline: o VIP entra uma única vez. Jogador VIP → nenhum bot senador; senão o
-// bot VIP abre o lado B (o modo pega o 1º bot B). Senador é só-B (podeNoLado).
-export function elencoOperacaoFlavio(roster, lado, personagem, vipDef) {
+/* Elenco do modo: o VIP é um corpo A MAIS no lado B — N escoltas + o VIP, nunca o VIP no
+   lugar de uma das N. Corpo de VIP (`_objectiveNpc`) não é vaga de gente, então tirá-lo das N
+   deixava a sala N×N com N-1 vagas em B. Vale offline (main.js) e no nó/arnês (Game sem
+   `matchRoster`); online o elenco chega pronto do servidor, já com o VIP.
+   O VIP abre o lado B: o modo pega o 1º bot B, o nó publica o roster nessa ordem e o cliente
+   online monta os corpos por ela. Senador sorteado como escolta é trocado por outro
+   personagem B (o VIP entra uma vez só); jogador VIP ocupa o corpo extra, então o lado dele
+   ganha uma escolta para seguir com N além do VIP. `candidatos` = personagens sorteáveis no
+   lado B (o chamador filtra; este módulo não carrega o elenco). Régua: operacao-flavio-vaga-check.mjs. */
+export function elencoOperacaoFlavio(roster, lado, personagem, vipDef, candidatos = []) {
   if (!vipDef?.id) return roster;
   const campo = lado === 'B' ? 'allyDefs' : 'enemyDefs';
-  const semVip = roster[campo].filter((def) => def.id !== vipDef.id);
-  roster[campo] = jogadorEhVip(lado, personagem, vipDef) ? semVip : [vipDef, ...semVip];
+  const jogadorVip = jogadorEhVip(lado, personagem, vipDef);
+  const escolta = roster[campo].filter((def) => def.id !== vipDef.id);
+  const faltam = roster[campo].length - escolta.length + (jogadorVip ? 1 : 0);
+  const doLado = candidatos.filter((c) => c.id !== vipDef.id);
+  const usados = new Set([personagem, ...roster.allyDefs.map((def) => def.id), ...roster.enemyDefs.map((def) => def.id)]);
+  for (let i = 0; i < faltam && doLado.length; i++) {
+    const livres = doLado.filter((c) => !usados.has(c.id));
+    const pool = livres.length ? livres : doLado;
+    const def = pool[(Math.random() * pool.length) | 0];
+    usados.add(def.id);
+    escolta.push(def);
+  }
+  roster[campo] = jogadorVip ? escolta : [vipDef, ...escolta];
   return roster;
 }
 
