@@ -4,6 +4,7 @@
 // ?hddenso=0 volta ao morro ralo (casario 440, sem mata no topo); ?hdcaixa=0 mantém o tambor galvanizado autoral das lajes (±11,4; ±7);
 // ?hdvaral=0 mantém o varal autoral (lajes_varal.glb, corda em fita e toalhas texturizadas); ?hdloja=0 tira toldo, cadeira e engradado do mercadinho do beco oeste.
 // Objetos de laje/calçada/beco novos (props, varais, caixas das lajes, esgoto do beco) só entram no quadro das poses de captura (POSES/noQuadro).
+// O varal do beco em z = 19,6–20,3 (atrás da pose `beco`, fora de todas) saiu para pagar os três props de viela do beco sul.
 import * as THREE from 'three';
 import { preloadMapProps, PropBatch } from './mapprops.js';
 
@@ -409,7 +410,7 @@ function beco(F, rng, s, FR) {
     const pts = [], r0 = .16 + rng() * .1; for (let i = 0; i <= 10; i++) { const a = i / 10 * Math.PI; pts.push(V(lado * (X + .01), y - Math.sin(a) * (r0 * 2.2 + k * .09), s * (z - r0 + i / 10 * r0 * 2 + k * .05))); }
     F.cor(ESCURO).tubo(pts, .008, 3);
   }
-  for (const [z0, z1, y] of [[8.75, 9.25, 4.46], [10.3, 9.7, 4.40], [12.0, 12.7, 4.7], [15.0, 15.6, 4.85], [19.6, 20.3, 4.7]]) panos += varal(F, rng, -X - .02, s * z0, X + .02, s * z1, y, FR);
+  for (const [z0, z1, y] of [[8.75, 9.25, 4.46], [10.3, 9.7, 4.40], [12.0, 12.7, 4.7], [15.0, 15.6, 4.85]]) panos += varal(F, rng, -X - .02, s * z0, X + .02, s * z1, y, FR);
   // Caixa de passagem e medidor no alto da fachada, com o feixe descendo até ela.
   for (const [lado, z, y] of [[-1, 12.4, 4.0], [1, 16.8, 4.2], [-1, 22.6, 3.95]]) F.cor(0x6a6c69).caixa(lado * (X + .01), y, s * z, .09, .34, .26).cor(ESCURO).tubo([V(lado * X, y + .34, s * z), V(lado * X, 4.3 + (lado > 0 ? .5 : 0), s * z)], .012, 3);
   // Tubo de queda de esgoto (PVC marrom de 7,5 cm) na junta entre casas, abraçadeira a cada 1,2 m e curva no pé: 8 cm de saliência, sem colisão. Só no quadro da pose `beco`.
@@ -788,6 +789,12 @@ function props(grupo, rng, topo, mundo, mat, FR, scene, liga) {
   }
   // Botijão no balcão de gás da praça (bloco baixo de 32 cm).
   const c3 = colEm(4.95, -6.02, .28, .36); if (c3) botijao(F, 4.95, c3.maxY, -6.0, rng);
+  // Viela do beco central (paredes em |x| = 1, piso y = 0): caixa de feira, balde e botijão encostados à parede, nos vãos entre janela e porta
+  // (nunca na frente de uma), só no quadro da pose `beco`. Sem colisão: saliência de 28–36 cm numa viela de 2 m — fora da linha de andar do meio.
+  // rSemVermelho (sorteio ≥ 0,5) pula a caixa vermelha e o balde vinho: a 3–5 m da câmera nada cor de sangue.
+  // Só o beco sul (z > 0): o espelhado fica a 29 m, atrás do próprio beco, e passaria em noQuadro por estar no eixo da câmera.
+  if (noQuadro(-.8, 12, [0])) { const rSemVermelho = () => .5 + rng() * .5;
+    caixaFeira(F, -.80, 0, 11.75, rSemVermelho, Math.PI / 2); balde(F, -.83, 0, 13.72, rSemVermelho); botijao(F, .81, 0, 13.6, rSemVermelho); }
   // Lajes inalcançáveis dos quartos de fundo (±6,5; ∓17), só no quadro: no lado do Beco do Varal, varal com roupa pendendo; do outro, cadeira, caixas de feira e saco.
   for (const side of [-1, 1]) { const x = side * 6.5, z = -side * 17, y = noQuadro(x, z) ? topo(x, z) : null; if (y === null) continue;
     if (side > 0) { for (const dz of [-1.45, 1.45]) F.cor(0x55585a).caixa(x + .25, y, z + dz, .04, 1.72, .04).caixa(x + .25, y + 1.68, z + dz, .5, .04, .04);
