@@ -3,7 +3,7 @@
 # fora deste arquivo (tools/cf/virada.sh): ligar e desligar a virada não depende de deploy.
 name = "csb-prod"
 main = "dist/server/entry.mjs"
-compatibility_date = "2026-11-09"
+compatibility_date = "2026-11-08"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 preview_urls = true
