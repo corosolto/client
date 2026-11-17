@@ -244,8 +244,10 @@ function postes(F, W, rng, lista, ctf) {
 // (−16,3; −8,0), P2 na calçada da casa B (−16,95; 1,9) em (−19,4; −0,7) — fora de rota. Cruzeta dupla, luminária, caixa cinza,
 // relógio com eletroduto no P1; 9 cabos entre eles (4 nas cruzetas, 5 em feixe a 7,0–7,5 m) e descidas P1 → bar A(−9,75; 2,6)
 // (3,75 m, acima da placa) e P2 → face −z da casa B (relógio a 1,3 m). Posições copiadas da planta; sem casas, só postes e cabos.
+// Postes da rua da pose rua: P1/P2 no corredor B–C e P3 na borda da viela A–B (−12,6; −7,0, braço para a viela), para a fiação cruzar o quadro a 4–5 m
+// (os ramais a 3,3–3,75 m liam como fio rasteiro). P1→P3: 5 catenárias (feixe a 7,0–7,5 m); P3→caixa do bar a 4,6 m; P2→B a 4,4 m.
 function postesRua(F, W, rng, casas) {
-  const P = [[-16.3, -8.0, 1], [-19.4, -0.7, -1]], d = Math.hypot(P[1][0] - P[0][0], P[1][1] - P[0][1]);
+  const P = [[-16.3, -8.0, 1], [-19.4, -0.7, -1], [-12.6, -7.0, -1]], d = Math.hypot(P[1][0] - P[0][0], P[1][1] - P[0][1]);
   const ux = (P[1][0] - P[0][0]) / d, uz = (P[1][1] - P[0][1]) / d, px = uz, pz = -ux, ry = Math.atan2(-pz, px);
   let cabos = 0;
   const cabo = (A, B, barriga, r) => { W.cor(ESCURO).fio(catenaria(A, B, barriga, 3.6, 10), r); cabos++; };
@@ -263,12 +265,16 @@ function postesRua(F, W, rng, casas) {
     cabo(V(P[0][0] + s * .44 * px, 7.72, P[0][1] + s * .44 * pz), V(P[1][0] + s * .44 * px, 7.72, P[1][1] + s * .44 * pz), .3 + rng() * .1, .010);
   }
   for (let k = 0; k < 5; k++) { const o = (k - 2) * .09, y = 7.0 + k * .1; cabo(V(P[0][0] + o * px, y, P[0][1] + o * pz), V(P[1][0] + o * px, y, P[1][1] + o * pz), .35 + rng() * .2, .009); }
+  // P1 → P3 (cruza a rua da pose rua): 2 cabos na cruzeta alta, 3 no feixe baixo, flecha 2–4 % do vão de 3 m.
+  for (const s of [-1, 1]) cabo(V(P[0][0] + s * .59 * px, 8.42, P[0][1] + s * .59 * pz), V(P[2][0] + s * .59 * px, 8.42, P[2][1] + s * .59 * pz), .12 + rng() * .06, .012);
+  for (let k = 0; k < 3; k++) { const o = (k - 1) * .1, y = 7.05 + k * .12; cabo(V(P[0][0] + o * px, y, P[0][1] + o * pz), V(P[2][0] + o * px, y, P[2][1] + o * pz), .15 + rng() * .1, .009); }
   const kA = casas.length ? maisPerto(casas, -9.75, 2.6) : null, kB = casas.length ? maisPerto(casas, -16.95, 1.9) : null;
   if (kA) { const f = faceDe(kA, 'z', -1), ax = f.fx + f.tx * -1.25, az = f.fz + f.tz * -1.25;
-    cabo(V(P[0][0] + .1, 6.95, P[0][1]), V(ax, 3.75, az), .2, .009); F.cor(0x3a3d3f).caixa(ax, 3.7, az, .1, .1, .06, f.ry); }
+    cabo(V(P[2][0] + .1, 6.95, P[2][1]), V(ax, 4.6, az), .2, .009); cabo(V(P[2][0] - .1, 6.9, P[2][1]), V(ax + f.tx * .4, 4.5, az + f.tz * .4), .18, .009);
+    F.cor(0x3a3d3f).caixa(ax, 4.55, az, .1, .1, .06, f.ry).cor(0x767978).tubo([V(ax, 4.55, az), V(ax, 1.73, az)], .016, 4).cor(0x8a8d8c).caixa(ax, 1.3, az, .3, .42, .11, f.ry); }
   if (kB) { const f = faceDe(kB, 'z', -1), bx = f.fx + f.tx * -.8 + f.nx * .055, bz = f.fz + f.tz * -.8 + f.nz * .055;
-    cabo(V(P[1][0], 6.95, P[1][1]), V(bx, 3.3, bz), .12, .009);
-    F.cor(0x8a8d8c).caixa(bx, 1.3, bz, .3, .42, .11, f.ry).cor(0x1b1d1e).caixa(bx + f.nx * .056, 1.5, bz + f.nz * .056, .16, .14, .012, f.ry).cor(0x767978).tubo([V(bx, 1.73, bz), V(bx, 3.3, bz)], .016, 4); }
+    cabo(V(P[1][0], 6.95, P[1][1]), V(bx, 4.4, bz), .14, .009);
+    F.cor(0x8a8d8c).caixa(bx, 1.3, bz, .3, .42, .11, f.ry).cor(0x1b1d1e).caixa(bx + f.nx * .056, 1.5, bz + f.nz * .056, .16, .14, .012, f.ry).cor(0x767978).tubo([V(bx, 1.73, bz), V(bx, 4.4, bz)], .016, 4); }
   return cabos;
 }
 
@@ -441,17 +447,23 @@ function lastro(L, rng) {
 }
 
 // Guia de concreto na beira do canal (|x| = 3,17; 24 cm): pula pontes (z = −22, 0, 22) e rampas (RAMPAS de map_corrego.js) e as pontas assoreadas.
-// Afundada 2 cm, encardida (0x62625c) e contínua (segmentos emendados, sem giro nem altura por segmento). A tampa escura fica 1 cm
-// PARA DENTRO da guia (antes sobrava um lábio de 5 mm virado ao sol: linha branca pontilhada de 1 px na aresta do muro, `ponte`/`alto`).
+// Afundada 2 cm, encardida (0x62625c) e contínua (segmentos emendados, sem giro nem altura por segmento); tampa escura 1 cm para dentro.
+// Junta de piche em |x| = 5: o topo do muro/rampa do canal (caixa, y = 0, |x| ≤ 5) encosta no plano de asfalto (y = 0,01, |x| ≥ 5)
+// com um degrau de 1 cm ABERTO pelo lado — da ponte o raio passa entre a quina da caixa e a borda do plano e vê o céu (linha branca
+// pontilhada de 1 px na aresta, `ponte`/`alto`; com clear magenta a linha ficava magenta). A tira de 8 cm cobre o degrau (y −0,03…0,012).
 function guiaCanal(F, rng) {
   let n = 0;
-  for (const lado of [-1, 1]) for (let z = -32; z < 32; z += 2) {
-    const z1 = Math.min(32, z + 2), zm = (z + z1) / 2, h = .24;
-    if ([-22, 0, 22].some((b) => Math.abs(zm - b) < 2.1) || RAMPAS.some(([l, a, b]) => l === lado && zm > a - 1 && zm < b + 1)) continue;
-    F.cor(0x62625c, .9 + rng() * .14).caixa(lado * 3.17, -.02, zm, .3, h, z1 - z + .02);
-    F.cor(0x47473f, .9 + rng() * .14).caixa(lado * 3.17, h - .02, zm, .28, .012, z1 - z + .02);
-    if (rng() < .3) F.cor(0x36362f).caixa(lado * 3.17, h - .01, zm + (rng() - .5), .27, .012, .6);
-    n++;
+  for (const lado of [-1, 1]) {
+    F.cor(0x34332f).caixa(lado * 5, -.03, 0, .08, .042, 80);
+    for (let z = -32; z < 32; z += 2) {
+      const z1 = Math.min(32, z + 2), zm = (z + z1) / 2, h = .24;
+      if ([-22, 0, 22].some((b) => Math.abs(zm - b) < 2.1) || RAMPAS.some(([l, a, b]) => l === lado && zm > a - 1 && zm < b + 1)) continue;
+      F.cor(0x62625c, .9 + rng() * .14).caixa(lado * 3.17, -.02, zm, .3, h, z1 - z + .02);
+      F.cor(0x47473f, .9 + rng() * .14).caixa(lado * 3.17, h - .02, zm, .28, .012, z1 - z + .02);
+      // Mancha no topo em 2 borrões redondos desalinhados (o retângulo de 0,27 × 0,6 lia como quadrado escuro sob a taboa, pose ponte).
+      if (rng() < .3) for (let b = 0; b < 2; b++) F.cor(0x3a3a33, .9 + rng() * .2).torno(lado * 3.17 + (rng() - .5) * .12, h - .012, zm + (rng() - .5) * .9, [[.05 + rng() * .05, 0], [.08 + rng() * .07, .006], [.03, .012]], 7, rng() * 6.28);
+      n++;
+    }
   }
   return n;
 }
@@ -465,7 +477,8 @@ function esgotoCanal(F, rng) {
     F.cor(0x111110).quad(V(xw + s * .41, -1.05, z - .07 * s), V(xw + s * .41, -1.05, z + .07 * s), V(xw + s * .41, -.91, z + .07 * s), V(xw + s * .41, -.91, z - .07 * s));
     F.cor(0x1e2418, .9).quad(V(xw + s * .015, -.86, z - .2 * s), V(xw + s * .015, -.86, z + .2 * s), V(xw + s * .015, -1.62, z + .45 * s), V(xw + s * .015, -1.62, z - .45 * s));
     F.cor(0x6b6a52).tubo([V(xw + s * .42, -1.0, z), V(xw + s * .5, -1.25, z), V(xw + s * .58, -1.6, z)], .025, 5);
-    F.cor(0x8f8d78, .95).torno(xw + s * .6, -1.605, z, [[.3, 0], [.36, .01], [.18, .02]], 10, rng() * 6.28);
+    // Espuma do despejo: 4 borrões rasos oliva-escuros de raio e tom variados em volta do pé do fio (disco claro lia como tampa/branco).
+    for (let b = 0; b < 4; b++) { const a = rng() * 6.28, d = rng() * .3; F.cor([0x4a4a38, 0x3f4032, 0x55543f][b % 3], .9 + rng() * .2).torno(xw + s * .6 + Math.cos(a) * d, -1.608 + b * .002, z + Math.sin(a) * d, [[.09 + rng() * .1, 0], [.12 + rng() * .12, .008], [.05, .014]], 7 + b, rng() * 6.28); }
   }
   for (const [x, z, sz, cor] of [[-2.72, -4.2, .24, 0x24272a], [2.74, -8.0, .2, 0xb8b9b2], [-2.7, -13.3, .22, 0x2c3238], [2.7, -17.2, .19, 0x2f4a7a]]) {
     const g = rng() * 6.28;
@@ -475,6 +488,12 @@ function esgotoCanal(F, rng) {
     const cx = Math.cos(g) * .15, cz = Math.sin(g) * .15, cor = [0x8e978e, 0x9aa39a][Math.floor(rng() * 2)];
     F.cor(cor, .95).tubo([V(x - cx, -1.59, z - cz), V(x + cx, -1.595, z + cz)], .042, 6).cor(0x2f4a6a).tubo([V(x + cx, -1.595, z + cz), V(x + cx * 1.15, -1.597, z + cz * 1.15)], .018, 5);
   }
+  // Flutuantes meio afundados na lâmina (−1,61): 2 PET deitadas (40 % fora), 2 sacolas infladas, 1 bandeja de isopor — perto dos
+  // muros no trecho da pose ponte (z 0 → −20), fora dos pilares da travessia (z −11 ± 1,6) e das pontes.
+  for (const [x, z, g] of [[1.9, -2.6, .7], [-2.1, -14.6, 2.4]]) { const cx = Math.cos(g) * .16, cz = Math.sin(g) * .16;
+    F.cor(0x9aa39a, .95).tubo([V(x - cx, -1.64, z - cz), V(x + cx * .6, -1.635, z + cz * .6), V(x + cx, -1.64, z + cz)], .045, 6).cor(0x2f4a6a).tubo([V(x + cx, -1.64, z + cz), V(x + cx * 1.15, -1.642, z + cz * 1.15)], .02, 5); }
+  for (const [x, z, s, cor] of [[-1.6, -6.9, .17, 0x6f6f66], [2.2, -18.9, .15, 0x3e4448]]) F.cor(cor, .95).torno(x, -1.70, z, [[s * .5, 0], [s * 1.0, s * .35], [s * .9, s * .7], [s * .4, s * .9], [s * .12, s * 1.0]], 8, rng() * 6.28);
+  F.cor(0x7a7b70, .95).caixa(0.9, -1.655, -9.0, .32, .06, .22, .5).cor(0x5e5f55).caixa(0.9, -1.60, -9.0, .26, .012, .16, .5);
   return 6;
 }
 // Margem do canal (passeio entre a guia e a fileira A, |x| 3,4–4,6): sacos de lixo pretos amarrados, sacolas claras e garrafas
@@ -533,9 +552,9 @@ function guias(F, rng, casas, cols) {
   const guia = (f, dg, e0, e1) => {
     const r0 = e0 ? 0 : .12, r1 = e1 ? 0 : .12;
     const L = f.meia * 2 + e0 + e1 - r0 - r1, off = (e1 - e0 - r1 + r0) / 2, gx = f.fx + f.nx * dg, gz = f.fz + f.nz * dg, cx = gx + f.tx * off, cz = gz + f.tz * off;
-    F.cor(0x9c9b93, .86 + rng() * .22).caixa(cx, -.01, cz, L, .08, .12, f.ry).cor(0x6e6d67).caixa(cx, .07, cz, L, .008, .13, f.ry);
-    for (const [e, r] of [[-1, r0], [1, r1]]) if (r) { const u = e * (f.meia - .06); F.cor(0x8f8e87, .9).caixa(gx + f.tx * u, -.01, gz + f.tz * u, .12, .045, .12, f.ry); }
-    if (rng() < .6) F.cor(0x4c4b46).caixa(cx + f.tx * (rng() - .5) * L * .6, .07, cz + f.tz * (rng() - .5) * L * .6, .5, .009, .14, f.ry);
+    F.cor(0x9c9b93, .86 + rng() * .22).caixa(cx, -.01, cz, L, .14, .15, f.ry).cor(0x6e6d67).caixa(cx, .13, cz, L, .008, .16, f.ry);
+    for (const [e, r] of [[-1, r0], [1, r1]]) if (r) { const u = e * (f.meia - .06); F.cor(0x8f8e87, .9).caixa(gx + f.tx * u, -.01, gz + f.tz * u, .12, .07, .15, f.ry); }
+    if (rng() < .6) F.cor(0x4c4b46).caixa(cx + f.tx * (rng() - .5) * L * .6, .13, cz + f.tz * (rng() - .5) * L * .6, .5, .009, .17, f.ry);
     n++;
   };
   for (const k of casas) {
@@ -942,19 +961,25 @@ function skyline(grupo, rng) {
     s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vHdYUS; varying float vHdLado;')
       .replace('#include <color_fragment>', `#include <color_fragment>
       float hdJanE = 0.0, hdJanM = 0.0, hdVar = 0.0;
-      if (vHdLado < 0.5) { float hdSem = vHdYUS.z, hdFy = fract(vHdYUS.x / 3.0), hdFu = fract(vHdYUS.y / 2.5);
-        vec2 hdCel = floor(vec2(vHdYUS.y / 2.5, vHdYUS.x / 3.0)) + hdSem * 31.0;
+      // 3 variantes por prédio (hdSem): 0 = janela em grade 2,5 × 3,0; 1 = fita horizontal contínua a cada 3,2 m (pavimento
+      // de laje marcada); 2 = janelas estreitas 1,6 × 2,9 em faixa clara — as torres idênticas liam como cópia (pose alto).
+      if (vHdLado < 0.5) { float hdSem = vHdYUS.z, hdTipo = floor(hdSem * 3.0);
+        vec2 hdPasso = hdTipo < 0.5 ? vec2(2.5, 3.0) : hdTipo < 1.5 ? vec2(3.4, 3.2) : vec2(1.6, 2.9);
+        float hdFy = fract(vHdYUS.x / hdPasso.y), hdFu = fract(vHdYUS.y / hdPasso.x);
+        vec2 hdCel = floor(vec2(vHdYUS.y / hdPasso.x, vHdYUS.x / hdPasso.y)) + hdSem * 31.0;
         float hdR = fract(sin(dot(hdCel, vec2(12.9898, 78.233))) * 43758.5453);
-        float hdJan = step(0.30, hdFy) * step(hdFy, 0.72) * step(0.22, hdFu) * step(hdFu, 0.78) * step(0.4, vHdYUS.x);
-        hdJanE = hdJan * step(0.7, hdR); hdJanM = hdJan - hdJanE;
-        hdVar = step(0.67, hdSem) * step(0.04, hdFy) * step(hdFy, 0.28) * step(0.4, vHdYUS.x);
-        diffuseColor.rgb *= 1.0 - 0.75 * hdJanE - 0.45 * hdJanM;
+        float hdJan = hdTipo < 1.5 ? step(0.30, hdFy) * step(hdFy, 0.72) * step(mix(0.22, 0.04, step(0.5, hdTipo)), hdFu) * step(hdFu, mix(0.78, 0.96, step(0.5, hdTipo)))
+          : step(0.22, hdFy) * step(hdFy, 0.80) * step(0.30, hdFu) * step(hdFu, 0.70);
+        hdJan *= step(0.4, vHdYUS.x);
+        hdJanE = hdJan * step(mix(0.7, 0.85, step(0.5, hdTipo)), hdR); hdJanM = hdJan - hdJanE;
+        hdVar = (step(1.5, hdTipo) * step(0.80, hdFy) + step(0.67, hdSem) * step(0.04, hdFy) * step(hdFy, 0.22)) * step(0.4, vHdYUS.x);
+        diffuseColor.rgb *= mix(1.0, 0.9, step(0.5, hdTipo) * step(hdTipo, 1.5)) * (1.0 - 0.75 * hdJanE - 0.45 * hdJanM);
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.54, 0.50), hdVar * 0.5); }
       else diffuseColor.rgb *= 0.9;`)
       .replace('#include <fog_fragment>', THREE.ShaderChunk.fog_fragment.replace(/, fogFactor \);/, ', fogFactor * 0.72 );')
         + '\n gl_FragColor.rgb = min(gl_FragColor.rgb * (1.0 - 0.32 * hdJanE - 0.16 * hdJanM) + 0.035 * hdVar, vec3(1.0));');
   };
-  mat.customProgramCacheKey = () => 'hd-skyline6';
+  mat.customProgramCacheKey = () => 'hd-skyline7';
   const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat, N), o = new THREE.Object3D(), c = new THREE.Color();
   lista.forEach((k, i) => { o.position.set(k.x, k.h / 2 - 2, k.z); o.rotation.set(0, k.ry, 0); o.scale.set(k.w, k.h, k.d); o.updateMatrix(); im.setMatrixAt(i, o.matrix); im.setColorAt(i, c.setHex(k.cor).multiplyScalar(.85 + rng() * .3)); });
   im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; im.frustumCulled = false; im.name = 'hd-skyline'; im.castShadow = false; im.receiveShadow = false;
