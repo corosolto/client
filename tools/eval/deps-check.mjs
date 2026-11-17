@@ -35,7 +35,20 @@ if (mutante && !['sem-isencao', 'isencao-vazia', 'advisory-nova'].includes(mutan
    assinaturas (trecho de URL/título) que cobrem a isenção; entrada de cadeia
    (via só com nomes de pacote) não carrega advisory própria - a raiz carrega.
    Cada linha diz por que o risco não se realiza aqui - "é transitiva" não é motivo. */
-const ISENTAS = new Map();
+const PICOMATCH_CADEIA = 'cadeia do picomatch GHSA-fc5q-39xc-vjpf (a raiz carrega a advisory). Reavaliar em 01/12/2026.';
+const ISENTAS = new Map([
+  ['picomatch', { adv: ['GHSA-fc5q-39xc-vjpf'], motivo: [
+    'ReDoS com extglob de ramo único repetido (`+(*a)`); afeta TODA versão publicada (<=4.0.7 e a linha 2.x),',
+    'sem versão corrigida em 17/11/2026 (correção em micromatch/picomatch#237/#238, sem merge).',
+    'Só roda no build/dev (vite, tinyglobby, glob loader do astro, chokidar): o padrão vem do código/config,',
+    'nunca do request. Medido em 17/11/2026: a função traçada da Vercel (.vercel/output/functions/_render.func)',
+    'e o worker do Cloudflare (dist/server) não contêm picomatch, anymatch, tinyglobby nem fdir.',
+    'Reavaliar em 01/12/2026; com release corrigida, bump e a isenção (e a cadeia abaixo) saem (DEP2 cobra).',
+  ].join(' ') }],
+  ...['@astrojs/internal-helpers', '@astrojs/markdown-satteri', '@astrojs/vercel', '@astrojs/vite-plugin-astro',
+    '@rollup/pluginutils', '@vercel/nft', 'anymatch', 'astro', 'fdir', 'tinyglobby', 'unstorage', 'vite',
+  ].map((nome) => [nome, { adv: [], motivo: PICOMATCH_CADEIA }]),
+]);
 
 const GRAVES = new Set(['high', 'critical']);
 
