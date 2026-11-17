@@ -4,10 +4,9 @@ import { describe, it } from 'node:test';
 import * as landing from '../../public/js/landing-app.js';
 import { desvioParaApp, trafficEntry, uniqueRegister } from '../../src/lib/server-traffic.mjs';
 
-async function carregaMiddlewareAstro(adaptador) {
+async function carregaMiddlewareAstro() {
   let fonte = readFileSync(new URL('../../src/middleware.ts', import.meta.url), 'utf8');
   fonte = fonte.replace(/^import[^\n]*\n/gm, '');
-  fonte = fonte.replace('declare const __ADAPTADOR__: string;', `const __ADAPTADOR__ = ${JSON.stringify(adaptador)};`);
   fonte = fonte.replace('export const onRequest =', 'const onRequest =');
   const lib = JSON.stringify(new URL('../../src/lib/server-traffic.mjs', import.meta.url).href);
   const prefixo = `import { desvioParaApp, trafficEntry, uniqueRegister } from ${lib};
@@ -105,12 +104,12 @@ describe('entradas HTML contadas no servidor', () => {
 });
 
 describe('middleware de contagem', () => {
-  it('não duplica a contagem na Vercel e mantém o ingest no Workers', async () => {
+  it('faz o ingest no Workers como única borda', async () => {
     const originalFetch = globalThis.fetch;
     const originalSecret = process.env.API_PROXY_SECRET;
     process.env.API_PROXY_SECRET = 'test-only-secret-for-server-traffic-000000';
     try {
-      for (const adaptador of ['vercel', 'cloudflare']) {
+      {
         let chamadas = 0;
         let proximo = 0;
         const pendencias = [];
@@ -122,7 +121,7 @@ describe('middleware de contagem', () => {
           chamadas++;
           return new Response(null, { status: 204 });
         };
-        const { onRequest } = await carregaMiddlewareAstro(adaptador);
+        const { onRequest } = await carregaMiddlewareAstro();
         const request = new Request('https://www.corosolto.com.br/?utm_source=x', {
           headers: { accept: 'text/html', 'user-agent': 'Mozilla/5.0' },
         });
@@ -133,7 +132,7 @@ describe('middleware de contagem', () => {
         await Promise.all(pendencias);
         assert.equal(response.status, 200);
         assert.equal(proximo, 1);
-        assert.equal(chamadas, adaptador === 'cloudflare' ? 1 : 0, `${adaptador} deve ter exatamente um dono da contagem`);
+        assert.equal(chamadas, 1, 'o Workers deve ter exatamente um dono da contagem');
       }
     } finally {
       globalThis.fetch = originalFetch;
@@ -143,26 +142,26 @@ describe('middleware de contagem', () => {
     }
   });
 
-  it('registra o proxy no build da Vercel', () => {
-    const config = JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'));
-    assert.equal(config.proxy?.entrypoint, 'middleware.js');
-  });
   it('envia apenas o agregado mínimo e não bloqueia a página', async () => {
     process.env.API_PROXY_SECRET = 'test-only-secret-for-server-traffic-000000';
-    const { default: middleware } = await import('../../middleware.js');
+    const { onRequest } = await carregaMiddlewareAstro();
     const originalFetch = globalThis.fetch;
     let captured;
-    let pending;
+    const pendencias = [];
+    globalThis.__serverTrafficBorda = {
+      ipDoCliente: () => '198.51.100.10',
+      agendar: (_locals, promise) => pendencias.push(promise),
+    };
     globalThis.fetch = async (_url, init) => {
       captured = init;
       return new Response(null, { status: 204 });
     };
     try {
       const request = new Request('https://www.corosolto.com.br/?utm_source=x&token=private', {
-        headers: { accept: 'text/html', referer: 'https://t.co/path?secret=private', 'user-agent': 'Mozilla/5.0', 'x-real-ip': '198.51.100.10' },
+        headers: { accept: 'text/html', referer: 'https://t.co/path?secret=private', 'user-agent': 'Mozilla/5.0' },
       });
-      const response = middleware(request, { waitUntil(promise) { pending = promise; } });
-      await pending;
+      const response = await onRequest({ request, locals: {} }, () => new Response(null, { status: 200 }));
+      await Promise.all(pendencias);
       assert.equal(response.status, 200);
       const body = JSON.parse(captured.body);
       assert.deepEqual({ landing: body.landing, referrer: body.referrer, utmSource: body.utmSource, kind: body.kind, agent: body.agent }, { landing: '/', referrer: 't.co', utmSource: 'x', kind: 'browser', agent: '' });
@@ -171,26 +170,27 @@ describe('middleware de contagem', () => {
       assert.equal(captured.body.includes('198.51'), false);
     } finally {
       globalThis.fetch = originalFetch;
-      delete process.env.API_PROXY_SECRET;
+      delete globalThis.__serverTrafficBorda;
     }
   });
   it('WebView de app na home recebe 302 para /app antes de qualquer ingestão', async () => {
     process.env.API_PROXY_SECRET = 'test-only-secret-for-server-traffic-000000';
-    const { default: middleware } = await import('../../middleware.js');
-    const originalFetch = globalThis.fetch;
+    const { onRequest } = await carregaMiddlewareAstro();
     let chamadas = 0;
     globalThis.fetch = async () => { chamadas++; return new Response(null, { status: 204 }); };
     try {
       const request = new Request('https://www.corosolto.com.br/?utm_source=tiktok&utm_medium=paid-social', {
-        headers: { accept: 'text/html', 'user-agent': 'Mozilla/5.0 (Linux; Android 14; wv) Chrome/130.0 Mobile Safari/537.36 musical_ly_2024.12 BytedanceWebview/x', 'x-real-ip': '198.51.100.10' },
+        headers: { accept: 'text/html', 'user-agent': 'Mozilla/5.0 (Linux; Android 14; wv) Chrome/130.0 Mobile Safari/537.36 musical_ly_2024.12 BytedanceWebview/x' },
       });
-      const response = middleware(request, { waitUntil() { assert.fail('redirect não agenda ingestão'); } });
+      const response = await onRequest(
+        { request, locals: {}, redirect: (url, status) => new Response(null, { status, headers: { location: String(url) } }) },
+        () => new Response(null, { status: 200 }),
+      );
       assert.equal(response.status, 302);
       assert.equal(response.headers.get('location'), 'https://www.corosolto.com.br/app?utm_source=tiktok&utm_medium=paid-social');
       assert.equal(chamadas, 0);
     } finally {
-      globalThis.fetch = originalFetch;
-      delete process.env.API_PROXY_SECRET;
+      delete globalThis.fetch;
     }
   });
 });

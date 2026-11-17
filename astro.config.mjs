@@ -1,5 +1,4 @@
 import { defineConfig } from 'astro/config';
-import vercel from '@astrojs/vercel';
 import cloudflare from '@astrojs/cloudflare';
 import { adaptadorAlvo } from './scripts/adaptador.mjs';
 import { aeoCurado } from './scripts/aeo.mjs';
@@ -16,7 +15,7 @@ if(!roster)throw Error('Catálogo de personagens indisponível');
 const SOCIAL_CHARACTERS=Object.fromEntries([...roster[1].matchAll(/\{\s*id:\s*'([^']+)'[\s\S]*?name:\s*'([^']+)'/g)].map(m=>[m[1],{id:m[1],nome:m[2]}]));
 /* 63 retratos inline somam 13 MB gzip no bundle SSR, acima do teto do Workers (10 MB):
    no Cloudflare viram arquivos em public/img/social-card e a rota lê pelo asset binding. */
-const RETRATOS_EM_ARQUIVO = adaptadorAlvo() === 'cloudflare';
+const RETRATOS_EM_ARQUIVO = true;
 if (RETRATOS_EM_ARQUIVO) mkdirSync('public/img/social-card', { recursive: true });
 const SOCIAL_PORTRAITS={};
 for(const id of Object.keys(SOCIAL_CHARACTERS)){
@@ -77,12 +76,11 @@ const TP_CSS = { arquivos: TP_CSS_ARQUIVOS, rev: createHash('sha1').update(TP_CS
 
 export default defineConfig({
   output: 'static',
-  /* ADAPTER=cloudflare troca o alvo do deploy (spike da migração, docs/runbooks/MIGRACAO-CLOUDFLARE.md);
-     sem a variável continua Vercel, então main e CI não mudam. */
-  adapter: adaptadorAlvo() === 'cloudflare'
-    ? cloudflare({ prerenderEnvironment: 'node', imageService: 'passthrough' })
-    : vercel(),
-  session: adaptadorAlvo() === 'cloudflare' ? false : undefined,
+  /* Fase 6 da migração (docs/runbooks/MIGRACAO-CLOUDFLARE.md): a Vercel saiu do deploy;
+     o alvo é o Workers, sem condicional de ADAPTER. A variável sobrevive só como rótulo
+     de telemetria (__ADAPTADOR__ / RETRATOS_EM_ARQUIVO). */
+  adapter: cloudflare({ prerenderEnvironment: 'node', imageService: 'passthrough' }),
+  session: false,
   server: {
     port: Number(process.env.PORT) || 4321,
   },
@@ -92,8 +90,8 @@ export default defineConfig({
        (wasm do resvg, avatar). O alias troca o arquivo inteiro, sem `if` de runtime no bundle. */
     resolve: {
       alias: {
-        '#borda': fileURLToPath(new URL(`./src/lib/borda/${adaptadorAlvo()}.ts`, import.meta.url)),
-        '#borda-imagem': fileURLToPath(new URL(`./src/lib/borda/${adaptadorAlvo()}-imagem.ts`, import.meta.url)),
+        '#borda': fileURLToPath(new URL('./src/lib/borda/cloudflare.ts', import.meta.url)),
+        '#borda-imagem': fileURLToPath(new URL('./src/lib/borda/cloudflare-imagem.ts', import.meta.url)),
       },
     },
     define: {
@@ -104,7 +102,7 @@ export default defineConfig({
       __SOCIAL_PORTRAITS__: JSON.stringify(SOCIAL_PORTRAITS),
       __SOCIAL_CHARACTERS__: JSON.stringify(SOCIAL_CHARACTERS),
       __SOCIAL_LOGO__: JSON.stringify(SOCIAL_LOGO),
-      __ADAPTADOR__: JSON.stringify(adaptadorAlvo()),
+      __ADAPTADOR__: JSON.stringify('cloudflare'),
     },
     // BUG-75 (achado do dono, 29/08): public/private-assets/viewmodels é symlink
     // para fora da raiz; sem fs.allow explícito um restart do dev server pode

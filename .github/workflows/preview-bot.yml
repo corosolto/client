@@ -38,7 +38,7 @@ jobs:
           gh api "repos/$REPO/pulls/$PR/files" --paginate \
             --jq '.[] | .filename + " +" + (.additions|tostring) + " -" + (.deletions|tostring)' > /tmp/arquivos.txt
           TOTAL=$(gh api "repos/$REPO/pulls/$PR" --jq '.additions + .deletions')
-          PERIGO=$(grep -cE '^\.github/|^scripts/|^package(-lock)?\.json|^vercel\.json|^src/pages/api/|^supabase/|^\.env' /tmp/arquivos.txt || true)
+          PERIGO=$(grep -cE '^\.github/|^scripts/|^package(-lock)?\.json|^borda\.json|^src/pages/api/|^supabase/|^\.env' /tmp/arquivos.txt || true)
           if [ "$PERIGO" -gt 0 ] || [ "$TOTAL" -gt 3000 ]; then
             TEXTO="sensitive area or large diff; manual review is required"
           else

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /* ============================================================================
-   cf-paridade-estatica-check.mjs — TODA REGRA DE vercel.json TEM CONTRAPARTE NO WORKERS
+   cf-paridade-estatica-check.mjs — TODA REGRA DE borda.json TEM CONTRAPARTE NO WORKERS
    ----------------------------------------------------------------------------
    POR QUE EXISTE
-   `public/_headers` e `public/_redirects` são gerados de `vercel.json` por
+   `public/_headers` e `public/_redirects` são gerados de `borda.json` por
    tools/cf/gen-headers-redirects.mjs; o Worker (src/cf/worker.ts) aplica o que o formato
    estático não expressa. Esta régua prova que nada da Vercel ficou para trás:
 

@@ -1,6 +1,6 @@
 // Real renderer/embedded font/current roster. Fixture image is not match evidence.
 import assert from 'node:assert/strict';
-import {readFileSync,mkdtempSync,writeFileSync,mkdirSync} from 'node:fs';
+import {readFileSync,mkdtempSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -36,7 +36,18 @@ const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 /* O bloco também conhece o alvo do deploy (Vercel aqui: retratos inline) e os `fs` do caminho Cloudflare. */
 const {adaptadorAlvo}=await import('../../scripts/adaptador.mjs');
 const prepared=await new AsyncFunction('readFileSync','existsSync','sharp','adaptadorAlvo','mkdirSync','writeFileSync',prepare+";return {characters:SOCIAL_CHARACTERS,portraits:SOCIAL_PORTRAITS,logo:typeof SOCIAL_LOGO==='undefined'?null:SOCIAL_LOGO}")(readFileSync,(await import('node:fs')).existsSync,sharp,adaptadorAlvo,mkdirSync,writeFileSync);
-const {characters,portraits}=prepared;logo=prepared.logo;
+/* RETRATOS_EM_ARQUIVO (fase 6, borda única Cloudflare): o trecho do config grava os retratos
+   em public/img/social-card e o mapa devolve o caminho; a rota profile-card no Workers lê o
+   arquivo e embute em data URI. A régua faz o mesmo casamento aqui para reusar as cláusulas
+   escritas contra data URI. */
+const {characters,portraits}=prepared; logo=prepared.logo;
+for(const [id,v] of Object.entries(portraits)){
+  if(!v.startsWith('data:')){
+    const arquivo='public'+v;
+    assert(existsSync(arquivo),'social-card file missing for '+id);
+    portraits[id]='data:image/png;base64,'+readFileSync(arquivo).toString('base64');
+  }
+}
 assert(logo?.startsWith('data:image/png;base64,'),'build must embed the official public/logo.png as SOCIAL_LOGO');
 const logoPixels=await sharp(Buffer.from(logo.split(',')[1],'base64')).ensureAlpha().raw().toBuffer({resolveWithObject:true});
 const logoExpected=await sharp('public/logo.png').trim({threshold:10}).resize({height:150}).ensureAlpha().raw().toBuffer();

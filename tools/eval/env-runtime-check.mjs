@@ -62,7 +62,7 @@ const semComentarios = (texto) => texto
   .replace(/\/\*[\s\S]*?\*\//g, (b) => b.replace(/[^\n]/g, ' '))
   .replace(/(^|[^:])\/\/[^\n]*/g, (b) => b.replace(/[^\n]/g, ' '));
 function arquivosFonte() {
-  const saida = ['middleware.js'];
+  const saida = [];
   const entrar = (dir) => {
     for (const nome of readdirSync(dir, { withFileTypes: true })) {
       const caminho = join(dir, nome.name);
