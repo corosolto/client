@@ -1,14 +1,16 @@
-# Portão de PR para a main:
+# Portão de PR para a main e para a staging:
 #   package.json e public/js/version.js têm que CONCORDAR — a armadilha do ?v= está
 #   documentada no version.js ("correção que não chega ao usuário" por dias).
 #   O BUMP em si não é mais exigido do PR desde 08/08: o release.yml bumpa, taga e
 #   publica o GitHub Release sozinho a cada push na main. (Antes disso este portão
 #   exigia "versão diferente da main" — e reprovava mecanicamente toda vez que dois
 #   trabalhos paralelos pisavam na mesma versão, ex.: PR #91.)
+# Na staging desde 17/11/2026: o ruleset proposto exige `versao-bumpada` e `ratchet` nas
+# duas bases (docs/quality-gates.md), e check exigido que não roda trava o PR para sempre.
 name: pr-gates
 on:
   pull_request:
-    branches: [main]
+    branches: [main, staging]
   merge_group:
     types: [checks_requested]
 
@@ -68,7 +70,8 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          BASE=origin/main
+          # O KNOWN-RED de referência é o da base do PR (main ou staging).
+          BASE="origin/${GITHUB_BASE_REF:-main}"
           if [ "$EVENTO" = merge_group ]; then
             [ -n "$FILA_BASE" ] && [ -n "$FILA_HEAD" ] || { echo "::error::lote sem base ou head"; exit 1; }
             BASE="$FILA_BASE"
