@@ -414,19 +414,27 @@ if (MUT !== 'opcional-fantasma') {
     b.pos.set(g.player.pos.x + 2.5, g.player.pos.y, g.player.pos.z); b.think = 0;
     g._botShootNN(b, g.player);
     const botRecarregou = (b.mesh?.ctrl?._reloadDur || 0) > 0;
-    // AN10: cadência de animação cai com a distância (bot teleportado pra longe)
-    const longe = g.bots.find(x => x.mesh?.ctrl && x.alive && x !== b) || b;
-    longe.pos.set(g.player.pos.x + 80, longe.pos.y, g.player.pos.z + 80);
-    let chamadasLonge = 0;
-    const origLonge = longe.mesh.ctrl.update.bind(longe.mesh.ctrl);
-    longe.mesh.ctrl.update = (...a) => { chamadasLonge++; return origLonge(...a); };
-    const perto = g.bots.find(x => x.mesh?.ctrl && x.alive && x !== longe) || b;
-    perto.pos.set(g.player.pos.x + 3, perto.pos.y, g.player.pos.z + 3);
-    let chamadasPerto = 0;
-    const origPerto = perto.mesh.ctrl.update.bind(perto.mesh.ctrl);
-    perto.mesh.ctrl.update = (...a) => { chamadasPerto++; return origPerto(...a); };
-    for (let i = 0; i < 120; i++) g.update(1 / 60);
-    const lodLonge = longe.mesh.ctrl.lod;
+    // AN10: mede o mesmo bot perto e longe. Depender de dois vivos tornava o fallback `|| b`
+    // embrulhar o mesmo controller duas vezes e contar 120/120 quando a rodada tinha só um.
+    let fase = 'perto', chamadasLonge = 0, chamadasPerto = 0;
+    const originalUpdate = b.mesh.ctrl.update.bind(b.mesh.ctrl);
+    b.mesh.ctrl.update = (...a) => {
+      if (fase === 'longe') chamadasLonge++; else chamadasPerto++;
+      return originalUpdate(...a);
+    };
+    b.target = null; b.nextShotAt = Infinity; b.reactAt = Infinity;
+    const medir = (distancia) => {
+      b._animAcc = 0;
+      for (let i = 0; i < 120; i++) {
+        b.pos.set(g.camera.position.x + distancia, b.pos.y, g.camera.position.z + distancia);
+        b._lp = { x: b.pos.x, z: b.pos.z };
+        g._updateBot(b, 1 / 60);
+      }
+    };
+    medir(3);
+    fase = 'longe';
+    medir(80);
+    const lodLonge = b.mesh.ctrl.lod;
     return { jogadorRecarregando, botRecarregou, armaBot: b.weapon, chamadasLonge, chamadasPerto, lodLonge };
   });
   await f2();
