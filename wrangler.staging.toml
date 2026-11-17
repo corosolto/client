@@ -1,10 +1,12 @@
 # Staging paralelo da migração Vercel -> Cloudflare Workers.
-# Sem DNS nesta fase: o host workers.dev é a prova de saída da fase 3.
+# Host: staging.corosolto.com.br (Custom Domain do Worker, criado fora deste arquivo) e o workers.dev.
+# Segredos: os de produção menos X_PIXEL_TOKEN, para staging não mandar conversão ao X.
 name = "csb-staging"
 main = "dist/server/entry.mjs"
 compatibility_date = "2026-11-09"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
+preview_urls = true
 
 [assets]
 binding = "ASSETS"
@@ -16,7 +18,12 @@ run_worker_first = ["/", "/index.html"]
 [observability]
 enabled = true
 
-# Texto, não segredo. Os quatro segredos entram com `wrangler secret put`.
+# Texto, não segredo. Segredos (API_PROXY_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) por `wrangler secret put`.
 [vars]
 PUBLIC_API_BASE = "https://csbrasil-backend-hupd3weo5q-rj.a.run.app"
 RANKING_ON = "true"
+
+# Viewmodel autorado (arte privada) servido pelo Worker a partir do R2; ver src/cf/borda.mjs.
+[[r2_buckets]]
+binding = "PRIVADO"
+bucket_name = "corosolto-private"

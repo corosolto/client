@@ -1319,7 +1319,7 @@ let emotesMod = null, emotesMontados = false;
 async function carregaEmotes() {
   if (emotesMod) return emotesMod;
   const m = await import('./emotes.js');
-  setEmoteDriver({ pose: m.poseEmote, duracao: m.emoteDuracao, laco: m.emoteLaco });
+  setEmoteDriver(m.EMOTE_DRIVER);
   emotesMod = m;
   return m;
 }
@@ -2096,6 +2096,7 @@ function _flushMarcos() {
 addEventListener('cs-privacy-change', _funnelLand);
 // Convite de login (login-prompt.js) no mesmo pipeline do funil; o consentimento é conferido lá.
 function _loginPromptTrack(step, data) {
+  if (!analyticsAllowed()) return;
   if (testMode) return;
   sendJsonKeepalive('/api/funnel', { step, ..._clientSessionContext(), ...data });
 }
@@ -5639,10 +5640,10 @@ function mpDesconectou() {
   const sessao = mpSessao;
   const { sala, no } = sessao;
   const team = sessao.net?._lastTeam || 'auto';
-  /* limpeza igual à antiga — mas SEM enviar 'quit' de telemetria: a partida continua no
-   * servidor; se a reconexão falhar, o quit sai na última tentativa */
+  /* A instância local termina aqui mesmo quando o servidor preserva o slot para reconexão.
+   * Conta este trecho antes de descartar o jogo; uma reconexão cria a próxima sessão local. */
+  try { sendTelemetry(); } catch { /* diagnóstico não bloqueia a reconexão */ }
   mpPararContagemProximo();
-  mpLimparIdentidade();
   sessao.chat?.destruir();
   mpSessao = null;
   mpDevolverEscolhaSp();

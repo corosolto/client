@@ -130,17 +130,17 @@ async function measure(NetClient, mainSource) {
     await new Promise(resolve => { replay.onerror = resolve; replay.onopen = resolve; });
     const ws = f.attempts[1];
     return connected && client.connected && client.meta.protocolVersion === 8 && calls === 1 && before === 2 &&
-      f.attempts[0].kind === 'wt' && f.attempts[0].offered[0] === 'coro-snapshot-v9' &&
+      f.attempts[0].kind === 'wt' && f.attempts[0].offered[0] === 'coro-snapshot-v10' &&
       ws.kind === 'ws' && ws.accepted && ws.ticket !== ticket && ws.nonce !== f.attempts[0].nonce && f.consumed.size === 2 &&
       f.attempts[2].error === 'ticket_reused' && new URL(client.url).searchParams.get('keep') === '1';
   });
-  await scenario('T2', { node: 9 }, f => f.mint(), ({ f, client, connected, calls }) => connected && client.connected && client.meta.protocolVersion === 9 && client.tp.protocolo === 'coro-snapshot-v9' && calls === 0 && f.attempts.length === 1 && f.attempts[0].kind === 'wt');
+  await scenario('T2', { node: 10 }, f => f.mint(), ({ f, client, connected, calls }) => connected && client.connected && client.meta.protocolVersion === 10 && client.tp.protocolo === 'coro-snapshot-v10' && calls === 0 && f.attempts.length === 1 && f.attempts[0].kind === 'wt');
   await scenario('T3', {}, null, ({ f, client, connected }) => connected && client.connected && f.attempts.length === 1 && f.attempts[0].kind === 'ws' && f.consumed.size === 1);
   await scenario('T4', {}, () => { throw Error('mint_failed'); }, ({ f, client, connected, error, calls }) => !connected && !client.connected && error === 'mint_failed' && calls === 1 && f.attempts.length === 1);
   await scenario('T5', {}, () => '', ({ f, client, connected, calls }) => !connected && !client.connected && calls === 1 && f.attempts.length === 1);
   await scenario('T6', {}, (_f, ticket) => ticket, ({ f, client, connected, calls }) => !connected && !client.connected && calls === 1 && f.attempts.length === 1);
   await scenario('T7', {}, () => 'v1.fixture.unissued', ({ f, client, connected, calls }) => !connected && !client.connected && calls === 1 && f.attempts.length === 2 && f.attempts[1].error === 'ticket_invalid');
-  await scenario('T8', { node: 9, wtVersion: 8, wsVersion: 8 }, f => f.mint(), ({ f, client, connected }) => !connected && !client.connected && client.meta === null && f.attempts.length === 2 && f.transports.every(t => t.closes > 0));
+  await scenario('T8', { node: 10, wtVersion: 9, wsVersion: 9 }, f => f.mint(), ({ f, client, connected }) => !connected && !client.connected && client.meta === null && f.attempts.length === 2 && f.transports.every(t => t.closes > 0));
   await scenario('T9', { wtFailure: 'before-auth' }, f => f.mint(), ({ f, ticket, client, connected, calls }) => connected && client.connected && calls === 1 && f.attempts.length === 2 && f.attempts[1].ticket !== ticket && !f.consumed.has(f.attempts[0].nonce) && f.consumed.size === 1);
   await scenario('T10', { anonymous: true, wtFailure: 'before-auth' }, null, ({ f, client, connected }) => connected && client.connected && f.attempts.length === 2 && f.attempts[0].kind === 'wt' && f.attempts[1].kind === 'ws' && f.attempts[1].ticket === '');
   await scenario('T11', { wsProtocol: '' }, f => f.mint(), ({ f, client, connected }) => !connected && !client.connected && client.meta === null && f.attempts.length === 2 && f.attempts[1].accepted);
