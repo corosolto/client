@@ -35,15 +35,24 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      # O Worker é um arquivo: não baixa a árvore de 1,8 GiB para publicá-lo.
+      # O Worker é um arquivo: não baixa a árvore de 1,8 GiB para publicá-lo. Vêm junto o
+      # teste do contrato e os workflows que ele lê (os alvos do dispatch e este arquivo).
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
           filter: blob:none
-          sparse-checkout: workers/vigia-cron
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /workers/vigia-cron/
+            /tools/ops/tests/vigia-cron.test.mjs
+            /.github/workflows/
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
+      # O ops:test não roda no pr-fast: este é o portão do caminho de deploy. Cron sem
+      # alvo, alvo sem workflow_dispatch ou segredo trocado não chegam à Cloudflare.
+      - name: Contrato cron → workflow (tools/ops/tests/vigia-cron.test.mjs)
+        run: node --test tools/ops/tests/vigia-cron.test.mjs
       - name: Confere conta e segredos
         env:
           ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
