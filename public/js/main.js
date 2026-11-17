@@ -473,7 +473,8 @@ function rebuildMenuBackdrop(mapa) {
   ajustarAnisotropia(menuScene, settings.quality);
 }
 function menuProps(mapa) {
-  return mapPropIds(mapa);
+  const deferred = mapa.menuDeferredProps || [];
+  return mapPropIds(mapa).filter((id) => !deferred.includes(id));
 }
 let _menuLoadSeq = 0;
 async function loadMenuBackdrop() {
