@@ -335,6 +335,26 @@ export function literalReferences(sources) {
 }
 
 const SCHEMA = 'asset-inventory-v2';
+const SCHEMA_V1 = 'asset-inventory-v1';
+
+/* Branches cut before v2 still carry a v1 manifest (every file → sha256, orphan paths in a list).
+ * The generator migrates it keeping every reviewed orphan hash; --check fails until it is written. */
+export function upgradeInventory(data) {
+  if (data?.schema !== SCHEMA_V1) return data;
+  if (!data.files || Array.isArray(data.files) || typeof data.files !== 'object' || !Array.isArray(data.unreferenced)) {
+    throw new Error(`expected ${SCHEMA_V1} files object and unreferenced array`);
+  }
+  for (const path of data.unreferenced) {
+    if (typeof path !== 'string' || !HEX256.test(data.files[path] || '')) throw new Error(`invalid ${SCHEMA_V1} unreferenced entry: ${path}`);
+  }
+  const orphans = new Set(data.unreferenced);
+  return {
+    schema: SCHEMA,
+    roots: data.roots,
+    referenced: Object.keys(data.files).filter((path) => !orphans.has(path)).sort(),
+    unreferenced: Object.fromEntries([...orphans].sort().map((path) => [path, data.files[path]])),
+  };
+}
 
 export function validateInventory(data) {
   if (!data || data.schema !== SCHEMA || !Array.isArray(data.roots)
@@ -358,9 +378,10 @@ export function validateInventory(data) {
 }
 
 export function readInventory(path = MANIFEST) {
-  if (!existsSync(path)) return { data: null, raw: '' };
+  if (!existsSync(path)) return { data: null, raw: '', legacy: false };
   const raw = readFileSync(path, 'utf8');
-  return { data: validateInventory(JSON.parse(raw)), raw };
+  const parsed = JSON.parse(raw);
+  return { data: validateInventory(upgradeInventory(parsed)), raw, legacy: parsed?.schema === SCHEMA_V1 };
 }
 
 export function serializeInventory(data) {
@@ -430,7 +451,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
   printFindings(result.findings);
 
   if (CHECK) {
-    if (!published.data || result.findings.length) process.exit(1);
+    if (published.legacy) console.error(`ASSET-INVENTORY: ${relative(ROOT, MANIFEST)} is still ${SCHEMA_V1}; run node tools/gen-asset-inventory.mjs to migrate it (reviewed orphan hashes are kept)`);
+    if (!published.data || published.legacy || result.findings.length) process.exit(1);
     if (result.refresh) console.log(`ASSET-INVENTORY: ${result.refresh} known-set entr(ies) behind the disk (not a failure; optional refresh: node tools/gen-asset-inventory.mjs)`);
     console.log('ASSET-INVENTORY: reviewed orphans and runtime references are intact');
     process.exit(0);
