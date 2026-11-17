@@ -140,38 +140,41 @@ if (CI_MUTADO) falhas.push(`PI4 mutação '${MUT}' não aplicou no ci.yml — aj
    job real da seção jobs:, e a unicidade dos aliases eval:/mut: é cobrada
    GLOBALMENTE — duplicata em qualquer outro job, inclusive job novo
    desconhecido, reprova. */
+/* Os quatro shards do collider (~12 s cada) completam lotes diferentes do pr-fast. */
+const COLLIDER_DONOS = ['mapas-e-site', 'equipamento-tp-corpo', 'equipamento-tp-origem', 'invariantes-mapas'];
 const GRUPOS_COLLIDER_PI4 = COLLIDER_SHARDS.map((indice) => [
-  `operacao-flavio-collider-${indice + 1}`,
+  COLLIDER_DONOS[indice],
   `Operação Flávio, collider ${indice + 1}`,
   [`eval:operacao-flavio-collider-${indice + 1}`],
 ]);
 const GRUPOS_PI4 = [
   ['economia-ak-hud', 'TRETA$ da partida segue o CS', ['eval:economia']],
   ['economia-ak-hud', 'TRETA$ da partida dentro do Game real', ['eval:economia-jogo']],
-  ['contratos-visuais-personagens-camera', 'Contratos visuais de personagens', ['eval:shot-final-pose', 'eval:authored-locomotion', 'eval:character-normal-quality', 'eval:normal-only-fit-equivalence', 'eval:tp-world-contract', 'eval:skin-profile-flow', 'eval:death-camera-consistency', 'eval:knife-skin-markings']],
-  ['contratos-visuais-ferro-balcao', 'Contrato visual de ferro e balcão', ['eval:ferro-balcao']],
-  ['contratos-visuais-mapas-materiais', 'Contratos visuais de mapas', ['eval:map-material-finish']],
-  ['contratos-visuais-visual-map', 'Contratos visuais de geometria e UV', ['eval:visual-map-contracts']],
-  ['contratos-visuais-campo-uv', 'Contrato visual de campo UV', ['eval:campo-uv']],
-  ['contratos-visuais-gameplay-grafite', 'Contratos visuais de gameplay', ['eval:grafite-curation', 'eval:match-pickups', 'eval:net-flash-disable', 'eval:grafite-atual:prova', 'eval:piscina-graffiti-batch']],
+  ['contratos-visuais-personagens', 'Contratos visuais de personagens', ['eval:shot-final-pose', 'eval:authored-locomotion', 'eval:character-normal-quality', 'eval:normal-only-fit-equivalence', 'eval:tp-world-contract', 'eval:skin-profile-flow', 'eval:death-camera-consistency', 'eval:knife-skin-markings']],
+  ['contratos-visuais-personagens', 'Contrato visual de ferro e balcão', ['eval:ferro-balcao']],
+  ['contratos-visuais-mapas', 'Contratos visuais de mapas', ['eval:map-material-finish']],
+  ['contratos-visuais-personagens', 'Contratos visuais de geometria e UV', ['eval:visual-map-contracts']],
+  ['contratos-visuais-mapas', 'Contrato visual de campo UV', ['eval:campo-uv']],
+  ['contratos-visuais-mapas', 'Contratos visuais de gameplay', ['eval:grafite-curation', 'eval:match-pickups', 'eval:net-flash-disable', 'eval:grafite-atual:prova', 'eval:piscina-graffiti-batch']],
   ['economia-ak-hud', 'Flash, fluidez e ADS da AK pública', ['eval:flashbang', 'mut:flashbang', 'eval:movimento-fluidez', 'eval:ads1p-public', 'eval:posto-board-support', 'eval:preview-grip-phase', 'eval:armadura', 'eval:ads1p-runtime-public']],
   ['economia-ak-hud', 'Câmera, atalhos e HUD', ['eval:cameraoclusao', 'tools/eval/camera-oclusao-mutate.mjs', 'tools/eval/camera-hud-check.mjs']],
   ['soundscape', 'Loops de áudio de todos os mapas', ['eval:soundscape-contract']],
-  ['operacao-flavio-core', 'Operação Flávio, núcleo', ['eval:operacao-flavio-core', 'eval:operacao-reset', 'eval:operacao-duration', 'eval:operacao-clock', 'eval:operacao-boarding', 'eval:character-owned', 'eval:objective-codec-contract', 'eval:operacao-npc']],
+  ['operacao-flavio', 'Operação Flávio, núcleo', ['eval:operacao-flavio-core', 'eval:operacao-reset', 'eval:operacao-duration', 'eval:operacao-clock', 'eval:operacao-boarding', 'eval:character-owned', 'eval:objective-codec-contract', 'eval:operacao-npc']],
   ...GRUPOS_COLLIDER_PI4,
-  ['operacao-flavio-menu', 'Operação Flávio, menu', ['eval:operacao-flavio-menu', 'eval:mode-announcements', 'eval:ctflabels', 'eval:tpreloadpaired']],
-  ['operacao-flavio-online', 'Operação Flávio, online', ['eval:operacao-online']],
-  ['operacao-flavio-integracao', 'Operação Flávio, integração', ['eval:operacao-flavio-integracao']],
-  ['operacao-flavio-comportamento', 'Operação Flávio, comportamento', ['eval:operacao-flavio-comportamento', 'eval:bots-perf']],
-  ['operacao-flavio-escolta', 'Operação Flávio, escolta', ['eval:operacao-flavio-escolta']],
+  ['operacao-flavio-e-mantle', 'Operação Flávio, menu', ['eval:operacao-flavio-menu', 'eval:mode-announcements', 'eval:ctflabels', 'eval:tpreloadpaired']],
+  ['operacao-flavio-e-mantle', 'Operação Flávio, online', ['eval:operacao-online']],
+  ['operacao-flavio', 'Operação Flávio, integração', ['eval:operacao-flavio-integracao']],
+  ['operacao-flavio-e-mantle', 'Operação Flávio, comportamento', ['eval:operacao-flavio-comportamento', 'eval:bots-perf']],
+  ['operacao-flavio', 'Operação Flávio, escolta', ['eval:operacao-flavio-escolta']],
   ['equipamento-tp-corpo', 'Corpo em processos CPU reais', ['eval:tp-identity']],
+  ['contratos-visuais-personagens', 'Emotes de captura no runtime', ['eval:emotes-mocap', 'eval:emotes-roster']],
   ['equipamento-tp-origem', 'Drip, luvas e cosméticos', ['eval:tp-drip-source', 'eval:tp-glove-origin', 'eval:tp-cosmetic-source']],
   ['reguas-e-site', 'Suites preservam cobertura', ['tests/eval-suites.test.mjs']],
   ['reguas-e-site', 'Todo mapa devolve o que o game.js consome', ['eval:mapcontrato']],
   ['mapas-e-site', 'Pichação colada na parede', ['eval:pichacao-parede']],
   ['mapas-e-site', 'Amazônia acessível', ['eval:amazonia']],
   ['mapas-e-site', 'Escadão — circulação', ['eval:escadao-graph', 'eval:escadao-home', 'eval:escadao-structure', 'eval:escadao-descent', 'eval:escadao-details']],
-  ['mantle', 'Validar fluidez, território e rede do mantle', ['eval:mantle-fluidez', 'mut:mantle', 'eval:mantle-network']],
+  ['operacao-flavio-e-mantle', 'Validar fluidez, território e rede do mantle', ['eval:mantle-fluidez', 'mut:mantle', 'eval:mantle-network']],
   ['mapas-e-site', 'Escadão — compatibilidade', ['tools/eval/escadao-audio-pack-check.mjs']],
 ];
 const COMANDOS_VISUAIS_BASE = Object.freeze([
@@ -262,7 +265,8 @@ try {
     const total = donos.reduce((n, p) => n + p.tokens.filter((token) => token === comando).length, 0);
     if (total !== 1) falhas.push(`PI4 ${comando}: esperado uma execução no CI, encontradas ${total} em [${donos.map((p) => `${p.job}:${p.nome}`).join(', ')}]`);
   }
-  const gruposVisuais = GRUPOS_PI4.filter(([job]) => job.startsWith('contratos-visuais-'));
+  /* Grupo visual = grupo cujos comandos são da base visual, em qualquer lote do pr-fast. */
+  const gruposVisuais = GRUPOS_PI4.filter(([, , comandos]) => comandos.some((c) => COMANDOS_VISUAIS_BASE.includes(c)));
   const comandosVisuais = gruposVisuais.flatMap(([, , comandos]) => comandos);
   const coberturaOrdenada = [...comandosVisuais].sort((a, b) => COMANDOS_VISUAIS_BASE.indexOf(a) - COMANDOS_VISUAIS_BASE.indexOf(b));
   if (new Set(comandosVisuais).size !== COMANDOS_VISUAIS_BASE.length
@@ -333,7 +337,7 @@ for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) {
   const total = PORTOES.reduce((n, p) => n + passosPorPortao[p].length, 0);
   console.log(`  \x1b[32m✓\x1b[0m PI4 ${GRUPOS_PI4.length} grupos independentes × ${casosPI4} cenários de status`);
-  const gruposVisuais = GRUPOS_PI4.filter(([job]) => job.startsWith('contratos-visuais-'));
+  const gruposVisuais = GRUPOS_PI4.filter(([, , comandos]) => comandos.some((c) => COMANDOS_VISUAIS_BASE.includes(c)));
   const totalVisuais = gruposVisuais.reduce((n, [, , comandos]) => n + comandos.length, 0);
   console.log(`  \x1b[32m✓\x1b[0m PI4 ${totalVisuais} contratos visuais únicos, ordenados e cobertos pelos ${gruposVisuais.length} shards`);
   console.log(`  \x1b[32m✓\x1b[0m PI todo passo dos dois portões está definido e aponta para arquivo que existe (${total} citações)`);

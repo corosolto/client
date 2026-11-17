@@ -13,9 +13,8 @@ import {
 
 const AGORA = Date.parse('2026-11-10T12:00:00.000Z');
 const CHAVE_CACHE_DURACOES = "eval-durations-v1-${{ hashFiles('tools/eval/out/durations.json') }}";
-const PREFIXO_CACHE_CONSUMIDOR = 'eval-durations-v1-';
 const WORKFLOW_PRODUTOR = readFileSync(new URL('../.github/workflows/eval-duration-calibration.yml', import.meta.url), 'utf8');
-const WORKFLOW_CONSUMIDOR = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
+const WORKFLOW_PR_FAST = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
 const relatorio = (resultados) => ({ resultados });
 const ok = (passo, duracao) => ({ passo, duracao, status: 'ok' });
 
@@ -97,25 +96,19 @@ test('CLI de calibração é byte-determinístico para os mesmos artefatos', () 
   }
 });
 
-test('produtor grava por conteúdo e consumidor aceita qualquer match do prefixo', () => {
+test('produtor grava por conteúdo, sem run_id, com permissão só de cache', () => {
   validarChavesCache(WORKFLOW_PRODUTOR, CHAVE_CACHE_DURACOES);
-  validarChavesCache(WORKFLOW_CONSUMIDOR, PREFIXO_CACHE_CONSUMIDOR);
   assert.match(WORKFLOW_PRODUTOR, /permissions:\n\s+actions: write\n\s+contents: read/);
   assert.match(WORKFLOW_PRODUTOR, /actions\/cache\/save@0057852bfaa89a56745cba8c7296529d2fc39830/);
-  assert.match(WORKFLOW_CONSUMIDOR, /actions\/cache\/restore@0057852bfaa89a56745cba8c7296529d2fc39830/);
-  assert.match(WORKFLOW_CONSUMIDOR, /restore-keys:\s*\|\n\s+eval-durations-v1-\n/);
-  assert.match(WORKFLOW_CONSUMIDOR, /cache-matched-key == ''/);
+});
 
-  const inicio = WORKFLOW_CONSUMIDOR.indexOf('  contratos-visuais-personagens-camera:');
-  const fim = WORKFLOW_CONSUMIDOR.indexOf('\n  contratos-visuais-ferro-balcao:', inicio);
-  assert.ok(inicio >= 0 && fim > inicio);
-  const job = WORKFLOW_CONSUMIDOR.slice(inicio, fim);
-  assert.doesNotMatch(job, /cache-hit != 'true'/);
-  const restore = job.indexOf('Restore calibrated duration manifest');
-  const shard = job.indexOf('--shard=${{ matrix.shard }}/3');
-  assert.ok(restore >= 0 && shard > restore, 'cache precisa ser restaurado antes do passo shardado');
-  assert.match(job, /matrix:\n\s+shard: \[1, 2, 3\]/);
-  assert.doesNotMatch(job, /--shard=off/);
+/* Os lotes do pr-fast são fixos no ci.yml e só USAM o manifesto para serem
+   rebalanceados à mão. Manifesto vencido (> 48 h) faz o runner com --shard reprovar;
+   se o pr-fast voltasse a depender dele, um cron perdido deixaria todo PR vermelho. */
+test('pr-fast não depende do manifesto de durações', () => {
+  assert.doesNotMatch(WORKFLOW_PR_FAST, /eval-durations/);
+  assert.doesNotMatch(WORKFLOW_PR_FAST, /--shard=/);
+  assert.doesNotMatch(WORKFLOW_PR_FAST, /--durations=/);
 });
 
 test('contrato do cache rejeita chave exclusiva de run_id e run_attempt', () => {

@@ -194,7 +194,9 @@ for (const [id, weapon] of [['mst', 'ak'], ['sertanejo', 'revolver38'], ['gotinh
               const active = a.actions[name], previous = previousPhases.get(name);
               if (!active?.running) continue;
               const pairChanged = previousPair && pairKey !== previousPair;
-              const reiniciou = pairChanged && pair.includes(name);
+              // Troca de par reinicia só quem ENTRA; quem já tocava no par anterior segue a
+              // fase (reiniciar o run a cada troca de setor congelava as pernas do bot).
+              const reiniciou = pairChanged && pair.includes(name) && !previousPair.split('|').includes(name);
               if (previous || reiniciou) {
                 const base = reiniciou ? 0 : previous.time;
                 const time = ((base + dt * active.rate) % active.duration + active.duration) % active.duration;

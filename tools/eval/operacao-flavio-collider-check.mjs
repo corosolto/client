@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Game, THREE, initTextures } from './harness.mjs';
 import { withVisibleShotOccluders } from '../../public/js/shot_surfaces.js';
+import { OperacaoFlavio } from '../../public/js/mode_operacao_flavio.js';
 
 const url = new URL('../../public/js/map_operacao_flavio.js', import.meta.url);
 let source = readFileSync(url, 'utf8');
@@ -68,6 +69,13 @@ const edits = {
   'balcao-gigante': ["real('balcao_recepcao', 16.75, -39, 0),", "['balcao_recepcao', 16.75, -39, 7.2, 0, 7, 1.4, 2.2, true],"],
   'jardineira-render-baixo': ["real('jardineira', 24, -44.5, 0),", "['jardineira', 24, -44.5, 2.5, 0, 2.5, 1.8, 1.4, true],"],
   'kit-barreira-no-patio': ["usarProp('barreiras_aeroporto', [x, 0.08, 70]", "usarProp('barreiras_aeroporto', [x, 0.08, 52]"],
+  // Respawn 17/11: torre de fachada render-only sobre as portas x=±17, portal fundo, colunas do
+  // pórtico render-only na viela interna, vidraça cruzando a porta e piso visual acima do pé.
+  'fachada-torre': ["real('terminal_fachada', xModuloFachada, fachadaNorte.z, 0, false),", "['terminal_fachada', 18, -15.82, 16, 0, 16, 5, 1, false],"],
+  'portal-fundo': ["real('terminal_portal', 0, fachadaSul.z, Math.PI, false),", "['terminal_portal', 0, -52.15, 6, Math.PI, 5, 4, 2, false],"],
+  'coluna-fantasma': ["bloco('coluna-portico-leste', 13.6, 2, -13, 0.5, 4, 0.7, mats.marinho);", "bloco('coluna-portico-leste', 12.2, 2, -13, 0.5, 4, 0.7, mats.marinho, false);"],
+  'vidro-na-porta': ['for (const x of [-10, 10]) {', 'for (const x of [-26, -18, -10, 10, 18, 26]) {'],
+  'piso-elevado': ["bloco('piso-terminal-executivo', 0, 0.02, -34, 58, 0.08, 36,", "bloco('piso-terminal-executivo', 0, 0.3, -34, 58, 0.6, 36,"],
 };
 if (mutant) {
   const edit = edits[mutant];
@@ -849,6 +857,108 @@ try {
     const length = Math.hypot(next.x - spawn.x, next.z - spawn.z);
     const dot = (-Math.sin(spawn.yaw)) * (next.x - spawn.x) / length + (-Math.cos(spawn.yaw)) * (next.z - spawn.z) / length;
     assert.ok(dot > .75, 'primeira leitura aponta para a rota');
+  });
+  // Respawn (playtest 17/11: bot entrando por parede sem porta, afundado até a cintura colado
+  // na fachada norte). Varre TODO ponto onde alguém nasce: bases B/E com o jitter de ±0,5 m do
+  // início da rodada e as ondas de spawnCandidates (o código que o nó MP roda) em cada
+  // checkpoint das três variantes, nos dois times. Mede com a proporção real dos GLBs.
+  check('respawn-points-floor-solid-exit', () => {
+    const map = glbReal, CORPO = 0.38, JOELHO = 0.35, AFUNDA = 0.2;
+    map.root.updateMatrixWorld(true);
+    // Volume visual por malha (instância a instância), inclusive render-only. Fora: céu e placa
+    // (sem superfície), avião (proxies medidos na malha em aircraft-ring-*), escada (piso subível
+    // de groundHeightAt) e arco do raio-x (passagem; os pilares têm colisor próprio).
+    const passagem = /^(aviao_executivo|escada_embarque|arco_seguranca)$/;
+    const volumes = [], caixa = new THREE.Box3(), matriz = new THREE.Matrix4();
+    map.root.traverse((o) => {
+      if (!o.isMesh || o.name === 'ceu-degrade-aeroporto' || o.userData.nonSolidSurface) return;
+      let topo = o;
+      while (topo.parent && topo.parent !== map.root) topo = topo.parent;
+      if (passagem.test(topo.name)) return;
+      o.geometry.computeBoundingBox();
+      const add = (box) => volumes.push({ nome: topo.name || o.name, minX: box.min.x, maxX: box.max.x, minY: box.min.y, maxY: box.max.y, minZ: box.min.z, maxZ: box.max.z });
+      if (!o.isInstancedMesh) add(caixa.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld));
+      else for (let i = 0; i < o.count; i++) {
+        o.getMatrixAt(i, matriz);
+        add(caixa.copy(o.geometry.boundingBox).applyMatrix4(matriz.premultiply(o.matrixWorld)));
+      }
+    });
+    const cobre = (v, x, z, r) => x > v.minX - r && x < v.maxX + r && z > v.minZ - r && z < v.maxZ + r;
+    const cruza = (a, b, v, r) => {
+      let t0 = 0, t1 = 1;
+      for (const [p, d, lo, hi] of [[a.x, b.x - a.x, v.minX - r, v.maxX + r], [a.z, b.z - a.z, v.minZ - r, v.maxZ + r]]) {
+        if (Math.abs(d) < 1e-12) { if (p <= lo || p >= hi) return false; continue; }
+        let n = (lo - p) / d, f = (hi - p) / d;
+        if (n > f) [n, f] = [f, n];
+        t0 = Math.max(t0, n); t1 = Math.min(t1, f);
+        if (t0 >= t1) return false;
+      }
+      return true;
+    };
+    const pontos = [];
+    for (const [time, bases] of Object.entries(map.spawns)) for (const [i, s] of bases.entries()) {
+      for (const [dx, dz] of [[0, 0], [-.5, -.5], [-.5, .5], [.5, -.5], [.5, .5]]) {
+        pontos.push({ rotulo: `base ${time}${i}`, x: s.x + dx, z: s.z + dz, alvo: time === 'B' ? map.escortPath[1] : map.escortPath[0] });
+      }
+    }
+    const modo = Object.assign(Object.create(OperacaoFlavio.prototype), { game: { world: map, state: 'live' }, vip: { pos: { x: 0, y: 0, z: 0 } } });
+    map.escortPaths.forEach((caminho, rota) => {
+      modo.state = { caminho, checkpoint: 0 };
+      for (let k = 0; k < caminho.length; k++) {
+        modo.state.checkpoint = k; modo.vip.pos.x = caminho[k].x; modo.vip.pos.z = caminho[k].z;
+        for (const time of ['B', 'E']) {
+          const alvo = time === 'B' ? caminho[Math.max(0, k - 1)] : caminho[Math.min(k + 1, caminho.length - 1)];
+          const lista = modo.spawnCandidates(time);
+          assert.ok(lista?.length, `variante ${rota} cp ${k} ${time}: onda sem candidato`);
+          for (const p of lista) pontos.push({ rotulo: `onda ${time} variante ${rota} cp ${k}`, x: p.x, z: p.z, alvo });
+        }
+      }
+    });
+    const ruins = new Map();
+    const anota = (p, motivo) => { const chave = `(${p.x.toFixed(2)},${p.z.toFixed(2)}) ${motivo}`; if (!ruins.has(chave)) ruins.set(chave, p.rotulo); };
+    for (const p of pontos) {
+      const y = map.groundHeightAt(p.x, p.z);
+      // Pé no colisor de chão na altura declarada (y > 0 só existe no piso subível da escada).
+      if (!(y > 0.02 || map.colliders.some(c => Math.abs(c.maxY - y) <= 0.02 && cobre(c, p.x, p.z, 0)))) anota(p, 'sem colisor de chão sob o pé');
+      for (const v of volumes) {
+        if (v.minY <= y + AFUNDA && v.maxY > y + AFUNDA && cobre(v, p.x, p.z, 0)) anota(p, `pé enterrado em ${v.nome} (topo ${(v.maxY - y).toFixed(2)} m acima)`);
+        else if (v.minY < y + JOELHO && v.maxY > y + JOELHO && cobre(v, p.x, p.z, CORPO)) anota(p, `corpo dentro de ${v.nome}`);
+      }
+      if (map.colliders.some(c => c.minY < y + 1.8 && c.maxY > y + 0.1 && cobre(c, p.x, p.z, CORPO))) anota(p, 'corpo dentro de colisor');
+      // Saída: nó mais próximo → comboio pelo grafo; nenhum trecho cruza volume na altura do peito.
+      const de = map.nearestWaypoint(p.x, p.z), ate = map.nearestWaypoint(p.alvo.x, p.alvo.z), caminho = map.findPath(de, ate);
+      if (caminho.at(-1) !== ate) { anota(p, 'sem rota até o comboio'); continue; }
+      const rota = [p, ...caminho.map(i => map.waypoints.nodes[i])];
+      for (let i = 1; i < rota.length; i++) for (const v of volumes) {
+        if (v.minY < 1.2 && v.maxY > 1.6 && cruza(rota[i - 1], rota[i], v, CORPO)) {
+          anota(p, `rota (${rota[i - 1].x},${rota[i - 1].z})→(${rota[i].x},${rota[i].z}) atravessa ${v.nome}`);
+        }
+      }
+    }
+    assert.ok(pontos.length > 200, `varredura cobre bases e ondas (${pontos.length} pontos)`);
+    // Ponto preso no volume primeiro, rota depois: a mensagem aponta onde o bot nasce errado.
+    const lista = [...ruins].sort(([a], [b]) => / rota /.test(a) - / rota /.test(b));
+    assert.equal(ruins.size, 0, `${ruins.size} ponto(s) de respawn ruins: ${lista.slice(0, 12).map(([k, r]) => `${r} ${k}`).join('; ')}`);
+  });
+  // Prop GLB render-only nunca vira piso jogável: ou fica além dos limites (kit de barreiras) ou é
+  // pele dentro de um colisor (módulos de fachada na parede). Avião, escada e arco têm cláusulas.
+  check('decor-props-off-playable-floor', () => {
+    for (const [nome, map] of [['glb', glbReal], ['fallback', fallback]]) {
+      map.root.updateMatrixWorld(true);
+      const limites = map.bounds;
+      const decor = map.root.children.filter(o => {
+        const id = o.name.replace(/^fallback-/, '');
+        return id in mediumModule.PROP_FILES && !/^(aviao_executivo|escada_embarque|arco_seguranca)$/.test(id) && !map.colliders.some(c => c.id === id);
+      });
+      assert.ok(decor.some(o => /terminal_fachada/.test(o.name)) && decor.some(o => /terminal_portal/.test(o.name)), `${nome}: módulos decorativos presentes`);
+      for (const o of decor) {
+        const box = new THREE.Box3().setFromObject(o);
+        const fora = box.min.x > limites.maxX || box.max.x < limites.minX || box.min.z > limites.maxZ || box.max.z < limites.minZ;
+        // Pele = dentro de um colisor de parede (do chão até acima da cabeça), não do solo.
+        const pele = map.colliders.some(c => c.minY < 0.1 && c.maxY > 1.8 && box.min.x >= c.minX - .05 && box.max.x <= c.maxX + .05 && box.min.z >= c.minZ - .05 && box.max.z <= c.maxZ + .05);
+        assert.ok(fora || pele, `${nome}: ${o.name} ocupa piso jogável x ${box.min.x.toFixed(2)}…${box.max.x.toFixed(2)} z ${box.min.z.toFixed(2)}…${box.max.z.toFixed(2)}`);
+      }
+    }
   });
   check('ground-operation-detail-around-boarding', () => {
     const group = loaded.root.getObjectByName('operacao-solo-embarque');
