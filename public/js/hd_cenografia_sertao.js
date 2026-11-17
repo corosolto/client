@@ -1,5 +1,5 @@
 // Cenografia HD do Sertão (demo ?hd=1). Nada aqui tem colisão: só existe fora de bounds, rente ao chão
-// (até 12 cm), em cima ou colado em colisor que já existe, ou acima de 2,2 m. Tudo sai por desfaz().
+// (até 12 cm), em cima ou colado em colisor que já existe, ou acima de 2,2 m. Tudo sai por desfaz(); `opts.bordas=false` omite a vegetação de borda.
 import * as THREE from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { placeProp } from './mapprops.js';
@@ -39,7 +39,7 @@ function tufoGeo(semente, laminas = 6, { larg0 = .045, base = [.55, .48, .30], p
   g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setIndex(I); g.computeBoundingSphere(); return g;
 }
 
-// Acumulador de peças de madeira/arame numa malha só (1 draw call): UV em metros, cor por vértice.
+// Acumulador de peças de madeira/arame numa malha só (1 draw call): UV em metros; veio longo fica no V da tábua.
 function oficina() {
   const P = [], N = [], U = [], C = [], I = [], v = new THREE.Vector3(), n = new THREE.Vector3(), nm = new THREE.Matrix3();
   const api = {
@@ -52,7 +52,7 @@ function oficina() {
         for (const [a, c] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
           v.set(nn[0] * sn / 2 + tu[0] * a * su / 2 + tv[0] * c * sv / 2, nn[1] * sn / 2 + tu[1] * a * su / 2 + tv[1] * c * sv / 2, nn[2] * sn / 2 + tu[2] * a * su / 2 + tv[2] * c * sv / 2).applyMatrix4(m);
           n.set(nn[0], nn[1], nn[2]).applyMatrix3(nm).normalize(); P.push(v.x, v.y, v.z); N.push(n.x, n.y, n.z); C.push(cor[0], cor[1], cor[2]);
-          const uu = a * su / 2 / 1.1 + fase, vv = c * sv / 2 / 1.1 + fase * 3; if (su >= sv) U.push(uu + api.tipo * 100, vv); else U.push(vv + api.tipo * 100, uu); }
+          const uu = a * su / 2 / 1.1 + fase, vv = c * sv / 2 / 1.1 + fase * 3; if (su >= sv) U.push(vv + api.tipo * 100, uu); else U.push(uu + api.tipo * 100, vv); }
         I.push(b, b + 1, b + 2, b, b + 2, b + 3); }
     },
     // Tronco de cone entre a e b; `aneis` opcional = [[t, fatorDeRaio]] para barriga de barril.
@@ -63,7 +63,7 @@ function oficina() {
       perfil.forEach(([t, k], j) => { const r = (r0 + (r1 - r0) * t) * k;
         for (let i = 0; i <= lados; i++) { const ang = i / lados * Math.PI * 2 + giro;
           v.set(Math.cos(ang) * r, t * L, Math.sin(ang) * r).applyQuaternion(q).add(a); n.set(Math.cos(ang), 0, Math.sin(ang)).applyQuaternion(q);
-          P.push(v.x, v.y, v.z); N.push(n.x, n.y, n.z); C.push(cor[0], cor[1], cor[2]); U.push(t * L / 1.1 + api.tipo * 100, i / lados * Math.max(.35, r * 5.7)); }
+          P.push(v.x, v.y, v.z); N.push(n.x, n.y, n.z); C.push(cor[0], cor[1], cor[2]); U.push(i / lados * Math.max(.35, r * 5.7) + api.tipo * 100, t * L / 1.1); }
         if (j) for (let i = 0; i < lados; i++) { const p0 = base + (j - 1) * (lados + 1) + i, p1 = p0 + lados + 1; I.push(p0, p1, p0 + 1, p0 + 1, p1, p1 + 1); } });
       if (tampas) for (const [t, k, sinal] of [[1, perfil[perfil.length - 1][1], 1], [0, perfil[0][1], -1]]) { const c0 = P.length / 3, r = (r0 + (r1 - r0) * t) * k;
         n.set(0, sinal, 0).applyQuaternion(q); v.set(0, t * L, 0).applyQuaternion(q).add(a); P.push(v.x, v.y, v.z); N.push(n.x, n.y, n.z); C.push(cor[0] * .8, cor[1] * .8, cor[2] * .8); U.push(.5 + api.tipo * 100, .5);
@@ -176,7 +176,9 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
     const im = lote(g, mat, n, 'capim'); lixo.push(g, mat); let k = 0;
     const poe = (x, z, h, larg = 1) => { if (k >= n) return; obj.position.set(x, -.01, z); obj.rotation.set(0, rnd() * 6.283, 0); obj.scale.set(h * larg, h, h * larg); obj.updateMatrix();
       const v = .8 + rnd() * .45, w = rnd(); im.setMatrixAt(k, obj.matrix); im.setColorAt(k++, cor.setRGB(v * (1 + .1 * w), v * (.96 + .02 * w), v * (.9 - .25 * w))); };
-    for (let t = 0; t < 900 && k < n * .52; t++) { const p = peDeParede(.05, .3); if (p) poe(p[0], p[1], .11 + rnd() * .18, .8 + rnd() * .5); }
+    if (opts.bordas !== false) for (const [x, z] of [[-19, -8], [-17, -5], [19, -8], [18, -5], [-18, 16]]) {
+      if (naArena(x, z, .4) && livre(x, z, .1) && !dentroDeCasa(x, z)) poe(x, z, .16 + rnd() * .12, .9 + rnd() * .35);
+    }
     for (let t = 0; t < 400 && k < n * .70; t++) { const emX = rnd() < .43, s = rnd() < .5 ? -1 : 1;
       const x = emX ? B.minX + rnd() * (B.maxX - B.minX) : s * (B.maxX - .05 - rnd() * .5), z = emX ? s * (B.maxZ - .25 - rnd() * .5) : B.minZ + rnd() * (B.maxZ - B.minZ);
       if (emX && Math.abs(x) < 7) continue; if (livre(x, z, .05)) poe(x, z, .13 + rnd() * .17, .8 + rnd() * .5); }
@@ -600,14 +602,21 @@ export function cenografiaSertaoHD(scene, renderer, opts = {}, kit = {}) {
       o.updateWorldMatrix(true, false); const id = +o.name.slice(-1), x = (id % 2 ? 1 : -1) * g.width * .2, z = (id % 3 - 1) * g.depth * .24, y = g.height / 2, em = (dy) => new THREE.Matrix4().setPosition(x, y + dy, z).premultiply(o.matrixWorld);
       liso.caixa(em(.95), .46, 1.15, .46, [.6, .52, .43]); liso.caixa(em(1.56), .6, .08, .6, [.3, .21, .16]); liso.caixa(em(1.67), .3, .14, .3, [.17, .14, .12]); });
     if (opts.flora !== false && opts.arbustos !== false) {
-      const ga = pedraGeo(0, 41, .3), n = 44, im = lote(ga, matPedra, n, 'arbustos'); lixo.push(ga);
-      for (let i = 0; i < n; i++) { const emX = i % 2 === 0, s = rnd() < .5 ? -1 : 1, fora = 1.7 + Math.pow(rnd(), 1.4) * 4.2;
-        const x = emX ? (rnd() * 2 - 1) * (B.maxX + 2) : s * (B.maxX + fora), z = emX ? s * (B.maxZ + fora + 1.2) : (rnd() * 2 - 1) * (B.maxZ + 2), r0 = .5 + rnd() * .65, y = terreno(x, z);
-        if (emX && Math.abs(x) < 9.5) { obj.scale.setScalar(0); obj.updateMatrix(); im.setMatrixAt(i, obj.matrix); continue; }
+      const ga = pedraGeo(0, 41, .3), n = 47, im = lote(ga, matPedra, n, 'arbustos'); lixo.push(ga);
+      const arbusto = (i, x, z) => {
+        if (!naArena(x, z, .6) || !livre(x, z, .7) || dentroDeCasa(x, z) || zonas.some(([zx, zz]) => Math.hypot(x - zx, z - zz) < 5.4)) { obj.scale.setScalar(0); obj.updateMatrix(); im.setMatrixAt(i, obj.matrix); return; }
+        const r0 = .5 + rnd() * .65, y = terreno(x, z);
         obj.position.set(x, y + r0 * .42, z); obj.rotation.set(0, rnd() * 6.283, 0); obj.scale.set(r0 * (1 + rnd() * .5), r0 * (.62 + rnd() * .3), r0 * (1 + rnd() * .4)); obj.updateMatrix(); im.setMatrixAt(i, obj.matrix);
         const v = .22 + rnd() * .14, w = rnd(); im.setColorAt(i, cor.setRGB(v * (1.15 + .2 * w), v * (1.05 + .05 * w), v * (.62 - .12 * w)));
         for (let k = 0; k < 3; k++) { const ang = rnd() * 6.283, abre = .35 + rnd() * .7, L = r0 * (1.5 + rnd() * .7), d = V3(Math.cos(ang) * Math.sin(abre), Math.cos(abre), Math.sin(ang) * Math.sin(abre)), a = V3(x, y, z), m2 = a.clone().addScaledVector(d, L * .55);
-          of.cilindro(a, m2, .055, .045, 3, [.36, .31, .26], { tampas: false }); of.cilindro(m2, m2.clone().addScaledVector(d, L * .45).add(V3((rnd() - .5) * .3, .12, (rnd() - .5) * .3)), .045, .03, 3, [.4, .34, .28], { tampas: false }); } }
+          of.cilindro(a, m2, .055, .045, 3, [.36, .31, .26], { tampas: false }); of.cilindro(m2, m2.clone().addScaledVector(d, L * .45).add(V3((rnd() - .5) * .3, .12, (rnd() - .5) * .3)), .045, .03, 3, [.4, .34, .28], { tampas: false }); }
+      };
+      if (opts.bordas !== false) [[-18, -8], [18, -8], [-17, 16]].forEach(([x, z], i) => arbusto(i, x, z));
+      else for (let i = 0; i < 3; i++) { obj.scale.setScalar(0); obj.updateMatrix(); im.setMatrixAt(i, obj.matrix); }
+      for (let i = 3; i < n; i++) { const emX = i % 2 === 0, s = rnd() < .5 ? -1 : 1, fora = 1.7 + Math.pow(rnd(), 1.4) * 4.2;
+        const x = emX ? (rnd() * 2 - 1) * (B.maxX + 2) : s * (B.maxX + fora), z = emX ? s * (B.maxZ + fora + 1.2) : (rnd() * 2 - 1) * (B.maxZ + 2);
+        if (emX && Math.abs(x) < 9.5) { obj.scale.setScalar(0); obj.updateMatrix(); im.setMatrixAt(i, obj.matrix); continue; }
+        arbusto(i, x, z); }
       im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; im.computeBoundingSphere();
     }
     if (panos.length) {

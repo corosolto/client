@@ -1,5 +1,5 @@
 // Kit visual HD do Sertão, atrás de ?hd=1 (demo de gráficos, desligado por padrão).
-// Tudo reversível por desliga() para A/B na mesma sessão.
+// Opções `opts.ceu`, `opts.chao`, `opts.base` e `opts.reboco` controlam cada frente; o céu novo é opt-in por ?hdceu=1 ou `opts.ceu`; ?hdceu=0 é o kill-switch reversível.
 import * as THREE from 'three';
 import { cenografiaSertaoHD } from './hd_cenografia_sertao.js';
 
@@ -70,16 +70,23 @@ export function ligaSub(shader, sub) {
   shader.uniforms.hdSub = { value: sub.tex };
   shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D hdSub;');
 }
-export const idadeDaParede = (rodape, piso = '0.0', suave = false, sub = null, pe = null, leve = false, grao = 1, macro = 1) => `
+// `liso` (0..1): na faixa do corpo (0,45–2,1 m) a cor da textura vai para a sua média local (mip +6) e fica só o grão fino
+// (razão 0,95–1,05); mancha, umidade e pé zeram ali. Mancha de albedo do tamanho de cabeça na faixa lia como inimigo.
+export const idadeDaParede = (rodape, piso = '0.0', suave = false, sub = null, pe = null, leve = false, grao = 1, macro = 1, liso = 0) => `
   { float hdY = vHdPos.y - ${piso}; vec2 hdQ = vec2(vHdPos.x + vHdPos.z, hdY);
     float hdMacro = hdN(hdQ * 0.55) * 0.6 + hdN(hdQ * 1.9) * 0.4;
     float hdCorpo = smoothstep(0.6, 0.9, hdY) * (1.0 - smoothstep(1.7, 2.0, hdY));
+    ${liso > 0 ? `float hdLiso = ${liso.toFixed(3)} * smoothstep(0.42, 0.58, hdY) * (1.0 - smoothstep(1.92, 2.12, hdY));
+    #ifdef USE_MAP
+      { vec3 hdMed = diffuse * texture2D(map, vMapUv, 6.0).rgb;
+        diffuseColor.rgb = mix(diffuseColor.rgb, hdMed * clamp(diffuseColor.rgb / max(hdMed, vec3(1e-4)), 0.95, 1.05), hdLiso); }
+    #endif` : ''}
     ${suave ? `#ifdef USE_MAP
       diffuseColor.rgb = mix(diffuseColor.rgb, diffuse * texture2D(map, vMapUv, 4.5).rgb, 0.7 * hdCorpo);
     #endif` : ''}
     float hdMedio = hdN(hdQ * 5.5) * 0.55 + hdN(hdQ * 13.0) * 0.45;
-    diffuseColor.rgb *= ${macro === 1 ? '' : `mix(1.0, `}mix(mix(0.72, 1.12, hdMacro), mix(0.93, 1.05, hdMacro), hdCorpo)${macro === 1 ? '' : `, ${macro.toFixed(3)})`} * mix(mix(0.88, 1.08, hdMedio), mix(0.96, 1.03, hdMedio), hdCorpo) * ${grao === 1 ? 'hdGrao(hdQ)' : `mix(1.0, hdGrao(hdQ), ${grao.toFixed(3)})`};
-    float hdEsc = smoothstep(0.66, 0.86, hdN(vec2(hdQ.x * 1.05 + hdN(hdQ * 0.31) * 2.3, hdY * 0.2))) * smoothstep(1.9, 3.1, hdY);
+    diffuseColor.rgb *= ${liso > 0 ? 'mix(' : ''}${macro === 1 ? '' : `mix(1.0, `}mix(mix(0.72, 1.12, hdMacro), mix(0.93, 1.05, hdMacro), hdCorpo)${macro === 1 ? '' : `, ${macro.toFixed(3)})`} * mix(mix(0.88, 1.08, hdMedio), mix(0.96, 1.03, hdMedio), hdCorpo)${liso > 0 ? ', 1.0, hdLiso)' : ''} * ${grao === 1 ? 'hdGrao(hdQ)' : `mix(1.0, hdGrao(hdQ), ${grao.toFixed(3)})`};
+    float hdEsc = smoothstep(0.66, 0.86, hdN(vec2(hdQ.x * 1.05 + hdN(hdQ * 0.31) * 2.3, hdY * 0.2))) * smoothstep(1.9, 3.1, hdY)${liso > 0 ? ' * (1.0 - hdLiso)' : ''};
     diffuseColor.rgb *= 1.0 - 0.27 * hdEsc;
     float hdTrinca = hdTrincaL(vec2(hdQ.x, hdY));
     diffuseColor.rgb *= 1.0 - mix(0.42, 0.2, hdCorpo) * hdTrinca;
@@ -115,19 +122,19 @@ export const idadeDaParede = (rodape, piso = '0.0', suave = false, sub = null, p
       hdSubC *= 1.0 - ${(sub.beico ?? .55).toFixed(3)} * (1.0 - hdPele2);
       diffuseColor.rgb *= 1.0 + 0.16 * hdPele2 * (1.0 - hdPele);
       diffuseColor.rgb = mix(diffuseColor.rgb, mix(diffuseColor.rgb, hdSubC, ${(sub.forca ?? 1).toFixed(3)}), hdPele);` : ''}
-    ${pe ? `float hdSuj = smoothstep(${pe.altura.toFixed(3)}, 0.04, hdY + (hdN(hdQ * vec2(2.3, 0.0)) - 0.5) * 0.22) * (0.62 + 0.38 * hdN(hdQ * 1.3));
+    ${pe ? `float hdSuj = smoothstep(${pe.altura.toFixed(3)}, 0.04, hdY + (hdN(hdQ * vec2(2.3, 0.0)) - 0.5) * 0.22) * (0.62 + 0.38 * hdN(hdQ * 1.3))${liso > 0 ? ' * (1.0 - hdLiso)' : ''};
     vec3 hdTerra = vec3(${pe.cor.map((c) => c.toFixed(3)).join(', ')});
     hdTerra *= ${(1 - pe.escuro).toFixed(3)} * dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)) / dot(hdTerra, vec3(0.3, 0.59, 0.11));
-    diffuseColor.rgb = mix(diffuseColor.rgb, hdTerra * mix(0.86, 1.12, hdMedio), hdSuj); }` : `float hdSuj = smoothstep(${rodape.toFixed(3)}, 0.05, hdY) * (0.5 + 0.5 * hdN(hdQ * 1.3)) * (1.0 - 0.6 * hdPele);
+    diffuseColor.rgb = mix(diffuseColor.rgb, hdTerra * mix(0.86, 1.12, hdMedio), hdSuj); }` : `float hdSuj = smoothstep(${rodape.toFixed(3)}, 0.05, hdY) * (0.5 + 0.5 * hdN(hdQ * 1.3)) * (1.0 - 0.6 * hdPele)${liso > 0 ? ' * (1.0 - hdLiso)' : ''};
     diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.55, 0.45, 0.36), hdSuj); }`}`;
 
 // Caixas instanciadas têm UV 0..1 por face: sem projeção no mundo o relevo estica com a parede.
-export function projetaMundo(material, metros, { rodape = 0, metrosCor = metros, sub = null, pe = null, extra = null, leve = false, grao = 1, macro = 1 } = {}) {
+export function projetaMundo(material, metros, { rodape = 0, metrosCor = metros, sub = null, pe = null, extra = null, leve = false, grao = 1, macro = 1, corpoLiso = 0 } = {}) {
   material.onBeforeCompile = (shader) => {
     if (rodape > 0) {
       shader.vertexShader = shader.vertexShader.replace('#include <common>', `#include <common>\nvarying vec3 vHdPos;${extra?.vertCabeca || ''}`);
       shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>\nvarying vec3 vHdPos;${RUIDO_GLSL}${GRAO_GLSL}${extra?.cabeca || ''}`)
-        .replace('#include <map_fragment>', `#include <map_fragment>\n${extra?.antes || ''}${idadeDaParede(rodape, '0.0', false, sub, pe, leve, grao, macro)}${extra?.depois || ''}`);
+        .replace('#include <map_fragment>', `#include <map_fragment>\n${extra?.antes || ''}${idadeDaParede(rodape, '0.0', false, sub, pe, leve, grao, macro, corpoLiso)}${extra?.depois || ''}`);
       if (extra?.normal) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>\n${extra.normal}`);
       ligaSub(shader, sub);
       if (extra?.uniforms) Object.assign(shader.uniforms, extra.uniforms);
@@ -158,7 +165,7 @@ export function projetaMundo(material, metros, { rodape = 0, metrosCor = metros,
         ${rodape > 0 ? `vHdPos = hdMundo.xyz;${extra?.vert || ''}` : ''}
       }`);
   };
-  material.customProgramCacheKey = () => `sertao-hd-mundo10-${metros}-${rodape}-${metrosCor}-${sub ? `${sub.metros}${sub.cor}${sub.pe}${sub.alto}${sub.y0}${sub.sat}${sub.forca}${sub.tijolo}${sub.taipa}${sub.foraDoCorpo}${sub.adobe ? `a${sub.razao}${sub.junta}${sub.media}${sub.beico}` : ''}` : 0}-${pe ? `${pe.cor}${pe.altura}${pe.escuro}` : 0}${extra ? `-${extra.chave}` : ''}${leve ? '-leve' : ''}${grao === 1 && macro === 1 ? '' : `-g${grao}-${macro}`}`;
+  material.customProgramCacheKey = () => `sertao-hd-mundo10-${metros}-${rodape}-${metrosCor}-${sub ? `${sub.metros}${sub.cor}${sub.pe}${sub.alto}${sub.y0}${sub.sat}${sub.forca}${sub.tijolo}${sub.taipa}${sub.foraDoCorpo}${sub.adobe ? `a${sub.razao}${sub.junta}${sub.media}${sub.beico}` : ''}` : 0}-${pe ? `${pe.cor}${pe.altura}${pe.escuro}` : 0}${extra ? `-${extra.chave}` : ''}${leve ? '-leve' : ''}${grao === 1 && macro === 1 ? '' : `-g${grao}-${macro}`}${corpoLiso > 0 ? `-liso${corpoLiso}` : ''}`;
 }
 
 export const materiaisDe = (o) => (Array.isArray(o.material) ? o.material : [o.material]).filter(Boolean);
@@ -171,7 +178,7 @@ const TERRA = [.16, .118, .09];
 // Barrado de tinta gasta por casa: anil, verde-água e ocre desbotados (linear). Nada verde-escuro (escondia perna).
 const BARRADOS = [[.17, .26, .40], [.28, .42, .35], [.50, .36, .12]];
 const LUMA = 'vec3(0.3, 0.59, 0.11)';
-function acabamentoParede(scene, { albedo = .7, barrado = true, sujeira = .8, dessat = .4, fino = .9, perto = 2.2, grao2 = .8, realce = 1.1, ceu = .42, sol = .15 } = {}) {
+function acabamentoParede(scene, { albedo = .7, barrado = true, sujeira = .9, dessat = .4, fino = 1.1, perto = 2.45, grao2 = 1, realce = 1.16, ceu = .42, sol = .15 } = {}) {
   const casas = []; scene.traverse((o) => { if (/^sertao-(casa-[a-z]+|praca-casa-interior)-\d+$/.test(o.name)) { const p = o.getWorldPosition(new THREE.Vector3()); casas.push(new THREE.Vector4(p.x, p.z, 56, casas.length % 3)); } });
   const matriz = scene.getObjectByName('sertao-igrejinha-0'); if (matriz) casas.push(new THREE.Vector4(matriz.position.x, matriz.position.z, 30, 0));
   const n = barrado ? casas.length : 0, cor = (c) => `vec3(${c.map((v) => v.toFixed(3)).join(', ')})`;
@@ -229,7 +236,7 @@ function acabamentoParede(scene, { albedo = .7, barrado = true, sujeira = .8, de
       #endif
     }` };
 }
-function rebocoHD(scene, { metros = 1.1, relevo = 3.15, rodape = .75, adobe = true, pe = { cor: TERRA, altura: .62, escuro: .34 }, parede = {} } = {}) {
+function rebocoHD(scene, { metros = 1.1, relevo = 3.65, rodape = .75, adobe = true, pe = { cor: TERRA, altura: .62, escuro: .34 }, parede = {} } = {}) {
   const alvos = new Set();
   scene.traverse((o) => { if (o.isMesh) for (const m of materiaisDe(o)) if (m.map?.name === 'oeste-adobe-paupique' || m.map?.name === 'oeste-adobe-real') alvos.add(m); });
   const antes = [...alvos].map((m) => ({ m, map: m.map, bumpMap: m.bumpMap, normalMap: m.normalMap, roughnessMap: m.roughnessMap,
@@ -238,7 +245,7 @@ function rebocoHD(scene, { metros = 1.1, relevo = 3.15, rodape = .75, adobe = tr
   for (const m of alvos) {
     // A cor autoral fica: trocá-la pelo reboco limpo apagava a pátina que dá idade à parede.
     m.bumpMap = null; m.normalMap = pbrTex('hd_sertao/white_rough_plaster_normal'); m.normalScale.set(relevo, relevo);
-    m.roughnessMap = null; m.roughness = .93;
+    m.roughnessMap = null; m.roughness = .96;
     projetaMundo(m, metros, { rodape, metrosCor: 3, pe: pe || null, extra, leve: true, macro: .6,
       sub: m.map?.name === 'oeste-adobe-paupique' ? adobeDeBaixo(adobe ? { adobe: true, foraDoCorpo: true, tex: pbrTex('hd_sertao/clay_block_wall_cor', true), metros: 1.6, media: .1178,
         cor: [1.38, .86, .5], razao: .56, junta: .9, alto: .725, pe: .66 } : {}) : null }); m.needsUpdate = true;
@@ -248,14 +255,14 @@ function rebocoHD(scene, { metros = 1.1, relevo = 3.15, rodape = .75, adobe = tr
 }
 
 // Base de pedra, madeira e chão: os três ainda eram 512 px só cor, com bumpMap = a própria cor.
-function baseHD(scene, { pedraMetros = 1.6, madeira = 2.2, chao = 300, telha = 2.6 } = {}) {
+function baseHD(scene, { pedraMetros = 1.6, madeira = 2.2, chao = 150, telha = 2.6 } = {}) {
   const porMapa = new Map();
   scene.traverse((o) => { if (o.isMesh) for (const m of materiaisDe(o)) if (m.map?.name && m.isMeshStandardMaterial) (porMapa.get(m.map.name) || porMapa.set(m.map.name, new Set()).get(m.map.name)).add(m); });
   const antes = [], guarda = (m) => antes.push({ m, cor: m.color.clone(), map: m.map, bumpMap: m.bumpMap, normalMap: m.normalMap, roughnessMap: m.roughnessMap, roughness: m.roughness,
     ns: m.normalScale.x, obc: m.onBeforeCompile, key: m.customProgramCacheKey });
   for (const m of porMapa.get('oeste-pedra-real') || []) { guarda(m);
     m.map = pbrTex('cobblestone_floor_01_color', true); m.bumpMap = null; m.normalMap = pbrTex('cobblestone_floor_01_normal'); m.normalScale.set(3.1, 3.1);
-    m.roughnessMap = pbrTex('cobblestone_floor_01_rough'); m.roughness = 1; m.color.setRGB(1.45, 1.36, 1.2); projetaMundo(m, pedraMetros); m.needsUpdate = true; }
+    m.roughnessMap = pbrTex('cobblestone_floor_01_rough'); m.roughness = 1; m.color.setRGB(1.45, 1.36, 1.2); projetaMundo(m, pedraMetros); suavizaDetalheHD(m, `pedra-${pedraMetros}`); m.needsUpdate = true; }
   for (const m of telha ? porMapa.get('oeste-roof-real') || [] : []) { guarda(m); m.userData.hdLaje = true;
     m.map = pbrTex('hd_sertao/clay_roof_tiles_02_cor', true); m.bumpMap = null; m.normalMap = pbrTex('hd_sertao/clay_roof_tiles_02_normal'); m.normalScale.set(3.4, 3.4); m.color.setRGB(.66, .7, .74);
     // Fiada da telha segue a queda da água: a direção sai da componente horizontal da normal do plano.
@@ -276,17 +283,31 @@ function baseHD(scene, { pedraMetros = 1.6, madeira = 2.2, chao = 300, telha = 2
           vNormalMapUv = hdUv;
         #endif
       }`); };
-    m.customProgramCacheKey = () => `sertao-hd-telha2-${telha}`; m.needsUpdate = true; }
+    m.customProgramCacheKey = () => `sertao-hd-telha2-${telha}`; suavizaDetalheHD(m, `telha-${telha}`); m.needsUpdate = true; }
   for (const nome of [...(telha ? [] : ['oeste-roof-real']), 'oeste-hay-real', 'oeste-cactus-real'])
     for (const m of porMapa.get(nome) || []) { guarda(m); m.bumpMap = null; m.normalMap = relevoDeCor(m.map, madeira); m.normalScale.set(1, 1); m.needsUpdate = true; }
   for (const m of porMapa.get('oeste-sand-real') || []) { guarda(m);
-    // Plano de 1200 m: 300 repetições = 4 m; com 2,2 m o pedrisco virava chiado visto da praça.
-    m.normalMap = pbrTex('hd_sertao/dry_ground_rocks_normal', false, chao); m.normalScale.set(.52, .52); m.roughnessMap = null; m.roughness = 1;
-    // Chão medido claro e lavado contra a arte (L 137, S 0,27 contra L 85, S 0,49): desce meio caminho.
-    m.color.setRGB(.95, .79, .72); m.needsUpdate = true; }
+    // Terra seca usa escala de 8 m: trinca fina e pedrinhas esparsas, sem placa de cascalho.
+    m.map = pbrTex('hd_sertao/dry_ground_01_cor', true, chao); m.normalMap = pbrTex('hd_sertao/dry_ground_01_normal', false, chao); m.normalScale.set(.34, .34);
+    m.roughnessMap = pbrTex('hd_sertao/dry_ground_01_rough', false, chao); m.roughness = 1; m.bumpMap = null;
+    m.color.setRGB(.74, .61, .5); m.needsUpdate = true; }
   return () => { for (const s of antes) { Object.assign(s.m, { map: s.map, bumpMap: s.bumpMap, normalMap: s.normalMap, roughnessMap: s.roughnessMap,
     roughness: s.roughness, onBeforeCompile: s.obc, customProgramCacheKey: s.key }); s.m.color.copy(s.cor); s.m.normalScale.set(s.ns, s.ns); delete s.m.userData.hdLaje; s.m.needsUpdate = true; } };
 }
+
+// Atenua normal e albedo de materiais repetidos quando o passo UV fica menor que um pixel.
+function suavizaDetalheHD(material, chave = '') {
+  const obc = material.onBeforeCompile, key = material.customProgramCacheKey;
+  material.onBeforeCompile = (shader, renderer) => {
+    obc?.call(material, shader, renderer);
+    shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+      { float hdPasso = max(fwidth(vNormalMapUv.x), fwidth(vNormalMapUv.y));
+        float hdFino = smoothstep(0.055, 0.012, hdPasso);
+        normal = normalize(mix(nonPerturbedNormal, normal, hdFino)); }`);
+  };
+  material.customProgramCacheKey = () => `sertao-hd-antimoire-${chave}-${key ? key.call(material) : ''}`;
+}
+
 
 // Só vale para caixa sem subdivisão: em todo vértice |position| é meia dimensão, e a dimensão
 // da face sai do próprio atributo. Barril e tronco seguem no material original.
@@ -611,14 +632,14 @@ export function luzHD(scene, renderer, { hemi = .38, solGanho = 1.3, ceu = {}, c
 
 // Chão do Sertão: o detalhe mora no ALBEDO (o relevo some na sombra). Variação por posição de mundo,
 // sulcos de roda e terra rachada; encadeia o onBeforeCompile que o mapa já pôs (untileSertaoSoil).
-function chaoHD(scene, { cor = [.6, .535, .6], sulcos = true, rachado = true, contraste = .6, detalhe = .27, dessat = .5, fino = .16 } = {}) {
+function chaoHD(scene, { cor = [.58, .49, .41], chao = 150, sulcos = true, rachado = true, contraste = .44, detalhe = .12, dessat = .58, fino = .06 } = {}) {
   const solo = scene.getObjectByName('sertao-solo'), m = solo?.material;
   if (!m?.isMeshStandardMaterial) return () => {};
   const antes = { cor: m.color.clone(), obc: m.onBeforeCompile, key: m.customProgramCacheKey };
   m.color.setRGB(cor[0], cor[1], cor[2]);
   m.onBeforeCompile = (shader, r) => {
     antes.obc?.call(m, shader, r);
-    shader.uniforms.hdSolo = { value: pbrTex('hd_sertao/dry_ground_rocks_cor', true) };
+    shader.uniforms.hdSolo = { value: pbrTex('hd_sertao/dry_ground_01_cor', true, chao) };
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vHdPos;')
       .replace('#include <project_vertex>', '#include <project_vertex>\nvHdPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
     shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>\nvarying vec3 vHdPos;\nuniform sampler2D hdSolo;${RUIDO_GLSL}
@@ -655,11 +676,11 @@ function chaoHD(scene, { cor = [.6, .535, .6], sulcos = true, rachado = true, co
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11))) * vec3(1.14, 1.04, 0.9), 0.4 * smoothstep(0.5, 0.8, hdMa2));
         // Pedrisco e torrão: mesma UV do relevo, para o albedo casar com a normal.
         #ifdef USE_NORMALMAP
-          float hdT1 = dot(texture2D(hdSolo, vNormalMapUv).rgb, vec3(0.3, 0.59, 0.11)) / 0.0793;
+          float hdT1 = dot(texture2D(hdSolo, vNormalMapUv).rgb, vec3(0.3, 0.59, 0.11)) / 0.11;
           float hdPertoC = smoothstep(0.03, 0.012, hdPx);
-          diffuseColor.rgb *= mix(1.0, clamp(hdT1, 0.4, 1.8), ${detalhe.toFixed(3)} * mix(0.45, 1.0, smoothstep(0.09, 0.025, hdPx)) * (1.0 + 0.7 * hdPertoC)) * (1.0 + 0.3 * smoothstep(1.2, 1.7, hdT1) * hdPertoC);
-          float hdF3 = smoothstep(0.05, 0.012, hdPx), hdT3 = dot(texture2D(hdSolo, vNormalMapUv * 3.0 + 0.37).rgb, vec3(0.3, 0.59, 0.11)) / 0.0793;
-          diffuseColor.rgb *= mix(1.0, clamp(hdT3, 0.5, 1.6), ${fino.toFixed(3)} * hdF3); hdAlt += (clamp(hdT3, 0.4, 1.7) - 1.0) * 0.007 * hdF3;
+          diffuseColor.rgb *= mix(1.0, clamp(hdT1, 0.55, 1.5), ${detalhe.toFixed(3)} * mix(0.45, 1.0, smoothstep(0.09, 0.025, hdPx)) * (1.0 + 0.5 * hdPertoC)) * (1.0 + 0.18 * smoothstep(1.2, 1.7, hdT1) * hdPertoC);
+          float hdF3 = smoothstep(0.05, 0.012, hdPx), hdT3 = dot(texture2D(hdSolo, vNormalMapUv * 3.0 + 0.37).rgb, vec3(0.3, 0.59, 0.11)) / 0.11;
+          diffuseColor.rgb *= mix(1.0, clamp(hdT3, 0.65, 1.4), ${fino.toFixed(3)} * hdF3); hdAlt += (clamp(hdT3, 0.6, 1.5) - 1.0) * 0.004 * hdF3;
         #endif
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11))), ${dessat.toFixed(3)});
         ${sulcos ? `if (hdPx < 0.9) { vec2 hdS = hdSulcos(hdP) * smoothstep(0.9, 0.2, hdPx);
@@ -677,17 +698,19 @@ function chaoHD(scene, { cor = [.6, .535, .6], sulcos = true, rachado = true, co
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
       { vec3 hdSx = dFdx(-vViewPosition), hdSy = dFdy(-vViewPosition), hdR1 = cross(hdSy, normal), hdR2 = cross(normal, hdSx);
         float hdDet = dot(hdSx, hdR1);
-        normal = normalize(abs(hdDet) * normal - sign(hdDet) * (dFdx(hdAlt) * hdR1 + dFdy(hdAlt) * hdR2) * 1.6); }`);
+        normal = normalize(abs(hdDet) * normal - sign(hdDet) * (dFdx(hdAlt) * hdR1 + dFdy(hdAlt) * hdR2) * 1.6);
+        float hdPasso = max(fwidth(vNormalMapUv.x), fwidth(vNormalMapUv.y));
+        normal = normalize(mix(nonPerturbedNormal, normal, smoothstep(0.055, 0.012, hdPasso))); }`);
   };
-  m.customProgramCacheKey = () => `sertao-hd-chao8-${sulcos}-${rachado}-${contraste}-${detalhe}-${dessat}-${fino}-${antes.key ? antes.key.call(m) : ''}`;
+  m.customProgramCacheKey = () => `sertao-hd-chao9-${chao}-${sulcos}-${rachado}-${contraste}-${detalhe}-${dessat}-${fino}-${antes.key ? antes.key.call(m) : ''}`;
   m.needsUpdate = true;
   return () => { m.color.copy(antes.cor); m.onBeforeCompile = antes.obc; m.customProgramCacheKey = antes.key; m.needsUpdate = true; };
 }
 
 // Céu de fim de tarde do Sertão: zênite âmbar empoeirado, horizonte quente puxando para o sol,
 // disco solar e duas camadas de nuvem com a borda voltada ao sol iluminada.
-export function ceuTardeHD(scene, sol, { zenite = 0x7a6c70, horizonte = null, horizonteSol = 0xffb04c, solCor = 0xffa648, disco = 9, bruma = 0xf6d49a, brumaForca = .55,
-  nuvem = 0xffd08a, nuvemSombra = 0x8a756a, cobertura = .51, curva = .36, ganho = .95, raio = 100, morro = null } = {}) {
+export function ceuTardeHD(scene, sol, { zenite = 0x3f4778, horizonte = 0xc6815c, horizonteSol = 0xf49b47, solCor = 0xe47a36, disco = 6, bruma = 0xd8985f, brumaForca = .32,
+  nuvem = 0xd89b68, nuvemSombra = 0x5a4f68, cobertura = .56, curva = .42, ganho = .9, raio = 100, morro = null } = {}) {
   horizonte ??= scene.fog?.color?.getHex() ?? 0xd7a477;
   const mat = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false,
     uniforms: { uZ: { value: new THREE.Color(zenite) }, uH: { value: new THREE.Color(horizonte) }, uHS: { value: new THREE.Color(horizonteSol) },
@@ -769,7 +792,7 @@ export function aplicaSertaoHD(scene, renderer, opts = {}) {
   }
   const serra = !!cen && cen.serra !== false;
   if (opts.luz !== false) {
-    const tarde = q.get('hdsol') !== '0' && opts.solTarde !== false, ceuNovo = opts.ceu !== false;
+    const tarde = q.get('hdsol') !== '0' && opts.solTarde !== false, ceuNovo = q.get('hdceu') === '0' || opts.ceu === false ? false : (q.get('hdceu') === '1' || opts.ceu !== undefined);
     desfaz.push(luzHD(scene, renderer, { hemi: .16, solGanho: 1.5, ceu: { ganho: .34, halo: .6 }, cupula: ceuNovo ? null : { morro: { cor: 0x5e3f38, altura: .16 } },
       ...(tarde ? { solDir: SOL_TARDE, solCor: 0xffc088, solGanho: 3.19, hemi: 1.13, ambiente: false, rebote: 0xa08468 } : {}), ...(opts.luz || {}) }));
     if (tarde) desfaz.push(sombraRasante(scene));
