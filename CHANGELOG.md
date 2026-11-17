@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.150`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.151`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -286,6 +286,361 @@
 - A animação de recarga em terceira pessoa deixa de reiniciar ao terminar; o clipe ainda retoma quando uma reação de dano o interrompe.
 - As réguas de emote validam a composição exata dos 16 itens do menu, e os harnesses de snapshot injetam o catálogo v9 ao avaliar `netgame.js`.
 - Estados assados por personagem só entram quando não aumentam nenhum teto congelado de deformação; os offsets de pé e as catracas de chão são regenerados sobre o conjunto aprovado.
+
+## [2.1.0-alpha.151] — 2026-11-17
+
+### Mudado
+- feat(emotes): emotes de captura (capoeira, breakdance, gestos) por clipe de corpo inteiro (#1280)
+- Production-ready Cloudflare Workers: private assets from R2, edge cache and deploy verification (staging) (#1378)
+- fix(animation): select baked states per character body (#1279)
+- feat(animation): ship third-person states and motion-capture emotes (#1268)
+- release: batch 2026-11-17 — Cloudflare Workers, animation states, playtest fixes (#1385)
+- test: harden multiplayer release gates
+- fix: restore network prepush gates
+- test(net): reject extra emote failures
+- docs(animation): record finite reload clip
+- fix(animation): finish authored reload once
+- fix(test): track protocol v10 emote helper
+- docs(mp): document objective rewards
+- fix(mp): publish objective reward contract
+- fix(test): inject protocol v10 catalog in harnesses
+- fix(animation): complete merged harness routes
+- fix(assets): refresh baked animation inventory
+- feat(net): replicate captured emotes in protocol v10
+- fix(cf): block stale queued promotions
+- test(anim): verify blended strafe timing
+- test(emotes): execute lazy driver initializers
+- fix(cf): deploy every protected main SHA
+- test(animation): reject duplicate baked-state vetoes
+- fix(privacy): reuse pending beacon across choices
+- fix(privacy): stop beacon without reloading flows
+- fix(privacy): stop beacon after consent withdrawal
+- fix(privacy): gate Cloudflare analytics by choice
+- fix(netcode): decouple v9 emote ids from catalog
+- fix(cf): harden edge cutover invariants
+- fix(animacoes): restaurar clipes vetados da release
+- fix(cf): correct R2 fetch and promotion arguments
+- chore(animacoes): regenerar packs e catracas aprovados
+- fix(animacoes): vetar regressao de rig nos estados
+- fix(animacoes): encerrar recarga sem reiniciar clipe
+- fix(ci): restore animation prepush gates
+- fix(animation): preserve authored clips
+- fix(animation): honor idle floor band
+- fix(cf): validate R2 object before 304
+- test(emotes): mutate silent pack failure
+- fix(ci): wire animation packs into fast gates
+- test(net): make local emote leak mutants causal
+- fix(cf): require an etag for conditional cache hits
+- fix(cf): preserve dynamic methods and cache 304s
+- fix(cf): bypass assets for write methods
+- fix(cf): trust only protected preview bases
+- fix(cf): provision PR preview URLs
+- fix(cf): promote exact candidate version
+- fix(ci): isolate pre-push lock fixture
+- fix(cf): enable candidate preview URLs
+- docs(cf): document verified promotion
+- fix(cf): verify versions before promotion
+- fix(cf): restrict deploy refs before secrets
+- fix(cf): consume private audio and route apex assets
+- fix(cf): scope deploy secrets and verify R2 bytes
+- fix(cf): allow wrangler.prod.toml at the root and repair the changelog line
+- fix(eval): drive bot reload through real caller
+- docs(changelog): keep the legacy host out of published text
+- fix(cf): spell out eval:cfborda mutants for the MA1 announcement check
+- feat(privacy): drop the Vercel Web Analytics loader
+- style(cf): keep new comments within the two-line ceiling
+- fix(eval): isolate procedural animation fallback
+- fix(eval): keep deploy gates compatible with v9
+- docs(eval): refresh architecture index
+- fix(animation): connect third-person state callers
+- fix(ci): validate legacy lock timestamp portability
+- fix(ci): validate legacy lock process age
+- fix(ci): isolate kernel lock from legacy path
+- fix(ci): preserve writer credentials and lock ownership
+- fix(docs): remove generated merge markers
+- fix(ci): validate legacy lock timestamp portability
+- fix(ci): validate legacy lock process age
+- fix(ci): isolate kernel lock from legacy path
+- fix(ci): preserve writer credentials and lock ownership
+- fix(docs): remove generated merge markers
+- fix(multiplayer): align remote strafe direction
+- fix(eval): pin codec control to TAP output
+- fix(eval): isolate procedural 3P fallback
+- fix(emotes): surface mocap pack failures
+- docs(cf): record phases 3-4 of the Vercel exit in the runbook and changelog
+- feat(cf): read the private audio pack from R2 and verify every Workers deploy
+- feat(cf): serve private viewmodels from R2 and cache s-maxage at the edge
+- fix(assets): inventory baked animation sources
+- fix(net): keep capture emotes local in v9
+- fix(net): keep capture emotes local in v9
+- test(net): restore namespace and transport proofs
+- fix(animation): align remote lateral axis
+- fix(net): freeze emote IDs in snapshot v9
+- test(animation): fail closed on causal clauses and roster refs
+- fix(animation): initialize pending ceremony state
+- test(animacao): exige que o módulo sem pack não toque reload_rifle
+- test(animacao): exige lateral do remoto do MP em m/s
+- fix(animacao): granada pedida antes do pack toca quando ele chega
+- fix(animacao): bot do single-player faz strafe para o lado certo
+- test(emotes): mutante cobra a cláusula dele e o roster lê o raio do jogo
+- fix(emotes): origem dos emotes sem travessão no title da roda
+- fix(animacao): flinch volta ao overlay quando outro clipe toma o tronco
+- test(animacao): mede os call sites dos estados extras no Game real
+- fix(animacoes): veto de runtime exige régua existente e medição do lado ruim dela
+- test(animacao): mede recarga e hit com clipe na partida viva
+- test(animacao): prova que a cerimônia segura o corpo parado
+- test(animacao): mede a recarga com clipe no contrato mundo
+- test(animacao): exige strafe autoral no backpedal local
+- docs(emotes): comentários do retarget cabem em duas linhas
+- test(emotes): EMM11 cobra clipe no driver do lobby
+- fix(animacao): exige strafe e recuo autorais no remoto do MP
+- fix(animacoes): promoção do importador desfaz alvos já trocados se uma escrita falha
+- fix(animacoes): --check do importador reprova arquivo publicado defasado
+- fix(animacoes): refs globais vêm de uma fonte só (REFS_PADRAO)
+- fix(lixo): LX5 reconhece clipe por estado listado no índice de animações
+- chore(animacoes): regenera índice, offsets de pé e revisões depois dos vetos de runtime
+- fix(animacoes): restaura clipes atuais vetados (saci, skatista, trapfunk, zumbi, esquerdomacho/death)
+- fix(animacoes): restaura clipes atuais vetados ( metaleiro mistico ostentacao pagodeiro professor raul)
+- fix(animacoes): restaura clipes atuais vetados ( deputado doutora farialimer fluxo juiz julia-zanatta)
+- fix(animacoes): restaura clipes atuais vetados ( caminhoneiro capitao clubber coach criarj curupira)
+- fix(animacoes): restaura clipes atuais vetados ( barbudo blackmetal bonzo boto cadequinha caipora)
+- fix(animacoes): vetos de runtime do AN1 (28 idles) e da câmera de morte (esquerdomacho/death)
+- revert(tp-anim3p): AN1 volta ao critério original (base − 10 cm)
+- chore(animacoes): regenera offsets de pé e revisões depois dos vetos
+- fix(animacoes): restaura o idle atual de mandrake, pagodeiro (veto eval:select)
+- fix(animacoes): restaura o idle atual de et, titica, jozo, funkraiz, hipster (veto eval:select)
+- fix(animacoes): restaura o idle atual de proerd, reggae, bombado, padata, mst (veto eval:select)
+- fix(animacoes): restaura o idle atual de ministro, marina-silva, esbirro, gotinha, oakley (veto eval:select)
+- fix(animacoes): veto do eval:select mantém o idle atual em 17 corpos
+- fix(tp-anim3p): AN1 mede aproximação ao pente e AN3 mede o corpo assentado
+- fix(postura): estados assados pagam 7 dívidas registradas
+- fix(animacoes): cuca ganha pasta completa com os mantidos copiados do compartilhado
+- fix(animacoes): canarinho mantém idle1h por veto de runtime
+- chore(animacoes): regenera índice, offsets de pé e revisões de asset
+- chore(animacoes): evidência compacta da troca por estado
+- feat(animacoes): zumbi troca 8/11 estados pelos assados do Studio
+- feat(animacoes): trapfunk troca 11/11 estados pelos assados do Studio
+- feat(animacoes): titica troca 11/11 estados pelos assados do Studio
+- feat(animacoes): skatista troca 11/11 estados pelos assados do Studio
+- feat(animacoes): sindicato troca 11/11 estados pelos assados do Studio
+- feat(animacoes): sertanejo troca 3/11 estados pelos assados do Studio
+- feat(animacoes): senador troca 10/11 estados pelos assados do Studio
+- feat(animacoes): saci troca 10/11 estados pelos assados do Studio
+- feat(animacoes): reggae troca 11/11 estados pelos assados do Studio
+- feat(animacoes): raul troca 11/11 estados pelos assados do Studio
+- feat(animacoes): rapper troca 11/11 estados pelos assados do Studio
+- feat(animacoes): punk troca 11/11 estados pelos assados do Studio
+- feat(animacoes): programador-virado troca 7/11 estados pelos assados do Studio
+- feat(animacoes): profeta-calcada troca 7/11 estados pelos assados do Studio
+- feat(animacoes): professor troca 11/11 estados pelos assados do Studio
+- feat(animacoes): proerd troca 11/11 estados pelos assados do Studio
+- feat(animacoes): palhacomal troca 11/11 estados pelos assados do Studio
+- feat(animacoes): pagodeiro troca 11/11 estados pelos assados do Studio
+- feat(animacoes): padati troca 11/11 estados pelos assados do Studio
+- feat(animacoes): padata troca 11/11 estados pelos assados do Studio
+- feat(animacoes): ostentacao troca 11/11 estados pelos assados do Studio
+- feat(animacoes): oakley troca 7/11 estados pelos assados do Studio
+- feat(animacoes): mst troca 11/11 estados pelos assados do Studio
+- feat(animacoes): motoca-cachorro-loko troca 11/11 estados pelos assados do Studio
+- feat(animacoes): mistico troca 11/11 estados pelos assados do Studio
+- feat(animacoes): ministro troca 8/11 estados pelos assados do Studio
+- feat(animacoes): microfonildo troca 8/11 estados pelos assados do Studio
+- feat(animacoes): metaleiro troca 11/11 estados pelos assados do Studio
+- feat(animacoes): marina-silva troca 7/11 estados pelos assados do Studio
+- feat(animacoes): mariabonita troca 7/11 estados pelos assados do Studio
+- feat(animacoes): mandrake troca 11/11 estados pelos assados do Studio
+- feat(animacoes): lobisomem troca 11/11 estados pelos assados do Studio
+- feat(animacoes): lenda-lanhouse troca 11/11 estados pelos assados do Studio
+- feat(animacoes): lampiao troca 8/11 estados pelos assados do Studio
+- feat(animacoes): julia-zanatta troca 11/11 estados pelos assados do Studio
+- feat(animacoes): juiz troca 8/11 estados pelos assados do Studio
+- feat(animacoes): jozo troca 11/11 estados pelos assados do Studio
+- feat(animacoes): hipster troca 11/11 estados pelos assados do Studio
+- feat(animacoes): gotinha troca 11/11 estados pelos assados do Studio
+- feat(animacoes): gilbomes troca 11/11 estados pelos assados do Studio
+- feat(animacoes): funkraiz troca 11/11 estados pelos assados do Studio
+- feat(animacoes): funkeiro troca 11/11 estados pelos assados do Studio
+- feat(animacoes): fluxo troca 9/11 estados pelos assados do Studio
+- feat(animacoes): farialimer troca 11/11 estados pelos assados do Studio
+- feat(animacoes): et troca 11/11 estados pelos assados do Studio
+- feat(animacoes): esquerdomacho troca 5/11 estados pelos assados do Studio
+- feat(animacoes): esbirro troca 7/11 estados pelos assados do Studio
+- feat(animacoes): emo troca 11/11 estados pelos assados do Studio
+- feat(animacoes): doutora troca 11/11 estados pelos assados do Studio
+- feat(animacoes): dollynho troca 11/11 estados pelos assados do Studio
+- feat(animacoes): doidinho-bairro troca 9/11 estados pelos assados do Studio
+- feat(animacoes): designer-ux troca 11/11 estados pelos assados do Studio
+- feat(animacoes): deputado troca 11/11 estados pelos assados do Studio
+- feat(animacoes): dama troca 11/11 estados pelos assados do Studio
+- feat(animacoes): curupira troca 11/11 estados pelos assados do Studio
+- feat(animacoes): cuca troca 5/11 estados pelos assados do Studio
+- feat(animacoes): criarj troca 11/11 estados pelos assados do Studio
+- feat(animacoes): coach troca 11/11 estados pelos assados do Studio
+- feat(animacoes): clubber troca 11/11 estados pelos assados do Studio
+- feat(animacoes): chave troca 11/11 estados pelos assados do Studio
+- feat(animacoes): capitao troca 10/11 estados pelos assados do Studio
+- feat(animacoes): canarinho troca 11/11 estados pelos assados do Studio
+- feat(animacoes): caminhoneiro troca 11/11 estados pelos assados do Studio
+- feat(animacoes): camera-roxa troca 11/11 estados pelos assados do Studio
+- feat(animacoes): caipora troca 6/11 estados pelos assados do Studio
+- feat(animacoes): cadequinha troca 11/11 estados pelos assados do Studio
+- feat(animacoes): boto troca 11/11 estados pelos assados do Studio
+- feat(animacoes): bonzo troca 11/11 estados pelos assados do Studio
+- feat(animacoes): bombado troca 11/11 estados pelos assados do Studio
+- feat(animacoes): blackmetal troca 11/11 estados pelos assados do Studio
+- feat(animacoes): barbudo troca 11/11 estados pelos assados do Studio
+- feat(animacoes): bandeirante troca 11/11 estados pelos assados do Studio
+- feat(animacoes): ancap troca 2/11 estados pelos assados do Studio
+- feat(animacoes): adjim troca 4/11 estados pelos assados do Studio
+- feat(animacoes): locomoção usa a velocidade natural do clipe assado
+- feat(animacoes): regra do dono decide a troca de clipe por estado
+- fix(animacoes): importador promove todos os arquivos só depois de validar todos os corpos
+- fix(animacoes): exclusão exige piora medida e hash das fontes do QA; --check reproduz a evidência
+- docs(animacoes): régua declara o que não exercita sem pack aceito
+- fix(animacoes): importador só publica pack depois de validar o corpo inteiro
+- fix(animacoes): régua exige piora no sentido da métrica em toda exclusão
+- docs(emotes): registra retarget por corpo, roster e residuos
+- test(emotes): mede os 99 corpos e skins e cobra capsula e coluna com mutantes
+- fix(emotes): retarga clipe de captura pelo repouso de cada corpo, com chao por contato e capsula
+- fix(animacoes): evidência dos estados assados sai de public/ para o arnês
+- fix(emotes): preserva ancora da mira de cabeca
+- fix(animacoes): valida fallback assado contra manifest antes de hashear
+- fix(emotes): encurta comentarios e mede saida do clipe no EP7
+- docs(emotes): registra emotes de captura, rede e desbloqueio
+- test(emotes): cobra emotes de captura com mutantes
+- feat(emotes): toca emotes de captura por clipe de corpo inteiro
+- feat(anims): empacota emotes de captura num glb compartilhado
+- fix(animacoes): exclui qualquer piora numérica no QA
+- chore(animacoes): restaura medições dos clipes atuais
+- fix(animacoes): remove runtime de packs reprovados no QA
+- fix(animacoes): preserva estados atuais de cuca
+- fix(animacoes): preserva estados atuais de trapfunk
+- fix(animacoes): preserva estados atuais de skatista
+- fix(animacoes): preserva estados atuais de sindicato
+- fix(animacoes): preserva estados atuais de raul
+- fix(animacoes): preserva estados atuais de rapper
+- fix(animacoes): preserva estados atuais de punk
+- fix(animacoes): preserva estados atuais de programador-virado
+- fix(animacoes): preserva estados atuais de profeta-calcada
+- fix(animacoes): preserva estados atuais de professor
+- fix(animacoes): preserva estados atuais de pagodeiro
+- fix(animacoes): preserva estados atuais de padati
+- fix(animacoes): preserva estados atuais de ostentacao
+- fix(animacoes): preserva estados atuais de motoca-cachorro-loko
+- fix(animacoes): preserva estados atuais de mistico
+- fix(animacoes): preserva estados atuais de metaleiro
+- fix(animacoes): preserva estados atuais de mandrake
+- fix(animacoes): preserva estados atuais de lobisomem
+- fix(animacoes): preserva estados atuais de julia-zanatta
+- fix(animacoes): preserva estados atuais de juiz
+- fix(animacoes): preserva estados atuais de gilbomes
+- fix(animacoes): preserva estados atuais de funkeiro
+- fix(animacoes): preserva estados atuais de farialimer
+- fix(animacoes): preserva estados atuais de emo
+- fix(animacoes): preserva estados atuais de doutora
+- fix(animacoes): preserva estados atuais de dollynho
+- fix(animacoes): preserva estados atuais de doidinho-bairro
+- fix(animacoes): preserva estados atuais de designer-ux
+- fix(animacoes): preserva estados atuais de curupira
+- fix(animacoes): preserva estados atuais de criarj
+- fix(animacoes): preserva estados atuais de coach
+- fix(animacoes): preserva estados atuais de clubber
+- fix(animacoes): preserva estados atuais de chave
+- fix(animacoes): preserva estados atuais de caminhoneiro
+- fix(animacoes): preserva estados atuais de camera-roxa
+- fix(animacoes): preserva estados atuais de caipora
+- fix(animacoes): preserva estados atuais de cadequinha
+- fix(animacoes): preserva estados atuais de boto
+- fix(animacoes): preserva estados atuais de bonzo
+- fix(animacoes): preserva estados atuais de blackmetal
+- fix(animacoes): preserva estados atuais de barbudo
+- fix(animacoes): preserva estados atuais de bandeirante
+- feat(animacoes): assa estados da cuca com passive knees
+- docs(animacoes): documenta packs e revisões de assets
+- chore(animacoes): regenera medição e offsets de pés
+- chore(animacoes): registra QA e seleção dos packs
+- feat(animacoes): integra packs assados e réguas de contato
+- fix(animacoes): preserva estados atuais de hipster
+- fix(animacoes): preserva estados atuais de funkraiz
+- fix(animacoes): preserva estados atuais de mariabonita
+- fix(animacoes): preserva estados atuais de jozo
+- fix(animacoes): preserva estados atuais de titica
+- fix(animacoes): preserva estados atuais de et
+- fix(animacoes): preserva estados atuais de mst
+- fix(animacoes): preserva estados atuais de lampiao
+- fix(animacoes): preserva estados atuais de padata
+- fix(animacoes): preserva estados atuais de palhacomal
+- fix(animacoes): preserva estados atuais de bombado
+- fix(animacoes): preserva estados atuais de reggae
+- fix(animacoes): preserva estados atuais de gotinha
+- fix(animacoes): preserva estados atuais de marina-silva
+- fix(animacoes): preserva estados atuais de ministro
+- fix(animacoes): preserva estados atuais de canarinho
+- feat(animacoes): assa estados de trapfunk
+- feat(animacoes): assa estados de titica
+- feat(animacoes): assa estados de skatista
+- feat(animacoes): assa estados de sindicato
+- feat(animacoes): assa estados de reggae
+- feat(animacoes): assa estados de raul
+- feat(animacoes): assa estados de rapper
+- feat(animacoes): assa estados de punk
+- feat(animacoes): assa estados de programador-virado
+- feat(animacoes): assa estados de profeta-calcada
+- feat(animacoes): assa estados de professor
+- feat(animacoes): assa estados de palhacomal
+- feat(animacoes): assa estados de pagodeiro
+- feat(animacoes): assa estados de padati
+- feat(animacoes): assa estados de padata
+- feat(animacoes): assa estados de ostentacao
+- feat(animacoes): assa estados de mst
+- feat(animacoes): assa estados de motoca-cachorro-loko
+- feat(animacoes): assa estados de mistico
+- feat(animacoes): assa estados de ministro
+- feat(animacoes): assa estados de metaleiro
+- feat(animacoes): assa estados de marina-silva
+- feat(animacoes): assa estados de mariabonita
+- feat(animacoes): assa estados de mandrake
+- feat(animacoes): assa estados de lobisomem
+- feat(animacoes): assa estados de lampiao
+- feat(animacoes): assa estados de julia-zanatta
+- feat(animacoes): assa estados de juiz
+- feat(animacoes): assa estados de jozo
+- feat(animacoes): assa estados de hipster
+- feat(animacoes): assa estados de gotinha
+- feat(animacoes): assa estados de gilbomes
+- feat(animacoes): assa estados de funkraiz
+- feat(animacoes): assa estados de funkeiro
+- feat(animacoes): assa estados de farialimer
+- feat(animacoes): assa estados de et
+- feat(animacoes): assa estados de emo
+- feat(animacoes): assa estados de doutora
+- feat(animacoes): assa estados de dollynho
+- feat(animacoes): assa estados de doidinho-bairro
+- feat(animacoes): assa estados de designer-ux
+- feat(animacoes): assa estados de curupira
+- feat(animacoes): assa estados de criarj
+- feat(animacoes): assa estados de coach
+- feat(animacoes): assa estados de clubber
+- feat(animacoes): assa estados de chave
+- feat(animacoes): assa estados de canarinho
+- feat(animacoes): assa estados de caminhoneiro
+- feat(animacoes): assa estados de camera-roxa
+- feat(animacoes): assa estados de caipora
+- feat(animacoes): assa estados de cadequinha
+- feat(animacoes): assa estados de boto
+- feat(animacoes): assa estados de bonzo
+- feat(animacoes): assa estados de bombado
+- feat(animacoes): assa estados de blackmetal
+- feat(animacoes): assa estados de barbudo
+- feat(animacoes): assa estados do bandeirante
+- docs(animacao): registra saque pendente na carga lazy
+- test(animacao): mede fallback procedural no contrato mundo
+- fix(animacao): reproduz primeiro saque apos carga lazy
+- fix(animacao): torna cerimonia opcional no harness
+- chore(assets): versiona o pack de estados extras
+- test(animacao): cobre estados extras com mutantes
+- feat(animacao): integra estados extras em terceira pessoa
+- feat(anims): empacota clipes extras compartilhados
 
 ## [2.1.0-alpha.150] — 2026-11-17
 
