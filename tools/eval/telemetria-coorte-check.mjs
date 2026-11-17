@@ -106,18 +106,27 @@ else for (const caso of CASOS) {
   conferir('TC2', caso, { ...r });
 }
 
-let usos = 0;
-for (const m of main.matchAll(/\.\.\.sinaisDeBuild\(\)/g)) {
-  usos++;
-  const antes = main.slice(0, m.index);
-  const ini = antes.lastIndexOf('\nfunction ');
-  const nome = (antes.slice(ini).match(/function (\w+)/) || [])[1];
-  const corpo = antes.slice(ini);
-  if (!/^\nfunction \w+\([^)]*\) \{\n\s*if \(!analyticsAllowed\(\)\) return;/.test(corpo)) {
-    falhas.push(`TC3 ${nome || '?'} manda sinaisDeBuild() sem começar por analyticsAllowed()`);
+const confereConsentimento = (padrao, ignorados = new Set()) => {
+  let encontrados = 0;
+  for (const m of main.matchAll(padrao)) {
+    const antes = main.slice(0, m.index);
+    const ini = antes.lastIndexOf('\nfunction ');
+    const nome = (antes.slice(ini).match(/function (\w+)/) || [])[1];
+    if (ignorados.has(nome)) continue;
+    encontrados++;
+    const corpo = antes.slice(ini);
+    if (!/^\nfunction \w+\([^)]*\) \{\n\s*if \(!analyticsAllowed\(\)\) return;/.test(corpo)) {
+      falhas.push(`TC3 ${nome || '?'} manda telemetria sem começar por analyticsAllowed()`);
+    }
   }
+  return encontrados;
+};
+const usosDiretos = confereConsentimento(/\.\.\.sinaisDeBuild\(\)/g, new Set(['_clientSessionContext']));
+const usosContexto = confereConsentimento(/\.\.\._clientSessionContext\(\)/g);
+const usos = usosDiretos + usosContexto;
+if (usosDiretos < 1 || usosContexto < 3) {
+  falhas.push(`TC3 cobertura insuficiente: ${usosDiretos} envio(s) direto(s) e ${usosContexto} via contexto`);
 }
-if (usos < 2) falhas.push(`TC3 esperava sinaisDeBuild() no perf e na partida, achou ${usos}`);
 const reporta = extrair(index, 'function reporta(');
 if (!reporta || !/^function reporta\([^)]*\)\{\s*\n\s*if \(!window\.__csPrivacy\?\.allowed\(\)\) return null;/.test(reporta)) {
   falhas.push('TC3 reporta() não começa pela checagem de privacidade');

@@ -14,6 +14,7 @@ export const ECONOMIA = Object.freeze({
   derrotaSeguida: Object.freeze([1400, 1900, 2400, 2900, 3400]),
   descontoAssinatura: 0.1,
   recompensaKillPadrao: 300,
+  recompensaObjetivo: 300,
 });
 
 // Armas grátis no chão SÓ no Javaporcos (dono, 01/11); o nó dedicado lê o mesmo conjunto.
