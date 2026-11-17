@@ -78,10 +78,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 3.092,
+          "maxEdge": 3.06,
           "backMaxEdge": 2.564,
-          "maoL": 1.965,
-          "maoR": 1.602,
+          "maoL": 1.909,
+          "maoR": 1.581,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -99,10 +99,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 11.242,
-          "backMaxEdge": 5.385,
-          "maoL": 3.264,
-          "maoR": 1.528,
+          "maxEdge": 8.487,
+          "backMaxEdge": 4.152,
+          "maoL": 3.091,
+          "maoR": 1.453,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -120,10 +120,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 3.298,
-          "backMaxEdge": 3.298,
-          "maoL": 1.975,
-          "maoR": 1.425,
+          "maxEdge": 2.88,
+          "backMaxEdge": 2.88,
+          "maoL": 1.911,
+          "maoR": 1.412,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -206,8 +206,8 @@
         "clips": {
           "maxEdge": 2.616,
           "backMaxEdge": 2.616,
-          "maoL": 1.691,
-          "maoR": 1.487,
+          "maoL": 1.671,
+          "maoR": 1.462,
           "seamGapMax": 0
         },
         "bindErro": 0.01083
@@ -225,10 +225,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.792,
-          "backMaxEdge": 2.263,
-          "maoL": 1.751,
-          "maoR": 1.467,
+          "maxEdge": 2.791,
+          "backMaxEdge": 2.17,
+          "maoL": 1.738,
+          "maoR": 1.371,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -246,9 +246,9 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.241,
-          "backMaxEdge": 1.991,
-          "maoL": 1.946,
+          "maxEdge": 2.156,
+          "backMaxEdge": 1.808,
+          "maoL": 1.897,
           "maoR": 1.531,
           "seamGapMax": 0
         },
@@ -268,7 +268,7 @@
         },
         "clips": {
           "maxEdge": 2.485,
-          "backMaxEdge": 2.119,
+          "backMaxEdge": 2.057,
           "maoL": 1.429,
           "maoR": 1.352,
           "seamGapMax": 0
@@ -288,8 +288,8 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 14.354,
-          "backMaxEdge": 1.587,
+          "maxEdge": 10.838,
+          "backMaxEdge": 1.517,
           "maoL": 1.463,
           "maoR": 1.347,
           "seamGapMax": 0
@@ -299,19 +299,19 @@
     },
     "camera-roxa": {
       "tipo": "corpo",
-      "sha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+      "sha256": "148997911e43e4489ea7994860cb0a85d24a7e657940ca08949250551c04316b",
       "metricas": {
         "sinteticas": {
-          "maxEdge": 6.014,
-          "backMaxEdge": 6.014,
+          "maxEdge": 3.257,
+          "backMaxEdge": 2.945,
           "maoL": 1,
           "maoR": 1,
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 8.402,
-          "backMaxEdge": 8.402,
-          "maoL": 1.614,
+          "maxEdge": 3.315,
+          "backMaxEdge": 2.838,
+          "maoL": 1.561,
           "maoR": 1.59,
           "seamGapMax": 0
         },
@@ -330,10 +330,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.622,
-          "backMaxEdge": 2.095,
+          "maxEdge": 2.502,
+          "backMaxEdge": 2.074,
           "maoL": 1.749,
-          "maoR": 1.547,
+          "maoR": 1.531,
           "seamGapMax": 0
         },
         "bindErro": 0.01198
@@ -351,10 +351,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.675,
+          "maxEdge": 2.587,
           "backMaxEdge": 1.986,
-          "maoL": 2.675,
-          "maoR": 1.746,
+          "maoL": 2.587,
+          "maoR": 1.644,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -456,10 +456,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.763,
+          "maxEdge": 2.456,
           "backMaxEdge": 1.852,
-          "maoL": 1.513,
-          "maoR": 1.565,
+          "maoL": 1.508,
+          "maoR": 1.509,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -477,9 +477,9 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.688,
-          "backMaxEdge": 2.013,
-          "maoL": 1.437,
+          "maxEdge": 2.602,
+          "backMaxEdge": 1.943,
+          "maoL": 1.422,
           "maoR": 1.428,
           "seamGapMax": 0
         },
@@ -498,10 +498,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.675,
-          "backMaxEdge": 2.675,
-          "maoL": 1.711,
-          "maoR": 1.47,
+          "maxEdge": 2.51,
+          "backMaxEdge": 2.286,
+          "maoL": 1.66,
+          "maoR": 1.448,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -519,10 +519,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.775,
-          "backMaxEdge": 1.894,
+          "maxEdge": 2.668,
+          "backMaxEdge": 1.856,
           "maoL": 1.706,
-          "maoR": 1.456,
+          "maoR": 1.394,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -543,7 +543,7 @@
           "maxEdge": 12.444,
           "backMaxEdge": 7.256,
           "maoL": 3.488,
-          "maoR": 2.412,
+          "maoR": 2.217,
           "seamGapMax": 0
         },
         "bindErro": 0.01212
@@ -603,10 +603,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 4.224,
+          "maxEdge": 3.931,
           "backMaxEdge": 3.258,
-          "maoL": 2.549,
-          "maoR": 2.109,
+          "maoL": 2.098,
+          "maoR": 1.718,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -624,9 +624,9 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 5.235,
+          "maxEdge": 5.018,
           "backMaxEdge": 2.849,
-          "maoL": 5.124,
+          "maoL": 5.018,
           "maoR": 1.899,
           "seamGapMax": 0
         },
@@ -645,10 +645,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.721,
-          "backMaxEdge": 2.323,
-          "maoL": 1.138,
-          "maoR": 1.37,
+          "maxEdge": 2.451,
+          "backMaxEdge": 2.229,
+          "maoL": 1.107,
+          "maoR": 1.367,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -687,10 +687,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 3.027,
+          "maxEdge": 2.917,
           "backMaxEdge": 1.911,
-          "maoL": 1.923,
-          "maoR": 1.346,
+          "maoL": 1.805,
+          "maoR": 1.32,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -710,7 +710,7 @@
         "clips": {
           "maxEdge": 2.071,
           "backMaxEdge": 2.037,
-          "maoL": 1.497,
+          "maoL": 1.486,
           "maoR": 1.338,
           "seamGapMax": 0
         },
@@ -729,10 +729,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.316,
+          "maxEdge": 2.147,
           "backMaxEdge": 1.807,
-          "maoL": 1.615,
-          "maoR": 1.419,
+          "maoL": 1.554,
+          "maoR": 1.403,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -813,10 +813,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.428,
-          "backMaxEdge": 1.675,
-          "maoL": 1.541,
-          "maoR": 1.433,
+          "maxEdge": 2.172,
+          "backMaxEdge": 1.53,
+          "maoL": 1.513,
+          "maoR": 1.382,
           "seamGapMax": 0
         },
         "bindErro": 0.01198
@@ -855,10 +855,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.215,
-          "backMaxEdge": 1.94,
-          "maoL": 1.547,
-          "maoR": 1.429,
+          "maxEdge": 2.185,
+          "backMaxEdge": 1.847,
+          "maoL": 1.496,
+          "maoR": 1.427,
           "seamGapMax": 0
         },
         "bindErro": 0.01326
@@ -897,10 +897,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 3.042,
-          "backMaxEdge": 1.877,
-          "maoL": 1.427,
-          "maoR": 1.385,
+          "maxEdge": 2.395,
+          "backMaxEdge": 1.725,
+          "maoL": 1.401,
+          "maoR": 1.292,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -918,10 +918,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.515,
-          "backMaxEdge": 1.757,
-          "maoL": 1.761,
-          "maoR": 1.496,
+          "maxEdge": 2.333,
+          "backMaxEdge": 1.677,
+          "maoL": 1.719,
+          "maoR": 1.397,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -939,10 +939,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 3.052,
-          "backMaxEdge": 2.802,
-          "maoL": 1.708,
-          "maoR": 1.453,
+          "maxEdge": 2.187,
+          "backMaxEdge": 2.064,
+          "maoL": 1.688,
+          "maoR": 1.395,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -962,8 +962,8 @@
         "clips": {
           "maxEdge": 5,
           "backMaxEdge": 2.947,
-          "maoL": 1.891,
-          "maoR": 1.411,
+          "maoL": 1.854,
+          "maoR": 1.403,
           "seamGapMax": 0
         },
         "bindErro": 0.00793
@@ -1044,10 +1044,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.209,
-          "backMaxEdge": 2.152,
-          "maoL": 1.537,
-          "maoR": 1.381,
+          "maxEdge": 2.114,
+          "backMaxEdge": 2.114,
+          "maoL": 1.481,
+          "maoR": 1.364,
           "seamGapMax": 0
         },
         "bindErro": 0.01262
@@ -1108,7 +1108,7 @@
         },
         "clips": {
           "maxEdge": 11.401,
-          "backMaxEdge": 3.666,
+          "backMaxEdge": 3.09,
           "maoL": 2.382,
           "maoR": 1.611,
           "seamGapMax": 0
@@ -1151,9 +1151,9 @@
         "clips": {
           "maxEdge": 4.442,
           "backMaxEdge": 4.442,
-          "maoL": 1.716,
-          "maoR": 1.509,
-          "seamGapMax": 0.0709
+          "maoL": 1.665,
+          "maoR": 1.508,
+          "seamGapMax": 0.06987
         },
         "bindErro": 0.02859
       }
@@ -1191,10 +1191,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 4.698,
-          "backMaxEdge": 3.538,
-          "maoL": 1.619,
-          "maoR": 1.37,
+          "maxEdge": 3.663,
+          "backMaxEdge": 3.141,
+          "maoL": 1.572,
+          "maoR": 1.346,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -1214,8 +1214,8 @@
         "clips": {
           "maxEdge": 3.272,
           "backMaxEdge": 2.513,
-          "maoL": 1.619,
-          "maoR": 1.701,
+          "maoL": 1.601,
+          "maoR": 1.654,
           "seamGapMax": 0
         },
         "bindErro": 0.01263
@@ -1244,18 +1244,18 @@
     },
     "lula-cyborg": {
       "tipo": "skin",
-      "sha256": "dee1c4685b95d8c742c55b58d4ec0bdc8239e4fe5e89b45d89619510f454e16e",
+      "sha256": "e94ce8f2be07cc36d56b2107ceaf65dd3536d90dbc900cf8e6eda5c7cd1ca119",
       "metricas": {
         "sinteticas": {
-          "maxEdge": 4.109,
-          "backMaxEdge": 2.569,
+          "maxEdge": 2.909,
+          "backMaxEdge": 2.22,
           "maoL": 1,
           "maoR": 1,
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 8.241,
-          "backMaxEdge": 8.241,
+          "maxEdge": 5.145,
+          "backMaxEdge": 2.965,
           "maoL": 1.796,
           "maoR": 1.586,
           "seamGapMax": 0
@@ -1265,18 +1265,18 @@
     },
     "lula-drip": {
       "tipo": "skin",
-      "sha256": "b7c49abc6b7612c6341bf16642d4c691c4c89f39d16e6136bf6f58ea2dabc3c9",
+      "sha256": "881e87facd893855a2139824a489160014847c2506bdb712ae120c2f8727e0b1",
       "metricas": {
         "sinteticas": {
-          "maxEdge": 5.669,
-          "backMaxEdge": 2.744,
+          "maxEdge": 3.23,
+          "backMaxEdge": 1.777,
           "maoL": 1,
           "maoR": 1,
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 8.473,
-          "backMaxEdge": 4.055,
+          "maxEdge": 4.039,
+          "backMaxEdge": 2.83,
           "maoL": 1.819,
           "maoR": 1.911,
           "seamGapMax": 0
@@ -1286,18 +1286,18 @@
     },
     "lula-mandrake": {
       "tipo": "skin",
-      "sha256": "d7014fbc5694121b7e9c659e9dc00f11c816897353f2b9cd2db77eb91bbe7862",
+      "sha256": "4e58761e8ed5827ad7ef35432e57c20885c2490d70721d2c309497b1f7cf84dd",
       "metricas": {
         "sinteticas": {
-          "maxEdge": 5.22,
-          "backMaxEdge": 2.136,
+          "maxEdge": 2.478,
+          "backMaxEdge": 1.922,
           "maoL": 1,
           "maoR": 1,
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 8.279,
-          "backMaxEdge": 5.913,
+          "maxEdge": 3.22,
+          "backMaxEdge": 3.22,
           "maoL": 2.307,
           "maoR": 2.084,
           "seamGapMax": 0
@@ -1338,10 +1338,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 3.042,
-          "backMaxEdge": 1.877,
-          "maoL": 1.427,
-          "maoR": 1.385,
+          "maxEdge": 2.395,
+          "backMaxEdge": 1.725,
+          "maoL": 1.42,
+          "maoR": 1.292,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -1383,7 +1383,7 @@
           "maxEdge": 4.573,
           "backMaxEdge": 4.573,
           "maoL": 1.587,
-          "maoR": 1.501,
+          "maoR": 1.474,
           "seamGapMax": 0.06472
         },
         "bindErro": 0.03797
@@ -1443,10 +1443,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.809,
-          "backMaxEdge": 1.687,
-          "maoL": 1.726,
-          "maoR": 1.591,
+          "maxEdge": 2.779,
+          "backMaxEdge": 1.588,
+          "maoL": 1.706,
+          "maoR": 1.432,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -1550,8 +1550,8 @@
         "clips": {
           "maxEdge": 2.334,
           "backMaxEdge": 2.304,
-          "maoL": 1.439,
-          "maoR": 1.386,
+          "maoL": 1.422,
+          "maoR": 1.382,
           "seamGapMax": 0
         },
         "bindErro": 0.01304
@@ -1569,11 +1569,11 @@
           "seamGapMax": 0.07681
         },
         "clips": {
-          "maxEdge": 7.655,
-          "backMaxEdge": 7.375,
-          "maoL": 2.013,
-          "maoR": 1.708,
-          "seamGapMax": 0.10449
+          "maxEdge": 6.045,
+          "backMaxEdge": 6.045,
+          "maoL": 1.921,
+          "maoR": 1.563,
+          "seamGapMax": 0.08579
         },
         "bindErro": 0
       }
@@ -1592,8 +1592,8 @@
         "clips": {
           "maxEdge": 3.044,
           "backMaxEdge": 3.044,
-          "maoL": 1.675,
-          "maoR": 1.297,
+          "maoL": 1.624,
+          "maoR": 1.288,
           "seamGapMax": 0
         },
         "bindErro": 0.01308
@@ -1614,7 +1614,7 @@
           "maxEdge": 4.004,
           "backMaxEdge": 1.89,
           "maoL": 1.372,
-          "maoR": 1.38,
+          "maoR": 1.373,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -1632,10 +1632,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.097,
+          "maxEdge": 2.066,
           "backMaxEdge": 1.942,
-          "maoL": 2.097,
-          "maoR": 1.471,
+          "maoL": 2.066,
+          "maoR": 1.385,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -1653,10 +1653,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.828,
-          "backMaxEdge": 2.828,
-          "maoL": 1.665,
-          "maoR": 1.547,
+          "maxEdge": 2.743,
+          "backMaxEdge": 2.743,
+          "maoL": 1.591,
+          "maoR": 1.425,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -1674,10 +1674,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 3.882,
-          "backMaxEdge": 3.882,
-          "maoL": 1.646,
-          "maoR": 1.482,
+          "maxEdge": 2.986,
+          "backMaxEdge": 2.986,
+          "maoL": 1.571,
+          "maoR": 1.406,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -1696,9 +1696,9 @@
         },
         "clips": {
           "maxEdge": 2.4,
-          "backMaxEdge": 1.968,
-          "maoL": 1.519,
-          "maoR": 1.454,
+          "backMaxEdge": 1.931,
+          "maoL": 1.493,
+          "maoR": 1.435,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -1716,10 +1716,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 3.168,
-          "backMaxEdge": 1.788,
-          "maoL": 1.527,
-          "maoR": 1.383,
+          "maxEdge": 3.128,
+          "backMaxEdge": 1.755,
+          "maoL": 1.458,
+          "maoR": 1.346,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -1737,8 +1737,8 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.488,
-          "backMaxEdge": 2.488,
+          "maxEdge": 2.466,
+          "backMaxEdge": 2.452,
           "maoL": 2.466,
           "maoR": 1.629,
           "seamGapMax": 0
@@ -1759,7 +1759,7 @@
         },
         "clips": {
           "maxEdge": 8.73,
-          "backMaxEdge": 2.88,
+          "backMaxEdge": 2.287,
           "maoL": 1.809,
           "maoR": 2.251,
           "seamGapMax": 0
@@ -1769,21 +1769,21 @@
     },
     "profeta-calcada": {
       "tipo": "corpo",
-      "sha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+      "sha256": "ae201746977859d212aafe3f5f2b97e5152758af7421d0cad439ac00f1f7e400",
       "metricas": {
         "sinteticas": {
-          "maxEdge": 17.467,
-          "backMaxEdge": 11.173,
+          "maxEdge": 10.066,
+          "backMaxEdge": 3.76,
           "maoL": 1,
           "maoR": 1,
-          "seamGapMax": 0.26473
+          "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 46.024,
-          "backMaxEdge": 14.607,
+          "maxEdge": 20.067,
+          "backMaxEdge": 3.242,
           "maoL": 1,
-          "maoR": 5.144,
-          "seamGapMax": 0.82867
+          "maoR": 4.992,
+          "seamGapMax": 0
         },
         "bindErro": 0
       }
@@ -1800,11 +1800,11 @@
           "seamGapMax": 0.03496
         },
         "clips": {
-          "maxEdge": 6.723,
-          "backMaxEdge": 4.855,
+          "maxEdge": 5.682,
+          "backMaxEdge": 3.871,
           "maoL": 5.47,
           "maoR": 5.682,
-          "seamGapMax": 0.04957
+          "seamGapMax": 0.03905
         },
         "bindErro": 0
       }
@@ -1823,8 +1823,8 @@
         "clips": {
           "maxEdge": 2.291,
           "backMaxEdge": 1.787,
-          "maoL": 1.425,
-          "maoR": 1.464,
+          "maoL": 1.4,
+          "maoR": 1.388,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -1842,10 +1842,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 3.053,
+          "maxEdge": 3.025,
           "backMaxEdge": 1.743,
-          "maoL": 1.832,
-          "maoR": 1.521,
+          "maoL": 1.817,
+          "maoR": 1.49,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -1863,10 +1863,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 2.146,
-          "backMaxEdge": 1.95,
-          "maoL": 1.669,
-          "maoR": 1.546,
+          "maxEdge": 1.929,
+          "backMaxEdge": 1.917,
+          "maoL": 1.664,
+          "maoR": 1.534,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -1886,8 +1886,8 @@
         "clips": {
           "maxEdge": 2.015,
           "backMaxEdge": 1.734,
-          "maoL": 1.771,
-          "maoR": 1.47,
+          "maoL": 1.681,
+          "maoR": 1.371,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -1905,9 +1905,9 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 3.855,
-          "backMaxEdge": 1.896,
-          "maoL": 1.56,
+          "maxEdge": 2.595,
+          "backMaxEdge": 1.891,
+          "maoL": 1.553,
           "maoR": 1.396,
           "seamGapMax": 0
         },
@@ -1927,8 +1927,8 @@
         },
         "clips": {
           "maxEdge": 3.613,
-          "backMaxEdge": 2.736,
-          "maoL": 2.429,
+          "backMaxEdge": 2.566,
+          "maoL": 2.318,
           "maoR": 1.944,
           "seamGapMax": 0
         },
@@ -1989,9 +1989,9 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 4.485,
-          "backMaxEdge": 2.66,
-          "maoL": 1.737,
+          "maxEdge": 4.272,
+          "backMaxEdge": 2.338,
+          "maoL": 1.705,
           "maoR": 1.451,
           "seamGapMax": 0
         },
@@ -2013,7 +2013,7 @@
           "maxEdge": 3.111,
           "backMaxEdge": 2.219,
           "maoL": 1.412,
-          "maoR": 1.502,
+          "maoR": 1.422,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -2031,10 +2031,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 3.515,
-          "backMaxEdge": 3.515,
+          "maxEdge": 3.063,
+          "backMaxEdge": 3.063,
           "maoL": 1.766,
-          "maoR": 1.437,
+          "maoR": 1.342,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -2052,10 +2052,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 3.119,
-          "backMaxEdge": 3.119,
-          "maoL": 1.751,
-          "maoR": 1.303,
+          "maxEdge": 2.97,
+          "backMaxEdge": 2.452,
+          "maoL": 1.715,
+          "maoR": 1.293,
           "seamGapMax": 0
         },
         "bindErro": 0
@@ -2094,10 +2094,10 @@
           "seamGapMax": 0
         },
         "clips": {
-          "maxEdge": 6.409,
+          "maxEdge": 4.598,
           "backMaxEdge": 3.814,
-          "maoL": 2.014,
-          "maoR": 1.49,
+          "maoL": 1.995,
+          "maoR": 1.474,
           "seamGapMax": 0
         },
         "bindErro": 0.01545
