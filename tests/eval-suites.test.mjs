@@ -125,6 +125,25 @@ test('runner rejeita suite inválida antes de executar npm', () => {
   assert.match(r.stderr, /fast, deploy, core, maps, ui, audio, browser, network, vm/);
 });
 
+test('runner não confunde saída verbosa de passo aprovado com infraestrutura quebrada', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'runner-buffer-'));
+  try {
+    writeFileSync(join(dir, 'npm'), `#!${process.execPath}
+process.stdout.write('x'.repeat(1_200_000));
+`, { mode: 0o755 });
+    const r = spawnSync(process.execPath, ['tools/eval/runner.mjs', 'passo-verboso'], {
+      encoding: 'utf8',
+      env: { ...process.env, PATH: `${dir}:${process.env.PATH}` },
+    });
+    assert.equal(r.error, undefined);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stdout, /1\/1 passaram/);
+    assert.doesNotMatch(r.stdout + r.stderr, /ENOBUFS|PULOU|não medido/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('runner expande suite e preserva duração, placar e exit 78 de não medido', () => {
   const dir = mkdtempSync(join(tmpdir(), 'runner-suite-'));
   try {
