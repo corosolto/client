@@ -140,13 +140,19 @@ def gh(args, **kwargs):
     return subprocess.run(['gh', *args], capture_output=True, text=True, **kwargs)
 
 
+def gh_read(args, **kwargs):
+    """Leitura de metadata com o GITHUB_TOKEN: campos `login` exigem `read:org`, que o PAT não tem."""
+    env = dict(os.environ, GH_TOKEN=os.environ.get('READ_GH_TOKEN') or os.environ.get('GH_TOKEN', ''))
+    return subprocess.run(['gh', *args], capture_output=True, text=True, env=env, **kwargs)
+
+
 def current_attested_pr(pr: str) -> dict:
     fields = (
         'title,body,assignees,isDraft,labels,reviewDecision,mergeStateStatus,'
         'statusCheckRollup,latestReviews,reviewRequests,files,changedFiles,'
         'baseRefName,baseRefOid,headRefName,headRefOid,headRepository'
     )
-    current_raw = gh(['pr', 'view', pr, '--json', fields], check=True)
+    current_raw = gh_read(['pr', 'view', pr, '--json', fields], check=True)
     payload = json.load(open('/tmp/automerge-attestation-input.json'))
     payload['pr'] = json.loads(current_raw.stdout)
     payload['pr']['unresolvedReviewThreads'] = unresolved_review_threads(os.environ['GITHUB_REPOSITORY'], int(pr))
@@ -184,7 +190,7 @@ def main() -> int:
     head_oid = canonical_head(current)
     post_policy_status(repo, head_oid, current_result)
 
-    live = json.loads(gh(['pr', 'view', pr, '--json', 'id,autoMergeRequest,headRefOid,labels'], check=True).stdout)
+    live = json.loads(gh_read(['pr', 'view', pr, '--json', 'id,autoMergeRequest,headRefOid,labels'], check=True).stdout)
     if live['headRefOid'] != head_oid:
         raise RuntimeError('head moved after the policy status; the next bot run evaluates the new head')
     armed = live.get('autoMergeRequest') is not None
@@ -196,7 +202,7 @@ def main() -> int:
             comment(pr, f"🤖 **csbrasil-bot**: auto-merge disarmed — `{POLICY_CONTEXT}`: "
                         f"{current_result['policy_description']}.")
         if labeled:
-            gh(['pr', 'edit', pr, '--remove-label', 'pronto-pra-merge'])
+            gh(['api', '-X', 'DELETE', f'repos/{repo}/issues/{pr}/labels/pronto-pra-merge'])
         print(f"auto-merge not allowed by policy (armed before: {armed})")
         return 0
 
@@ -209,7 +215,7 @@ def main() -> int:
         armou = gh(['api', 'graphql', '-f', f'query={ARM}', '-f', f"id={live['id']}", '-f', f'head={head_oid}'])
         if armou.returncode == 0:
             if not labeled:
-                gh(['pr', 'edit', pr, '--add-label', 'pronto-pra-merge'])
+                gh(['api', '-X', 'POST', f'repos/{repo}/issues/{pr}/labels', '-f', 'labels[]=pronto-pra-merge'])
                 comment(pr, f"🤖 **csbrasil-bot**: `{POLICY_CONTEXT}` passed; auto-merge armed (merge commit, "
                             f"head `{head_oid[:12]}`). GitHub merges when the required checks pass.")
             print('auto-merge armed')

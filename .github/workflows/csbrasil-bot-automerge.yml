@@ -30,8 +30,15 @@ on:
         required: true
         type: number
 
+# Leituras de metadata usam o GITHUB_TOKEN (mesmo contrato do WSEC3 no classify): o
+# `gh pr view` com assignees/reviews/autoMergeRequest consulta `login`, que exige
+# `read:org`, e o PAT do bot só tem `repo`/`workflow` (medido em 17/11, run 44057889277).
+# Escritas (status, armar, merge, label, comentário) continuam com o PAT.
 permissions:
   contents: read
+  pull-requests: read
+  checks: read
+  statuses: read
 
 # Uma avaliação por PR; a mais nova vale. Cancelar no meio é seguro: o status sai antes
 # de armar/desarmar, e o run seguinte refaz a decisão inteira.
@@ -47,6 +54,7 @@ jobs:
     timeout-minutes: 10
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      READ_GH_TOKEN: ${{ github.token }}
       PR_NUMBER: ${{ inputs.pr_number }}
     steps:
       - name: Guarda do token do bot
@@ -71,7 +79,7 @@ jobs:
         run: python3 scripts/ci/ensure_labels.py pronto-pra-merge
       - name: Fetch PR status
         if: env.pular != '1'
-        run: gh pr view "$PR_NUMBER" --json title,body,assignees,isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,latestReviews,reviewRequests,files,changedFiles,baseRefName,baseRefOid,headRefName,headRefOid,headRepository > /tmp/automerge.json
+        run: GH_TOKEN="$READ_GH_TOKEN" gh pr view "$PR_NUMBER" --json title,body,assignees,isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,latestReviews,reviewRequests,files,changedFiles,baseRefName,baseRefOid,headRefName,headRefOid,headRepository > /tmp/automerge.json
       - name: Count unresolved review conversations
         if: env.pular != '1'
         run: |
