@@ -8,7 +8,9 @@
      MS2 · main.js: recordMatchStats manda character e skin do retrato `s`, mesmo com game.playerDef trocado depois
      MS3 · partialPayload (abandono): character e skin vêm do jogo no momento da captura
 
-   Uso: node tools/eval/match-skin-snapshot-check.mjs [--mutante=skin-do-jogo|personagem-do-jogo|sem-skin-no-fim] */
+   Uso: node tools/eval/match-skin-snapshot-check.mjs [--mutante=skin-do-jogo|personagem-do-jogo|sem-skin-no-fim|partial-sem-skin]
+   Saída com mutante: 1 = morto (alguma cláusula reprovou), 2 = não aplicou/desconhecido, 3 = SOBREVIVEU.
+   O CI aceita só 1; um sobrevivente nunca sai com o mesmo status de um morto. */
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
@@ -18,6 +20,7 @@ const muta = (texto, de, para) => { if (!texto.includes(de)) { console.error(`�
 if (MUT === 'skin-do-jogo') main = muta(main, 'character: s.character, skin: s.skin || null,', 'character: s.character, skin: game?.playerDef?.skinId || null,');
 else if (MUT === 'personagem-do-jogo') main = muta(main, 'character: s.character, skin: s.skin || null,', 'character: game?.playerDef?.id, skin: s.skin || null,');
 else if (MUT === 'sem-skin-no-fim') game = muta(game, 'character: this.playerDef.id, skin: this.playerDef.skinId || null,', 'character: this.playerDef.id,');
+else if (MUT === 'partial-sem-skin') main = muta(main, 'seconds: Math.round(g.time), character: g.playerDef?.id || g.playerCharId || currentChar, skin: g.playerDef?.skinId || null,', 'seconds: Math.round(g.time), character: g.playerDef?.id || g.playerCharId || currentChar, skin: null,');
 else if (MUT) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 const corpo = (fonte, inicio) => {
@@ -67,4 +70,4 @@ cobra('MS3', /character: g\.playerDef\?\.id \|\| g\.playerCharId \|\| currentCha
 
 if (falhas.length) { console.error(`✗ envio do personagem/skin:\n  ${falhas.join('\n  ')}`); process.exit(1); }
 console.log(`✓ fim da partida manda o personagem e a skin capturados (MS1–MS3)${MUT ? ` — mutante ${MUT} NÃO morreu` : ''}`);
-process.exit(MUT ? 1 : 0);
+process.exit(MUT ? 3 : 0);
