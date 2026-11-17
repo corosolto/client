@@ -1,7 +1,11 @@
 name: smoke-web
 
 on:
+  # Os três padrões + `ready_for_review`: no draft só o `smoke` básico roda (job
+  # `decide`, saída `pronto`) e o `gh pr ready` roda tudo no mesmo SHA. Sem
+  # `converted_to_draft` de propósito: voltar a draft não cancela o run pronto deste SHA.
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       host:
@@ -14,6 +18,8 @@ permissions:
 
 # Push novo no MESMO PR cancela o smoke velho: ele testaria um commit que já não é
 # a cabeça do PR e prende runner do plano Free (teto de 20 jobs) por até 40 min.
+# O `ready_for_review` cancela o run do draft (o run novo roda o `smoke` de novo, com
+# os pesados); label, edição e volta a draft não disparam, então não matam o run pronto.
 concurrency:
   group: smoke-web-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -25,14 +31,36 @@ jobs:
   # scripts/ci/gatilho.mjs (fonte única, medida pela eval:portaogatilho) e o pulo
   # aparece como SKIPPED, que o check_automerge aceita. Falha FECHADO: push, dispatch,
   # erro de diff ou do gatilho = roda. Só `rodar=false` exato pula.
+  # RASCUNHO: a saída `pronto` é `false` só em `pull_request` com draft exatamente
+  # `true`; chat-desktop e smoke-cf exigem `pronto != 'false'` (saída ausente = roda).
+  # O `smoke` básico (GATILHOS.smoke.leves) roda também no draft: 5,5 min p50, e foi
+  # quem reprovou em 10 dos 16 runs vermelhos do smoke-web em 30 d.
   decide:
+    # Nome próprio: o cf-preview e o portao-browser também têm um job `decide`. Este é
+    # o check que nasce na hora do `ready_for_review` e segura o PR até o smoke novo.
+    name: smoke-decide
     runs-on: ubuntu-latest
     # 15 e não 5: o checkout com histórico (filter blob:none) deste repo passou de 5 min
     # em runner lento e o job morria em "operation was canceled" antes de medir (PR #1130).
     timeout-minutes: 15
     outputs:
       rodar: ${{ steps.filtro.outputs.rodar }}
+      pronto: ${{ steps.rascunho.outputs.pronto }}
+      site: ${{ steps.site.outputs.site }}
     steps:
+      - name: O PR está pronto para o smoke pesado?
+        id: rascunho
+        env:
+          EVENTO: ${{ github.event_name }}
+          RASCUNHO: ${{ github.event.pull_request.draft }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENTO" = "pull_request" ] && [ "$RASCUNHO" = "true" ]; then
+            echo "pronto=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=PR em rascunho::chat-desktop e smoke-cf pulados; rodam no gh pr ready (ready_for_review)"
+          else
+            echo "pronto=true" >> "$GITHUB_OUTPUT"
+          fi
       # Leve: só árvore e commits; os blobs vêm sob demanda (o package.json, se mudou).
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -64,6 +92,26 @@ jobs:
             echo "rodar=false" >> "$GITHUB_OUTPUT"
           else
             echo "rodar=true" >> "$GITHUB_OUTPUT"
+          fi
+      # O smoke-cf testa o preview do cf-preview. O cf-preview só constrói quando o PR
+      # toca o site, pelo MESMO filtro (scripts/ci/gatilho.mjs site): sem preview esperado
+      # o smoke-cf sai SKIPPED em vez de esperar 15 min por um comentário que não vem.
+      # Falha FECHADO: sem lista de arquivos, ou erro do gatilho, `site=true`.
+      - name: O PR toca o site (o cf-preview constrói preview)?
+        id: site
+        env:
+          EVENTO: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENTO" != "pull_request" ] || [ ! -f "$RUNNER_TEMP/arquivos.txt" ]; then
+            echo "site=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          node scripts/ci/gatilho.mjs site < "$RUNNER_TEMP/arquivos.txt" > "$RUNNER_TEMP/site.txt" \
+            || echo "rodar=true" > "$RUNNER_TEMP/site.txt"
+          if grep -qx 'rodar=false' "$RUNNER_TEMP/site.txt"; then
+            echo "site=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "site=true" >> "$GITHUB_OUTPUT"
           fi
 
   # DOIS JOBS EM PARALELO (14/10/2026). O roteiro desktop do chat de sala custa ~14,5 min
@@ -114,7 +162,7 @@ jobs:
 
   chat-desktop:
     needs: decide
-    if: needs.decide.outputs.rodar == 'true'
+    if: needs.decide.outputs.rodar == 'true' && needs.decide.outputs.pronto != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -153,10 +201,12 @@ jobs:
             test-results
           if-no-files-found: ignore
 
-  # O preview é opcional enquanto a migração roda em paralelo com a Vercel.
+  # O preview é opcional enquanto a migração roda em paralelo com a Vercel. No PR, roda
+  # só quando o cf-preview constrói preview: a mesma condição do job `preview` de lá
+  # (site tocado, fora de draft, branch deste repositório).
   smoke-cf:
     needs: decide
-    if: (github.event_name == 'pull_request' && needs.decide.outputs.rodar == 'true') || (github.event_name == 'workflow_dispatch' && inputs.host != '' && needs.decide.outputs.rodar == 'true')
+    if: (github.event_name == 'pull_request' && needs.decide.outputs.rodar == 'true' && needs.decide.outputs.pronto != 'false' && needs.decide.outputs.site != 'false' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && inputs.host != '' && needs.decide.outputs.rodar == 'true')
     continue-on-error: true
     runs-on: ubuntu-latest
     timeout-minutes: 30

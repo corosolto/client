@@ -435,6 +435,8 @@ const WORKFLOWS = [
   ['preview-deploy.yml', []],
   ['preview-bot.yml', []],
   ['portao-browser.yml', []],
+  ['smoke-web.yml', []],
+  ['cf-preview.yml', []],
   ['autofix.yml', []],
   ['cache-limpeza.yml', []],
   ['eval-duration-calibration.yml', []],

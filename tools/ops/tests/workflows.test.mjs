@@ -61,7 +61,7 @@ test('portao-browser.yml: Sertão em dois shards balanceados, cobertura exata e 
   const corpo = sertao[1];
   assert.ok(!/run: npm run eval:(grafite|select|entrada|armas|boot)\b/.test(corpo), 'o Sertão divide job com o resto do portão');
   assert.match(corpo, /^ {4}needs: decide$/m);
-  assert.match(corpo, /^ {4}if: needs\.decide\.outputs\.rodar == 'true'$/m);
+  assert.match(corpo, /^ {4}if: needs\.decide\.outputs\.rodar == 'true' && needs\.decide\.outputs\.pronto != 'false'$/m);
   assert.match(corpo, /^ {6}fail-fast: false$/m);
   assert.doesNotMatch(corpo, /^ {4}needs:.*\bportao\b/m, 'o Sertão espera o resto do portão');
 
@@ -79,7 +79,7 @@ test('portao-browser.yml: Sertão em dois shards balanceados, cobertura exata e 
   assert.match(corpo, /ARTIFACT_DIR: artifacts\/sertao-astra\/livestock-runtime-\$\{\{ matrix\.shard\.nome \}\}/);
   assert.match(corpo, /name: sertao-livestock-runtime-\$\{\{ matrix\.shard\.nome \}\}/);
   assert.match(corpo, /path: artifacts\/sertao-astra\/livestock-runtime-\$\{\{ matrix\.shard\.nome \}\}\//);
-  assert.match(jobs.portao, /^ {4}needs: \[decide, portao-fauna, portao-armas, portao-controles, portao-core, portao-passe\]$/m, 'agregação do portao mudou');
+  assert.match(jobs.portao, /^ {4}needs: \[decide, portao-fauna, portao-armas, portao-controles, portao-core, portao-passe, sertao\]$/m, 'agregação do portao mudou');
 
   for (const [nome, corpoJob] of Object.entries(jobs)) {
     if (!/run: npm run eval:/.test(corpoJob)) continue;
