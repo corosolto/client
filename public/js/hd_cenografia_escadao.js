@@ -131,9 +131,10 @@ function escondeHorizonte(scene) {
   const alvo = scene.getObjectByName('ESCADAO_HORIZONTE_MORRO'); if (!alvo || !alvo.visible) return () => {};
   alvo.visible = false; return () => { alvo.visible = true; };
 }
-// Casas do morro: branco sujo, cinza, terracota e cartões coloridos lavados (azul, verde, ocre: nada de salmão nem pele); 32 % de
-// tijolo aparente; 45 % das rebocadas com barrado de 1,5–1,9 m num 2º tom mais escuro (rng2 próprio: o sorteio de posição não muda).
-const TONS = [0xd3cdbf, 0xc9c3b4, 0x9c5a3d, 0x8e8b84, 0x7f8588, 0xb9ad94, 0x4f6f8c, 0x6f8a4a, 0x9a7a2e, 0x7a5a8a], TIJOLO = 0x8a5236;
+// Casas do morro: branco sujo, cinza, terracota e cartões lavados (azul, verde, ocre: nada de salmão nem pele); 32 % de tijolo
+// aparente; 45 % das rebocadas com barrado de 1,5–1,9 m num 2º tom mais escuro (rng2 próprio: o sorteio de posição não muda).
+// r23: saturação ≤ 0,3 em todos (o laranja saturado lia como cartão; o AgX + névoa já tingem).
+const TONS = [0xd3cdbf, 0xc9c3b4, 0x9b7a6c, 0x8e8b84, 0x7f8588, 0xb9ad94, 0x7f8c99, 0x8a9478, 0xa89a7a, 0x8f8694], TIJOLO = 0x8c6f63;
 // Atlas do horizonte (canvas 512, células de 128): linhas 0–1 = 8 fachadas de UM pavimento (parede branca tingida pelo instanceColor,
 // janelas escuras com caixilho, varanda com guarda-corpo em 3 variantes, marquise); linha 2 col 0 = laje (cinza com manchas); linha 3 =
 // 4 copas (alpha radial em cachos, miolo escuro e borda clara). Gerado em runtime, sem textura em disco.
@@ -211,7 +212,7 @@ function morro(grupo, rng, longe, { casario = true, mata = true } = {}) {
         if (casas % 3 === 0) { const ax = x + (rng() - .5) * w * .6, az = z + (rng() - .5) * dd * .6, ah = 2.2 + rng() * 1.4;
           C.cor(0x6f7275).caixa(ax, y + h + .06, az, .06, ah, .06).caixa(ax, y + h + ah - .1, az, 1.1, .03, .03, ry).caixa(ax, y + h + ah - .4, az, .9, .03, .03, ry).caixa(ax, y + h + ah - .7, az, .7, .03, .03, ry); }
         if (mata && rng() < .18) { blobs++; ar.push({ x: x + (rng() - .5) * 8, y: y - .3, z: z + (rng() - .5) * 8, s: 3.5 + rng() * 1.5, cor: 0x2f4a10, g: .8 + rng() * .4, cel: Math.floor(rng() * 4), ry: rng() * 3 }); }
-      } else if (mata && (alto ? rng() < .9 : ((d < .42 && rng() < .75) || rng() < .12))) { blobs++;
+      } else if (mata && (alto ? rng() < .9 : ((d < .42 && rng() < .75) || rng() < .3))) { blobs++;
         const esc = rng(), s = esc < .4 ? 3.5 + rng() * 1.5 : esc < .8 ? 6 + rng() * 2 : 9 + rng() * 3;
         ar.push({ x, y: y - .6, z, s, cor: [0x28400c, 0x2f4c10, 0x3a5a14, 0x24380e][Math.floor(rng() * 4)], g: .75 + rng() * .5, cel: Math.floor(rng() * 4), ry: rng() * 3 });
         if (rng() < .4) { blobs++; ar.push({ x: x + s * .4, y: y - .6, z: z + s * .25, s: s * .6, cor: 0x2c4610, g: .8 + rng() * .4, cel: Math.floor(rng() * 4), ry: rng() * 3 }); } } } }
@@ -250,14 +251,18 @@ function materiaisLonge(atlas) {
         float hdEstr = 0.5 + 0.5 * sin(vHdW.y * 7.0 + 3.0 * hdVn(vHdW.xz * 0.8)); vec3 hdGr = diffuseColor.rgb * mix(0.8, 1.14, hdEstr) * (0.9 + 0.2 * hdVn(vHdW.xz * 3.0));
         diffuseColor.rgb = mix(hdMata, hdGr, hdGran); }`); };
   terreno.customProgramCacheKey = () => 'hd-longe-terreno1';
-  const atlasUV = (s) => { s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 hdCel; attribute vec2 hdRep; attribute float hdFace;')
+  // r23: fract(uv·hdRep) era feito no VÉRTICE (uv = 0/1 nos cantos → fract = 0: a face inteira amostrava o canto branco da célula = caixa
+  // lisa laranja); agora o vértice passa uv·hdRep e a célula, e o fragmento faz o fract. Janelas do atlas com +50 % de contraste.
+  const atlasUV = (s) => { s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 hdCel; attribute vec2 hdRep; attribute float hdFace; varying vec2 vHdCel;')
     .replace('#include <uv_vertex>', `#include <uv_vertex>
-      { vec2 hdC = hdFace > 0.5 ? vec2(0.0, 0.25) : hdCel, hdR = hdFace > 0.5 ? vec2(1.0) : hdRep;
-        vMapUv = hdC + 0.006 + fract(uv * hdR) * 0.238; }`); };
+      { vHdCel = hdFace > 0.5 ? vec2(0.0, 0.25) : hdCel; vMapUv = uv * (hdFace > 0.5 ? vec2(1.0) : hdRep); }`);
+    s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vHdCel;')
+      .replace('vec4 sampledDiffuseColor = texture2D( map, vMapUv );', `vec4 sampledDiffuseColor = texture2D( map, vHdCel + 0.006 + fract(vMapUv) * 0.238 );
+      { float hdL = dot(sampledDiffuseColor.rgb, vec3(0.3, 0.59, 0.11)); sampledDiffuseColor.rgb = mix(sampledDiffuseColor.rgb, sampledDiffuseColor.rgb * mix(0.5, 1.08, smoothstep(0.1, 0.9, hdL)), 0.6); }`); };
   const casario = base('casario', { map: atlas, vertexColors: false });
-  casario.onBeforeCompile = (s) => { nevoa(s); atlasUV(s); }; casario.customProgramCacheKey = () => 'hd-longe-casario1';
+  casario.onBeforeCompile = (s) => { nevoa(s); atlasUV(s); }; casario.customProgramCacheKey = () => 'hd-longe-casario2';
   const mata = base('mata', { map: atlas, alphaTest: .5, vertexColors: false });
-  mata.onBeforeCompile = (s) => { nevoa(s); atlasUV(s); }; mata.customProgramCacheKey = () => 'hd-longe-mata1';
+  mata.onBeforeCompile = (s) => { nevoa(s); atlasUV(s); }; mata.customProgramCacheKey = () => 'hd-longe-mata2';
   const liso = base('liso'); liso.onBeforeCompile = nevoa; liso.customProgramCacheKey = () => 'hd-longe-escadao4';
   return { terreno, casario, mata, liso, todos: [terreno, casario, mata, liso] };
 }
@@ -710,7 +715,99 @@ const PROPS = [
   ['caixote_madeira', -2.7, -0.95, .30, .15], ['caixote_madeira', -2.7, -0.95, .30, -.2, .30], ['botijao_gas', -3.3, -1.0, .58, 1.1],
   ['cadeira_plastico', 1.25, -23.75, .78, 2.9], ['caixote_madeira', -2.05, -23.8, .30, .2], ['caixote_madeira', -2.05, -23.8, .30, -.4, .30], ['botijao_gas', 0.55, -23.72, .58, .4],
 ];
-function vida(grupo, rng, topos, mat, vivo, mundo, criadas, W, scene, escondidos) {
+/* ===================== r23: FIOS FINOS, PARAPEITOS, MURETAS, BICICLETA, CAIXILHOS, MÃO-FRANCESA ===================== */
+// Cabos autorais (grupo escadao_fiacao: cilindros de 2–5 cm, retos, soltos no ar) somem (visible = false, voltam em desliga) e os
+// mesmos ramais (userData.escadaoRamais: a, b, queda) voltam em fita de 4 mm com a MESMA catenária, presos em roldana de porcelana
+// (face x = ±2,2 das frentes da escada) ou isolador no topo do poste autoral (|x| ≥ 14). Devolve nº de fios.
+function fiosFinos(F, W, scene, escondidos) {
+  const g = scene.getObjectByName('escadao_fiacao'); if (!g || !g.visible) return 0;
+  g.visible = false; escondidos.push(g); let n = 0;
+  const ponta = (p) => { if (Math.abs(p[0]) >= 14) { F.cor(0xd0d0c8).torno(p[0], p[1] - .02, p[2], [[.02, 0], [.034, .025], [.034, .05], [.022, .07]], 6); return V(p[0], p[1] + .07, p[2]); }
+    if (Math.abs(Math.abs(p[0]) - 2.1) < .2) return roldana(F, p[0], p[1], p[2], -Math.sign(p[0]), 0, .03);
+    return V(p[0], p[1], p[2]); };
+  for (const r of g.userData?.escadaoRamais || []) { const A = ponta(r.a), B = ponta(r.b); W.cor(n % 3 ? ESCURO : CHUMBO2).cabo(A, B, r.queda, r.raio > .02 ? .003 : .002); n++; }
+  return n;
+}
+// Parapeito de tijolo (3 fiadas de 7,5 cm, 20 cm de espessura, recuado 5 cm da borda) em volta de cada laje perto da escada (|x| ≤ 9,
+// z −10..10) e sobre muros finos altos (≤ 0,8 m de espessura, ≥ 1,5 m, topo ≥ 2,4 m acima do piso nas 2 pontas e no centro, nada
+// em cima); ferragem de espera num canto. Topos de "cartão" das poses escada/spawn. Tudo acima de 2,4 m: sem colisão.
+function parapeitos(F, rng, mundo, topos, alvos) {
+  const cols = mundo?.colliders || [], chao = mundo?.groundHeightAt || (() => 0), mede = medidorDeTopo(alvos); let n = 0;
+  const fiadas = (x0, z0, x1, z1, y, e) => { const L = Math.hypot(x1 - x0, z1 - z0), ry = Math.atan2(-(z1 - z0), x1 - x0);
+    for (let k = 0; k < 3; k++) { const rec = (k % 2 ? .006 : 0); F.cor(VERGA_TIJOLO[(k + n) % 3], .92 + rng() * .16).caixa((x0 + x1) / 2, y + k * .078, (z0 + z1) / 2, L, .07, e - rec * 2, ry);
+      F.cor(0x8e8a80, .9).caixa((x0 + x1) / 2, y + k * .078 + .07, (z0 + z1) / 2, L, .008, e - .02, ry); } };
+  const semNada = (c) => !cols.some((k) => k !== c && k.minY < c.maxY + .3 && k.maxY > c.maxY && k.maxX > c.minX && k.minX < c.maxX && k.maxZ > c.minZ && k.minZ < c.maxZ);
+  for (const t of topos) { if (!t.perto || Math.abs(t.cx) > 9 || t.cz < -10 || t.cz > 10) continue; const y = t.y + .005, i = .05;
+    fiadas(t.x0 + i, t.z0 + i + .1, t.x1 - i, t.z0 + i + .1, y, .2); fiadas(t.x0 + i, t.z1 - i - .1, t.x1 - i, t.z1 - i - .1, y, .2);
+    fiadas(t.x0 + i + .1, t.z0 + i, t.x0 + i + .1, t.z1 - i, y, .2); fiadas(t.x1 - i - .1, t.z0 + i, t.x1 - i - .1, t.z1 - i, y, .2); n++;
+    esperas(F, t.x0 + .35, mede(t.x0 + .35, t.z1 - .35, t.y), t.z1 - .35, rng); }
+  for (const c of cols) { const w = c.maxX - c.minX, d = c.maxZ - c.minZ, cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
+    if (Math.min(w, d) > .8 || Math.max(w, d) < 1.5 || Math.abs(cx) > 9 || cz < -8 || cz > 8 || !semNada(c)) continue;
+    const emX = w <= d, a0 = emX ? c.minZ : c.minX, a1 = emX ? c.maxZ : c.maxX, pt = (a) => emX ? [cx, a] : [a, cz];
+    if ([a0 + .2, (a0 + a1) / 2, a1 - .2].some((a) => c.maxY - chao(...pt(a)) < 2.4)) continue;
+    const e = Math.min(w, d) + .02, [x0, z0] = pt(a0 + .05), [x1, z1] = pt(a1 - .05); fiadas(x0, z0, x1, z1, c.maxY + .005, e); n++;
+    const [ex, ez] = pt(a1 - .25); esperas(F, ex, c.maxY, ez, rng); }
+  return n;
+}
+// Mureta baixa de bloco de concreto (39 x 19 x 14, 3 fiadas, junta de 1 cm sobre lastro escuro) de (x0, z0) a (x1, z1), base em y.
+function muretaBloco(F, rng, x0, z0, x1, z1, y, fiadas = 3) {
+  const L = Math.hypot(x1 - x0, z1 - z0), ux = (x1 - x0) / L, uz = (z1 - z0) / L, ry = Math.atan2(-uz, ux);
+  F.cor(0x4a4844).caixa((x0 + x1) / 2, y, (z0 + z1) / 2, L, fiadas * .2, .12, ry);
+  for (let k = 0; k < fiadas; k++) { let a = k % 2 ? .2 : 0; if (k % 2) F.cor(0x8d8a82, .9 + rng() * .1).caixa(x0 + ux * .1, y + k * .2, z0 + uz * .1, .19, .19, .14, ry);
+    for (; a + .39 <= L + .01; a += .40) F.cor(0x8d8a82, .88 + rng() * .14).caixa(x0 + ux * (a + .195), y + k * .2, z0 + uz * (a + .195), .39, .19, .14, ry);
+    if (L - a > .05) F.cor(0x8d8a82, .9).caixa(x0 + ux * (a + (L - a) / 2), y + k * .2, z0 + uz * (a + (L - a) / 2), L - a, .19, .14, ry); }
+  F.cor(0x9a9790).caixa((x0 + x1) / 2, y + fiadas * .2, (z0 + z1) / 2, L + .02, .03, .16, ry);
+}
+// Bicicleta encostada numa parede: plano da roda em (u, y) ao longo de (ux, uz) a partir de (x0, y0, z0), tombada 7° para a parede
+// (normal nx, nz). Aros de 14 lados em tubo, quadro de 6 tubos, garfo, guidão, selim e pedal. Fundida: 0 draw calls.
+function bicicleta(F, x0, y0, z0, ux, uz, nx, nz) {
+  const P = (u, y) => V(x0 + ux * u - nx * y * .12, y0 + y, z0 + uz * u - nz * y * .12);
+  const roda = (u, r) => { const pts = []; for (let i = 0; i <= 14; i++) { const a = i / 14 * Math.PI * 2; pts.push(P(u + Math.cos(a) * r, r + Math.sin(a) * r)); } F.cor(0x1c1c1c).tubo(pts, .016, 4);
+    for (let i = 0; i < 3; i++) { const a = i * Math.PI / 3; F.cor(0x9a9a96).tubo([P(u + Math.cos(a) * r, r + Math.sin(a) * r), P(u - Math.cos(a) * r, r - Math.sin(a) * r)], .003, 3); } };
+  roda(-.45, .33); roda(.55, .33);
+  const B = P(0, .30), R = P(-.45, .33), Fa = P(.55, .33), H = P(.42, .92), S = P(-.05, .86);
+  F.cor(0x2f4a6e); for (const [a, b] of [[R, S], [R, B], [B, S], [S, H], [B, H], [H, Fa]]) F.tubo([a, b], .014, 5);
+  F.cor(0x3a3d3f).tubo([P(.42, .98).addScaledVector(V(nx, 0, nz), -.22), P(.42, .98).addScaledVector(V(nx, 0, nz), .22)], .011, 4).caixa(x0 + ux * .05 - nx * .11, y0 + .88, z0 + uz * .05 - nz * .11, .24, .05, .1, Math.atan2(-uz, ux))
+    .tubo([P(-.06, .30), P(.06, .30)], .012, 4).caixa(x0 + ux * .06 - nx * .04, y0 + .27, z0 + uz * .06 - nz * .04, .04, .02, .1, Math.atan2(-uz, ux));
+}
+// Caixilho fino (tiras de 5 x 5 cm, 3 cm à frente do vidro) e peitoril de 12 cm nas janelas instanciadas do bairro externo
+// (material do vidro autoral: cor 273b42 sem mapa; só instâncias fora da arena: |x| > 17,9 ou z > 40). De longe liam como retângulo cinza.
+function caixilhos(F, rng, scene) {
+  const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(); let n = 0;
+  scene.traverse((o) => { if (!o.isInstancedMesh || !o.material || Array.isArray(o.material) || o.material.map || o.material.color?.getHex() !== 0x273b42) return;
+    for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, m4); m4.decompose(p, q, s); if (Math.abs(p.x) < 17.9 && p.z < 40) continue;
+      const emZ = s.z < s.x, w = emZ ? s.x : s.z, h = s.y, nx = emZ ? 0 : -Math.sign(p.x), nz = emZ ? -1 : 0, fx = p.x + nx * (s.x / 2 + .03), fz = p.z + nz * (s.z / 2 + .03), tom = .9 + rng() * .2;
+      const tira = (dx, dz, dy, cw, ch) => F.cor(0xb9b5aa, tom).caixa(fx + dx, p.y + dy, fz + dz, emZ ? cw : .05, ch, emZ ? .05 : cw);
+      tira(0, 0, h / 2 - .05, w + .1, .05); tira(0, 0, -h / 2, w + .1, .05);
+      tira(emZ ? -w / 2 - .025 : 0, emZ ? 0 : -w / 2 - .025, -h / 2, .05, h); tira(emZ ? w / 2 + .025 : 0, emZ ? 0 : w / 2 + .025, -h / 2, .05, h);
+      F.cor(0x8f8c84, tom).caixa(fx + nx * .045, p.y - h / 2 - .04, fz + nz * .045, emZ ? w + .14 : .12, .04, emZ ? .12 : w + .14);
+      if (rng() < .5) F.cor(0x2a2d30).caixa(fx + nx * .005, p.y - h / 2, fz + nz * .005, emZ ? w + .02 : .012, h * .55, emZ ? .012 : w + .02); n++; } });
+  return n;
+}
+// Mão-francesa (2 por prateleira) sob as prateleiras de zinco dos vasos autorais (map_escadao.js:1187: placa 48 x 6 cm a y − 0,2):
+// barra vertical chumbada na parede, horizontal sob a placa e diagonal de ferro de 12 mm. [x, yPlaca, z, nx, nz, dist à parede].
+function maosFrancesas(F, chao) {
+  const H = 7.56, lista = [[-13.65, 2.6, 8.8, 1, 0, .25], [-13.65, 4.0, 7.2, 1, 0, .25], [-2.0, chao(0, 5) + 1.85, 5, 1, 0, .2], [2.0, chao(0, -3.7) + 1.85, -3.7, -1, 0, .2], [-7, H + 1.9, -21.85, 0, -1, .05], [7, H + 1.9, -21.85, 0, -1, .05]];
+  for (const [x, y, z, nx, nz, d] of lista) { if (!Number.isFinite(y)) continue; const tx = -nz, tz = nx;
+    for (const s of [-.16, .16]) { const wx = x - nx * d + tx * s, wz = z - nz * d + tz * s;
+      F.cor(0x2e3133).caixa(wx + nx * .012, y - .3, wz + nz * .012, nx ? .024 : .03, .3, nx ? .03 : .024).caixa(wx + nx * .11, y - .035, wz + nz * .11, nx ? .22 : .03, .022, nx ? .03 : .22)
+        .tubo([V(wx + nx * .015, y - .28, wz + nz * .015), V(wx + nx * .21, y - .04, wz + nz * .21)], .006, 4); } }
+  return lista.length;
+}
+function r23(F, W, rng, mundo, topos, alvos, scene, escondidos, info) {
+  const chao = mundo?.groundHeightAt || (() => 0), cols = mundo?.colliders || [];
+  info.fiosFinos = fiosFinos(F, W, scene, escondidos);
+  info.parapeitos = parapeitos(F, rng, mundo, topos, alvos);
+  // Mureta baixa de bloco no patamar 2, encostada à parede da direita (1º colisor com minX em 1,9–3,5 cruzando z −1,9..3), sem colisão.
+  const dir = cols.filter((c) => c.minX > 1.9 && c.minX < 3.5 && c.maxZ > -1.9 && c.minZ < 3.0 && c.maxY > 6.0).sort((a, b) => a.minX - b.minX)[0];
+  if (dir) { const z0 = Math.max(dir.minZ, -1.9), z1 = Math.min(dir.maxZ, 2.9); if (z1 - z0 > 1.2) { muretaBloco(F, rng, dir.minX - .07, z0, dir.minX - .07, z1, 5.04, 2); info.mureta = 1; } }
+  // Mirante: muro baixo de bloco colado à esquerda da mercearia (x −4,1..−2,33, frente z −23,3) e bicicleta encostada na frente da
+  // casa de tijolo (x −6,6..−4,95, z −26,1), ambos no quadro da pose.
+  muretaBloco(F, rng, -4.1, -23.37, -2.33, -23.37, H_TOP, 3);
+  bicicleta(F, -6.55, H_TOP, -26.36, 1, 0, 0, -1);
+  info.caixilhos = caixilhos(F, rng, scene); info.maosFrancesas = maosFrancesas(F, chao);
+}
+function vida(grupo, rng, topos, mat, vivo, mundo, criadas, W, scene, escondidos, alvos = [], r23on = true) {
   // Roupas: roupeiro (malha subdividida + atlas de tecido, 1 draw call); os varais autorais do mapa (userData.escadaoVaral:
   // GLB varal_roupas_01/02 ou corda + 3 caixas) somem (visible = false, volta em desliga) e o kit pendura as peças na mesma corda.
   ROUPEIRO = roupeiro();
@@ -766,6 +863,8 @@ function vida(grupo, rng, topos, mat, vivo, mundo, criadas, W, scene, escondidos
     F.cor(0x4a3f33).caixa(cx, .15, cz, .50, .28, .34, ry);
     for (const yy of [.17, .27, .37]) {
       for (const s of [-1, 1]) F.cor(0xb39a72, .95 + .05 * s).caixa(cx + s * .17 * sn, yy, cz + s * .17 * cs, .52, .07, .02, ry).caixa(cx + s * .26 * cs, yy, cz - s * .26 * sn, .02, .07, .36, ry); } }
+  // r23 (opts.r23 === false / ?hdr23=0 desliga): fios finos no lugar dos cabos autorais, parapeitos, muretas, bicicleta, caixilhos, mão-francesa.
+  if (r23on) r23(F, W, rngDe(2311), mundo, topos, alvos, scene, escondidos, info);
   const malha = new THREE.Mesh(F.geo(), mat); malha.name = 'hd-vida'; grupo.add(malha);
   if (ROUPEIRO.n()) { const ta = atlasRoupas(rng), mr = new THREE.MeshStandardMaterial({ map: ta, vertexColors: true, side: THREE.DoubleSide, roughness: .92, metalness: 0, alphaTest: .5, transparent: true, name: 'hd-roupas' }); criadas.push(ta, mr);
     const roupasMesh = new THREE.Mesh(ROUPEIRO.geo(), mr); roupasMesh.name = 'hd-roupas'; roupasMesh.frustumCulled = false; grupo.add(roupasMesh); info.pecas = ROUPEIRO.n(); }
@@ -803,7 +902,7 @@ export function cenografiaEscadao(scene, opts = {}) {
   if (lig('fachada')) info.fachada = fachada(grupo, rngDe(9311), mundo, mat, alvos);
   if (lig('postes')) info.postes = postes(grupo, rngDe(4051), mundo, mat, W);
   const escondidos = [];
-  if (lig('vida')) info.vida = vida(grupo, rngDe(5519), topos, mat, () => vivo, mundo, criadas, W, scene, escondidos);
+  if (lig('vida')) info.vida = vida(grupo, rngDe(5519), topos, mat, () => vivo, mundo, criadas, W, scene, escondidos, alvos, lig('r23'));
   if (W.n()) { const mf = materialFio(res); criadas.push(mf); const fios = new THREE.Mesh(W.geo(), mf); fios.name = 'hd-fios'; fios.frustumCulled = false;
     fios.onBeforeRender = (r) => { const t = r.getRenderTarget(); if (t) res.value.set(t.width, t.height); else r.getDrawingBufferSize(res.value); }; grupo.add(fios); info.fios = W.n(); }
   grupo.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = true; o.raycast = () => {}; o.userData.nonSolidSurface = true; } });
