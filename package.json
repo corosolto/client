@@ -1007,6 +1007,7 @@
   "private": true,
   "type": "module",
   "overrides": {
+    "workerd": "1.20261117.1",
     "zod": "^4.6.7",
     "undici": "^8.12.2"
   },
