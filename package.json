@@ -796,7 +796,7 @@
     "eval:mp-cor-lado": "node tools/eval/mp-cor-lado-check.mjs",
     "//eval:hub-about-links": "Clica cada link do SOBRE O JOGO e do rodapé do hub, e os links de dentro da Privacidade e do Excluir dados embutidos: tudo fica no lobby, outra origem abre em nova aba, mailto sem aba. Mutantes revertem site-links.js. BASE obrigatório.",
     "eval:home-faq-maps": "node tools/eval/home-faq-maps-check.mjs && ! node tools/eval/home-faq-maps-check.mjs --mutante=mapa-a-menos",
-    "eval:wfcheckout": "node tools/eval/workflow-checkout-check.mjs",
+    "eval:wfcheckout": "node tools/eval/workflow-checkout-check.mjs && ! node tools/eval/workflow-checkout-check.mjs --mutante=steam-source-default",
     "arch:check:release": "node tools/gen-arch.mjs --check --release",
     "docs:check:release": "node tools/gen-docs.mjs --check --release",
     "eval:contagens-pr": "node tools/eval/contagens-pr-check.mjs",
