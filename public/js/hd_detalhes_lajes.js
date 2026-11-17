@@ -117,12 +117,19 @@ function peitoril(P) {
   for (const [x, y, s] of [[.13, .72, .09], [.10, .75, .06], [.19, .74, .07], [.15, .67, .06]]) P.ret(x, y, s, s, '#3f6a35', .8);
   P.ret(.72, .78, .055, .15, '#3f7a4a', .9); P.ret(.737, .73, .021, .05, '#3f7a4a', .9); P.ret(.735, .722, .025, .012, '#d8d4c8', 1);
 }
+// Ar-condicionado de janela (caixa 55 x 38 cm no canto inferior direito do vão, grelha, pingadeira escura) sobre o correr de vidro liso.
+function arCondicionado(P, r) {
+  P.ret(.52, .50, .44, .40, '#b8bab6', 1); P.ret(.535, .515, .41, .37, '#9ea09c', .95);
+  for (let y = .54; y < .84; y += .028) P.ret(.55, y, .25, .012, '#6d6f6b', .9);
+  P.ret(.82, .54, .10, .30, '#86888a', .95); P.ret(.845, .60, .05, .05, '#2b2d2e', 1);
+  P.so((C) => { C.fillStyle = 'rgba(40,36,30,.35)'; C.fillRect(.56, .90, .36, .02 + r() * .03); C.fillStyle = 'rgba(0,0,0,.25)'; C.fillRect(.52, .88, .44, .02); });
+}
 // 9 tipos numa grade 3x3; o shader escolhe a célula pelo hash da posição do vão.
-export const JANELA_TIPOS = ['correr de alumínio, vidro liso', 'correr de alumínio, vidro canelado, folha aberta', 'basculante de ferro', 'veneziana', 'vitrô de ferro com grade em losango',
+export const JANELA_TIPOS = ['correr de alumínio, vidro liso', 'correr de alumínio com ar-condicionado de janela', 'basculante de ferro', 'veneziana', 'vitrô de ferro com grade em losango',
   'vão fechado com bloco de cimento', 'vão fechado com madeirite e tábua', 'lençol por dentro e ventilador', 'correr remendada com papelão, barras retas, vaso e garrafa'];
 export function atlasJanelas() {
   const P = par(), r = rngDe(4471);
-  [() => correr(P, r), () => correr(P, r, { fantasia: true, aberta: true }), () => basculante(P), () => veneziana(P, r), () => vitro(P, r), () => blocos(P, r), () => madeirite(P, r), () => cortina(P),
+  [() => correr(P, r), () => { correr(P, r); arCondicionado(P, r); }, () => basculante(P), () => veneziana(P, r), () => vitro(P, r), () => blocos(P, r), () => madeirite(P, r), () => cortina(P),
     () => { correr(P, r, { papelao: true }); barras(P); peitoril(P); }]
     .forEach((f, k) => P.celula((k % 3) * CEL, Math.floor(k / 3) * CEL, CEL, CEL, () => { f(); suja(P, r, 26); }));
   return funde(P, 'hd-janelas');
@@ -164,8 +171,9 @@ function madeiraVelha(P, r) {
 // Ferrugem = um gradiente vertical contínuo nos 30 cm do pé, modulado por gradiente horizontal suave; fechadura preta com miolo a 0,9 m do piso.
 function enrolar(P, r) {
   P.ret(0, 0, 1, 1, '#50565a', .95);
-  const tinta = r() < .5 ? [112, 126, 128] : [110, 120, 136], corte = .50 + r() * .06, fase = r() * 6.28, lascas = 2 + Math.floor(r() * 2);
-  for (let y = .012; y < .93; y += .043) { const g = .92 + r() * .12; P.ret(.07, y, .86, .028, tom([134, 142, 146], g), .85); P.ret(.07, y + .028, .86, .015, '#666c70', .4); }
+  // Dois tons com luma ±20 % (galvanizado 150/158/162 ≈ 156; tinta 84/98/104 ou 80/92/118 ≈ 95): a 3 m o par 141/123 lia como chapa uniforme cinza-azul.
+  const tinta = r() < .5 ? [84, 98, 104] : [80, 92, 118], corte = .50 + r() * .06, fase = r() * 6.28, lascas = 2 + Math.floor(r() * 2);
+  for (let y = .012; y < .93; y += .043) { const g = .92 + r() * .12; P.ret(.07, y, .86, .028, tom([150, 158, 162], g), .85); P.ret(.07, y + .028, .86, .015, '#666c70', .4); }
   P.so((C) => {
     // Tinta: polígono da borda superior até a linha de corte senoidal (amplitude 0,01 = 2 cm); as lascas são elipses de galvanizado por cima.
     C.save(); C.beginPath(); C.moveTo(0, 0); C.lineTo(1, 0);
@@ -174,10 +182,12 @@ function enrolar(P, r) {
     for (let y = .012; y < .93; y += .043) { const g = .92 + r() * .12; C.fillStyle = tom(tinta, g); C.fillRect(.07, y, .86, .028); C.fillStyle = '#4e5a5a'; C.fillRect(.07, y + .028, .86, .015); }
     C.restore();
     for (let i = 0; i < lascas; i++) { const u = .12 + r() * .76, rx = .045 + r() * .04, ry = .02 + r() * .016, a = (r() - .5) * .5;
-      C.fillStyle = tom([134, 142, 146], .95 + r() * .1); C.beginPath(); C.ellipse(u, corte - .006 + r() * .012, rx, ry, a, 0, 6.3); C.fill();
+      C.fillStyle = tom([150, 158, 162], .95 + r() * .1); C.beginPath(); C.ellipse(u, corte - .006 + r() * .012, rx, ry, a, 0, 6.3); C.fill();
       C.fillStyle = 'rgba(102,108,112,.55)'; C.beginPath(); C.ellipse(u, corte - .006 + r() * .012, rx * .55, ry * .5, a, 0, 6.3); C.fill(); }
-    const gv = C.createLinearGradient(0, .78, 0, 1); gv.addColorStop(0, 'rgba(96,62,38,0)'); gv.addColorStop(.35, 'rgba(100,64,40,.2)'); gv.addColorStop(.75, 'rgba(84,54,32,.5)'); gv.addColorStop(1, 'rgba(62,40,24,.8)');
+    // Ferrugem no pé (≤ 45 cm = v 0,78–1): gradiente contínuo mais fechado, com 6–9 manchas de óxido de 3–8 cm sobre as lâminas.
+    const gv = C.createLinearGradient(0, .78, 0, 1); gv.addColorStop(0, 'rgba(96,62,38,0)'); gv.addColorStop(.3, 'rgba(104,66,40,.38)'); gv.addColorStop(.7, 'rgba(88,56,32,.72)'); gv.addColorStop(1, 'rgba(60,38,22,.92)');
     C.fillStyle = gv; C.fillRect(.07, .78, .86, .22);
+    for (let i = 0, n = 6 + Math.floor(r() * 4); i < n; i++) { const u = .1 + r() * .8, vv = .80 + r() * .17, rx = .02 + r() * .03; C.fillStyle = `rgba(${r() < .5 ? '110,64,34' : '78,48,28'},${.45 + r() * .35})`; C.beginPath(); C.ellipse(u, vv, rx, rx * (.4 + r() * .5), (r() - .5) * .8, 0, 6.3); C.fill(); }
     const gh = C.createLinearGradient(.07, 0, .93, 0); gh.addColorStop(0, 'rgba(80,52,30,.35)'); gh.addColorStop(.3, 'rgba(80,52,30,0)'); gh.addColorStop(.62, 'rgba(80,52,30,.3)'); gh.addColorStop(1, 'rgba(80,52,30,.05)');
     C.save(); C.globalAlpha = 1; C.fillStyle = gh; C.beginPath(); C.rect(.07, .84, .86, .16); C.fill(); C.restore();
   });

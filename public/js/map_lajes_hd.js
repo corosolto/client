@@ -63,8 +63,10 @@ const PARS = `varying vec3 vHdPos;
   float hdBandaP(vec3 p){ return max(hdBanda(hdAndar(p)), hdBanda(p.y - 3.1) * hdLajeViz(p)); }
   float hdHalo(vec2 q, float w){ float c = floor(q.x / 1.7), fx = q.x - (c + 0.5) * 1.7;
     return (1.0 - smoothstep(0.012, 0.06, abs(fx - (w - 0.5) * 1.2))) * step(0.5, hdH(vec2(c, 3.0))) * smoothstep(0.03, 0.008, fwidth(q.x)); }
-  float hdTrinca(vec2 q, float w){ float c = floor(q.x / 1.7), fx = q.x - (c + 0.5) * 1.7, l = fwidth(q.x);
-    return (1.0 - smoothstep(0.003, 0.005 + l * 1.2, abs(fx - (w - 0.5) * 1.2))) * step(0.5, hdH(vec2(c, 3.0))) * smoothstep(0.03, 0.008, l); }
+  // e = espessura (0,45–1,5): a trinca de largura constante lia como vetor; o chamador varia pelo ruído ao longo do traço.
+  float hdTrinca(vec2 q, float w, float e){ float c = floor(q.x / 1.7), fx = q.x - (c + 0.5) * 1.7, l = fwidth(q.x);
+    return (1.0 - smoothstep(0.003 * e, (0.005 + l * 1.2) * e, abs(fx - (w - 0.5) * 1.2))) * step(0.5, hdH(vec2(c, 3.0))) * smoothstep(0.03, 0.008, l); }
+  float hdTrinca(vec2 q, float w){ return hdTrinca(q, w, 1.0); }
   vec4 hdTijolo(vec2 q, float n, float v){ vec2 b = vec2(q.x / 0.29 + 0.5 * floor(q.y / 0.193), q.y / 0.193), f = abs(fract(b) - 0.5), px = fwidth(q);
     float ja = smoothstep(0.035, 0.012, max(px.x, px.y)), jf = smoothstep(0.05, 0.02, px.y);
     float j = max((1.0 - smoothstep(0.006, 0.008 + px.x, (0.5 - f.x) * 0.29)) * ja, (1.0 - smoothstep(0.006, 0.008 + px.y, (0.5 - f.y) * 0.193)) * jf);
@@ -165,7 +167,7 @@ const idade = (o, sub, semPe = false, ao = true, sobre = null) => `
   ${o.umidade ? `{ float hdEsc = smoothstep(0.46, 0.72, texture2D(hdRuido, vec2(hdQ.x * 0.61, hdQ.y * 0.045) + 0.71).r * 0.8 + hdM.a * 0.2) * smoothstep(2.12, 2.40, hdY) * hdFora;
     diffuseColor.rgb = hdUmido(diffuseColor.rgb, 0.7 * hdEsc) * (1.0 - 0.42 * hdEsc); }` : ''}
   // Trinca com descascado em volta (halo de até 6 cm, quebrado pelo ruído, só fora da faixa do corpo) e oclusão no sulco.
-  { float hdTr = hdTrinca(hdQ, hdA.a), hdHl = hdHalo(hdQ, hdA.a) * hdFora * smoothstep(0.30, 0.50, hdM.g);
+  { float hdTrE = 0.45 + 1.05 * texture2D(hdRuido, vec2(hdQ.y * 0.9 + 0.2, hdQ.x * 0.11)).b; float hdTr = hdTrinca(hdQ, hdA.a, hdTrE), hdHl = hdHalo(hdQ, hdA.a) * hdFora * smoothstep(0.30, 0.50, hdM.g);
     diffuseColor.rgb *= (1.0 - 0.48 * mix(1.0, 0.6, hdCorpo) * hdTr) * (1.0 - 0.22 * hdHl) * (1.0 + 0.12 * hdHl * step(0.5, hdM.b)); hdAlt -= 0.004 * hdTr + 0.005 * hdHl; }
   float hdPele = 0.0;
   ${o.descasca && sub ? `{ float hdFb = hdA.g * 0.62 + hdM.g * 0.28 + hdM.a * 0.10, hdW = max(0.006, fwidth(hdFb));
@@ -273,31 +275,43 @@ function rebocoHD(m, r, U, o) {
         float hdRep = max(step(0.55, hdS1), hdSarr * hdFamOn) * smoothstep(hdLin - 0.01, hdLin + 0.01, hdY) * hdLiv, hdBar = step(0.62, hdS2) * (1.0 - smoothstep(hdLb - 0.01, hdLb + 0.01, hdY)) * hdLiv;
         // A barra pintada cobre a umidade: juntas, barra (-12 %) e umidade residual ficam dentro dos -18 %.
         float hdRod = (1.0 - smoothstep(0.12, 0.42, hdY + 0.10 * (hdM.a - 0.5))) * hdLiv * (1.0 - 0.7 * hdBar);
-        float hdMofo = hdRod * smoothstep(0.46, 0.62, hdGm * 0.5 + hdM.g * 0.5), hdSal = smoothstep(0.18, 0.30, hdY) * (1.0 - smoothstep(0.36, 0.45, hdY)) * smoothstep(0.48, 0.60, hdA.g) * hdLiv;
+        // Casa alvo das poses parede/laje (face x = -5,2 do quarto do miolo, z -16..-7): as três famílias entram por posição de mundo —
+        // mofo mais fechado no pé (< 0,45 m) e escorrido do topo (cinta 2,95 → 2,12 m, colunas de 3–25 cm); o remendo largo só pelo sorteio por célula.
+        float hdAlvo = step(abs(vHdPos.x + 5.2), 0.3) * step(2.95, vHdPos.y) * step(abs(vHdPos.z + 11.5), 4.5) * hdLiv;
+        float hdMofo = hdRod * smoothstep(0.46 - 0.14 * hdAlvo, 0.62 - 0.14 * hdAlvo, hdGm * 0.5 + hdM.g * 0.5), hdSal = smoothstep(0.18, 0.30, hdY) * (1.0 - smoothstep(0.36, 0.45, hdY)) * smoothstep(0.48, 0.60, hdA.g) * hdLiv;
         hdReb = hdUmido(hdReb, 0.26 * hdRod) * (1.0 - 0.06 * hdRod);
-        hdReb = mix(hdReb, hdReb * vec3(0.72, 0.90, 0.55) * (0.95 + 0.1 * hdM.r), 0.55 * hdMofo);
+        hdReb = mix(hdReb, hdReb * vec3(0.72, 0.90, 0.55) * (0.95 + 0.1 * hdM.r), (0.55 + 0.2 * hdAlvo) * hdMofo);
+        { float hdEscT = hdAlvo * smoothstep(2.12, 2.30, hdY) * smoothstep(0.42, 0.62, texture2D(hdRuido, vec2(hdQ.x * 0.9, hdQ.y * 0.06) + 0.3).r) * (0.55 + 0.45 * smoothstep(2.3, 2.9, hdY));
+          hdReb = hdUmido(hdReb, 0.6 * hdEscT) * (1.0 - 0.30 * hdEscT); }
         hdReb = mix(hdReb, vec3(dot(hdReb, ${LUMA})) * 1.10 + 0.04, 0.6 * hdSal);
         // Remendo de massa nova: célula de 1,8 x 0,8 m (≈ 1 m² visível) acima de 2,12 m ou abaixo de 0,52 m, cinza-claro neutro (+10 % de luma, sem o quente do reboco).
         float hdRy = hdY > 1.3 ? (hdY - 2.12) / 0.8 : (hdY - 0.52) / 0.8, hdOk = (hdY > 1.3 ? step(2.12, hdY) : step(hdY, 0.52)) * (1.0 - hdBandaP(vHdPos));
         vec2 hdRc = vec2(hdQ.x / 1.8 + hdCs * 3.0, hdRy), hdRf = fract(hdRc), hdRw = fwidth(hdRc);
         float hdRr = hdH(floor(hdRc) + hdCs * 13.0), hdRd = min(min(hdRf.x, 1.0 - hdRf.x) - (0.05 + 0.06 * hdM.g), min(hdRf.y, 1.0 - hdRf.y) - (0.08 + 0.08 * hdM.r));
-        // Remendo forçado na parede da pose parede (face x = -5,2 da casa cream do miolo, z -12,6..-11,0, 2,12–2,92 m da laje = 1,3 m²): o sorteio por célula deixava a pose sem remendo.
-        float hdSel = step(0.72, hdRr) * hdOk, hdSelF = step(abs(vHdPos.x + 5.2), 0.3) * step(2.0, hdY);
-        float hdRdF = min(min(vHdPos.z + 12.6, -11.0 - vHdPos.z), min(hdY - 2.12, 2.92 - hdY));
-        float hdRw2 = max(fwidth(hdY), 0.003), hdRdT = max(mix(-1.0, hdRd, hdSel), mix(-1.0, hdRdF, hdSelF)), hdRem = hdLiv * smoothstep(0.0, 0.012 + hdRw2 * 1.5, hdRdT);
+        // Sem remendo forçado na parede das poses parede/laje: o quadro da pose parede vê a face x = -5,2 só em hdY 0,26–2,0 (faixa do corpo,
+        // mancha de 1,3 m² proibida) e o topo (> 2,12 m) fica atrás do telhado de zinco na pose laje. O remendo entra só pelo sorteio por célula.
+        float hdSel = step(0.72, hdRr) * hdOk;
+        float hdRw2 = max(fwidth(hdY), 0.003), hdRdT = mix(-1.0, hdRd, hdSel), hdRem = hdLiv * smoothstep(0.0, 0.012 + hdRw2 * 1.5, hdRdT);
         // Borda dura: sulco escuro de 1,5 cm ao redor (a massa nova fica 2 mm à frente), antes a borda lia como borrão.
         float hdRemB = (smoothstep(-0.015 - hdRw2, 0.0, hdRdT) - smoothstep(0.0, 0.012 + hdRw2 * 1.5, hdRdT)) * hdLiv;
         hdReb = mix(hdReb, hdNeu * vec3(dot(hdReb, ${LUMA})) * (1.14 + 0.06 * hdM.r) * (0.96 + 0.08 * hdGm), 0.95 * hdRem) * (1.0 - 0.22 * hdRemB); hdAlt += 0.002 * hdRem * hdV9; hdRel *= 1.0 - 0.6 * hdRem;
         // Borda de rolo: sobreposição de tinta mais clara e com relevo (antes era só uma linha escura).
         float hdBord = hdRep * (1.0 - smoothstep(0.0, 0.02 + fwidth(hdY) * 1.5, hdY - hdLin)) * hdV9; hdAlt += 0.0012 * hdBord;
         hdReb *= mix(vec3(1.0), mix(vec3(1.08, 1.05, 0.97), vec3(0.93, 0.955, 1.03), step(0.78, hdS1)), hdRep * (1.0 - hdRem)) * (1.0 + 0.12 * hdBord);
-        hdReb = mix(hdReb, hdReb * mix(vec3(0.88, 0.875, 0.87), vec3(0.84, 0.89, 0.90), step(0.81, hdS2)), hdBar * (1.0 - hdRem)); }` : ''}
+        hdReb = mix(hdReb, hdReb * mix(vec3(0.88, 0.875, 0.87), vec3(0.84, 0.89, 0.90), step(0.81, hdS2)), hdBar * (1.0 - hdRem));
+        // Permitido na faixa do corpo (≤ 10 cm de largura, -10 %): 2–3 escorridos finos por parede de 4 m descendo da cinta superior (hdY 2,95)
+        // por 1,5–2,9 m (célula de 1,1 m, sorteio 85 %, largura 6–10 cm, ponta esfumada) e células de 20–40 cm a ±4 % (canal R a 0,95/m: 26 cm).
+        { float hdFc = floor(hdQ.x / 1.1 + hdCs * 7.0), hdFx = (fract(hdQ.x / 1.1 + hdCs * 7.0) - mix(0.25, 0.75, hdH(vec2(hdFc, 9.0 + hdCs)))) * 1.1;
+          float hdFw = 0.03 + 0.02 * hdH(vec2(hdFc, 11.0)), hdFl = 1.5 + 1.4 * hdH(vec2(hdFc, 13.0)), hdFo = 2.95 - hdFl;
+          float hdFio = step(0.15, hdH(vec2(hdFc, 5.0 + hdCs))) * (1.0 - smoothstep(hdFw * 0.5, hdFw + fwidth(hdFx) * 1.5, abs(hdFx + 0.012 * (hdM.g - 0.5)))) * smoothstep(hdFo, hdFo + 0.5, hdY) * step(hdY, 2.97) * hdLiv * (0.75 + 0.25 * hdM.b);
+          hdReb = hdUmido(hdReb, 0.35 * hdFio) * (1.0 - 0.10 * hdFio);
+          float hdCel = texture2D(hdRuido, hdQ * 0.95 + hdCs * 9.0 + 0.61).r; hdReb *= 1.0 + 0.08 * (hdCel - 0.5) * hdLiv; } }` : ''}
       hdReb *= mix(vec3(1.0), hdBk.rgb, hdBl);
       diffuseColor.rgb *= mix(hdReb, hdTj.rgb * mix(1.0, hdFino, 0.45) * (0.92 + 0.16 * hdM.b) * mix(mix(0.80, 1.14, hdA.r), 0.97, hdCorpo), hdCr);
       hdAlt = mix(hdAlt, hdV9 * (0.007 * (1.0 - hdTj.a) + 0.0015 * hdFino) + hdV3 * 0.0008 * hdGf, hdCr) * (1.0 - 0.9 * vHdMi); hdRel = mix((1.0 + 0.24 * hdChapR * hdFamOn - 0.5 * hdLiso - 0.2 * hdSarr) * (1.0 - 0.35 * hdChap * hdLisoM), 0.7, hdCr) * (1.0 - 0.85 * vHdMi); hdRug = mix(mix(hdRug, mix(0.86, 1.0, hdTj.a), hdCr), 0.6, vHdMi);
       ${idade(o, SUBS.tijolo, o.rebocoPe, false, { k: 'hdSobre', cor: 'hdNeu * mix(vec3(1.0), hdPasV, 1.8) * 0.9' })} }`);
     ganchos(shader); };
-  m.customProgramCacheKey = () => `lajes-hd-reboco73-${o.umidade}-${o.descasca}-${o.rebocoSombra}-${o.tijoloGrao}-${o.rebocoPe}-${o.rebocoFam}-${o.rebocoBorda}`;
+  m.customProgramCacheKey = () => `lajes-hd-reboco75-${o.umidade}-${o.descasca}-${o.rebocoSombra}-${o.tijoloGrao}-${o.rebocoPe}-${o.rebocoFam}-${o.rebocoBorda}`;
 }
 // Tijolo aparente: mesma textura e UV do mapa. Junta afundada (lida da saturação do texel), tom por fiada e por
 // trecho de tijolo, chapisco no pé e no alto. Na faixa do corpo sobra só a junta.
@@ -327,9 +341,19 @@ function tijoloHD(m, U, o) {
       diffuseColor.rgb *= mix(mix(hdC, hdMassa, 0.92 * hdJ), hdMassa * 1.35, 0.75 * hdResp2);
       hdAlt = hdPerto * (0.007 * (1.0 - hdJ) * (1.0 - 0.7 * hdResp2) + 0.0016 * hdGrao * hdRan + 0.003 * hdResp2 + 0.0006 * hdMic.b * (1.0 - hdJ));
       hdRug = mix(mix(0.9, 1.0, hdJ), 1.0, hdResp2); hdRel = 1.7 * mix(0.6, 1.0, hdNitido()) * (1.0 - 0.6 * hdResp2);
+      // Reboco parcial (emboço cinza) de borda irregular sobre o tijolo de catálogo: só acima de 2,08 m e abaixo de 0,46 m (zero na faixa do corpo,
+      // hdBandaP), sulco escuro de ~2 cm na borda. Na faixa do corpo sobram 2–3 tijolos por m² com tom próprio (célula 29 x 19,3 cm, sorteio 14 %).
+      { vec4 hdRpN = texture2D(hdRuido, hdQ * 0.085 + 0.45); float hdRpM = hdRpN.a * 0.7 + hdM.g * 0.3, hdRpW = max(fwidth(hdRpM) * 1.5, 0.004);
+        float hdRpZ = max(smoothstep(2.08, 2.30, hdY), 1.0 - smoothstep(0.32, 0.46, hdY)) * (1.0 - hdBandaP(vHdPos));
+        float hdRp = smoothstep(0.54, 0.54 + hdRpW, hdRpM) * hdRpZ, hdRpB = (smoothstep(0.515, 0.54, hdRpM) - smoothstep(0.54, 0.54 + hdRpW, hdRpM)) * hdRpZ;
+        vec3 hdEmb = ${EMBOCO} * (0.9 + 0.2 * hdMic.r) * (0.96 + 0.08 * hdA.r);
+        diffuseColor.rgb = mix(diffuseColor.rgb, hdEmb, hdRp) * (1.0 - 0.18 * hdRpB); hdAlt = mix(hdAlt, 0.0008 * hdMic.b, hdRp) + 0.004 * hdRp; hdRel *= 1.0 - 0.8 * hdRp; hdRug = mix(hdRug, 1.0, hdRp);
+        float hdRow = floor(vMapUv.y * 10.29), hdCol = floor(vMapUv.x * 6.9 + 0.5 * mod(hdRow, 2.0)), hdTjH = hdH(vec2(hdCol, hdRow) + 0.37);
+        float hdTjS = step(0.83, hdTjH) * (1.0 - hdJ) * hdPerto * (1.0 - hdRp);
+        diffuseColor.rgb *= mix(1.0, mix(0.80, 1.16, step(0.93, hdTjH)), hdTjS); }
       ${idade(o, o.tijoloGrao ? SUBS.chapiscoAcab : SUBS.chapisco)} }`);
     ganchos(shader); };
-  m.customProgramCacheKey = () => `lajes-hd-tijolo66-${o.umidade}-${o.descasca}-${o.tijoloGrao}`;
+  m.customProgramCacheKey = () => `lajes-hd-tijolo68-${o.umidade}-${o.descasca}-${o.tijoloGrao}`;
 }
 // Concreto serve piso e parede (orientação pela derivada da posição, constante por triângulo); chão e concreto
 // dividem o programa. hdPisoP = (lado da placa, limiar da poça, altura máxima com poça).
@@ -355,7 +379,7 @@ function concretoHD(m, r, U, o) {
         `vec3 mapN; if (hdPiso > 0.5) mapN = texture2D(normalMap, vNormalMapUv).xyz * 2.0 - 1.0; else mapN = texture2D(hdFormaN, vNormalMapUv * ${k}).xyz * 2.0 - 1.0;`) + '\nnormal = hdBump(normal, -vViewPosition, hdAlt);' + POCA.normal + SEM_FAISCA)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>${POCA.emissao}`)
       .replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\nif (hdPiso > 0.5 && hdNy > 0.0) reflectedLight.indirectDiffuse *= hdPisoA;'); };
-  m.customProgramCacheKey = () => `lajes-hd-concreto64-${o.umidade}`;
+  m.customProgramCacheKey = () => `lajes-hd-concreto65-${o.umidade}`;
 }
 // Chapa: a onda do mapa corre em v; as caixas do mapa têm u ao longo da fachada, então troca os eixos (caimento).
 function chapaHD(m, U, o) {
@@ -492,7 +516,7 @@ function porCaixa(scene, mats, visita) {
 }
 // Painel fino, alto e largo = janela. Sorteia o tipo pelo hash da posição do vão, devolve a lista e marca os vértices.
 // Peso por tipo: basculante de ferro, veneziana e vitrô com grade sobem (o correr de alumínio dominava e as janelas liam iguais).
-const PESO_JANELA = [.14, .10, .14, .15, .14, .05, .05, .11, .12];
+const PESO_JANELA = [.09, .13, .16, .14, .14, .05, .05, .13, .11];
 const h3 = (x, y, z) => { const s = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453; return s - Math.floor(s); };
 function marcaJanelas(scene, mat) {
   const marcadas = [], janelas = [], todas = [], ultimo = new Map();
@@ -698,6 +722,10 @@ export function aplicaLajesHD(scene, renderer, opts = {}) {
         if (Math.abs(v.x) > 1.2 || Math.hypot(v.x + 2, v.z - 17) > 3.5) continue;
         const ux = Math.abs(nm[2]), uz = Math.abs(nm[0]), x = v.x + nm[0] * .035 + ux * t[0], z = v.z + nm[2] * .035 + uz * t[0], y = cx.min.y + t[1] + t[2];
         F.cor(0x2a2623).caixa(x, y, z, .025 + ux * .03, .055, .025 + uz * .03).cor(0x8d9290).tubo([V(x - ux * .015, y + .05, z - uz * .015), V(x - ux * .015, y + .085, z - uz * .015), V(x + ux * .015, y + .085, z + uz * .015), V(x + ux * .015, y + .05, z + uz * .015)], .005, 4);
+        // Aço de enrolar (tipo 4): corrente galvanizada (elos de 1,2 cm em zigue-zague) do furo do trilho (u -0,43; 0,40 m) até o cadeado do pé, e um segundo cadeado no trilho.
+        if (p.material.userData.hdTipo === 4) { const pts = [], x0 = v.x + nm[0] * .03, z0 = v.z + nm[2] * .03;
+          for (let i = 0; i <= 10; i++) { const k = i / 10, u = -.43 + .21 * k * k, yy = cx.min.y + .40 - .31 * k, w = (i % 2 ? 1 : -1) * .006; pts.push(V(x0 + ux * u + nm[0] * w, yy, z0 + uz * u + nm[2] * w)); }
+          F.cor(0x8d9290, .9).tubo(pts, .005, 4).cor(0x2a2623).caixa(x0 + ux * -.43, cx.min.y + .40, z0 + uz * -.43, .022 + ux * .03, .05, .022 + uz * .03); }
         n++; }
       if (n) { const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .55, metalness: .35, name: 'hd-cadeado' }); cadeados = new THREE.Mesh(F.geo(), m); cadeados.name = 'hd-cadeados'; cadeados.raycast = () => {}; scene.add(cadeados); criadas.push(m); } }
   }

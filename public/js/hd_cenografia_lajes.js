@@ -209,15 +209,17 @@ function morro(grupo, rng, U, denso = true) {
 
   // Casinhas: grade de 4,6 m (6,4 no modo ralo) com sorteio dentro das manchas adensadas e abaixo da linha da mata; cada célula só recebe uma.
   // Paleta terracota / cimento / branco sujo: tijolo saturado com ganho alto virava pastel rosa atrás da névoa azulada.
-  // Heap r22: árvores 500 → 280 e casario 840/900 → 590/630 (-30 %); copa 10 % maior compensa a cobertura.
-  const casas = [], arvores = [], ocupado = new Set(), CEL = denso ? 4.6 : 6.4, NCASAS = denso ? 590 : 440, NTOPO = denso ? 630 : 540, NARV = denso ? 280 : 340, esc = denso ? .85 : 1;
-  const TIJOLO = [0x7e4a34, 0x72422c, 0x885238, 0x66392a], CRU = [0x6f685e, 0x7b7469, 0x5c5850], TINTA = [0xa39d90, 0xb0a99b, 0x8e8d84];
+  // Heap r22: árvores 500 → 280 e casario 840/900 → 590/630 (-30 %). r23: a encosta fora das manchas adensadas ficava lisa (lajesol, à direita,
+  // zero casa até a mata): o casario cobre toda a faixa abaixo da linha da mata (fora da mancha entra 55 %), 590/630 → 700/740, e as copas
+  // (esferas) caem 40 % (280 → 168) para pagar; brancos sujos entram na paleta (casas brancas/terracota escalonadas).
+  const casas = [], arvores = [], ocupado = new Set(), CEL = denso ? 4.6 : 6.4, NCASAS = denso ? 700 : 440, NTOPO = denso ? 740 : 540, NARV = denso ? 168 : 340, esc = denso ? .85 : 1;
+  const TIJOLO = [0x7e4a34, 0x72422c, 0x885238, 0x66392a], CRU = [0x6f685e, 0x7b7469, 0x5c5850], TINTA = [0xb8b3a6, 0xc4bfb2, 0xa39d90, 0xb0a99b, 0x8e8d84];
   // Raio uniforme (antes pow 1,2 puxava para o pé): o casario sobe a encosta até a linha da mata (~62 % da crista) em vez de ficar só embaixo.
   for (let t = 0; t < NCASAS * 32 && casas.length < NCASAS; t++) {
     const a = rng() * Math.PI * 2, r = 60 + rng() * (R_FIM - 68), x0 = Math.cos(a) * r, z0 = Math.sin(a) * r;
-    if (adensado(x0, z0) < LIM) continue;
+    if (adensado(x0, z0) < LIM && rng() > .55) continue;
     const ch = `${Math.round(x0 / CEL)}_${Math.round(z0 / CEL)}`; if (ocupado.has(ch)) continue; ocupado.add(ch);
-    const x = Math.round(x0 / CEL) * CEL + (rng() - .5) * 1.6, z = Math.round(z0 / CEL) * CEL + (rng() - .5) * 1.6, y = alturaMorro(x, z), s = rng(), pal = s < .58 ? TIJOLO : s < .86 ? CRU : TINTA;
+    const x = Math.round(x0 / CEL) * CEL + (rng() - .5) * 1.6, z = Math.round(z0 / CEL) * CEL + (rng() - .5) * 1.6, y = alturaMorro(x, z), s = rng(), pal = s < .52 ? TIJOLO : s < .72 ? CRU : TINTA;
     if (denso && mata(x, z, y) > .5) continue;
     casas.push({ x, z, y, w: (4.2 + rng() * 2.4) * esc, d: (4.6 + rng() * 2.6) * esc, h: (1 + Math.floor(rng() * rng() * 2.9)) * 2.7 + .4, ry: Math.atan2(-x, -z) + (rng() - .5) * .7,
       cor: pal[Math.floor(rng() * 97) % pal.length], caixa: rng() < (denso ? .85 : .75) });
@@ -453,7 +455,7 @@ function relogio(F, rng, x, n, y, z, topo, evita) {
   for (let yy = y + .95; yy < topo - .25; yy += .6) F.cor(0x7c7f7e).caixa(x + n * .025, yy, z - .08, .036, .03, .05);
   return xm;
 }
-function fios(grupo, rng, topo, mundo, mat, evita, FR) {
+function fios(grupo, rng, topo, mundo, mat, evita, FR, scene = null) {
   const F = fundidor(); let feixes = 0;
   const poste = (x, y, z, h, ry) => { F.cor(0x3a3531).caixa(x, y - .3, z, .05, h + .3, .05, ry).cor(FERRO).caixa(x, y + h - .3, z, .12, .12, .08, ry); };
   for (const [ax, az, bx, bz, n, gato] of FEIXES) {
@@ -496,9 +498,30 @@ function fios(grupo, rng, topo, mundo, mat, evita, FR) {
     F.cor(ESCURO).tubo([V(x - side * .13, 5.65, z + .14), V(xf, 6.1, z - .05)], .006, 3); }
   const paredes = cols.some((c) => Math.abs(c.maxX + 1) < .05 && c.maxY > 6 && c.minZ < 10 && c.maxZ > 13);
   const panos = paredes ? beco(F, rng, 1, FR) + beco(F, rng, -1, FR) : 0;
+  if (paredes) passarelas(F, rng, cols, scene);
   if (!F.tris()) return { tris: 0, panos };
   const malha = new THREE.Mesh(F.geo(), mat); malha.name = 'hd-fios';
   grupo.add(malha); return { tris: F.tris(), panos };
+}
+// Passarelas/lajes que cruzam o beco central (caixas de parede a parede, |x| ≥ 0,8, |z| 8,3–26, fundo ≥ 3,4 m): liam como chapa sem espessura.
+// Entra, por laje: viga de concreto sob a laje (22 x 16 cm), platibanda de 12 cm nas duas bordas (espessura contra o céu), 2 cabos em
+// catenária e 1 cano de PVC pendurado por baixo com 2 abraçadeiras. Tudo acima de BECO_MIN. Lajes vêm dos colisores ou, sem colisor, das caixas
+// fundidas de lajes-alvenaria (24 vértices cada, como porCaixa de map_lajes_hd.js).
+function passarelas(F, rng, cols, scene) {
+  const lajes = [], ehLaje = (x0, x1, y0, y1, z0, z1) => x0 <= -.8 && x1 >= .8 && x1 - x0 < 3.2 && y0 >= 3.4 && y1 - y0 <= .6 && z1 - z0 >= .5 && z1 - z0 <= 4 && Math.abs((z0 + z1) / 2) > 8.3 && Math.abs((z0 + z1) / 2) < 26;
+  for (const c of cols) if (ehLaje(c.minX, c.maxX, c.minY, c.maxY, c.minZ, c.maxZ)) lajes.push([c.minX, c.maxX, c.minY, c.maxY, c.minZ, c.maxZ]);
+  if (!lajes.length && scene) { const p = new THREE.Vector3();
+    scene.traverse((o) => { if (!o.isMesh || !/^lajes-alvenaria/.test(o.name)) return; const pos = o.geometry.attributes.position; if (!pos || pos.count % 24) return; o.updateWorldMatrix(true, false);
+      for (let i = 0; i < pos.count; i += 24) { let x0 = 1e9, y0 = 1e9, z0 = 1e9, x1 = -1e9, y1 = -1e9, z1 = -1e9;
+        for (let k = i; k < i + 24; k++) { p.fromBufferAttribute(pos, k).applyMatrix4(o.matrixWorld); x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); z0 = Math.min(z0, p.z); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); z1 = Math.max(z1, p.z); }
+        if (ehLaje(x0, x1, y0, y1, z0, z1)) lajes.push([x0, x1, y0, y1, z0, z1]); } }); }
+  for (const [x0, x1, y0, y1, z0, z1] of lajes) { if (y0 - .34 < BECO_MIN) continue; const w = x1 - x0, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, g = .85 + rng() * .2;
+    F.cor(0x6b675f, g).caixa(cx, y0 - .22, cz, w, .22, .16);
+    for (const zb of [z0 + .05, z1 - .05]) F.cor(0x7a766e, g).caixa(cx, y1, zb, w, .12, .10).cor(0x4f4c47, g).caixa(cx, y0 - .04, zb, w, .04, .06);
+    for (const [dz, barriga] of [[-.32, .12], [.30, .18]]) F.cor(ESCURO).tubo(catenaria(V(x0, y0 - .06, cz + dz), V(x1, y0 - .06, cz + dz), barriga, BECO_MIN, 8), .006, 3);
+    const yc = y0 - .30, zc = Math.min(z1 - .18, cz + .1);
+    F.cor(0xb9b5a6, .9 + rng() * .2).tubo([V(x0 - .04, yc, zc), V(x1 + .04, yc, zc)], .025, 5).cor(0x6f7271);
+    for (const xa of [x0 + w * .25, x1 - w * .25]) F.caixa(xa, yc, zc, .05, .30, .04); }
 }
 
 function antena(F, x, y, z, rng) {
@@ -547,20 +570,20 @@ function lavar(F, x, y, z, rng, ry) {
   const bx = x + .62 * cs + .1 * sn, bz = z - .62 * sn + .1 * cs, cor = rng() < .5 ? 0x3c5f9a : 0x9aa0a4, pts = (r, y0, y1) => [V(bx, y + y0, bz), V(bx, y + y1, bz)];
   F.cor(cor).tubo(pts(.16, .04, .44), .16, 8).tubo(pts(.11, .44, .52), .11, 8).cor(0x2c2e30).tubo(pts(.14, 0, .05), .14, 6).tubo(pts(.1, .52, .62), .1, 6);
 }
-// Torre de tijolo baiano: fiadas de 19 cm com junta de argamassa recuada e tom por fiada; `tijolos` recorta cada tijolo (26 cm,
-// amarração corrida) em placa 1 cm à frente do miolo de argamassa — só nas torres vistas de perto (ry tem de ser 0).
+// Torre de tijolo baiano: fiadas de 19 cm com junta de argamassa recuada e tom por fiada; `tijolos` recorta cada bloco (19 x 9 cm, fiada de 10 cm,
+// amarração corrida) em placa 1 cm à frente do miolo de argamassa (a fiada de 19 cm recortada em 27 cm lia como bloco 2,5x o tijolo da parede).
 function torreTijolo(F, x, y, z, w, h, rng, tijolos = false, ry = 0) {
-  const n = Math.max(1, Math.round(h / .193)), fh = h / n, cores = [0x87604f, 0x7c5646, 0x90675a, 0x80594b];
+  const n = Math.max(1, Math.round(h / (tijolos ? .10 : .193))), fh = h / n, cores = [0x87604f, 0x7c5646, 0x90675a, 0x80594b];
   if (tijolos) F.cor(0x8d8a82, .95).caixa(x, y, z, w - .02, h, w - .02, 0);
   for (let i = 0; i < n; i++) { const yb = y + i * fh;
     if (!tijolos) { F.cor(0x8d8a82, .9).caixa(x, yb, z, w - .024, .012, w - .024, ry).cor(cores[Math.floor(rng() * 4)], .9 + rng() * .2).caixa(x, yb + .012, z, w, fh - .012, w, ry); continue; }
-    for (let f = 0; f < 4; f++) for (let b = -w / 2, len = i % 2 ? .135 : .27; b < w / 2 - .02; b += len, len = .27) { const e = Math.min(b + len - .01, w / 2), c = (b + e) / 2;
+    for (let f = 0; f < 4; f++) for (let b = -w / 2, len = i % 2 ? .095 : .19; b < w / 2 - .02; b += len, len = .19) { const e = Math.min(b + len - .01, w / 2), c = (b + e) / 2;
       F.cor(cores[Math.floor(rng() * 4)], .88 + rng() * .24);
       if (f < 2) F.caixa(x + (f ? -1 : 1) * (w / 2 - .01), yb + .012, z + c, .02, fh - .012, e - b); else F.caixa(x + c, yb + .012, z + (f === 2 ? 1 : -1) * (w / 2 - .01), e - b, fh - .012, .02); } }
 }
 // Caixa d'água de polietileno azul (500 ou 1000 L) com tampa, sobre torre de tijolo ou direto na laje; `lados` 24 nas vistas de perto.
 // Azul menos saturado (0x1a5cb4 virava chapado no AgX), entrada com boia por cima e saída de PVC; `cor` cinza = fibrocimento (sem nervura, tampa chata).
-// A torre é sempre de tijolo recortado (fiada de 19 cm = tijolo da parede): a fiada lisa de 1,2 m lia como tijolo 3x a escala.
+// A torre é sempre de tijolo recortado (bloco 19 x 9 cm, fiada de 10 cm): a fiada lisa de 1,2 m lia como tijolo 3x a escala e a recortada de 27 x 19 cm como 2,5x.
 function caixaAzul(F, x, y, z, rng, cor = 0x1d5498, comTorre = 1, g0 = 0, lados = 10) {
   const g = g0 || (rng() < .5 ? 1 : .8), torre = comTorre && rng() < .55 ? .5 + rng() * .7 : 0, r = .62 * g, h = .86 * g, tom = .85 + rng() * .3, fibro = cor === 0x8a8781;
   if (torre) { torreTijolo(F, x, y - .05, z, 1.2 * g, torre + .05, rng, true); F.cor(0x6b675f).caixa(x, y + torre, z, 1.36 * g, .08, 1.36 * g, 0); }
@@ -636,7 +659,8 @@ function telhados(grupo, rng, topo, mundo, vivo, mat, scene, comCaixas, FR) {
   const rg = rngDe(40124); let fibro = false;
   for (const c of tetos) { const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2, w = c.maxX - c.minX, d = c.maxZ - c.minZ; if (Math.abs(cx) > 22 || w > 30 || d > 30 || !noQuadro(cx, cz, [1, 2, 3])) continue;
     const dentroX = Math.abs(cx) > Math.abs(cz) * .6, sx = Math.sign(cx) || 1, sz = Math.sign(cz) || 1, lado = (rg() - .5) * .5;
-    const px = dentroX ? cx - sx * (w / 2 - 1.2 - rg() * .4) : cx + lado * (w - 2.6), pz = dentroX ? cz + lado * (d - 2.6) : cz - sz * (d / 2 - 1.2 - rg() * .4);
+    // 0,75–1,05 m da borda (era 1,2–1,6): vista de baixo (lajesol) a caixa ficava cortada pela platibanda da própria laje; sem torre, o pé fica ≥ 0,13 m dentro da borda.
+    const px = dentroX ? cx - sx * (w / 2 - .75 - rg() * .3) : cx + lado * (w - 2.6), pz = dentroX ? cz + lado * (d - 2.6) : cz - sz * (d / 2 - .75 - rg() * .3);
     const y = topo(px, pz); if (y === null) continue;
     if (!comLista.has(c) && rg() < .7) caixaAzul(F, px, y - .03, pz, rg, rg() < .25 ? 0x8a8781 : 0x1d5498, 0, 0, 12);
     const qx = dentroX ? cx - sx * (w / 2 - .7) : cx - lado * (w - 2.6), qz = dentroX ? cz - lado * (d - 2.6) : cz - sz * (d / 2 - .7), yq = topo(qx, qz);
@@ -671,7 +695,7 @@ function telhados(grupo, rng, topo, mundo, vivo, mat, scene, comCaixas, FR) {
     else puxadinho(F, x, y - .05, z, rng, dentroX ? Math.PI / 2 : 0);
   });
   for (const s of [1, -1]) for (const [x, z, id, pe] of TANQUES_BECO) { const y = topo(x, s * z); if (y === null) continue;
-    torreTijolo(F, x, y - .05, s * z, 1.3, pe + .05, rng); F.cor(0x6b675f).caixa(x, y + pe, s * z, 1.45, .09, 1.45, 0);
+    torreTijolo(F, x, y - .05, s * z, 1.3, pe + .05, rng, true); F.cor(0x6b675f).caixa(x, y + pe, s * z, 1.45, .09, 1.45, 0);
     if (id === 'caixa_dagua_azul' && s > 0) tanques.push({ id, x, y: y + pe + .08, z: s * z, targetH: 1.35 + rng() * .35, ry: rng() * 6.28 }); else caixaAzul(F, x, y + pe + .08, s * z, rng, id === 'caixa_dagua_preta' ? 0x1c1d20 : 0x1d5498, 0, 0, 16);
     antena(F, x + (x > 0 ? .95 : -.95), y - .05, s * (z + .5), rng);
     // Fundo do beco (caixas pastel): parabólica no telhado que fecha o beco, uma por lado, atrás da segunda caixa.
@@ -800,19 +824,64 @@ function cadeira(F, x, y, z, rng, ry) {
 // O varal autoral (lajes_varal.glb, curva de Bézier do Sketchfab) desenha a corda como fita bege de 4 cm torcida: sai de cena e entra
 // varal de poste de concreto de 9 cm (lê a 1 200 px; o tubo de 3,6 cm sumia) com travessa galvanizada e corda de 1,5 px, recuado 0,5 m para fora (±7,5; ±11)
 // e com roupa só na metade externa (|x| ≥ 7): da pose rente à parede (hd_lab `parede`: -6,5/3,1/-12,8, yaw -2) nada entra no corredor da laje; calça sempre dobrada. Volta em desliga().
-function varais(scene, F, FR, rng) {
-  const ocultos = [], cx = new THREE.Box3();
+function varais(scene, F, FR, rng, R) {
+  const ocultos = [], cx = new THREE.Box3(), PREG = [0x2a5a9a, 0x3f7a4a, 0xb9a83c];
   scene.traverse((o) => { if (o.userData.lajesAuthored !== 'lajes_varal' || !o.visible) return; cx.setFromObject(o);
     const sx = Math.sign(cx.min.x + cx.max.x) || 1, x = sx * 7.5, z = (cx.min.z + cx.max.z) / 2, y = cx.min.y, h = 1.9; if (!noQuadro(x, z)) return; ocultos.push(o);
     for (const dx of [-1.1, 1.1]) F.cor(0x8e8f8a, .9 + rng() * .2).caixa(x + dx, y, z, .09, h, .09).cor(0x8d9290).tubo([V(x + dx, y + h - .014, z - .26), V(x + dx, y + h - .014, z + .26)], .014, 5).cor(0x6a6c69).caixa(x + dx, y, z, .22, .06, .22);
     for (const [dz, formas] of [[-.2, [0, 2]], [.2, [1, 0]]]) { const A = V(x - 1.1, y + h, z + dz), B = V(x + 1.1, y + h, z + dz), L = 2.2, barriga = .04;
       FR.cor(0xa89f8a).fio(catenaria(A, B, barriga, 0, 12), .003);
       let s = .72;
+      // Peças do roupeiro (malha com caimento + atlas): camisa = camiseta do atlas, calça dobrada e toalha = célula retangular; pregador de plástico nas pontas.
       for (const forma of formas) { const [w] = PECAS[forma]; if (s + w > L - .12) break; const t = (s + w / 2) / L, yy = y + h - barriga * 4 * t * (1 - t) - .01;
-        pano(F, rng, sx * (6.4 + s + w / 2), yy, z + dz, 1, 0, forma, forma === 1 ? JEANS : PANOS[Math.floor(rng() * PANOS.length)], forma === 1);
+        const P = R.peca(rng, sx * (6.4 + s + w / 2), yy, z + dz, 1, 0, w, forma === 1 ? .52 : forma === 0 ? .66 : .55, forma === 0 ? 0 : 3, rng() < .3 ? 1 : 0, (forma === 1 ? JEANS : PANOS[Math.floor(rng() * PANOS.length)])[0], .9 + rng() * .2);
+        for (const u of [-.38, .38]) { const p = P(u, 0); F.cor(PREG[Math.floor(rng() * 2.999)], .95).caixa(p.x, yy - .03, p.z, .02, .07, .015); }
         s += w + .08 + rng() * .1; } } });
   for (const o of ocultos) o.visible = false;
   return () => { for (const o of ocultos) o.visible = true; };
+}
+// Roupas do varal reposto (pose laje): port do roupeiro do Escadão (hd_cenografia_escadao.js) — atlas de tecido 512 px gerado em runtime
+// (colunas: camiseta, calça, lençol, toalha, pano de prato; 2ª linha estampada) e malha 6 x 8 por peça com barriga, dobra lateral, torção ±4°
+// e AO por vértice nas dobras. Um draw call a mais (`hd-roupas`); os quads de pano() seguem nos becos e telhados.
+function atlasRoupas(rng) {
+  const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d'); g.clearRect(0, 0, 512, 512);
+  const cel = (col, lin, alpha, estampa) => { const x0 = 0, y0 = 0; g.save(); g.translate(col * 102.4, lin * 128); g.scale(.8, 1); g.beginPath();
+    if (col === 0) { g.moveTo(x0 + 36, y0 + 6); g.lineTo(x0 + 92, y0 + 6); g.lineTo(x0 + 124, y0 + 30); g.lineTo(x0 + 114, y0 + 58); g.lineTo(x0 + 94, y0 + 50); g.lineTo(x0 + 94, y0 + 126); g.lineTo(x0 + 34, y0 + 126); g.lineTo(x0 + 34, y0 + 50); g.lineTo(x0 + 14, y0 + 58); g.lineTo(x0 + 4, y0 + 30); g.closePath(); }
+    else if (col === 1) { g.moveTo(x0 + 30, y0 + 2); g.lineTo(x0 + 98, y0 + 2); g.lineTo(x0 + 100, y0 + 126); g.lineTo(x0 + 70, y0 + 126); g.lineTo(x0 + 64, y0 + 40); g.lineTo(x0 + 58, y0 + 126); g.lineTo(x0 + 28, y0 + 126); g.closePath(); }
+    else g.rect(x0 + 2, y0 + 2, 124, 124);
+    g.clip(); g.fillStyle = `rgba(255,255,255,${alpha})`; g.fillRect(x0, y0, 128, 128);
+    g.fillStyle = 'rgba(0,0,0,.045)'; for (let i = 0; i < 128; i += 2) { g.fillRect(x0, y0 + i, 128, 1); g.fillRect(x0 + i, y0, 1, 128); }
+    g.fillStyle = 'rgba(0,0,0,.05)'; for (let i = 0; i < 50; i++) g.fillRect(x0 + rng() * 128, y0 + rng() * 128, 1 + rng() * 4, 1);
+    if (col === 0) { g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(x0 + 64, y0 + 6, 18, 10, 0, 0, 6.3); g.fill(); g.fillRect(x0 + 33, y0 + 50, 62, 2); }
+    if (col === 1) { g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(x0 + 30, y0 + 2, 68, 7); g.fillRect(x0 + 62, y0 + 40, 4, 86); g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(x0 + 44, y0 + 12, 2, 112); g.fillRect(x0 + 84, y0 + 12, 2, 112); }
+    if (col === 3) { g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(x0 + 2, y0 + 10, 124, 6); g.fillRect(x0 + 2, y0 + 112, 124, 6); }
+    if (col === 4) { g.fillStyle = 'rgba(0,0,0,.14)'; for (let i = 0; i < 128; i += 16) { g.fillRect(x0 + i, y0, 8, 128); g.fillRect(x0, y0 + i, 128, 8); } }
+    if (estampa === 1) { g.fillStyle = 'rgba(0,0,0,.26)'; for (let i = 8; i < 128; i += 18) g.fillRect(x0, y0 + i, 128, 7); }
+    if (estampa === 2) { g.fillStyle = 'rgba(0,0,0,.30)'; for (let i = 0; i < 40; i++) { g.beginPath(); g.arc(x0 + 8 + rng() * 112, y0 + 8 + rng() * 112, 3 + rng() * 2, 0, 6.3); g.fill(); } }
+    if (estampa === 3) { g.fillStyle = 'rgba(0,0,0,.22)'; for (let i = 0; i < 128; i += 24) { g.fillRect(x0 + i, y0, 10, 128); g.fillRect(x0, y0 + i, 128, 10); } }
+    g.restore(); };
+  for (let col = 0; col < 5; col++) { cel(col, 0, col === 2 ? .92 : 1, 0); cel(col, 1, col === 2 ? .92 : 1, 1 + (col % 3)); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.name = 'hd-roupas'; return t;
+}
+function roupeiro() {
+  const pos = [], nor = [], uv = [], cor = [], idx = [], c = new THREE.Color();
+  return {
+    peca(rng, cx, y, cz, dx, dz, w, h, tipo, estampa, hex, ganho) {
+      const nx = -dz, nz = dx, vai = (rng() - .5) * .06, fase = rng() * 6.28, amp = .012 + rng() * .02, tw = (rng() - .5) * .14, NU = 6, NV = 8, b = pos.length / 3;
+      const P = (u, v) => { const s = Math.sin(u * 5.0 + fase + v * 2.0) * amp * v + vai * v * v + .014 * Math.sin(v * Math.PI) * Math.cos(u * 3.0 + fase) + tw * u * w * v;
+        return V(cx + dx * u * w + nx * s, y - v * h, cz + dz * u * w + nz * s); };
+      c.setHex(hex).multiplyScalar(ganho);
+      for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++) { const u = i / NU - .5, v = j / NV, p = P(u, v);
+        const du = P(u + .01, v).sub(P(u - .01, v)), dv = P(u, v + .01).sub(P(u, v - .01)), n = du.cross(dv).normalize();
+        const ao = .78 + .22 * (.5 + .5 * Math.cos(u * 5.0 + fase + v * 2.0)) * (.4 + .6 * v) + .08 * (1 - v);
+        pos.push(p.x, p.y, p.z); nor.push(n.x, n.y, n.z); uv.push((tipo + .5 + u * .98) / 5, 1 - (estampa + .01 + v * .98) / 4); cor.push(c.r * ao, c.g * ao, c.b * ao); }
+      for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) { const k = b + j * (NU + 1) + i; idx.push(k, k + NU + 1, k + 1, k + 1, k + NU + 1, k + NU + 2); }
+      return P;
+    },
+    n: () => idx.length / 6,
+    geo() { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('color', new THREE.Float32BufferAttribute(cor, 3)); g.setIndex(idx); return soltaAoSubir(g); },
+  };
 }
 // Mercadinho na fachada de entorno 41 (x = -14,85; frente para o beco oeste): toldo listrado assentado na marquise de zinco autoral
 // da vitrine (braços passariam dentro dela), cadeira e engradados na porta (0,8 m fora da rota x = -13,8). Placa: atlas de pichação.
@@ -855,8 +924,19 @@ function props(grupo, rng, topo, mundo, mat, FR, scene, liga) {
       botijao(F, x - .65, y, z - 1.3, rng); balde(F, x - .7, y, z + 1.1, rng); }
     else { cadeira(F, x + .35, y, z - .8, rng, 2.4 + rng()); caixaFeira(F, x - .6, y, z + 1.1, rng, .3); caixaFeira(F, x - .62, y + .31, z + 1.08, rng, .9); sacoCimento(F, x + .45, y, z + 1.2, rng, .4); balde(F, x - .25, y, z - 1.35, rng); }
   }
-  const volta = liga.varal ? varais(scene, F, FR, rng) : () => {};
+  // Laje da pose lajesol (-7,2; 3,1; -3,5, yaw 0,9) lia vazia: mancha de água (polígono 1,3 x 0,9 m a 3 mm do piso, 2 m à frente — plano, não é obstáculo),
+  // e na faixa de 58 cm entre o pilar (-11,6; -4,3) e a mureta (|x| 12,2–12,7, fora da rota): saco de material, botijão, balde e antena velha deitada ao pé da mureta.
+  if (noQuadro(-12.4, -3.6, [2])) { const yl = topo(-8.9, -4.9);
+    if (yl !== null) { const cm = [-8.9, -4.9], pts = []; for (let i = 0; i < 14; i++) { const a = i / 14 * 6.283, r = (.55 + .25 * Math.sin(a * 3 + 1.2) + .12 * Math.sin(a * 7)) * (1 + .3 * Math.cos(a)); pts.push(V(cm[0] + Math.cos(a) * r * 1.1, yl + .003, cm[1] + Math.sin(a) * r * .8)); }
+      F.cor(0x4a4742, .9); for (let i = 0; i < 14; i++) F.tri(V(cm[0], yl + .003, cm[1]), pts[(i + 1) % 14], pts[i]);
+      F.cor(0x3e3b37, .9); for (let i = 0; i < 14; i++) F.tri(V(cm[0] + .15, yl + .004, cm[1] - .1), V(cm[0] + .15 + (pts[(i + 1) % 14].x - cm[0]) * .45, yl + .004, cm[1] - .1 + (pts[(i + 1) % 14].z - cm[1]) * .45), V(cm[0] + .15 + (pts[i].x - cm[0]) * .45, yl + .004, cm[1] - .1 + (pts[i].z - cm[1]) * .45));
+      const yp = topo(-12.35, -4.9) ?? yl; sacoCimento(F, -12.35, yp, -4.9, rng, .3); botijao(F, -12.42, yp, -3.6, rng); balde(F, -12.45, yp, -2.9, rng);
+      F.cor(0x6f7275, .9).tubo([V(-12.58, yp + .03, -2.3), V(-12.58, yp + .03, -.7)], .02, 4); for (let i = 0; i < 5; i++) F.tubo([V(-12.58 - .3 + i * .03, yp + .03, -1.1 + i * .13), V(-12.58 + .3 - i * .03, yp + .03, -1.1 + i * .13)], .011, 3);
+      F.cor(0x34302c).caixa(-12.58, yp, -2.3, .2, .08, .14); } }
+  const R = roupeiro(), volta = liga.varal ? varais(scene, F, FR, rng, R) : () => {};
   if (liga.loja) loja(F, rng, cols);
+  if (R.n()) { const mr = new THREE.MeshStandardMaterial({ map: atlasRoupas(rngDe(5177)), vertexColors: true, roughness: .95, metalness: 0, side: THREE.DoubleSide, alphaTest: .5, name: 'hd-roupas' });
+    const roupas = new THREE.Mesh(R.geo(), mr); roupas.name = 'hd-roupas'; roupas.userData.hdSombra = true; roupas.userData.hdAtlas = true; grupo.add(roupas); }
   if (!F.tris()) return { tris: 0, volta };
   const malha = new THREE.Mesh(F.geo(), mat); malha.name = 'hd-props'; malha.userData.hdSombra = true; grupo.add(malha); return { tris: F.tris(), volta };
 }
@@ -872,7 +952,7 @@ export function cenografiaLajes(scene, opts = {}) {
   const FR = fiador(), res = { value: new THREE.Vector2(1, 1) };
   let voltaMorro = () => {}, voltaCaixas = () => {}, voltaVaral = () => {};
   if (lig('morro')) { morro(grupo, rngDe(opts.semente || 20261110), U, lig('denso')); voltaMorro = escondeMorroVelho(scene); }
-  if (lig('fios')) info.fios = fios(grupo, rngDe(7717), topo, mundo, mat, evita, FR);
+  if (lig('fios')) info.fios = fios(grupo, rngDe(7717), topo, mundo, mat, evita, FR, scene);
   if (lig('fachada')) info.fachada = fachada(grupo, rngDe(9311), mundo, opts.janelas || [], mat, evita);
   if (lig('telhados')) { const t = telhados(grupo, rngDe(40123), topo, mundo, () => vivo, mat, scene, lig('caixas'), FR); info.telhados = t.tris; voltaCaixas = t.volta; }
   if (lig('props')) { const p = props(grupo, rngDe(8831), topo, mundo, mat, FR, scene, { varal: lig('varal'), loja: lig('loja') }); info.props = p.tris; voltaVaral = p.volta; }
@@ -886,7 +966,7 @@ export function cenografiaLajes(scene, opts = {}) {
     grupo.traverse((o) => { if (!o.isMesh) return;
       const prop = !!o.userData.mapPropId;
       // Geometria e material dos tanques moram no cache do mapprops (a caixa d'água do mapa usa o mesmo molde).
-      if (!prop) { o.geometry.dispose(); o.material.dispose(); }
+      if (!prop) { o.geometry.dispose(); o.material.dispose(); if (o.userData.hdAtlas) o.material.map?.dispose(); }
       else if (o.userData.hdNovo) for (const t of [o.material.map, o.material.normalMap, o.material.roughnessMap]) t?.dispose();
       if (o.userData.hdMatProprio) o.material.dispose();
       if (o.isInstancedMesh) o.dispose(); });
