@@ -38,14 +38,23 @@
    PG6 · pacote público e assert nominal antecedem serve/medição; erro não é ignorado.
          Fetch, assert e imports precisam acordar o portão.
 
+   PG7 · rascunho: o `on.pull_request.types` traz os três padrões + `ready_for_review`
+         (sem ele o `gh pr ready` não roda o pesado no SHA). O passo `rascunho` do decide
+         é EXECUTADO em bash: só `pull_request` com draft `true` emite `pronto=false`;
+         push, dispatch, draft `false` ou ausente emitem `pronto=true`. Todo job fora de
+         GATILHOS[alvo].leves exige `pronto != 'false'` (saída ausente roda); job leve
+         não olha o `pronto`.
+
    Mutantes: tira-caminho (PG1), passo-novo (PG2), diff-aberto e quotepath-volta (PG3),
    portao-na-fila (PG5), sem-fetch/fetch-tarde/assert-sem-pack/fetch-ignorado/
    fetch-fora-gatilho, early-exit, errexit-desligado, heredoc, indent-escape e
-   shell-sem-errexit (PG6). Aplicação ausente/ambígua sai78; mutante sobrevivente sai4.
+   shell-sem-errexit (PG6), ready-sumiu, rascunho-aberto, pesado-no-rascunho e
+   leve-pulado (PG7). Aplicação ausente/ambígua sai78; mutante sobrevivente sai4.
    Uso: node tools/eval/portao-gatilho-check.mjs [--mutante=<nome>]
    ============================================================================ */
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { dirname, join, normalize } from 'node:path';
 import { GATILHOS, casa, decidir, scriptsUsados } from '../../scripts/ci/gatilho.mjs';
 
@@ -57,6 +66,7 @@ const MUTANTES = {
   'fetch-ignorado': 'PG6', 'fetch-fora-gatilho': 'PG6',
   'early-exit': 'PG6', 'errexit-desligado': 'PG6', 'heredoc': 'PG6',
   'indent-escape': 'PG6', 'shell-sem-errexit': 'PG6',
+  'ready-sumiu': 'PG7', 'rascunho-aberto': 'PG7', 'pesado-no-rascunho': 'PG7', 'leve-pulado': 'PG7',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -268,6 +278,10 @@ for (const [alvo, g] of Object.entries(GATILHOS)) {
   if (MUT === 'diff-aberto' && alvo === 'portao') wf = substituirUma(wf, /if ! git [^\n]*diff[^\n]*\n(?:[^\n]*\n){0,2}?[^\n]*rodar=true/, (m) => m.replace(/rodar=true$/, 'rodar=false'), MUT);
   if (MUT === 'quotepath-volta' && alvo === 'smoke') wf = substituirUma(wf, 'git -c core.quotePath=false diff', 'git diff', MUT);
   if (MUT === 'portao-na-fila' && alvo === 'portao') wf = substituirUma(wf, '  pull_request:\n', '  pull_request:\n  merge_group:\n    types: [checks_requested]\n', MUT);
+  if (MUT === 'ready-sumiu' && alvo === 'portao') wf = substituirUma(wf, ', ready_for_review]', ']', MUT);
+  if (MUT === 'rascunho-aberto' && alvo === 'smoke') wf = substituirUma(wf, '[ "$RASCUNHO" = "true" ]', '[ "$RASCUNHO" != "false" ]', MUT);
+  if (MUT === 'pesado-no-rascunho' && alvo === 'smoke') wf = substituirUma(wf, /( {4}if: needs\.decide\.outputs\.rodar == 'true') && needs\.decide\.outputs\.pronto != 'false'(\n {4}runs-on: ubuntu-latest\n {4}timeout-minutes: 40\n)/, (m) => m.replace(" && needs.decide.outputs.pronto != 'false'", ''), MUT);
+  if (MUT === 'leve-pulado' && alvo === 'smoke') wf = substituirUma(wf, /^ {4}if: needs\.decide\.outputs\.rodar == 'true'\n/m, "    if: needs.decide.outputs.rodar == 'true' && needs.decide.outputs.pronto == 'true'\n", MUT);
   if (alvo === 'portao' && MUTANTES[MUT] === 'PG6') wf = mutarBootstrapDecals(wf);
   const cmd = comandos(wf);
   if (alvo === 'portao') conferirBootstrapDecals(wf);
@@ -336,6 +350,43 @@ for (const [alvo, g] of Object.entries(GATILHOS)) {
   for (const [nome, corpo] of jobs) {
     if (!/^ {4}needs:\s*(?:decide|\[[^\]]*\bdecide\b[^\]]*\])\s*$/m.test(corpo)) falhas.push(`PG3 ${g.workflow}: o job \`${nome}\` não tem \`needs: decide\``);
     if (!/^ {4}if:[^\n]*needs\.decide\.outputs\.rodar == 'true'/m.test(corpo)) falhas.push(`PG3 ${g.workflow}: o job \`${nome}\` não obedece \`needs.decide.outputs.rodar == 'true'\``);
+  }
+
+  /* ---- PG7: rascunho pula só o pesado; ready_for_review roda tudo ---- */
+  const blocoPr = /^ {2}pull_request:[^\n]*\n((?: {4}[^\n]*\n)*)/m.exec(on);
+  const tipos = blocoPr && /^ {4}types:\s*\[([^\]]*)\]/m.exec(blocoPr[1]);
+  if (!tipos) falhas.push(`PG7 ${g.workflow}: \`pull_request\` sem \`types:\` explícito — o padrão não traz \`ready_for_review\` e o draft que vira pronto fica sem o pesado`);
+  else {
+    const lista = tipos[1].split(',').map((t) => t.trim());
+    for (const t of ['opened', 'synchronize', 'reopened', 'ready_for_review']) if (!lista.includes(t)) falhas.push(`PG7 ${g.workflow}: \`pull_request.types\` sem \`${t}\``);
+  }
+  if (!/^ {6}pronto: \$\{\{ steps\.rascunho\.outputs\.pronto \}\}$/m.test(decide)) falhas.push(`PG7 ${g.workflow}: o decide não exporta \`pronto\` do passo \`rascunho\``);
+  const passoRascunho = passosRun(decide).find((p) => /^ {8}id: rascunho$/m.test(p.corpo));
+  if (!passoRascunho) falhas.push(`PG7 ${g.workflow}: o decide não tem o passo \`id: rascunho\``);
+  else {
+    if (!/^ {10}EVENTO: \$\{\{ github\.event_name \}\}$/m.test(passoRascunho.corpo) || !/^ {10}RASCUNHO: \$\{\{ github\.event\.pull_request\.draft \}\}$/m.test(passoRascunho.corpo)) falhas.push(`PG7 ${g.workflow}: o passo \`rascunho\` não lê EVENTO/RASCUNHO do evento`);
+    const script = passoRascunho.comandos.join('\n');
+    const dir = mkdtempSync(join(tmpdir(), 'pg7-'));
+    try {
+      const casos = [['pull_request', 'true', 'false'], ['pull_request', 'false', 'true'], ['pull_request', '', 'true'], ['push', '', 'true'], ['workflow_dispatch', '', 'true']];
+      casos.forEach(([evento, rascunho, esperado], i) => {
+        const saida = join(dir, `out-${i}`);
+        const r = spawnSync('bash', ['-c', script], { encoding: 'utf8', env: { PATH: process.env.PATH, EVENTO: evento, RASCUNHO: rascunho, GITHUB_OUTPUT: saida } });
+        const linhas = ler(saida).split('\n').filter(Boolean);
+        if (r.status !== 0 || linhas.length !== 1 || linhas[0] !== `pronto=${esperado}`) falhas.push(`PG7 ${g.workflow}: evento ${evento} com draft '${rascunho}' deu ${JSON.stringify(linhas)} (status ${r.status}), esperado pronto=${esperado}`);
+      });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+  for (const leve of g.leves) if (!blocos[leve]) falhas.push(`PG7 GATILHOS.${alvo}.leves declara \`${leve}\`, que ${g.workflow} não tem`);
+  for (const [nome, corpo] of jobs) {
+    const se = (/^ {4}if:([^\n]*)$/m.exec(corpo) || [])[1] || '';
+    if (g.leves.includes(nome)) {
+      if (/outputs\.pronto/.test(se)) falhas.push(`PG7 ${g.workflow}: o job leve \`${nome}\` olha o \`pronto\` — sairia do draft`);
+    } else if (!se.includes("needs.decide.outputs.pronto != 'false'") || /outputs\.pronto == 'true'/.test(se)) {
+      falhas.push(`PG7 ${g.workflow}: o job \`${nome}\` não exige \`needs.decide.outputs.pronto != 'false'\` — roda no draft ou pula com saída ausente`);
+    }
   }
 }
 

@@ -31,6 +31,14 @@
    portão seria PULADO, falha aberta. O decide lista com `-c core.quotePath=false -z`
    (separado por NUL, nome cru) e, por defesa, esta CLI ainda desfaz a forma com aspas.
 
+   RASCUNHO (17/11/2026): PR draft é iteração, não candidato a merge. O decide também
+   emite `pronto`: `false` SÓ quando o evento é `pull_request` e o PR é draft (valor
+   exato `true`). Todo job fora de `leves` exige `pronto != 'false'` e sai SKIPPED no
+   draft; o `ready_for_review` (nos `types` do `on:`) roda tudo no mesmo SHA. Saída
+   ausente, push, dispatch = roda. Medido em 30 d: o portão custa ~71 runner-min por
+   push e o smoke pesado (chat-desktop + smoke-cf) ~28; o `smoke` básico (5,5 min p50)
+   reprovou em 10 dos 16 runs vermelhos do smoke-web, por isso é `leve` e fica no draft.
+
    Uso (CI):  git -c core.quotePath=false diff --no-renames --name-only -z BASE...HEAD \
                 | BASE=<sha> HEAD=<sha> node scripts/ci/gatilho.mjs <portao|smoke>
    ============================================================================ */
@@ -75,6 +83,8 @@ export const GATILHOS = {
     /* `npm run` que o workflow chama. A régua cobra os dois lados: passo novo sem
        entrada aqui é vermelho, e entrada aqui sem passo também (passo que sumiu). */
     passos: ['eval:serve', 'eval:map-fauna-curated:runtime', 'eval:grafite-atual', 'eval:select', 'eval:lobbyarmamao', 'eval:mira-public', 'eval:entrada', 'eval:perfilmobile:browser', 'eval:toquecontroles', 'eval:passe:browser', 'eval:vm-maos-mobile-desktop', 'eval:armas', 'eval:boot', 'eval:sertao-livestock-runtime', 'eval:grafite:ar'],
+    /* Jobs que rodam também em PR draft. Os demais (fora o decide) esperam o `pronto`. */
+    leves: [],
   },
   smoke: {
     workflow: '.github/workflows/smoke-web.yml',
@@ -85,6 +95,7 @@ export const GATILHOS = {
       /^\.github\/workflows\/smoke-web\.yml$/,
     ],
     passos: ['dev'],
+    leves: ['smoke'],
   },
 };
 
