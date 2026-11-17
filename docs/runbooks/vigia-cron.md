@@ -28,9 +28,9 @@ com `{"ref":"main"}`). O trabalho continua no GitHub Actions; só o relógio mud
 
 ## Segredos
 
-O deploy publica código, crons e segredos numa versão só (`wrangler deploy --secrets-file`,
-com referências `${VAR}` que o wrangler expande do ambiente do passo; o valor não vai para
-disco nem log).
+O deploy publica código, crons e segredos numa versão só: `wrangler deploy --secrets-file
+/dev/stdin` recebe pelo pipe um JSON montado do ambiente do passo (JSON não passa pela
+expansão de `$VAR` do dotenv; o valor não vai para disco, log nem argumento de comando).
 
 | no Worker | vem de (Actions secret do client) | permissão necessária |
 |---|---|---|
