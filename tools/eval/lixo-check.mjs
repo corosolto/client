@@ -66,9 +66,12 @@ export const ALLOW_RAIZ = new Set([
   'package.json', 'package-lock.json', 'playwright.smoke.config.mjs', 'renovate.json',
   'skills-lock.json', 'tsconfig.json', 'vercel.json', 'wrangler.toml', 'wrangler.preview.toml', 'wrangler.staging.toml',
 ]);
+/* workers/: Workers da Cloudflare fora do site (vigia-cron, o relógio do monitoramento).
+   Fora de tools/ de propósito: tools/ops/** liga o portao-browser no PR. */
 export const ALLOW_DIRS = new Set([
   '.agents', '.claude', '.codex', '.devcontainer', '.githooks', '.github',
   'content', 'docs', 'plans', 'progress', 'prompts', 'public', 'references', 'schemas', 'scripts', 'src', 'tests', 'tools',
+  'workers',
 ]);
 
 export const RE_DOC_HISTORICO = /(CONTINUATION|HANDOFF|STATUS|RELATORIO|PLANO)|\d{4}-?\d{2}-?\d{2}|R\d{3,4}/;
