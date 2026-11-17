@@ -295,7 +295,6 @@ function marcaResultado(h) {
   const mid = idMapa(h.map);
   if (mid) {
     const i = imagem('tp-perfil__marca-mapa', `/img/map-previews/${mid}.jpg`);
-    i.loading = 'lazy';
     i.onerror = () => { i.remove(); delete m.dataset.mapa; };
     m.dataset.mapa = '';
     m.append(i);

@@ -32,12 +32,19 @@ const DONO = { id: EU, nick: 'ZeDoAWP', handle: 'zedoawp', url: '/u/zedoawp', vi
   settings: { share_character: true }, socials: [{ url: 'https://instagram.com/zedoawp' }, { url: 'https://www.tiktok.com/@zedoawp' }],
   achievements: [], favorites: [{ map: 'praca_poderes', mode: 'rounds', character: 'sertanejo', faction: 'B', rounds: 40 }], history: HIST,
   last_character: 'sertanejo', presence: { online: true }, relationship: null,
+  /* conta elegível (7+ dias): o solo conta 0,5× no ranking geral e as linhas solo ganham o selo */
+  solo: { source: SOLO, counts_for_ranking: true, ranking_weight: 0.5, matches: 2, kills: 85, rounds: 3, solo_play_seconds: 1500 },
   /* fora de ordem de propósito (o backend manda no máximo 3): arma que o cliente não conhece, abate zero e número fora da faixa segura */
   top_weapons: [{ weapon: 'ak', kills: 118 }, { weapon: 'awp', kills: 400 }, { weapon: 'bazuca_fake', kills: 1 },
     { weapon: 'mp5', kills: 1e21 }, { weapon: 'knife', kills: 0 }] };
 const CONTA = { id: EU, handle: 'zedoawp', url: '/u/zedoawp', bio: DONO.bio, socials: DONO.socials,
   settings: { share_character: true, profile: 'public', presence: 'private', activity: 'friends' } };
-const ALHEIO = { ...DONO, id: OUTRO, nick: 'ClubberDaLaje', handle: 'clubber', url: '/u/clubber', points: 150, level: 3, kills: 40, history: [], favorites: [],
+/* Medalha: abate e tempo do solo (bloco `solo`) contam; rodada solo jogada não é vitória. Sem somar o solo, primeiro abate e uma hora de arena somem.
+   Conta ainda sem elegibilidade (counts_for_ranking:false): a partida solo diz só "Solo", sem o selo de 0,5×. */
+const ALHEIO = { ...DONO, id: OUTRO, nick: 'ClubberDaLaje', handle: 'clubber', url: '/u/clubber', points: 150, level: 3, kills: 0, favorites: [],
+  history: [HIST[1]], activity_visible: true,
+  round_wins: 0, wins: 0, legacy_wins: 0, verified_play_seconds: 1800, achievements: [],
+  solo: { source: SOLO, counts_for_ranking: false, ranking_weight: 0.5, matches: 4, kills: 3, rounds: 5, solo_play_seconds: 2400 },
   last_character: null, relationship: 'none', top_weapons: [], presence: null };
 /* O que a produção devolve ao visitante (medido em /api/social?action=profile&id=…): privacidade já podada no backend. */
 const VISITA = { ...DONO, settings: null, last_character: null, favorites: [], history: [], relationship: null, treta_balance: null };
@@ -53,7 +60,7 @@ const MUT = {
   'dois-limas': ['PF5', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace("'tp-carreira__compartilhar'", "'tp-btn--primario tp-carreira__compartilhar'")],
   'numero-inventado': ['PF6', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace("trk('Abates', conta(p.kills))", "trk('Abates', conta(Number(p.kills) + 16))")],
   'acao-morta': ['PF7', ['alheio'], /\/js\/tp\/perfil\.js/, (t) => t.replace('() => clicaLegado(texto)?.click()', '() => {}')],
-  'kd-apertado': ['CA1', ['dono'], /\/css\/tp\/perfil\.css/, (t) => t.replace('grid-template-columns:44px minmax(0,1fr) 76px auto', 'grid-template-columns:44px minmax(0,1fr) 34px auto')],
+  'kd-apertado': ['CA1', ['dono'], /\/css\/tp\/perfil\.css/, (t) => t.replace('grid-template-columns:64px minmax(0,1fr) 76px auto', 'grid-template-columns:64px minmax(0,1fr) 34px auto')],
   'carreira-empilhada': ['CA1', ['dono'], /\/css\/tp\/perfil\.css/, (t) => t.replace('.tp-carreira{display:grid', '.tp-carreira{display:block')],
   'barra-da-faixa': ['CA2', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('Math.min(1, pts / seguinte.minPoints)', 'Math.min(1, (pts - rank.minPoints) / seguinte.minPoints)')],
   'convite-sem-token': ['CA3', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('link += `#invite=${r.invite}`', "link += ''")],
@@ -62,8 +69,21 @@ const MUT = {
     .replace("/^single_?player$/.test(h.game_type || '') ? tr('Solo')", "false ? tr('Solo')")],
   'solo-sem-selo': ['CA5', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('if (h.source !== SOLO) return null;', 'if (true) return null;')],
   'solo-engole-antigo': ['CA5', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('for (const h of (p.history || []).slice(0, 5))', 'for (const h of (p.history || []).filter((x) => x.source).slice(0, 5))')],
-  'cabecalho-mentiroso': ['CA5', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace("cabecalho('Últimas partidas', 'partida confirmada e solo não verificado')", "cabecalho('Últimas partidas', 'confirmadas pelo servidor')")],
+  'cabecalho-mentiroso': ['CA5', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace("cabecalho('Últimas partidas', 'multiplayer confirmado e solo a 0,5× no ranking')", "cabecalho('Últimas partidas', 'confirmadas pelo servidor')")],
   'derrota-inventada': ['CA5', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace("h.result === 'loss' ? tr('Derrota').charAt(0) : '·'", "tr('Derrota').charAt(0)")],
+  'sem-miniatura': ['CA6', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('if (mid) {', 'if (false) {')],
+  /* PF10: render do community.js com os mesmos dados não pode apagar nem remontar o perfil. */
+  'remonta-sempre': ['PF10', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('if (velho && !trocouVista && desenho.no === velho && desenho.sig === sig)', 'if (false)')],
+  'render-apaga-perfil': ['PF10', ['dono'], /\/js\/community\.js/, (t) => t.replace('if(manter){for(const n of [...content.childNodes])if(n!==manter)n.remove();}else content.replaceChildren();', 'content.replaceChildren();')],
+  /* tirar e repor o mesmo nó (replaceChildren com ele dentro) reinicia a animação de entrada: pisca igual */
+  'render-tira-e-repoe': ['PF10', ['dono'], /\/js\/community\.js/, (t) => t.replace('if(manter){for(const n of [...content.childNodes])if(n!==manter)n.remove();}else content.replaceChildren();', 'content.replaceChildren(...(manter?[manter]:[]));')],
+  'medalha-sem-modal': ['PF11', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace("med.onclick = () => abrirMedalhas(p, '', med);", 'med.onclick = null;')],
+  'medalha-sem-solo': ['PF11', ['alheio'], /\/js\/tp\/perfil\.js/, (t) => t.replace('n(p.kills) + n(s.kills)', 'n(p.kills)')],
+  'vitoria-do-solo': ['PF11', ['alheio'], /\/js\/tp\/perfil\.js/, (t) => t.replace('wins: Math.max(n(p.round_wins), n(p.legacy_wins ?? p.wins))', 'wins: Math.max(n(p.round_wins), n(p.legacy_wins ?? p.wins)) + n(s.rounds)')],
+  'patente-sem-modal': ['PF12', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace('b.onclick = () => abrirPatentes(p, b);', 'b.onclick = null;')],
+  'modal-empilha': ['PF12', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace("for (const d of document.querySelectorAll('dialog[open]')) d.close();", '')],
+  'selo-mentiroso': ['CA5', ['dono'], /\/js\/tp\/perfil\.js/, (t) => t.replace("tr('0,5× no ranking')", "tr('não vale ranking')")],
+  'selo-sem-elegibilidade': ['CA7', ['alheio'], /\/js\/tp\/perfil\.js/, (t) => t.replace('p?.solo?.counts_for_ranking === true', 'true')],
   'patente-sem-tr': ['IN1', ['en'], /\/js\/i18n\.js/, (t) => t.replace("'Próxima patente': 'Next rank',", '')],
   'toque-pequeno': ['VP2', ['telas'], /\/css\/tp\/perfil\.css/, (t) => t.replace('@media (pointer:coarse){', '@media (pointer:none){')],
   'gancho-sem-flag': ['SF1', ['semflag'], /\/js\/community\.js/, (t) => t.replace("if(document.documentElement?.dataset?.ui==='v3')root.tpPerfilDados", 'root.tpPerfilDados')],
@@ -80,13 +100,20 @@ const MUT = {
   'vazio-zerado': ['VS2', ['semperfil'], /\/js\/tp\/perfil\.js/, (t) => t.replace("el('p', 'tp-perfil__vazio', tr('Abates, ranking", "trk('Abates', '0'), el('p', 'tp-perfil__vazio', tr('Abates, ranking")],
 };
 
+/* Anúncios do lobby (passe, Javaporco, modos) são <dialog> modais de outras telas que abrem em fila logo depois do boot e deixam
+   o perfil inerte: cliques e abas param e a régua mede o anúncio, não o perfil. Aqui só abrem os modais do perfil e o da própria régua. */
 /* `logado:false` é o visitante: social-auth responde sem conta e o cs_anon do convidado é o mesmo id que o jogo registra. */
 async function contexto(mutante, { lang = 'pt', cla = MEU_CLA, viewport = { width: 1536, height: 1024 }, toque = false, posts = [], logado = true, anon = '', semPerfil = false } = {}) {
   const ctx = await browser.newContext({ viewport, hasTouch: toque, isMobile: toque, deviceScaleFactor: 1 });
   await ctx.addInitScript(({ l, a }) => {
     localStorage.setItem('awpbr_nick', 'ZeDoAWP'); localStorage.setItem('cs_treta_intro', '1'); localStorage.setItem('cs_lang', l);
     if (a) { localStorage.setItem('cs_anon', a); localStorage.setItem('awpbr_token', '99999999-8888-4777-8666-555555555555'); }
-    window.__copiado = '';
+    window.__copiado = ''; window.__anunciosPulados = [];
+    const abreModal = HTMLDialogElement.prototype.showModal;
+    HTMLDialogElement.prototype.showModal = function () {
+      if (this.matches('.tp-pmodal, #regua-outro-dialog')) return abreModal.call(this);
+      window.__anunciosPulados.push(this.id || this.className);
+    };
     try { Object.defineProperty(navigator, 'clipboard', { value: { writeText: async (t) => { window.__copiado = t; } } }); } catch { /* sem clipboard */ }
   }, { l: lang, a: anon });
   if (mutante) {
@@ -166,6 +193,7 @@ async function medeCarreira(p) {
   await p.click('.tp-perfil__abas [data-vista="carreira"]').catch(() => {});
   await p.waitForSelector('.tp-carreira', { timeout: 5000 }).catch(() => {});
   await p.waitForFunction(() => !document.querySelector('.tp-carreira__cla .tp-perfil__vazio') || document.querySelector('.tp-carreira__cla h3'), null, { timeout: 8000 }).catch(() => {});
+  await p.waitForFunction(() => [...document.querySelectorAll('.tp-carreira .tp-perfil__marca-mapa')].every((i) => i.complete), null, { timeout: 8000 }).catch(() => {});
   await p.waitForTimeout(700);
   return p.evaluate((caixaSrc) => {
     const caixa = eval(caixaSrc);
@@ -178,7 +206,9 @@ async function medeCarreira(p) {
         const selo = e.querySelector('.tp-selo-solo'), sub = e.querySelector('small');
         const kdEl = e.querySelector('.tp-carreira__kd'), quandoEl = e.querySelector('.tp-carreira__quando');
         const kdR = kdEl.getBoundingClientRect(), quandoR = quandoEl?.getBoundingClientRect();
+        const mini = e.querySelector('.tp-perfil__marca-mapa');
         return { marca: e.querySelector('.tp-perfil__marca').textContent, mapa: e.querySelector('b').textContent,
+          mini: mini?.getAttribute('src') || '', miniOk: (mini?.naturalWidth || 0) > 0,
           kd: kdEl.textContent, origem: e.dataset.origem || '',
           sub: sub ? [...sub.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('') : '',
           selo: selo?.textContent || '', borda: getComputedStyle(e).boxShadow,
@@ -209,6 +239,63 @@ async function medeVisitante(p) {
     };
   }, `(${caixa})`);
 }
+/* PF10: dois cs-community-open seguidos (o que a troca de aba do hub e o "voltar da partida" disparam) com os mesmos dados. */
+async function medeSemPiscar(p) {
+  await p.evaluate(() => {
+    const c = document.getElementById('social-content');
+    window.__tpNo = c.querySelector(':scope > .tp-perfil'); window.__tpSaiu = 0; window.__tpBusy = 0;
+    new MutationObserver((ms) => {
+      for (const m of ms) {
+        if (m.type === 'attributes' && c.getAttribute('aria-busy') === 'true') window.__tpBusy++;
+        for (const n of m.removedNodes) if (n.classList?.contains('tp-perfil')) window.__tpSaiu++;
+      }
+    }).observe(c, { childList: true, attributes: true, attributeFilter: ['aria-busy'] });
+    for (let i = 0; i < 2; i++) document.dispatchEvent(new CustomEvent('cs-community-open', { detail: { tab: 'profile' } }));
+  });
+  await p.waitForTimeout(400);
+  await p.waitForFunction(() => document.getElementById('social-content')?.getAttribute('aria-busy') === 'false', null, { timeout: 15000 }).catch(() => {});
+  await p.waitForTimeout(800);
+  return p.evaluate(() => ({ existe: !!window.__tpNo, mesmo: !!window.__tpNo && document.querySelector('#social-content > .tp-perfil') === window.__tpNo, saiu: window.__tpSaiu, renders: window.__tpBusy }));
+}
+/* PF11: o selo da vitrine abre o modal com todas as medalhas (estado e critério de cada uma). */
+async function medeMedalhas(p, foto = '') {
+  /* o anúncio do passe (dialog modal de outra tela) pode abrir depois do boot e deixar a página inerte: fecha antes do clique */
+  await p.evaluate(() => { for (const d of document.querySelectorAll('dialog[open]')) d.close(); });
+  await p.click('.tp-perfil__destaque--medalha').catch(() => {});
+  await p.waitForSelector('#tp-perfil-medalhas[open]', { timeout: 3000 }).catch(() => {});
+  await p.waitForTimeout(400);
+  const r = await p.evaluate(() => {
+    const d = document.querySelector('#tp-perfil-medalhas[open]');
+    return { fila: [...document.querySelectorAll('.tp-perfil__medalhas-fila .tp-medalha')].filter((e) => e.checkVisibility()).map((e) => e.dataset.estado),
+      aberto: !!d, rotulado: !!d && !!document.getElementById(d.getAttribute('aria-labelledby'))?.textContent.trim(),
+      itens: d ? [...d.querySelectorAll('.tp-pmodal__medalha')].map((li) => [li.dataset.chave, li.dataset.estado, li.querySelector('.tp-pmodal__criterio')?.textContent || '', li.querySelector('.tp-pmodal__estado')?.textContent || '']) : [] };
+  });
+  if (foto && r.aberto) await p.screenshot({ path: foto });
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(300);
+  return { ...r, fechou: await p.evaluate(() => !document.querySelector('#tp-perfil-medalhas')) };
+}
+/* PF12: a patente do topo abre a escada inteira, com a atual marcada; sem empilhar dialog, Esc fecha e o foco volta. */
+async function medePatentes(p, foto = '') {
+  await p.evaluate(() => { const x = document.createElement('dialog'); x.id = 'regua-outro-dialog'; document.body.append(x); x.showModal(); });
+  await p.evaluate(() => document.querySelector('.tp-perfil__cartao .tp-patente-botao')?.click());
+  await p.waitForSelector('#tp-perfil-patentes[open]', { timeout: 3000 }).catch(() => {});
+  await p.waitForTimeout(400);
+  const r = await p.evaluate(() => {
+    const d = document.querySelector('#tp-perfil-patentes[open]');
+    if (!d) return { aberto: false };
+    const degraus = [...d.querySelectorAll('.tp-pmodal__degrau')];
+    return { aberto: true, rotulado: !!document.getElementById(d.getAttribute('aria-labelledby'))?.textContent.trim(), foco: !!document.activeElement?.classList.contains('tp-pmodal__fechar'),
+      degraus: degraus.length, atual: degraus.filter((x) => x.getAttribute('aria-current') === 'step').map((x) => x.querySelector('b').textContent),
+      rumo: d.querySelector('.tp-pmodal__rumo')?.textContent || '', abertos: document.querySelectorAll('dialog[open]').length };
+  });
+  if (foto && r.aberto) await p.screenshot({ path: foto });
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(300);
+  const depois = await p.evaluate(() => ({ fechou: !document.querySelector('#tp-perfil-patentes'), volta: !!document.activeElement?.classList.contains('tp-patente-botao') }));
+  await p.evaluate(() => document.getElementById('regua-outro-dialog')?.remove());
+  return { ...r, ...depois };
+}
 
 /* Cada cenário abre o jogo uma vez; o mutante roda só os cenários da cláusula que ele quer derrubar. */
 const CENARIOS = {
@@ -218,6 +305,9 @@ const CENARIOS = {
     const p = await abrir(ctx);
     const perfil = await medePerfil(p);
     if (!mut) await p.screenshot({ path: `${OUT}/perfil-1536x1024.png` });
+    const semPiscar = await medeSemPiscar(p);
+    const medalhasDono = await medeMedalhas(p, mut ? '' : `${OUT}/medalhas-1536x1024.png`);
+    const patentes = await medePatentes(p, mut ? '' : `${OUT}/patentes-1536x1024.png`);
     await p.fill('#tp-pf-bio', 'Bio nova da régua').catch(() => {});
     await p.fill('#tp-pf-nick', 'ZeDaRegua').catch(() => {});
     const previa = await p.evaluate(() => ({ bio: document.querySelector('.tp-perfil__cartao .tp-perfil__bio')?.textContent || '', nick: document.querySelector('.tp-perfil__cartao .tp-perfil__nick')?.textContent || '', contador: document.querySelector('.tp-perfil__contador')?.textContent || '' }));
@@ -232,7 +322,7 @@ const CENARIOS = {
     await p.waitForTimeout(800);
     const copiado = await p.evaluate(() => window.__copiado);
     await ctx.close();
-    return { perfil, previa, enviados, carreira, copiado, convites: posts.filter((x) => x.clans === 'invite').length };
+    return { perfil, previa, enviados, carreira, copiado, convites: posts.filter((x) => x.clans === 'invite').length, semPiscar, medalhasDono, patentes };
   },
   async en(mut) {
     const ctx = await contexto(mut, { lang: 'en' });
@@ -256,10 +346,13 @@ const CENARIOS = {
     const perfil = await medePerfil(p);
     if (!mut) await p.screenshot({ path: `${OUT}/perfil-alheio-1536x1024.png` });
     const abas = await p.evaluate(() => !!document.querySelector('.tp-perfil__abas')?.checkVisibility());
+    const medalhasAlheio = await medeMedalhas(p);
+    const atividadeAlheio = await p.evaluate(() => [...document.querySelectorAll('.tp-perfil__evento')].filter((e) => e.checkVisibility())
+      .map((e) => ({ origem: e.dataset.origem || '', selo: e.querySelector('.tp-selo-solo')?.textContent || '', sub: e.querySelector('small')?.textContent || '' })));
     await p.click('.tp-perfil__acoes .tp-btn--primario').catch(() => {});
     await p.waitForTimeout(1200);
     await ctx.close();
-    return { perfil, abas, pedido: posts.find((x) => x.action === 'request') };
+    return { perfil, abas, pedido: posts.find((x) => x.action === 'request'), medalhasAlheio, atividadeAlheio };
   },
   async semcla(mut) {
     const ctx = await contexto(mut, { cla: { clan: null, members: [], playerId: EU } });
@@ -362,8 +455,8 @@ const CENARIOS = {
   },
 };
 
-const PT_VAZA = /\b(Próxima patente|Abates|Vitórias|Partidas|Últimas partidas|Medalhas|Editar perfil|Salvar perfil|Nível|Vitrine|Números|Atividade|Arena favorita|membros|LÍDER|Copiar convite|Carreira e clã|destaques do histórico|Capitão|Armas preferidas|Horas jogadas|abates confirmados|contadas à parte|solo não verificado|não vale ranking)\b/i;
-const EN_VAZA = /\b(Next rank|Kills|Wins|Matches|Latest matches|Medals|Edit profile|Save profile|Level|Showcase|Stats|Activity|Favorite arena|members|LEADER|Copy clan invite|Career and clan|Captain|Favorite weapons|Hours played|kills confirmed|counted separately|unverified solo|COUNT FOR RANKING)\b/;
+const PT_VAZA = /\b(Próxima patente|Abates|Vitórias|Partidas|Últimas partidas|Medalhas|Editar perfil|Salvar perfil|Nível|Vitrine|Números|Atividade|Arena favorita|membros|LÍDER|Copiar convite|Carreira e clã|destaques do histórico|Capitão|Armas preferidas|Horas jogadas|abates confirmados|contadas à parte|multiplayer confirmado|no ranking)\b/i;
+const EN_VAZA = /\b(Next rank|Kills|Wins|Matches|Latest matches|Medals|Edit profile|Save profile|Level|Showcase|Stats|Activity|Favorite arena|members|LEADER|Copy clan invite|Career and clan|Captain|Favorite weapons|Hours played|kills confirmed|counted separately|confirmed multiplayer)\b/;
 
 async function medir(mutante = '') {
   const so = mutante ? MUT[mutante][1] : Object.keys(CENARIOS);
@@ -438,10 +531,50 @@ async function medir(mutante = '') {
       if (solo !== (l.origem === 'solo')) erraOrigem.push(`${h.map}: marca de origem "${l.origem || 'nenhuma'}"`);
       if (solo !== !!l.selo) erraOrigem.push(`${h.map}: selo "${l.selo || 'nenhum'}"`);
       if (solo && (l.corSelo === l.corSub || l.borda === 'none')) erraOrigem.push(`${h.map}: selo sem destaque próprio (cor ${l.corSelo}, borda ${l.borda})`);
+      /* 094/095: solo conta 0,5× no ranking geral; selo que diz "não vale" mente. */
+      if (solo && (!/0,5×/.test(l.selo) || /n[ãa]o vale/i.test(l.selo))) erraOrigem.push(`${h.map}: selo "${l.selo}" não diz 0,5× no ranking`);
       if (h.result === null && l.marca !== '·') erraOrigem.push(`${h.map} sem resultado desenhou "${l.marca}"`);
     });
     add('CA5', !erraOrigem.length, erraOrigem.length ? erraOrigem.join('; ')
       : `${k.linhas.filter((l) => l.origem === 'solo').length} solo com selo próprio e ${k.linhas.filter((l) => !l.origem).length} verificadas na mesma lista, em ordem de data; cabeçalho "${nota}"`);
+    /* CA6: cada partida mostra a miniatura do mapa dela (o V/D vira selo por cima). */
+    const erraMini = HIST.slice(0, 5).map((h, i) => [h, k.linhas[i]]).filter(([h, l]) => !l || l.mini !== `/img/map-previews/${h.map}.jpg` || !l.miniOk)
+      .map(([h, l]) => `${h.map}: ${!l ? 'sem linha' : l.mini ? `${l.mini} ${l.miniOk ? '' : 'não carregou'}` : 'sem miniatura'}`);
+    add('CA6', k.linhas.length && !erraMini.length, erraMini.length ? erraMini.join('; ') : `${k.linhas.length} partidas com miniatura do mapa carregada`);
+    /* PF10: dois cs-community-open com os mesmos dados re-renderizam o legado, mas o perfil Treta Pop é o mesmo nó, sem sair do DOM. */
+    const sp = d.semPiscar;
+    add('PF10', sp.existe && sp.mesmo && sp.saiu === 0 && sp.renders >= 1, `${sp.renders} render(s) do community.js; perfil ${!sp.existe ? 'AUSENTE' : sp.mesmo ? 'é o mesmo nó' : 'REMONTADO'}, saiu do DOM ${sp.saiu} vez(es)`);
+    /* PF12: escada de patentes. DONO tem 1020 pontos: Capitão, próxima Major em 1.100. */
+    const pt = d.patentes, erraPat = [];
+    if (!pt.aberto) erraPat.push('a patente não abriu o modal');
+    else {
+      if (pt.degraus !== 9 || pt.atual.join() !== 'Capitão') erraPat.push(`${pt.degraus} degraus (quer 9), atual [${pt.atual}] (quer Capitão)`);
+      if (!/Major/.test(pt.rumo) || !/1\.020\s*\/\s*1\.100/.test(pt.rumo) || !/80/.test(pt.rumo)) erraPat.push(`progresso "${pt.rumo.replace(/\s+/g, ' ')}"`);
+      if (pt.abertos !== 1) erraPat.push(`${pt.abertos} dialogs abertos ao mesmo tempo`);
+      if (!pt.rotulado || !pt.foco) erraPat.push(`aria-labelledby ${pt.rotulado ? 'ok' : 'FALTA'}, foco no fechar ${pt.foco ? 'ok' : 'NÃO'}`);
+      if (!pt.fechou || !pt.volta) erraPat.push(`Esc ${pt.fechou ? 'fechou' : 'NÃO fechou'}, foco ${pt.volta ? 'voltou' : 'NÃO voltou'} para a patente`);
+    }
+    add('PF12', !erraPat.length, erraPat.length ? erraPat.join('; ') : 'patente abre a escada (9 degraus, Capitão marcado, 1.020 / 1.100 rumo a Major), um dialog só, Esc fecha e devolve o foco');
+  }
+  /* PF11: medalhas à vista e modal com todas. Dono: 4 conquistadas pelos totais. Alheio: só o solo dá primeiro abate e uma hora;
+     rodada solo jogada não vira vitória; dez abates fica com progresso 3/10 (faltam 7). */
+  if (m.dono || m.alheio) {
+    const erraMed = [];
+    const confere = (quem, md, quer) => {
+      if (!md?.aberto) { erraMed.push(`${quem}: selo de medalhas não abriu o modal`); return; }
+      const tem = md.itens.map(([k, e]) => `${k}:${e}`).join(' ');
+      if (tem !== quer) erraMed.push(`${quem}: [${tem}] (quer [${quer}])`);
+      if (md.fila.join() !== quer.split(' ').map((x) => x.split(':')[1]).join()) erraMed.push(`${quem}: vitrine [${md.fila}]`);
+      if (md.itens.some(([, , c]) => !/:/.test(c))) erraMed.push(`${quem}: medalha sem critério`);
+      if (!md.rotulado || !md.fechou) erraMed.push(`${quem}: rótulo ${md.rotulado ? 'ok' : 'FALTA'}, Esc ${md.fechou ? 'fecha' : 'NÃO fecha'}`);
+    };
+    if (m.dono) confere('dono', m.dono.medalhasDono, 'first_kill:ganha ten_kills:ganha first_win:ganha one_hour:ganha');
+    if (m.alheio) {
+      confere('alheio', m.alheio.medalhasAlheio, 'first_kill:ganha ten_kills:travada first_win:travada one_hour:ganha');
+      const dez = m.alheio.medalhasAlheio?.itens?.find(([k]) => k === 'ten_kills');
+      if (dez && !/\b7 abates/.test(dez[3])) erraMed.push(`alheio: dez abates sem o progresso do solo ("${dez[3]}")`);
+    }
+    add('PF11', !erraMed.length, erraMed.length ? erraMed.join('; ') : 'medalhas visíveis na vitrine; modal com nome, critério, progresso e estado; solo soma abate e tempo, nunca vitória');
   }
   if (m.semcla) {
     const k = m.semcla.carreira;
@@ -456,6 +589,10 @@ async function medir(mutante = '') {
     const a = m.alheio;
     add('PF7', a.perfil.cartao && !a.perfil.editar && !a.abas && a.pedido?.target === OUTRO && /ADICIONAR AMIGO/.test(a.perfil.primarios.join()),
       !a.perfil.cartao ? 'perfil alheio sem cartão Treta Pop' : `perfil alheio: edição ${a.perfil.editar ? 'VAZA' : 'fora'}, abas ${a.abas ? 'VAZAM' : 'fora'}, lima [${a.perfil.primarios}], pedido de amizade ${a.pedido ? `para ${a.pedido.target}` : 'NÃO saiu'}`);
+    /* CA7: conta sem elegibilidade (solo.counts_for_ranking:false) — a partida solo diz "Solo" e não promete 0,5× no ranking. */
+    const at = a.atividadeAlheio || [];
+    add('CA7', at.length === 1 && at[0].origem === 'solo' && /\bSolo\b/.test(at[0].sub) && !at[0].selo,
+      at.length ? `solo sem elegibilidade: "${at[0].sub}", selo "${at[0].selo || 'nenhum'}", origem ${at[0].origem || 'nenhuma'}` : 'atividade do perfil alheio não desenhou a partida solo');
   }
   if (m.telas) {
     const t = m.telas, quebras = [], toque = [];
