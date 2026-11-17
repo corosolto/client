@@ -21,7 +21,11 @@ export const ALVOS = Object.freeze({
 
 export const REF = 'main';
 
-async function dispara(alvo, env, fetchImpl) {
+/* Teto por chamada à API (pedido + corpo da resposta). Conexão travada não pode segurar a
+   invocação até a plataforma matá-la sem log: aborta, registra `rede: …` e o cron falha. */
+export const TEMPO_MAX_MS = 10_000;
+
+async function dispara(alvo, env, fetchImpl, tempoMaxMs) {
   const base = { repo: alvo.repo, workflow: alvo.workflow, ref: REF };
   const token = env[alvo.segredo];
   if (!token) {
@@ -40,6 +44,7 @@ async function dispara(alvo, env, fetchImpl) {
         'x-github-api-version': '2022-11-28',
       },
       body: JSON.stringify({ ref: REF }),
+      signal: AbortSignal.timeout(tempoMaxMs),
     });
   } catch (erro) {
     console.error(JSON.stringify({ ...base, ok: false, erro: `rede: ${erro?.message || erro}` }));
@@ -56,13 +61,13 @@ async function dispara(alvo, env, fetchImpl) {
 
 /* Dispara todos os alvos do cron e devolve o resultado por alvo. Exportado para o
    teste; o handler `scheduled` só transforma falha em exceção. */
-export async function disparaCron(cron, env, fetchImpl = fetch) {
+export async function disparaCron(cron, env, fetchImpl = fetch, tempoMaxMs = TEMPO_MAX_MS) {
   const alvos = ALVOS[cron];
   if (!alvos) {
     console.error(JSON.stringify({ cron, ok: false, erro: 'cron sem alvo: wrangler.toml e ALVOS divergiram' }));
     return [{ cron, repo: '(nenhum)', workflow: '(cron sem alvo)', ok: false }];
   }
   const resultados = [];
-  for (const alvo of alvos) resultados.push({ cron, workflow: alvo.workflow, repo: alvo.repo, ok: await dispara(alvo, env, fetchImpl) });
+  for (const alvo of alvos) resultados.push({ cron, workflow: alvo.workflow, repo: alvo.repo, ok: await dispara(alvo, env, fetchImpl, tempoMaxMs) });
   return resultados;
 }
