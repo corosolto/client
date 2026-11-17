@@ -394,10 +394,8 @@ test('lock real vence uma seleção segura de package.json', () => {
 const WORKFLOWS = [
   ['ci.yml', ['eval:operacao-flavio', 'eval:release']],
   ['release.yml', ['eval:release']],
-  ['deploy-prod.yml', ['eval:edgecache', 'eval:release']],
+  ['cf-prod-deploy.yml', ['eval:edgecache', 'eval:release']],
   ['prod-watch.yml', ['eval:edgecache', 'eval:wfpurge']],
-  ['preview-build.yml', []],
-  ['preview-deploy.yml', []],
   ['preview-bot.yml', []],
   ['portao-browser.yml', []],
   ['smoke-web.yml', []],
