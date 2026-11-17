@@ -107,7 +107,7 @@ check(r304?.status === 304, 'B3', `If-None-Match: ${r304?.status}`);
 for (const [caso, req, b] of [
   ['fora do manifesto', new Request('https://x/private-assets/viewmodels/ak/inventado.glb'), cheio],
   ['fora do prefixo', new Request(`https://x/models/${entrada.path}`), cheio],
-  ['travessia', new Request('https://x/private-assets/viewmodels/%2e%2e/%2e%2e/vercel.json'), cheio],
+  ['travessia', new Request('https://x/private-assets/viewmodels/%2e%2e/%2e%2e/borda.json'), cheio],
   ['POST', new Request(url, { method: 'POST' }), cheio],
   ['sem binding', new Request(url), undefined],
   ['objeto ausente', new Request(url), bucket(new Map())],

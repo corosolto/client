@@ -53,7 +53,7 @@ export const routeOgPath = (path: string, title: string) =>
   `/api/og/pagina.png?${new URLSearchParams({ rota: path, titulo: title })}`;
 
 /* URL externa, não o atalho `/discord`: o atalho só resolve na Vercel, e o rodapé
-   também é servido no dev, no itch.io e na CrazyGames. Mude aqui e em `vercel.json`. */
+   também é servido no dev, no itch.io e na CrazyGames. Mude aqui e em `borda.json`. */
 export const DISCORD_URL = '/discord';
 export const TELEGRAM_URL = '/telegram';
 export const GITHUB_URL = 'https://github.com/corosolto/client';
