@@ -87,10 +87,12 @@ recombina o que já foi integrado; não dispensa revisão pendente nem check ver
 merge commit e nunca apaga `staging`.
 
 Merge DIRETO do bot (`gh pr merge --merge --match-head-commit`) só acontece com o critério
-completo (rollup inteiro verde, deduplicado pelo run mais novo, e estado `CLEAN`): quando o
-GitHub recusa armar porque o PR já está limpo, ou enquanto o ruleset da base não exige todos
-os contextos da tabela acima. Sem os settings, então, o bot nunca arma e nunca mergeia sem o
-critério antigo.
+completo: rollup inteiro verde (deduplicado pelo run mais novo), cada contexto da tabela acima
+PRESENTE e verde (ausente não é verde; `politica-merge` fica de fora porque é o que o bot
+publica), base `main` ou `staging` e estado `CLEAN`. Isso vale quando o GitHub recusa armar
+porque o PR já está limpo, ou enquanto o ruleset da base não exige todos os contextos da tabela
+e a resolução de conversas. Sem os settings, então, o bot nunca arma e nunca mergeia sem esse
+critério.
 
 Resolver conversa não dispara Actions. Se a última ação num PR foi resolver conversa,
 reavalie com `gh workflow run csbrasil-bot-automerge.yml -f pr_number=<N>`.

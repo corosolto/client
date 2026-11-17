@@ -84,13 +84,21 @@ def selftest() -> int:
         'changedFiles': 1,
         'reviewDecision': 'APPROVED',
         'mergeStateStatus': 'CLEAN',
-        'statusCheckRollup': [{'__typename': 'CheckRun', 'conclusion': 'SUCCESS'}],
+        'baseRefName': 'staging',
+        'statusCheckRollup': [
+            {'__typename': 'CheckRun', 'name': contexto, 'conclusion': 'SUCCESS'}
+            for contexto in REQUIRED_CONTEXTS['staging'] if contexto != POLICY_CONTEXT
+        ],
         'unresolvedReviewThreads': 0,
         'headRefOid': 'b' * 40,
     }
     from check_automerge import decide
     result = decide(evaluated)
     assert result['auto_merge'] and result['eligible'] and result['policy_state'] == 'success'
+    sem_portao = dict(evaluated, statusCheckRollup=[
+        item for item in evaluated['statusCheckRollup'] if item['name'] != 'portao'])
+    assert decide(sem_portao)['auto_merge'] and not decide(sem_portao)['eligible'], \
+        'required check absent from the rollup must block the direct merge'
     assert revalidate_decision(evaluated, result, dict(evaluated)) == result
     for stale in (dict(evaluated, reviewDecision='CHANGES_REQUESTED'),
                   dict(evaluated, unresolvedReviewThreads=1)):

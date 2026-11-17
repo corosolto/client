@@ -153,10 +153,22 @@ def decide(pr: dict) -> dict:
         (release_batch and batch_review_ok)
         or (eligible_safe and pr.get("reviewDecision") == "APPROVED")
     )
+    # Merge direto exige cada contexto do ruleset-alvo PRESENTE e verde, não só "nenhum
+    # vermelho": check exigido que nunca apareceu não é check verde. `politica-merge` fica
+    # fora porque é o status que esta decisão publica. Base fora do mapa nunca mescla direto.
+    verdes = {
+        item.get("name") if item.get("__typename") == "CheckRun" else item.get("context")
+        for item in _latest_runs(rollup_bruto or [])
+        if (item.get("__typename") == "CheckRun" and item.get("conclusion") in GOOD)
+        or (item.get("__typename") == "StatusContext" and item.get("state") == "SUCCESS")
+    }
+    exigidos = [c for c in REQUIRED_CONTEXTS.get(pr.get("baseRefName"), ()) if c != POLICY_CONTEXT]
+    required_green = bool(exigidos) and all(contexto in verdes for contexto in exigidos)
     eligible = (
         auto_merge
         and pr.get("mergeStateStatus") in {"CLEAN", "HAS_HOOKS"}
         and checks_green
+        and required_green
         and (not hotfix_main or release_batch or hotfix_verified)
     )
     if auto_merge:
@@ -200,13 +212,18 @@ def selftest() -> int:
     trocado aqui mescla PR vermelho na main - o defeito mais caro que este
     arquivo consegue produzir. Cada caso abaixo é uma condição de bloqueio.
     """
+    verdes = [
+        {"__typename": "CheckRun", "workflowName": "gates", "name": contexto, "conclusion": "SUCCESS"}
+        for contexto in REQUIRED_CONTEXTS["staging"] if contexto != POLICY_CONTEXT
+    ]
     base = {
         "isDraft": False,
         "labels": [{"name": "safe-automerge"}],
         "files": [{"path": "docs/a.md"}],
         "reviewDecision": "APPROVED",
         "mergeStateStatus": "CLEAN",
-        "statusCheckRollup": [{"__typename": "CheckRun", "conclusion": "SUCCESS"}],
+        "baseRefName": "staging",
+        "statusCheckRollup": verdes,
         "unresolvedReviewThreads": 0,
     }
 
@@ -239,7 +256,10 @@ def selftest() -> int:
          com(statusCheckRollup=[{"__typename": "StatusContext", "state": "FAILURE"}]), False),
         ("skipped e neutral não bloqueiam",
          com(statusCheckRollup=[{"__typename": "CheckRun", "conclusion": "SKIPPED"},
-                                {"__typename": "CheckRun", "conclusion": "NEUTRAL"}]), True),
+                                {"__typename": "CheckRun", "conclusion": "NEUTRAL"}] + verdes), True),
+        ("check exigido ausente não mescla (ausente não é verde)",
+         com(statusCheckRollup=[item for item in verdes if item["name"] != "portao"]), False),
+        ("base fora do ruleset-alvo não mescla direto", com(baseRefName="feature/x"), False),
         ("lista de arquivos nula (PR grande) não mescla",
          com(files=None, changedFiles=1720), False),
         ("lista truncada conta como desconhecida",
@@ -312,12 +332,11 @@ def selftest() -> int:
          com(labels=[{"name": "safe-automerge"}, {"name": "needs-hotfix-review"}]), False),
         ("hotfix na main sem check de ancestry não mescla",
          com(labels=[{"name": "safe-automerge"}, {"name": "hotfix"}, {"name": "release"}],
-             baseRefName="main"), False),
+             baseRefName="main",
+             statusCheckRollup=[item for item in verdes if item["name"] != "hotfix-ancestry"]), False),
         ("hotfix na main com ancestry verde mescla",
          com(labels=[{"name": "safe-automerge"}, {"name": "hotfix"}, {"name": "release"}],
-             baseRefName="main",
-             statusCheckRollup=[{"__typename": "CheckRun", "name": "pr-fast", "conclusion": "SUCCESS"},
-                                {"__typename": "CheckRun", "name": "hotfix-ancestry", "conclusion": "SUCCESS"}]), True),
+             baseRefName="main", statusCheckRollup=verdes), True),
         ("hotfix na main com ancestry vermelha não mescla",
          com(labels=[{"name": "safe-automerge"}, {"name": "hotfix"}, {"name": "release"}],
              baseRefName="main",
@@ -332,24 +351,22 @@ def selftest() -> int:
              {"__typename": "CheckRun", "workflowName": "smoke-web", "name": "smoke",
               "conclusion": "FAILURE", "startedAt": "2026-11-17T01:00:00Z"},
              {"__typename": "CheckRun", "workflowName": "smoke-web", "name": "smoke",
-              "conclusion": "SUCCESS", "startedAt": "2026-11-17T02:00:00Z"}]), True),
+              "conclusion": "SUCCESS", "startedAt": "2026-11-17T02:00:00Z"}] + verdes), True),
         ("run novo vermelho vence run velho verde",
          com(statusCheckRollup=[
              {"__typename": "CheckRun", "workflowName": "smoke-web", "name": "smoke",
               "conclusion": "SUCCESS", "startedAt": "2026-11-17T01:00:00Z"},
              {"__typename": "CheckRun", "workflowName": "smoke-web", "name": "smoke",
-              "conclusion": "FAILURE", "startedAt": "2026-11-17T02:00:00Z"}]), False),
+              "conclusion": "FAILURE", "startedAt": "2026-11-17T02:00:00Z"}] + verdes), False),
         ("run do próprio bot em andamento não é portão",
          com(statusCheckRollup=[
-             {"__typename": "CheckRun", "workflowName": "ci", "name": "build", "conclusion": "SUCCESS"},
              {"__typename": "CheckRun", "workflowName": "csbrasil-bot-automerge", "name": "automerge",
               "conclusion": None},
              {"__typename": "CheckRun", "workflowName": "csbrasil-bot-pr-classify", "name": "classify",
-              "conclusion": "CANCELLED"}]), True),
+              "conclusion": "CANCELLED"}] + verdes), True),
         ("status antigo do politica-merge não trava a reavaliação",
          com(statusCheckRollup=[
-             {"__typename": "CheckRun", "workflowName": "ci", "name": "build", "conclusion": "SUCCESS"},
-             {"__typename": "StatusContext", "context": "politica-merge", "state": "PENDING"}]), True),
+             {"__typename": "StatusContext", "context": "politica-merge", "state": "PENDING"}] + verdes), True),
         ("check de terceiro com mesmo nome de job do bot não é ignorado",
          com(statusCheckRollup=[
              {"__typename": "CheckRun", "workflowName": "ci", "name": "automerge", "conclusion": "FAILURE"}]), False),
