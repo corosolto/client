@@ -42,7 +42,7 @@ something is wrong and the quality gate is green, the defect is in the quality g
 | Zone | What it is | Measured size | Rule |
 |---|---|---|---|
 | `public/` | the **game** | 218 `.js` files, 84,992 lines · vendored Three.js `r160` | Raw ES modules, **zero build**, no runtime dependencies |
-| `src/` | the **site** | 30 `.astro` pages, 5 `/api` routes · Astro `^7.1.1` | Frameworks are welcome; `service_role` only on the server |
+| `src/` | the **site** | 30 `.astro` pages, 5 `/api` routes · Astro `^7.4.12` | Frameworks are welcome; `service_role` only on the server |
 | `tools/` | the **harness** | 1075 scripts in `tools/eval/`, 94 in `tools/` | Plain Node: starts the real game without a browser |
 
 **There is no `public/index.html`.** The game's HTML is `src/pages/index.astro`, served at the `/` route. Serving `public/` statically delivers the visual harnesses, **not the game** — this is the trap that costs everyone their first hour.
