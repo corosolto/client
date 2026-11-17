@@ -404,7 +404,8 @@ async function medir(mutante = '') {
      3D, aviso de missão e RESGATAR TUDO pela tela. */
   if (quer('PB12', 'PB13', 'PB14', 'PB15', 'PB16', 'PB17')) {
     const mock = mockNoAr({ autenticado: true, xp: 16750, claimed: [] });
-    const { page, ctx, posts, erros, voo } = await abrir({ w: 1440, h: 900, mock, mutante, anuncioVisto: true, memoria: null, atrasoPostMs: 80 });
+    /* atrasoPostMs > PASSE_ESPACO_RESGATE_MS (150): só assim um resgate sem await sobrepõe o seguinte e a PB13 vê 2 em voo. */
+    const { page, ctx, posts, erros, voo } = await abrir({ w: 1440, h: 900, mock, mutante, anuncioVisto: true, memoria: null, atrasoPostMs: 400 });
     await page.evaluate(() => {   // todo aviso de missão criado, mesmo os que já saíram da tela
       window.__avisos = [];
       new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) if (n.classList?.contains('tp-passe-aviso')) window.__avisos.push(n.dataset.missao); })
@@ -438,7 +439,8 @@ async function medir(mutante = '') {
     const caixa = await page.locator('.tp-passe-nivel[data-nivel="3"] .tp-passe-nivel__cab').boundingBox().catch(() => null);   // 1ª linha, na tela
     if (caixa) await page.mouse.move(caixa.x + caixa.width / 2, caixa.y + caixa.height / 2);
     await page.waitForTimeout(400);
-    const hover = await page.evaluate(() => getComputedStyle(document.querySelector('.tp-passe-nivel[data-nivel="3"]')).transform);
+    /* Sem cartão (mutante que some com a tela) o hover vale '' e a PB16 reprova, em vez de derrubar a régua. */
+    const hover = await page.evaluate(() => { const c = document.querySelector('.tp-passe-nivel[data-nivel="3"]'); return c ? getComputedStyle(c).transform : ''; });
     await foto(page, 'passe-hover-1440', mutante);
     add('PB16', grade.display === 'grid' && grade.colunas === 5 && grade.linhas === 3 && grade.cabe && grade.resgataveis === 10 && grade.travados === 5 && grade.atual === '10' && grade.abertos === 1 && /matrix/.test(hover),
       `trilha ${grade.display} com ${grade.colunas} colunas × ${grade.linhas} linhas, ${grade.cabe ? 'sem rolagem lateral' : 'ROLA NA HORIZONTAL'}; ${grade.resgataveis} resgatáveis, ${grade.travados} travados, atual ${grade.atual}; hover ${hover}`);
@@ -512,7 +514,7 @@ async function medir(mutante = '') {
   /* Sessão I: 1280×720, RESGATAR TUDO pela celebração, celebração vista não repete, pós-partida. */
   if (quer('PB12', 'PB13', 'PB18')) {
     const mock = mockNoAr({ autenticado: true, xp: 16750, claimed: [] });
-    const { page, ctx, posts, erros, voo } = await abrir({ w: 1280, h: 720, mock, mutante, anuncioVisto: true, memoria: null, atrasoPostMs: 80 });
+    const { page, ctx, posts, erros, voo } = await abrir({ w: 1280, h: 720, mock, mutante, anuncioVisto: true, memoria: null, atrasoPostMs: 400 });
     await page.waitForSelector('#tp-passe-festa[open]', { timeout: 10000 }).catch(() => {});
     await page.waitForTimeout(1200);
     await foto(page, 'festa-boas-vindas-1280', mutante);
@@ -565,7 +567,10 @@ let sair = 0;
 const pedidos = (process.argv.find((a) => a.startsWith('--mutantes=')) || '').split('=')[1]?.split(',').filter(Boolean) || [];
 if (process.argv.some((a) => a === '--mutantes' || a.startsWith('--mutantes='))) {
   for (const [mut, [alvo]] of Object.entries(MUTANTES).filter(([m]) => !pedidos.length || pedidos.includes(m))) {
-    const rs = (await medir(mut)).filter((x) => x.id === alvo || x.id.startsWith(`${alvo}@`));
+    /* Cada mutante isolado: exceção da medição é ERRO da régua (reprova), nunca mordida nem queda da rodada inteira. */
+    let rs;
+    try { rs = (await medir(mut)).filter((x) => x.id === alvo || x.id.startsWith(`${alvo}@`)); }
+    catch (e) { sair = 1; console.log(`ERRO   ${alvo} (${mut})  a medição quebrou: ${String(e.message || e).split('\n')[0]}`); continue; }
     const morde = rs.some((x) => !x.ok);
     if (!morde) sair = 1;
     const c = rs.find((x) => !x.ok) || rs[0] || { msg: 'cláusula não medida' };
