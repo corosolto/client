@@ -72,7 +72,7 @@ Ver o piloto no renderer real, sem estar no elenco:
 Bucket `corosolto-assets`, domínio público `https://assets.corosolto.com.br`, chave
 `packs/<kind>/<id>/<versão>/<arquivo>` — o mesmo caminho do pin, então trocar de origem é só o
 prefixo. O resolvedor continua verificando SHA-256 do manifesto e de cada arquivo: a CDN não é
-fonte de confiança, só de bytes. A CSP do `vercel.json` lista a origem no `connect-src`.
+fonte de confiança, só de bytes. A CSP de `borda.json` lista a origem no `connect-src`.
 
 O publicador sobe só pacote fixado e íntegro (SHA do `manifest.json` local = pin; bytes e SHA
 de cada arquivo = inventário), com `Content-Type` pela extensão, `Cache-Control: public,

@@ -34,7 +34,7 @@ PROIBIDOS = (
     "supabase/",
     "package.json",
     "package-lock.json",
-    "vercel.json",
+    "borda.json",
 )
 
 

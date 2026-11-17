@@ -224,7 +224,7 @@ function medir() {
     three: three ? `r${three}` : null,
     threeOnde: 'public/vendor/three.module.js (vendorizado — sem CDN, sem npm no runtime)',
     astro: dep('astro'),
-    adapter: dep('@astrojs/vercel'),
+    adapter: dep('@astrojs/cloudflare'),
     supabase: dep('@supabase/supabase-js'),
     playwright: dep('playwright'),
     gltfTransform: dep('@gltf-transform/core'),
@@ -535,7 +535,7 @@ const BLOCOS = {
     `| Motor 3D (WebGL) | **Three.js**, vendorizado | \`${f.stack.three}\` |`,
     `| Jogo | ES modules vanilla, **zero build** | ${v(f.jogo.arquivos)} arquivos |`,
     `| Site | **Astro** com SSR | \`${f.stack.astro}\` |`,
-    `| Hospedagem | adapter **Vercel** | \`${f.stack.adapter}\` |`,
+    `| Hospedagem | adapter **Cloudflare Workers** | \`${f.stack.adapter}\` |`,
     `| Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | \`${f.stack.supabase}\` |`,
     `| Browser nas réguas | **Playwright** | \`${f.stack.playwright}\` |`,
     `| Pipeline de GLB | **gltf-transform** | \`${f.stack.gltfTransform}\` |`,
@@ -545,7 +545,7 @@ const BLOCOS = {
     `| Runtime de CI | **Node** | \`${f.stack.node}\` |`,
     '',
     `Three.js sai de \`public/vendor/three.module.js\` (**sem CDN, sem npm no runtime**). ` +
-    `Astro e Vercel de \`package.json\` + \`astro.config.mjs\` + \`vercel.json\`. ` +
+    `Astro e Cloudflare Workers saem de \`package.json\` + \`astro.config.mjs\` + \`wrangler.jsonc\` + \`borda.json\`. ` +
         `Dos scripts de \`tools/\`, **${v(f.pipeline.playwright)}** importam Playwright, ` +
     `**${v(f.pipeline.gltf)}** importam gltf-transform e **${v(f.pipeline.meshopt)}** importam meshoptimizer.`,
     rodape(f.stack.cmd),
@@ -740,7 +740,7 @@ const BLOCOS_EN = {
   stack: (f) => [
     '| Layer | Tool | Version |', '|---|---|---|',
     `| 3D engine (WebGL) | **Three.js**, vendored | \`${f.stack.three}\` |`, `| Game | vanilla ES modules, **zero build** | ${v(f.jogo.arquivos)} files |`,
-    `| Site | **Astro** with SSR | \`${f.stack.astro}\` |`, `| Hosting | **Vercel** adapter | \`${f.stack.adapter}\` |`,
+    `| Site | **Astro** with SSR | \`${f.stack.astro}\` |`, `| Hosting | **Cloudflare Workers** adapter | \`${f.stack.adapter}\` |`,
     `| Database | **managed Postgres** (RLS; private schema) | \`${f.stack.supabase}\` |`, `| Browser checks | **Playwright** | \`${f.stack.playwright}\` |`,
     `| GLB pipeline | **gltf-transform** | \`${f.stack.gltfTransform}\` |`, `| Mesh compression | **meshoptimizer** | \`${f.stack.meshopt}\` |`,
     `| Images | **sharp** · **resvg** | \`${f.stack.sharp}\` · \`${f.stack.resvg}\` |`, `| This documentation | **Docusaurus** | \`${f.stack.docusaurus}\` |`, `| CI runtime | **Node** | \`${f.stack.node}\` |`,
@@ -807,7 +807,7 @@ const BLOCOS_RAIZ = {
     `| 3D engine (WebGL) | **Three.js**, vendored | \`${f.stack.three}\` |`,
     `| Game | Vanilla ES modules, **zero build** | ${v(f.jogo.arquivos)} files |`,
     `| Site | **Astro** with SSR | \`${f.stack.astro}\` |`,
-    `| Hosting | **Vercel** adapter | \`${f.stack.adapter}\` |`,
+    `| Hosting | **Cloudflare Workers** adapter | \`${f.stack.adapter}\` |`,
     `| Database | **Managed Postgres** (RLS; private schema, outside the repo) | \`${f.stack.supabase}\` |`,
     `| Browser in test harnesses | **Playwright** | \`${f.stack.playwright}\` |`,
     `| GLB pipeline | **gltf-transform** | \`${f.stack.gltfTransform}\` |`,
@@ -817,7 +817,7 @@ const BLOCOS_RAIZ = {
     `| CI runtime | **Node** | \`${f.stack.node}\` |`,
     '',
     'Three.js comes from `public/vendor/three.module.js` (**no CDN, no npm at runtime**). ' +
-    'Astro and Vercel come from `package.json` + `astro.config.mjs` + `vercel.json`. ' +
+    'Astro and Cloudflare Workers come from `package.json` + `astro.config.mjs` + `wrangler.jsonc` + `borda.json`. ' +
     `Of the scripts in \`tools/\`, **${v(f.pipeline.playwright)}** import Playwright, ` +
     `**${v(f.pipeline.gltf)}** import gltf-transform and **${v(f.pipeline.meshopt)}** import meshoptimizer.`,
     rodapeReadme('dependencies/devDependencies in package.json · REVISION in public/vendor/three.module.js'),

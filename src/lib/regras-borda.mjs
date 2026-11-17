@@ -1,4 +1,4 @@
-// Regras de `vercel.json` (headers e redirects) em runtime: compila o `source` (sintaxe
+// Regras de `borda.json` (headers e redirects) em runtime: compila o `source` (sintaxe
 // path-to-regexp da Vercel) e avalia `has`/`missing` de query. Usado pelo Worker e pelas réguas.
 
 /* `(grupo)` fica como regex, `{/}?` vira opcional, `:nome` vira segmento; o resto é literal. */

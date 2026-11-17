@@ -118,9 +118,9 @@ references/
 # estar no gitignore e só no meu repo local, assim como references".
 #
 # CONSEQUÊNCIA QUE PRECISA FICAR ESCRITA: com isso o `audio-pack.zip` vira a ÚNICA fonte de
-# áudio para qualquer clone e para o deploy (o `vercel.json` roda `fetch-audio.sh` antes do
-# build). Se o pacote não contiver os sons CC0 de arma e um manifest, produção fica sem tiro
-# real e sem voz — o jogo cai no SFX sintetizado e ninguém vê erro nenhum. Ver BUG-19.
+# áudio para qualquer clone e para o deploy (`cf-prod-deploy.yml` roda `fetch-audio.sh` antes
+# do build). Se o pacote não contiver os sons CC0 de arma e um manifest, produção fica sem
+# tiro real e sem voz — o jogo cai no SFX sintetizado e ninguém vê erro nenhum. Ver BUG-19.
 #
 # `manifest.example.json` FICA versionado de propósito: não é áudio, é o fallback que o
 # `fetch-audio.sh` copia quando o pacote não traz manifest. Sem ele o build fica sem rede

@@ -1,8 +1,4 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "proxy": { "entrypoint": "middleware.js" },
-  "buildCommand": "bash scripts/fetch-audio.sh && bash scripts/fetch-decals.sh && bash scripts/fetch-viewmodels.sh && npm run strip:decalbg && npm run assert:assets && npm run audio:check && npm run check:vercel && npm run build",
-  "ignoreCommand": "bash scripts/ci/vercel-ignore.sh",
   "redirects": [
     {
       "source": "/discord",
@@ -519,10 +515,5 @@
         }
       ]
     }
-  ],
-  "git": {
-    "deploymentEnabled": {
-      "main": true
-    }
-  }
+  ]
 }

@@ -22,8 +22,8 @@
     "eval:social-boot-guest": "node tools/eval/social-boot-guest-check.mjs --mutantes",
     "eval:hub-identity": "node tools/eval/hub-identity-check.mjs",
     "build": "node tools/viewmodels/prepare_precision_preview.mjs --assert-clean && npm run copy-wasm && npm run gen:assetrev && astro build && node scripts/prune-dist.mjs",
-    "//build:cf": "Spike Cloudflare Workers (docs/runbooks/MIGRACAO-CLOUDFLARE.md): gera _headers/_redirects de vercel.json e builda com ADAPTER=cloudflare; deploy com `npx wrangler deploy`.",
-    "build:cf": "node tools/cf/gen-headers-redirects.mjs && bash scripts/fetch-audio.sh && bash scripts/fetch-decals.sh && if [ -n \"${VM_BLOB_TOKEN:-}${BLOB_READ_WRITE_TOKEN:-}\" ]; then bash scripts/fetch-viewmodels.sh; else echo \"::warning::BLOB_READ_WRITE_TOKEN/VM_BLOB_TOKEN ausente: viewmodels privados serão omitidos e o runtime usará o legado\"; VM_REQUIRED=0 bash scripts/fetch-viewmodels.sh; fi && ADAPTER=cloudflare npm run build",
+    "//build:cf": "Spike Cloudflare Workers (docs/runbooks/MIGRACAO-CLOUDFLARE.md): gera _headers/_redirects de borda.json e builda com o adapter Cloudflare fixo; deploy com `npx wrangler deploy`.",
+    "build:cf": "node tools/cf/gen-headers-redirects.mjs && bash scripts/fetch-audio.sh && bash scripts/fetch-decals.sh && if [ -n \"${VM_BLOB_TOKEN:-}${BLOB_READ_WRITE_TOKEN:-}\" ]; then bash scripts/fetch-viewmodels.sh; else echo \"::warning::BLOB_READ_WRITE_TOKEN/VM_BLOB_TOKEN ausente: viewmodels privados serão omitidos e o runtime usará o legado\"; VM_REQUIRED=0 bash scripts/fetch-viewmodels.sh; fi && ADAPTER=cloudflare npm run build && npm run check:borda",
     "eval:cfparidade": "node tools/eval/cf-paridade-estatica-check.mjs && bash -euo pipefail -c 'for m in sem-header sem-redirect; do if node tools/eval/cf-paridade-estatica-check.mjs --mutante=\"$m\" >/dev/null 2>&1; then status=0; else status=$?; fi; if [ \"$status\" -ne 1 ]; then echo \"mutante $m: esperado exit 1, obtido $status\" >&2; exit 1; fi; done'",
     "eval:cfallowlist": "node tools/eval/cf-paridade-allowlist-check.mjs && ! node tools/eval/cf-paridade-allowlist-check.mjs --mutante=rota-ausente >/dev/null 2>&1",
     "//eval:cfborda": "Borda Cloudflare: cache stale e preenchimento frio serializados, viewmodel R2 validado por SHA-256 antes de ETag/304, bootstrap não destrutivo, promoção serializada, cancelada por push mais novo e bloqueada para SHA obsoleto, rotas de cutover com propriedade e trava, áudio privado e deploy somente por push protegido. O runner exige exit 1 exato de cada mutante. Mutantes: sem-strip, vm-sem-etag, vm-304-antes-r2, vm-sem-sha, apex-301, apex-sem-worker-first, assets-sem-fallback, assets-intercepta-post, cache-ignora-etag, cache-sem-stale, cache-revalida-condicional, cache-preenche-condicional, cache-sem-single-flight, cache-sem-fill-flight, cache-aceita-legado, staging-dispatch-arbitrario, prod-dispatch-arbitrario, prod-sem-candidato, prod-sem-preview-url, prod-promove-por-tag, prod-percentual-com-simbolo, preview-sem-provisionamento, preview-base-arbitraria, staging-sem-bootstrap, prod-sem-bootstrap, preview-sem-bootstrap, staging-mantem-obsoleto, prod-mantem-obsoleto, staging-sem-head-guard, prod-sem-head-guard, prod-gate-head-message, prod-bootstrap-comentado, prod-job-if-false, prod-verifica-condicional, prod-verifica-continua-erro, prod-verifica-decoy.",
@@ -177,7 +177,7 @@
     "eval:error-console": "node tools/eval/error-console-check.mjs",
     "eval:edgecache": "node tools/eval/edge-cache-check.mjs",
     "eval:cspwasm": "node tools/eval/csp-wasm-check.mjs",
-    "//eval:portalembed": "Wrappers de portal (tools/portal/*) embedam o site: frame-ancestors do vercel.json cobre cada ancestral, iframe no site com UTM e pointer-lock. 4 mutantes.",
+    "//eval:portalembed": "Wrappers de portal (tools/portal/*) embedam o site: frame-ancestors do borda.json cobre cada ancestral, iframe no site com UTM e pointer-lock. 4 mutantes.",
     "eval:portalembed": "node tools/eval/portal-embed-check.mjs --mutate",
     "eval:skins": "node tools/eval/skins-gauntlet.mjs",
     "eval:webgl": "node tools/eval/webgl-compat-check.mjs",
@@ -341,7 +341,7 @@
     "eval:spawn": "node tools/eval/spawn-settle-check.mjs",
     "check:deploy": "node tools/eval/runner.mjs --suite=deploy",
     "check:prepush": "node tools/eval/selecao-pre-push.mjs",
-    "check:vercel": "node tools/eval/runner.mjs syntax eval:recoil-contract eval:firing-cadence eval:ballistics-falloff eval:assetfetch eval:apis eval:geoproxy eval:nosgemeos",
+    "check:borda": "node tools/eval/runner.mjs syntax eval:recoil-contract eval:firing-cadence eval:ballistics-falloff eval:assetfetch eval:apis eval:geoproxy eval:nosgemeos",
     "check:fast": "node tools/eval/runner.mjs --suite=fast",
     "//eval:rede3p": "Snapshot v9 até o rig real: crouch, recarga por borda e prazo monotônico, dança e ordenação; treze mutantes causais.",
     "eval:rede3p": "node tools/eval/rede3p-mutants-check.mjs && node tools/eval/rede3p-mutants-proof.mjs",
@@ -382,7 +382,6 @@
     "eval:client-snapshot-negotiation": "node tools/eval/client-snapshot-negotiation-check.mjs && node tools/eval/client-snapshot-negotiation-check.mjs --mutante=legacy-offer && node tools/eval/client-snapshot-negotiation-check.mjs --mutante=welcome-version && node tools/eval/client-snapshot-negotiation-check.mjs --mutante=partida-version && node tools/eval/client-snapshot-negotiation-check.mjs --mutante=legacy-wt-request && node tools/eval/client-snapshot-negotiation-check.mjs --mutante=attempt-guard && node tools/eval/client-snapshot-negotiation-check.mjs --mutante=ws-selection && node tools/eval/client-snapshot-negotiation-check.mjs --mutante=early-close-notify && node tools/eval/client-snapshot-negotiation-check.mjs --mutante=callback-before-close && node tools/eval/client-snapshot-negotiation-check.mjs --mutante=failover-notify && node tools/eval/client-snapshot-negotiation-check.mjs --mutante=accepted-close-notify && npm run -s eval:client-ticket-fallback",
     "eval:client-ticket-fallback": "node tools/eval/client-ticket-fallback-check.mjs && node tools/eval/client-ticket-fallback-check.mjs --mutante=replay-ticket && node tools/eval/client-ticket-fallback-check.mjs --mutante=unsafe-no-provider && node tools/eval/client-ticket-fallback-check.mjs --mutante=refresh-validation && node tools/eval/client-ticket-fallback-check.mjs --mutante=node-pin",
     "eval:assetfetch": "node tools/eval/asset-fetch-check.mjs",
-    "eval:vercelbuild": "node tools/eval/vercel-build-check.mjs",
     "eval:movimento": "node tools/eval/movimento-golden.mjs && node tools/eval/movimento-golden-mutants-check.mjs",
     "eval:botsim-golden": "node tools/eval/botsim-golden.mjs",
     "//eval:lajes-cache": "Reuso de geometrias do entorno de Lajes preserva buffers, RNG e mundo em duas builds; descarte unico e sem vazamento entre builds",
@@ -748,7 +747,7 @@
     "eval:mapas-paginas": "node --experimental-strip-types tools/eval/mapas-paginas-check.mjs && for m in sem-pagina sem-jogar sem-sitemap; do ! node --experimental-strip-types tools/eval/mapas-paginas-check.mjs --mutante=$m >/dev/null 2>&1 || exit 1; done",
     "//eval:cla-ssr": "ADR 0008: /clans/<id> sai do servidor com tag, nome, descrição, canonical e JSON-LD do clã, sem levar a sessão ao backend. Precisa de npm run build antes.",
     "eval:cla-ssr": "node tools/eval/cla-ssr-check.mjs && node tools/eval/cla-ssr-check.mjs --mutate",
-    "//eval:rotas": "ADR 0008: cada tela do hub tem rota fixa; ida e volta da tabela, link antigo, 301 do vercel.json, abas da comunidade e <base href>. Os mutantes provam que cada item morde.",
+    "//eval:rotas": "ADR 0008: cada tela do hub tem rota fixa; ida e volta da tabela, link antigo, 301 do borda.json, abas da comunidade e <base href>. Os mutantes provam que cada item morde.",
     "eval:rotas": "node tools/eval/rotas-check.mjs && for m in caminho legado redirect abas base href-antigo perfil perfil-aba; do ! node tools/eval/rotas-check.mjs --mutante=$m >/dev/null 2>&1 || exit 1; done",
     "//eval:compartilhar": "ADR 0008: botão único de compartilhar (Web Share ou cópia) e os 6 pontos ligados à URL certa, com mutantes.",
     "eval:compartilhar": "node tools/eval/compartilhar-check.mjs && for m in cancelar origem ponto; do ! node tools/eval/compartilhar-check.mjs --mutante=$m >/dev/null 2>&1 || exit 1; done",
@@ -999,20 +998,16 @@
   },
   "homepage": "https://www.corosolto.com.br",
   "dependencies": {
-    "@astrojs/vercel": "^11.0.6",
     "@resvg/resvg-js": "^2.6.2",
     "@resvg/resvg-wasm": "^2.6.2",
     "@supabase/supabase-js": "^2.110.7",
-    "@vercel/functions": "3.7.5",
-    "astro": "^7.1.1",
+    "astro": "^7.4.12",
     "sharp": "^0.35.3"
   },
   "private": true,
   "type": "module",
   "overrides": {
-    "@vercel/routing-utils": {
-      "path-to-regexp": "^6.3.0"
-    },
+    "workerd": "1.20261117.1",
     "zod": "^4.6.7",
     "undici": "^8.12.2"
   },
@@ -1032,7 +1027,7 @@
     "meshoptimizer": "^1.2.0",
     "ndarray-pixels": "^5.2.0",
     "playwright": "^1.62.1",
-    "wrangler": "^4.158.0",
+    "wrangler": "^4.164.0",
     "yaml": "^2.9.1"
   },
   "packageManager": "npm@10.9.9"

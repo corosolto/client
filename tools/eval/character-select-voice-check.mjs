@@ -14,7 +14,7 @@ if (mutante && !['sem-clique', 'auto-fala', 'mesmo-som', 'sem-identidade', 'troc
 let main = readFileSync('public/js/main.js', 'utf8');
 let fetchAudio = readFileSync('scripts/fetch-audio.sh', 'utf8');
 let audio = readFileSync('public/js/audio.js', 'utf8');
-let vercel = readFileSync('vercel.json', 'utf8');
+let vercel = readFileSync('borda.json', 'utf8');
 if (mutante === 'sem-clique') {
   const antes = main;
   main = main.replace(

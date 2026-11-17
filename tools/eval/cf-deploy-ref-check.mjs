@@ -112,16 +112,34 @@ const leWorkflow = (fonte, id) => {
     return { doc: {}, job: null, steps: [], linhas: [], comandos: '' };
   }
 };
-const validaWorkflow = (fonte, ramo, id) => {
+const validaWorkflow = (fonte, ramo, id, { aceitaDispatch = false } = {}) => {
   const workflow = leWorkflow(fonte, id);
   const gatilhos = workflow.doc?.on || {};
-  check(!Object.hasOwn(gatilhos, 'workflow_dispatch'), id,
-    'workflow com segredo Cloudflare não pode executar YAML de ref arbitrário');
+  /* Fase 4/6: o trem de release publica o commit de bump com GITHUB_TOKEN, e push por
+     token de app não dispara workflow — sem o dispatch o Workers não deploya bump.
+     O dispatch é aceito quando quem publica está preso ao environment `production`
+     (protection do dono) e o ref do input nunca sai do `with:` do checkout. */
+  if (aceitaDispatch && Object.hasOwn(gatilhos, 'workflow_dispatch')) {
+    const jobDeploy = workflow.job;
+    check(jobDeploy?.environment === 'production', id,
+      'workflow_dispatch de deploy exige environment production com protection');
+    const fonteRef = jobDeploy?.steps || [];
+    const refVaza = fonteRef.filter((s) => typeof s?.run === 'string')
+      .some((s) => (s.run.match(/inputs\.ref/g) || []).length);
+    check(!refVaza, id, 'inputs.ref de dispatch não pode ser interpolado em run: (só no with do checkout)');
+  } else {
+    check(!Object.hasOwn(gatilhos, 'workflow_dispatch'), id,
+      'workflow com segredo Cloudflare não pode executar YAML de ref arbitrário');
+  }
   check(Array.isArray(gatilhos?.push?.branches) && gatilhos.push.branches.includes(ramo),
     id, `deploy precisa nascer de push na ${ramo} protegida`);
   const checkout = workflow.steps.find((step) => typeof step?.uses === 'string'
     && step.uses.startsWith('actions/checkout@'));
-  check(checkout?.with?.ref === '${{ github.sha }}', id, 'checkout precisa fixar o SHA do push');
+  check(aceitaDispatch
+    ? checkout?.with?.ref === "${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}"
+      && checkout?.with?.['persist-credentials'] === false
+    : checkout?.with?.ref === '${{ github.sha }}',
+  id, 'checkout precisa fixar o SHA do push (dispatch usa o ref do trem, sem credencial persistida)');
   const build = workflow.steps.find((step) => step?.id === 'build');
   check(typeof build?.run === 'string' && build.run.includes('git rev-parse HEAD')
     && JSON.stringify(workflow.steps).includes('steps.build.outputs.sha'),
@@ -164,7 +182,7 @@ const validaWorkflow = (fonte, ramo, id) => {
 };
 
 const stagingWorkflow = validaWorkflow(staging, 'staging', 'CFREF1');
-const producaoWorkflow = validaWorkflow(producao, 'main', 'CFREF2');
+const producaoWorkflow = validaWorkflow(producao, "main", "CFREF2", { aceitaDispatch: true });
 check(producaoWorkflow.job && !Object.hasOwn(producaoWorkflow.job, 'if'), 'CFREF2',
   'todo push protegido na main precisa publicar o SHA, inclusive merge commit de release');
 check(stagingWorkflow.doc?.concurrency?.['cancel-in-progress'] === true,
