@@ -113,7 +113,8 @@ if (MUTATE) {
   const MUTANTES = [
     ['AC1', 'só linhas do banco', fonte.replace('saved.has(k) || derived[k]', 'saved.has(k)')],
     ['AC2', 'volta ao date(null)', fonte.replace("a.at?new Date(a.at).toLocaleDateString('pt-BR'):a.source==='history'?'pelo histórico preservado':'conquistada'", "a.at?new Date(a.at).toLocaleDateString('pt-BR'):'Ainda sem atividade'")],
-    ['AC3', 'hora de arena com o tempo antigo', fonte.replace('active=Number(p.verified_play_seconds ?? 0) || 0', 'active=Number(p.play_seconds) || 0')],
+    /* a hora de arena soma só tempo confirmado (+ o tempo solo, que conta só para medalha); o mutante troca o confirmado pelo tempo antigo */
+    ['AC3', 'hora de arena com o tempo antigo', fonte.replace('active=(Number(p.verified_play_seconds ?? 0) || 0)+', 'active=(Number(p.play_seconds) || 0)+')],
     ['AC3', 'conquista sem prova', fonte.replace('first_kill:kills>=1', 'first_kill:true')],
     ['AC4', 'estranho vê "nenhuma rodada"', fonte.replace("'Este jogador não compartilha as rodadas com você.'", "'Nenhuma rodada confirmada ainda.'")],
   ];

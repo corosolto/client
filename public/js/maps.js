@@ -55,6 +55,8 @@ export const MAPS = {
   },
   praca_poderes: { name: 'Praça dos Três Poderes',   // Brasília fiel (substitui o clássico)
     props: ['congresso', 'catedral', 'ministerio', 'palacio', 'justica', 'tires', 'stall', 'tent', 'bus', 'drinkstand', 'urna', 'towner'],
+    // O carrinho de 707 kB é opcional no cenário do menu; a partida ainda carrega todos os props.
+    menuDeferredProps: ['towner'],
     propsComplete: true,
     ambience: ['rat', 'pigeonGround', 'armadillo'],
   },

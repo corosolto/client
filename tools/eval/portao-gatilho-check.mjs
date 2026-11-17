@@ -38,16 +38,32 @@
    PG6 · pacote público e assert nominal antecedem serve/medição; erro não é ignorado.
          Fetch, assert e imports precisam acordar o portão.
 
+   PG7 · rascunho: o `on.pull_request.types` traz os três padrões + `ready_for_review`
+         (sem ele o `gh pr ready` não roda o pesado no SHA). O passo `rascunho` do decide
+         é EXECUTADO em bash: só `pull_request` com draft `true` emite `pronto=false`;
+         push, dispatch, draft `false` ou ausente emitem `pronto=true`. Todo job fora de
+         GATILHOS[alvo].leves exige `pronto != 'false'` (saída ausente roda); job leve
+         não olha o `pronto`.
+
+   PG8 · o filtro "toca o site?" é UM só (scripts/ci/gatilho.mjs SITE): o decide do
+         cf-preview e o do smoke-web chamam `gatilho.mjs site`, nenhum dos dois traz
+         filtro de caminho próprio, e o smoke-cf no PR exige `site != 'false'` e as
+         mesmas condições do job `preview` (fora de draft, branch deste repositório).
+         Sem isso o smoke-cf espera 15 min por preview que o cf-preview não constrói.
+
    Mutantes: tira-caminho (PG1), passo-novo (PG2), diff-aberto e quotepath-volta (PG3),
    portao-na-fila (PG5), sem-fetch/fetch-tarde/assert-sem-pack/fetch-ignorado/
    fetch-fora-gatilho, early-exit, errexit-desligado, heredoc, indent-escape e
-   shell-sem-errexit (PG6). Aplicação ausente/ambígua sai78; mutante sobrevivente sai4.
+   shell-sem-errexit (PG6), ready-sumiu, rascunho-aberto, pesado-no-rascunho e
+   leve-pulado (PG7), filtro-divergente, cf-sem-site e cf-de-fork (PG8). Aplicação
+   ausente/ambígua sai78; mutante sobrevivente sai4.
    Uso: node tools/eval/portao-gatilho-check.mjs [--mutante=<nome>]
    ============================================================================ */
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { dirname, join, normalize } from 'node:path';
-import { GATILHOS, casa, decidir, scriptsUsados } from '../../scripts/ci/gatilho.mjs';
+import { GATILHOS, casa, decidir, decidirSite, scriptsUsados } from '../../scripts/ci/gatilho.mjs';
 
 const MUT = process.argv.find((a) => a.startsWith('--mutante='))?.slice('--mutante='.length) || '';
 const MUTANTES = {
@@ -57,6 +73,8 @@ const MUTANTES = {
   'fetch-ignorado': 'PG6', 'fetch-fora-gatilho': 'PG6',
   'early-exit': 'PG6', 'errexit-desligado': 'PG6', 'heredoc': 'PG6',
   'indent-escape': 'PG6', 'shell-sem-errexit': 'PG6',
+  'ready-sumiu': 'PG7', 'rascunho-aberto': 'PG7', 'pesado-no-rascunho': 'PG7', 'leve-pulado': 'PG7',
+  'filtro-divergente': 'PG8', 'cf-sem-site': 'PG8', 'cf-de-fork': 'PG8',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -268,6 +286,10 @@ for (const [alvo, g] of Object.entries(GATILHOS)) {
   if (MUT === 'diff-aberto' && alvo === 'portao') wf = substituirUma(wf, /if ! git [^\n]*diff[^\n]*\n(?:[^\n]*\n){0,2}?[^\n]*rodar=true/, (m) => m.replace(/rodar=true$/, 'rodar=false'), MUT);
   if (MUT === 'quotepath-volta' && alvo === 'smoke') wf = substituirUma(wf, 'git -c core.quotePath=false diff', 'git diff', MUT);
   if (MUT === 'portao-na-fila' && alvo === 'portao') wf = substituirUma(wf, '  pull_request:\n', '  pull_request:\n  merge_group:\n    types: [checks_requested]\n', MUT);
+  if (MUT === 'ready-sumiu' && alvo === 'portao') wf = substituirUma(wf, ', ready_for_review]', ']', MUT);
+  if (MUT === 'rascunho-aberto' && alvo === 'smoke') wf = substituirUma(wf, '[ "$RASCUNHO" = "true" ]', '[ "$RASCUNHO" != "false" ]', MUT);
+  if (MUT === 'pesado-no-rascunho' && alvo === 'smoke') wf = substituirUma(wf, /( {4}if: needs\.decide\.outputs\.rodar == 'true') && needs\.decide\.outputs\.pronto != 'false'(\n {4}runs-on: ubuntu-latest\n {4}timeout-minutes: 40\n)/, (m) => m.replace(" && needs.decide.outputs.pronto != 'false'", ''), MUT);
+  if (MUT === 'leve-pulado' && alvo === 'smoke') wf = substituirUma(wf, /^ {4}if: needs\.decide\.outputs\.rodar == 'true'\n/m, "    if: needs.decide.outputs.rodar == 'true' && needs.decide.outputs.pronto == 'true'\n", MUT);
   if (alvo === 'portao' && MUTANTES[MUT] === 'PG6') wf = mutarBootstrapDecals(wf);
   const cmd = comandos(wf);
   if (alvo === 'portao') conferirBootstrapDecals(wf);
@@ -337,6 +359,73 @@ for (const [alvo, g] of Object.entries(GATILHOS)) {
     if (!/^ {4}needs:\s*(?:decide|\[[^\]]*\bdecide\b[^\]]*\])\s*$/m.test(corpo)) falhas.push(`PG3 ${g.workflow}: o job \`${nome}\` não tem \`needs: decide\``);
     if (!/^ {4}if:[^\n]*needs\.decide\.outputs\.rodar == 'true'/m.test(corpo)) falhas.push(`PG3 ${g.workflow}: o job \`${nome}\` não obedece \`needs.decide.outputs.rodar == 'true'\``);
   }
+
+  /* ---- PG7: rascunho pula só o pesado; ready_for_review roda tudo ---- */
+  const blocoPr = /^ {2}pull_request:[^\n]*\n((?: {4}[^\n]*\n)*)/m.exec(on);
+  const tipos = blocoPr && /^ {4}types:\s*\[([^\]]*)\]/m.exec(blocoPr[1]);
+  if (!tipos) falhas.push(`PG7 ${g.workflow}: \`pull_request\` sem \`types:\` explícito — o padrão não traz \`ready_for_review\` e o draft que vira pronto fica sem o pesado`);
+  else {
+    const lista = tipos[1].split(',').map((t) => t.trim());
+    for (const t of ['opened', 'synchronize', 'reopened', 'ready_for_review']) if (!lista.includes(t)) falhas.push(`PG7 ${g.workflow}: \`pull_request.types\` sem \`${t}\``);
+  }
+  if (!/^ {6}pronto: \$\{\{ steps\.rascunho\.outputs\.pronto \}\}$/m.test(decide)) falhas.push(`PG7 ${g.workflow}: o decide não exporta \`pronto\` do passo \`rascunho\``);
+  const passoRascunho = passosRun(decide).find((p) => /^ {8}id: rascunho$/m.test(p.corpo));
+  if (!passoRascunho) falhas.push(`PG7 ${g.workflow}: o decide não tem o passo \`id: rascunho\``);
+  else {
+    if (!/^ {10}EVENTO: \$\{\{ github\.event_name \}\}$/m.test(passoRascunho.corpo) || !/^ {10}RASCUNHO: \$\{\{ github\.event\.pull_request\.draft \}\}$/m.test(passoRascunho.corpo)) falhas.push(`PG7 ${g.workflow}: o passo \`rascunho\` não lê EVENTO/RASCUNHO do evento`);
+    const script = passoRascunho.comandos.join('\n');
+    const dir = mkdtempSync(join(tmpdir(), 'pg7-'));
+    try {
+      const casos = [['pull_request', 'true', 'false'], ['pull_request', 'false', 'true'], ['pull_request', '', 'true'], ['push', '', 'true'], ['workflow_dispatch', '', 'true']];
+      casos.forEach(([evento, rascunho, esperado], i) => {
+        const saida = join(dir, `out-${i}`);
+        const r = spawnSync('bash', ['-c', script], { encoding: 'utf8', env: { PATH: process.env.PATH, EVENTO: evento, RASCUNHO: rascunho, GITHUB_OUTPUT: saida } });
+        const linhas = ler(saida).split('\n').filter(Boolean);
+        if (r.status !== 0 || linhas.length !== 1 || linhas[0] !== `pronto=${esperado}`) falhas.push(`PG7 ${g.workflow}: evento ${evento} com draft '${rascunho}' deu ${JSON.stringify(linhas)} (status ${r.status}), esperado pronto=${esperado}`);
+      });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+  for (const leve of g.leves) if (!blocos[leve]) falhas.push(`PG7 GATILHOS.${alvo}.leves declara \`${leve}\`, que ${g.workflow} não tem`);
+  for (const [nome, corpo] of jobs) {
+    const se = (/^ {4}if:([^\n]*)$/m.exec(corpo) || [])[1] || '';
+    if (g.leves.includes(nome)) {
+      if (/outputs\.pronto/.test(se)) falhas.push(`PG7 ${g.workflow}: o job leve \`${nome}\` olha o \`pronto\` — sairia do draft`);
+    } else if (!se.includes("needs.decide.outputs.pronto != 'false'") || /outputs\.pronto == 'true'/.test(se)) {
+      falhas.push(`PG7 ${g.workflow}: o job \`${nome}\` não exige \`needs.decide.outputs.pronto != 'false'\` — roda no draft ou pula com saída ausente`);
+    }
+  }
+}
+
+/* ---- PG8: um filtro só para "toca o site?" (cf-preview e smoke-cf) ---- */
+{
+  let cf = ler('.github/workflows/cf-preview.yml');
+  let sw = ler('.github/workflows/smoke-web.yml');
+  if (MUT === 'filtro-divergente') cf = substituirUma(cf, /node scripts\/ci\/gatilho\.mjs site < "\$RUNNER_TEMP\/arquivos\.txt" > "\$RUNNER_TEMP\/veredito\.txt"/, `{ grep -zEq '^(src/|public/)' "$RUNNER_TEMP/arquivos.txt" && echo rodar=true || echo rodar=false; } > "$RUNNER_TEMP/veredito.txt"`, MUT);
+  if (MUT === 'cf-sem-site') sw = substituirUma(sw, " && needs.decide.outputs.site != 'false'", '', MUT);
+  if (MUT === 'cf-de-fork') sw = substituirUma(sw, ' && github.event.pull_request.head.repo.full_name == github.repository', '', MUT);
+  const cfJobs = jobsDe(comandos(cf));
+  const swJobs = jobsDe(comandos(sw));
+  const cfDecide = cfJobs.decide || '';
+  if (!/node scripts\/ci\/gatilho\.mjs site\b/.test(cfDecide)) falhas.push('PG8 cf-preview.yml: o decide não chama `scripts/ci/gatilho.mjs site` — filtro do preview fora da fonte única');
+  if (/grep -[a-zA-Z]*E/.test(cfDecide)) falhas.push('PG8 cf-preview.yml: o decide traz filtro de caminho próprio (grep -E) — diverge do que o smoke-web espera');
+  if (!/grep -qx 'rodar=false'/.test(cfDecide)) falhas.push('PG8 cf-preview.yml: o pulo do preview não exige `rodar=false` exato');
+  const preview = cfJobs.preview || '';
+  for (const c of ["needs.decide.outputs.rodar == 'true'", 'github.event.pull_request.draft != true', 'github.event.pull_request.head.repo.full_name == github.repository']) {
+    if (!preview.includes(c)) falhas.push(`PG8 cf-preview.yml: o job \`preview\` perdeu \`${c}\` — o smoke-cf espelha esta condição`);
+  }
+  const swDecide = swJobs.decide || '';
+  if (!/^ {6}site: \$\{\{ steps\.site\.outputs\.site \}\}$/m.test(swDecide) || !/node scripts\/ci\/gatilho\.mjs site\b/.test(swDecide)) falhas.push('PG8 smoke-web.yml: o decide não exporta `site` de `scripts/ci/gatilho.mjs site`');
+  const seCf = (/^ {4}if:([^\n]*)$/m.exec(swJobs['smoke-cf'] || '') || [])[1] || '';
+  const ramoPr = seCf.split('||').find((r) => r.includes("github.event_name == 'pull_request'")) || '';
+  for (const c of ["needs.decide.outputs.site != 'false'", "needs.decide.outputs.pronto != 'false'", 'github.event.pull_request.head.repo.full_name == github.repository']) {
+    if (!ramoPr.includes(c)) falhas.push(`PG8 smoke-web.yml: o smoke-cf no PR não exige \`${c}\` — espera preview que o cf-preview não constrói`);
+  }
+  const casosSite = [[[], true], [['src/pages/index.astro'], true], [['CHANGELOG.md'], true], [['.github/workflows/smoke-web.yml', 'scripts/ci/gatilho.mjs'], false], [['tests/smoke/web-smoke.spec.js'], false]];
+  for (const [lista, esperado] of casosSite) if (decidirSite(lista).rodar !== esperado) falhas.push(`PG8 site ${JSON.stringify(lista)}: esperado rodar=${esperado}`);
+  const cli = (entrada) => spawnSync(process.execPath, ['scripts/ci/gatilho.mjs', 'site'], { input: entrada, encoding: 'utf8' }).stdout.trim();
+  if (cli('docs/x.md\0') !== 'rodar=false' || cli('public/js/a.js\0') !== 'rodar=true') falhas.push('PG8 a CLI `gatilho.mjs site` não decide como decidirSite');
 }
 
 /* ---- PG3: a CLI lê nome com acento cru (NUL) e na forma entre aspas do git ---- */

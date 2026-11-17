@@ -7,12 +7,12 @@ import { WEAPONS } from '../data/weapons.js';
 import { MAPS, resolveMapId } from '../maps.js';
 import { heroUrl, retratoFontes } from '../data/retratos.js';
 import { origemCompartilhamento } from '../compartilhar.js';
+import { TRETA_SKINS } from '../treta-catalog.js';
 
 const local = () => (LANG === 'en' ? 'en-US' : 'pt-BR');
 const num = (n) => Number(n).toLocaleString(local());
 const conta = (n) => (Number.isFinite(Number(n)) ? num(Number(n)) : '0');
 const decimal = (n, casas) => (Number.isFinite(Number(n)) ? Number(n).toLocaleString(local(), { maximumFractionDigits: casas }) : '0');
-const MEDALHAS = { first_kill: 'Primeiro abate', ten_kills: 'Dez abates na conta', first_win: 'Primeira vitória', one_hour: 'Uma hora de arena ativa' };
 const MODOS = { ctf: 'Captura', rounds: 'Mata-mata' };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ERROS = {
@@ -62,7 +62,20 @@ const origem = (h) => (h.source === SOLO ? tr('Solo')
   : h.game_type === 'multiplayer' ? 'Multiplayer' : /^single_?player$/.test(h.game_type || '') ? tr('Solo') : '');
 const modo = (h) => [MODOS[h.mode] ? tr(MODOS[h.mode]) : String(h.mode || '').toUpperCase(), origem(h)].filter(Boolean).join(' · ');
 const marcas = (r) => (r.symbol === 'star' ? '★' : '▲').repeat(r.marks);
-const retrato = (p) => PROFILE_CHARACTERS[p.last_character]?.portrait || null;
+/* Skin vem do backend (097: last_skin, ao lado de last_character, mesma partida e mesmo share_character).
+   Ela só vale quando é do mesmo personagem base; sem ela (ou payload antigo) fica o retrato do base. */
+const SKINS = new Map(TRETA_SKINS.map((s) => [s.id, s]));
+function personagemDe(p) {
+  const base = Object.hasOwn(PROFILE_CHARACTERS, p?.last_character || '') ? PROFILE_CHARACTERS[p.last_character] : null;
+  const skin = typeof p?.last_skin === 'string' ? SKINS.get(p.last_skin) : null;
+  if (skin && (!base || skin.character === base.id)) {
+    const src = `/img/skins/${skin.id}.webp`;
+    return { id: skin.character, nome: skin.name, skin: skin.id, arte: src, hero: src, avatar: src, reserva: base?.portrait || null };
+  }
+  if (!base) return null;
+  return { id: base.id, nome: base.nome, skin: null, arte: base.portrait, hero: heroUrl(base.id), avatar: retratoFontes(base.id)[0] || '', reserva: base.portrait };
+}
+const retrato = (p) => personagemDe(p)?.arte || null;
 /* O backend manda SEGUNDOS; hora decimal ("6,7 h") não é leitura de jogador. */
 function tempo(seg) {
   const s = Math.max(0, Math.floor(Number(seg) || 0)), h = Math.floor(s / 3600), min = Math.floor((s % 3600) / 60);
@@ -77,30 +90,172 @@ function armasDe(p) {
 }
 const nomeArma = (id) => WEAPONS[id]?.name || String(id).toUpperCase();
 
-/* Mesma regra das conquistas do community.js: o histórico preservado conta, data só quando o servidor manda. */
-function medalhas(p) {
-  const kills = Number(p.kills) || 0, wins = Math.max(Number(p.round_wins) || 0, Number(p.legacy_wins ?? p.wins) || 0), ativo = Number(p.verified_play_seconds ?? 0) || 0;
-  const derivada = { first_kill: kills >= 1, ten_kills: kills >= 10, first_win: wins >= 1, one_hour: ativo >= 3600 };
-  const salvas = new Set((p.achievements || []).map((a) => a?.key));
-  return Object.keys(MEDALHAS).filter((k) => salvas.has(k) || derivada[k]);
+/* Medalhas: a chave é a do servidor (player_achievement) e a regra derivada segue os totais do perfil.
+   Abate e tempo das partidas SOLO (bloco `solo`) entram só aqui; o ranking tem regra própria e nunca lê esta soma.
+   solo.rounds é rodada JOGADA, não vencida: não vale para "Primeira vitória". Data só quando o servidor manda. */
+const MEDALHAS = [
+  { key: 'first_kill', nome: 'Primeiro abate', desc: 'O primeiro adversário no chão. Daqui pra frente é ladeira abaixo.', criterio: 'Fazer 1 abate', meta: 1, de: 'kills', icone: 'mira', un: ['abate', 'abates'] },
+  { key: 'ten_kills', nome: 'Dez abates na conta', desc: 'Dez na conta: já dá pra contar vantagem no grupo.', criterio: 'Somar 10 abates', meta: 10, de: 'kills', icone: 'alvo', un: ['abate', 'abates'] },
+  { key: 'first_win', nome: 'Primeira vitória', desc: 'Levou a primeira rodada. O placar lembra.', criterio: 'Vencer 1 rodada', meta: 1, de: 'wins', icone: 'taca', un: ['vitória', 'vitórias'] },
+  { key: 'one_hour', nome: 'Uma hora de arena ativa', desc: 'Sessenta minutos de treta de verdade: menu, espectador e AFK não contam.', criterio: 'Jogar 1 hora de partida ativa', meta: 3600, de: 'seg', icone: 'relogio' },
+];
+function totaisMedalha(p) {
+  const n = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : 0), s = p.solo && typeof p.solo === 'object' ? p.solo : {};
+  return { kills: n(p.kills) + n(s.kills), wins: Math.max(n(p.round_wins), n(p.legacy_wins ?? p.wins)), seg: n(p.verified_play_seconds) + n(s.solo_play_seconds) };
 }
-function patente(points) {
-  const r = careerRank(points);
-  if (!r) return null;
+function medalhas(p) {
+  const t = totaisMedalha(p), salvas = new Map((Array.isArray(p.achievements) ? p.achievements : []).filter((a) => typeof a?.key === 'string').map((a) => [a.key, a]));
+  return MEDALHAS.map((m) => {
+    const valor = t[m.de], s = salvas.get(m.key), ok = !!s || valor >= m.meta;
+    return { ...m, valor, ok, at: s?.at || null, doServidor: !!s, p: ok ? 1 : Math.min(1, valor / m.meta) };
+  });
+}
+const valorMedalha = (m, v) => (m.de === 'seg' ? tempo(v) : `${conta(v)} ${tr(m.un[Number(v) === 1 ? 0 : 1])}`);
+
+const SVG = 'http://www.w3.org/2000/svg';
+const ICONES = {
+  mira: [['circle', { cx: 12, cy: 12, r: 6.5 }], ['path', { d: 'M12 1.5v6M12 16.5v6M1.5 12h6M16.5 12h6' }]],
+  alvo: [['circle', { cx: 12, cy: 12, r: 9 }], ['circle', { cx: 12, cy: 12, r: 5 }], ['circle', { cx: 12, cy: 12, r: 1.6, fill: 'currentColor' }]],
+  taca: [['path', { d: 'M7 3.5h10v5a5 5 0 0 1-10 0z' }], ['path', { d: 'M7 5.5H3.5V7A3.5 3.5 0 0 0 7 10.5M17 5.5h3.5V7a3.5 3.5 0 0 1-3.5 3.5M12 13.5v4M8 21h8M9.5 17.5h5V21h-5z' }]],
+  relogio: [['circle', { cx: 12, cy: 12, r: 9 }], ['path', { d: 'M12 6.5V12l3.5 3' }]],
+};
+function icone(nome) {
+  const s = document.createElementNS(SVG, 'svg');
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); s.setAttribute('focusable', 'false');
+  for (const [tag, at] of ICONES[nome]) {
+    const n = document.createElementNS(SVG, tag);
+    for (const [k, v] of Object.entries(at)) n.setAttribute(k, String(v));
+    s.append(n);
+  }
+  return s;
+}
+/* Selo da medalha: conquistada brilha; bloqueada fica apagada com o anel de progresso (--p). */
+function seloMedalha(m, cls = '') {
+  const b = el('span', `tp-medalha ${cls}`.trim());
+  b.dataset.estado = m.ok ? 'ganha' : 'travada';
+  b.style.setProperty('--p', String(m.p));
+  b.append(icone(m.icone));
+  return b;
+}
+const dataCurta = (iso) => { const t = Date.parse(iso); return Number.isFinite(t) ? new Date(t).toLocaleDateString(local()) : ''; };
+
+/* Modal do perfil: um <dialog> por vez (fecha qualquer outro antes), foco no ✕, Esc e clique fora fecham,
+   o foco volta para quem abriu e o nó sai do DOM ao fechar. */
+function modal(id, rotulo, texto, corpo, origem = null) {
+  const volta = origem || document.activeElement;
+  for (const d of document.querySelectorAll('dialog[open]')) d.close();
+  const d = el('dialog', 'tp-pmodal');
+  d.id = id; d.setAttribute('aria-labelledby', `${id}-titulo`);
+  const caixa = el('div', 'tp-pmodal__caixa'), cab = el('header', 'tp-pmodal__cab'), titulos = el('div', 'tp-pmodal__titulos');
+  const h = titulo('h2', texto, 'tp-pmodal__titulo');
+  h.id = `${id}-titulo`;
+  titulos.append(el('span', 'tp-rotulo', rotulo), h);
+  const x = el('button', 'tp-pmodal__fechar', '✕');
+  x.type = 'button'; x.setAttribute('aria-label', tr('Fechar')); x.onclick = () => d.close();
+  cab.append(titulos, x);
+  caixa.append(cab, ...corpo);
+  d.append(caixa);
+  d.addEventListener('click', (e) => { if (e.target === d) d.close(); });
+  d.addEventListener('close', () => { d.remove(); if (volta?.isConnected) volta.focus?.(); }, { once: true });
+  document.body.append(d);
+  d.showModal();
+  x.focus();
+  return d;
+}
+function abrirMedalhas(p, foco = '', origem = null) {
+  const lista = medalhas(p), ganhas = lista.filter((m) => m.ok).length;
+  const g = el('ul', 'tp-pmodal__medalhas');
+  for (const m of lista) {
+    const li = el('li', 'tp-pmodal__medalha'), txt = el('div', 'tp-pmodal__medalha-texto');
+    li.dataset.estado = m.ok ? 'ganha' : 'travada'; li.dataset.chave = m.key;
+    const barra = el('div', 'tp-barra tp-pmodal__barra');
+    barra.append(el('i'));
+    barra.style.setProperty('--p', String(m.p));
+    barra.setAttribute('role', 'progressbar'); barra.setAttribute('aria-label', tr(m.nome));
+    barra.setAttribute('aria-valuemin', '0'); barra.setAttribute('aria-valuemax', String(m.meta)); barra.setAttribute('aria-valuenow', String(Math.min(m.valor, m.meta)));
+    const pe = el('div', 'tp-pmodal__pe');
+    pe.append(el('span', 'tp-num', m.ok ? valorMedalha(m, m.valor) : `${valorMedalha(m, m.valor)} / ${valorMedalha(m, m.meta)}`),
+      el('span', 'tp-pmodal__estado', m.ok ? (m.at ? `${tr('Conquistada em')} ${dataCurta(m.at)}` : tr(m.doServidor ? 'Conquistada' : 'Conquistada pelos totais do perfil'))
+        : `${tr('Falta')} ${valorMedalha(m, m.meta - m.valor)}`));
+    txt.append(titulo('h3', tr(m.nome), 'tp-pmodal__medalha-nome'), el('p', 'tp-pmodal__desc', tr(m.desc)),
+      el('span', 'tp-pmodal__criterio', `${tr('Critério')}: ${tr(m.criterio)}`), barra, pe);
+    li.append(seloMedalha(m, 'tp-medalha--grande'), txt);
+    g.append(li);
+  }
+  const d = modal('tp-perfil-medalhas', tr('CONQUISTAS DA CARREIRA'), tr('Medalhas'), [
+    el('p', 'tp-pmodal__resumo', `${ganhas} / ${lista.length} ${tr('conquistadas')}`), g,
+    el('p', 'tp-pmodal__nota', tr('Abates e tempo das partidas solo contam para as medalhas. No ranking geral o solo vale 0,5×.'))], origem);
+  if (foco) d.querySelector(`[data-chave="${foco}"]`)?.scrollIntoView({ block: 'nearest' });
+  return d;
+}
+
+/* Patente: CAREER_RANKS (career-rank.js) sobre os pontos de carreira; nível = 1 + pontos/100 (074). */
+function emblema(r, cls = '') {
+  const s = el('span', `tp-emblema ${cls}`.trim(), marcas(r));
+  s.dataset.tier = r.tier;
+  s.setAttribute('aria-hidden', 'true');
+  return s;
+}
+const nivelDe = (p) => (Number.isFinite(Number(p.level)) ? Number(p.level) : null);
+function abrirPatentes(p, origem = null) {
+  const pts = Math.max(0, Number(p.points) || 0), atual = careerRank(p.points), prox = atual && CAREER_RANKS[CAREER_RANKS.indexOf(atual) + 1];
+  const topo = el('div', 'tp-pmodal__patente');
+  const quem = el('div', 'tp-pmodal__patente-texto');
+  quem.append(titulo('h3', tr(atual.label), 'tp-pmodal__patente-nome'),
+    el('span', 'tp-num', [nivelDe(p) !== null ? `${tr('Nível')} ${nivelDe(p)}` : '', `${num(pts)} ${tr('pontos')}`].filter(Boolean).join(' · ')));
+  topo.append(emblema(atual, 'tp-emblema--grande'), quem);
+  const rumo = el('div', 'tp-pmodal__rumo');
+  if (prox) {
+    const linha = el('div', 'tp-pmodal__pe');
+    const rot = el('span', '', `${tr('Próxima patente')}: `);
+    rot.append(el('b', '', `${marcas(prox)} ${tr(prox.label)}`));
+    linha.append(rot, el('span', 'tp-num', `${num(pts)} / ${num(prox.minPoints)}`));
+    const barra = el('div', 'tp-barra tp-pmodal__barra');
+    barra.append(el('i'));
+    barra.style.setProperty('--p', String(Math.min(1, pts / prox.minPoints)));
+    barra.setAttribute('role', 'progressbar'); barra.setAttribute('aria-label', tr('Próxima patente'));
+    barra.setAttribute('aria-valuemin', '0'); barra.setAttribute('aria-valuemax', String(prox.minPoints)); barra.setAttribute('aria-valuenow', String(pts));
+    rumo.append(linha, barra, el('span', 'tp-pmodal__estado', `${tr('Faltam')} ${num(prox.minPoints - pts)} ${tr('pontos')}`));
+  } else rumo.append(el('b', '', tr('Patente máxima')));
+  const escada = el('ol', 'tp-pmodal__escada');
+  for (const r of CAREER_RANKS) {
+    const li = el('li', 'tp-pmodal__degrau'), estado = r === atual ? 'atual' : r.minPoints <= pts ? 'feita' : 'proxima';
+    li.dataset.estado = estado;
+    if (estado === 'atual') li.setAttribute('aria-current', 'step');
+    const txt = el('span', 'tp-pmodal__degrau-texto');
+    txt.append(el('b', '', tr(r.label)), el('span', 'tp-num', `${tr('Nível')} ${r.minPoints / 100 + 1} · ${num(r.minPoints)} ${tr('pontos')}`));
+    li.append(emblema(r), txt, el('span', 'tp-pmodal__degrau-tag', estado === 'atual' ? tr('VOCÊ ESTÁ AQUI') : estado === 'feita' ? '✓' : ''));
+    escada.append(li);
+  }
+  return modal('tp-perfil-patentes', tr('PATENTES DE CARREIRA'), tr('Escada de patentes'), [topo, rumo, escada,
+    el('p', 'tp-pmodal__nota', tr('Cada 100 pontos sobem um nível. Abate multiplayer confirmado soma 2 pontos; abate solo soma 0,5 no ranking geral.'))], origem);
+}
+/* Selo de patente + nível no topo do perfil: um botão só, que abre a escada inteira. */
+function patente(p) {
+  const r = careerRank(p.points), nivel = nivelDe(p) !== null ? el('span', 'tp-perfil__nivel', `${tr('Nível')} ${p.level}`) : null;
+  if (!r) return nivel;
+  const b = el('button', 'tp-patente-botao');
+  b.type = 'button'; b.title = tr('Ver escada de patentes'); b.setAttribute('aria-haspopup', 'dialog');
   const s = el('span', 'tp-patente', `${marcas(r)} ${tr(r.label).toUpperCase()}`);
   s.dataset.tier = r.tier;
-  return s;
+  b.dataset.tier = r.tier;
+  const seta = el('span', 'tp-patente-botao__seta', '›');
+  seta.setAttribute('aria-hidden', 'true');
+  b.append(s, ...(nivel ? [nivel] : []), seta);
+  b.onclick = () => abrirPatentes(p, b);
+  return b;
 }
 function inicial(p, cls) {
   const i = el('span', `${cls} tp-perfil__inicial tp-disp`, String(p.nick || '?').slice(0, 1));
   i.setAttribute('aria-hidden', 'true');
   return i;
 }
-/* Sem foto enviada, o rosto do último personagem (data/retratos.js); personagem sem rosto cai na inicial. */
+/* Sem foto enviada, o rosto do último personagem (data/retratos.js) ou da skin; personagem sem rosto cai na inicial. */
 function avatar(p, cls) {
-  const src = p.avatar_url || (PROFILE_CHARACTERS[p.last_character] ? retratoFontes(p.last_character)[0] : '');
+  const c = p.avatar_url ? null : personagemDe(p), src = p.avatar_url || c?.avatar || '';
   if (!src) return inicial(p, cls);
   const img = imagem(cls, src);
+  if (c?.skin) img.dataset.recorte = 'skin';
   img.onerror = () => img.replaceWith(inicial(p, cls));
   return img;
 }
@@ -123,10 +278,8 @@ function identidade(d, cla) {
   if (p.handle) linha.append(el('span', 'tp-perfil__handle', `@${p.handle}`));
   const pr = presenca(p.presence);
   if (pr) linha.append(pr);
-  const meta = el('span', 'tp-perfil__linha');
-  const pat = patente(p.points);
+  const meta = el('span', 'tp-perfil__linha'), pat = patente(p);
   if (pat) meta.append(pat);
-  if (Number.isFinite(Number(p.level))) meta.append(el('span', 'tp-perfil__nivel', `${tr('Nível')} ${p.level}`));
   return [linha, titulo('h2', p.nick, 'tp-perfil__nick'), meta];
 }
 function cabecalho(texto, nota) {
@@ -135,16 +288,30 @@ function cabecalho(texto, nota) {
   if (nota) cab.append(el('span', 'tp-perfil__nota', tr(nota)));
   return cab;
 }
+/* Miniatura do mapa com o resultado (V/D) como selo por cima; sem miniatura (mapa sem prévia ou erro) fica só o selo grande. */
 function marcaResultado(h) {
-  const m = el('span', 'tp-perfil__marca tp-disp', h.result === 'win' ? tr('Vitória').charAt(0) : h.result === 'loss' ? tr('Derrota').charAt(0) : '·');
+  const m = el('span', 'tp-perfil__marca tp-disp');
   m.dataset.resultado = h.result || '';
+  const mid = idMapa(h.map);
+  if (mid) {
+    const i = imagem('tp-perfil__marca-mapa', `/img/map-previews/${mid}.jpg`);
+    i.onerror = () => { i.remove(); delete m.dataset.mapa; };
+    m.dataset.mapa = '';
+    m.append(i);
+  }
+  m.append(el('span', 'tp-perfil__marca-letra', h.result === 'win' ? tr('Vitória').charAt(0) : h.result === 'loss' ? tr('Derrota').charAt(0) : '·'));
   return m;
 }
-/* Solo não passa pelo nó e não vale ranking: a linha ganha selo âmbar para não se confundir com rodada verificada. */
-function selaOrigem(linha, h) {
+/* Solo vem do aparelho do jogador. Com a conta elegível (solo.counts_for_ranking, 7+ dias) ele conta 0,5× no ranking geral
+   (094/095) e a linha ganha o selo; sem elegibilidade (ou payload antigo) fica só o rótulo "Solo" do modo. Nada de tom de alerta. */
+const soloVale = (p) => p?.solo?.counts_for_ranking === true;
+function selaOrigem(linha, h, vale) {
   if (h.source !== SOLO) return null;
   linha.dataset.origem = 'solo';
-  return el('span', 'tp-selo-solo', tr('não vale ranking'));
+  if (!vale) return null;
+  const s = el('span', 'tp-selo-solo', tr('0,5× no ranking'));
+  s.title = tr('Solo · conta 0,5× no ranking geral');
+  return s;
 }
 function aviso() {
   const a = el('p', 'tp-perfil__aviso');
@@ -173,7 +340,7 @@ function vistaSemPerfil() {
 export function ligar() {
   const raiz = document.getElementById('community'), content = document.getElementById('social-content');
   if (!raiz || !content) return;
-  let vista = 'perfil', avisoGuardado = '', cla = null, claDe = '';
+  let vista = 'perfil', avisoGuardado = '', cla = null, claDe = '', saidaAtual = null, obsNota = null, desenho = { no: null, sig: '' };
 
   const acoesLegado = () => [...(content.querySelector(':scope > .social-card .social-actions')?.children || [])];
   const clicaLegado = (texto) => acoesLegado().find((b) => b.tagName === 'BUTTON' && b.textContent.trim() === texto);
@@ -257,15 +424,21 @@ export function ligar() {
         if (reserva) i.onerror = () => { i.onerror = () => i.remove(); i.src = reserva; };
         t.append(i);
       }
-      t.append(el('span', 'tp-perfil__destaque-rotulo tp-disp', rotulo));
+      t.append(typeof rotulo === 'string' ? el('span', 'tp-perfil__destaque-rotulo tp-disp', rotulo) : rotulo);
       return t;
     };
-    const c = PROFILE_CHARACTERS[p.last_character], hero = c && heroUrl(c.id);
-    g.append(c ? destaque('tp-perfil__destaque--personagem', `${tr('Último personagem')} · ${c.nome}`, hero || c.portrait, hero && c.portrait)
+    /* Personagem: faixa no rodapé (rótulo pequeno em cima, nome embaixo) sobre um degradê, sem cobrir o rosto. */
+    const c = personagemDe(p), faixa = c && el('span', 'tp-perfil__destaque-rotulo tp-perfil__destaque-faixa');
+    if (c) faixa.append(el('span', 'tp-rotulo tp-perfil__destaque-mini', tr('Último personagem')), el('span', 'tp-disp tp-perfil__destaque-nome', c.nome));
+    g.append(c ? destaque('tp-perfil__destaque--personagem', faixa, c.hero || c.arte, c.hero && c.reserva)
       : destaque('tp-perfil__destaque--vazio', tr(own ? 'Personagem aparece depois da primeira rodada confirmada' : 'Último personagem não compartilhado')));
-    const m = medalhas(p), med = el('div', 'tp-perfil__destaque tp-perfil__destaque--medalha');
-    med.append(el('span', 'tp-perfil__selo-grande tp-num', String(m.length)),
-      el('span', 'tp-perfil__destaque-rotulo tp-disp', tr(m.length ? 'Medalhas' : 'A primeira medalha vem do primeiro abate')));
+    /* Medalhas à vista: os quatro selos (conquistada brilha, bloqueada mostra o progresso) e o clique abre a lista inteira. */
+    const m = medalhas(p), ganhas = m.filter((x) => x.ok).length, med = el('button', 'tp-perfil__destaque tp-perfil__destaque--medalha');
+    med.type = 'button'; med.setAttribute('aria-haspopup', 'dialog');
+    const fila = el('span', 'tp-perfil__medalhas-fila');
+    for (const x of m) fila.append(seloMedalha(x));
+    med.append(fila, el('span', 'tp-perfil__destaque-rotulo tp-disp', ganhas ? `${tr('Medalhas')} · ${ganhas}/${m.length}` : tr('A primeira medalha vem do primeiro abate')));
+    med.onclick = () => abrirMedalhas(p, '', med);
     g.append(med);
     const fav = p.activity_visible === true ? p.favorites?.[0] : null, mid = fav && idMapa(fav.map);
     g.append(fav ? destaque('tp-perfil__destaque--mapa', `${tr('Arena favorita')} · ${nomeMapa(fav.map)}`, mid ? `/img/map-previews/${mid}.jpg` : null)
@@ -331,7 +504,7 @@ export function ligar() {
     const g = el('div', 'tp-perfil__atividade');
     for (const h of (visivel && Array.isArray(p.history) ? p.history : []).slice(0, 3)) {
       const it = el('div', 'tp-perfil__evento'), t = el('span', 'tp-perfil__evento-texto');
-      const sub = el('small', '', [modo(h), relativo(h.started_at)].filter(Boolean).join(' · ')), selo = selaOrigem(it, h);
+      const sub = el('small', '', [modo(h), relativo(h.started_at)].filter(Boolean).join(' · ')), selo = selaOrigem(it, h, soloVale(p));
       if (selo) sub.append(selo);
       t.append(el('b', '', `${nomeMapa(h.map)} · ${conta(h.kills)}/${conta(h.deaths)}`), sub);
       it.append(marcaResultado(h), t);
@@ -339,7 +512,7 @@ export function ligar() {
     }
     if (!g.children.length) g.append(el('p', 'tp-perfil__vazio', tr(visivel
       ? 'Ainda sem partida registrada.' : 'Este jogador não compartilha as rodadas com você.')));
-    s.append(cabecalho('Atividade', 'partida confirmada e solo não verificado'), g);
+    s.append(cabecalho('Atividade', 'multiplayer confirmado e solo a 0,5× no ranking'), g);
     return s;
   }
 
@@ -463,11 +636,22 @@ export function ligar() {
     return s;
   }
 
-  function vistaPerfil(d) {
-    const saida = aviso(), nota = content.querySelector(':scope > .social-card .social-inline-status');
-    saida.textContent = avisoGuardado || tr(nota?.textContent || '');
+  /* O aviso do cartão espelha o status do legado (.social-inline-status), que o community.js recria a cada render:
+     um observador só, religado ao nó novo a cada render assentado e desligado ao desmontar. */
+  function religaNota() {
+    obsNota?.disconnect(); obsNota = null;
+    const saida = saidaAtual?.isConnected ? saidaAtual : null, nota = content.querySelector(':scope > .social-card .social-inline-status');
+    if (!saida) { avisoGuardado = ''; return; }
+    if (avisoGuardado || nota?.textContent) saida.textContent = avisoGuardado || tr(nota.textContent);
     avisoGuardado = '';
-    if (nota) new MutationObserver(() => { saida.textContent = tr(nota.textContent); }).observe(nota, { childList: true, characterData: true, subtree: true });
+    if (!nota) return;
+    obsNota = new MutationObserver(() => { saida.textContent = tr(nota.textContent); });
+    obsNota.observe(nota, { childList: true, characterData: true, subtree: true });
+  }
+
+  function vistaPerfil(d) {
+    const saida = aviso();
+    saidaAtual = saida;
     const grade = el('div', 'tp-perfil__grade'), principal = el('div', 'tp-perfil__principal'), dupla = el('div', 'tp-perfil__dupla');
     const c = cartao(d, saida);
     dupla.append(vitrine(d.p, d.own), numeros(d));
@@ -499,7 +683,7 @@ export function ligar() {
     barra.style.setProperty('--p', String(seguinte ? Math.min(1, pts / seguinte.minPoints) : 1));
     barra.setAttribute('role', 'progressbar'); barra.setAttribute('aria-label', tr('Próxima patente'));
     barra.setAttribute('aria-valuemin', '0'); barra.setAttribute('aria-valuemax', String(seguinte?.minPoints || pts)); barra.setAttribute('aria-valuenow', String(pts));
-    prox.append(topo, barra, el('span', 'tp-perfil__nota', tr('Cada abate soma 1 ponto; abate multiplayer confirmado soma 2.')));
+    prox.append(topo, barra, el('span', 'tp-perfil__nota', tr('Abate multiplayer confirmado soma 2 pontos; abate solo soma 0,5 no ranking geral.')));
 
     const trks = el('div', 'tp-carreira__trks');
     const fav = p.favorites?.[0], arma = armasDe(p)[0];
@@ -511,20 +695,26 @@ export function ligar() {
 
     const partidas = el('section', 'tp-painel tp-carreira__partidas');
     partidas.setAttribute('aria-label', tr('Últimas partidas'));
-    partidas.append(cabecalho('Últimas partidas', 'partida confirmada e solo não verificado'));
+    partidas.append(cabecalho('Últimas partidas', 'multiplayer confirmado e solo a 0,5× no ranking'));
     for (const h of (p.history || []).slice(0, 5)) {
       const m = el('div', 'tp-carreira__m'), t = el('span', 'tp-perfil__evento-texto');
-      const sub = el('small', '', [modo(h), h.complete === false ? tr('encerrada antes do placar') : ''].filter(Boolean).join(' · ')), selo = selaOrigem(m, h);
+      const sub = el('small', '', [modo(h), h.complete === false ? tr('encerrada antes do placar') : ''].filter(Boolean).join(' · ')), selo = selaOrigem(m, h, soloVale(p));
       if (selo) sub.append(selo);
       t.append(el('b', '', nomeMapa(h.map)), sub);
       m.append(marcaResultado(h), t, el('span', 'tp-num tp-carreira__kd', `${conta(h.kills)} / ${conta(h.deaths)}`), el('span', 'tp-carreira__quando', relativo(h.started_at)));
       partidas.append(m);
     }
     if (!p.history?.length) partidas.append(el('p', 'tp-perfil__vazio', tr('Ainda sem partida registrada.')));
-    const med = el('div', 'tp-perfil__chips');
-    for (const k of medalhas(p)) med.append(el('span', 'tp-perfil__medalha', tr(MEDALHAS[k])));
-    if (!med.children.length) med.append(el('span', 'tp-perfil__nota', tr('A primeira medalha vem do primeiro abate.')));
+    const med = el('div', 'tp-perfil__medalhas');
+    for (const x of medalhas(p)) {
+      const b = el('button', 'tp-perfil__medalha');
+      b.type = 'button'; b.dataset.estado = x.ok ? 'ganha' : 'travada'; b.setAttribute('aria-haspopup', 'dialog');
+      b.append(seloMedalha(x), el('span', 'tp-perfil__medalha-nome', tr(x.nome)));
+      b.onclick = () => abrirMedalhas(p, x.key, b);
+      med.append(b);
+    }
     partidas.append(el('span', 'tp-rotulo tp-carreira__med-rotulo', tr('Medalhas')), med);
+    if (!medalhas(p).some((x) => x.ok)) partidas.append(el('span', 'tp-perfil__nota', tr('A primeira medalha vem do primeiro abate.')));
 
     const sec = el('section', 'tp-painel tp-carreira__cla');
     sec.setAttribute('aria-label', tr('Clã'));
@@ -597,22 +787,52 @@ export function ligar() {
       if (!linha.querySelector('.tp-perfil__tag')) linha.prepend(el('span', 'tp-perfil__tag tp-num', `[${cla.clan.tag}]`));
   }
 
-  /* Monta por cima do perfil que o community.js acabou de desenhar; o legado fica escondido e segue dono das ações. */
+  /* Assinatura do que a tela desenha: render do community.js com os mesmos dados (reabrir a aba, voltar da partida,
+     boot repetido) não remonta nada. Visualizações e "visto por último" não aparecem aqui, então ficam de fora. */
+  function assinatura(d) {
+    const fora = (k, v) => (k === 'views' || k === 'last_active_at' ? undefined : v);
+    return JSON.stringify([vista, LANG, d.own, d.visitante, d.p, d.conta, acoesLegado().map((n) => `${n.tagName}:${n.textContent.trim()}`)], fora);
+  }
+  /* Remontagem com dados novos: a imagem já carregada (mesma classe e mesmo src) muda de pai em vez de baixar de novo. */
+  function reaproveitaImagens(novo, velho) {
+    const prontas = new Map();
+    for (const i of velho.querySelectorAll('img')) if (i.complete && i.naturalWidth) prontas.set(`${i.className}|${i.getAttribute('src')}`, i);
+    for (const i of novo.querySelectorAll('img')) {
+      const k = `${i.className}|${i.getAttribute('src')}`, o = prontas.get(k);
+      if (o) { prontas.delete(k); i.replaceWith(o); }
+    }
+  }
+  function desmonta(velho) {
+    velho?.remove();
+    delete content.dataset.tpPerfil;
+    obsNota?.disconnect(); obsNota = null; saidaAtual = null;
+    for (const m of document.querySelectorAll('dialog.tp-pmodal[open]')) m.close();
+  }
+
+  /* Monta por cima do perfil que o community.js acabou de desenhar; o legado fica escondido e segue dono das ações.
+     Enquanto o community.js carrega (aria-busy) o último desenho fica na tela: ele preserva o nó quando o alvo é o mesmo. */
   function montar(trocouVista = false) {
     const d = raiz.tpPerfilDados, velho = content.querySelector(':scope > .tp-perfil');
+    if (raiz.dataset.view !== 'profile' || d?.aba) { desmonta(velho); return; }
+    if (content.getAttribute('aria-busy') !== 'false') return;
     /* Sem perfil (visitante sem rodada confirmada) a tela ainda é nossa: desenha o vazio em vez de devolver o legado. */
-    const vale = content.getAttribute('aria-busy') === 'false' && raiz.dataset.view === 'profile' && !d?.aba
-      && (d?.p ? [...content.querySelectorAll(':scope > .social-card > h2')].some((h) => h.firstChild?.textContent === d.p.nick) : d?.visitante === true);
-    if (!vale) { velho?.remove(); delete content.dataset.tpPerfil; return; }
-    if (velho && !trocouVista) return;
+    const vale = d?.p ? [...content.querySelectorAll(':scope > .social-card > h2')].some((h) => h.firstChild?.textContent === d.p.nick) : d?.visitante === true;
+    if (!vale) { desmonta(velho); return; }
     if (!d.own) vista = 'perfil';
+    /* Conta ainda carregando (boot): com desenho na tela, espera a resposta definitiva em vez de pintar a versão de visitante. */
+    if (velho && d.provisorio && !trocouVista) return;
+    const sig = assinatura(d);
+    if (velho && !trocouVista && desenho.no === velho && desenho.sig === sig) { religaNota(); return; }
+    saidaAtual = null;
     const v = el('div', 'tp-perfil');
-    v.dataset.vista = vista;
+    v.dataset.vista = vista; v.dataset.alvo = raiz.tpPerfilAlvo ?? '';
+    desenho = { no: v, sig };
     if (d.own) v.append(abas());
     if (d.visitante) v.append(convite());
     v.append(!d.p ? vistaSemPerfil() : vista === 'carreira' ? vistaCarreira(d) : vistaPerfil(d));
-    if (velho) velho.replaceWith(v); else content.prepend(v);
+    if (velho) { v.dataset.troca = ''; reaproveitaImagens(v, velho); velho.replaceWith(v); } else content.prepend(v);
     content.dataset.tpPerfil = vista;
+    religaNota();
     if (d.own) void carregaCla(d);
   }
 
