@@ -62,9 +62,9 @@ export const LX1_PREFIXOS = ['plans/', 'progress/', 'prompts/', 'content/', 'ref
 export const ALLOW_RAIZ = new Set([
   '.env.example', '.gitignore', '.mailmap',
   'AGENTS.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'ROADMAP.md', 'SECURITY.md',
-  'astro.config.mjs', 'knip.json', 'middleware.js', 'mint-assets.json',
+  'astro.config.mjs', 'borda.json', 'knip.json', 'mint-assets.json',
   'package.json', 'package-lock.json', 'playwright.smoke.config.mjs', 'renovate.json',
-  'skills-lock.json', 'tsconfig.json', 'vercel.json', 'wrangler.toml', 'wrangler.preview.toml', 'wrangler.staging.toml', 'wrangler.prod.toml',
+  'skills-lock.json', 'tsconfig.json', 'wrangler.toml', 'wrangler.preview.toml', 'wrangler.staging.toml', 'wrangler.prod.toml',
 ]);
 export const ALLOW_DIRS = new Set([
   '.agents', '.claude', '.codex', '.devcontainer', '.githooks', '.github',

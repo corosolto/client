@@ -14,7 +14,7 @@ directive" e a família `gold#ak` (GLB comprimido) morre na carga.
 O QUE ELE MEDE
 Carrega a página alvo DUAS vezes, trocando só o header `Content-Security-Policy`
 da resposta do documento, e tenta instanciar um módulo WebAssembly mínimo:
-  - com a CSP do `vercel.json` deste checkout -> TEM de instanciar;
+  - com a CSP do `borda.json` deste checkout -> TEM de instanciar;
   - com a CSP antiga (sem `'wasm-unsafe-eval'`) -> TEM de falhar.
 A segunda metade é o mutante: se ela também passar, a medição não está medindo
 CSP nenhuma e o verde não vale.
@@ -34,12 +34,12 @@ const arg = (n) => {
 const ALVO = arg('alvo') || 'https://www.corosolto.com.br';
 
 const cspDoRepo = () => {
-  const vercel = JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'));
+  const vercel = JSON.parse(readFileSync(new URL('../../borda.json', import.meta.url), 'utf8'));
   for (const regra of vercel.headers || []) {
     const h = (regra.headers || []).find((x) => x.key === 'Content-Security-Policy');
     if (h) return h.value;
   }
-  throw new Error('vercel.json sem Content-Security-Policy');
+  throw new Error('borda.json sem Content-Security-Policy');
 };
 
 // WASM mínimo válido: módulo vazio. Instanciar é o que a CSP barra.

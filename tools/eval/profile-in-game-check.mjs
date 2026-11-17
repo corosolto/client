@@ -50,7 +50,7 @@ async function coletar() {
     return fetchReal(alvo, init);
   };
   const pedir = async (rota) => {
-    const r = await handler.fetch(new Request(`${CANONICO}${rota}`, { headers: { 'x-forwarded-for': '127.0.0.1' } }));
+    const r = await handler.fetch(new Request(`${CANONICO}${rota}`, { headers: { 'cf-connecting-ip': '127.0.0.1' } }));
     return { status: r.status, html: await r.text() };
   };
   const pub = await pedir(`/u/${HANDLE}`), priv = await pedir(`/u/${PRIVADO}`);

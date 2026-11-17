@@ -57,7 +57,7 @@ if (mutant === 'sem-cache-bust') {
   productSources = productSources.map(([file, source]) => [file, source.replace('?v=${V}', '')]);
   harnessSources = harnessSources.map(([file, source]) => [file, source.replace(/\?h=[a-f0-9]+/, '')]);
 }
-let vercel = JSON.parse(readFileSync('vercel.json', 'utf8'));
+let vercel = JSON.parse(readFileSync('borda.json', 'utf8'));
 if (mutant === 'addons-immutable') {
   const route = vercel.headers?.find((item) => item.source === '/vendor/(.*)');
   const header = route?.headers?.find((item) => item.key.toLowerCase() === 'cache-control');

@@ -1,5 +1,5 @@
-// Porta de `middleware.js` (proxy da Vercel) para o Astro, ligada só no Workers: na Vercel o
-// proxy já conta o tráfego de toda requisição e este `onRequest` devolve `next()` sem tocar nada.
+// Fase 6 da migração (docs/runbooks/MIGRACAO-CLOUDFLARE.md): o Workers é a única borda;
+// o guard por __ADAPTADOR__ saiu junto com a Vercel.
 import { defineMiddleware } from 'astro:middleware';
 import { borda } from '#borda';
 import { backendUrl } from './lib/env-runtime';
@@ -8,10 +8,7 @@ import { desvioParaApp, trafficEntry, uniqueRegister } from './lib/server-traffi
 // Env lida POR REQUISIÇÃO: no Workers a ponte do src/cf/worker.ts copia [vars] e
 // secrets do binding para process.env; segredo nunca inlinado pelo import.meta.env.
 
-declare const __ADAPTADOR__: string;
-
 export const onRequest = defineMiddleware((context, next) => {
-  if (__ADAPTADOR__ !== 'cloudflare') return next();
   const { request } = context;
   const desvio = desvioParaApp(request);
   if (desvio) return context.redirect(desvio, 302);

@@ -15,10 +15,9 @@
    DG2 · nenhum download do caminho do build corre sem retry. `set -e` mais um
          `curl` sem `--retry` transforma soluço de rede em PR vermelho, e o autor
          não tem o que consertar - é o mesmo dano do portão que não pode medir.
-   DG3 · o preview de fork roda sem pedir aprovação a ninguém, porque quem compila
-         não tem segredo e quem tem segredo não compila. Os dois arquivos existem e o
-         contrato deles é guardado em detalhe pelo `scripts/ci/workflow_security_check.py`
-         (PRV1/PRV2/PRV3); aqui só se confere que o par não sumiu.
+   DG3 · o preview de fork roda sem pedir aprovação a ninguém: `cf-preview.yml`
+         compila sem segredos no evento `pull_request`, e o deploy confiável continua
+         isolado em `cf-preview-deploy.yml`. O par Vercel aposentado não pode voltar.
    DG4 · o contexto obrigatório `build` da main sai de UM job só, o `build` do
          ci.yml (pr-fast). O ruleset exige o contexto pelo NOME, sem amarrar a
          workflow, então qualquer outro job chamado `build` conta para ele. Medido
@@ -41,7 +40,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const MUTANTES = {
-  'ci-sem-build': 'DG1', 'download-sem-retry': 'DG2', 'preview-sem-par': 'DG3', 'preview-vira-build': 'DG4',
+  'ci-sem-build': 'DG1', 'download-sem-retry': 'DG2', 'cf-sem-pull-request': 'DG3',
   'agregador-sem-job': 'DG5', 'agregador-pula': 'DG5', 'agregador-cego': 'DG5', 'build-sem-agregador': 'DG5',
   'soundscape-fora-build': 'DG5', 'cache-restaura-parcial': 'DG6', 'cache-audio-sem-checksum': 'DG6', 'cache-decals-tag-incerta': 'DG6',
 };
@@ -74,15 +73,16 @@ for (const f of FETCHERS) {
 }
 if (!FETCHERS.length) falhas.push('DG2 nenhum scripts/fetch-*.sh encontrado — a régua perdeu o alvo');
 
-/* ---- DG3: a etiqueta do preview nasce com quem a usa ---- */
-let preview = ler('.github/workflows/preview-bot.yml');
-if (MUT === 'preview-sem-par') preview = preview.replace(/ensure_labels\.py preview-autorizado/, 'ensure_labels.py');
+/* ---- DG3 (fase 6): o par Vercel de preview está aposentado — cf-preview manda ---- */
 const temBuild = ler('.github/workflows/preview-build.yml');
 const temDeploy = ler('.github/workflows/preview-deploy.yml');
-if (MUT === 'preview-sem-par') { /* nome antigo do mutante: agora derruba o par */ }
-const par = (MUT === 'preview-sem-par') ? '' : (temBuild && temDeploy);
-if (!par) {
-  falhas.push('DG3 falta preview-build.yml ou preview-deploy.yml — sem o par, preview de fork volta a depender de aprovação humana');
+if (temBuild || temDeploy) {
+  falhas.push('DG3 preview-build.yml/preview-deploy.yml voltaram — fase 6 aposenta o par Vercel; preview de fork é cf-preview.yml');
+}
+let cfPreview = ler('.github/workflows/cf-preview.yml');
+if (MUT === 'cf-sem-pull-request') cfPreview = cfPreview.replace(/^(\s+)pull_request:/m, '$1workflow_dispatch:');
+if (!cfPreview || !/^\s*pull_request:/m.test(cfPreview)) {
+  falhas.push('DG3 cf-preview.yml ausente ou sem gatilho pull_request — preview de fork fica sem caminho');
 }
 
 /* ---- DG4: só o pr-fast responde pelo contexto obrigatório `build` ---- */
@@ -104,7 +104,6 @@ const nomesDeJob = (fonte) => {
 };
 for (const arq of readdirSync('.github/workflows').filter((f) => /\.ya?ml$/.test(f))) {
   let fonte = ler(`.github/workflows/${arq}`);
-  if (MUT === 'preview-vira-build' && arq === 'preview-build.yml') fonte = fonte.replace(/^ {2}preview:\s*$/m, '  build:');
   const nomes = nomesDeJob(fonte);
   if (arq === 'ci.yml' && !nomes.includes('build')) falhas.push('DG4 ci.yml não tem mais o job `build` — o contexto obrigatório da main ficaria sem dono');
   if (arq !== 'ci.yml' && nomes.includes('build')) falhas.push(`DG4 ${arq} tem um job \`build\` — ele conta para o contexto obrigatório \`build\` da main junto com o pr-fast`);
@@ -156,14 +155,12 @@ const corposDeJob = (fonte) => {
 
 /* ---- DG6: cache de assets só reutiliza a tag/checksum exatos ---- */
 {
-  let preview = temBuild;
   let browser = ler('.github/workflows/portao-browser.yml');
   const CHAVE_AUDIO = 'key: audio-pack-${{ steps.packs.outputs.audio_tag }}-${{ steps.packs.outputs.audio_sha }}';
   const CHAVE_DECALS = 'key: decals-pack-${{ steps.packs.outputs.decals_tag }}';
-  if (MUT === 'cache-restaura-parcial') preview = preview.replace(CHAVE_AUDIO, `${CHAVE_AUDIO}\n          restore-keys: audio-pack-`);
-  if (MUT === 'cache-audio-sem-checksum') preview = preview.replace(CHAVE_AUDIO, 'key: audio-pack-${{ steps.packs.outputs.audio_tag }}');
+  if (MUT === 'cache-restaura-parcial') browser = browser.replace(CHAVE_AUDIO, `${CHAVE_AUDIO}\n          restore-keys: audio-pack-`);
+  if (MUT === 'cache-audio-sem-checksum') browser = browser.replace(CHAVE_AUDIO, 'key: audio-pack-${{ steps.packs.outputs.audio_tag }}');
   if (MUT === 'cache-decals-tag-incerta') {
-    preview = preview.replace(CHAVE_DECALS, 'key: decals-pack-latest');
     browser = browser.replace(CHAVE_DECALS, 'key: decals-pack-latest');
   }
   const passosDe = (corpo) => corpo.split(/^ {6}- /m).slice(1);
@@ -186,20 +183,9 @@ const corposDeJob = (fonte) => {
       if (fetch < 0 || passos.indexOf(cache) > fetch) falhas.push(`DG6 ${arquivo}: cache de ${esperado.path} precisa preceder ${esperado.fetch}`);
     }
   };
-  conferir(preview, 'preview-build.yml', 'preview', [
-    { path: 'public/audio', key: CHAVE_AUDIO, fetch: 'bash scripts/fetch-audio.sh' },
-    { path: 'public/img/decals', key: CHAVE_DECALS, fetch: 'bash scripts/fetch-decals.sh' },
-  ]);
   conferir(browser, 'portao-browser.yml', 'portao-core', [
     { path: 'public/img/decals', key: CHAVE_DECALS, fetch: 'bash scripts/fetch-decals.sh' },
   ]);
-  const previewTags = passosDe(corposDeJob(preview).preview || '').find((p) => /^ {8}id: packs\s*$/m.test(p)) || '';
-  for (const token of ['scripts/fetch-audio.sh', 'AUDIO_PACK_URL', 'audio_tag', 'AUDIO_PACK_SHA256', 'audio_sha']) {
-    if (!previewTags.includes(token)) falhas.push(`DG6 preview-build.yml: passo packs não deriva ${token} para a chave`);
-  }
-  const assets = passosDe(corposDeJob(preview).preview || '').find((p) => p.includes('bash scripts/fetch-audio.sh')) || '';
-  if (!assets.includes('AUDIO_PACK_SHA256: ${{ vars.AUDIO_PACK_SHA256 }}')) falhas.push('DG6 preview-build.yml: checksum da chave não chega ao fetch de áudio');
-  if (!/npm run assert:assets/.test(assets)) falhas.push('DG6 preview-build.yml: assert nominal de assets foi removido do bootstrap cacheado');
 }
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
