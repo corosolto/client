@@ -8842,7 +8842,9 @@ export class Game {
           if (fromReg >= 0) {
             b.path = this._findPathLocal(Wo, fromReg,
               Wo.nearestWaypoint(objectiveDestination.x, objectiveDestination.z, b.pos.y), b._banNodes);
-            b.pathIdx = 1;
+            // Começa no nó de saída quando o próximo não se alcança em linha reta (guarda colado
+            // no batente da porta mirava o nó do outro lado da parede e raspava nela).
+            b.pathIdx = b.path.length > 1 && !this._walkReach(b, Wo.waypoints.nodes[b.path[1]], 0.3) ? 0 : 1;
           } else armRegroupEscape();
         }
         let regNode = b._regroupEscapePending || b._regroupDirectEscape ? null : objectiveDestination;
@@ -8856,9 +8858,10 @@ export class Game {
           const gx = regNode.x - b.pos.x, gz = regNode.z - b.pos.z, gn = Math.hypot(gx, gz) || 1;
           // PERSEGUIÇÃO AMORTECIDA do ponto de slot: passo proporcional ao vão assenta em
           // ~1 s sem depender de skill; passo cheio flipava de sentido em 60 Hz (régua de órbita).
+          // No waypoint o passo para no nó: passar dele fazia o vai-e-vem de 6 cm por quadro.
           const step = regNode === objectiveDestination
             ? Math.min(BOT_SPEED * dt, Math.max(gn * dt * 6, 1e-4))
-            : BOT_SPEED * dt;
+            : Math.min(BOT_SPEED * dt, gn);
           b.pos.x += (gx / gn) * step;
           b.pos.z += (gz / gn) * step;
           this._collide(b.pos, 0.38);
