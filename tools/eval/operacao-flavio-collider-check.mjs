@@ -76,6 +76,14 @@ const edits = {
   'coluna-fantasma': ["bloco('coluna-portico-leste', 13.6, 2, -13, 0.5, 4, 0.7, mats.marinho);", "bloco('coluna-portico-leste', 12.2, 2, -13, 0.5, 4, 0.7, mats.marinho, false);"],
   'vidro-na-porta': ['for (const x of [-10, 10]) {', 'for (const x of [-26, -18, -10, 10, 18, 26]) {'],
   'piso-elevado': ["bloco('piso-terminal-executivo', 0, 0.02, -34, 58, 0.08, 36,", "bloco('piso-terminal-executivo', 0, 0.3, -34, 58, 0.6, 36,"],
+  // Fila e arco (18/11): fita volta a ser só render, pilares voltam a ±1,28 (colisor no ar ao lado da
+  // malha) e a fila sólida encosta na lane da escolta (guardas laterais funilam nas fitas).
+  'fita-sem-colisor': ["0.06, 0.06, mats.laranja, true, false);", "0.06, 0.06, mats.laranja, false, false);"],
+  'arco-largo': ['[[-0.96, -0.70], [0.70, 0.96]]', '[[-1.52, -1.04], [1.04, 1.52]]'],
+  'fila-colada-na-lane': ['postes: [4, 6.5, 9]', 'postes: [1.5, 4, 6.5]'],
+  // Fallback sem GLB: volta a caixa de 3 m que fecha o vão, ou desenha o pilar mais largo que o colisor.
+  'arco-fallback-caixa': ["if (templates.has('arco_seguranca')) usarProp('arco_seguranca', [0, 0.08, ARCO.z], 3, null, 0, false);\n  else {", "usarProp('arco_seguranca', [0, 0.08, ARCO.z], 3, [3, 3, 0.8], 0, false);\n  if (false) {"],
+  'arco-fallback-largo': ['ARCO.z, x1 - x0, ARCO.topo,', 'ARCO.z, x1 - x0 + 0.5, ARCO.topo,'],
 };
 if (mutant) {
   const edit = edits[mutant];
@@ -168,6 +176,53 @@ const glbTemplates = Object.fromEntries(Object.entries(mediumModule.PROP_FILES).
   return [id, new THREE.Mesh(new THREE.BoxGeometry(size.x, size.y, size.z).translate(center.x, center.y, center.z), template.material)];
 }));
 const glbReal = world(mediumModule, (id) => glbTemplates[id]);
+// Pilares do arco do raio-x. Com GLB, o template de caixa do glbReal fecha o vão, então os vértices
+// da malha vão para a pose do mapa: vão = vértice mais baixo perto da linha central (verga) e pilar =
+// cada lado na faixa que o corpo encosta (1,5 m acima do piso, a do Game._collide); o painel do
+// pilar leste a 2 m de altura entra mais no vão, mas fica acima da cabeça. Sem GLB, o fallback
+// procedural desenha caixas: pilar = caixa que nasce no piso, verga = a que começa acima dele.
+const pilaresArco = (map) => {
+  const arco = map.root.children.find(o => o.name === 'arco_seguranca');
+  if (!arco) {
+    const pecas = map.root.children.filter(o => o.name === 'fallback-arco_seguranca').map(o => new THREE.Box3().setFromObject(o));
+    assert.ok(pecas.length, 'fallback desenha o arco');
+    const total = pecas.reduce((t, b) => t.union(b), new THREE.Box3());
+    return { cx: (total.min.x + total.max.x) / 2, vao: Math.min(...pecas.filter(b => b.min.y >= 0.1).map(b => b.min.y)), topo: total.max.y,
+      caixas: pecas.filter(b => b.min.y < 0.1).sort((a, b) => a.min.x - b.min.x) };
+  }
+  arco.updateMatrixWorld(true);
+  const pontos = glbVertices('arco_seguranca.glb').map(p => p.clone().applyMatrix4(arco.matrixWorld));
+  const total = new THREE.Box3().setFromPoints(pontos), cx = (total.min.x + total.max.x) / 2;
+  const vao = Math.min(...pontos.filter(p => Math.abs(p.x - cx) < 0.3).map(p => p.y));
+  const faixa = Math.min(vao, total.min.y + 1.5);
+  const lado = (s) => new THREE.Box3().setFromPoints(pontos.filter(p => p.y <= faixa && Math.sign(p.x - cx) === s));
+  return { cx, vao, topo: total.max.y, caixas: [lado(-1), lado(1)] };
+};
+// Peça no piso com topo a partir de SOLIDO (acima do joelho, não se passa por cima) e base abaixo de
+// 1,5 m (faixa vertical do Game._collide) parece sólida: o corpo não pode atravessá-la.
+const SOLIDO = 0.7;
+// Volume visual por malha (instância a instância), inclusive render-only. Fora: céu e placa (sem
+// superfície), avião (proxies medidos na malha em aircraft-ring-*) e escada (piso subível de
+// groundHeightAt), com ou sem GLB. O arco entra pelos pilares de pilaresArco nas duas variantes.
+const volumesVisuais = (map) => {
+  map.root.updateMatrixWorld(true);
+  const volumes = [], caixa = new THREE.Box3(), matriz = new THREE.Matrix4();
+  const add = (nome, box) => volumes.push({ nome, minX: box.min.x, maxX: box.max.x, minY: box.min.y, maxY: box.max.y, minZ: box.min.z, maxZ: box.max.z });
+  map.root.traverse((o) => {
+    if (!o.isMesh || o.name === 'ceu-degrade-aeroporto' || o.userData.nonSolidSurface) return;
+    let topo = o;
+    while (topo.parent && topo.parent !== map.root) topo = topo.parent;
+    if (/^(fallback-)?(aviao_executivo|escada_embarque|arco_seguranca)$/.test(topo.name)) return;
+    o.geometry.computeBoundingBox();
+    if (!o.isInstancedMesh) add(topo.name || o.name, caixa.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld));
+    else for (let i = 0; i < o.count; i++) {
+      o.getMatrixAt(i, matriz);
+      add(topo.name || o.name, caixa.copy(o.geometry.boundingBox).applyMatrix4(matriz.premultiply(o.matrixWorld)));
+    }
+  });
+  for (const pilar of pilaresArco(map).caixas) add('arco_seguranca', pilar);
+  return volumes;
+};
 const blocked = (map, x, z, inflate = 0) => map.colliders.some(c => x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < 1.8 && c.maxY > .1);
 let failures = 0;
 const check = (name, fn) => {
@@ -863,26 +918,7 @@ try {
   // início da rodada e as ondas de spawnCandidates (o código que o nó MP roda) em cada
   // checkpoint das três variantes, nos dois times. Mede com a proporção real dos GLBs.
   check('respawn-points-floor-solid-exit', () => {
-    const map = glbReal, CORPO = 0.38, JOELHO = 0.35, AFUNDA = 0.2;
-    map.root.updateMatrixWorld(true);
-    // Volume visual por malha (instância a instância), inclusive render-only. Fora: céu e placa
-    // (sem superfície), avião (proxies medidos na malha em aircraft-ring-*), escada (piso subível
-    // de groundHeightAt) e arco do raio-x (passagem; os pilares têm colisor próprio).
-    const passagem = /^(aviao_executivo|escada_embarque|arco_seguranca)$/;
-    const volumes = [], caixa = new THREE.Box3(), matriz = new THREE.Matrix4();
-    map.root.traverse((o) => {
-      if (!o.isMesh || o.name === 'ceu-degrade-aeroporto' || o.userData.nonSolidSurface) return;
-      let topo = o;
-      while (topo.parent && topo.parent !== map.root) topo = topo.parent;
-      if (passagem.test(topo.name)) return;
-      o.geometry.computeBoundingBox();
-      const add = (box) => volumes.push({ nome: topo.name || o.name, minX: box.min.x, maxX: box.max.x, minY: box.min.y, maxY: box.max.y, minZ: box.min.z, maxZ: box.max.z });
-      if (!o.isInstancedMesh) add(caixa.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld));
-      else for (let i = 0; i < o.count; i++) {
-        o.getMatrixAt(i, matriz);
-        add(caixa.copy(o.geometry.boundingBox).applyMatrix4(matriz.premultiply(o.matrixWorld)));
-      }
-    });
+    const map = glbReal, CORPO = 0.38, JOELHO = 0.35, AFUNDA = 0.2, volumes = volumesVisuais(map);
     const cobre = (v, x, z, r) => x > v.minX - r && x < v.maxX + r && z > v.minZ - r && z < v.maxZ + r;
     const cruza = (a, b, v, r) => {
       let t0 = 0, t1 = 1;
@@ -925,12 +961,13 @@ try {
         else if (v.minY < y + JOELHO && v.maxY > y + JOELHO && cobre(v, p.x, p.z, CORPO)) anota(p, `corpo dentro de ${v.nome}`);
       }
       if (map.colliders.some(c => c.minY < y + 1.8 && c.maxY > y + 0.1 && cobre(c, p.x, p.z, CORPO))) anota(p, 'corpo dentro de colisor');
-      // Saída: nó mais próximo → comboio pelo grafo; nenhum trecho cruza volume na altura do peito.
+      // Saída: nó mais próximo → comboio pelo grafo; nenhum trecho cruza peça que parece sólida
+      // (fita da fila a 0,95 m conta: o corpo não passa por cima dela).
       const de = map.nearestWaypoint(p.x, p.z), ate = map.nearestWaypoint(p.alvo.x, p.alvo.z), caminho = map.findPath(de, ate);
       if (caminho.at(-1) !== ate) { anota(p, 'sem rota até o comboio'); continue; }
       const rota = [p, ...caminho.map(i => map.waypoints.nodes[i])];
       for (let i = 1; i < rota.length; i++) for (const v of volumes) {
-        if (v.minY < 1.2 && v.maxY > 1.6 && cruza(rota[i - 1], rota[i], v, CORPO)) {
+        if (v.minY < 1.5 && v.maxY >= SOLIDO && cruza(rota[i - 1], rota[i], v, CORPO)) {
           anota(p, `rota (${rota[i - 1].x},${rota[i - 1].z})→(${rota[i].x},${rota[i].z}) atravessa ${v.nome}`);
         }
       }
@@ -941,14 +978,15 @@ try {
     assert.equal(ruins.size, 0, `${ruins.size} ponto(s) de respawn ruins: ${lista.slice(0, 12).map(([k, r]) => `${r} ${k}`).join('; ')}`);
   });
   // Prop GLB render-only nunca vira piso jogável: ou fica além dos limites (kit de barreiras) ou é
-  // pele dentro de um colisor (módulos de fachada na parede). Avião, escada e arco têm cláusulas.
+  // pele dentro de um colisor (módulos de fachada na parede). Avião e escada têm cláusulas; o arco
+  // tem colisor por pilar (solid-looking-props-collide-as-drawn).
   check('decor-props-off-playable-floor', () => {
     for (const [nome, map] of [['glb', glbReal], ['fallback', fallback]]) {
       map.root.updateMatrixWorld(true);
       const limites = map.bounds;
       const decor = map.root.children.filter(o => {
         const id = o.name.replace(/^fallback-/, '');
-        return id in mediumModule.PROP_FILES && !/^(aviao_executivo|escada_embarque|arco_seguranca)$/.test(id) && !map.colliders.some(c => c.id === id);
+        return id in mediumModule.PROP_FILES && !/^(aviao_executivo|escada_embarque)$/.test(id) && !map.colliders.some(c => c.id === id);
       });
       assert.ok(decor.some(o => /terminal_fachada/.test(o.name)) && decor.some(o => /terminal_portal/.test(o.name)), `${nome}: módulos decorativos presentes`);
       for (const o of decor) {
@@ -958,6 +996,53 @@ try {
         const pele = map.colliders.some(c => c.minY < 0.1 && c.maxY > 1.8 && box.min.x >= c.minX - .05 && box.max.x <= c.maxX + .05 && box.min.z >= c.minZ - .05 && box.max.z <= c.maxZ + .05);
         assert.ok(fora || pele, `${nome}: ${o.name} ocupa piso jogável x ${box.min.x.toFixed(2)}…${box.max.x.toFixed(2)} z ${box.min.z.toFixed(2)}…${box.max.z.toFixed(2)}`);
       }
+    }
+  });
+  // Fila e arco do controle de acesso (18/11): postes e fitas eram só render (bots e VIP passavam
+  // por dentro da fita) e os colisores do arco ficavam a ±1,28 m, no ar ao lado dos pilares da malha
+  // (±0,70…0,96 m). O que parece sólido no piso jogável colide como é desenhado e as rotas passam
+  // pelos vãos com o corpo do VIP livre — com GLB (proporção nativa) e com o fallback procedural.
+  check('solid-looking-props-collide-as-drawn', () => {
+    const PELE = 0.25, VIP = 0.46, FORMACAO = 3.1 + 0.38;
+    const fmt = (v) => `${v.nome || v.id} x ${v.minX.toFixed(2)}…${v.maxX.toFixed(2)} z ${v.minZ.toFixed(2)}…${v.maxZ.toFixed(2)}`;
+    const distancia = (x, z, c) => Math.hypot(Math.max(c.minX - x, 0, x - c.maxX), Math.max(c.minZ - z, 0, z - c.maxZ));
+    for (const [variante, map] of [['glb', glbReal], ['fallback', fallback]]) {
+      const B = map.bounds, arco = pilaresArco(map);
+      // Visível → colisor: no piso jogável, a caixa de toda peça sólida cabe num colisor que ocupa a
+      // mesma altura (PELE absorve montantes e nervuras colados na parede).
+      const solidos = volumesVisuais(map).filter(v => v.maxY >= SOLIDO && v.minY < 1.5
+        && v.maxX > B.minX && v.minX < B.maxX && v.maxZ > B.minZ && v.minZ < B.maxZ);
+      const soltos = solidos.filter(v => !map.colliders.some(c => c.minY < v.maxY && c.maxY > v.minY
+        && v.minX >= c.minX - PELE && v.maxX <= c.maxX + PELE && v.minZ >= c.minZ - PELE && v.maxZ <= c.maxZ + PELE));
+      assert.equal(soltos.length, 0, `${variante}: ${soltos.length} peça(s) sólida(s) sem colisor: ${soltos.slice(0, 8).map(fmt).join('; ')}`);
+      // Colisor → visível: um colisor por peça, com a caixa da malha (nada de colidir com o ar). O
+      // pilar do arco vai do piso à verga no visual; o colisor sobe até o topo do arco.
+      const ajuste = { 'poste-fila': [0.02, ['X', 'Y', 'Z']], 'fita-fila': [0.02, ['X', 'Y', 'Z']], arco_seguranca: [0.05, ['X', 'Z']] };
+      for (const [nome, [tol, eixos]] of Object.entries(ajuste)) {
+        const pecas = solidos.filter(v => v.nome === nome), proxies = map.colliders.filter(c => c.id === nome);
+        assert.ok(pecas.length > 0 && pecas.length === proxies.length, `${variante}: ${nome} com um colisor por peça (${pecas.length}×${proxies.length})`);
+        for (const v of pecas) {
+          const proxy = proxies.find(c => eixos.every(e => Math.abs(c['min' + e] - v['min' + e]) <= tol && Math.abs(c['max' + e] - v['max' + e]) <= tol));
+          assert.ok(proxy, `${variante}: ${fmt(v)} sem colisor do tamanho do visual (colisores: ${proxies.map(fmt).join('; ')})`);
+          if (nome === 'arco_seguranca') assert.ok(proxy.minY <= v.minY && proxy.maxY >= arco.vao && proxy.maxY <= arco.topo + 0.02, `${variante}: ${fmt(v)} com colisor do piso à verga, sem passar do topo`);
+        }
+      }
+      // Rotas passam: toda rota do VIP e de serviço segue com o corpo do VIP longe de poste, fita e
+      // pilar, e uma rota cruza o arco entre os pilares. A fila sólida fica fora da lane da escolta:
+      // guarda a até 3,1 m de lado do VIP mais o corpo (0,38 m) não encosta em fita nem poste (fita
+      // atravessando a lane funilava a formação; escort-flicker-check media o passo invertido).
+      const pecas = map.colliders.filter(c => /^(poste-fila|fita-fila|arco_seguranca)$/.test(c.id));
+      let cruzaArco = false;
+      for (const [rota, folga] of [...map.escortPaths.map(r => [r, FORMACAO]), ...map.escortServiceRoutes.map(r => [r, VIP])]) for (let i = 1; i < rota.length; i++) {
+        const a = rota[i - 1], b = rota[i], passos = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.1);
+        for (let n = 0; n <= passos; n++) {
+          const x = a.x + (b.x - a.x) * n / passos, z = a.z + (b.z - a.z) * n / passos;
+          const toca = pecas.find(c => distancia(x, z, c) < (c.id === 'arco_seguranca' ? VIP : folga));
+          assert.ok(!toca, `${variante}: rota (${a.x},${a.z})→(${b.x},${b.z}) passa por (${x.toFixed(2)},${z.toFixed(2)}) colada em ${toca && fmt(toca)}`);
+        }
+        if ((a.z + 13) * (b.z + 13) < 0 && Math.abs(a.x + (b.x - a.x) * (-13 - a.z) / (b.z - a.z) - arco.cx) < 0.7) cruzaArco = true;
+      }
+      assert.ok(cruzaArco, `${variante}: uma rota atravessa o arco entre os pilares`);
     }
   });
   check('ground-operation-detail-around-boarding', () => {

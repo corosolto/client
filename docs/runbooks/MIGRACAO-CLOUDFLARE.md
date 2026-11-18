@@ -215,7 +215,10 @@ viewmodels respondem 200 com tamanho e ETag (sha256) do manifesto.
 - **Cache.** `s-maxage` vira a janela fresca do `caches.default` (`/api/og`, `/mapa`) e
   `stale-while-revalidate` vira a janela em que a resposta anterior é servida enquanto o Worker
   revalida em segundo plano. Fill frio e revalidação da mesma URL compartilham uma única operação,
-  impedindo gravações fora de ordem. As duas diretivas saem do `cache-control` do navegador, como na
+  impedindo gravações fora de ordem. No workerd promessa e corpo pertencem à requisição que os
+  criou: a dona segura a operação com `ctx.waitUntil` até ela assentar e quem só espera relê a
+  própria cópia do `caches.default` (sem cópia fresca, busca sozinho); ler a `Response` da dona dava
+  500 em rajada (17/11, `cf-borda-workerd-check`). As duas diretivas saem do `cache-control` do navegador, como na
   Vercel; viewmodel `immutable` também é guardado. O cache do Workers só vale em domínio próprio (no
   `workers.dev` todo hit renderiza).
 - **SHA.** `CS_BUILD_SHA` (workflows) > `VERCEL_GIT_COMMIT_SHA` > `GITHUB_SHA`.
