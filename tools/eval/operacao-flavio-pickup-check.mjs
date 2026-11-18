@@ -9,8 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { Game as BaseGame, CHARACTERS, initTextures, renderer, sfx, seedRandom, pickMatchRoster, mkEl } from './harness.mjs';
-import { elencoOperacaoFlavio } from '../../public/js/mode_operacao_flavio.js';
+import { Game as BaseGame, CHARACTERS, initTextures, renderer, sfx, seedRandom, pickMatchRoster, elencoDaEscolta, mkEl } from './harness.mjs';
 import { WEAPONS } from '../../public/js/data/weapons.js';
 
 const COLETA = 'return b.alive && !b._remote && !b._objectiveNpc && !this._entidadeEscolta(b);';
@@ -85,7 +84,7 @@ function novoJogo(lado, seed = 7) {
   const game = new Game({ renderer, textures: initTextures(renderer), sfx,
     settings: { bots: 4, quality: 'low', difficulty: 'normal', sens: 1 }, playerCharId: personagem,
     playerTeam: lado, playerFaction: lado, enemyFaction: outro, nickname: 'PICKUP-FLAVIO',
-    mapId: 'operacao_flavio', ctf: false, testMode: true, matchRoster: elencoOperacaoFlavio(roster, lado, personagem, SENADOR),
+    mapId: 'operacao_flavio', ctf: false, testMode: true, matchRoster: elencoDaEscolta(roster, lado, personagem),
     onQuit() {}, onMatchEnd() {} });
   game._ensureDolly = () => {};
   game._startRound(); game.state = 'live'; game.time = 10;

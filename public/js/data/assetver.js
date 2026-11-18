@@ -362,7 +362,7 @@ export const ASSET_REV = Object.freeze({
   "audio/ia/rounds-lyria/r-f.mp3": "0aeaa931df",
   "audio/ia/rounds-lyria/r-u.mp3": "b2dd1fdc8f",
   "audio/manifest.example.json": "7a18573ddb",
-  "audio/manifest.json": "4c553a1e36",
+  "audio/manifest.json": "6f68c4bb59",
   "audio/menu-music/m01.mp3": "0cd32f4590",
   "audio/menu-music/m02.mp3": "e2b8bb6a39",
   "audio/menu-music/m03.mp3": "c421f783b3",

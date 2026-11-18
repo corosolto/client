@@ -10,24 +10,22 @@
 #   2. commit "chore(release): vX" + tag vX + push.
 #   3. GitHub Release com as notas do CHANGELOG (mesma extração do job release do ci.yml).
 #
-# POR QUE TUDO NUM WORKFLOW SÓ (e não "tag dispara ci.yml que cria o Release que dispara
-# o deploy-prod.yml"): evento criado com o GITHUB_TOKEN **não dispara workflow novo** —
-# é a proteção anti-recursão do GitHub. O caso alpha.32 está documentado no cabeçalho do
-# deploy-prod.yml. A mesma regra trabalha A FAVOR aqui: o push do bot não re-dispara nem
-# este workflow nem o build do ci.yml — não existe loop. (A Vercel tem webhook próprio e
-# VAI buildar o commit de bump: 2 deploys por merge, inofensivo, o último fica valendo.)
+# POR QUE O RELEASE FICA NUM WORKFLOW SÓ: evento criado com GITHUB_TOKEN não dispara outro
+# workflow por `push`. O bump, a tag e o GitHub Release acontecem aqui; depois do push atômico,
+# este job usa a exceção segura `workflow_dispatch` para mandar o SHA do bump ao
+# `cf-prod-deploy.yml`. Assim a produção recebe a versão publicada, não só o merge anterior.
 #
-# Deploy de produção NÃO passa por aqui: decisão do dono (08/08) é manter o auto-deploy
-# da Vercel na main. O deploy-prod.yml continua existindo como caminho manual por tag
-# (gh workflow run deploy-prod.yml -f tag=vX) caso o auto-deploy seja desligado de novo.
+# Produção não é construída neste workflow. `cf-prod-deploy.yml` recebe push protegido da main
+# e o dispatch explícito acima, verifica uma versão candidata e só então promove o ID exato.
+# A Vercel fica congelada como origem de rollback dos 30 dias e não participa do trem.
 #
 # TREM DE RELEASE (13/10/2026, autorizado pelo dono): era um release por push na main —
 # 126 releases para 130 merges em 30 dias. Cada um reescrevia README/AGENTS/ARCH/docs,
 # todo PR aberto conflitava e o autofix mergeava a base em cada um (49% dos commits da
 # main eram do bot). O trem passou a sair 2×/dia e por workflow_dispatch (hotfix:
 # `gh workflow run release.yml`). Só embarca se houver commit novo desde a última tag E o
-# pr-fast estiver VERDE na head da main. A Vercel só builda produção em commit
-# `chore(release):` (scripts/ci/vercel-ignore.sh) — então produção passa a esperar o CI.
+# pr-fast estiver VERDE na head da main. O dispatch do `cf-prod-deploy.yml` acontece só depois
+# que o push atômico do commit `chore(release):` e da tag foi confirmado.
 #
 # RELEASE EM LOTE (14/10/2026, decisão do dono): horário fixo travava o desenvolvimento —
 # o trabalho esperava a janela das 11:41/19:41 em vez de sair quando o lote fechava. Agora
@@ -187,9 +185,9 @@ jobs:
     # 30 (teto da WT2): até 5 bumps de ~1 min mais a espera pelo pr-fast de uma cabeça
     # nova, que o passo corta num prazo próprio de 22 min antes de publicar qualquer coisa.
     timeout-minutes: 30
-    # actions: read para reconferir o pr-fast quando a main anda durante o bump.
+    # actions: write para despachar o deploy do commit de bump; contents: write para publicar.
     permissions:
-      actions: read
+      actions: write
       contents: write
     # Grupo PRÓPRIO e NUNCA cancelável: o embarque de um lote novo dividindo grupo com este
     # job cancelaria o bump velho no meio do push/tag/Release, deixando tag sem Release e o
@@ -390,6 +388,15 @@ jobs:
             exit 0
           fi
           gh release create "$TAG" --generate-notes "${EXTRA[@]}" --title "CSBR $TAG"
+
+      - name: Publica o commit de release no Cloudflare Workers
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          gh workflow run cf-prod-deploy.yml --ref main -f "ref=$SHA"
 
       - name: Avisa o backend do release para reconciliar os nós MP
         if: steps.guard.outputs.skip != 'true'

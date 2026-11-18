@@ -75,23 +75,19 @@ A fase 0 original filtrava preview por diff e ainda buildava todo PR que tocava 
 de fork (`preview-build.yml` → `preview-deploy.yml`) buildava a Vercel em TODO push de PR, sem filtro
 nenhum. Os dois caminhos fecharam de vez:
 
-- `vercel-ignore.sh`: branch de PR sai 0 sempre; o comentário sticky do PR aponta o preview
-  `*.workers.dev` do `cf-preview.yml`. staging/main/lote-* continuam buildando na Vercel.
-- `preview-build.yml` virou `workflow_dispatch` (input `pr_number`): não roda mais por push de PR.
-  `preview-deploy.yml` segue em `workflow_run`, que é o que publica o build de EMERGÊNCIA no contexto
-  base (dispatch → build concluído → deploy com `VERCEL_TOKEN` e `--prebuilt`). Nenhum outro workflow
-  escuta esse par; PR de fork não recebe preview Vercel (o bot do `preview-bot.yml` agora diz isso).
-- A régua PRV1 do `workflow_security_check.py` proíbe o build de voltar a disparar sozinho por
-  `pull_request`/`push`/`schedule` (mutante `compila-volta-pr`) e segue proibindo `secrets.` nele;
-  DG3/DG6 e o concurrency-check continuam prendendo o par como estava.
-- Superfície Vercel que resta: builds de produção (trem de release) + builds de staging/main/lote-*.
-- Fatura esperada: Build CPU Minutes cai para ~3 builds de release/semana (trem 14/10); Fast Origin
-  Transfer segue igual até a virada da fase 4, porque produção ainda serve da Vercel.
+- `vercel-ignore.sh` sai 0 para qualquer branch: a integração Git mantém apenas o último
+  deploy congelado durante os 30 dias de rollback.
+- `preview-build.yml` e `preview-deploy.yml` foram removidos na fase 6. A régua
+  `workflow_security_check.py` e DG3 reprovam se o par voltar.
+- `cf-preview.yml` compila PR interno sem segredos; `cf-preview-deploy.yml` publica o
+  artefato no contexto confiável. PR de fork não recebe URL de preview.
+- Superfície Vercel restante: nenhuma publicação nova pelo repositório.
+- Fatura esperada: zero Build CPU Minutes novos; o tráfego de produção passa no `csb-prod`.
 
 ## Fase 1: resultado do spike (09/11/2026)
 
 Spike no ar: `https://csb-spike.rubenmarcus-dev.workers.dev` (Worker `csb-spike`, conta rubenmarcus.dev; sem DNS, sem segredos).
-Build: `npm run build:cf` (= gera `_headers`/`_redirects` de `vercel.json` + `ADAPTER=cloudflare npm run build`); deploy: `npx wrangler deploy`.
+Build: `npm run build:cf` (= gera `_headers`/`_redirects` de `borda.json` + `ADAPTER=cloudflare npm run build`); deploy: `npx wrangler deploy`.
 Paridade com produção (`node tools/eval/cf-paridade-check.mjs --alvo <url>`): 19 rotas, 18 idênticas em status e headers
 comparados (CSP, HSTS, cache-control, x-content-type-options, referrer/permissions-policy, content-type, location); a única
 diferença é `/api/badge` (503 `not_configured` sem Supabase no spike, 404 na produção).
@@ -219,7 +215,10 @@ viewmodels respondem 200 com tamanho e ETag (sha256) do manifesto.
 - **Cache.** `s-maxage` vira a janela fresca do `caches.default` (`/api/og`, `/mapa`) e
   `stale-while-revalidate` vira a janela em que a resposta anterior é servida enquanto o Worker
   revalida em segundo plano. Fill frio e revalidação da mesma URL compartilham uma única operação,
-  impedindo gravações fora de ordem. As duas diretivas saem do `cache-control` do navegador, como na
+  impedindo gravações fora de ordem. No workerd promessa e corpo pertencem à requisição que os
+  criou: a dona segura a operação com `ctx.waitUntil` até ela assentar e quem só espera relê a
+  própria cópia do `caches.default` (sem cópia fresca, busca sozinho); ler a `Response` da dona dava
+  500 em rajada (17/11, `cf-borda-workerd-check`). As duas diretivas saem do `cache-control` do navegador, como na
   Vercel; viewmodel `immutable` também é guardado. O cache do Workers só vale em domínio próprio (no
   `workers.dev` todo hit renderiza).
 - **SHA.** `CS_BUILD_SHA` (workflows) > `VERCEL_GIT_COMMIT_SHA` > `GITHUB_SHA`.

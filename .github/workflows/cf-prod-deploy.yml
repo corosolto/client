@@ -1,11 +1,17 @@
 # Produção no Cloudflare Workers (docs/runbooks/MIGRACAO-CLOUDFLARE.md, fase 4).
-# Todo push na `main` protegida publica exatamente o SHA recebido. Isso cobre o merge commit
-# do trem de release e hotfixes sem executar YAML de refs controladas por colaborador.
+# O push protegido da `main` publica o SHA recebido. O trem chama `workflow_dispatch` com o
+# commit de bump porque pushes feitos pelo GITHUB_TOKEN não disparam outro workflow.
 name: cf-prod-deploy
 
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: SHA atual da main que o trem de release acabou de publicar
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -19,10 +25,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
+    env:
+      # Cache Purge é uma permissão da zona, separada do token que publica o Worker.
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
@@ -88,3 +97,16 @@ jobs:
           npx wrangler versions deploy "$VERSION_ID@100" \
             --config wrangler.prod.toml \
             --yes
+      # BUG-39: o HTML antigo ainda pode pedir URLs versionadas de /js/; o manifesto de skins
+      # também é mutável sob /models/. A promoção só termina depois de limpar os dois.
+      - name: purge do edge Cloudflare (/js/ + CSS + manifesto de skins)
+        if: env.CF_API_TOKEN != ''
+        run: |
+          set -euo pipefail
+          ZONE_NAME="${CF_ZONE_NAME:-corosolto.com.br}"
+          ZONE_ID=$(curl -fsS -H "Authorization: Bearer $CF_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/zones?name=$ZONE_NAME" \
+            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const r=JSON.parse(s).result;if(!r?.[0]?.id)process.exit(1);console.log(r[0].id)})")
+          curl -fsS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" \
+            --data '{"prefixes":["www.corosolto.com.br/js/","www.corosolto.com.br/style.css","www.corosolto.com.br/models/skins/manifest.json"]}' \
+            "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/purge_cache"

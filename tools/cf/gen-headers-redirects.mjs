@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /* ============================================================================
-   gen-headers-redirects.mjs — vercel.json É A FONTE; _headers/_redirects SÃO GERADOS
+   gen-headers-redirects.mjs — borda.json É A FONTE; _headers/_redirects SÃO GERADOS
    ----------------------------------------------------------------------------
    POR QUE EXISTE
    Até a fase 6 da migração (docs/runbooks/MIGRACAO-CLOUDFLARE.md) o site vive nas duas
    bordas. Manter duas listas de headers à mão é como a CSP diverge sem ninguém ver.
-   Este script lê `vercel.json` e escreve `public/_headers` e `public/_redirects` no
+   Este script lê `borda.json` e escreve `public/_headers` e `public/_redirects` no
    formato do Workers Static Assets. A régua `eval:cfparidade` cobra que toda regra da
    Vercel tem contraparte aqui.
 
@@ -72,7 +72,7 @@ function variantes(padrao) {
 }
 
 export function gerar(vercel) {
-  const linhasHeaders = ['# GERADO por tools/cf/gen-headers-redirects.mjs a partir de vercel.json. Não edite.'];
+  const linhasHeaders = ['# GERADO por tools/cf/gen-headers-redirects.mjs a partir de borda.json. Não edite.'];
   const aproximadas = [];
   for (const regra of vercel.headers) {
     const { padrao, exato } = fonteParaPadrao(regra.source);
@@ -83,7 +83,7 @@ export function gerar(vercel) {
     }
   }
 
-  const linhasRedirects = ['# GERADO por tools/cf/gen-headers-redirects.mjs a partir de vercel.json. Não edite.'];
+  const linhasRedirects = ['# GERADO por tools/cf/gen-headers-redirects.mjs a partir de borda.json. Não edite.'];
   const soNoWorker = [];
   for (const regra of vercel.redirects) {
     if (regra.has || regra.missing) { soNoWorker.push(regra); continue; }
@@ -102,7 +102,7 @@ export function gerar(vercel) {
 }
 
 export function lerVercel() {
-  return JSON.parse(readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
+  return JSON.parse(readFileSync(path.join(ROOT, 'borda.json'), 'utf8'));
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {

@@ -2,13 +2,13 @@
 // o que `_headers`/`_redirects` não cobrem (redirect por query e headers de resposta SSR), servir o
 // viewmodel privado do R2 e guardar no caches.default o que a rota marca com `s-maxage`.
 import astro from '@astrojs/cloudflare/entrypoints/server';
-import vercelJson from '../../vercel.json';
+import bordaJson from "../../borda.json";
 import manifestoVm from '../../tools/viewmodels/vm-assets.manifest.json';
-import { compilarHeader, compilarRedirect, headersPara, redirectPara } from '../lib/regras-vercel.mjs';
+import { compilarHeader, compilarRedirect, headersPara, redirectPara } from '../lib/regras-borda.mjs';
 import { PREFIXO_VM, indiceViewmodels, politicaCache, redirectDeHost, ttlBorda, viewmodelDoBucket } from './borda.mjs';
 
-const REDIRECTS = vercelJson.redirects.map(compilarRedirect);
-const HEADERS = vercelJson.headers.map(compilarHeader);
+const REDIRECTS = bordaJson.redirects.map(compilarRedirect);
+const HEADERS = bordaJson.headers.map(compilarHeader);
 const VIEWMODELS = indiceViewmodels(manifestoVm);
 
 // Default da Vercel em resposta SSR sem cache-control; mantido para a CDN se comportar igual.
@@ -76,6 +76,8 @@ const produzir = async (request: Request, env: Env, ctx: Ctx, url: URL) => {
   return prepararResposta(resposta, url.pathname);
 };
 type Produzida = { saida: Response; cliente: string; ttl: number; stale: number };
+// Operação compartilhada por URL; a dona segura o contexto (waitUntil) e quem espera nunca lê a
+// Response dela (workerd: I/O é da requisição dona). Ver MIGRACAO-CLOUDFLARE.md, "Cache".
 const OPERACOES_CACHE = new Map<string, Promise<Produzida>>();
 const rotaTemCache = (pathname: string) =>
   pathname === '/mapa' || pathname.startsWith('/api/og/') || pathname.startsWith(PREFIXO_VM);
@@ -107,25 +109,31 @@ const produzirParaCache = async (cache: Cache, request: Request, env: Env, ctx: 
 const operacaoCache = (cache: Cache, request: Request, env: Env, ctx: Ctx, url: URL) => {
   const chave = request.url;
   const existente = OPERACOES_CACHE.get(chave);
-  if (existente) return existente;
+  if (existente) return { trabalho: existente, dona: false };
   const trabalho = produzirParaCache(cache, request, env, ctx, url);
   OPERACOES_CACHE.set(chave, trabalho);
   const limpar = () => {
     if (OPERACOES_CACHE.get(chave) === trabalho) OPERACOES_CACHE.delete(chave);
   };
-  void trabalho.then(limpar, limpar);
-  return trabalho;
+  ctx.waitUntil(trabalho.then(limpar, limpar));
+  return { trabalho, dona: true };
 };
 const revalidarUmaVez = async (cache: Cache, request: Request, env: Env, ctx: Ctx, url: URL) => {
   try {
-    await operacaoCache(cache, request, env, ctx, url);
+    await operacaoCache(cache, request, env, ctx, url).trabalho;
   } catch (error) {
     console.error(`[cache] revalidação falhou para ${url.pathname}:`, error);
   }
 };
-const preencherUmaVez = async (cache: Cache, request: Request, env: Env, ctx: Ctx, url: URL) => {
-  const nova = await operacaoCache(cache, request, env, ctx, url);
-  return { ...nova, saida: nova.saida.clone() };
+const respostaDeQuemEspera = async (cache: Cache, request: Request, env: Env, ctx: Ctx, url: URL, trabalho: Promise<Produzida>) => {
+  try {
+    await trabalho;
+  } catch {
+    // A falha pertence à requisição dona; esta consulta a origem por conta própria abaixo.
+  }
+  const guardada = await cache.match(request);
+  if (guardada && Date.now() <= (Number(guardada.headers.get(CC_FRESCO_ATE)) || 0)) return doCache(guardada);
+  return (await produzir(request, env, ctx, url)).saida;
 };
 
 export default {
@@ -150,8 +158,11 @@ export default {
         }
       }
     }
-    if (cache && rotaTemCache(url.pathname))
-      return responderCondicional((await preencherUmaVez(cache, request, env, ctx, url)).saida, request);
+    if (cache && rotaTemCache(url.pathname)) {
+      const { trabalho, dona } = operacaoCache(cache, request, env, ctx, url);
+      if (dona) return responderCondicional((await trabalho).saida, request);
+      return responderCondicional(await respostaDeQuemEspera(cache, request, env, ctx, url, trabalho), request);
+    }
     return (await produzir(request, env, ctx, url)).saida;
   },
 };

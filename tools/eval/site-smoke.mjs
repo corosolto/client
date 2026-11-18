@@ -45,9 +45,11 @@ import { XMLParser, XMLValidator } from 'fast-xml-parser';
 // tempo — e errado do pior jeito: vermelho por engano quando alguém religar o
 // ranking, o que treina a equipe a ignorar o portão. Então lemos a flag.
 // Leitura por regex, não import: o arquivo é .ts e este arnês roda em node puro.
+// Fase 6 (adapter Cloudflare): o valor real vem do `[vars]` do wrangler.toml
+// (loadWranglerEnv injeta no build/dev) — site.ts passa a ler import.meta.env.
 const RANKING_ON = /export const RANKING_ON\s*=\s*true/.test(
   readFileSync(new URL('../../src/lib/site.ts', import.meta.url), 'utf8'),
-);
+) || /RANKING_ON\s*=\s*"true"/.test(readFileSync(new URL('../../wrangler.toml', import.meta.url), 'utf8'));
 
 const args = process.argv.slice(2);
 const JSON_OUT = args.includes('--json');

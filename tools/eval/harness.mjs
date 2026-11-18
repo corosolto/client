@@ -93,7 +93,7 @@ export const { MAPS, MAP_IDS, carregaMapa } = await import(`${JS}/maps.js`);
    síncrono. Carrega tudo na entrada e o registro volta pronto. */
 await Promise.all(MAP_IDS.map((id) => carregaMapa(id)));
 export const { initTextures } = await import(`${JS}/textures.js`);
-export const { Game, confirmGate, CONFIRM_MIN_MS, CONFIRM_MAX_MS, pickMatchRoster } = await import(`${JS}/game.js`);
+export const { Game, confirmGate, CONFIRM_MIN_MS, CONFIRM_MAX_MS, pickMatchRoster, elencoDaEscolta } = await import(`${JS}/game.js`);
 export const { CHARACTERS } = await import(`${JS}/characters.js`);
 export const PCHAR = (CHARACTERS.find(c => c.team === 'E') || CHARACTERS[0]).id;   // o scoreboard lê player.def.name
 export { mkEl };
