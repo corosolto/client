@@ -308,11 +308,13 @@ async function medir(mutante = '') {
     await page.waitForTimeout(800);
     const login = await page.evaluate(() => ({ aberto: !!document.getElementById('login-prompt')?.open, titulo: document.getElementById('login-prompt-title')?.textContent || '' }));
     await foto(page, 'login-celular-visitante', mutante);
+    /* O ouvinte da decisão do convite (cs-pos-partida) entra ANTES do fechar: se o fechamento já
+       disparasse o evento de forma síncrona, ele não se perde. O /api/treta segue segurado até depois. */
+    await page.evaluate(() => document.addEventListener('cs-pos-partida', () => { window.__reguaConviteDecidiu = true; }, { once: true }));
     /* espera tolerante: sob mutante o convite pode não ter aberto; a cláusula mede o estado depois */
     await page.click('#login-prompt-close', { timeout: 3000 }).catch(() => {});
     const fechou = await page.waitForFunction(() => !document.getElementById('login-prompt')?.open, null, { timeout: 3000 }).then(() => true, () => false);
-    /* Só agora chega o bônus de cadastro (/api/treta): o convite decide (cs-pos-partida) sem reabrir atrás do do passe. */
-    await page.evaluate(() => document.addEventListener('cs-pos-partida', () => { window.__reguaConviteDecidiu = true; }, { once: true }));
+    /* Só agora chega o bônus de cadastro (/api/treta): o convite decide sem reabrir atrás do do passe. */
     await soltaTreta();
     await page.waitForFunction(() => window.__reguaConviteDecidiu || document.getElementById('login-prompt')?.open, null, { timeout: 8000 }).catch(() => {});
     const convite = await page.evaluate(() => ({ decidiu: !!window.__reguaConviteDecidiu, voltou: document.getElementById('login-prompt')?.open ? document.getElementById('login-prompt-title')?.textContent || '?' : '' }));
