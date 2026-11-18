@@ -10,8 +10,8 @@ import { Game, CHARACTERS, initTextures, renderer, sfx, seedRandom, pickMatchRos
 
 const mutations = {
   'elenco-duplica-senador': {
-    before: 'roster[campo] = jogadorEhVip(lado, personagem, vipDef) ? semVip : [vipDef, ...semVip];',
-    after: 'roster[campo] = [vipDef, ...semVip];',
+    before: 'roster[campo] = jogadorVip ? escolta : [vipDef, ...escolta];',
+    after: 'roster[campo] = [vipDef, ...escolta];',
     clause: 'elenco offline põe o senador uma única vez',
   },
   'vip-sempre-bot': {
@@ -119,8 +119,11 @@ const check = (clause, run) => {
     console.error('✗ ' + clause + ': ' + error.message);
   }
 };
+// Pool de reposição igual ao do elencoDaEscolta (game.js): sorteáveis que jogam no B.
+const { podeNoLado } = await import('../../public/js/characters.js');
+const ESCOLTA_B = CHARACTERS.filter((c) => !c.passe && podeNoLado(c, 'B'));
 const elenco = (lado, personagem) => elencoOperacaoFlavio(
-  pickMatchRoster(lado, lado === 'B' ? 'E' : 'B', { allies: 3, enemies: 4 }, personagem), lado, personagem, SENADOR);
+  pickMatchRoster(lado, lado === 'B' ? 'E' : 'B', { allies: 3, enemies: 4 }, personagem), lado, personagem, SENADOR, ESCOLTA_B);
 
 // Mesmo caminho do main.js offline: roster sorteado + elenco do modo + Game não dedicado.
 function withGame(personagem, run, { online = false } = {}) {
@@ -150,7 +153,7 @@ check('elenco offline põe o senador uma única vez', () => {
   const jogadorVip = elenco('B', SENADOR.id);
   assert.equal(jogadorVip.allyDefs.filter((def) => def.id === SENADOR.id).length, 0, 'Zero Um jogador: nenhum bot senador aliado');
   assert.equal(jogadorVip.enemyDefs.filter((def) => def.id === SENADOR.id).length, 0, 'nem do outro lado');
-  assert.equal(jogadorVip.allyDefs.length, 3, 'tamanho do time B preservado');
+  assert.equal(jogadorVip.allyDefs.length, 4, 'jogador VIP é o corpo a mais: a escolta segue com 4');
   const outro = elenco('B', OUTRO_B.id);
   assert.equal(outro.allyDefs[0].id, SENADOR.id, 'outro personagem B: bot VIP abre o lado B');
   assert.equal(outro.allyDefs.filter((def) => def.id === SENADOR.id).length, 1, 'senador uma vez só');
