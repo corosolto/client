@@ -4,6 +4,7 @@
      PB2 tela (desktop 1536×1024): 15 níveis × 5 recompensas, XP, missões; RESGATAR NÍVEL 1 manda só
          {action:'claim', level:1}, o nível vira RESGATADO e o bônus de XP aparece.
      PB3 visitante no celular deitado (844×390): CTA abre o convite de login; depois de fechar,
+         o convite do bônus de cadastro (/api/treta chegando depois) não reabre na mesma visita, e
          a aba PASSE mostra 15 níveis sem rolagem horizontal nem resgate, com CTA para entrar.
      PB5 funil do painel: com medição permitida sai modal_view e open, uma vez cada; com a recusa
          gravada em cs_privacy não sai nenhum evento.
@@ -80,6 +81,7 @@ const MUTANTES = {
   'premio-sem-poster': ['PB8', '/js/tp/passe.js', [['  if (!skin?.poster) {\n', '  if (true) {\n']]],
   'bot-travado-fixado': ['PB9', '/js/main.js', [['if (!ehPin && personagemTravado(def)) {', 'if (false) {']]],
   'anuncio-desiste': ['PB10', '/js/passe-anuncio.js', [['    await semDialogoAberto();\n', '    return null;\n']]],
+  'convite-volta': ['PB3', '/js/login-prompt.js', [['    markSeen();dialog.showModal();\n', '    dialog.showModal();\n']]],
   'festa-ausente': ['PB12', '/js/tp/passe-festa.js', [['  abrirFesta(f);\n', '\n']]],
   'resgatar-tudo-paralelo': ['PB13', '/js/passe.js', [['const out = await resgatarComLimite(fila[i]);', 'const out = resgatarComLimite(fila[i]).catch(() => null);']]],
   'selo-parado': ['PB14', '/js/tp/lobby.js', [['document.addEventListener(PASSE_EVENTO, () => { passeAba(); marcar(); });', 'document.addEventListener(PASSE_EVENTO, () => { marcar(); });']]],
@@ -114,7 +116,7 @@ const CONTA = '00000000-0000-4000-8000-0000000000aa';
 const INJETA_PERSONAGEM = (t) => t.replace('export const CHARACTERS = [',
   "export const CHARACTERS = [\n  { id: 'capitao-caveira', team: 'E', name: 'Capitão Caveira', passe: { season: 'sessao-da-treta-s1', level: 1 },\n    blurb: 'Personagem do passe (régua).', pal: { skin: 0xe8b98a, shirt: 0x222222, pants: 0x222222, hair: 0x111111, boots: 0x111111 } },");
 
-async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mutante = '', personagem = null, anuncioVisto = false, recusaMedicao = false, atrasoMs = 0, flavio = false, posterQuebrado = '', auto = false, memoria = 15, atrasoPostMs = 0 }) {
+async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mutante = '', personagem = null, anuncioVisto = false, recusaMedicao = false, atrasoMs = 0, flavio = false, posterQuebrado = '', auto = false, memoria = 15, atrasoPostMs = 0, seguraTreta = false }) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: toque, isMobile: toque, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   page.setDefaultTimeout(15000);
@@ -153,6 +155,19 @@ async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mu
     await r.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     if (resgate) voo.agora--;
   });
+  /* seguraTreta: o GET /api/treta (bônus de cadastro, que abre o convite do visitante com nick salvo)
+     sai de um fixo e só responde quando a régua solta, em vez de correr contra a rede até o backend. */
+  let soltar;
+  const solta = new Promise((ok) => { soltar = ok; }), entregas = [];
+  if (seguraTreta) await page.route((u) => u.pathname === '/api/treta', (r) => {
+    if (r.request().method() !== 'GET') return r.fallback();
+    const entrega = solta.then(() => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ authenticated: false, currency: 'TRETA$', catalog: [],
+      campaign: { id: 'regua', starts_at: new Date(Date.now() - 5 * DIA).toISOString(), ends_at: new Date(Date.now() + 60 * DIA).toISOString(),
+        email_reward: 10000, referral_reward: 100, sp_reward: 10, mp_reward: 25, daily_match_cap: 250, referral_cap: 10, signup_bonus: 10000 } }) }));
+    entregas.push(entrega);
+    return entrega;
+  });
+  const soltaTreta = async () => { soltar(); await Promise.all(entregas); };
   await page.route((u) => u.pathname === '/api/social-auth', async (r) => {
     const u = new URL(r.request().url());
     if (r.request().method() !== 'GET') return r.fulfill({ status: 400, contentType: 'application/json', body: '{"error":"bad_request"}' });
@@ -177,7 +192,7 @@ async function abrir({ w = 1536, h = 1024, toque = false, conta = true, mock, mu
   await page.waitForFunction(() => !document.getElementById('splash-enter')?.classList.contains('hidden'), null, { timeout: 90000 }).catch(() => {});
   await page.waitForTimeout(1200);
   await entrarNoLobby(page, flavio ? 'flavio' : !anuncioVisto);
-  return { page, ctx, posts, eventos, erros, gets, voo };
+  return { page, ctx, posts, eventos, erros, gets, voo, soltaTreta };
 }
 
 /* Sai do splash e espera o status do passe (aba PASSE visível). O anúncio sai depois que o lobby
@@ -286,16 +301,25 @@ async function medir(mutante = '') {
   /* Sessão B: celular deitado, visitante. */
   if (quer('PB3', 'PB5')) {
     const mock = mockNoAr({ autenticado: false, claimed: [] });
-    const { page, ctx, posts, eventos, erros } = await abrir({ w: 844, h: 390, toque: true, conta: false, mock, mutante, recusaMedicao: true });
+    const { page, ctx, posts, eventos, erros, soltaTreta } = await abrir({ w: 844, h: 390, toque: true, conta: false, mock, mutante, recusaMedicao: true, seguraTreta: true });
     const anuncio = await page.evaluate(() => ({ aberto: !!document.getElementById('passe-anuncio')?.open, cta: document.querySelector('#passe-anuncio [data-passe-cta]')?.textContent || '' }));
     await foto(page, 'anuncio-celular-visitante', mutante);
     if (anuncio.aberto) await page.click('#passe-anuncio [data-passe-cta]', { timeout: 5000 }).catch(() => {});
     await page.waitForTimeout(800);
     const login = await page.evaluate(() => ({ aberto: !!document.getElementById('login-prompt')?.open, titulo: document.getElementById('login-prompt-title')?.textContent || '' }));
     await foto(page, 'login-celular-visitante', mutante);
-    /* espera tolerante: sob mutante o convite pode não ter aberto ou não fechar; a cláusula mede o estado depois */
+    /* As decisões do convite (cs-pos-partida) são contadas desde ANTES do fechar, para nenhuma se perder;
+       só conta como resposta ao /api/treta a que vier depois de soltá-lo (segurado até o fechar). */
+    await page.evaluate(() => { window.__reguaDecisoes = 0; document.addEventListener('cs-pos-partida', () => { window.__reguaDecisoes++; }); });
+    /* espera tolerante: sob mutante o convite pode não ter aberto; a cláusula mede o estado depois */
     await page.click('#login-prompt-close', { timeout: 3000 }).catch(() => {});
-    await page.waitForFunction(() => !document.getElementById('login-prompt')?.open, null, { timeout: 3000 }).catch(() => {});
+    const fechou = await page.waitForFunction(() => !document.getElementById('login-prompt')?.open, null, { timeout: 3000 }).then(() => true, () => false);
+    const antes = await page.evaluate(() => window.__reguaDecisoes);
+    /* Só agora chega o bônus de cadastro (/api/treta): o convite decide sem reabrir atrás do do passe. */
+    await soltaTreta();
+    await page.waitForFunction((n) => window.__reguaDecisoes > n || document.getElementById('login-prompt')?.open, antes, { timeout: 8000 }).catch(() => {});
+    const convite = await page.evaluate((n) => ({ decidiu: window.__reguaDecisoes > n, voltou: document.getElementById('login-prompt')?.open ? document.getElementById('login-prompt-title')?.textContent || '?' : '' }), antes);
+    if (convite.voltou) await page.click('#login-prompt-close').catch(() => {});
     await page.click('[data-tp-aba="passe"]').catch(() => {});
     await page.waitForSelector('#tp-passe[open] .tp-passe-nivel', { timeout: 10000 }).catch(() => {});
     const tela = await page.evaluate(() => {
@@ -306,8 +330,9 @@ async function medir(mutante = '') {
     await foto(page, 'passe-celular-visitante', mutante);
     await page.click('[data-resgatar]', { timeout: 1500 }).catch(() => {});
     await page.waitForTimeout(500);
-    add('PB3', anuncio.aberto && anuncio.cta === 'ENTRAR E JOGAR O PASSE' && login.aberto && /passe/.test(login.titulo) && tela.aberta && tela.larguraOk && tela.niveis === 15 && tela.resgates === 0 && tela.entrar && posts.length === 0,
-      `anúncio ${anuncio.aberto ? `"${anuncio.cta}"` : 'NÃO ABRIU'}; login ${login.aberto ? `"${login.titulo}"` : 'NÃO ABRIU'}; tela ${tela.aberta ? 'aberta' : 'FECHADA'}, ${tela.niveis} níveis, ${tela.larguraOk ? 'sem rolagem lateral' : 'ROLA NA HORIZONTAL'}, ${tela.resgates} botão(ões) de resgate, ENTRAR ${tela.entrar ? 'presente' : 'ausente'}; resgates ${posts.length}`);
+    add('PB3', anuncio.aberto && anuncio.cta === 'ENTRAR E JOGAR O PASSE' && login.aberto && /passe/.test(login.titulo) && fechou && convite.decidiu && !convite.voltou
+      && tela.aberta && tela.larguraOk && tela.niveis === 15 && tela.resgates === 0 && tela.entrar && posts.length === 0,
+      `anúncio ${anuncio.aberto ? `"${anuncio.cta}"` : 'NÃO ABRIU'}; login ${login.aberto ? `"${login.titulo}"` : 'NÃO ABRIU'} ${fechou ? 'fechou' : 'NÃO FECHOU'}; bônus de cadastro depois: ${convite.voltou ? `convite VOLTOU "${convite.voltou}"` : convite.decidiu ? 'convite não voltou' : 'convite NÃO DECIDIU'}; tela ${tela.aberta ? 'aberta' : 'FECHADA'}, ${tela.niveis} níveis, ${tela.larguraOk ? 'sem rolagem lateral' : 'ROLA NA HORIZONTAL'}, ${tela.resgates} botão(ões) de resgate, ENTRAR ${tela.entrar ? 'presente' : 'ausente'}; resgates ${posts.length}`);
     add('PB5@recusa', eventos.length === 0, `funil com recusa gravada: ${eventos.length ? `SAIU ${JSON.stringify(eventos)}` : 'nenhum evento'}`);
     add('PB0@celular', !erros.length, erros.length ? `erros de página: ${erros.join(' | ')}` : 'sem erro de página');
     await ctx.close();
