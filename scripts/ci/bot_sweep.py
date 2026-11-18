@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Persistent, change-aware state for the two scheduled bot sweeps."""
+"""Persistent, change-aware state for the scheduled classify sweep.
+
+The `automerge` kind stays decodable: PRs opened before 17/11/2026 still carry the
+automerge sweep marker, and it must keep NOT suppressing a classify dispatch.
+"""
 import base64
 import binascii
 import hashlib

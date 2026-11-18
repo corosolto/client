@@ -2,11 +2,35 @@
 
 ## Required checks
 
-- `pr-fast`
-- `smoke-web` quando a PR toca jogo/UI/site
-- `dco` para toda contribuição via PR
-- `pr-language`: título e descrição da PR em inglês, para humanos e bots
-- `hotfix-ancestry`: obrigatório e verde na head atual de hotfix que mira `main`
+O que segura o merge é o ruleset do GitHub, não esta lista: check que o ruleset não exige
+não impede merge nativo. Estado-alvo (17/11/2026), igual em `main` e `staging`, com a fonte
+única em `REQUIRED_CONTEXTS` de `scripts/ci/check_automerge.py`:
+
+| Contexto exigido | Workflow · job | Observação |
+| --- | --- | --- |
+| `build` | `pr-fast` (`ci.yml`) · agregador | todos os jobs do pr-fast |
+| `dco` | `pr-fast` (`ci.yml`) · `dco` | `Signed-off-by` em todo commit |
+| `versao-bumpada`, `ratchet` | `pr-gates` | roda em PR para `main` e `staging` |
+| `english` | `pr-language` | título e descrição da PR em inglês |
+| `hotfix-ancestry` | `hotfix-ancestry-gate` | verde e "não se aplica" fora de hotfix→`main` |
+| `portao-decide`, `portao` | `portao-browser` | `portao` agrega os `portao-*` e o Sertão |
+| `smoke-decide`, `smoke`, `chat-desktop` | `smoke-web` | `smoke-cf` fica fora: opcional nesta fase |
+| `politica-merge` | commit status do `csbrasil-bot-automerge` | ver "Merge policy" |
+
+Regras de nome: job SKIPPED conta como sucesso, e contexto exigido que nunca aparece trava o
+PR para sempre. Por isso só entram jobs que existem em TODO PR das duas bases (inclusive
+`staging → main`) e que saem SKIPPED, nunca ausentes, quando não se aplicam (draft, gatilho
+que não casa). Os `*-decide` são exigidos porque nascem na hora: no `ready_for_review` de um
+draft, o check mais novo de `portao`/`chat-desktop` ainda é o SKIPPED do draft até o `decide`
+novo terminar. `decide` puro não serve (o `cf-preview` também tem um). Matrix pulada não
+expande o nome (`Sertão — ${{ matrix.shard.nome }}`), então o Sertão entra pelo `portao`.
+
+As duas bases também exigem conversa de revisão resolvida e só aceitam merge commit.
+
+**Depende do dono aplicar** (o bot não altera settings). Hoje (17/11) a `main` exige só
+`build`, `dco`, `versao-bumpada` e `ratchet`; a `staging` não tem ruleset; `allow_auto_merge`
+está desligado. Os comandos exatos estão no PR que introduziu o auto-merge nativo e na seção
+"Rollout" abaixo.
 
 ## PR em draft: itere barato, peça os portões pesados no fim
 
@@ -44,10 +68,36 @@ em `GATILHOS.<alvo>.leves` (`scripts/ci/gatilho.mjs`).
 
 ## Merge policy
 
-Pode entrar em automerge:
+O `csbrasil-bot-automerge` não faz polling e não espera check. O `csbrasil-bot-pr-classify`
+o despacha (`workflow_dispatch`) no fim de cada classificação, depois de aplicar as labels; ele
+publica o commit status `politica-merge` na head e arma ou desarma o auto-merge nativo do GitHub
+(merge commit, `expectedHeadOid` = head avaliada). Quem espera os checks é o ruleset.
 
-- docs, changelog e templates pequenos classificados por `safe-automerge`
-- a PR oficial `staging → main` com label `release`, depois de checks verdes e revisões resolvidas
+`politica-merge` vale para merge de GENTE também (o ruleset exige):
+
+- `failure`: `needs-estragacodigo-resolution` sem `estragacodigo-resolved`, ou
+  `needs-hotfix-review`;
+- `pending`: `needs-human-gameplay`/`needs-human-backend` ou diff em `public/`, `src/` ou
+  `supabase/` mesmo sem essas labels (decisão do dono, que mergeia como bypass actor; o lote
+  oficial `staging → main` fica fora porque recombina o que já passou pelo dono), draft, ou lista
+  de arquivos que não deu para verificar;
+- `success`: nenhum bloqueio. Com "auto-merge armed" na descrição quando o bot armou.
+
+O bot arma o auto-merge só para:
+
+- docs, changelog e templates pequenos classificados por `safe-automerge`, com
+  `reviewDecision=APPROVED`, sem workflow e sem `public/`, `src/`, `supabase/`;
+- a PR oficial `staging → main` com label `release` e `estragacodigo-resolved`, sem
+  `CHANGES_REQUESTED`.
+
+Quando surge bloqueio (label, review), o status sai ANTES do desarme: mesmo se o desarme
+falhar, o contexto exigido fora do verde segura o merge nativo. Head nova não tem
+`politica-merge` até o bot rodar, e contexto exigido ausente também segura.
+
+Conversa de revisão aberta NÃO entra no `politica-merge`: resolver conversa não dispara
+Actions, então um `failure` por conversa ficaria preso depois da resolução. Quem segura é a
+regra nativa de conversa resolvida, que o GitHub reavalia sozinho; por isso o bot só arma
+quando o ruleset da base tem essa regra.
 
 Não entra no automerge de PR individual:
 
@@ -62,6 +112,30 @@ Não entra no automerge de PR individual:
 Essas superfícies seguem a aprovação humana antes de integrar `staging`. O lote diário só
 recombina o que já foi integrado; não dispensa revisão pendente nem check vermelho. O bot usa
 merge commit e nunca apaga `staging`.
+
+Merge DIRETO do bot (`gh pr merge --merge --match-head-commit`) só acontece com o critério
+completo: rollup inteiro verde (deduplicado pelo run mais novo), cada contexto da tabela acima
+PRESENTE e verde (ausente não é verde; `politica-merge` fica de fora porque é o que o bot
+publica), zero conversa aberta (o bot é bypass actor e passaria por cima da regra nativa),
+base `main` ou `staging` e estado `CLEAN`. Isso vale quando o GitHub recusa armar porque o PR
+já está limpo ou porque `allow_auto_merge` está desligado, ou enquanto o ruleset da base não
+exige todos os contextos da tabela e a resolução de conversas. Sem os settings, então, o bot
+nunca arma e nunca mergeia sem esse critério.
+
+## Rollout
+
+1. Dono, ANTES do merge do PR do auto-merge nativo: `allow_auto_merge=true`, ruleset novo
+   da `staging` e `main` com os contextos que já existem hoje (`build`, `dco`,
+   `versao-bumpada`/`ratchet` só na `main`, `english`, `hotfix-ancestry`), conversa resolvida
+   e só merge commit.
+2. Merge, na `staging` e depois na `main`, deste PR e do PR que cria `portao-decide`/
+   `smoke-decide` e o `sertao` no `portao`.
+3. Dono: ruleset completo (tabela acima) nas duas bases. A partir daqui o bot arma.
+
+Se o código entrar antes dos settings, o bot publica `politica-merge` (sem efeito, ninguém o
+exige), não arma (falta contexto no ruleset) e só mergeia direto com o critério antigo
+completo. Se o passo 3 for aplicado antes do passo 2, todo PR fica bloqueado esperando
+contexto que ainda não existe: falha fechada, o dono mergeia por bypass.
 
 ## Lixo não nasce em PR (`eval:lixo`)
 

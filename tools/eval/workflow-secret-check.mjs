@@ -23,9 +23,11 @@
 
    WSEC2 · o csbrasil-bot-automerge sem CSBRASIL_BOT_TOKEN avisa (`::warning` "Bot
            inerte") e pula num PASSO de guarda, não num job separado. O job `bot-token`
-           existia só para ler o secret e subia um runner a mais em cada disparo, e o
-           automerge dispara em label, sync, review e a cada pr-fast que termina. Todo
-           passo depois da guarda obedece a ela (`if: env.pular != '1'`).
+           existia só para ler o secret e subia um runner a mais em cada disparo. Todo
+           passo depois da guarda obedece a ela (`if: env.pular != '1'`). E o automerge
+           só acorda por `workflow_dispatch` (17/11/2026): o classify o despacha depois de
+           aplicar as labels, na versão do default branch. O fan-in de `workflow_run`, o
+           cron e o `pull_request_target` de volta multiplicam runs sem decidir nada novo.
 
    Uso: node tools/eval/workflow-secret-check.mjs [--mutante=<nome>]
    ============================================================================ */
@@ -35,7 +37,7 @@ import { gatilhosDe, ifDe, jobsDe, parseWorkflow, passosDe, runDe } from './work
 
 const DIR = '.github/workflows';
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = { 'guard-sem-if': 'WSEC1', 'gatilho-cego-novo': 'WSEC1', 'guarda-em-job': 'WSEC2', 'passo-fura-guarda': 'WSEC2', 'guarda-muda': 'WSEC2' };
+const MUTANTES = { 'guard-sem-if': 'WSEC1', 'gatilho-cego-novo': 'WSEC1', 'guarda-em-job': 'WSEC2', 'passo-fura-guarda': 'WSEC2', 'guarda-muda': 'WSEC2', 'fan-in-volta': 'WSEC2' };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 /* Gatilhos que, num PR de fork, chegam sem secret. `pull_request` entra na lista
@@ -63,7 +65,7 @@ if (MUT === 'gatilho-cego-novo') {
 
 for (let [nome, texto] of fontes) {
   if (MUT === 'guard-sem-if' && nome === 'csbrasil-bot-pr-classify.yml') {
-    texto = texto.replace(/    if: >-\n(      github\.event_name[^\n]*\n)+/, '');
+    texto = texto.replace(/    if: >-\n(?:      [^\n]*\n)+/, '');
   }
 
   const workflow = estrutura(nome, texto, 'WSEC1');
@@ -95,16 +97,15 @@ for (let [nome, texto] of fontes) {
   if (MUT === 'guarda-em-job') am = am.replace(/^jobs:\n/m, 'jobs:\n  bot-token:\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - run: echo token\n');
   if (MUT === 'passo-fura-guarda') am = am.replace(/(- name: Fetch PR status\n)\s+if: env\.pular != '1'\n/, '$1');
   if (MUT === 'guarda-muda') am = am.replace(/::warning title=Bot inerte::/, '');
+  if (MUT === 'fan-in-volta') am = am.replace(/^on:\n/m, 'on:\n  workflow_run:\n    workflows: [pr-fast]\n    types: [completed]\n');
   const workflow = estrutura('csbrasil-bot-automerge.yml', am, 'WSEC2');
   const jobs = jobsDe(workflow);
-  const inventarios = passosDe(jobs.sweep).map(runDe)
-    .filter((run) => /python3 scripts\/ci\/bot_sweep\.py --list-open/.test(run));
-  if (inventarios.length !== 1
-      || !/GH_TOKEN="\$\{\{ github\.token \}\}"\s+python3 scripts\/ci\/bot_sweep\.py --list-open "\$REPO"/.test(inventarios[0])) {
-    falhas.push('WSEC2 sweep de automerge não limita github.token à única leitura paginada');
+  const gatilhos = gatilhosDe(workflow);
+  if (gatilhos.length !== 1 || gatilhos[0] !== 'workflow_dispatch') {
+    falhas.push(`WSEC2 csbrasil-bot-automerge.yml acorda por [${gatilhos.join(', ')}] — esperado só workflow_dispatch (despachado pelo classify)`);
   }
   const ids = Object.keys(jobs);
-  const esperados = ['automerge', 'sweep'];
+  const esperados = ['automerge'];
   if (ids.length !== esperados.length || esperados.some((id) => !ids.includes(id))) {
     falhas.push(`WSEC2 csbrasil-bot-automerge.yml tem os jobs [${ids.join(', ')}] — esperados [${esperados.join(', ')}], cada um com guarda em passo`);
   }
