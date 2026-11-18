@@ -15,6 +15,14 @@
 # EM VERMELHO (saída 1: CRÍTICO ou ALTO): abre UMA issue `ops-diag` com o relatório, ou
 # comenta na que já está aberta. Verde (0) fecha a issue aberta. Inconclusivo (78: rede
 # do runner) fica só no log — não é verde nem vermelho.
+#
+# AGENDA: de hora em hora (minuto 17, UTC). O relógio primário é o Worker vigia-cron
+# (workers/vigia-cron/, runbook docs/runbooks/vigia-cron.md), que chama o workflow_dispatch:
+# medido em 11/2026, o `schedule` daqui rodou 32 vezes em 10 dias contra 240 previstas
+# (~13%), porque o GitHub descarta disparo agendado sob carga. O `schedule` fica como rede
+# de segurança se o Worker cair. Rodada em dobro é inofensiva: a diagnose só lê, o
+# `concurrency` abaixo (sem cancelamento) enfileira a segunda, e a issue é UMA por
+# incêndio (a segunda comenta ou fecha a mesma).
 name: ops-diag
 on:
   schedule:

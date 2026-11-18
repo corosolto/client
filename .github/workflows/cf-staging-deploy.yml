@@ -32,6 +32,15 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: bash scripts/fetch-audio.sh --prefetch-r2
+      # Viewmodel privado entra no build como asset estático: servido pelo Worker, cada GLB
+      # era uma invocação cobrada (88% das chamadas do csb-prod em 17/11).
+      - name: Baixa viewmodels privados do R2
+        env:
+          VM_R2_BUCKET: corosolto-private
+          VM_REQUIRED: '1'
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_WORKERS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: bash scripts/fetch-viewmodels.sh
       # O token existe só nesta etapa e na publicação. O build consome o cache verificado,
       # sem acesso ao R2 nem a qualquer segredo.
       - name: Build Cloudflare
