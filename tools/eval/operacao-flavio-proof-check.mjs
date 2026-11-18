@@ -64,6 +64,8 @@ const familias = {
     'fita-sem-colisor': 'FALHA solid-looking-props-collide-as-drawn:',
     'arco-largo': 'FALHA solid-looking-props-collide-as-drawn:',
     'fila-colada-na-lane': 'FALHA solid-looking-props-collide-as-drawn:',
+    'arco-fallback-caixa': 'FALHA solid-looking-props-collide-as-drawn:',
+    'arco-fallback-largo': 'FALHA solid-looking-props-collide-as-drawn:',
   }],
   menu: ['operacao-flavio-menu-check.mjs', Object.fromEntries(
     ['preferencia', 'sem-objetivo', 'botoes-ativos', 'rotulo'].map(m => [m, 'FALHA menu-objective-operacao_flavio-ctf:']))],

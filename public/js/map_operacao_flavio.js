@@ -705,7 +705,17 @@ export function buildOperacaoFlavio(scene, T = {}) {
   const groundHeightAt = (x, z) => (escadaModelo.visible ? pisoEscada(x, z) : 0);
   usarProp('trator_bagagem', [-20, 0.08, 50], MEDIDA_REAL.trator_bagagem, MEDIDA_REAL.trator_bagagem, Math.PI / 2);
   usarProp('carrinho_ferramentas', [27, 0.08, 38], MEDIDA_REAL.carrinho_ferramentas, MEDIDA_REAL.carrinho_ferramentas, Math.PI / 2);
-  usarProp('arco_seguranca', [0, 0.08, -13], 3, [3, 3, 0.8], 0, false);
+  // Arco do raio-x medido na malha (escala 3 m pela altura, base em y 0,08): pilares com face interna
+  // a 0,70 m da linha central e externa a 0,96 m, pés com ±0,643 m em z, verga a partir de 2,53 m e
+  // topo em 3,08 m. Sem o GLB o fallback desenha os mesmos pilares e a verga (decorativos, como a
+  // caixa antiga: sem oclusor nem sombra), não uma caixa de 3 m fechando o vão; os colisores
+  // (abaixo) usam as mesmas constantes, com ou sem o modelo.
+  const ARCO = { z: -13, pilares: [[-0.96, -0.70], [0.70, 0.96]], meiaProf: 0.643, verga: 2.53, topo: 3.08 };
+  if (templates.has('arco_seguranca')) usarProp('arco_seguranca', [0, 0.08, ARCO.z], 3, null, 0, false);
+  else {
+    for (const [x0, x1] of ARCO.pilares) bloco('fallback-arco_seguranca', (x0 + x1) / 2, ARCO.topo / 2, ARCO.z, x1 - x0, ARCO.topo, 2 * ARCO.meiaProf, mats.metal, false, false);
+    bloco('fallback-arco_seguranca', 0, (ARCO.verga + ARCO.topo) / 2, ARCO.z, 2 * ARCO.pilares[1][1], ARCO.topo - ARCO.verga, 1.016, mats.metal, false, false);
+  }
   // Proxies do avião medidos na malha real (corpo 0,3–1,6 m e cabine acima), nunca maiores que o
   // render: nariz, asas e cauda deixam o anel em volta do avião livre para circular.
   for (const [id, minX, maxX, minY, maxY, minZ, maxZ] of [
@@ -728,11 +738,9 @@ export function buildOperacaoFlavio(scene, T = {}) {
   })();
   colliderDoProp('trator_bagagem', -20, 0, 50, ...MEDIDA_REAL.trator_bagagem, Math.PI / 2);
   colliderDoProp('carrinho_ferramentas', 27, 0, 38, ...MEDIDA_REAL.carrinho_ferramentas, Math.PI / 2);
-  // Pilares do arco medidos na malha (escala 3 m pela altura, base em y 0,08): face interna a 0,70 m
-  // da linha central, externa a 0,96 m, pés com ±0,643 m em z e topo em 3,08 m. Constantes, não a
-  // caixa do GLB, para a física ser a mesma sem o modelo; o vão de 1,4 m entre eles fica livre.
-  for (const [minX, maxX] of [[-0.96, -0.70], [0.70, 0.96]]) colliders.push({
-    id: 'arco_seguranca', minX, maxX, minY: 0, maxY: 3.08, minZ: -13 - 0.643, maxZ: -13 + 0.643,
+  // Um colisor por pilar do arco; o vão de 1,4 m entre eles fica livre para a rota do meio.
+  for (const [minX, maxX] of ARCO.pilares) colliders.push({
+    id: 'arco_seguranca', minX, maxX, minY: 0, maxY: ARCO.topo, minZ: ARCO.z - ARCO.meiaProf, maxZ: ARCO.z + ARCO.meiaProf,
   });
 
   // Placa render-only (sem colisor, oclusor ou raycast) igual para os dois times: a seta
