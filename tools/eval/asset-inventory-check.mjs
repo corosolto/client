@@ -51,13 +51,13 @@ function mutations() {
     mkdirSync(join(fixture, 'tools'), { recursive: true });
     const reviewedPath = 'models/skins/manifest.json';
     writeFileSync(manifestPath, `${JSON.stringify({
-      schema: 'asset-inventory-v1',
+      schema: 'asset-inventory-v2',
       roots: ['models', 'img/textures', 'textures', 'posters'],
-      files: {
+      referenced: [],
+      unreferenced: {
         [reviewedPath]: createHash('sha256')
           .update(readFileSync(join(fixture, 'public/models/skins/manifest.json'))).digest('hex'),
       },
-      unreferenced: [reviewedPath],
     }, null, 2)}\n`);
     const initialReview = readFileSync(manifestPath, 'utf8');
     rmSync(manifestPath);
@@ -68,6 +68,23 @@ function mutations() {
     result = runInventory(fixture, ['--check']);
     expectStatus(result, 0, 'initial non-audio inventory check');
     console.log('AI1: post-rewrite JSON reference baseline passes.');
+
+    const v2 = readFileSync(manifestPath, 'utf8');
+    const atual = JSON.parse(v2);
+    const hashDe = (path) => createHash('sha256').update(readFileSync(join(fixture, 'public', ...path.split('/')))).digest('hex');
+    writeFileSync(manifestPath, `${JSON.stringify({
+      schema: 'asset-inventory-v1',
+      roots: atual.roots,
+      files: Object.fromEntries([...atual.referenced, ...Object.keys(atual.unreferenced)].sort().map((path) => [path, hashDe(path)])),
+      unreferenced: Object.keys(atual.unreferenced),
+    }, null, 2)}\n`);
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'a v1 manifest fails check until migrated');
+    assert.match(result.stderr, /is still asset-inventory-v1; run node tools\/gen-asset-inventory\.mjs to migrate it/);
+    expectStatus(runInventory(fixture), 0, 'generator migrates a v1 manifest');
+    assert.equal(readFileSync(manifestPath, 'utf8'), v2);
+    expectStatus(runInventory(fixture, ['--check']), 0, 'migrated manifest check');
+    console.log('AI1v1: a v1 manifest fails check, and generation migrates it to the same v2 with reviewed orphan hashes kept.');
 
     put(fixture, 'public/js/runtime.json', '{"hero":"models/props/json-only.glb"}\n');
     put(fixture, 'public/models/props/json-only.glb', 'json-runtime-reference');
@@ -290,9 +307,8 @@ function mutations() {
 
     put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
     const reviewed = JSON.parse(readFileSync(manifestPath, 'utf8'));
-    reviewed.files['models/props/legacy.glb'] = createHash('sha256')
+    reviewed.unreferenced['models/props/legacy.glb'] = createHash('sha256')
       .update(readFileSync(join(fixture, 'public/models/props/legacy.glb'))).digest('hex');
-    reviewed.unreferenced.push('models/props/legacy.glb');
     writeFileSync(manifestPath, `${JSON.stringify(reviewed, null, 2)}\n`);
     expectStatus(runInventory(fixture), 0, 'explicitly reviewed orphan generation');
     expectStatus(runInventory(fixture, ['--check']), 0, 'explicitly reviewed orphan check');
@@ -313,13 +329,54 @@ function mutations() {
     put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const ADDED = '/textures/added.webp';\n");
     expectStatus(runInventory(fixture), 0, 'safe referenced add generation');
     expectStatus(runInventory(fixture, ['--check']), 0, 'safe referenced add check');
-    assert.ok(JSON.parse(readFileSync(manifestPath, 'utf8')).files['textures/added.webp']);
+    assert.ok(JSON.parse(readFileSync(manifestPath, 'utf8')).referenced.includes('textures/added.webp'));
 
     rmSync(join(fixture, 'public/models/props/legacy.glb'));
     expectStatus(runInventory(fixture), 0, 'safe reviewed orphan removal generation');
     expectStatus(runInventory(fixture, ['--check']), 0, 'safe reviewed orphan removal check');
-    assert.ok(!JSON.parse(readFileSync(manifestPath, 'utf8')).files['models/props/legacy.glb']);
+    assert.ok(!Object.hasOwn(JSON.parse(readFileSync(manifestPath, 'utf8')).unreferenced, 'models/props/legacy.glb'));
     console.log('AI5: referenced add and reviewed orphan removal migrate safely.');
+
+    /* AI6–AI8: o manifesto só prende o que alguém revisou. Byte de asset referenciado e
+       asset referenciado novo não pedem manifesto (era o vermelho de 9 runs, ex. 43765870187);
+       orfão com byte novo e asset conhecido que some continuam vermelhos. */
+    const beforeEdit = readFileSync(manifestPath, 'utf8');
+    put(fixture, 'public/textures/added.webp', 'edited-referenced-bytes');
+    put(fixture, 'public/textures/added2.webp', 'new-referenced-asset');
+    put(fixture, 'public/js/refs.js', "export const TEXTURE = '/img/textures/kept.webp';\nexport const POSTER = '/posters/kept.jpg';\nexport const ADDED = '/textures/added.webp';\nexport const ADDED2 = '/textures/added2.webp';\n");
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 0, 'referenced byte edit and referenced add need no manifest change');
+    assert.match(result.stdout, /1 known-set entr\(ies\) behind the disk/);
+    assert.equal(readFileSync(manifestPath, 'utf8'), beforeEdit);
+    console.log('AI6: editing or adding a referenced asset passes check without touching the manifest.');
+
+    put(fixture, 'public/models/props/legacy.glb', 'reviewed-orphan');
+    const reviewedAgain = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    reviewedAgain.unreferenced['models/props/legacy.glb'] = createHash('sha256').update('reviewed-orphan').digest('hex');
+    writeFileSync(manifestPath, `${JSON.stringify(reviewedAgain, null, 2)}\n`);
+    expectStatus(runInventory(fixture, ['--check']), 0, 'reviewed orphan restored');
+    put(fixture, 'public/models/props/legacy.glb', 'tampered-orphan');
+    const beforeTamper = readFileSync(manifestPath, 'utf8');
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'reviewed orphan with changed bytes fails check');
+    assert.match(result.stderr, /orphan-new: models\/props\/legacy\.glb sha256=[0-9a-f]{64} \(reviewed bytes were [0-9a-f]{64}\)/);
+    result = runInventory(fixture);
+    expectStatus(result, 1, 'generator cannot self-approve changed orphan bytes');
+    assert.equal(readFileSync(manifestPath, 'utf8'), beforeTamper);
+    rmSync(join(fixture, 'public/models/props/legacy.glb'));
+    console.log('AI7: a reviewed orphan whose bytes change fails check and generation until re-reviewed by hand.');
+
+    put(fixture, 'public/site.css', 'body { background: url(/textures/css-only.webp); }\n');
+    put(fixture, 'public/textures/css-only.webp', 'css-only-reference');
+    expectStatus(runInventory(fixture), 0, 'unquoted CSS reference enters the known set');
+    assert.ok(JSON.parse(readFileSync(manifestPath, 'utf8')).referenced.includes('textures/css-only.webp'));
+    rmSync(join(fixture, 'public/textures/css-only.webp'));
+    result = runInventory(fixture, ['--check']);
+    expectStatus(result, 1, 'known referenced asset lost without a literal reference');
+    assert.match(result.stderr, /referenced-file-lost: textures\/css-only\.webp/);
+    rmSync(join(fixture, 'public/site.css'));
+    expectStatus(runInventory(fixture), 0, 'known-set cleanup after reference removal');
+    console.log('AI8: the known set is a ratchet: a known asset still referenced only by CSS cannot vanish.');
 
     put(fixture, 'public/audio/time-e/ingame/used.mp3', 'used');
     put(fixture, 'public/audio/legacy/old.mp3', 'reviewed-old-orphan');
@@ -361,7 +418,7 @@ function mutations() {
     assert.ok(existsSync(join(fixture, 'public/audio/time-e/ingame/added.mp3')));
     console.log('AU4: audio referenced add and manual orphan removal pass.');
 
-    console.log('ASSET-INVENTORY mutations OK: generate/check orphan refusal, explicit review, 4 referenced-file-lost, safe add/remove for both inventories.');
+    console.log('ASSET-INVENTORY mutations OK: generate/check orphan refusal, explicit review bound to bytes, 5 referenced-file-lost incl. known-set ratchet, referenced edits/adds free, safe add/remove for both inventories.');
     return 0;
   } finally {
     rmSync(fixture, { recursive: true, force: true });

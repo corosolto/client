@@ -8,33 +8,69 @@ import { spawnSync } from 'node:child_process';
 import { SUITES, passosDaSuite } from '../tools/eval/suites.mjs';
 import { selecionarPorArquivos, validarMapaWorkflows } from '../tools/eval/selecao-pre-push.mjs';
 
-/* Baseline congelado das duas linhas que existiam antes do manifesto. O resumo
- * cobre ordem, repetições e conteúdo; ele NÃO é derivado do manifesto atual. */
-const BASELINE = {
-  fast: { quantidade: 338, sha256: '05c5d2027a8229f379a4556ee991daf1bc0e9f45b04ee3515d4e458259d6bfdf' },
-  deploy: { quantidade: 115, sha256: '97c0ba3d2ba2a738f14a87865e0c96af7eeabd500136463e566adf6b6b6ee316' },
+/* Baseline congelado das duas linhas que existiam antes do manifesto, legível em
+ * tests/fixtures/eval-suites-baseline.json e preso ao MESMO sha256 de sempre (a lista não
+ * mudou, só deixou de ser opaca). A regra é catraca: a baseline tem de ser subsequência
+ * ORDENADA da suite atual e nenhum passo roda duas vezes. Perder, reordenar ou duplicar um
+ * passo migrado reprova; passo novo entra em qualquer posição sem editar este arquivo.
+ * Antes, cada passo novo exigia somar o nome num registro NOVOS e a contagem total batia
+ * por igualdade: 19 dos 27 commits deste arquivo entre 18/10 e 17/11 eram essa soma, e 5 PRs
+ * reprovaram só por esquecê-la (runs 42580952308, 42623503905, 42635380158, 42735202297,
+ * 42749663123 — "339 !== 338"). */
+const BASELINE_SHA256 = {
+  fast: '05c5d2027a8229f379a4556ee991daf1bc0e9f45b04ee3515d4e458259d6bfdf',
+  deploy: '97c0ba3d2ba2a738f14a87865e0c96af7eeabd500136463e566adf6b6b6ee316',
 };
-const NOVOS = {
-  fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:estadosassados', 'eval:rig-census', 'eval:studiochar', 'eval:rede3p', 'eval:pesos-braco-perna', 'eval:rigmaos', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:cfborda', 'eval:prodcrash', 'eval:workflowguards', 'eval:estados3p', 'eval:emotes-mocap']),
-  deploy: new Set(['eval:estadosassados', 'eval:weapon-passe', 'eval:dispose', 'eval:workflowguards']),
-};
+const FIXTURE_BASELINE = 'tests/fixtures/eval-suites-baseline.json';
+const BASELINE = JSON.parse(readFileSync(new URL(`../${FIXTURE_BASELINE}`, import.meta.url), 'utf8'));
 const assinatura = (passos) => createHash('sha256').update(passos.join('\n')).digest('hex');
 
-for (const [nome, baseline] of Object.entries(BASELINE)) {
-  const preservados = () => SUITES[nome].filter((passo) => !NOVOS[nome].has(passo));
-  test(`check:${nome} preserva exatamente a sequência anterior`, () => {
-    assert.equal(preservados().length, baseline.quantidade);
-    assert.equal(assinatura(preservados()), baseline.sha256);
+function violacoesDaBaseline(nome, baseline, atual) {
+  const erros = [];
+  const vezes = new Map();
+  for (const passo of atual) vezes.set(passo, (vezes.get(passo) || 0) + 1);
+  for (const [passo, n] of vezes) {
+    if (n > 1) erros.push(`${passo} aparece ${n}× em check:${nome} — deixe uma só entrada em tools/eval/suites.mjs`);
+  }
+  let i = 0;
+  for (const passo of atual) if (i < baseline.length && passo === baseline[i]) i++;
+  if (i < baseline.length) {
+    const passo = baseline[i];
+    if (atual.includes(passo)) {
+      erros.push(`${passo} saiu da ordem migrada de check:${nome} (vinha logo depois de ${baseline[i - 1] ?? '(início)'}) — devolva-o à posição em tools/eval/suites.mjs`);
+    } else {
+      erros.push(`${passo} sumiu de check:${nome} — devolva-o em tools/eval/suites.mjs; se a remoção é decisão, tire-o de ${FIXTURE_BASELINE} e troque BASELINE_SHA256.${nome} por ${assinatura(baseline.filter((p) => p !== passo))}`);
+    }
+  }
+  return erros;
+}
+
+for (const nome of Object.keys(BASELINE_SHA256)) {
+  test(`check:${nome}: baseline legível é a mesma congelada no sha256`, () => {
+    assert.equal(assinatura(BASELINE[nome]), BASELINE_SHA256[nome], `${FIXTURE_BASELINE} foi editado sem trocar BASELINE_SHA256.${nome}`);
   });
 
-  test(`baseline de ${nome} detecta mutantes de perda e reordenação`, () => {
-    const semPasso = preservados().filter((_, i) => i !== 17);
-    assert.equal(semPasso.length, baseline.quantidade - 1);
-    assert.notEqual(assinatura(semPasso), baseline.sha256);
+  test(`check:${nome} preserva a sequência migrada, em ordem e sem passo repetido`, () => {
+    const erros = violacoesDaBaseline(nome, BASELINE[nome], SUITES[nome]);
+    assert.deepEqual(erros, [], erros.join('\n'));
+  });
 
-    const reordenado = preservados();
-    [reordenado[3], reordenado[19]] = [reordenado[19], reordenado[3]];
-    assert.notEqual(assinatura(reordenado), baseline.sha256);
+  test(`catraca de ${nome}: passo novo passa; perda, reordenação e duplicata reprovam`, () => {
+    const base = BASELINE[nome];
+    const atual = [...SUITES[nome]];
+    const comNovo = [...atual];
+    comNovo.splice(Math.floor(atual.length / 2), 0, 'eval:passo-novo-sem-registro');
+    assert.deepEqual(violacoesDaBaseline(nome, base, comNovo), []);
+
+    const semPasso = atual.filter((passo) => passo !== base[17]);
+    assert.match(violacoesDaBaseline(nome, base, semPasso).join('\n'), new RegExp(`${base[17]} sumiu`));
+
+    const reordenado = [...atual];
+    const [a, b] = [reordenado.indexOf(base[3]), reordenado.indexOf(base[19])];
+    [reordenado[a], reordenado[b]] = [reordenado[b], reordenado[a]];
+    assert.match(violacoesDaBaseline(nome, base, reordenado).join('\n'), /saiu da ordem migrada/);
+
+    assert.match(violacoesDaBaseline(nome, base, [...atual, base[5]]).join('\n'), new RegExp(`${base[5]} aparece 2×`));
   });
 }
 
@@ -67,7 +103,6 @@ test('release de personagem do Studio entra na fast logo depois do characterkit'
 
 test('rede3p permanece uma vez no fast integrado', () => {
   assert.equal(SUITES.fast.filter((passo) => passo === 'eval:rede3p').length, 1);
-  assert.equal(SUITES.fast.length, BASELINE.fast.quantidade + NOVOS.fast.size);
 });
 
 test('suites temáticas só reutilizam passos existentes, sem duplicar execução', () => {

@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 // CPR: contagem gerada não entra em PR (dois PRs abertos conflitavam no "N scripts"); só o release a reescreve.
-// Uso: node tools/eval/contagens-pr-check.mjs [--mutante=volatil-vira-estrutural|release-pula-volatil|arch-sem-mascara|mesclar-com-cursor|aceita-marcador|autofix-release]
+// Fato escrito à mão desalinhado na base (versão do package.json × version.js × CHANGELOG, LICENSE) é do
+// docs:check, não desta régua: medido em 11 runs de 01–16/11 (ex.: 43480458704, 43821409142), o bump do
+// alpha.149 sem CHANGELOG reprovava esta régua em todo PR, main e staging, sem o PR tocar nada dela. Por isso
+// cada perturbação tem de acender erro NOVO em relação à base; a cópia mede SEMPRE com um CHANGELOG
+// desalinhado de propósito (CPR8) para a tolerância nunca esconder o que a régua cobra.
+// Uso: node tools/eval/contagens-pr-check.mjs [--mutante=volatil-vira-estrutural|release-pula-volatil|arch-sem-mascara|mesclar-com-cursor|aceita-marcador|autofix-release|changelog-cego]
 import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -14,6 +19,7 @@ const MUTANTES = {
   'mesclar-com-cursor': ['tools/gerado-modo.mjs', '(velha, k) => !usadas.has(k) && re.test(velha)', '(velha, k) => k > Math.max(-1, ...usadas) && re.test(velha)'],
   'aceita-marcador': ['tools/gen-docs.mjs', 'const MARCADOR_CONFLITO = /^(<{7}|>{7})( |$)|^={7}$/m;', 'const MARCADOR_CONFLITO = /(?!)/;'],
   'autofix-release': ['.github/workflows/autofix.yml', 'node tools/gen-docs.mjs   ||', 'node tools/gen-docs.mjs --release ||'],
+  'changelog-cego': ['tools/gen-docs.mjs', 'if (top !== fatos.versao.pacote)', 'if (false)'],
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -35,7 +41,22 @@ const ENV = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.st
 const NA_COPIA = { cwd: TMP, env: ENV, encoding: 'utf8' };
 const lerT = (p) => readFileSync(T(p), 'utf8');
 const GEN = { docs: 'tools/gen-docs.mjs', arch: 'tools/gen-arch.mjs' };
-const passa = (qual, ...args) => spawnSync('node', [T(GEN[qual]), '--check', ...args], NA_COPIA).status === 0;
+// Item de erro do --check ("         - <motivo>"). O que o gerador escreve (bloco, marcador, colocação) tem de
+// fechar depois do --release; o resto é fato escrito à mão, tolerado só se a BASE já o tinha.
+const GERADOR = /bloco|marcador|colocaç/;
+const DRIFT = '0.0.0-contagens-pr';
+const toleradoNaBase = new Map();
+const conferir = (qual, args) => {
+  const r = spawnSync('node', [T(GEN[qual]), '--check', ...args], NA_COPIA);
+  const itens = `${r.stdout}${r.stderr}`.split('\n').map((l) => /^\s+- (.+)$/.exec(l)?.[1]).filter(Boolean);
+  return { ok: r.status === 0, itens };
+};
+const passa = (qual, ...args) => {
+  const { ok, itens } = conferir(qual, args);
+  if (ok) return true;
+  const tolerados = toleradoNaBase.get([qual, ...args].join(' ')) || new Set();
+  return itens.length > 0 && itens.every((i) => tolerados.has(i));
+};
 const trocar = (p, de, para) => {
   const t = lerT(p);
   const n = typeof de === 'function' ? de(t) : t.replace(de, para);
@@ -54,9 +75,20 @@ try {
   execFileSync('git', ['init', '-q'], NA_COPIA);
   execFileSync('git', ['add', '-A'], NA_COPIA);
   for (const g of Object.values(GEN)) spawnSync('node', [T(g), '--release'], NA_COPIA);
+  trocar('CHANGELOG.md', /^## \[[^\]]+\]/m, `## [${DRIFT}]`);
   base = new Map(['package.json', 'public/js/game.js', 'tools/eval/ARCH.md', ...lerT('tools/gen-docs.mjs').match(/'[\w/.-]+\.md'/g).map((x) => x.slice(1, -1))]
     .filter((p) => existsSync(T(p))).map((p) => [p, lerT(p)]));
-  if (!passa('docs', '--release') || !passa('arch', '--release')) throw new Error('nem o modo release deixa a árvore em dia (rode: npm run docs:release e leia o erro)');
+  for (const [qual, args] of [['docs', []], ['docs', ['--release']], ['arch', []], ['arch', ['--release']]]) {
+    const { itens } = conferir(qual, args);
+    const doGerador = itens.filter((i) => GERADOR.test(i));
+    if (args.length && doGerador.length) throw new Error(`nem o modo release deixa os blocos gerados em dia: ${doGerador[0]} (rode: npm run docs:release && npm run arch:release e leia o erro)`);
+    toleradoNaBase.set([qual, ...args].join(' '), new Set(itens.filter((i) => !GERADOR.test(i))));
+  }
+  const manuais = [...toleradoNaBase.get('docs --release')];
+  if (!manuais.some((i) => i.includes(DRIFT)))
+    falhas.push(`CPR8 CHANGELOG começando em '${DRIFT}' passou calado no docs:check:release: a régua não enxerga fato escrito à mão, então tolerá-lo esconderia o que ela devia cobrar`);
+  for (const i of manuais.filter((m) => !m.includes(DRIFT)))
+    console.log(`  ⚠ fora do escopo desta régua (já estava na base; quem cobra é o npm run docs:check): ${i}`);
 
   // ---- o PR típico: um script npm a mais e uma linha a mais no game.js
   trocar('package.json', (t) => { const j = JSON.parse(t); j.scripts['zz:contagens-pr'] = 'true'; return `${JSON.stringify(j, null, 2)}\n`; });
