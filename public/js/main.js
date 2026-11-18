@@ -265,7 +265,7 @@ renderer.domElement.addEventListener('webglcontextrestored', () => {
 }
 
 ajustarAnisotropia(null, settings.quality);
-const textures = initTextures();
+const textures = initTextures({ deferPosterImages: true });
 const sfx = new Sfx(); sfx.vol = settings.vol;
 sfx.speechEnabled = settings.speech !== false;
 sfx.reverbOn = new URLSearchParams(location.search).get('reverb') === '1';   // reverb leve opt-in (default off)

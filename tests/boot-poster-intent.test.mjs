@@ -29,7 +29,7 @@ function run({anxious=false,pick=[],base=origin,onStart=()=>{},releaseAt=null}={
   }
   const source=instrumentPosterIntent(anxious?eager(textures):textures).slice(begin);
   const block=source.slice(0,source.indexOf('  T.posterAspects ='));
-  vm.runInNewContext(block,{THREE:{Texture,TextureLoader,ImageLoader,SRGBColorSpace:'srgb',LinearMipmapLinearFilter:'mipmap'},T,window,document:{baseURI:base+'/'},URL,performance:{timeOrigin,now:()=>now++}});
+  vm.runInNewContext(block,{deferPosterImages:true,THREE:{Texture,TextureLoader,ImageLoader,SRGBColorSpace:'srgb',LinearMipmapLinearFilter:'mipmap'},T,window,document:{baseURI:base+'/'},URL,performance:{timeOrigin,now:()=>now++}});
   const initial=window.__bootPosterIntent.calls.length;
   for(const index of pick)void T.posterImgs[index];
   if(Number.isFinite(releaseAt)){now=releaseAt;T.liberarPosterImgs();}

@@ -505,6 +505,7 @@ async function exerciseMenuFaunaLifecycle(production=menuLifecycleSource){
   return world;
  }}]));
  const context=vm.createContext({THREE,menuScene:new THREE.Scene(),menuBackdropWorld:null,textures:initTextures(),settings:{quality:'low'},currentMap:'escadao',MAPS:maps,mapPropIds,
+  setTimeout:callback=>{queueMicrotask(callback);return 1;},
   renderer:{liberaPosDaCena(){}},ajustarAnisotropia(){},comMapaCarregado:(id,use)=>Promise.resolve(use(maps[id])),
   preloadMapProps:ids=>{const d=deferred();loads.set('props',d);return d.promise;},
   preloadMapAmbientLife:map=>{const d=deferred();loads.set('fauna',d);return d.promise;}

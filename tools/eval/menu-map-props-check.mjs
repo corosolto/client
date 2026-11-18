@@ -88,6 +88,8 @@ const fixture = () => {
   const events = []; let release;
   const pending = new Promise(resolve => { release = resolve; });
   const context = vm.createContext({ MAP_PROPS: COMMON_MAP_PROPS, MAPS, currentMap: 'praca_poderes', events,
+    setTimeout: (callback) => { queueMicrotask(callback); return 1; },
+    textures: { liberarPosterImgs() {} },
     mapPropIds,   // o main.js importa o módulo real; a régua testa a mesma dependência de produção
     comMapaCarregado: (id, callback) => callback(MAPS[id]),
     preloadMapProps: ids => { events.push({ kind: 'preload', ids: [...ids] }); return pending; },

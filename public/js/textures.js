@@ -361,7 +361,7 @@ function concreteBase(w = 256, h = 256, base = '#9a938a', dark = '#7d766d', peri
    nada a degradar em quality 'low'. */
 const TEX_SAT_HOT = new URLSearchParams(location.search).get('texsat') === '1';
 
-export function initTextures() {
+export function initTextures({ deferPosterImages = false } = {}) {
   const T = {};
 
   // --- ground / structure ---
@@ -578,7 +578,7 @@ export function initTextures() {
   };
   const _posterImageLoader = new THREE.ImageLoader(_tl.manager);
   const _posterArquivosPendentes = [], _posterTexturasPendentes = [];
-  let _postersLiberados = false;
+  let _postersLiberados = !deferPosterImages;
   /* O mapa recebe a Texture estável já na primeira montagem, mas a imagem só desce quando
      loadMenuBackdrop libera o pacote após os props e o portão da splash. */
   T.posterImgs = [];
