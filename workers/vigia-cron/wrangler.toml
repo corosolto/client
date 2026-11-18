@@ -1,0 +1,15 @@
+# vigia-cron: só Cron Triggers, sem rota nem URL pública (leia o cabeçalho de index.mjs).
+# Deploy: .github/workflows/vigia-cron-deploy.yml (push na main que toca esta pasta, ou manual).
+# Os crons abaixo são as chaves de ALVOS em dispara.mjs; tools/ops/tests/vigia-cron.test.mjs
+# reprova se divergirem. Cloudflare avalia cron em UTC, como o GitHub.
+name = "vigia-cron"
+main = "index.mjs"
+compatibility_date = "2026-11-09"
+workers_dev = false
+preview_urls = false
+
+[triggers]
+crons = ["*/15 * * * *", "17 * * * *", "*/30 * * * *"]
+
+[observability]
+enabled = true
