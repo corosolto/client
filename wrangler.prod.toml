@@ -1,6 +1,6 @@
 # Produção do site no Cloudflare Workers (docs/runbooks/MIGRACAO-CLOUDFLARE.md, fases 4–6).
-# Os hosts (www.corosolto.com.br, www.csbrasil.online, csbrasil.online) entram por Worker Route
-# fora deste arquivo (tools/cf/virada.sh): ligar e desligar a virada não depende de deploy.
+# Os hosts entram por Worker Route fora deste arquivo (tools/cf/virada.sh): www no csb-prod, apex
+# csbrasil.online no csb-apex (tools/cf/apex). Estático não invoca o Worker: só a home roda antes.
 name = "csb-prod"
 main = "dist/server/entry.mjs"
 compatibility_date = "2026-11-09"
@@ -13,7 +13,7 @@ binding = "ASSETS"
 directory = "./dist/client"
 not_found_handling = "none"
 html_handling = "drop-trailing-slash"
-run_worker_first = true
+run_worker_first = ["/", "/index.html"]
 
 [observability]
 enabled = true
@@ -23,7 +23,7 @@ enabled = true
 PUBLIC_API_BASE = "https://csbrasil-backend-hupd3weo5q-rj.a.run.app"
 RANKING_ON = "true"
 
-# Viewmodel autorado (arte privada) servido pelo Worker a partir do R2; ver src/cf/borda.mjs.
+# Viewmodel vem no build como asset estático (deploy baixa do R2); o binding é só o reserva de src/cf/borda.mjs.
 [[r2_buckets]]
 binding = "PRIVADO"
 bucket_name = "corosolto-private"

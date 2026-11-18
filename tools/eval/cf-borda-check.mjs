@@ -125,7 +125,15 @@ for (const [caso, req, b] of [
 // B4
 const apex = borda.redirectDeHost(new URL('https://csbrasil.online/jogar/multiplayer?partida=1'));
 check(apex?.status === 308 && apex.headers.get('location') === 'https://www.csbrasil.online/jogar/multiplayer?partida=1', 'B4', `apex: ${apex?.status} ${apex?.headers.get('location')}`);
-check(/run_worker_first\s*=\s*true/.test(wrangler), 'B4', 'apex precisa passar toda rota estática pelo redirect do Worker');
+// Estático fora do Worker (cada invocação é cobrada); o apex inteiro vai ao csb-apex pela rota.
+check(/run_worker_first\s*=\s*\[\s*"\/"\s*,\s*"\/index\.html"\s*\]/.test(wrangler) && !/run_worker_first\s*=\s*true/.test(wrangler),
+  'B4', 'csb-prod só roda antes dos assets na home; run_worker_first = true faz todo estático virar invocação');
+const virada = readFileSync(path.join(ROOT, 'tools/cf/virada.sh'), 'utf8');
+check(/"csbrasil\.online csbrasil\.online\/\* csb-apex"/.test(virada), 'B4', 'virada precisa ligar o apex no csb-apex');
+const apexWorker = (await import(pathToFileURL(path.join(ROOT, 'tools/cf/apex/worker.mjs')).href)).default;
+const apexResp = apexWorker.fetch(new Request('https://csbrasil.online/js/main.js?v=1'));
+check(apexResp.status === 308 && apexResp.headers.get('location') === 'https://www.csbrasil.online/js/main.js?v=1',
+  'B4', `csb-apex precisa mandar todo caminho do apex ao www: ${apexResp.status} ${apexResp.headers.get('location')}`);
 check(borda.redirectDeHost(new URL('https://www.corosolto.com.br/')) === null, 'B4', 'www não redireciona');
 
 // Integração real do entrypoint: o redirect do apex precisa acontecer antes de ASSETS,

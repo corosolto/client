@@ -31,6 +31,8 @@ case "$url" in
           printf '%s\\n' '{"result":[{"id":"r3","pattern":"csbrasil.online/*","script":"worker-alheio"}]}' ;;
         mixed-desliga)
           printf '%s\\n' '{"result":[{"id":"r1","pattern":"www.corosolto.com.br/*","script":"csb-prod"},{"id":"r2","pattern":"www.csbrasil.online/*","script":"csb-prod"},{"id":"r3","pattern":"csbrasil.online/*","script":"worker-alheio"}]}' ;;
+        proprios)
+          printf '%s\\n' '{"result":[{"id":"r1","pattern":"www.corosolto.com.br/*","script":"csb-prod"},{"id":"r2","pattern":"www.csbrasil.online/*","script":"csb-prod"},{"id":"r3","pattern":"csbrasil.online/*","script":"csb-apex"}]}' ;;
         *)
           printf '{"result":[{"id":"r1","pattern":"www.corosolto.com.br/*","script":"%s"},{"id":"r2","pattern":"www.csbrasil.online/*","script":"%s"},{"id":"r3","pattern":"csbrasil.online/*","script":"%s"}]}\\n' "$FAKE_OWNER" "$FAKE_OWNER" "$FAKE_OWNER" ;;
       esac
@@ -92,7 +94,12 @@ const ligaAusente = executar('liga', '__none');
 if (ligaAusente.status !== 0 || ligaAusente.mutacoes.length !== 3 || ligaAusente.mutacoes.some((linha) => !linha.startsWith('POST '))) {
   throw new Error(`liga ausente inválida: status=${ligaAusente.status} mutações=${ligaAusente.mutacoes.join(',')}`);
 }
-const desligaPropria = executar('desliga', 'csb-prod');
+const desligaPropria = executar('desliga', 'proprios');
+// Apex nas mãos do csb-prod (desenho antigo) é rota de outro Worker para a virada atual.
+const apexNoProd = executar('desliga', 'csb-prod');
+if (apexNoProd.status === 0 || apexNoProd.mutacoes.length) {
+  throw new Error(`desliga removeu rotas com o apex fora do csb-apex: status=${apexNoProd.status} mutações=${apexNoProd.mutacoes.join(',')}`);
+}
 if (desligaPropria.status !== 0 || desligaPropria.mutacoes.length !== 3 || desligaPropria.mutacoes.some((linha) => !linha.startsWith('DELETE '))) {
   throw new Error(`desliga própria inválida: status=${desligaPropria.status} mutações=${desligaPropria.mutacoes.join(',')}`);
 }
