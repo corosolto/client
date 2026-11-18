@@ -113,7 +113,7 @@ test('two actual family controllers preserve cache and release private resources
 if (!MUTANT) for (const mutant of MUTANTS) test(`causal source regression: ${mutant}`, () => {
   const env = { ...process.env, CSBR_VM_LIFECYCLE_MUTANT: mutant };
   delete env.NODE_TEST_CONTEXT;
-  const child = spawnSync(process.execPath, ['--test', fileURLToPath(import.meta.url)], {
+  const child = spawnSync(process.execPath, ['--test', '--test-reporter=tap', fileURLToPath(import.meta.url)], {
     env, encoding: 'utf8', timeout: 15000, maxBuffer: 256 * 1024,
   });
   assert.equal(child.error, undefined); assert.equal(child.signal, null); assert.equal(child.stderr, '');
