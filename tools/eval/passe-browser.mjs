@@ -308,16 +308,17 @@ async function medir(mutante = '') {
     await page.waitForTimeout(800);
     const login = await page.evaluate(() => ({ aberto: !!document.getElementById('login-prompt')?.open, titulo: document.getElementById('login-prompt-title')?.textContent || '' }));
     await foto(page, 'login-celular-visitante', mutante);
-    /* O ouvinte da decisão do convite (cs-pos-partida) entra ANTES do fechar: se o fechamento já
-       disparasse o evento de forma síncrona, ele não se perde. O /api/treta segue segurado até depois. */
-    await page.evaluate(() => document.addEventListener('cs-pos-partida', () => { window.__reguaConviteDecidiu = true; }, { once: true }));
+    /* As decisões do convite (cs-pos-partida) são contadas desde ANTES do fechar, para nenhuma se perder;
+       só conta como resposta ao /api/treta a que vier depois de soltá-lo (segurado até o fechar). */
+    await page.evaluate(() => { window.__reguaDecisoes = 0; document.addEventListener('cs-pos-partida', () => { window.__reguaDecisoes++; }); });
     /* espera tolerante: sob mutante o convite pode não ter aberto; a cláusula mede o estado depois */
     await page.click('#login-prompt-close', { timeout: 3000 }).catch(() => {});
     const fechou = await page.waitForFunction(() => !document.getElementById('login-prompt')?.open, null, { timeout: 3000 }).then(() => true, () => false);
+    const antes = await page.evaluate(() => window.__reguaDecisoes);
     /* Só agora chega o bônus de cadastro (/api/treta): o convite decide sem reabrir atrás do do passe. */
     await soltaTreta();
-    await page.waitForFunction(() => window.__reguaConviteDecidiu || document.getElementById('login-prompt')?.open, null, { timeout: 8000 }).catch(() => {});
-    const convite = await page.evaluate(() => ({ decidiu: !!window.__reguaConviteDecidiu, voltou: document.getElementById('login-prompt')?.open ? document.getElementById('login-prompt-title')?.textContent || '?' : '' }));
+    await page.waitForFunction((n) => window.__reguaDecisoes > n || document.getElementById('login-prompt')?.open, antes, { timeout: 8000 }).catch(() => {});
+    const convite = await page.evaluate((n) => ({ decidiu: window.__reguaDecisoes > n, voltou: document.getElementById('login-prompt')?.open ? document.getElementById('login-prompt-title')?.textContent || '?' : '' }), antes);
     if (convite.voltou) await page.click('#login-prompt-close').catch(() => {});
     await page.click('[data-tp-aba="passe"]').catch(() => {});
     await page.waitForSelector('#tp-passe[open] .tp-passe-nivel', { timeout: 10000 }).catch(() => {});
