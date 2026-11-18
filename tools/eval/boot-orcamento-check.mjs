@@ -84,6 +84,15 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   try {
   context = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
   await context.addInitScript(() => {
+    // O orçamento compara bytes, não sorte. A ordem de callbacks varia, então cada
+    // escolha precisa ser independente da quantidade de chamadas anteriores.
+    Math.random = () => 0.424242;
+    // Perfil, personagem e lado fixos: os defaults aleatórios mudam os GLBs medidos.
+    try {
+      localStorage.setItem('cs_anon', '00000000-0000-4000-8000-000000000042');
+      localStorage.setItem('csbr-home-character', 'canarinho');
+      localStorage.setItem('csbr-home-side', 'E');
+    } catch {}
     try { localStorage.setItem('cs_privacy', JSON.stringify({ version: 'corosolto-analytics-v1', analytics: false, updatedAt: new Date(0).toISOString() })); } catch {}
     // MapPinned preserva a mesma cena em todas as passadas.
     try { localStorage.setItem('awpbr_settings', JSON.stringify({ map: 'praca_poderes', mapPinned: true })); } catch {}

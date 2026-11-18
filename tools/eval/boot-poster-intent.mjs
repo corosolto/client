@@ -5,7 +5,7 @@ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const sorted=values=>[...new Set(values)].sort();
 
 export function instrumentPosterIntent(source) {
-  const anchor='  const _tl = new THREE.TextureLoader();\n  const _cartaz = (f) => {\n';
+  const anchor='  const _tl = new THREE.TextureLoader();\n  const _cartaz = (f, target = new THREE.Texture()) => {\n';
   must(source.split(anchor).length===2,'âncora _cartaz ausente/duplicada');
   return source.replace(anchor,`  if(window.__bootPosterIntent!==undefined)throw Error('prova de cartazes duplicada');
   const _posterProof=window.__bootPosterIntent={schema:'boot-poster-intent/1',timeOrigin:performance.timeOrigin,catalogue:POSTER_FILES.map(([f])=>new URL('posters/'+f,document.baseURI).href),calls:[]};
