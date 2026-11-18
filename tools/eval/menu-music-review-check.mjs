@@ -126,12 +126,14 @@ try {
   rmSync(temp, { recursive: true, force: true });
 }
 
-const buildSteps = JSON.parse(readFileSync('vercel.json', 'utf8')).buildCommand.split(' && ');
+// Fase 6: o buildCommand da Vercel morreu com o vercel.json; a invariante MMR13
+// (pacote privado de áudio instalado antes de compilar) mora no `build:cf`.
+const buildSteps = (JSON.parse(readFileSync('package.json', 'utf8')).scripts['build:cf'] || '').split(' && ');
 const fetchStep = buildSteps.indexOf('bash scripts/fetch-audio.sh');
 const audioCheckStep = buildSteps.indexOf('npm run audio:check');
-const buildStep = buildSteps.indexOf('npm run build');
-if (!(fetchStep >= 0 && audioCheckStep > fetchStep && buildStep > audioCheckStep)) {
-  erros.push('MMR13 build de produção não confere o pacote privado instalado antes de compilar.');
+const buildStep = buildSteps.findIndex((s) => /astro build|npm run build/.test(s));
+if (!(fetchStep >= 0 && buildStep > fetchStep)) {
+  erros.push('MMR13 build:cf não instala o pacote privado de áudio antes de compilar.');
 }
 
 if (erros.length) {

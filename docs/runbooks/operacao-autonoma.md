@@ -78,7 +78,7 @@ Quando o quality gate está verde e o dono diz que está errado, o defeito é do
 | achado | o que está acontecendo | recuperação |
 |---|---|---|
 | `grafo-incoerente`, `versao-divergente`, `main-js-indisponivel` | edge servindo HTML de um deploy e JS de outro (BUG-39/BUG-75) ou deploy incompleto | purgar `/js/*` e `/` no Cloudflare (o `crash-fix.yml` faz isso no dispatch `prod-crash`; à mão: `scripts/cloudflare-setup.sh` ou o painel), esperar o TTL curto (`eval:edgecache`) e `npm run prod:coherence`. Persistiu → rollback do site (§4) |
-| `main-js-e-html`, `html-sem-importmap`, `html-nao-200` | o host devolveu página no lugar do jogo/módulo | conferir `vercel.json` (rewrites/headers) e o deploy no ar; rollback do site |
+| `main-js-e-html`, `html-sem-importmap`, `html-nao-200` | o host devolveu página no lugar do jogo/módulo | conferir `borda.json` (redirects/headers), `cf-prod-deploy.yml` e o deploy no ar; rollback do site |
 | `health-indisponivel`, `banco-fora`, `health-nao-ok` | backend (Cloud Run) fora ou sem banco | logs do serviço, Secret Manager, status do Supabase; rollback de revisão do backend (§4). O single-player continua: o jogo tolera backend fora |
 | `schema-telemetria` | migration atrasada | aplicar as migrations pendentes no `db-privado`; enquanto isso os beacons chegam e não gravam — falha silenciosa, por isso é ALTO |
 | `mp-sem-heartbeat` | nó regional de multiplayer sem heartbeat | subir o nó (runbook do `csbrasil-backend/game`) e conferir o `/health` do próprio nó |
@@ -97,14 +97,15 @@ Quando o quality gate está verde e o dono diz que está errado, o defeito é do
 
 ## 4. Rollback
 
-**Site (Vercel).** Produção publica a `main` pela integração Git. Reverter = *Promote* do
-deploy anterior no painel (Deployments → deploy bom → Promote to Production) ou, pelo
-caminho manual por tag, `gh workflow run deploy-prod.yml -f tag=v2.0.0-alpha.<N-1>`
-(`.github/workflows/deploy-prod.yml`, que já purga `/js/*` no fim). Depois: `npm run
-prod:coherence` e `npm run ops:diag -- --remoto`.
+**Site (Cloudflare Workers).** Produção é o Worker `csb-prod`. Reverter = no painel da
+Cloudflare, Workers & Pages → `csb-prod` → Deployments, promover a versão anterior; pela CLI,
+`npx wrangler rollback --config wrangler.prod.toml --message "rollback <motivo>"`. Depois,
+purgar `/js/*`, `/style.css` e `/models/skins/manifest.json` e rodar `npm run prod:coherence`
+e `npm run ops:diag -- --remoto`. O último deploy da Vercel fica congelado durante os 30 dias
+de transição, mas não é caminho de publicação.
 
-**Edge (Cloudflare).** Não tem rollback — tem purge. `/js/*`, `/style.css` e `/` são os
-prefixos que já derrubaram o site; purgue-os antes de suspeitar do código.
+**Edge (Cloudflare).** Purge corrige cache, não código: use-o antes de rollback quando só
+`/js/*`, `/style.css` ou o manifesto divergir.
 
 **Backend (Cloud Run).** Rollback = mandar 100% do tráfego para a revisão anterior
 (`gcloud run services update-traffic`) — vive no repositório `csbrasil-backend`, com as

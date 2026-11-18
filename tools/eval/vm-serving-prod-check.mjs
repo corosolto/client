@@ -9,12 +9,14 @@
    Contrato: tools/viewmodels/vm-assets.manifest.json (35 assets, 75,4 MB medidos
    em 23/09 pela árvore viewmodels-catalog-final).
 
-   Modo dist (padrão; lê .vercel/output/static e/ou dist/client, ou --dist=<dir>):
+   Modo dist (padrão; lê dist/client, ou --dist=<dir>):
      SP1 toda entrada do manifesto existe no publicado com bytes e SHA-256 iguais
      SP2 nada fora do manifesto sob private-assets/viewmodels (vazamento de intermediário)
-     SP3 vercel.json, avaliado com a semântica da Vercel (@vercel/routing-utils):
-         GLB sai model/gltf-binary; imutável exatamente onde cachePolicyFor manda;
-         CSP permite connect-src 'self' e img-src blob:; buildCommand baixa antes do build
+     SP3 o `_headers` publicado (dist/client/_headers), avaliado com a semântica do
+         Workers Static Assets: GLB sai model/gltf-binary; imutável exatamente onde
+         cachePolicyFor manda; CSP permite connect-src 'self' e img-src blob:
+   SP3 (--config e dist): o mesmo para o `_headers` gerado de borda.json; build:cf gera o
+     `_headers` e baixa o viewmodel antes do build; csb-prod publica dist/client.
    Modo URL (--url=https://preview…): cada entrada responde 200 com bytes, SHA-256,
      Content-Type e Cache-Control esperados (SP1/SP3 medidos no ar). Deployment
      Protection: VERCEL_AUTOMATION_BYPASS_SECRET no ambiente vira cabeçalho.
@@ -29,12 +31,12 @@
    ============================================================================ */
 import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { ROOT, cachePolicyFor, contentTypeFor, listTree, readManifest, sha256File } from '../../scripts/vm-assets.mjs';
+import { gerar, lerVercel } from '../cf/gen-headers-redirects.mjs';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=').slice(1).join('=');
 const MUT = arg('mutante');
@@ -58,30 +60,60 @@ const files = manifest.files;
 const VICTIM = files.find((f) => f.path.endsWith('-baked-runtime.glb')) || files[0];
 const IMMUTABLE = 'public, max-age=31536000, immutable';
 
-/* ---- SP3 (config) ---- */
-function headerTable() {
-  let vercel = JSON.parse(readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
+/* ---- SP3 (config) ----
+   Produção é o Worker csb-prod (wrangler.prod.toml): o estático sai do asset layer de
+   dist/client com o `_headers` que o build:cf gera de borda.json
+   (tools/cf/gen-headers-redirects.mjs). A régua avalia esse `_headers` com a semântica do
+   Workers Static Assets: toda regra que casa com o caminho vale, em ordem; chave repetida
+   é concatenada com ", "; `! Chave` remove o que as regras anteriores puseram. */
+function regrasDoHeaders(texto) {
+  const regras = [];
+  for (const linha of texto.split('\n')) {
+    const corpo = linha.trim();
+    if (!corpo || corpo.startsWith('#')) continue;
+    if (!/^\s/.test(linha)) { regras.push({ padrao: corpo, ops: [] }); continue; }
+    const regra = regras.at(-1);
+    if (!regra) throw new Error(`cabeçalho sem regra no _headers: ${corpo}`);
+    if (corpo.startsWith('!')) { regra.ops.push({ chave: corpo.slice(1).trim().toLowerCase(), valor: null }); continue; }
+    const i = corpo.indexOf(':');
+    if (i <= 0) throw new Error(`linha inválida no _headers: ${corpo}`);
+    regra.ops.push({ chave: corpo.slice(0, i).trim().toLowerCase(), valor: corpo.slice(i + 1).trim() });
+  }
+  return regras;
+}
+
+/* `*` (splat) casa qualquer sequência, inclusive `/`; `:nome` casa um segmento. */
+const casaPadrao = (padrao, caminho) => new RegExp(`^${padrao.split('*')
+  .map((parte) => parte.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/:[A-Za-z]\w*/g, '[^/]+')).join('.*')}$`).test(caminho);
+
+function headersDoWorkers(regras, caminho) {
+  const h = {};
+  for (const { padrao, ops } of regras) {
+    if (!casaPadrao(padrao, caminho)) continue;
+    for (const { chave, valor } of ops) {
+      if (valor === null) delete h[chave];
+      else h[chave] = Object.hasOwn(h, chave) ? `${h[chave]}, ${valor}` : valor;
+    }
+  }
+  return h;
+}
+
+function headerTable(texto, fonte) {
+  let regras;
+  try { regras = regrasDoHeaders(texto); } catch (error) { check(false, 'SP3', `${fonte} legível`, error.message); return null; }
   if (MUT === 'sem-imutavel') {
-    const before = vercel.headers.length;
-    vercel = { ...vercel, headers: vercel.headers.filter((h) => !h.headers.some((x) => x.value === IMMUTABLE && h.source.includes('private-assets'))) };
-    mutApplied(vercel.headers.length < before, 'sem-imutavel');
+    let removidas = 0;
+    regras = regras.map(({ padrao, ops }) => ({
+      padrao,
+      ops: ops.filter((op) => {
+        const tira = padrao.includes('private-assets') && op.chave === 'cache-control' && op.valor === IMMUTABLE;
+        if (tira) removidas += 1;
+        return !tira;
+      }),
+    }));
+    mutApplied(removidas > 0, 'sem-imutavel');
   }
-  let getTransformedRoutes;
-  try { ({ getTransformedRoutes } = createRequire(import.meta.url)('@vercel/routing-utils')); } catch {
-    check(false, 'SP3', 'avaliar vercel.json', '@vercel/routing-utils ausente (dependência do @astrojs/vercel) — sem ele a régua não sabe medir; `npm ci`');
-    return null;
-  }
-  const res = getTransformedRoutes({ headers: vercel.headers });
-  if (res.error) { check(false, 'SP3', 'vercel.json válido', res.error.message); return null; }
-  const routes = res.routes.filter((r) => r.headers);
-  return {
-    vercel,
-    headersFor(p) {
-      const h = {};
-      for (const r of routes) if (new RegExp(r.src).test(p)) for (const [k, v] of Object.entries(r.headers)) h[k.toLowerCase()] = v;
-      return h;
-    },
-  };
+  return { fonte, headersFor: (p) => headersDoWorkers(regras, p) };
 }
 
 function checkHeaders(h, entry) {
@@ -94,22 +126,30 @@ function checkHeaders(h, entry) {
   return erros;
 }
 
-function checkConfig() {
-  const t = headerTable();
+function checkHeaderTable(t) {
   if (!t) return;
   const ruins = [];
   for (const f of files) {
     const erros = checkHeaders(t.headersFor(`${manifest.servedRoot}/${f.path}`), f);
     if (erros.length) ruins.push(`${f.path}: ${erros.join(', ')}`);
   }
-  check(!ruins.length, 'SP3', `cabeçalhos do vercel.json para ${files.length} assets`, ruins.length ? `${ruins.length} errados (ex.: ${ruins.slice(0, 3).join(' | ')})` : `${files.filter((f) => cachePolicyFor(f.path) === 'immutable').length} imutáveis, resto revalida`);
+  check(!ruins.length, 'SP3', `${t.fonte}: cabeçalhos de ${files.length} assets`, ruins.length ? `${ruins.length} errados (ex.: ${ruins.slice(0, 3).join(' | ')})` : `${files.filter((f) => cachePolicyFor(f.path) === 'immutable').length} imutáveis, resto revalida`);
   const csp = t.headersFor(`${manifest.servedRoot}/${files[0].path}`)['content-security-policy'] || '';
   const dir = (name) => (new RegExp(`${name}([^;]*)`).exec(csp) || [])[1] || '';
   check(/'self'/.test(dir('connect-src')) && /blob:/.test(dir('img-src')) && /'self'/.test(dir('img-src')),
-    'SP3', "CSP deixa o GLTFLoader buscar same-origin e decodificar textura em blob:", csp ? '' : 'sem CSP');
-  const build = t.vercel.buildCommand || '';
-  const iFetch = build.indexOf('scripts/fetch-viewmodels.sh');
-  check(iFetch >= 0 && iFetch < build.indexOf('npm run build'), 'SP3', 'buildCommand baixa o viewmodel antes do build', build.slice(0, 120));
+    'SP3', `${t.fonte}: CSP deixa o GLTFLoader buscar same-origin e decodificar textura em blob:`, csp ? '' : 'sem CSP');
+}
+
+function checkConfig() {
+  checkHeaderTable(headerTable(gerar(lerVercel()).headers, '_headers gerado de borda.json'));
+  // cf-prod-deploy/cf-staging-deploy publicam o `build:cf`: _headers e viewmodel têm de estar em public/ antes do build.
+  const build = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')).scripts?.['build:cf'] || '';
+  const antes = (trecho) => build.includes(trecho) && build.indexOf(trecho) < build.indexOf('npm run build');
+  check(antes('tools/cf/gen-headers-redirects.mjs') && antes('scripts/fetch-viewmodels.sh'), 'SP3',
+    'build:cf gera o _headers e baixa o viewmodel antes do build', build.slice(0, 160));
+  const wrangler = readFileSync(path.join(ROOT, 'wrangler.prod.toml'), 'utf8');
+  check(/\[assets\][^[]*\ndirectory\s*=\s*"\.\/dist\/client"/.test(wrangler), 'SP3',
+    'csb-prod publica dist/client, onde o build deixa _headers e viewmodel');
 }
 
 /* ---- SP4 (vínculo URL↔bytes) ---- */
@@ -157,6 +197,10 @@ function mutateDist(realRoot) {
 }
 
 async function checkDist(distRoot) {
+  const publicado = path.join(distRoot, '_headers');
+  const nome = path.relative(ROOT, publicado) || publicado;
+  if (existsSync(publicado)) checkHeaderTable(headerTable(readFileSync(publicado, 'utf8'), nome));
+  else check(false, 'SP3', `${nome} ausente`, 'o asset layer serviria o viewmodel sem os cabeçalhos de borda.json — o build não passou pelo build:cf');
   let root = path.join(distRoot, 'private-assets/viewmodels');
   if (!existsSync(root)) {
     check(false, 'SP1', `${path.relative(ROOT, distRoot) || distRoot}: private-assets/viewmodels ausente`, 'o build não recebeu o viewmodel — `bash scripts/fetch-viewmodels.sh` não rodou ou degradou sem token; produção cairia no legado');
@@ -218,8 +262,8 @@ if (URL_BASE) {
   if (process.argv.includes('--config')) {
     if (['arquivo-faltando', 'hash-errado', 'vazamento'].includes(MUT)) { console.error(`mutante ${MUT} precisa do publicado (sem --config)`); process.exit(2); }
   } else {
-    const dists = alvo ? [path.resolve(alvo)] : ['.vercel/output/static', 'dist/client'].map((d) => path.join(ROOT, d)).filter(existsSync);
-    if (!dists.length) check(false, 'SP1', 'nenhum publicado encontrado', 'rode `npm run build` (ou passe --dist=<dir>)');
+    const dists = alvo ? [path.resolve(alvo)] : [path.join(ROOT, 'dist/client')].filter(existsSync);
+    if (!dists.length) check(false, 'SP1', 'nenhum publicado encontrado', 'rode `npm run build:cf` (ou passe --dist=<dir>)');
     for (const d of dists) await checkDist(d);
   }
 }

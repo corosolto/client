@@ -43,7 +43,7 @@ witnesses kills. Until then, we use the layers below.
 11. **Durable rate limiting in Postgres** (migration 011 §3). A limit stored in a
     lambda's in-memory `Map` does not survive a cold start — see `docs/seguranca.md` §3.
 12. **Anti-SSRF** on every URL fetched by the server (`src/lib/safe-url.ts`).
-13. **Security headers** in `vercel.json`: CSP, nosniff, Referrer-Policy,
+13. **Security headers** sourced from `borda.json`: CSP, nosniff, Referrer-Policy,
     Permissions-Policy, HSTS.
 
 ## LGPD (Brazil's data protection law) / privacy

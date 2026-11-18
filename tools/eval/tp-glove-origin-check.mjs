@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { MUTANTS, mutateOriginSources } from './fixtures/tp-glove-origin-mutations.mjs';
+import { localizarNode22 } from './lib/node22.mjs';
 
 const SELF = fileURLToPath(import.meta.url), ROOT = path.resolve(path.dirname(SELF), '../..');
 const PREFIX = 'TP-ORIGIN/1 ', INTERNAL = '--origin-worker-internal';
@@ -229,7 +230,9 @@ for (const arg of args) {
 const report = { schema: 'tp-origin/1', at: new Date().toISOString(), node: process.version, mutant, sources: sources(), runs: [], unrun: [],
   scope: 'actual Game/GLTF CPU; actual factory candidate in memory; no raster/fit/MP/mobile or production byte-hash certification' };
 try {
-  must(process.versions.node.split('.')[0] === '22', 'Node22 required for comparable gate');
+  const node22 = localizarNode22();
+  if (node22 && node22 !== process.execPath) process.exit(spawnSync(node22, [SELF, ...args], { stdio: 'inherit' }).status ?? 3);
+  must(node22, 'Node22 required for comparable gate: CI runs Node 22; install node@22 or set CSBRASIL_NODE22');
   const { buildRepositoryArtifacts } = await import('../character-kit/gloves/repository.mjs');
   const built = buildRepositoryArtifacts(ROOT, { includeCosmetics: true });
   const variants = built.manifest.packages.filter(p => p.perspective === '3p').flatMap(p => p.sourceVariants.filter(v => v.id === 'bolsonaro-drip'));

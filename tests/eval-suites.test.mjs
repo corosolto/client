@@ -12,7 +12,7 @@ import { selecionarPorArquivos, validarMapaWorkflows } from '../tools/eval/selec
  * cobre ordem, repetições e conteúdo; ele NÃO é derivado do manifesto atual. */
 const BASELINE = {
   fast: { quantidade: 338, sha256: '05c5d2027a8229f379a4556ee991daf1bc0e9f45b04ee3515d4e458259d6bfdf' },
-  deploy: { quantidade: 116, sha256: '3aea0f68ace2a6954de58bd2ae028e7ab17cd879ca9057ac002c80f92955859d' },
+  deploy: { quantidade: 115, sha256: '97c0ba3d2ba2a738f14a87865e0c96af7eeabd500136463e566adf6b6b6ee316' },
 };
 const NOVOS = {
   fast: new Set(['eval:portalembed', 'eval:lixo', 'eval:envruntime', 'eval:servertraffic', 'eval:estadosassados', 'eval:rig-census', 'eval:studiochar', 'eval:rede3p', 'eval:pesos-braco-perna', 'eval:rigmaos', 'eval:shareorigin', 'eval:vm-enquadramento-placar', 'eval:pintura-fabrica', 'eval:weapon-passe', 'eval:passe', 'eval:fora-do-ar', 'eval:packpublish', 'eval:cfborda', 'eval:prodcrash', 'eval:workflowguards', 'eval:estados3p', 'eval:emotes-mocap']),
@@ -394,12 +394,10 @@ test('lock real vence uma seleção segura de package.json', () => {
 const WORKFLOWS = [
   ['ci.yml', ['eval:operacao-flavio', 'eval:release']],
   ['release.yml', ['eval:release']],
-  ['deploy-prod.yml', ['eval:edgecache', 'eval:release']],
+  ['cf-prod-deploy.yml', ['eval:edgecache', 'eval:release']],
   ['prod-watch.yml', ['eval:edgecache', 'eval:wfpurge', 'ops:test']],
   ['ops-diag.yml', ['ops:test']],
   ['vigia-cron-deploy.yml', ['ops:test']],
-  ['preview-build.yml', []],
-  ['preview-deploy.yml', []],
   ['preview-bot.yml', []],
   ['portao-browser.yml', []],
   ['smoke-web.yml', []],
