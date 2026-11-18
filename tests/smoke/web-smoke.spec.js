@@ -151,9 +151,9 @@ test('menu, ranking, map, teams, character and initial hud boot', async ({ page 
 
 test('queda do nó mostra estado de reconexão e permite entrar de novo', async ({ page }, testInfo) => {
   const base = process.env.BASE_URL || 'http://127.0.0.1:4321';
-  const fixtureSecure = new URL(base).protocol === 'https:';
-  const fixtureHttp = `${fixtureSecure ? 'https' : 'http'}://fixture.invalid`;
-  const fixtureMp = fixtureSecure ? 'wss://fixture.invalid' : 'fixture.invalid';
+  // A CSP permite conexões cross-origin seguras; HTTP só funciona para a própria origem.
+  const fixtureHttp = 'https://fixture.invalid';
+  const fixtureMp = 'wss://fixture.invalid';
   if (MUTANTE === 'sem-aviso-reconexao') {
     testInfo.annotations.push({ type: 'mutação', description: 'sem-aviso-reconexao — esconde o aviso depois do onClose; a régua DEVE reprovar' });
     await page.route('**/js/main.js*', async (rota) => {
