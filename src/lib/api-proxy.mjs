@@ -33,7 +33,8 @@ const cidadeCodificada = (bruto) => {
 };
 
 /* Uma fonte só por requisição: país da Cloudflare com cidade do PoP da Vercel é pior que
-   cidade ausente. Sem o Managed Transform de localização, a Cloudflare manda só o país. */
+   cidade ausente. No Worker a geo vem de `request.cf`, sem depender do Managed Transform. */
+const CAMPO_CF = { 'cf-ipcountry': 'country', 'cf-ipcity': 'city', 'cf-iplatitude': 'latitude', 'cf-iplongitude': 'longitude' };
 export function origemDoJogador(request, clientAddress) {
   const h = request.headers;
   // O adaptador Cloudflare expõe `request.cf`; no Vercel a decisão continua
@@ -42,6 +43,8 @@ export function origemDoJogador(request, clientAddress) {
     const real = h.get('cf-connecting-ip') || '';
     const geo = {};
     for (const nome of GEO_CLOUDFLARE) {
+      const doCf = request.cf?.[CAMPO_CF[nome]];
+      if (doCf != null && doCf !== '') { geo[nome] = nome === 'cf-ipcity' ? encodeURIComponent(String(doCf)) : String(doCf); continue; }
       const valor = h.get(nome);
       if (valor) geo[nome] = nome === 'cf-ipcity' ? cidadeCodificada(valor) : valor;
     }

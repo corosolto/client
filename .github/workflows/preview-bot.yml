@@ -1,10 +1,15 @@
-# Código de fork só recebe segredos depois de um mantenedor aprovar o SHA atual.
-# Todo push revoga o label; a próxima revisão precisa aplicá-lo novamente.
+# Comentário de classificação para PR de FORK: o código do fork não roda aqui; só a
+# lista de arquivos do diff é lida, com o GITHUB_TOKEN de leitura.
 name: preview-bot
 
+# Só `opened`/`reopened` (17/11/2026). Medido em 30 dias: 2.414 runs, 2.395 skipped. O
+# `if:` abaixo só deixa passar PR de fork e nunca `labeled`, então `labeled` não tinha
+# run útil possível; e `synchronize` só servia para revogar `preview-autorizado`, label
+# que não gatinga nada desde 22/08 (e repostava a classificação a cada push do fork).
+# PR de casa continua gerando run pulado em open/reopen: fork não é filtrável no gatilho.
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, reopened]
 
 permissions:
   pull-requests: write
@@ -12,20 +17,10 @@ permissions:
 
 jobs:
   avaliar:
-    if: >-
-      github.event.pull_request.head.repo.full_name != github.repository &&
-      github.event.action != 'labeled'
+    if: github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: revoga aprovação quando o SHA muda
-        if: github.event.action == 'synchronize'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR: ${{ github.event.pull_request.number }}
-          REPO: ${{ github.repository }}
-        run: gh pr edit "$PR" --repo "$REPO" --remove-label "preview-autorizado" 2>/dev/null || true
-
       # Classificação do diff para o revisor (área sensível ou diff grande). Não
       # promete preview: o de PR é Cloudflare (cf-preview.yml) e o da Vercel virou
       # emergência por dispatch.

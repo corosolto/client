@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.152`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.155`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -51,6 +51,8 @@
 - Release/pre-push reliability after the Cloudflare cutover: the boot budget pins guest identity, character, side and order-independent random choices, while decorative posters and menu fauna wait 250 ms after essential props so their variable completion no longer enters the fixed READY+50 ms window or steals boot bandwidth; the 3P animation LOD proof measures the same bot near then far instead of double-wrapping one controller when only one bot is alive; the production viewmodel gate reads `borda.json` through the shared Worker matcher plus `build:cf`, without the removed Vercel router dependency; and UI regression gives its simultaneous base/head Cloudflare runtimes distinct inspector ports instead of racing on `9229`. A successful Workers promotion no longer becomes a failed deploy solely because `CF_API_TOKEN` cannot list or purge the zone: the workflow emits the Cloudflare reason as a warning while `prod-watch` keeps the independent production probe.
 - The viewmodel network fixture now invokes every announced mutant with a literal `--mutante=<name>` while preserving exact exit-1 enforcement; the mutant-consistency gate can prove all five cases instead of treating the former dynamic shell loop as missing coverage.
 - The mythical-roster integration fixture now removes every `export function` declaration from the extracted `game.js` slice before evaluating it; adding the exported escort-roster helper no longer makes the existing gate fail with a parser error before it reaches its roster invariants.
+- Merge do bot passa a ser o auto-merge nativo do GitHub: o `csbrasil-bot-automerge` só acorda por `workflow_dispatch` do `csbrasil-bot-pr-classify` (sem o fan-in de `workflow_run` de 5 workflows, sem cron de 30 min, sem `pull_request_target`; 6.016 runs em 30 dias e 0 merges), publica o commit status `politica-merge` (vermelho com estraga-codigo pendente ou `needs-hotfix-review`; pendente com `needs-human-*`/draft; conversa aberta fica com a regra nativa de conversa resolvida) e arma/desarma o auto-merge por merge commit com `expectedHeadOid`. Só arma quando o ruleset da base exige todos os contextos de `REQUIRED_CONTEXTS` e a resolução de conversas; sem isso, só merge direto com o rollup inteiro verde (deduplicado pelo run mais novo, sem os runs do próprio bot, com cada contexto exigido presente e zero conversa aberta). Leituras de metadata usam o `GITHUB_TOKEN` (o PAT não tem `read:org`). O classify não reclassifica label do próprio bot. `deploy-prod.yml` saiu (falhou em todo run desde 11/08; produção é a Vercel Git na main) e RLS6/EC3/EC4/WC2 foram reescritas para o caminho real; `preview-bot` só em `opened`/`reopened`; `build-fix` ignora runs de `main`/`staging` no gatilho; `pr-gates` também roda em PR para `staging`. Ruleset proposto e rollout em `docs/quality-gates.md`.
+- Exact-count gates that failed PRs for bookkeeping now derive or ratchet instead, each with a red mutant. `eval:contagens-pr` measures each perturbation against the base, so a hand-written version mismatch already on `main`/`staging` (alpha.149 without its CHANGELOG entry: 11 red runs on every branch) stays in `docs:check` and no longer fails this gate; the copy always carries an injected CHANGELOG drift (CPR8, mutant `changelog-cego`). `eval:autofix` AF7 drops the manual `CHAMADAS_ESPERADAS` registry: a second, YAML/shell-based count must match the regex in every workflow, which immediately found a bot commit the regex never saw (`git \ -c … commit -s` in `csbrasil-bot-build-fix.yml`, now covered; mutant `chamada-fora-do-recorte`). `tests/eval-suites.test.mjs` keeps the pre-manifest `check:fast`/`check:deploy` sequences in `tests/fixtures/eval-suites-baseline.json` (same sha256) and requires them as an ordered subsequence with no duplicate step, so adding a step no longer means editing the test (5 runs failed with `339 !== 338`). `tools/asset-inventory.json` moves to `asset-inventory-v2`: reviewed orphans stay bound to their bytes and a known runtime asset still referenced cannot vanish, but editing or adding a referenced asset no longer requires regenerating the manifest (9 runs failed only on `hash-changed`/`inventory-new`).
 - Vercel Web Analytics leaves the site (fase 5): `privacy-runtime.js` no longer injects `/_vercel/insights/script.js`, which 404s on Workers. Cloudflare Web Analytics is set to manual snippet installation on both game zones and the runtime injects the hostname-specific beacon only through the existing `cs_privacy` gate on the apex or `www` production host. Stored refusal blocks the beacon at boot, explicit opt-in from a refused boot loads it once, and withdrawal disables the beacon's send guard without interrupting login or account writes. `privacy-choice-check` locks both public site tokens, opt-in, immediate withdrawal, no duplication, no staging or arbitrary-subdomain pollution, and no analytics on localhost.
 - Cloudflare Workers ready for production (fases 3–4 do `docs/runbooks/MIGRACAO-CLOUDFLARE.md`). The private audio pack and the authored viewmodels left the Vercel Blob for the private R2 bucket `corosolto-private`: `fetch-audio.sh` accepts `r2://bucket/key` with `AUDIO_PACK_SHA256`, and the Worker serves `/private-assets/viewmodels/*` straight from the R2 binding by the versioned manifest (ETag, 304, HEAD; anything off-contract falls through to the Astro 404 and the legacy viewmodel, as before). `s-maxage` now feeds `caches.default` and is stripped from the browser `cache-control` like Vercel did; the legacy apex domain 308s to its `www` inside the Worker; `window.__CS_BUILD.sha` reads `CS_BUILD_SHA`. `build:cf` runs `strip:decalbg`, `assert:assets` and (with the private pack) `audio:check`. Every staging/production deploy runs `tools/cf/verifica-deploy.mjs` (build SHA, byte-equal audio manifest, 63 viewmodels by size and sha256) because header parity alone missed a staging serving the public audio pack and no viewmodels for days. New: `wrangler.prod.toml` (`csb-prod`), `cf-prod-deploy.yml` (every protected `main` push publishes that exact SHA, including release merge commits) and `tools/cf/virada.sh` (Worker Routes in front of Vercel, reversible in seconds). `eval:cfborda` parses active workflow steps, rejects command-shaped comments and joins the fast suite and pr-fast.
 - Cloudflare/R2 valida presença e tamanho do viewmodel antes de honrar `If-None-Match`; um objeto ausente ou corrompido agora cai no 404/legado mesmo para clientes com ETag, em vez de receber um 304 falso. O mutante `vm-304-antes-r2` prende essa ordem.
@@ -79,8 +81,10 @@
 - Operação Flávio without the arch GLB: the procedural fallback drew a 3 × 3 m box that closed the X-ray arch passage and was walked through (render-only). It now draws the same two pillars and lintel as the mesh, from the `ARCO` constants shared with the pillar colliders. `solid-looking-props-collide-as-drawn` runs on both the GLB and the fallback map; mutants `arco-fallback-caixa` and `arco-fallback-largo`.
 - Operação Flávio: the access-control queue, the X-ray arch and the apron luggage carts now collide as drawn. Queue posts and belts were render-only, so the VIP route and bots walked through the belts; they are now solid (collider = visible box), every belt ends on a post, the belts drawn twice per row are gone, and the queue (`FILA_ACESSO`, three rows of two belts at `x 4…9`, `z -5/1/7`) moved east of the central escort lane — solid belts across the lane funnelled the guards walking up to 3.1 m beside the VIP. The arch pillar colliders sat at x ±1.04…1.52 while the mesh pillars span ±0.70…0.96, so players hit air beside the arch and walked through the pillars; they now match the mesh. The two luggage carts (bags up to 1.18 m) get a collider and stop bullets. The fitted arch exposed two regroup-navigation defects in `game.js`: a regroup route skipped its first node even when the next one was only "reachable" by sliding along a wall (a guard ground on the north door jamb), and the step toward a waypoint overshot the node, ping-ponging 6 cm per frame; the route now starts at its exit node in that case and the step stops at the node. `operacao-flavio-collider-check` gains `solid-looking-props-collide-as-drawn` (every prop on the playable floor that rises above the knee and sits in the body band is inside a collider; queue posts, belts and arch pillars have one collider each matching the mesh; escort routes keep the guard formation clear of the queue and every route keeps the VIP body clear of posts, belts and pillars), `respawn-points-floor-solid-exit` now treats anything taller than 0.7 m as solid on exit routes, and the arch is measured by its real pillars. Mutants `fita-sem-colisor`, `arco-largo`, `fila-colada-na-lane`, regroup `pula-inicio` and escort-flicker `passo-sem-chegada`/`salto-pelo-batente`.
 - Operação Flávio: the VIP (Zero Um) is now an extra body on side B instead of one of the N, so an N×N room offers N human slots on both sides (side B had N-1: the node's `vagasPorTime` correctly excludes the `_objectiveNpc` body, but the mode turned the first of the N B bots into the VIP). `elencoDaEscolta` (game.js) builds the B roster as VIP + N escorts for single-player (main.js) and for the node/harness (Game without `matchRoster`); a Zero Um drawn or pinned as escort is replaced by another B character, and a player who picks Zero Um is the extra body, so the escort keeps N bots besides them. The VIP still opens side B, so the published roster order, the online client's body matching and older clients keep agreeing on who the VIP is. New `eval:operacao-flavio-vaga` (inside `eval:operacao-flavio-escolta`) checks a dedicated N×N node (2, 5, 8) for N slots per side, a single unclaimable VIP and the online client mirror, with mutants `vip-consome-vaga`, `senador-sem-reposicao` and `vip-fora-da-frente`. Changes the MP simulation (SIM_HASH); the backend's `flavio-room-check` is updated in the paired backend PR.
+- The same-origin API proxy now forwards the player's country, city and coordinates from the Worker's `request.cf` instead of relying only on the `cf-ip*` headers, which exist only while the zone's "visitor location" Managed Transform is on (the pending `cf-ipcity` item). Headers stay as the fallback and `x-vercel-ip-*` never mixes in. `eval:geoproxy` GP9 drives a request carrying only `request.cf` and kills the `sem-request-cf` mutant.
 - Cloudflare Worker: concurrent requests for the same cached URL (viewmodels, `/mapa`, `/api/og/*`) no longer return 500. The single-flight cache operation handed the first request's `Response` to every other waiter and let a client disconnect cancel the operation others awaited; workerd forbids both, and on 17/11 `csb-prod` logged 81 "This promise was created by a request that has since ended" and 12 "Cannot perform I/O on behalf of a different request" (92 eyeball 500s, all from CI bursts on `/private-assets/viewmodels/*`, zero from browsers). The owner now keeps its context alive with `ctx.waitUntil` until the operation settles and waiters re-read their own copy from `caches.default` (or fetch it themselves when the operation left no fresh copy). `cf-borda-workerd-check` reproduces the 500 in real workerd (`wrangler dev`, mutant `espera-le-resposta-da-dona`) and `cf-borda-check` B2 pins the owner's `waitUntil` (mutant `cache-dona-sem-waituntil`).
 - The `portao-armas` viewmodel fixture survives transient network failures without hiding real ones: 5xx, connection resets and timeouts retry with exponential backoff (4 attempts), 404/other 4xx and byte/sha256 mismatches fail on the first response, downloads are capped at 6 concurrent, and the final error lists every attempt. `eval:vm-rede` (in `ci.yml`) drives a local flaky server with five mutants.
+- Cloudflare production stops paying a Worker invocation per static file: `csb-prod` had `run_worker_first = true` (so the apex redirect also covered assets), which turned every JS, image, audio and viewmodel request into a billed invocation and crossed the free plan's 100k/day on the first day after the cutover. `run_worker_first` is back to the home page only, the legacy apex domain goes to a dedicated `csb-apex` Worker (`tools/cf/apex`, 308 to `www` for every path) that `tools/cf/virada.sh` routes, and the 63 authored viewmodels enter the build as static assets: the staging/production deploys download them from the private R2 bucket (`VM_R2_BUCKET`, `fetch-viewmodels.mjs`, size and SHA-256 checked, `VM_REQUIRED=1`). `verifica-deploy` D3 judges the body bytes instead of an ETag, `eval:cfborda` B4 now fails `run_worker_first = true`, and `cf-virada-check` covers the apex Worker.
 - The production dependency audit (DEP1, `tools/eval/deps-check.mjs`) is green again after 12 new high advisories on 17/11 blocked `build` on every PR. Astro goes from `^7.1.1` (7.3.2) to `^7.4.12`, fixing its own advisories GHSA-mpr7-6m5w-76rw, GHSA-mh32-jxcr-mh9f and GHSA-r3h5-4585-7x3w; `@astrojs/vercel` moves to `devDependencies` like `@astrojs/cloudflare` (an adapter is build-time only), which drops `@vercel/nft`, `@rollup/pluginutils` and the vercel copy of `@astrojs/internal-helpers` from the production tree. The rest is the picomatch ReDoS GHSA-fc5q-39xc-vjpf, which has no patched release (4.0.7 is the latest): it is exempted nominally with its chain, because every pattern reaching picomatch is ours (config/build) and neither the Worker bundle nor the Vercel function contains picomatch. The `advisory-nova` mutant now targets an exempted package, so it proves DEP3 instead of failing on DEP1.
 - Operação Flávio: bots deixam de renascer e passar por dentro da fachada norte do terminal. O módulo `terminal_fachada` era escalado pelo maior lado e virava uma torre render-only de 16 × 13 × 8,6 m sobre as portas `x ±17`; as ondas de respawn B, as variantes oeste/leste e seus slots de cobertura caíam dentro dela, e o bot aparecia afundado até a cintura no rodapé, colado numa parede sem abertura. Fachada e portal agora são pele da parede (0,34 m, o colisor é a parede), a vidraça que cruzava as portas laterais saiu e as colunas do pórtico de controle ficaram sólidas fora da viela interna. A régua de colisores ganha `respawn-points-floor-solid-exit` (todo ponto de respawn com pé no chão, corpo fora de sólido visual e rota de saída sem atravessar parede) e `decor-props-off-playable-floor`, com cinco mutantes.
 - Bots voltam a mexer as pernas ao se deslocar (Operação Flávio e demais mapas): andando reto, a lateral ±0 cruzava a fronteira de setor do 8-way a cada quadro e `_setLocoPar` reiniciava o clipe de corrida, que ficava preso no quadro 0 com o esqueleto na pose de ligação; e o fallback sem par (LOD 2, sem strafe) reativava o clipe com o peso velho do par, até 0,03. Clipes que já tocam seguem fase e fade na troca de par e `_to` devolve peso 1. `eval:operacao-flavio-pernas` mede peso efetivo, fase e giro da coxa por metro no Game real do Flávio, com mutantes para as duas metades.
@@ -303,6 +307,111 @@
 - A animação de recarga em terceira pessoa deixa de reiniciar ao terminar; o clipe ainda retoma quando uma reação de dano o interrompe.
 - As réguas de emote validam a composição exata dos 16 itens do menu, e os harnesses de snapshot injetam o catálogo v9 ao avaliar `netgame.js`.
 - Estados assados por personagem só entram quando não aumentam nenhum teto congelado de deformação; os offsets de pé e as catracas de chão são regenerados sobre o conjunto aprovado.
+
+## [2.1.0-alpha.155] — 2026-11-17
+
+### Mudado
+- hotfix: keep static files out of the paid Cloudflare Worker path (#1411)
+- chore(cf): phase 6 — remove Vercel from deploy path (#1405)
+- release: batch 2026-11-18 — fase 6 (Vercel fora do deploy), workerd 11-17, MP smoke-cf verde (#1412)
+- fix(cf): override workerd to 1.20261117.1 tree-wide
+- fix(cf): upgrade wrangler instead of lowering compatibility_date
+- chore: retrigger pr-fast
+- fix(ci): scope RANKING_ON export to rotas-check only
+- fix(cf): CI mirrors production RANKING_ON for the dist rulers
+- docs(changelog): static files out of the Worker
+- feat(cf): ship authored viewmodels as static assets fetched from R2 at deploy
+- fix(cf): keep static files out of the paid Worker path
+- fix(cf): lower compatibility_date to what the pinned workerd supports
+- chore: retrigger pr-fast on post-sync tree
+- fix(cf): CFREF2 accepts release-train dispatch with production guard
+- fix(cf): last vercel.json readers migrated to borda.json
+- docs(ops): finish Cloudflare cutover references
+- fix(release): dispatch Cloudflare for version bumps
+- chore: retrigger pr-fast on synced tree
+- Merge dependency hardening into Cloudflare phase 6
+- chore: retrigger pr-fast
+- fix(ci): rulers track the Vercel-less repo state
+- fix(cf): dist-compartilhado builds CF-output compat mirror for SSR rulers
+- fix(cf): enforce no-Vercel and edge gates
+- fix(cf): worker.ts imports borda.json — build green with fixed adapter
+- chore(docs): regenerate derived blocks (autofix)
+- chore(cf): phase 6 — remove Vercel from deploy path
+
+## [2.1.0-alpha.154] — 2026-11-17
+
+### Mudado
+- hotfix: keep static files out of the paid Cloudflare Worker path (#1411)
+- docs(changelog): static files out of the Worker
+- feat(cf): ship authored viewmodels as static assets fetched from R2 at deploy
+- fix(cf): keep static files out of the paid Worker path
+
+## [2.1.0-alpha.153] — 2026-11-17
+
+### Mudado
+- fix(ci): restore staging gates and keep root docs in English (#1395)
+- chore: back-merge main (release 2.1.0-alpha.151) into staging (#1391)
+- fix(ci): keep verbose gates measurable (#1389)
+- docs(cf): record the production cutover to Workers (#1398)
+- ci(pr-fast): same steps in 10 lots, lockfile node_modules cache, lean dist artifact (#1390)
+- fix(anim3p): bots no longer glide with frozen legs (8-way pair restarted every frame) (#1400)
+- fix(flavio): respawns no longer clip through a doorless wall and sink under the floor (#1401)
+- fix(profile): stop flashing, show map thumbnails, honest solo badges, medal and rank dialogs, real character skins (#1393)
+- feat(pass): 5×3 grid, 3D preview, level-up celebration, post-match XP, claim all and lobby badge (#1394)
+- ci(gates): skip heavy browser gates on draft PRs, run them on ready_for_review (#1386)
+- release: batch 2026-11-17 (pm): Operação Flávio bot fixes, battle pass UI, profile fixes (#1402)
+- fix(deps): clear the 12 high production advisories blocking DEP1 (#1406)
+- release: batch 2026-11-17 (evening): unblock DEP1 so the release train can tag (#1410)
+- fix(deps): clear the 12 high production advisories blocking DEP1
+- test(menuprops): the Praça menu backdrop skips menuDeferredProps
+- test(perfil): surviving skin mutant exits 3, MS3 gets a partialPayload mutant
+- test(passe-check): PS15 runs tp/passe-festa.js instead of reading it
+- test(passe-browser): exact-module mutants that must apply, served-count verdict, tolerant waits
+- test(perfil): AC3 mutant anchors to the new arena-hour derivation
+- fix(perfil): submit-match sends the skin captured at match end, not the live one
+- ci(smoke-cf): skip when cf-preview builds no preview, one shared site filter
+- perf(boot): defer the optional Towner menu prop
+- test(flavio): cover the pre-pack straight run and _to inheritance
+- test(tpbackpedal): only clips entering a new 8-way pair restart
+- fix(flavio): facade modules become wall skins, doors and alleys clear
+- test(flavio): sweep every respawn point for floor, solids and exit route
+- docs(changelog): bot legs animate again while moving
+- fix(anim3p): keep locomotion clips alive across 8-way pair changes
+- test(flavio): measure bot leg locomotion in the real Operação Flávio game
+- docs(cf): record the production cutover to Workers on 2026-11-17
+- docs: refresh the English contribution block
+- fix(ci): keep verbose gates measurable
+- test(netcodec): track current v10 default
+- fix(passe-ui): account change drops the pending level-up and mission toasts
+- fix(scripts): restore five eval scripts lost in the #1378 merge
+- test(passe): régua do navegador não cai em mutante e PB13 mede sobreposição real
+- fix(perfil): last-character card label in a footer band, face uncovered
+- docs(gen-docs): generate the root README/AGENTS/CONTRIBUTING blocks in English
+- test(perfil): vazio-vira-legado mutant follows the rewritten montar guard
+- docs(arch): regenerate the game.js index for staging
+- fix(scripts): restore five eval scripts lost in the #1378 merge
+- docs(arch): regenerate the game.js index for staging
+- docs(arch): regenerate the game.js index for staging
+- test(perfil): ui-v3-perfil covers no-flash, map thumbs, medals, rank ladder and solo seal
+- docs(quality-gates): describe the pr-fast lots, cache and lean dist
+- ci(cache-limpeza): keep the node_modules cache of the current main lockfile
+- ci(pr-fast): run the same steps in 10 lots with a lockfile cache and a lean dist
+- fix(scripts): restore five eval scripts lost in the #1378 merge
+- fix(scripts): restore five eval scripts lost in the #1378 merge
+- test(passe-browser): drop the horizontal-scroll reset, allow --mutantes=ids
+- docs(changelog): pass grid, 3D preview, claim-all, level-up and post-match XP
+- test(passe-browser): level-10 account sessions PB12-PB18 with biting mutants
+- fix(passe-ui): badge clear of the tab label, celebration without scrollbar, lock only on locked
+- docs(quality-gates): document the draft-then-ready flow
+- ci(prepush): map smoke-web.yml to the core suite
+- ci(gates): skip heavy browser gates on draft PRs
+- fix(perfil): keep the drawn profile attached while the same target re-renders
+- fix(perfil): no flash on re-render, map thumbs, truthful solo seal, medals and rank modals
+- fix(perfil): match event sends the character actually played and its skin
+- feat(passe-ui): level-up overlay, mission toast, post-match XP and lobby badge
+- style(passe): Treta Pop grid, hover lift, state glow, preview, celebration and badge
+- feat(passe-ui): grid track, 3D reward preview and claim-all on the pass screen
+- feat(passe): forced settle, per-account novelty diff and sequential claim-all
 
 ## [2.1.0-alpha.152] — 2026-11-17
 
