@@ -8,12 +8,16 @@
      VM_BLOB_BASE_URL   sobrepõe o `blobBase` do manifesto
      VM_REQUIRED=1      qualquer asset faltando ou divergente reprova o build (produção)
      VM_SOURCE_DIR      copia de uma árvore local em vez do Blob (build local do dono)
+     VM_R2_BUCKET       baixa do R2 (cópia do Blob, mesma chave) pelo wrangler com CLOUDFLARE_API_TOKEN;
+                        é o caminho do deploy Cloudflare: o viewmodel vira asset estático do build
      VM_DEST            destino alternativo (réguas)
    Cache de build: cada asset fica em node_modules/.cache/csb-packs/viewmodels/<sha256>
    (a Vercel guarda a pasta entre builds); sem a pasta (local) baixa do Blob como antes.
    Sem credencial e sem VM_REQUIRED: avisa e sai 0 — o jogo cai no viewmodel legado. */
 import { createHash, randomBytes } from 'node:crypto';
-import { copyFileSync, existsSync, lstatSync, mkdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { execFile } from 'node:child_process';
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { promisify } from 'node:util';
 import path from 'node:path';
 
 import { DEST_DIR, ROOT, blobPathOf, readManifest, sha256File } from './vm-assets.mjs';
@@ -25,6 +29,7 @@ const REQUIRED = process.env.VM_REQUIRED === '1' || (VM_LAUNCH === true && proce
 const DEST = path.resolve(process.env.VM_DEST || DEST_DIR);
 const SOURCE_DIR = process.env.VM_SOURCE_DIR ? path.resolve(process.env.VM_SOURCE_DIR) : '';
 const TOKEN = process.env.VM_BLOB_TOKEN || process.env.BLOB_READ_WRITE_TOKEN || '';
+const R2_BUCKET = (process.env.VM_R2_BUCKET || '').trim();
 const CONCURRENCY = 6;
 const rel = (p) => (p.startsWith(`${ROOT}${path.sep}`) ? path.relative(ROOT, p) : p);
 const mb = (n) => `${(n / 1048576).toFixed(1)} MB`;
@@ -71,7 +76,31 @@ function finish(missing, why) {
 const baseOk = (b) => /^https:\/\/[a-z0-9-]+\.private\.blob\.vercel-storage\.com$/i.test(b)
   || /^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(b);
 
+const executa = promisify(execFile);
+
+// R2: o objeto tem a mesma chave do Blob; o wrangler grava no tmp e o conteúdo é conferido aqui.
+async function downloadR2(entry, tmp) {
+  let last = '';
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      rmSync(tmp, { force: true });
+      await executa('npx', ['--no-install', 'wrangler', 'r2', 'object', 'get', `${R2_BUCKET}/${blobPathOf(entry)}`, '--file', tmp, '--remote'],
+        { cwd: ROOT, timeout: 180000, maxBuffer: 4 * 1024 * 1024 });
+      const buf = readFileSync(tmp);
+      const sha = createHash('sha256').update(buf).digest('hex');
+      if (buf.length === entry.bytes && sha === entry.sha256) return '';
+      last = `conteúdo divergente no R2 (${buf.length} bytes, sha ${sha.slice(0, 10)} != ${entry.v})`;
+    } catch (error) {
+      last = String(error.stderr || error.message || error.code).trim().split('\n').slice(-1)[0];
+    }
+    await new Promise((r) => setTimeout(r, 1500 * attempt));
+  }
+  rmSync(tmp, { force: true });
+  return last;
+}
+
 async function download(entry, tmp) {
+  if (R2_BUCKET) return downloadR2(entry, tmp);
   const url = `${BASE}/${blobPathOf(entry)}`;
   let last = '';
   for (let attempt = 1; attempt <= 4; attempt += 1) {
@@ -130,13 +159,16 @@ if (!missing.length) finish([], '');
 if (existsSync(DEST) && lstatSync(DEST).isSymbolicLink()) {
   finish(missing, `${rel(DEST)} é symlink para a árvore local do dono; o fetch não escreve através dele — atualize a árvore ou regenere o manifesto (\`node scripts/upload-viewmodels.mjs --check\`)`);
 }
-if (!SOURCE_DIR) {
+if (R2_BUCKET && !SOURCE_DIR) {
+  if (!/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(R2_BUCKET)) finish(missing, `VM_R2_BUCKET inválido (${R2_BUCKET})`);
+} else if (!SOURCE_DIR) {
   if (!TOKEN) finish(missing, 'BLOB_READ_WRITE_TOKEN ausente (fork/local sem credencial)');
   if (!BASE) finish(missing, 'manifesto sem `blobBase` e VM_BLOB_BASE_URL vazio — rode `node scripts/upload-viewmodels.mjs --publicar`');
   if (!baseOk(BASE)) finish(missing, `base do Blob recusada (${BASE}): a credencial só vai para *.private.blob.vercel-storage.com`);
 }
 
-console.log(`viewmodel: instalando ${missing.length} asset(s) (${mb(missing.reduce((s, e) => s + e.bytes, 0))}) de ${SOURCE_DIR ? rel(SOURCE_DIR) : 'Blob privado'}`);
+const ORIGEM = SOURCE_DIR ? rel(SOURCE_DIR) : R2_BUCKET ? `R2 ${R2_BUCKET}` : 'Blob privado';
+console.log(`viewmodel: instalando ${missing.length} asset(s) (${mb(missing.reduce((s, e) => s + e.bytes, 0))}) de ${ORIGEM}`);
 const erros = new Map();
 const queue = [...missing];
 await Promise.all(Array.from({ length: CONCURRENCY }, async () => {

@@ -1,0 +1,221 @@
+/* vigia-cron: o relógio do monitoramento (workers/vigia-cron/). O contrato que, quebrado,
+   faria a vigilância parar SEM vermelho nenhum: cron do wrangler.toml sem alvo, alvo sem
+   cron, workflow alvo sem workflow_dispatch (o GitHub responde 422 e ninguém olha o log do
+   Worker), a rede de segurança (`schedule`) sumindo e erro HTTP engolido. */
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import worker from '../../../workers/vigia-cron/index.mjs';
+import { ALVOS, REF, TEMPO_MAX_MS, disparaCron } from '../../../workers/vigia-cron/dispara.mjs';
+import { errosDoWorkflow } from '../../../workers/vigia-cron/contrato.mjs';
+import { confereAlvos } from '../../../workers/vigia-cron/confere-alvos.mjs';
+
+const raiz = (p) => readFileSync(fileURLToPath(new URL(`../../../${p}`, import.meta.url)), 'utf8');
+const TOKENS = { GITHUB_TOKEN_CLIENT: 'tok-client-SENTINELA', GITHUB_TOKEN_BACKEND: 'tok-backend-SENTINELA' };
+
+function fetchFalso(status = 204, corpo = '') {
+  const chamadas = [];
+  const fn = async (url, init) => {
+    chamadas.push({ url, init });
+    return new Response(status === 204 ? null : corpo, { status });
+  };
+  return { fn, chamadas };
+}
+
+function capturaConsole(t) {
+  const log = t.mock.method(console, 'log', () => {});
+  const err = t.mock.method(console, 'error', () => {});
+  const linhas = (m) => m.mock.calls.map((c) => c.arguments.join(' '));
+  return { log: () => linhas(log), err: () => linhas(err) };
+}
+
+test('index.mjs exporta só o handler: o runtime recusa export que não é handler no módulo principal', async () => {
+  const modulo = await import('../../../workers/vigia-cron/index.mjs');
+  assert.deepEqual(Object.keys(modulo), ['default']);
+  assert.equal(typeof modulo.default.scheduled, 'function');
+});
+
+test('wrangler.toml e ALVOS têm exatamente os mesmos crons', () => {
+  const toml = raiz('workers/vigia-cron/wrangler.toml');
+  const linha = /^crons\s*=\s*\[(.*)\]\s*$/m.exec(toml);
+  assert.ok(linha, 'wrangler.toml sem [triggers] crons');
+  const crons = [...linha[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual([...crons].sort(), Object.keys(ALVOS).sort());
+  assert.match(toml, /^workers_dev = false$/m, 'Worker de cron não precisa de URL pública');
+});
+
+test('cada cron dispara o workflow certo, na main, com User-Agent e o token do repo certo', async (t) => {
+  capturaConsole(t);
+  const esperado = {
+    '*/15 * * * *': ['corosolto/client', 'prod-watch.yml', TOKENS.GITHUB_TOKEN_CLIENT],
+    '17 * * * *': ['corosolto/client', 'ops-diag.yml', TOKENS.GITHUB_TOKEN_CLIENT],
+    '*/30 * * * *': ['corosolto/backend', 'sync-nodes.yml', TOKENS.GITHUB_TOKEN_BACKEND],
+  };
+  assert.deepEqual(Object.keys(esperado).sort(), Object.keys(ALVOS).sort());
+  for (const [cron, [repo, workflow, token]] of Object.entries(esperado)) {
+    const { fn, chamadas } = fetchFalso(204);
+    const r = await disparaCron(cron, TOKENS, fn);
+    assert.deepEqual(r, [{ cron, repo, workflow, ok: true, status: 204 }]);
+    assert.equal(chamadas.length, 1);
+    const { url, init } = chamadas[0];
+    assert.equal(url, `https://api.github.com/repos/${repo}/actions/workflows/${workflow}/dispatches`);
+    assert.equal(init.method, 'POST');
+    assert.deepEqual(JSON.parse(init.body), { ref: 'main' });
+    assert.equal(init.headers.authorization, `Bearer ${token}`);
+    assert.match(init.headers['user-agent'], /\S/, 'a API do GitHub recusa request sem User-Agent');
+    assert.equal(init.headers.accept, 'application/vnd.github+json');
+  }
+  assert.equal(REF, 'main');
+});
+
+test('resposta não-204 vai para console.error com status e corpo, sem o token', async (t) => {
+  const c = capturaConsole(t);
+  const { fn } = fetchFalso(403, '{"message":"Resource not accessible by personal access token"}');
+  const r = await disparaCron('*/30 * * * *', TOKENS, fn);
+  assert.equal(r[0].ok, false);
+  const erros = c.err().join('\n');
+  assert.match(erros, /"status":403/);
+  assert.match(erros, /Resource not accessible/);
+  assert.match(erros, /sync-nodes\.yml/);
+  assert.doesNotMatch(erros + c.log().join('\n'), /SENTINELA/, 'token vazou no log');
+});
+
+test('sucesso loga o status 204; segredo ausente e rede caída não chamam/derrubam em silêncio', async (t) => {
+  const c = capturaConsole(t);
+  await disparaCron('*/15 * * * *', TOKENS, fetchFalso(204).fn);
+  assert.match(c.log().join('\n'), /"workflow":"prod-watch\.yml".*"status":204/);
+
+  const semToken = fetchFalso(204);
+  const r = await disparaCron('17 * * * *', {}, semToken.fn);
+  assert.equal(r[0].ok, false);
+  assert.equal(semToken.chamadas.length, 0);
+  assert.match(c.err().join('\n'), /GITHUB_TOKEN_CLIENT ausente/);
+
+  const caiu = await disparaCron('17 * * * *', TOKENS, async () => { throw new TypeError('fetch failed'); });
+  assert.equal(caiu[0].ok, false);
+  assert.match(c.err().join('\n'), /rede: fetch failed/);
+
+  const orfao = await disparaCron('5 * * * *', TOKENS, fetchFalso(204).fn);
+  assert.equal(orfao[0].ok, false);
+  assert.match(c.err().join('\n'), /cron sem alvo/);
+});
+
+test('API travada: o fetch leva teto (AbortSignal) e o aborto vira falha registrada, não invocação pendurada', async (t) => {
+  const c = capturaConsole(t);
+  assert.ok(TEMPO_MAX_MS > 0 && TEMPO_MAX_MS <= 30_000, `teto ${TEMPO_MAX_MS} ms`);
+  let sinal;
+  const travado = (url, init) => new Promise((_, rejeita) => {
+    sinal = init.signal;
+    init.signal.addEventListener('abort', () => rejeita(init.signal.reason));
+  });
+  const inicio = Date.now();
+  // AbortSignal.timeout usa timer unref no Node: sem algo ref'd o processo sairia antes do aborto.
+  const vivo = setInterval(() => {}, 1000);
+  t.after(() => clearInterval(vivo));
+  const r = await disparaCron('*/15 * * * *', TOKENS, travado, 50);
+  assert.ok(sinal instanceof AbortSignal, 'fetch sem signal');
+  assert.equal(r[0].ok, false);
+  assert.ok(Date.now() - inicio < 2000, 'o teto não abortou a chamada travada');
+  assert.match(c.err().join('\n'), /"workflow":"prod-watch\.yml".*rede: /);
+  const { fn, chamadas } = fetchFalso(204);
+  await disparaCron('*/15 * * * *', TOKENS, fn);
+  assert.ok(chamadas[0].init.signal instanceof AbortSignal, 'o caminho padrão também precisa do teto');
+});
+
+test('handler scheduled: lança em falha (o painel conta a invocação como erro) e resolve em 204', async (t) => {
+  capturaConsole(t);
+  const original = globalThis.fetch;
+  try {
+    globalThis.fetch = fetchFalso(204).fn;
+    await worker.scheduled({ cron: '*/15 * * * *', scheduledTime: Date.now() }, TOKENS);
+    globalThis.fetch = fetchFalso(422, '{"message":"Workflow does not have \'workflow_dispatch\' trigger"}').fn;
+    await assert.rejects(worker.scheduled({ cron: '17 * * * *', scheduledTime: Date.now() }, TOKENS), /corosolto\/client\/ops-diag\.yml/);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('workflows alvo do client aceitam o dispatch do Worker e mantêm o schedule de rede de segurança', () => {
+  for (const alvos of Object.values(ALVOS)) {
+    for (const { repo, workflow } of alvos) {
+      if (repo !== 'corosolto/client') continue;
+      const s = raiz(`.github/workflows/${workflow}`);
+      assert.deepEqual(errosDoWorkflow(s), [], workflow);
+      const on = /^on:\n([\s\S]*?)^\S/m.exec(s)?.[1] ?? '';
+      assert.match(on, /^ {2}schedule:/m, `${workflow} perdeu o schedule: sem ele, Worker fora do ar = vigilância parada`);
+    }
+  }
+});
+
+test('contrato do dispatch: reprova sem workflow_dispatch e com input obrigatório (vale também para o backend no deploy)', () => {
+  const base = "on:\n  push:\n    branches: [main]\n  workflow_dispatch:\n    inputs:\n      client_ref:\n        required: false\n\njobs: {}\n";
+  assert.deepEqual(errosDoWorkflow(base), []);
+  assert.match(errosDoWorkflow(base.replace('  workflow_dispatch:\n', '  repository_dispatch:\n')).join(), /sem workflow_dispatch/);
+  assert.match(errosDoWorkflow(base.replace('required: false', 'required: true')).join(), /input obrigatório/);
+  const deploy = raiz('.github/workflows/vigia-cron-deploy.yml');
+  const confere = deploy.indexOf('run: node workers/vigia-cron/confere-alvos.mjs');
+  assert.ok(confere > 0 && confere < deploy.indexOf(' deploy --config'), 'o deploy publica sem conferir os alvos da main (backend incluso)');
+  assert.match(raiz('workers/vigia-cron/confere-alvos.mjs'), /errosDoWorkflow/);
+});
+
+/* API fake do GitHub para o preflight do deploy: GET do YAML e POST do dispatch. */
+function githubFalso({ yaml, dispatch }) {
+  const chamadas = [];
+  const fn = async (url, init = {}) => {
+    chamadas.push({ url, metodo: init.method || 'GET', auth: init.headers?.authorization });
+    if (url.includes('/contents/')) return new Response(yaml, { status: 200 });
+    const status = typeof dispatch === 'function' ? dispatch(url) : dispatch;
+    return new Response(status === 204 ? null : '{"message":"Resource not accessible by personal access token"}', { status });
+  };
+  return { fn, chamadas };
+}
+const YAML_OK = "on:\n  schedule:\n    - cron: '*/15 * * * *'\n  workflow_dispatch:\n\njobs: {}\n";
+
+test('preflight do deploy: só passa com 204 REAL no dispatch de cada alvo, com o token de cada repo', async (t) => {
+  capturaConsole(t);
+  const linhas = [];
+  const { fn, chamadas } = githubFalso({ yaml: YAML_OK, dispatch: 204 });
+  assert.equal(await confereAlvos(TOKENS, fn, (l) => linhas.push(l)), true);
+  const posts = chamadas.filter((c) => c.metodo === 'POST');
+  const alvos = Object.values(ALVOS).flat();
+  assert.equal(posts.length, alvos.length, 'cada alvo é disparado uma vez');
+  for (const { repo, workflow, segredo } of alvos) {
+    const p = posts.find((c) => c.url.endsWith(`/repos/${repo}/actions/workflows/${workflow}/dispatches`));
+    assert.ok(p, `sem dispatch para ${repo}/${workflow}`);
+    assert.equal(p.auth, `Bearer ${TOKENS[segredo]}`);
+  }
+  assert.doesNotMatch(linhas.join('\n'), /SENTINELA/, 'token vazou no log');
+});
+
+test('preflight do deploy: token que lê mas não dispara (403) reprova, com motivo; 401/404/422 também', async (t) => {
+  capturaConsole(t);
+  for (const [status, motivo] of [[403, /sem Actions: write/], [401, /inválido ou expirado/], [404, /sem acesso ao repo/], [422, /sem workflow_dispatch/]]) {
+    const linhas = [];
+    const { fn } = githubFalso({ yaml: YAML_OK, dispatch: (url) => (url.includes('corosolto/backend') ? status : 204) });
+    assert.equal(await confereAlvos(TOKENS, fn, (l) => linhas.push(l)), false, `status ${status} passou`);
+    const log = linhas.join('\n');
+    assert.match(log, new RegExp(`::error::corosolto/backend/sync-nodes\\.yml@main: dispatch respondeu ${status}`));
+    assert.match(log, motivo);
+    assert.doesNotMatch(log, /SENTINELA/);
+  }
+  const semDispatch = githubFalso({ yaml: YAML_OK.replace('  workflow_dispatch:\n', ''), dispatch: 204 });
+  assert.equal(await confereAlvos(TOKENS, semDispatch.fn, () => {}), false);
+  assert.equal(semDispatch.chamadas.filter((c) => c.metodo === 'POST').length, 0, 'contrato quebrado não chega a disparar');
+});
+
+test('o deploy instala exatamente os segredos que ALVOS lê, sem ecoar valor', () => {
+  const s = raiz('.github/workflows/vigia-cron-deploy.yml');
+  const segredos = new Set(Object.values(ALVOS).flat().map((a) => a.segredo));
+  for (const nome of segredos) {
+    assert.match(s, new RegExp(`^ {10}${nome}: \\$\\{\\{ secrets\\.[A-Z_]+ \\}\\}$`, 'm'), `deploy não injeta ${nome}`);
+    assert.ok(s.includes(`${nome}: e.${nome}`), `deploy não põe o valor de ${nome} no JSON do --secrets-file`);
+  }
+  assert.match(s, /node -e '[^']*JSON\.stringify\([^']*'\s*\\\n\s*\| npx --yes wrangler@[\d.]+ deploy --config workers\/vigia-cron\/wrangler\.toml --secrets-file \/dev\/stdin/);
+  assert.doesNotMatch(s, /'GITHUB_TOKEN_[A-Z]+=\$\{/, 'placeholder ${VAR} literal no --secrets-file');
+  assert.match(s, /- 'workers\/vigia-cron\/\*\*'/);
+  assert.match(s, /^ {2}deploy:\n(?: {4}#[^\n]*\n)* {4}if: github\.ref == 'refs\/heads\/main'$/m, 'workflow_dispatch em branch não revisada publicaria o Worker de produção');
+  const teste = s.indexOf('run: node --test tools/ops/tests/vigia-cron.test.mjs');
+  assert.ok(teste > 0 && teste < s.indexOf(' deploy --config'), 'o deploy publica sem rodar este contrato antes (o ops:test não roda no pr-fast)');
+  assert.doesNotMatch(s, /echo[^\n]*\$\{?GITHUB_TOKEN_/, 'deploy ecoa token');
+});
