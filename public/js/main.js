@@ -487,11 +487,15 @@ async function loadMenuBackdrop() {
     const rebuildCurrent = () => {
       if (seq === _menuLoadSeq && id === currentMap) rebuildMenuBackdrop(mapa);
     };
-    /* Fauna pede DEPOIS dos props: em paralelo ela disputava banda (1.588 KB contra 4.083 KB)
-       com o que o portão da splash espera. O lobby final é o mesmo, só fica alcançável antes. */
+    /* Fauna pede DEPOIS dos props e fora da janela READY+50 ms: em paralelo ela
+       disputava banda e a conclusão variável dos GLBs fazia ORC1 oscilar. */
     return propsReady.then(() => {
       rebuildCurrent();
-      preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});
+      setTimeout(() => {
+        if (seq !== _menuLoadSeq || id !== currentMap) return;
+        textures.liberarPosterImgs?.();
+        preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});
+      }, 250);
     });
   });
 }

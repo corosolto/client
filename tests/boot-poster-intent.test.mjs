@@ -15,19 +15,25 @@ assert.ok(begin>=0&&end>begin,'real poster block missing');
 const mutator=checker.slice(checker.indexOf('const ANSIOSO ='),checker.indexOf('// A chamada real é a âncora da mutação.'));
 const eager=vm.runInNewContext(mutator+'poolAnsioso');
 const origin='http://fixture',timeOrigin=100_000,cutoffEpoch=timeOrigin+1050;
-function run({anxious=false,pick=[],base=origin,onStart=()=>{}}={}) {
+function run({anxious=false,pick=[],base=origin,onStart=()=>{},releaseAt=null}={}) {
   const requests=[],seen=new Set(),window={},T={};let now=100;
-  class TextureLoader {load(file) {
-    const url=new URL(file,base+'/').href;
-    if(!seen.has(url)){seen.add(url);const row={requestId:'r'+requests.length,url,inicio:timeOrigin+now,fim:null,type:'Image',method:'GET'};requests.push(row);onStart(url,row);}
-    return {};
-  }}
+  class Texture {}
+  class TextureLoader {constructor(){this.manager={};}}
+  class ImageLoader {
+    constructor(manager){this.manager=manager;}
+    load(file,onLoad) {
+      const url=new URL(file,base+'/').href;
+      if(!seen.has(url)){seen.add(url);const row={requestId:'r'+requests.length,url,inicio:timeOrigin+now,fim:null,type:'Image',method:'GET'};requests.push(row);onStart(url,row);}
+      const image={src:url};onLoad?.(image);return image;
+    }
+  }
   const source=instrumentPosterIntent(anxious?eager(textures):textures).slice(begin);
   const block=source.slice(0,source.indexOf('  T.posterAspects ='));
-  vm.runInNewContext(block,{THREE:{TextureLoader},T,window,document:{baseURI:base+'/'},URL,performance:{timeOrigin,now:()=>now++}});
+  vm.runInNewContext(block,{THREE:{Texture,TextureLoader,ImageLoader,SRGBColorSpace:'srgb',LinearMipmapLinearFilter:'mipmap'},T,window,document:{baseURI:base+'/'},URL,performance:{timeOrigin,now:()=>now++}});
   const initial=window.__bootPosterIntent.calls.length;
   for(const index of pick)void T.posterImgs[index];
-  return {trace:JSON.parse(JSON.stringify(window.__bootPosterIntent)),current:{timeOrigin,now:1100},requests,initial,T,origin:base};
+  if(Number.isFinite(releaseAt)){now=releaseAt;T.liberarPosterImgs();}
+  return {trace:JSON.parse(JSON.stringify(window.__bootPosterIntent)),current:{timeOrigin,now:Math.max(now+100,1100)},requests,initial,T,origin:base};
 }
 const proof=sample=>collectPosterProof({...sample,origin:sample.origin||origin,timeOrigin,cutoffEpoch});
 function verdict(cand,ref,legacy=false) {
@@ -42,9 +48,11 @@ function measure(sample,finished) {
   return {causa:'assets',bytes:financial.length*500000,reqs:financial.length,cartazes:financial.length,ultimoProp:700,primeiraFauna:800,posterProof:proof({...sample,requests})};
 }
 const clone=value=>JSON.parse(JSON.stringify(value));
-test('real lazy getters stay asleep through instrumentation and metadata reads',()=>{
+test('real lazy getters stay asleep until the post-gate release',()=>{
   const cold=run();assert.equal(cold.initial,0);assert.equal(cold.trace.calls.length,0);assert.equal(cold.requests.length,0);
-  const selected=run({pick:[0,4,21]});assert.equal(selected.trace.calls.length,3);assert.equal(lazyPosterSubset(proof(selected),proof(run({anxious:true}))),true);
+  const selected=run({pick:[0,4,21],releaseAt:1100});
+  assert.equal(selected.trace.calls.length,3);assert.equal(selected.requests.length,3);assert.equal(proof(selected).started.length,0);assert.equal(lazyPosterSubset(proof(selected),proof(run({anxious:true}))),true);
+  assert.equal(selected.T.posterImgs[0].image.src,origin+'/posters/despisque-leao.jpg');
 });
 test('both real eager pools reject ORC2 despite20vs21finished; old verdict mutation is caught',()=>{
   const left=run({anxious:true}),right=run({anxious:true});
