@@ -142,6 +142,11 @@ def decide(pr: dict) -> dict:
         policy = ("pending", "policy inputs unknown (file list); re-run the bot")
     elif human_labels:
         policy = ("pending", f"owner decision required ({', '.join(sorted(human_labels))}); no auto-merge")
+    elif touches_sensitive and not release_batch:
+        # Mesmo sem label `needs-human-*` (classify atrasado, label removida à mão): diff em
+        # public/, src/ ou supabase/ é decisão do dono. O lote oficial staging→main sempre
+        # toca essas pastas, mas só recombina o que já passou pelo dono na staging.
+        policy = ("pending", "owner decision required (diff touches public/, src/ or supabase/); no auto-merge")
     elif pr.get("isDraft", False):
         policy = ("pending", "draft pull request")
     else:
@@ -406,6 +411,13 @@ def selftest() -> int:
         ("gameplay: pendente, decisão do dono",
          com(labels=[{"name": "needs-human-gameplay"}]), False, "pending"),
         ("draft: pendente", com(isDraft=True), False, "pending"),
+        ("PR sensível sem label needs-human-*: pendente (decisão do dono)",
+         com(labels=[], files=[{"path": "public/js/game.js"}]), False, "pending"),
+        ("PR sensível com safe-automerge e sem label humana: pendente, não arma",
+         com(files=[{"path": "src/pages/api/ranking.ts"}]), False, "pending"),
+        ("lote oficial que toca public/src continua verde e arma",
+         com(**dict(lote, files=[{"path": "public/js/game.js"}, {"path": "src/pages/index.astro"}],
+                    changedFiles=2)), True, "success"),
         ("lista incompleta sem prova de diff: pendente",
          com(files=None, changedFiles=1720), False, "pending"),
         ("lote oficial resolvido arma", com(**lote), True, "success"),

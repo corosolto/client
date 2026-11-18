@@ -77,8 +77,10 @@ publica o commit status `politica-merge` na head e arma ou desarma o auto-merge 
 
 - `failure`: `needs-estragacodigo-resolution` sem `estragacodigo-resolved`, ou
   `needs-hotfix-review`;
-- `pending`: `needs-human-gameplay`/`needs-human-backend` (decisão do dono, que mergeia como
-  bypass actor), draft, ou lista de arquivos que não deu para verificar;
+- `pending`: `needs-human-gameplay`/`needs-human-backend` ou diff em `public/`, `src/` ou
+  `supabase/` mesmo sem essas labels (decisão do dono, que mergeia como bypass actor; o lote
+  oficial `staging → main` fica fora porque recombina o que já passou pelo dono), draft, ou lista
+  de arquivos que não deu para verificar;
 - `success`: nenhum bloqueio. Com "auto-merge armed" na descrição quando o bot armou.
 
 O bot arma o auto-merge só para:
