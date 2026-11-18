@@ -172,16 +172,17 @@ check('escolta entrega um LMG, uma escopeta, um rifle e um sniper', () => withGa
 }));
 
 check('4 guardas diretos e flanqueadores completam o 7x7', () => withGame(7, (game) => {
+  // 7 escoltas + VIP a mais (operacao-flavio-vaga-check): 4 guardas e 3 flanqueadores
   const { flanqueadores } = papeis(game);
-  assert.equal(flanqueadores.length, 2, 'dois flanqueadores de vanguarda');
-  assert.deepEqual(flanqueadores.map((bot) => bot.weapon), ['mp5', 'carbine']);
+  assert.equal(flanqueadores.length, 3, 'três flanqueadores de vanguarda');
+  assert.deepEqual(flanqueadores.map((bot) => bot.weapon), ['mp5', 'carbine', 'mp5']);
   assert.ok(flanqueadores.every((bot) => bot._flavioLado === 1 || bot._flavioLado === -1), 'um por lateral da vanguarda');
 }));
 
 check('6x6 mantém os quatro guardas diretos', () => withGame(6, (game) => {
   const { guardas, flanqueadores } = papeis(game);
   assert.equal(guardas.length, 4, 'formato menor não racha o quarteto de guardas');
-  assert.equal(flanqueadores.length, 1, 'quinto defensor vira flanqueador');
+  assert.equal(flanqueadores.length, 2, 'quinto e sexto defensores viram flanqueadores');
 }));
 
 check('guardas mais eficazes e mais duros de matar que os atacantes', () => withGame(7, (game) => {
