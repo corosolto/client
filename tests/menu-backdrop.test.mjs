@@ -22,17 +22,26 @@ const applyMutant = (name, from, to) => {
 };
 if (mutant) {
   // fauna-gates: a promessa devolvida passa a aguardar a fauna opcional (prende a entrada/splash).
-  if (mutant === 'fauna-gates') applyMutant(mutant, 'preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});', 'return preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});');
+  if (mutant === 'fauna-gates') applyMutant(mutant, "      setTimeout(() => {\n        if (seq !== _menuLoadSeq || id !== currentMap) return;\n        textures.liberarPosterImgs?.();\n        preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});\n      }, 250);", "      if (seq !== _menuLoadSeq || id !== currentMap) return;\n      textures.liberarPosterImgs?.();\n      return preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});");
   // stale-map: ignorar seq E mapa juntos destrava qualquer callback antigo.
-  else if (mutant === 'stale-map') applyMutant(mutant, 'if (seq === _menuLoadSeq && id === currentMap)', 'if (true)');
+  else if (mutant === 'stale-map') {
+    applyMutant('stale-map-rebuild', 'if (seq === _menuLoadSeq && id === currentMap)', 'if (true)');
+    applyMutant('stale-map-load', '        if (seq !== _menuLoadSeq || id !== currentMap) return;', '        if (false) return;');
+  }
   // ignore-seq: só o mapa protege; A->B->A aceita callbacks da primeira passada por A.
-  else if (mutant === 'ignore-seq') applyMutant(mutant, 'seq === _menuLoadSeq && ', '');
+  else if (mutant === 'ignore-seq') {
+    applyMutant('ignore-seq-rebuild', 'seq === _menuLoadSeq && ', '');
+    applyMutant('ignore-seq-load', '        if (seq !== _menuLoadSeq || id !== currentMap) return;', '        if (id !== currentMap) return;');
+  }
   // ignore-map: só o seq protege; troca de mapa sem novo preload aceita o callback velho.
-  else if (mutant === 'ignore-map') applyMutant(mutant, ' && id === currentMap', '');
+  else if (mutant === 'ignore-map') {
+    applyMutant('ignore-map-rebuild', ' && id === currentMap', '');
+    applyMutant('ignore-map-load', '        if (seq !== _menuLoadSeq || id !== currentMap) return;', '        if (seq !== _menuLoadSeq) return;');
+  }
   // no-late-fauna: preserva o desenho dos props e remove somente o redesenho da fauna tardia.
   else if (mutant === 'no-late-fauna') applyMutant(mutant, 'preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});', 'preloadMapAmbientLife(mapa).then(() => {}).catch(() => {});');
   // fauna-first: pede a fauna antes dos props, invertendo a ordenança de banda do span real.
-  else if (mutant === 'fauna-first') applyMutant(mutant, "    return propsReady.then(() => {\n      rebuildCurrent();\n      preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});\n    });", "    preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});\n    return propsReady.then(() => {\n      rebuildCurrent();\n    });");
+  else if (mutant === 'fauna-first') applyMutant(mutant, "    return propsReady.then(() => {\n      rebuildCurrent();\n      setTimeout(() => {\n        if (seq !== _menuLoadSeq || id !== currentMap) return;\n        textures.liberarPosterImgs?.();\n        preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});\n      }, 250);\n    });", "    textures.liberarPosterImgs?.();\n    preloadMapAmbientLife(mapa).then(rebuildCurrent).catch(() => {});\n    return propsReady.then(() => {\n      rebuildCurrent();\n    });");
   else throw new Error(`Unknown mutant: ${mutant}`);
 }
 // Emitido só depois da mutação literal e de suas assertivas de aplicação.
@@ -61,6 +70,8 @@ function world() {
     preloadMapProps: ([id]) => queue(`${id}:props`),
     preloadMapAmbientLife: ({ ambience: [id] }) => queue(id),
     rebuildMenuBackdrop: (mapa) => rebuilt.push(mapa.id),
+    setTimeout: (callback) => { queueMicrotask(callback); return 1; },
+    textures: { liberarPosterImgs() {} },
   });
   vm.runInContext(backdropSource, context);
   const load = () => {
@@ -137,11 +148,9 @@ test('old props and fauna cannot rebuild a newly selected map', { id: 'mb-backdr
   assert.ok(w.rebuilt.slice(1).every((map) => map === 'b'));
   const currentBuilds = [...w.rebuilt];
   w.take('a:props').resolve();
-  await flush();   // a fauna antiga só é pedida quando os props antigos resolvem
-  assert.deepEqual(w.rebuilt, currentBuilds, 'old props must not redraw the selected map');
-  w.take('rat').resolve();
   await flush();
-  assert.deepEqual(w.rebuilt, currentBuilds);
+  assert.deepEqual(w.rebuilt, currentBuilds, 'old props must not redraw the selected map');
+  assert.equal(w.loads.has('rat'), false, 'stale props must not start obsolete fauna work');
 });
 
 test('old callbacks from A cannot redraw after switching A to B and back to A', { id: 'mb-backdrop-05-return-to-a' }, async () => {
@@ -167,7 +176,7 @@ test('old callbacks from A cannot redraw after switching A to B and back to A', 
   await flush();
   assert.deepEqual(w.rebuilt, currentBuilds, 'map equality alone must not accept old A props');
   bProps.resolve();
-  await flush();   // callbacks velhos ainda pedem fauna, mas não podem redesenhar
+  await flush();   // callbacks velhos não podem pedir fauna nem redesenhar
   while (w.loads.has('rat')) w.take('rat').resolve();
   await flush();
   assert.deepEqual(w.rebuilt, currentBuilds, 'map equality alone must not accept old A fauna');
@@ -182,11 +191,9 @@ test('callbacks cannot redraw when map changes without starting a new preload', 
   await flush();
   w.context.currentMap = 'b';
   w.take('a:props').resolve();
-  await flush();   // fauna do mapa antigo é pedida aqui
-  assert.deepEqual(w.rebuilt, ['a'], 'old props must not redraw after selection changes');
-  w.take('rat').resolve();
   await flush();
-  assert.deepEqual(w.rebuilt, ['a'], 'callbacks from the old map must not redraw after selection changes');
+  assert.deepEqual(w.rebuilt, ['a'], 'old props must not redraw after selection changes');
+  assert.equal(w.loads.has('rat'), false, 'old props must not start fauna after selection changes');
 });
 
 test('pending old props cannot redraw after A to B to A', { id: 'mb-backdrop-07-pending-old-props' }, async () => {
@@ -211,7 +218,7 @@ test('pending old props cannot redraw after A to B to A', { id: 'mb-backdrop-07-
   oldProps.resolve();
   await flush();
   assert.deepEqual(w.rebuilt, currentBuilds, 'map equality alone must not accept old A props');
-  // Callbacks velhos ainda pedem fauna: cada pedido deve ser drenado sem redesenhar.
+  // Callbacks velhos não pedem fauna; qualquer fila restante deve continuar sem redesenhar.
   while (w.loads.has('rat')) w.take('rat').resolve();
   await flush();
   assert.deepEqual(w.rebuilt, currentBuilds, 'map equality alone must not accept old A fauna');

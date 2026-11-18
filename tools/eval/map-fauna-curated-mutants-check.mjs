@@ -24,7 +24,7 @@ export const causes = {
   'ignore-seq': { 5: oldProps, 7: oldProps },
   'ignore-map': { 6: changedMap },
   'no-late-fauna': { 1: 'late fauna must still appear', 2: 'late fauna still refines the same arena' },
-  'fauna-first': { 2: 'fauna must not be requested while props are still pending', 5: oldFauna, 7: oldFauna },
+  'fauna-first': { 2: 'fauna must not be requested while props are still pending', 4: 'stale props must not start obsolete fauna work', 5: oldFauna, 6: 'old props must not start fauna after selection changes', 7: oldFauna },
 };
 
 function requireThat(ok, reason) { if (!ok) throw Error(reason); }

@@ -28,6 +28,7 @@ jobs:
     env:
       # Cache Purge é uma permissão da zona, separada do token que publica o Worker.
       CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CF_ZONE_NAME: ${{ vars.CF_ZONE_NAME }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -107,15 +108,22 @@ jobs:
             --config wrangler.prod.toml \
             --yes
       # BUG-39: o HTML antigo ainda pode pedir URLs versionadas de /js/; o manifesto de skins
-      # também é mutável sob /models/. A promoção só termina depois de limpar os dois.
+      # também é mutável sob /models/. Token sem Zone:Read/Cache Purge não invalida a versão
+      # já promovida: avisa com o motivo; prod-watch mantém o probe de coerência independente.
       - name: purge do edge Cloudflare (/js/ + CSS + manifesto de skins)
         if: env.CF_API_TOKEN != ''
         run: |
           set -euo pipefail
           ZONE_NAME="${CF_ZONE_NAME:-corosolto.com.br}"
-          ZONE_ID=$(curl -fsS -H "Authorization: Bearer $CF_API_TOKEN" \
-            "https://api.cloudflare.com/client/v4/zones?name=$ZONE_NAME" \
-            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const r=JSON.parse(s).result;if(!r?.[0]?.id)process.exit(1);console.log(r[0].id)})")
-          curl -fsS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" \
+          ZONE_JSON=$(curl -sS -H "Authorization: Bearer $CF_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/zones?name=$ZONE_NAME") || ZONE_JSON=''
+          if ! ZONE_ID=$(printf '%s' "$ZONE_JSON" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{let j=null;try{j=JSON.parse(s)}catch{}const id=j?.result?.[0]?.id;if(id){process.stdout.write(String(id));return}process.stdout.write((j?.errors||[]).map(e=>e.code+' '+e.message).join('; ')||(j?'nenhuma zona visível para o token':'resposta sem JSON'));process.exit(1)})"); then
+            echo "::warning title=purge do edge pulado::CF_API_TOKEN não enxerga a zona $ZONE_NAME ($ZONE_ID). Dê ao token Zone:Read + Cache Purge nessa zona ou defina CF_ZONE_NAME. A versão promovida continua válida."
+            exit 0
+          fi
+          PURGE_JSON=$(curl -sS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" \
             --data '{"prefixes":["www.corosolto.com.br/js/","www.corosolto.com.br/style.css","www.corosolto.com.br/models/skins/manifest.json"]}' \
-            "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/purge_cache"
+            "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/purge_cache") || PURGE_JSON=''
+          if ! MOTIVO=$(printf '%s' "$PURGE_JSON" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{let j=null;try{j=JSON.parse(s)}catch{}if(j?.success===true)return;process.stdout.write((j?.errors||[]).map(e=>e.code+' '+e.message).join('; ')||'resposta sem JSON');process.exit(1)})"); then
+            echo "::warning title=purge do edge falhou::purge_cache da zona $ZONE_NAME sem success:true ($MOTIVO). A versão promovida continua válida."
+          fi

@@ -55,8 +55,8 @@ jobs:
         if: steps.muda.outputs.ui == '1'
         run: |
           mkdir -p artifacts/ui-regression
-          (cd "$RUNNER_TEMP/ui-base" && npm run dev -- --host 127.0.0.1 --port 4321 > "$GITHUB_WORKSPACE/artifacts/ui-regression/base-server.log" 2>&1) &
-          (npm run dev -- --host 127.0.0.1 --port 4322 > artifacts/ui-regression/head-server.log 2>&1) &
+          (cd "$RUNNER_TEMP/ui-base" && CS_CF_INSPECTOR_PORT=9231 npm run dev -- --host 127.0.0.1 --port 4321 > "$GITHUB_WORKSPACE/artifacts/ui-regression/base-server.log" 2>&1) &
+          (CS_CF_INSPECTOR_PORT=9232 npm run dev -- --host 127.0.0.1 --port 4322 > artifacts/ui-regression/head-server.log 2>&1) &
           for port in 4321 4322; do
             ready=0
             for i in $(seq 1 90); do

@@ -29,6 +29,17 @@ const launchBrowser = () => chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   args: ['--headless=new', '--mute-audio'],
 });
+const closeBrowser = async (instance) => {
+  let timer;
+  try {
+    await Promise.race([
+      instance.close(),
+      new Promise((resolve) => { timer = setTimeout(resolve, 5000); }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+};
 let browser = await launchBrowser();
 
 const MUT = {
@@ -86,7 +97,9 @@ async function abrirCard(page, toque) {
 /* A · 6 telas: posição, história, saída e as colunas. */
 async function telas(mutante, cap) {
   const e1 = [], e2 = [], e3 = [], e6 = [];
-  for (const [w, h, toque] of TELAS) {
+  // Mantém as seis telas em paralelo: o caminho sequencial excedia o teto local
+  // antes mesmo de chegar aos oito controles causais.
+  await Promise.all(TELAS.map(async ([w, h, toque]) => {
     const tag = `${w}x${h}`;
     const { page, ctx } = await lobby({ w, h, toque, mutante });
     if (cap) await page.screenshot({ path: `${OUT}/lobby-${tag}.png` });
@@ -138,7 +151,7 @@ async function telas(mutante, cap) {
       else if (!col.depoisDosAmigos) e6.push(`${tag}: Quests/skins antes de Amigos online`);
       if (col.naPartida.length) e6.push(`${tag}: ${col.naPartida.join(', ')} dentro do painel da partida`);
     } else if (h > 500 && !col.questsVisivel) e6.push(`${tag}: sem a coluna da direita, Quests sumiu`);
-    if (!(await abrirCard(page, toque))) { e2.push(`${tag}: o card não abre a história`); await ctx.close(); continue; }
+    if (!(await abrirCard(page, toque))) { e2.push(`${tag}: o card não abre a história`); await ctx.close(); return; }
     await page.waitForFunction(() => { const i = document.querySelector('dialog[data-historia] .cs-modes-bg'); return i?.complete; }, null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(500);
     if (cap) await page.screenshot({ path: `${OUT}/historia-${tag}.png` });
@@ -163,7 +176,7 @@ async function telas(mutante, cap) {
     if (gaveta) e3.push(`${tag}: Y abriu a gaveta por baixo da história`);
     if (s.aberto || s.foco !== 'tp-lobby-flavio') e3.push(`${tag}: Escape deixou ${s.aberto ? 'o diálogo aberto' : `o foco em ${s.foco}`}`);
     await ctx.close();
-  }
+  }));
   return [
     { id: 'LFB1', ok: !e1.length, msg: e1.join('; ') || `${TELAS.length} telas: sem Resenha; painel do Flávio acima da invasão, livre, à vista, arte carregada` },
     { id: 'LFB2', ok: !e2.length, msg: e2.join('; ') || `${TELAS.length} telas: história abre com a arte carregada, sem rolar nem sair da tela, foco preso no diálogo` },
@@ -215,7 +228,7 @@ if (process.argv.includes('--mutantes')) {
   const mutantes = Object.entries(MUT).filter(([m]) => !process.env.LFB || process.env.LFB === m);
   for (const [indice, [mut, [, , alvo, grupo]]] of mutantes.entries()) {
     // Um Chromium por mutante evita esgotar o route.fetch após dezenas de contexts.
-    if (indice) { await browser.close(); browser = await launchBrowser(); }
+    if (indice) { await closeBrowser(browser); browser = await launchBrowser(); }
     let c;
     try { c = (await GRUPOS[grupo](mut, false)).find((x) => x.id === alvo); }
     catch (e) { c = { ok: true, msg: `erro: ${e.message.split('\n')[0]}` }; }
@@ -233,5 +246,5 @@ if (process.argv.includes('--mutantes')) {
   sair = r.every((c) => c.ok) ? 0 : 1;
   console.log(`\nlobby-flavio (Chrome): ${r.filter((c) => c.ok).length}/${r.length}  (capturas em ${OUT})`);
 }
-await browser.close();
+await closeBrowser(browser);
 process.exit(sair);
