@@ -33,6 +33,9 @@ concurrency:
 
 jobs:
   deploy:
+    # Só a `main` publica: o workflow_dispatch numa branch não revisada pularia o merge e
+    # usaria os segredos de deploy para trocar o relógio de produção.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
