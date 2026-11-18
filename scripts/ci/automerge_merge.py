@@ -75,11 +75,24 @@ def missing_contexts(base: str, rules: list[dict]) -> list[str]:
     return faltam + [contexto for contexto in exigidos if contexto not in presentes]
 
 
+def armed_method(request) -> str | None:
+    """Método do auto-merge já armado no PR (None = desarmado). Só `MERGE` vale: o repo usa
+    merge commit e o ruleset ainda pode aceitar squash/rebase armados por gente."""
+    if request is None:
+        return None
+    return str((request or {}).get('mergeMethod') or 'UNKNOWN').upper()
+
+
 def selftest() -> int:
     release = merge_command('1332', 'a' * 40, 'release-batch')
     safe = merge_command('1328', 'b' * 40, 'safe')
     assert release == ['gh', 'pr', 'merge', '1332', '--merge', '--match-head-commit', 'a' * 40]
     assert safe == ['gh', 'pr', 'merge', '1328', '--merge', '--match-head-commit', 'b' * 40, '--delete-branch']
+    assert armed_method(None) is None
+    assert armed_method({'mergeMethod': 'MERGE'}) == 'MERGE'
+    assert armed_method({'mergeMethod': 'SQUASH'}) == 'SQUASH'
+    assert armed_method({'mergeMethod': 'rebase'}) == 'REBASE'
+    assert armed_method({}) == 'UNKNOWN', 'armed request without a readable method is not MERGE'
     evaluated = {
         'isDraft': False,
         'labels': [{'name': 'safe-automerge'}],
@@ -206,7 +219,15 @@ def main() -> int:
     live = json.loads(gh_read(['pr', 'view', pr, '--json', 'id,autoMergeRequest,headRefOid,labels'], check=True).stdout)
     if live['headRefOid'] != head_oid:
         raise RuntimeError('head moved after the policy status; the next bot run evaluates the new head')
-    armed = live.get('autoMergeRequest') is not None
+    metodo = armed_method(live.get('autoMergeRequest'))
+    if metodo not in (None, 'MERGE'):
+        # Alguém armou squash/rebase (ou o método não veio): desarma antes de qualquer outra
+        # decisão. Se a política permitir, o bot rearma abaixo com MERGE.
+        gh(['api', 'graphql', '-f', f'query={DISARM}', '-f', f"id={live['id']}"], check=True)
+        comment(pr, f"🤖 **csbrasil-bot**: auto-merge was armed with `{metodo}`; disarmed — this "
+                    "repository merges with a merge commit only.")
+        metodo = None
+    armed = metodo == 'MERGE'
     labeled = any(label['name'] == 'pronto-pra-merge' for label in live.get('labels') or [])
 
     if not current_result['auto_merge']:
