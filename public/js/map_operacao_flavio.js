@@ -299,6 +299,12 @@ export function buildOperacaoFlavio(scene, T = {}) {
     }
     return mesh;
   };
+  const colliderDoProp = (id, x, y, z, w, h, d, yaw = 0) => {
+    // AABB envolvente do retângulo rotacionado: física idêntica com ou sem GLB.
+    const cos = Math.abs(Math.cos(yaw)), sin = Math.abs(Math.sin(yaw));
+    const halfW = (w * cos + d * sin) / 2, halfD = (w * sin + d * cos) / 2;
+    colliders.push({ id, yaw, minX: x - halfW, maxX: x + halfW, minY: y, maxY: y + h, minZ: z - halfD, maxZ: z + halfD });
+  };
   const placa = (nome, titulo, subtitulo, x, y, z, w, h, yaw = 0, fundo, destaque) => {
     const mat = new THREE.MeshBasicMaterial({ map: texturaPlaca(titulo, subtitulo, fundo, destaque), side: THREE.FrontSide, toneMapped: false });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
@@ -418,12 +424,14 @@ export function buildOperacaoFlavio(scene, T = {}) {
   }
   bloco('separador-seguranca-oeste', -18, 0.52, 1, 0.52, 1.04, 28, mats.marinho);
   bloco('separador-seguranca-leste', 18, 0.52, 1, 0.52, 1.04, 28, mats.marinho);
-  for (const z of [-5, 1, 7]) for (const x of [-5.5, 5.5]) {
-    cilindro('poste-fila', x, 0.55, z, 0.11, 1.1, mats.metal);
-    // Cinto em dois segmentos com vão central de 1,8 m: a fila não vira trilho
-    // atravessando o campo da câmera (achado do gauntlet na captura do pátio).
-    for (const lado of [-3.2, 3.2]) bloco('fita-fila', lado, 0.95, z, 4.6, 0.06, 0.06, mats.laranja, false, false);
-  }
+  // Fila do controle de acesso: postes e fitas são sólidos, colisor = caixa visível, e toda fita
+  // termina num poste. Fica a leste da lane central: a escolta marcha por x≈-4…2 com guardas a até
+  // 3,1 m de lado, e fita sólida atravessando a lane funila a formação (passo invertido por quadro).
+  const FILA_ACESSO = { postes: [4, 6.5, 9], fileiras: [-5, 1, 7] };
+  for (const z of FILA_ACESSO.fileiras) FILA_ACESSO.postes.forEach((x, i, postes) => {
+    cilindro('poste-fila', x, 0.55, z, 0.11, 1.1, mats.metal, true);
+    if (i) bloco('fita-fila', (postes[i - 1] + x) / 2, 0.95, z, x - postes[i - 1], 0.06, 0.06, mats.laranja, true, false);
+  });
   // Colunas sólidas fora das vielas internas (x=±12) e do nó (±12,5;-13): render-only em ±12,2,
   // o bot nascia e passava dentro delas.
   bloco('portico-controle', 0, 3.9, -13, 27.7, 0.36, 0.7, mats.marinho, false);
@@ -526,14 +534,16 @@ export function buildOperacaoFlavio(scene, T = {}) {
       traco.position.set(x, 0.007, z); detalhe.add(traco);
     }
 
-    // Carretas de bagagem enchem os vãos laterais do stand; continuam render-only.
+    // Carretas de bagagem enchem os vãos laterais do stand. Com malas até 1,18 m parecem sólidas:
+    // colisor na pegada do chassi (as malas cabem nela), chassi e malas param bala; a haste é baixa.
     const carretaPos = [[-24.5, 58.4, 0.18], [22.5, 60.6, -0.34]];
     const bagagens = new THREE.InstancedMesh(new THREE.BoxGeometry(0.72, 0.3, 0.48), mats.interno, 14);
     let bagagem = 0;
     for (const [x, z, yaw] of carretaPos) {
       const carreta = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.24, 1.25), mats.metal);
       carreta.name = 'carreta-bagagem-embarque'; carreta.position.set(x, 0.44, z); carreta.rotation.y = yaw;
-      carreta.castShadow = !lowProfile; detalhe.add(carreta);
+      carreta.castShadow = !lowProfile; detalhe.add(carreta); occluders.push(carreta);
+      colliderDoProp('carreta-bagagem-embarque', x, 0, z, 2.5, 1.18, 1.25, yaw);
       const haste = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.1, 8), mats.metal);
       haste.name = 'haste-carreta-embarque'; haste.position.set(x - Math.cos(yaw) * 1.55, 0.35, z + Math.sin(yaw) * 1.55);
       haste.rotation.z = Math.PI / 2; haste.rotation.y = yaw; detalhe.add(haste);
@@ -551,7 +561,7 @@ export function buildOperacaoFlavio(scene, T = {}) {
         cinta.rotation.y = yaw; detalhe.add(cinta);
       }
     }
-    bagagens.name = 'bagagens-embarque'; bagagens.castShadow = !lowProfile; detalhe.add(bagagens);
+    bagagens.name = 'bagagens-embarque'; bagagens.castShadow = !lowProfile; detalhe.add(bagagens); occluders.push(bagagens);
   }
 
   // Volumes além do limite fecham o horizonte como um aeroporto, não como uma arena vazia.
@@ -696,12 +706,6 @@ export function buildOperacaoFlavio(scene, T = {}) {
   usarProp('trator_bagagem', [-20, 0.08, 50], MEDIDA_REAL.trator_bagagem, MEDIDA_REAL.trator_bagagem, Math.PI / 2);
   usarProp('carrinho_ferramentas', [27, 0.08, 38], MEDIDA_REAL.carrinho_ferramentas, MEDIDA_REAL.carrinho_ferramentas, Math.PI / 2);
   usarProp('arco_seguranca', [0, 0.08, -13], 3, [3, 3, 0.8], 0, false);
-  const colliderDoProp = (id, x, y, z, w, h, d, yaw = 0) => {
-    // AABB envolvente do retângulo rotacionado: física idêntica com ou sem GLB.
-    const cos = Math.abs(Math.cos(yaw)), sin = Math.abs(Math.sin(yaw));
-    const halfW = (w * cos + d * sin) / 2, halfD = (w * sin + d * cos) / 2;
-    colliders.push({ id, yaw, minX: x - halfW, maxX: x + halfW, minY: y, maxY: y + h, minZ: z - halfD, maxZ: z + halfD });
-  };
   // Proxies do avião medidos na malha real (corpo 0,3–1,6 m e cabine acima), nunca maiores que o
   // render: nariz, asas e cauda deixam o anel em volta do avião livre para circular.
   for (const [id, minX, maxX, minY, maxY, minZ, maxZ] of [
@@ -724,9 +728,11 @@ export function buildOperacaoFlavio(scene, T = {}) {
   })();
   colliderDoProp('trator_bagagem', -20, 0, 50, ...MEDIDA_REAL.trator_bagagem, Math.PI / 2);
   colliderDoProp('carrinho_ferramentas', 27, 0, 38, ...MEDIDA_REAL.carrinho_ferramentas, Math.PI / 2);
-  for (const x of [-1.28, 1.28]) colliders.push({
-    minX: x - 0.24, maxX: x + 0.24, minY: 0, maxY: 3,
-    minZ: -13.45, maxZ: -12.55,
+  // Pilares do arco medidos na malha (escala 3 m pela altura, base em y 0,08): face interna a 0,70 m
+  // da linha central, externa a 0,96 m, pés com ±0,643 m em z e topo em 3,08 m. Constantes, não a
+  // caixa do GLB, para a física ser a mesma sem o modelo; o vão de 1,4 m entre eles fica livre.
+  for (const [minX, maxX] of [[-0.96, -0.70], [0.70, 0.96]]) colliders.push({
+    id: 'arco_seguranca', minX, maxX, minY: 0, maxY: 3.08, minZ: -13 - 0.643, maxZ: -13 + 0.643,
   });
 
   // Placa render-only (sem colisor, oclusor ou raycast) igual para os dois times: a seta
