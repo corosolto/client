@@ -257,6 +257,9 @@ jobs:
       - name: Borda Cloudflare — cache, viewmodel do R2 e apex (com mutantes)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:cfborda
+      - name: Fixture do viewmodel publicado retenta só 5xx, corte e timeout (com mutantes)
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:vm-rede
       - name: Wrapper de portal embeda o site (frame-ancestors, UTM, pointer-lock)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run eval:portalembed
