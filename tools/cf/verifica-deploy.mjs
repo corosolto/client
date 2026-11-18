@@ -5,7 +5,7 @@
    cobra, contra o host publicado:
      D1  `/` responde 200 e grava o commit do build (window.__CS_BUILD.sha = --sha)
      D2  /audio/manifest.json publicado é byte a byte o do dist/client deste build
-     D3  todo viewmodel do manifesto versionado responde 200 com o tamanho e o ETag (sha256) dele
+     D3  todo viewmodel do manifesto versionado responde 200 com o tamanho e o sha256 do corpo dele
 
    Uso: node tools/cf/verifica-deploy.mjs --base=https://csb-staging.<sub>.workers.dev --sha=<40 hex>
         [--dist=dist/client] [--sem-viewmodel]  (--sem-viewmodel: Worker sem binding PRIVADO) */
@@ -68,17 +68,15 @@ export async function verificarDeploy({
            corruptos do mesmo tamanho; HEAD sozinho não prova o artefato publicado. */
         const resposta = await pega(url);
         const body = Buffer.from(await resposta.arrayBuffer());
-        const etag = (resposta.headers.get('etag') || '').replace(/^W\//, '');
         const valido = resposta.status === 200
           && body.length === f.bytes
-          && etag === `"${f.sha256}"`
           && sha256(body) === f.sha256;
         if (!valido) ruins.push(`${f.path} (${resposta.status}, ${body.length} B, etag ${resposta.headers.get('etag')})`);
       }
     }));
     check(!ruins.length, 'D3', ruins.length
       ? `${ruins.length}/${files.length} viewmodels fora do contrato: ${ruins.slice(0, 4).join('; ')}`
-      : `${files.length}/${files.length} viewmodels servidos do R2 com tamanho e sha256 do manifesto`);
+      : `${files.length}/${files.length} viewmodels publicados com tamanho e sha256 do manifesto`);
   }
 
   return { falhas };

@@ -214,6 +214,12 @@ avisa manutenção no app sem publicar app novo — ver `docs/mobile/CONFIG-REMO
 De propósito, `smoke:prod` **não** entra em `check:fast` nem em `check:deploy`: depende de
 rede externa e mede o que está no ar, não o que está no disco.
 
+Depois do smoke, a vigilância contínua é do `prod-watch.yml` (a cada 15 min) e do
+`ops-diag.yml` (de hora em hora). O relógio primário deles é o Worker `vigia-cron`, que chama
+o `workflow_dispatch` de cada um (e do `sync-nodes.yml` do backend). O `schedule` do GitHub,
+que descartava ~96% dos disparos, fica só como rede de segurança. Como conferir e o que fazer
+quando o Worker para: `docs/runbooks/vigia-cron.md`.
+
 ## Crash triage
 
 Issues `crash-auto` devem ser agrupadas por assinatura de erro antes de

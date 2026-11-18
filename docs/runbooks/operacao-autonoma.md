@@ -153,7 +153,8 @@ npm run ops:selftest   # mutantes: uma produção sintética por sintoma; cada u
 
 Os dois entram no `check:fast` (medido em 06/09/2026 no Mac: `ops:test` 0,2 s; `ops:selftest`
 ≈20 s com os cenários HTTP em paralelo, 2 Chromiums e 2 partidas sintéticas). No CI:
-`ops-diag.yml` roda a diagnose inteira a cada hora (artifact + issue `ops-diag` em vermelho,
+`ops-diag.yml` roda a diagnose inteira a cada hora, disparado pelo Worker vigia-cron
+(`docs/runbooks/vigia-cron.md`) (artifact + issue `ops-diag` em vermelho,
 fechada em verde); `portao-browser.yml` roda `eval:boot` e os cenários de navegador do
 selftest em PR que toca `main.js`, `ops.js`, `apibase.js`, `index.astro`, `boot-check` ou
 `tools/ops`; `prod-watch.yml` aquece o edge depois do purge de cada deploy. Um mutante que

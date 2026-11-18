@@ -69,8 +69,7 @@ const MUTANTES = {
   'bootstrap-sem-trailer': 'AF7',
   'release-sem-trailer': 'AF7',
   'release-sem-signoff': 'AF7',
-  'workflow-fora-do-registro': 'AF7',
-  'registro-orfao': 'AF7',
+  'chamada-fora-do-recorte': 'AF7',
   'trava-do-pr': 'AF5',
   'varredura-dispara-atrasado': 'AF8',
   'varredura-sem-espera': 'AF8',
@@ -173,37 +172,72 @@ if (MUT === 'commit-guardado-sem-trailer') wf = wf.replace(/(\|\| git commit[\s\
    blocos `run:`: as chamadas reais ficavam FORA do recorte, a régua media só o `--abort`
    e os dois mutantes de trailer estavam cegos — foi assim que o commit "regenera bloco
    derivado" saiu sem `Agent:` e o dco reprovou a PR #448 (issue #450). */
+/* `git` pode vir quebrado em `\` e com opção global antes do subcomando
+   (`git \ -c user.name=… commit -s`, o csbrasil-bot-build-fix.yml): foi a leitura do YAML
+   abaixo que achou essa chamada, que o recorte e o registro manual antigo nunca viram. */
+const ESPACO = String.raw`(?:[^\S\n]|\\\n)+`;
+const GIT_SUB = (sub) => String.raw`git(?:${ESPACO}(?:-[cC]${ESPACO}\S+|--[\w-]+(?:=\S+)?))*${ESPACO}${sub}(?![\w-])`;
 const recortarChamadas = (texto) =>
-  [...texto.matchAll(/^[^\S\n]*(?:if !? ?)?(?:[^\n#]*?(?:\|\||&&|;)[^\S\n]*)?git (?:commit|merge)(?:[^\n]*\\\n)*[^\n]*/gm)]
+  [...texto.matchAll(new RegExp(String.raw`^[^\S\n]*(?:if !? ?)?(?:[^\n#]*?(?:\|\||&&|;)[^\S\n]*)?${GIT_SUB('(?:commit|merge)')}(?:[^\n]*\\\n)*[^\n]*`, 'gm'))]
     .map((m) => m[0])
     .filter((t) => !/--abort/.test(t))                      // abortar não cria commit
     .filter((t) => !/^[^\S\n]*["']/.test(t));               // linha de string de `--body`: citação, não chamada
 /* Não saber medir é o mesmo vermelho de medir errado: foi um recorte que não achava
-   chamada NENHUMA que cegou os dois mutantes de trailer (#450). Achar menos que o
-   registrado é recorte quebrado, não workflow limpo — e workflow com chamada que não
-   está no registro é a mesma cegueira pela outra porta: um recorte que emudecesse
-   nele viraria verde silencioso. */
-const CHAMADAS_ESPERADAS = { 'autofix.yml': 3, 'issues-bot.yml': 1, 'release.yml': 1 };
-if (MUT === 'workflow-fora-do-registro') delete CHAMADAS_ESPERADAS['issues-bot.yml'];
-if (MUT === 'registro-orfao') CHAMADAS_ESPERADAS['fantasma.yml'] = 1;
+   chamada NENHUMA que cegou os dois mutantes de trailer (#450). A contagem que prova o
+   recorte NÃO é escrita à mão: uma segunda leitura, independente da regex, abre o YAML,
+   pega o `run:` de cada passo e conta comando a comando do shell (fora de aspas,
+   comentário e heredoc) quantos são `git commit`/`git merge`. As duas leituras têm de
+   bater em TODO workflow — chamada que a regex não vê é cegueira, e workflow novo entra
+   na conta sozinho. Antes era um registro manual (CHAMADAS_ESPERADAS): todo workflow que
+   passasse a comitar reprovava até alguém somar o arquivo nele (run 43714291813). */
+const comandosGitQueComitam = (script) => {
+  let codigo = '';
+  const heredocs = [];
+  for (let i = 0; i < script.length; i++) {
+    const c = script[i];
+    if (c === '\\' && script[i + 1] === '\n') { codigo += ' '; i++; continue; }
+    if (c === '\\') { codigo += script[i + 1] ?? ''; i++; continue; }
+    if (script.startsWith('${{', i)) { const fim = script.indexOf('}}', i); i = fim < 0 ? script.length : fim + 1; codigo += 'X'; continue; }
+    if (c === "'") { const fim = script.indexOf("'", i + 1); i = fim < 0 ? script.length : fim; codigo += 'Q'; continue; }
+    if (c === '"') {
+      let j = i + 1;
+      while (j < script.length && script[j] !== '"') j += script[j] === '\\' ? 2 : 1;
+      i = j; codigo += 'Q'; continue;
+    }
+    if (c === '#' && (i === 0 || /[\s;(|&]/.test(script[i - 1]))) { while (i + 1 < script.length && script[i + 1] !== '\n') i++; continue; }
+    const doc = /^<<-?\s*(['"]?)([\w-]+)\1/.exec(script.slice(i, i + 80));
+    if (doc) { heredocs.push(doc[2]); codigo += 'H'; i += doc[0].length - 1; continue; }
+    if (c === '\n' && heredocs.length) {
+      for (const fim of heredocs.splice(0)) {
+        const linhas = script.slice(i + 1).split('\n');
+        const k = linhas.findIndex((l) => l.trim() === fim);
+        i += linhas.slice(0, k < 0 ? linhas.length : k + 1).join('\n').length + 1;
+      }
+      codigo += '\n';
+      continue;
+    }
+    codigo += c;
+  }
+  return codigo.split(/\n|;|&&|\|\||\|/).map((cmd) => cmd.trim().split(/\s+/)).filter((t) => {
+    while (t.length && /^(?:!|if|then|else|elif|do|while|until|time|\{|\(|[A-Za-z_]\w*=\S*)$/.test(t[0])) t.shift();
+    if (t[0] !== 'git') return false;
+    let k = 1;
+    while (k < t.length && t[k].startsWith('-')) k += /^-[Cc]$/.test(t[k]) ? 2 : 1;
+    return /^(?:commit|merge)$/.test(t[k] || '') && !t.includes('--abort');
+  }).map((t) => t.join(' '));
+};
 const WORKFLOWS = readdirSync('.github/workflows').filter((f) => /\.ya?ml$/.test(f));
-/* Registro órfão é a régua jurando medir arquivo que não existe: se o workflow for
-   renomeado ou removido, a entrada velha ficaria verde calada para sempre. */
-for (const nome of Object.keys(CHAMADAS_ESPERADAS)) {
-  if (!WORKFLOWS.includes(nome)) falhas.push(`AF7 CHAMADAS_ESPERADAS registra ${nome}, que não está em .github/workflows/ — renomeie ou remova o registro, senão a régua jura medir arquivo que não existe`);
-}
 for (const nome of WORKFLOWS) {
   let texto = nome === 'autofix.yml' ? wf : ler(`.github/workflows/${nome}`);
   if (MUT === 'bootstrap-sem-trailer' && nome === 'issues-bot.yml') texto = texto.replace(/\n\s*-m "Agent: csbrasil-bot \(issues-bot\)" \\/, '');
   if (MUT === 'release-sem-trailer' && nome === 'release.yml') texto = texto.replace(/ \\\n\s*-m "Agent: csbrasil-deploy-bot \(release\)"/, '');
   if (MUT === 'release-sem-signoff' && nome === 'release.yml') texto = texto.replace('git commit -s -m "chore(release)', 'git commit -m "chore(release)');
+  if (MUT === 'chamada-fora-do-recorte' && nome === 'issues-bot.yml') texto = texto.replace('git commit --allow-empty', 'time git commit --allow-empty');
   const chamadas = recortarChamadas(texto);
-  const esperado = CHAMADAS_ESPERADAS[nome] ?? 0;
-  if (chamadas.length < esperado) {
-    falhas.push(`AF7 o recorte achou ${chamadas.length} chamada(s) de \`git commit\`/\`git merge\` no ${nome}, e CHAMADAS_ESPERADAS registra ${esperado} — o recorte está cego: conserte a regex da AF7 (ou atualize o registro se uma chamada saiu de propósito) antes de confiar no verde`);
-  }
-  if (!esperado && chamadas.length) {
-    falhas.push(`AF7 ${nome} faz \`git commit\`/\`git merge\` e não está em CHAMADAS_ESPERADAS — registre a contagem, senão um recorte que ficar cego neste arquivo vira verde silencioso`);
+  const workflow = estrutura(nome, texto, 'AF7');
+  const lidas = workflow ? Object.values(jobsDe(workflow)).flatMap((job) => passosDe(job).flatMap((passo) => comandosGitQueComitam(runDe(passo)))) : [];
+  if (workflow && chamadas.length !== lidas.length) {
+    falhas.push(`AF7 ${nome}: o recorte acha ${chamadas.length} chamada(s) de \`git commit\`/\`git merge\` e a leitura do YAML acha ${lidas.length} (${lidas.join(' · ').slice(0, 160)}) — o recorte está cego para essa forma: amplie a regex de recortarChamadas em tools/eval/autofix-check.mjs antes de confiar no verde`);
   }
   for (const trecho of chamadas) {
     if (!/Agent:/.test(trecho)) falhas.push(`AF7 um \`git commit\`/\`git merge\` do ${nome} não leva \`Agent:\` — o agente_check reprova a PR que a própria máquina tocou (#406, #450, #451)`);
@@ -213,7 +247,7 @@ for (const nome of WORKFLOWS) {
        congelaria o valor no YAML. A âncora em `git commit` é de propósito: em
        `git merge`, `-s` é ESTRATÉGIA (`-s ours`), e `[ -s arquivo ]` é o operador de
        teste do shell — os dois passariam por signoff num recorte que só visse ` -s `. */
-    if (!/Signed-off-by:/.test(trecho) && !/git commit[^\n]*\s-s\s/.test(trecho)) falhas.push(`AF7 um \`git commit\`/\`git merge\` do ${nome} não leva \`Signed-off-by:\` nem \`git commit … -s\` — o dco reprova o commit que a máquina fez`);
+    if (!/Signed-off-by:/.test(trecho) && !new RegExp(String.raw`${GIT_SUB('commit')}[^\n]*\s-s\s`).test(trecho)) falhas.push(`AF7 um \`git commit\`/\`git merge\` do ${nome} não leva \`Signed-off-by:\` nem \`git commit … -s\` — o dco reprova o commit que a máquina fez`);
   }
 }
 
