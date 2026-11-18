@@ -10,7 +10,7 @@
    Mutantes (cada um tem de reprovar): sem-strip, vm-sem-etag, vm-304-antes-r2, vm-sem-sha,
    apex-301, apex-sem-worker-first, assets-sem-fallback, assets-intercepta-post,
    cache-ignora-etag, cache-sem-stale, cache-revalida-condicional, cache-preenche-condicional,
-   cache-sem-single-flight, cache-sem-fill-flight, cache-aceita-legado. */
+   cache-sem-single-flight, cache-sem-fill-flight, cache-aceita-legado, cache-dona-sem-waituntil. */
 import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -38,6 +38,7 @@ const MUTACOES = {
   'cache-sem-single-flight': ['src/cf/worker.ts', 'const existente = OPERACOES_CACHE.get(chave);', 'const existente = undefined;'],
   'cache-sem-fill-flight': ['src/cf/worker.ts', 'const existente = OPERACOES_CACHE.get(chave);', 'const existente = undefined;'],
   'cache-aceita-legado': ['src/cf/worker.ts', 'if (frescoAte > 0) {', 'if (true) {'],
+  'cache-dona-sem-waituntil': ['src/cf/worker.ts', '  ctx.waitUntil(trabalho.then(limpar, limpar));', '  void trabalho.then(limpar, limpar);'],
 };
 if (MUTANTE && !MUTACOES[MUTANTE]) { console.error(`mutante desconhecido: ${MUTANTE}`); process.exit(2); }
 
@@ -258,16 +259,26 @@ const envPreenchimento = {
     },
   },
 };
-const coldA = workerReal.fetch(new Request('https://www.corosolto.com.br/mapa?cold=1'), envPreenchimento, ctx);
-const coldB = workerReal.fetch(new Request('https://www.corosolto.com.br/mapa?cold=1'), envPreenchimento, ctx);
+// A dona do preenchimento segura o próprio contexto (waitUntil) até a operação assentar: no
+// workerd, cliente que desconecta cancela a requisição, e quem espera a operação dela recebia 500
+// ("This promise was created by a request that has since ended", csb-prod 17/11).
+const esperasDona = [];
+const esperasOutra = [];
+const ctxDona = { waitUntil(promise) { esperasDona.push(promise); pendentes.push(promise); } };
+const ctxOutra = { waitUntil(promise) { esperasOutra.push(promise); pendentes.push(promise); } };
+const coldA = workerReal.fetch(new Request('https://www.corosolto.com.br/mapa?cold=1'), envPreenchimento, ctxDona);
+const coldB = workerReal.fetch(new Request('https://www.corosolto.com.br/mapa?cold=1'), envPreenchimento, ctxOutra);
 await new Promise((resolve) => setImmediate(resolve));
 const chamadasAntesDeLiberar = chamadasPreenchimento;
+const donaSeguraAntes = esperasDona.length === 1 && esperasOutra.length === 0;
 for (const libera of liberaPreenchimentos) libera();
 const [coldRespostaA, coldRespostaB] = await Promise.all([coldA, coldB]);
 check(chamadasAntesDeLiberar === 1
   && await coldRespostaA.text() === 'cold-fill'
   && await coldRespostaB.text() === 'cold-fill',
 'B2', `misses concorrentes precisam compartilhar preenchimento; chamadas=${chamadasAntesDeLiberar}`);
+check(donaSeguraAntes,
+  'B2', `dona do preenchimento precisa segurar a operação com waitUntil; dona=${esperasDona.length} outra=${esperasOutra.length}`);
 cacheEntry = null;
 falhaCachePut = true;
 const respostaSemCacheApi = await silencioso(() => workerReal.fetch(
@@ -301,12 +312,19 @@ check(staleReal.status === 200 && await staleReal.text() === 'stale-v1',
   'B2', 'janela stale-while-revalidate precisa servir a cópia anterior durante falha da origem');
 await Promise.all(pendentes.splice(0));
 const liberaRevalidacoes = [];
+let revalidacoesLiberadas = false;
+const liberarRevalidacoes = () => {
+  revalidacoesLiberadas = true;
+  for (const libera of liberaRevalidacoes.splice(0)) libera();
+};
 let chamadasRevalidacao = 0;
+// Depois de liberada, a origem responde na hora: quem espera uma operação que não deixou cópia
+// fresca no cache consulta a origem por conta própria (src/cf/worker.ts, respostaDeQuemEspera).
 const envRevalidacao = {
   ASSETS: {
     fetch: async (request) => {
       chamadasRevalidacao++;
-      await new Promise((resolve) => liberaRevalidacoes.push(resolve));
+      if (!revalidacoesLiberadas) await new Promise((resolve) => liberaRevalidacoes.push(resolve));
       return request.headers.has('if-none-match')
         ? new Response(null, { status: 304 })
         : new Response('stale-v2', {
@@ -322,7 +340,7 @@ const respostasStale = Promise.all([
 ]);
 if (MUTANTE === 'cache-sem-stale') {
   await new Promise((resolve) => setImmediate(resolve));
-  for (const libera of liberaRevalidacoes) libera();
+  for (const libera of liberaRevalidacoes.splice(0)) libera();
 }
 const [staleCondicionalA, staleCondicionalB] = await respostasStale;
 check(staleCondicionalA.status === 200
@@ -335,7 +353,7 @@ cacheEntry.headers.set('x-csb-stale-ate', String(Date.now() - 1));
 const expiradoEmVoo = workerReal.fetch(swrRequest, envRevalidacao, ctx);
 await new Promise((resolve) => setImmediate(resolve));
 const chamadasComExpirado = chamadasRevalidacao;
-for (const libera of liberaRevalidacoes) libera();
+liberarRevalidacoes();
 const respostaExpirada = await expiradoEmVoo;
 await Promise.all(pendentes.splice(0));
 check(chamadasComExpirado === 1

@@ -131,6 +131,7 @@ Cobertura: **4197 de 10287 linhas (41%)** do `game.js` têm dono declarado. O re
 | 758 | `_doLado` | 4 |
 | 764 | `_pinnedDefs` | 5 |
 | 769 | `pickMatchRoster` | 21 |
+| 791 | `elencoDaEscolta` | 7 |
 | 790 | `BOT_WEAPON_POOL` | 5 |
 | 795 | `pickMatchWeapons` | 9 |
 | 804 | `aguardarPreloads` | 9 |

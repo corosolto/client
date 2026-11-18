@@ -21,15 +21,17 @@
      GP6 o segredo da env API_PROXY_SECRET sobe como x-csb-proxy-auth, e só ele
      GP7 main.js manda telemetry/presence/heartbeat/submit-match/perf por apiUrl
      GP8 o fetch do proxy tem prazo (backend pendurado não segura a função)
+     GP9 no Worker a geo vem de request.cf (país, cidade codificada, lat/lon) mesmo sem
+         os headers cf-ip* do Managed Transform
 
    Mutantes: --mutante=geo-direto | pop-como-cidade | cf-forjado | sem-segredo
-             | rota-fora-do-proxy | fetch-cru | sem-prazo
+             | rota-fora-do-proxy | fetch-cru | sem-prazo | sem-request-cf
    Uso: node tools/eval/geo-proxy-check.mjs [--mutante=...]
    ============================================================================ */
 import { readFileSync } from 'node:fs';
 
 const mut = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = ['geo-direto', 'pop-como-cidade', 'cf-forjado', 'sem-segredo', 'rota-fora-do-proxy', 'fetch-cru', 'sem-prazo'];
+const MUTANTES = ['geo-direto', 'pop-como-cidade', 'cf-forjado', 'sem-segredo', 'rota-fora-do-proxy', 'fetch-cru', 'sem-prazo', 'sem-request-cf'];
 if (mut && !MUTANTES.includes(mut)) throw new Error(`mutante desconhecido: ${mut}`);
 const muta = (fonte, de, para) => {
   const novo = fonte.replace(de, para);
@@ -45,6 +47,7 @@ if (mut === 'geo-direto') jogo = muta(jogo, "if (VIA_SITE.has(nome) && !forcado)
 if (mut === 'pop-como-cidade') proxy = muta(proxy, 'if (request.cf || saltoDaCloudflare(clientAddress)) {', 'if (false) {');
 if (mut === 'cf-forjado') proxy = muta(proxy, 'if (request.cf || saltoDaCloudflare(clientAddress)) {', "if (request.headers.has('cf-connecting-ip')) {");
 if (mut === 'sem-prazo') proxy = muta(proxy, '    signal: AbortSignal.timeout(TEMPO_MAXIMO_MS),\n', '');
+if (mut === 'sem-request-cf') proxy = muta(proxy, 'const doCf = request.cf?.[CAMPO_CF[nome]];', 'const doCf = undefined;');
 if (mut === 'sem-segredo') rota = muta(rota, '{ segredo: SEGREDO }', '{}');
 if (mut === 'rota-fora-do-proxy') rota = muta(rota, "'submit-match', ", '');
 if (mut === 'fetch-cru') main = muta(main, "void fetch(apiUrl(path), {", "void fetch(path, {");
@@ -120,6 +123,14 @@ const CF = { 'cf-connecting-ip': '201.17.0.9', 'cf-ipcountry': 'BR', 'cf-ipcity'
   const sem = await sobe({ 'x-csb-proxy-auth': 'forjado' }, '203.0.113.9');
   cobra(com.get('x-csb-proxy-auth') === 'z'.repeat(40), 'GP6 o proxy não prova a origem ao backend — com API_PROXY_SECRET no backend a geo seria descartada');
   cobra(!sem.has('x-csb-proxy-auth'), 'GP6 x-csb-proxy-auth do NAVEGADOR atravessou o proxy');
+}
+{
+  const req = new Request('https://www.corosolto.com.br/api/telemetry', { method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '201.17.0.9' }, body: '{}' });
+  Object.defineProperty(req, 'cf', { value: { country: 'BR', city: 'São Paulo', latitude: '-23.55', longitude: '-46.63' } });
+  let h;
+  await proxyApiRequest(req, 'https://backend.invalid/api/telemetry', '', async (_url, init) => { h = init.headers; return new Response('{}'); });
+  cobra(h.get('cf-ipcountry') === 'BR' && decodeURIComponent(h.get('cf-ipcity') || '') === 'São Paulo' && h.get('cf-iplatitude') === '-23.55' && h.get('cf-iplongitude') === '-46.63',
+    `GP9 geo de request.cf não subiu (país=${h.get('cf-ipcountry')}, cidade=${h.get('cf-ipcity')}, lat=${h.get('cf-iplatitude')}) — sem o Managed Transform a cidade morre`);
 }
 cobra(sinal instanceof AbortSignal, 'GP8 fetch do proxy sem prazo — Cloud Run pendurado segura cada chamada de telemetria até o teto da função da Vercel');
 cobra(/from '\.\.\/\.\.\/lib\/env-runtime'/.test(rota) && /\{ segredo: envRuntime\('API_PROXY_SECRET'\) \|\| ''/.test(rota),
