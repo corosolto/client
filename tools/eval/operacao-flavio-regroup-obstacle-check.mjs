@@ -24,6 +24,9 @@ if (mutation) {
     'para-apos-lateral': ['if (formationPull) {', 'if (formationPull && this.time < 14) {'],
     'sem-colisao': ['  _collide(pos, r, colliders = this.world.colliders) {', '  _collide(pos, r, colliders = this.world.colliders) { return;'],
     'sem-rearme': ['          } else {\n            b.path = null;\n            b._escapeUntil = Math.max(b._escapeUntil || 0, this.time + 0.35);', '          } else {\n            b.path = null;\n            b._escapeUntil = b._escapeUntil || 0;'],
+    // Rota de reagrupamento começa no nó de saída quando o seguinte está atrás de parede (18/11:
+    // guarda colado na fachada norte mirava (0,-14,67) através dela depois do ajuste do arco).
+    'pula-inicio': ['b.pathIdx = b.path.length > 1 && !this._walkReach(b, Wo.waypoints.nodes[b.path[1]], 0.3) ? 0 : 1;', 'b.pathIdx = 1;'],
   };
   const start = source.indexOf('      // Reagrupar não muda o yaw que orienta a mira.');
   const end = source.indexOf('      // FLANCO/AVANÇO:', start);

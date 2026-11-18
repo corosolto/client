@@ -35,6 +35,10 @@ const mutations = {
   'sem-hold-escape-direto': ['escortCenterMoving && this.time > (b._escapeDiretoAt || 0) + 0.6', 'escortCenterMoving'],
   // ...e se a proteção de spawn voltar a piscar o corpo inteiro na escolta.
   'protecao-pisca': ["if (this.time < b.protUntil && this.world.mode !== 'escort') g.visible = Math.floor(this.time * 12) % 2 === 0;", 'if (this.time < b.protUntil) g.visible = Math.floor(this.time * 12) % 2 === 0;'],
+  // ...e se o passo até o waypoint do reagrupamento voltar a passar do nó (vai-e-vem no fim da rota).
+  'passo-sem-chegada': [': Math.min(BOT_SPEED * dt, gn);', ': BOT_SPEED * dt;'],
+  // ...e se o primeiro nó da rota for pulado quando o deslizamento na parede "alcança" o próximo.
+  'salto-pelo-batente': ['Wo.waypoints.nodes[b.path[1]], 0.3) ? 0 : 1;', 'Wo.waypoints.nodes[b.path[1]]) ? 0 : 1;'],
 };
 const mutation = process.argv.find(arg => arg.startsWith('--mutante='))?.slice(10);
 let Game = BaseGame;

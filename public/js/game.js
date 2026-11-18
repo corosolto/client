@@ -7,7 +7,7 @@ import { escapeClanName } from './clan-label.js';
 import { ajustarAnisotropia } from './textures.js';
 import { MAPS, resolveMapId } from './maps.js';
 import { criarInvasaoJavaporcos } from './mode_javaporcos.js';
-import { criarOperacaoFlavio } from './mode_operacao_flavio.js';
+import { criarOperacaoFlavio, elencoOperacaoFlavio } from './mode_operacao_flavio.js';
 import { atualizaCortes } from './mapprops.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon, podeNoLado } from './characters.js';
 import { buildCharacterModel, hasModel, preloadCharacterAssets, setEmoteDriver, getGloveHandle, GloveManifestUnavailable } from './glbchars.js';
@@ -785,6 +785,14 @@ export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCha
   };
 }
 
+/* Elenco da Operação Flávio: VIP Zero Um como corpo A MAIS no lado B (N escoltas + VIP), com
+   sorteio de reposição do mesmo pool dos bots. Um ponto só para o SP (main.js) e o nó/arnês
+   (Game sem matchRoster). Régua: tools/eval/operacao-flavio-vaga-check.mjs. */
+export function elencoDaEscolta(roster, lado, personagem) {
+  return elencoOperacaoFlavio(roster, lado, personagem, byId('senador'),
+    CHARACTERS.filter((c) => _sorteavel(c) && podeNoLado(c, 'B')));
+}
+
 /* Pool dos bots em modo `all`: uma fonte só para o sorteio da partida (pickMatchWeapons) e
    para o fallback do Game — duas listas divergiriam em silêncio e furariam o preload. */
 const BOT_WEAPON_POOL = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'm92', 'md97',
@@ -985,7 +993,10 @@ export class Game {
     this._botDmgPlayer = BOT_FAIR ? (BOT_DMG_BY_DIFF[diffKey(this.settings)] ?? 0.72) : BOT_DMG_PLAYER;
     // Equilíbrio de times: o roster (regra de N×N garantido, repete com aviso se a facção não
     // tem elenco — ver pickMatchRoster) vem sorteado do main.js ou é sorteado aqui (arnês/testes).
-    const { allyDefs, enemyDefs } = matchRoster || pickMatchRoster(this.playerFaction, this.enemyFaction, teamSize, playerCharId, this.dedicated);
+    const vipExtra = !matchRoster && this.world.mode === 'escort';   // VIP é corpo a mais em B (elencoDaEscolta)
+    const roster = matchRoster || pickMatchRoster(this.playerFaction, this.enemyFaction, teamSize, playerCharId, this.dedicated);
+    if (vipExtra) elencoDaEscolta(roster, playerTeam, playerCharId);
+    const { allyDefs, enemyDefs } = roster;
     const mkBot = (def, team, i) => {
       // arma sorteada no main.js (que preloadou por ela); sem lista, sorteia aqui. Contador
       // próprio: `i` reinicia por LADO e daria a mesma arma aos dois times.
@@ -1024,7 +1035,7 @@ export class Game {
       const nFoe = this.bots.filter(b => b.team === this.enemyTeam).length;
       const want = matchRoster
         ? { mine: allyDefs.length + (this.dedicated ? 0 : 1), foe: enemyDefs.length }   // formato escolhido no menu
-        : { mine: teamSize, foe: teamSize };                                           // sorteio interno (arnês): N×N
+        : { mine: teamSize + (vipExtra && playerTeam === 'B' ? 1 : 0), foe: teamSize + (vipExtra && this.enemyTeam === 'B' ? 1 : 0) };   // sorteio interno (arnês/nó): N×N (+VIP em B)
       const msg = `[times] ${this._teamTag(playerTeam)} ${nMine} × ${nFoe} ${this._teamTag(this.enemyTeam)} (pedido ${want.mine} × ${want.foe})`;
       if (nMine !== want.mine || nFoe !== want.foe) console.error(new Error(msg + ' — COMPOSIÇÃO ERRADA (bug)'));
       else console.info(msg);
@@ -8842,7 +8853,9 @@ export class Game {
           if (fromReg >= 0) {
             b.path = this._findPathLocal(Wo, fromReg,
               Wo.nearestWaypoint(objectiveDestination.x, objectiveDestination.z, b.pos.y), b._banNodes);
-            b.pathIdx = 1;
+            // Começa no nó de saída quando o próximo não se alcança em linha reta (guarda colado
+            // no batente da porta mirava o nó do outro lado da parede e raspava nela).
+            b.pathIdx = b.path.length > 1 && !this._walkReach(b, Wo.waypoints.nodes[b.path[1]], 0.3) ? 0 : 1;
           } else armRegroupEscape();
         }
         let regNode = b._regroupEscapePending || b._regroupDirectEscape ? null : objectiveDestination;
@@ -8856,9 +8869,10 @@ export class Game {
           const gx = regNode.x - b.pos.x, gz = regNode.z - b.pos.z, gn = Math.hypot(gx, gz) || 1;
           // PERSEGUIÇÃO AMORTECIDA do ponto de slot: passo proporcional ao vão assenta em
           // ~1 s sem depender de skill; passo cheio flipava de sentido em 60 Hz (régua de órbita).
+          // No waypoint o passo para no nó: passar dele fazia o vai-e-vem de 6 cm por quadro.
           const step = regNode === objectiveDestination
             ? Math.min(BOT_SPEED * dt, Math.max(gn * dt * 6, 1e-4))
-            : BOT_SPEED * dt;
+            : Math.min(BOT_SPEED * dt, gn);
           b.pos.x += (gx / gn) * step;
           b.pos.z += (gz / gn) * step;
           this._collide(b.pos, 0.38);

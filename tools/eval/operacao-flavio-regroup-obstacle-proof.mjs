@@ -36,6 +36,7 @@ for (const [name, clauses] of [
   ['para-apos-dois-passos', [progress]], ['para-apos-lateral', [progress]], ['so-gira', [progress]],
   ['apaga-alvo', ['aquisição normal mantém inimigo visível', 'recuperação retém alvo enquanto realmente visível']],
   ['sem-colisao', ['recuperação preserva colisão com cenário real']],
+  ['pula-inicio', ['hop bloqueado deve ser descartado antes de navegar']],
 ]) {
   const contexts = [[]];
   if (geometryArgs.length && name !== 'sem-rearme') contexts.push(geometryArgs);
