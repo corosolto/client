@@ -2,18 +2,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { register } from 'node:module';
-import { isMainThread } from 'node:worker_threads';
-
-if (isMainThread) register(import.meta.url);
+import { registerHooks } from 'node:module';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const TARGET = pathToFileURL(path.join(ROOT, 'tools/character-kit/gloves/repository.mjs')).href;
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const must = (ok, message) => { if (!ok) throw Error('TP_DRIP_LOADER_INFRA: ' + message); };
 
-export async function load(url, context, nextLoad) {
-  const result = await nextLoad(url, context);
+// Hook síncrono no próprio thread: `module.register()` é DEP0205 no Node 26 e o
+// aviso no stderr do filho invalidava o caso (o agregador exige stderr vazio).
+function load(url, context, nextLoad) {
+  const result = nextLoad(url, context);
   if (url !== TARGET) return result;
   const original = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.from(result.source));
   const expected = process.env.CSBR_TP_DRIP_REPOSITORY_SHA256;
@@ -35,3 +34,5 @@ export async function load(url, context, nextLoad) {
   }, null, 2) + '\n');
   return { ...result, source };
 }
+
+registerHooks({ load });

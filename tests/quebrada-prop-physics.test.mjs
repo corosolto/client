@@ -52,7 +52,7 @@ test('Quebrada physical proxies do not depend on optional GLB availability', () 
 
 if (!MUTANT) for (const mutant of MUTANTS) test(`causal optional prop physics: ${mutant}`, () => {
   const env = { ...process.env, CSBR_PROP_PHYSICS_MUTANT: mutant }; delete env.NODE_TEST_CONTEXT;
-  const child = spawnSync(process.execPath, ['--test', fileURLToPath(import.meta.url)], { env, encoding: 'utf8', timeout: 30000, maxBuffer: 128 * 1024 });
+  const child = spawnSync(process.execPath, ['--test', '--test-reporter=tap', fileURLToPath(import.meta.url)], { env, encoding: 'utf8', timeout: 30000, maxBuffer: 128 * 1024 });
   assert.equal(child.error, undefined); assert.equal(child.signal, null); assert.equal(child.stderr, '');
   assert.equal(child.status, 1); assert.match(child.stdout, /name: 'AssertionError'/);
   assert.doesNotMatch(child.stdout, /SyntaxError|ReferenceError|TypeError|Multiple instances of Three/);
