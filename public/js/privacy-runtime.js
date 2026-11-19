@@ -4,7 +4,7 @@
 (function () {
   if (window.__csPrivacy) return;
   const VERSION='corosolto-analytics-v1',KEY='cs_privacy';
-  const USAGE_HOSTS=new Set(['corosolto.com.br','www.corosolto.com.br','csbrasil.online','www.csbrasil.online']);
+  const USAGE_HOSTS=Object.freeze({'corosolto.com.br':true,'www.corosolto.com.br':true,'csbrasil.online':true,'www.csbrasil.online':true});
   function choice() {
     try {
       const value=JSON.parse(localStorage.getItem(KEY) || 'null');
@@ -12,7 +12,7 @@
     } catch { return null; }
   }
   function allowed() { return choice()?.analytics!==false; }
-  function usageHost() { return USAGE_HOSTS.has(location.hostname.toLowerCase()); }
+  function usageHost() { return USAGE_HOSTS[location.hostname.toLowerCase()]===true; }
   let usageLoaded=false,usageScript=null;
   function enableUsage() {
     if(!allowed() || !usageHost())return;

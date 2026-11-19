@@ -10,7 +10,7 @@ if(mutant==='keep-optional-storage-on-refusal')source=source.replace('if(!analyt
 if(mutant==='injects-third-party')source=source.replace("script.src='/api/usage-script.js';","script.src='https://cdn.example/usage.js';");
 if(mutant==='sem-opt-in')source=source.replace("window.addEventListener('cs-privacy-change',enableUsage);",'');
 if(mutant==='sem-parada-retirada')source=source.replace('window.__csUsageStop?.();','');
-if(mutant==='analytics-em-staging')source=source.replace('return USAGE_HOSTS.has(location.hostname.toLowerCase());','return [...USAGE_HOSTS].some((domain)=>location.hostname.endsWith(domain));');
+if(mutant==='analytics-em-staging')source=source.replace('return USAGE_HOSTS[location.hostname.toLowerCase()]===true;','return Object.keys(USAGE_HOSTS).some((domain)=>location.hostname.endsWith(domain));');
 if(mutant==='duplica-pendente')source=source.replace('if(usageLoaded){','if(false){');
 assert.doesNotMatch(source,/cloudflare|__cf|static\.cloudflareinsights/i,'Public privacy runtime exposes the analytics provider or its CDN');
 function boot(hostname='www.corosolto.com.br',privacy=null,autoLoad=true){
