@@ -10,7 +10,10 @@ export const GET: APIRoute = async ({ request }) => {
   const token = usageSiteToken(new URL(request.url).hostname);
   if (!token) return new Response(null, { status: 404, headers: NO_STORE });
   try {
-    const response = await fetch(UPSTREAM, { headers: { accept: 'application/javascript' } });
+    const response = await fetch(UPSTREAM, {
+      headers: { accept: 'application/javascript' },
+      signal: AbortSignal.timeout(5000),
+    });
     if (!response.ok) return new Response(null, { status: 502, headers: NO_STORE });
     const source = await response.text();
     return new Response(wrapUsageScript(source, token), {

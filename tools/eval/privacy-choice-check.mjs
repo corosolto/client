@@ -68,4 +68,16 @@ serverWindow.__csUsageStop();assert.equal(serverWindow.__cfBeacon,null);assert.e
 const main=read('public/js/main.js');
 for(const name of ['sendTelemetry','sendGameStarted','_pick','_picks','_pingPresenca','_funnel','_sendAcquisition','_sendPerf','_perfFinish','sendMatchEvent','sendTrainingFrames']){const start=main.indexOf(`function ${name}(`);assert(start>=0,name);const body=main.slice(start,main.indexOf('\n}',start));assert(body.includes('analyticsAllowed()'),`${name} must gate before collecting`);}
 const index=read('src/pages/index.astro');assert(index.indexOf('/js/privacy-runtime.js')<index.indexOf('function reporta('));assert(/function reporta[\s\S]*?if \(!window\.__csPrivacy\?\.allowed\(\)\) return null/.test(index));assert(!index.includes("_s1.src = '/_vercel/insights/script.js'"),'No unconditional third-party tracker');
+const {stripTypeScriptTypes}=await import('node:module');
+const routeSource=stripTypeScriptTypes(read('src/pages/api/usage-script.js.ts')).replace("'../../lib/usage-script.mjs'",JSON.stringify(new URL('../../src/lib/usage-script.mjs',import.meta.url).href));
+const {GET:usageRoute}=await import('data:text/javascript,'+encodeURIComponent(routeSource));
+const realFetch=globalThis.fetch,realTimeout=AbortSignal.timeout;let deadline=null;
+AbortSignal.timeout=(ms)=>{deadline=ms;const c=new AbortController();queueMicrotask(()=>c.abort(new DOMException('timeout','TimeoutError')));return c.signal;};
+globalThis.fetch=(_url,init={})=>new Promise((_resolve,reject)=>init.signal?.addEventListener('abort',()=>reject(init.signal.reason)));
+try{
+  const stalled=await Promise.race([usageRoute({request:new Request('https://www.corosolto.com.br/api/usage-script.js')}),new Promise(r=>setTimeout(()=>r('hang'),1000))]);
+  assert.notEqual(stalled,'hang','Stalled upstream must not hold /api/usage-script.js open');
+  assert.equal(stalled.status,502,'Stalled upstream answers 502');
+  assert(Number.isFinite(deadline)&&deadline>0&&deadline<=10000,`Upstream deadline must be bounded (got ${deadline})`);
+}finally{globalThis.fetch=realFetch;AbortSignal.timeout=realTimeout;}
 console.log('PASS first-party usage script follows cs_privacy per hostname, stored refusal blocks boot, withdrawal purges optional storage and essential identity is preserved');
