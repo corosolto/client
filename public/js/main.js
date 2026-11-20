@@ -2271,7 +2271,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     enemy: _escalados.filter((id) => !_podeNoLadoSp(id)),
   };
   const matchRoster = sessao
-    ? rosterDoServidor(side, charId)
+    ? rosterDoServidor(sessao, side, charId)
     : pickMatchRoster(faction, enemyFac, { allies: settingsDaPartida.allyBots, enemies: settingsDaPartida.enemyBots }, charId, false, _pinned);
   // Operação Flávio: VIP é corpo a mais em B; Zero Um escolhido no B é o próprio VIP. Só
   // offline — online o elenco do servidor já traz o VIP.
@@ -4810,9 +4810,11 @@ async function openInspectionScreen(target) {
 
 /* `matchRoster` a partir do elenco do servidor. Personagem desconhecido cai no fallback em
    vez de sumir e desalinhar o casamento de ids. */
-function rosterDoServidor(lado, charId) {
-  const roster = mpSessao.net.meta.roster || [];
-  const meu = mpSessao.net.yourEnt;
+/* Recebe a sessão capturada no início do lançamento: uma queda durante o `await` do preload zera
+   `mpSessao`, e ler o global aqui derrubava a abertura (#1383). Quem perdeu a corrida sai logo depois. */
+function rosterDoServidor(sessao, lado, charId) {
+  const roster = sessao.net.meta.roster || [];
+  const meu = sessao.net.yourEnt;
   const def = (r) => ({...(CHARACTERS.find((c) => c.id === r.char) || CHARACTERS[0]), skinId:r.skinId || null,eyewearId:r.eyewearId || null});
   return {
     allyDefs: roster.filter((r) => r.team === lado && r.id !== meu).map(def),
