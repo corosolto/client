@@ -1802,10 +1802,10 @@ bloco('fonte', ['MOD1'], async () => {
    Os tetos do CHR2 e do CHR6 saem do PRÓPRIO JOGO: 0,15 m é meia hitbox de cabeça
    (glbchars.js:296, BoxGeometry(0.26, 0.30, 0.26)) e 0,98 de IoU é o mesmo patamar que a
    PX2 já usa para silhueta de arma. Nenhum deles é palpite novo. */
-bloco('chars-mat', ['CHR1','CHR2','CHR3','CHR5','CHR5B','CHR6','CHR7'], async () => {
+bloco('chars-mat', ['CHR1','CHR2','CHR3','CHR3C','CHR5','CHR5B','CHR6','CHR7'], async () => {
   const { data: j, error } = await REL_CHAR;
   if (error) {
-    for (const id of ['CHR1', 'CHR2', 'CHR3', 'CHR5', 'CHR6']) {
+    for (const id of ['CHR1', 'CHR2', 'CHR3', 'CHR3C', 'CHR5', 'CHR6']) {
       skip(id, 'régua de personagem', 'char-probe.mjs: ' + error);
     }
   } else {
@@ -1902,6 +1902,25 @@ bloco('chars-mat', ['CHR1','CHR2','CHR3','CHR5','CHR5B','CHR6','CHR7'], async ()
       + `[${afunda.slice(0, 4).map((c) => `${c.id} ${ef.get(c.id).min.toFixed(3)}`).join(', ') || '-'}] | `
       + `flutuando ${flutua.length} [${flutua.slice(0, 4).map((c) => `${c.id} +${ef.get(c.id).max.toFixed(3)}`).join(', ') || '-'}] `
       + '| o sinal separa dois defeitos diferentes: y<0 é pé DENTRO do chão, y>0 é boneco no ar');
+
+    /* CHR3C MALHA × PISO (#1117): com o pé plantado, rabo, capa ou quadril ainda cruzam o
+       chão. A sonda só grava `corpoPorPose` quando a bbox diverge do pé por mais de 5 cm,
+       e esse mesmo corte é o teto aqui, já somado ao offset de runtime da CHR3.
+       `--mutante=rabo-limpo` zera o corpo medido e tem que deixar a cláusula verde. */
+    const TOL3C = 0.05;
+    const raboLimpo = process.argv.includes('--mutante=rabo-limpo');
+    const cruzaPiso = [];
+    for (const c of P) for (const [pose, y] of Object.entries((c.C3 && c.C3.corpoPorPose) || {})) {
+      const efetivoCorpo = (raboLimpo ? 0 : y) + ((footOff[c.id] || {})[pose] || 0);
+      if (efetivoCorpo < -TOL3C) cruzaPiso.push({ id: c.id, pose, y: efetivoCorpo });
+    }
+    cruzaPiso.sort((a, b) => a.y - b.y);
+    put('CHR3C', 'malha × piso: com o pé no chão, nenhuma parte do corpo cruza o piso além de 0,05 m',
+      cruzaPiso.length === 0,
+      `${cruzaPiso.length} personagem×pose com o corpo abaixo do piso `
+      + `[${cruzaPiso.slice(0, 6).map((r) => `${r.id}/${r.pose} ${r.y.toFixed(3)}`).join(', ') || '-'}]`
+      + (raboLimpo ? ' | MUTANTE rabo-limpo: corpo zerado' : '')
+      + ' | é a malha (rabo, capa, quadril), não o pé: o pé fica na CHR3');
 
     // ── CHR5 ACABAMENTO ───────────────────────────────────────────────────────
     // Crítico só o que é sempre verificável (personagem tem geometria e material).
