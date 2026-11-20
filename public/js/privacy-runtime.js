@@ -26,14 +26,16 @@
     if(!allowed() || !token)return;
     window.__cfBeacon={token};
     if(cloudflareLoaded){
-      // Se o módulo ainda não executou, restaura o token no mesmo elemento; nunca cria uma segunda instância.
+      // Se o script ainda não executou, restaura o token no mesmo elemento; nunca cria uma segunda instância.
       cloudflareScript.dataset.cfBeacon=JSON.stringify({token});
       return;
     }
     cloudflareLoaded=true;
     const script=document.createElement('script');
     cloudflareScript=script;
-    script.type='module';
+    /* Clássico, como no snippet da Cloudflare (#1425). Este arquivo roda antes do importmap: um
+       `type=module` injetado aqui faz o Firefox ignorar o importmap, e `import 'three'` derruba o boot. */
+    script.defer=true;
     script.src='https://static.cloudflareinsights.com/beacon.min.js';
     script.dataset.cfBeacon=JSON.stringify({token});
     script.addEventListener('load',()=>{
@@ -44,7 +46,7 @@
   function stopCloudflareAnalytics() {
     // O beacon consulta este global antes de cada envio; anulá-lo preserva o fluxo atual.
     window.__cfBeacon=null;
-    // Se o módulo ainda não executou, ele também não pode capturar um token válido.
+    // Se o script ainda não executou, ele também não pode capturar um token válido.
     if(cloudflareScript)cloudflareScript.dataset.cfBeacon='{"token":""}';
   }
   function clearOptionalStorage() {
