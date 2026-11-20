@@ -584,6 +584,7 @@
     "eval:pos-alvo": "node tools/eval/pos-alvo-check.mjs",
     "eval:ibl-vm": "node tools/eval/ibl-vm-check.mjs",
     "eval:escala-favela": "node tools/eval/escala-favela-check.mjs",
+    "eval:escala-lajes": "node tools/eval/escala-lajes-check.mjs && ! node tools/eval/escala-lajes-check.mjs --mutante=porta-ana",
     "eval:occluders": "node tools/eval/occluder-ray-check.mjs",
     "eval:slice-abilities": "node tools/eval/vertical-slice-abilities-check.mjs",
     "eval:map-source": "node tools/eval/map-source-check.mjs",
