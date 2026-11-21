@@ -4183,22 +4183,6 @@ async function renderHubRanking() {
     const number = document.createElement('b'); number.textContent = String(value);
     card.append(number, document.createTextNode(label)); cards.appendChild(card);
   }
-  /* 21 dos 25 do ranking não têm foto (medido 22/10): sem avatar_url entra a arte do último
-     personagem jogado, e a inicial fica só pra quem não tem nem foto nem personagem. */
-  const rostoDoJogador = (p) => {
-    const caixa = document.createElement('span'); caixa.className = 'ranking-avatar';
-    const inicial = document.createElement('span');
-    inicial.textContent = (Array.from(p.nick || '?')[0] || '?').toUpperCase();
-    caixa.append(inicial);
-    const arte = /^[a-z0-9][a-z0-9_-]{0,31}$/.test(p.last_character || '') ? `/img/chars/avatars/${p.last_character}.webp` : '';
-    const fonte = (typeof p.avatar_url === 'string' && p.avatar_url) || arte;
-    if (!fonte) return caixa;
-    const img = document.createElement('img');
-    img.src = fonte; img.width = 36; img.height = 36; img.loading = 'lazy'; img.alt = '';
-    if (fonte === arte) img.dataset.arte = '1';
-    img.onerror = () => { if (arte && img.dataset.arte !== '1') { img.dataset.arte = '1'; img.src = arte; return; } img.hidden = true; };
-    caixa.append(img); return caixa;
-  };
   /* A linha inteira leva ao perfil: role+tabindex no <tr> porque <a> não embrulha linha de
      tabela, e aninhar link dentro de link quebra o teclado e o leitor de tela. */
   const linhaDoJogador = (p, i) => {
@@ -4214,7 +4198,7 @@ async function renderHubRanking() {
     dados.append(nome);
     const selo = accountVerifiedBadge(p.account_verified); if (selo) dados.append(selo);
     const patente = careerRankBadge(p.career_points ?? p.points); if (patente) dados.append(patente);
-    dupla.append(rostoDoJogador(p), dados); quem.append(dupla);
+    dupla.append(rankingAvatar(p, { size: 36 }), dados); quem.append(dupla);
     linha.append(posicao, quem);
     for (const valor of [p.points, p.kills, p.kd, p.matches]) {
       const cel = document.createElement('td'); cel.textContent = valor == null ? '—' : String(valor); linha.append(cel);
@@ -5810,6 +5794,6 @@ const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location
   }
 }
 void window.__CS_LANG_READY__.then(finishBoot).catch((error) => window.__gameLaunch?.fail(error, 'boot'));
-import {rankingTable,playerProfilePath} from './ranking-player.js';
+import {rankingTable,playerProfilePath,rankingAvatar} from './ranking-player.js';
 import {accountVerifiedBadge} from './account-verified.js';
 import {careerRankBadge} from './career-rank.js';

@@ -1,6 +1,7 @@
 import {accountVerifiedBadge} from './account-verified.js';
 import {careerRankBadge} from './career-rank.js';
-import {heroUrl,retratoFontes} from './data/retratos.js';
+import {bustoUrl,heroUrl,retratoFontes} from './data/retratos.js';
+import {PROFILE_CHARACTERS} from './profile-character-catalog.js';
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function node(tag,text='',className='') {const n=document.createElement(tag);n.textContent=text;n.className=className;return n;}
 function https(value) {
@@ -40,15 +41,44 @@ export function playerProfilePath(player) {
   if(typeof player.url==='string' && /^\/u\/(?:[a-z][a-z0-9_]{2,23}|[0-9a-f-]{36})(?:\/|$)/i.test(player.url))return player.url;
   return /^[a-z][a-z0-9_]{2,23}$/.test(player.public_handle || player.handle || '') ? `/u/${player.public_handle || player.handle}` : `/u/${player.id}`;
 }
+const defaultAvatar = bustoUrl('canarinho');
+
+export function rankingAvatar(player, { mini = false, size = 32, alt = '' } = {}) {
+  const avatar = node('span', '', mini ? 'tp-rosto tp-rosto--mini' : 'ranking-avatar');
+  const image = node('img');
+  const human = uuid.test(player.id || '');
+  const expectedUpload = human ? `/api/social-avatar?id=${encodeURIComponent(player.id)}` : null;
+  const upload = human && (player.avatar_url === expectedUpload ? expectedUpload : https(player.avatar_url));
+  // Bots chegam do servidor com uma arte de personagem, sem conta ou upload.
+  const botId = !human && /^\/img\/chars-hero\/([a-z0-9_-]+)\.webp(?:\?.*)?$/i.exec(player.avatar_url)?.[1]?.toLowerCase();
+  const botArt = botId && (heroUrl(botId) ? player.avatar_url : retratoFontes(botId)[0]);
+  const character = Object.hasOwn(PROFILE_CHARACTERS, player.last_character) ? bustoUrl(player.last_character) : null;
+  const sources = [...new Set([upload, botArt, character, defaultAvatar].filter(Boolean))];
+
+  image.alt = alt;
+  image.width = image.height = size;
+  image.loading = 'lazy';
+  image.decoding = 'async';
+  image.referrerPolicy = 'no-referrer';
+  let index = 0;
+  image.onerror = () => {
+    const next = sources[++index];
+    if (next) {
+      image.src = next;
+      return;
+    }
+    const nick = player.nick || '?';
+    const initials = mini ? nick.replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2) : Array.from(nick)[0];
+    avatar.replaceChildren(node('span', (initials || '?').toUpperCase(), mini ? 'tp-disp' : ''));
+  };
+  image.src = sources[0];
+  avatar.append(image);
+  return avatar;
+}
+
 export function rankingPlayerCell(player,{careerOnly=false}={}) {
   const cell=node('td'),identity=node('div','','ranking-player'),path=playerProfilePath(player);
-  const avatar=node('span','','ranking-avatar');avatar.append(node('span',Array.from(player.nick || '?')[0].toUpperCase()));
-  const human=uuid.test(player.id || '');
-  /* Bot chega do servidor como /img/chars-hero/<id>.webp; id sem hero cai no retrato que existe. */
-  const botId=!human && typeof player.avatar_url==='string' ? /^\/img\/chars-hero\/([a-z0-9_-]+)\.webp(?:\?.*)?$/i.exec(player.avatar_url)?.[1]?.toLowerCase() : null;
-  const botArt=botId?(heroUrl(botId)?player.avatar_url:retratoFontes(botId)[0]):null;
-  const photo=human?`/api/social-avatar?id=${encodeURIComponent(player.id)}`:botArt;
-  if(photo){const image=node('img');image.src=photo;image.alt=human?`Avatar de ${player.nick}`:`Personagem de ${player.nick}`;image.width=32;image.height=32;image.loading='lazy';image.referrerPolicy='no-referrer';image.onerror=()=>{image.hidden=true;};avatar.append(image);}
+  const avatar=rankingAvatar(player,{alt:`Avatar de ${player.nick}`});
   const details=node('div'),name=node(path?'a':'span',player.nick);if(path)name.href=path;details.append(name);
   const badge=accountVerifiedBadge(player.account_verified);if(badge)details.append(badge);
   const rank=careerRankBadge(Object.prototype.hasOwnProperty.call(player, 'career_points')?player.career_points:careerOnly?null:player.points);if(rank)details.append(rank);

@@ -42,7 +42,7 @@ if(mutant==='hub-legacy-source'){const changed=main.replace("await api('/api/soc
 // Os três pedidos de 22/10 na aba RANKING: título, linha inteira clicável e avatar de personagem.
 if(mutant==='hub-title'){const changed=astro.replace('<h2>RANKING</h2>','<h2>PLACAR DA RUA</h2>');assert.notEqual(changed,astro,'MUTATION DID NOT APPLY');astro=changed;mutationsApplied++;}
 if(mutant==='hub-row-link'){const changed=main.replace("linha.setAttribute('role', 'link'); linha.setAttribute('tabindex', '0');","linha.dataset.mutante = '1';");assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
-if(mutant==='hub-char-avatar'){const changed=main.replace("? `/img/chars/avatars/${p.last_character}.webp` : ''","? '' : ''");assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
+if(mutant==='hub-char-avatar'){const changed=main.replace('rankingAvatar(p, { size: 36 })','rankingAvatar({ ...p, last_character: null }, { size: 36 })');assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
 // Pedidos de 24/10: quem já está logado não vê convite de nick, e a lista rola em páginas de 25.
 if(mutant==='hub-cta-logado'){const changed=main.replace('Boolean(registeredNick || contaNick)','Boolean(registeredNick)');assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
 if(mutant==='hub-sem-pagina'){const changed=main.replace('  global.append(mais);\n','');assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
