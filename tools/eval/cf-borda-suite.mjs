@@ -10,7 +10,7 @@ const plans = [
     mutants: [
       'sem-strip', 'vm-sem-etag', 'vm-304-antes-r2', 'vm-sem-sha', 'apex-301',
       'apex-sem-worker-first', 'assets-sem-fallback', 'assets-intercepta-post',
-      'cache-ignora-etag', 'cache-sem-stale', 'cache-revalida-condicional',
+      'cache-ignora-etag', 'cache-sem-contadores', 'cache-sem-stale', 'cache-revalida-condicional',
       'cache-preenche-condicional', 'cache-sem-single-flight', 'cache-sem-fill-flight',
       'cache-aceita-legado', 'cache-dona-sem-waituntil',
     ],
