@@ -346,7 +346,7 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
       if(proofDir) {
         const abortTrace=terminalCapture?terminalCapture.abortTrace:page?await page.evaluate(()=>window.__bootTrace||[]).catch(e=>({error:e.message})):null;
         const fetchBodies=terminalCapture?terminalCapture.fetchBodies:page?await page.evaluate(()=>window.__bootFetchBodies||[]).catch(e=>({error:e.message})):null;
-        writeFileSync(proofDir+'/diagnostic.json',JSON.stringify({runId:RUN_ID,passId,label,origin:origin?.url,...diagnostic(),abortTrace,fetchBodies,readyExact:terminalCapture?.readyExact??null},null,2));
+        writeFileSync(proofDir+'/diagnostic.json',JSON.stringify({runId:RUN_ID,passId,label,origin:origin?.url,...diagnostic(),abortTrace,fetchBodies,readyExact:terminalCapture?.readyExact??null,transport:page?.transportDiagnostics?.()},null,2));
       }
     } finally {
       try {

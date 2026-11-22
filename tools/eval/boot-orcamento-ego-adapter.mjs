@@ -66,6 +66,8 @@ class EgoPage {
     this._listeners = new Map();
     this._requests = new Map();
     this._finished = new Map();
+    this._completionWaiters = new Map();
+    this._unmatchedNetwork = [];
     this._bodyPromises = new Map();
     this._frameUrls = new Map();
     this._mainFrame = new EgoFrame(this, 'main');
@@ -74,7 +76,10 @@ class EgoPage {
     this._batch = null;
     this._closed = false;
     this._pumping = true;
-    this._pumpPromise = this._pump().catch(error => { this._transportError = error; });
+    this._pumpPromise = this._pump().catch(error => {
+      this._transportError = error;
+      this._rejectCompletions(error);
+    });
   }
   on(event, listener) { const rows = this._listeners.get(event) || []; rows.push(listener); this._listeners.set(event, rows); }
   off(event, listener) { const rows = this._listeners.get(event) || []; const index = rows.indexOf(listener); if (index >= 0) rows.splice(index, 1); }
@@ -126,29 +131,61 @@ class EgoPage {
       return;
     }
     const request = this._requests.get(params.requestId);
-    if (!request) return;
+    if (!request) {
+      if (this._unmatchedNetwork.length < 64 && ['Network.responseReceived', 'Network.loadingFinished', 'Network.loadingFailed'].includes(event.method)) {
+        this._unmatchedNetwork.push({ method: event.method, requestId: params.requestId, timestamp: params.timestamp,
+          bytes: params.encodedDataLength, url: params.response?.url, type: params.type, loaderId: params.loaderId });
+      }
+      return;
+    }
     if (event.method === 'Network.responseReceived' && params.response) {
       const response = new EgoResponse(this, request, event);
       this._emit('response', response);
       return;
     }
     if (event.method === 'Network.loadingFinished') {
-      this._finished.set(params.requestId, event);
+      this._complete(params.requestId, event);
       return;
     }
     if (event.method === 'Network.loadingFailed') {
       request._failure = { errorText: params.errorText || 'loadingFailed' };
-      this._finished.set(params.requestId, event);
+      this._complete(params.requestId, event);
       this._emit('requestfailed', request);
     }
   }
+  _complete(id, event) {
+    this._finished.set(id, event);
+    const waiter = this._completionWaiters.get(id);
+    if (!waiter) return;
+    clearTimeout(waiter.timer);
+    this._completionWaiters.delete(id);
+    waiter.resolve(event);
+  }
+  _rejectCompletions(error) {
+    for (const { reject, timer } of this._completionWaiters.values()) {
+      clearTimeout(timer);
+      reject(error);
+    }
+    this._completionWaiters.clear();
+  }
+  _whenFinished(id) {
+    if (this._transportError) throw this._transportError;
+    const finished = this._finished.get(id);
+    if (finished) return finished;
+    if (this._closed) throw Error('observação Ego encerrou antes de loadingFinished: ' + id);
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this._completionWaiters.delete(id);
+        reject(Error('Network.getResponseBody antes de loadingFinished: ' + id));
+      }, 30000);
+      this._completionWaiters.set(id, { resolve, reject, timer });
+    });
+  }
+  transportDiagnostics() { return { unmatchedNetwork: this._unmatchedNetwork }; }
   async bodyFor(requestId) {
     if (this._bodyPromises.has(requestId)) return this._bodyPromises.get(requestId);
     const promise = (async () => {
-      const deadline = Date.now() + 30000;
-      while (!this._finished.has(requestId) && Date.now() < deadline) await this._raw.waitForTimeout(5);
-      if (!this._finished.has(requestId)) throw Error('Network.getResponseBody antes de loadingFinished: ' + requestId);
-      const finished = this._finished.get(requestId);
+      const finished = await this._whenFinished(requestId);
       if (finished.method === 'Network.loadingFailed') throw Error('corpo indisponível após loadingFailed: ' + requestId);
       const result = await this._raw.cdp('Network.getResponseBody', { requestId });
       return Buffer.from(result.body, result.base64Encoded ? 'base64' : 'utf8');
@@ -175,7 +212,13 @@ class EgoPage {
   async waitForTimeout(ms) { return this._raw.waitForTimeout(ms); }
   async evaluate(fn, arg) { const value = await this._raw.evaluate(fn, arg ?? null); await this.drain(); return value; }
   isClosed() { return this._closed; }
-  async close() { if (!this._closed) { this._closed = true; this._pumping = false; await this._pumpPromise; } }
+  async close() {
+    if (this._closed) return;
+    this._closed = true;
+    this._pumping = false;
+    await this._pumpPromise;
+    this._rejectCompletions(Error('observação Ego encerrou antes de loadingFinished'));
+  }
   mainFrame() { return this._mainFrame; }
   async newCDPSession() { const cdp = new EgoCDP(this); this._cdps.add(cdp); return cdp; }
 }
