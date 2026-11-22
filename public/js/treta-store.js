@@ -36,6 +36,16 @@ let state=null,manifest={skins:{}},eyeManifest={eyewear:{}},selected=null,filter
 let onEquip=()=>{},infoStage=null,infoVersion=0;
 let equipmentRevision='';
 const inventoryWaiters=new Set();
+// These are server writes; stale-response guards cannot undo a reversed arrival order.
+let equipmentMutation=Promise.resolve();
+const queueEquipmentMutation=operation=>{
+  const next=equipmentMutation.catch(()=>{}).then(operation);
+  equipmentMutation=next.catch(()=>{});
+  return next;
+};
+export function tretaEquipmentReady() {
+  return equipmentMutation;
+}
 let accountEpoch=0,refreshEpoch=-1,loading=false,refreshFailed=false,purchasePending=false,view='characters',detailVersion=0,previewReady=false,previewLoading=false;
 const $=id=>document.getElementById(id);
 const owned=id=>state?.inventory?.some(s=>s.skin_id===id);
@@ -152,12 +162,15 @@ export function tretaSkinsDoArmario() {
 }
 export async function desequiparTretaSkin() {
   const epoch=accountEpoch,owner=state?.accountId;
-  const result=await socialApi('/api/treta',{action:'unequip',slot:'character'});
-  if(epoch!==accountEpoch || result.accountId!==owner)return false;
-  state=result;
-  draw();updateBuy();notifyEquipment();
-  document.dispatchEvent(new CustomEvent('cs-skin-equipped',{detail:{skinId:null,characterId:null,model:null}}));
-  return true;
+  return queueEquipmentMutation(async()=>{
+    if(epoch!==accountEpoch || state?.accountId!==owner)return false;
+    const result=await socialApi('/api/treta',{action:'unequip',slot:'character'});
+    if(epoch!==accountEpoch || result.accountId!==owner)return false;
+    state=result;
+    draw();updateBuy();notifyEquipment();
+    document.dispatchEvent(new CustomEvent('cs-skin-equipped',{detail:{skinId:null,characterId:null,model:null}}));
+    return true;
+  });
 }
 function notifyEquipment() {
   // A skin pode ser removida do inventário antes de seu manifesto chegar.
@@ -409,16 +422,19 @@ function updateBuy() {
 }
 async function equip(skin) {
   const epoch=accountEpoch,owner=state?.accountId;
-  const result=await socialApi('/api/treta',{action:'equip',skinId:skin.id});
-  if(epoch!==accountEpoch || result.accountId!==owner)return false;
-  state=result;
-  draw();updateBuy();notifyEquipment();
-  if(skin.slot==='weapon')document.dispatchEvent(new CustomEvent('cs-weapon-skin-equipped',{detail:{skinId:skin.id,weaponId:skin.weapon}}));
-  else if(skin.slot==='eyewear')document.dispatchEvent(new CustomEvent('cs-eyewear-equipped',{detail:{eyewearId:skin.id}}));
-  else if(skin.slot==='glove')document.dispatchEvent(new CustomEvent('cs-glove-equipped',{detail:{gloveId:skin.id}}));
-  else if(skin.slot==='pack')document.dispatchEvent(new CustomEvent('cs-pack-equipped',{detail:{packId:skin.id}}));
-  else {onEquip({...skin,model:asset(skin.id).model});document.dispatchEvent(new CustomEvent('cs-skin-equipped',{detail:{skinId:skin.id,characterId:skin.character,model:asset(skin.id).model}}));}
-  return true;
+  return queueEquipmentMutation(async()=>{
+    if(epoch!==accountEpoch || state?.accountId!==owner)return false;
+    const result=await socialApi('/api/treta',{action:'equip',skinId:skin.id});
+    if(epoch!==accountEpoch || result.accountId!==owner)return false;
+    state=result;
+    draw();updateBuy();notifyEquipment();
+    if(skin.slot==='weapon')document.dispatchEvent(new CustomEvent('cs-weapon-skin-equipped',{detail:{skinId:skin.id,weaponId:skin.weapon}}));
+    else if(skin.slot==='eyewear')document.dispatchEvent(new CustomEvent('cs-eyewear-equipped',{detail:{eyewearId:skin.id}}));
+    else if(skin.slot==='glove')document.dispatchEvent(new CustomEvent('cs-glove-equipped',{detail:{gloveId:skin.id}}));
+    else if(skin.slot==='pack')document.dispatchEvent(new CustomEvent('cs-pack-equipped',{detail:{packId:skin.id}}));
+    else {onEquip({...skin,model:asset(skin.id).model});document.dispatchEvent(new CustomEvent('cs-skin-equipped',{detail:{skinId:skin.id,characterId:skin.character,model:asset(skin.id).model}}));}
+    return true;
+  });
 }
 async function buy() {
   if(purchasePending || loading || refreshFailed || !selected || !available(selected.id) || (!owned(selected.id) && !previewReady))return;

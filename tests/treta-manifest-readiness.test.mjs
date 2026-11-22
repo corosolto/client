@@ -13,8 +13,8 @@ const model = '/models/skins/lula-cyborg.glb';
 const manifest = { skins: { 'lula-cyborg': { approved: true, character: 'barbudo', model } } };
 const equipped = { authenticated: true, accountId: 'fixture', inventory: [{ skin_id: 'lula-cyborg', equipped: true }], catalog: [{ id: 'lula-cyborg', slot: 'character', available: true, character_id: 'barbudo', model_path: model }] };
 
-function fixture({ inventory = equipped, accountReady = Promise.resolve(), readInventory, timeoutAPI = true, weaponSkins = [{ id: 'ouro-ak', name: 'AK Ouro', slot: 'weapon', weapon: 'ak', model: '/models/weapons/ak.glb', ready: true }], mutate = value => value } = {}) {
-  const media = deferred(), controllers = [], deadlines = [], nodes = new Map(), listeners = new Map(), timers=new Map(), fetches=[];
+function fixture({ inventory = equipped, accountReady = Promise.resolve(), readInventory, socialApi, timeoutAPI = true, weaponSkins = [{ id: 'ouro-ak', name: 'AK Ouro', slot: 'weapon', weapon: 'ak', model: '/models/weapons/ak.glb', ready: true }], mutate = value => value } = {}) {
+  const media = deferred(), controllers = [], deadlines = [], nodes = new Map(), listeners = new Map(), timers=new Map(), fetches=[], events=[];
   let timerID=0;
   const node = id => ({ id, open: false, close(){this.open=false;}, textContent: '', dataset: {}, classList: { add: noop, remove: noop, contains: () => false }, setAttribute: noop, append: noop, replaceChildren: noop, addEventListener: noop });
   const context = vm.createContext({
@@ -23,7 +23,7 @@ function fixture({ inventory = equipped, accountReady = Promise.resolve(), readI
       getElementById: id => { if (!nodes.has(id)) nodes.set(id, node(id)); return nodes.get(id); },
       createElement: () => node(''), querySelectorAll: () => [], querySelector: () => null,
       addEventListener: (name, callback) => { if (!listeners.has(name)) listeners.set(name, []); listeners.get(name).push(callback); },
-      dispatchEvent: event => { for (const callback of listeners.get(event.type) || []) callback(event); }, documentElement: { dataset: { ui: 'v3' } },
+      dispatchEvent: event => { events.push(event); for (const callback of listeners.get(event.type) || []) callback(event); }, documentElement: { dataset: { ui: 'v3' } },
     },
     window: {}, location: { search: '', href: 'https://fixture.invalid/', origin: 'https://fixture.invalid' },
     localStorage: { getItem: () => null, setItem: noop }, sessionStorage: { getItem: () => 'recorded', setItem: noop },
@@ -36,7 +36,7 @@ function fixture({ inventory = equipped, accountReady = Promise.resolve(), readI
     TRETA_DEFAULT_REWARDS: {}, TRETA_COIN_ART: { poster: '/fixture.webp' },
     initTretaRewards: noop, updateTretaRewards: noop, ligarCompartilhar: noop,
     estadoDaUrl: () => null, loadAccount: async () => ({ authenticated: true }),
-    socialApi: readInventory || (async () => { await accountReady; return inventory; }), assetUrl: p => '/' + p,
+    socialApi: socialApi || readInventory || (async () => { await accountReady; return inventory; }), assetUrl: p => '/' + p,
     fetch: async (url, options) => {
       assert.equal(url, '/models/skins/manifest.json');
       fetches.push({url,signal:options?.signal});
@@ -44,11 +44,119 @@ function fixture({ inventory = equipped, accountReady = Promise.resolve(), readI
       return media.promise;
     },
   });
-  const api = new vm.Script(mutate(source) + '\ndraw=()=>{};initProposals=()=>{};updateBuy=()=>{};({initTretaStore,equippedTretaSkin,desequiparTretaSkin,tretaSkinPresentation,tretaWeaponPresentation,buyForTest:async skin=>{selected=skin;previewReady=true;visual=async()=>({dispose(){}});openDialog=()=>{};await buy();}});').runInContext(context);
+  const api = new vm.Script(mutate(source) + '\ndraw=()=>{};initProposals=()=>{};updateBuy=()=>{};({initTretaStore,refresh,equiparTretaSkin,equippedTretaWeaponSkin,desequiparTretaSkin,equippedTretaSkin,tretaSkinPresentation,tretaWeaponPresentation,buyForTest:async skin=>{selected=skin;previewReady=true;visual=async()=>({dispose(){}});openDialog=()=>{};await buy();}});').runInContext(context);
   let settled = false;
   const ready = api.initTretaStore().then(() => { settled = true; });
-  return { api, ready, media, deadlines, controllers, timers, fetches, settled: () => settled, emit: type => context.document.dispatchEvent({ type }), accountChanged: detail => context.document.dispatchEvent({ type: 'cs-account-change', detail }) };
+  return { api, ready, media, deadlines, controllers, timers, fetches, events, settled: () => settled, emit: type => context.document.dispatchEvent({ type }), accountChanged: detail => context.document.dispatchEvent({ type: 'cs-account-change', detail }) };
 }
+const raceCharacter = { id: 'lula-cyborg', name: 'Barbudo Cyborg', slot: 'character', character: 'barbudo' };
+const raceSkins = [
+  { id: 'ouro-ak', name: 'AK Ouro', slot: 'weapon', weapon: 'ak', model: '/models/weapons/ak.glb', ready: true },
+  { id: 'prata-ak', name: 'AK Prata', slot: 'weapon', weapon: 'ak', model: '/models/weapons/ak-prata.glb', ready: true },
+];
+const raceCatalog = [
+  { id: raceCharacter.id, slot: 'character', available: true, character_id: raceCharacter.character, model_path: model },
+  ...raceSkins.map(s => ({ id: s.id, slot: 'weapon', available: true, weapon_id: s.weapon, model_path: s.model })),
+];
+const raceState = accountId => ({ authenticated: true, accountId, inventory: [raceCharacter, ...raceSkins].map(s => ({ skin_id: s.id, equipped: false })), catalog: raceCatalog });
+const raceStateWith = (accountId, ...skinIds) => ({ ...raceState(accountId), inventory: [raceCharacter, ...raceSkins].map(s => ({ skin_id: s.id, equipped: skinIds.includes(s.id) })) });
+async function equipmentFixture() {
+  let serverState = raceState('fixture');
+  const writes = [];
+  const socialApi = async (_path, body) => {
+    if (!body || body.action === 'refresh') return serverState;
+    if (body.action !== 'equip' && body.action !== 'unequip') return serverState;
+    const operation = deferred();
+    writes.push({ body, operation });
+    const next = await operation.promise;
+    if (next?.accountId === serverState.accountId) serverState = next;
+    return next;
+  };
+  const f = fixture({ inventory: serverState, weaponSkins: raceSkins, socialApi });
+  f.media.resolve({ ok: true, json: async () => ({ skins: { 'lula-cyborg': { approved: true, character: 'barbudo', model } } }) });
+  await f.ready;
+  return { f, writes, setServerState: value => { serverState = value; }, state: raceStateWith };
+}
+test('equipment intents serialize server writes and refresh preserves the latest choice', async () => {
+  const h = await equipmentFixture();
+  const first = h.f.api.equiparTretaSkin('ouro-ak');
+  await tick();
+  assert.equal(h.writes.length, 1);
+  const second = h.f.api.equiparTretaSkin('prata-ak');
+  await tick();
+  assert.equal(h.writes.length, 1);
+  assert.equal(h.writes[0].body.skinId, 'ouro-ak');
+  h.writes[0].operation.resolve(h.state('fixture', 'ouro-ak'));
+  assert.equal(await first, true);
+  await tick();
+  assert.equal(h.writes.length, 2);
+  assert.equal(h.writes[1].body.skinId, 'prata-ak');
+  h.writes[1].operation.resolve(h.state('fixture', 'prata-ak'));
+  assert.equal(await second, true);
+  assert.equal(h.f.api.equippedTretaWeaponSkin('ak'), 'prata-ak');
+  await h.f.api.refresh();
+  assert.equal(h.f.api.equippedTretaWeaponSkin('ak'), 'prata-ak');
+});
+test('confirmed snapshots and events survive intents from different slots', async () => {
+  const h = await equipmentFixture();
+  const character = h.f.api.equiparTretaSkin('lula-cyborg');
+  await tick();
+  assert.equal(h.writes[0].body.skinId, 'lula-cyborg');
+  const weapon = h.f.api.equiparTretaSkin('ouro-ak');
+  await tick();
+  assert.equal(h.writes.length, 1, 'weapon waits for the character write');
+  h.writes[0].operation.resolve(h.state('fixture', 'lula-cyborg'));
+  assert.equal(await character, true);
+  assert.ok(h.f.events.some(event => event.type === 'cs-skin-equipped' && event.detail?.skinId === 'lula-cyborg'));
+  await tick();
+  h.writes[1].operation.resolve(h.state('fixture', 'lula-cyborg', 'ouro-ak'));
+  assert.equal(await weapon, true);
+  assert.equal(h.f.api.equippedTretaSkin('barbudo'), 'lula-cyborg');
+  assert.equal(h.f.api.equippedTretaWeaponSkin('ak'), 'ouro-ak');
+});
+
+
+test('a confirmed equip survives a failed follow-up unequip', async () => {
+  const h = await equipmentFixture();
+  const first = h.f.api.equiparTretaSkin('ouro-ak');
+  await tick();
+  assert.equal(h.writes.length, 1);
+  const second = h.f.api.desequiparTretaSkin();
+  await tick();
+  assert.equal(h.writes.length, 1, 'unequip waits for the equip response');
+  h.writes[0].operation.resolve(h.state('fixture', 'ouro-ak'));
+  assert.equal(await first, true);
+  await tick();
+  assert.equal(h.writes.length, 2);
+  assert.equal(h.writes[1].body.action, 'unequip');
+  h.writes[1].operation.reject(new Error('server_down'));
+  await assert.rejects(second, /server_down/);
+  assert.equal(h.f.api.equippedTretaWeaponSkin('ak'), 'ouro-ak');
+  await h.f.api.refresh();
+  assert.equal(h.f.api.equippedTretaWeaponSkin('ak'), 'ouro-ak');
+});
+
+test('an old account write drains before a new account intent', async () => {
+  const h = await equipmentFixture();
+  const old = h.f.api.equiparTretaSkin('ouro-ak');
+  await tick();
+  assert.equal(h.writes.length, 1);
+  h.setServerState(h.state('next-account', null));
+  h.f.accountChanged({ authenticated: true, accountId: 'next-account' });
+  await tick();
+  const next = h.f.api.equiparTretaSkin('prata-ak');
+  await tick();
+  assert.equal(h.writes.length, 1, 'new account waits for the old request to settle');
+  h.writes[0].operation.resolve(h.state('fixture', 'ouro-ak'));
+  assert.equal(await old, false);
+  await tick();
+  assert.equal(h.writes.length, 2);
+  assert.equal(h.writes[1].body.skinId, 'prata-ak');
+  h.writes[1].operation.resolve(h.state('next-account', 'prata-ak'));
+  assert.equal(await next, true);
+  assert.equal(h.f.api.equippedTretaWeaponSkin('ak'), 'prata-ak');
+});
+
 
 async function ownedWaits(mutate) {
   const f = fixture({ mutate });
