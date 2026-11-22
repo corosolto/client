@@ -1562,7 +1562,7 @@ function openHubRoster(updateRoute = true) {
   hubRosterCat = temPoliticos(hubRosterLado) ? 'P' : null;
   let rosterActionRevision = 0;
   const lados = $('hub-roster-lados'), filters = $('hub-roster-factions'), grid = $('hub-roster-grid');
-  // Redraws from a completed store write must not cancel that same intent.
+  // O redesenho após gravar na loja não pode cancelar a intenção que o disparou.
   const render = () => {
     lados.replaceChildren(); filters.replaceChildren(); grid.replaceChildren();
     for (const lado of ['E', 'B']) {
@@ -1628,7 +1628,7 @@ function openHubRoster(updateRoute = true) {
         const action = ++rosterActionRevision;
         ui.click();
         if (personagemTravado(def)) { $('hub-roster-selected').textContent = frase('passeTravadoAviso', def.name, nivel || '?'); return; }
-        // A mutation may have started before this render saw the equipped skin.
+        // A gravação pode ter começado antes de o redesenho ler a skin equipada.
         try {
           await tretaEquipmentReady();
           if (action !== rosterActionRevision) return;

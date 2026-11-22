@@ -36,7 +36,7 @@ let state=null,manifest={skins:{}},eyeManifest={eyewear:{}},selected=null,filter
 let onEquip=()=>{},infoStage=null,infoVersion=0;
 let equipmentRevision='';
 const inventoryWaiters=new Set();
-// These are server writes; stale-response guards cannot undo a reversed arrival order.
+// Ignorar uma resposta atrasada não corrige gravações fora de ordem no servidor.
 let equipmentMutation=Promise.resolve();
 const queueEquipmentMutation=operation=>{
   const next=equipmentMutation.catch(()=>{}).then(operation);
