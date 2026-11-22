@@ -16,12 +16,11 @@
 import { execSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { MUT, TELAS, TOQUE, escapeFailures, idiomaVerdict, inspectLobbyDOM, inspectModalDOM, jogarVerdict, lobbyFailures, modalFailures, telaVerdicts } from './lobby-flavio-common.mjs';
 
 const BASE = process.env.BASE || 'http://127.0.0.1:9428';
 /* desktop do dono, Full HD, notebook 1536×864 e 1280×720, celular deitado (Android grande e iPhone) */
-const TELAS = [[1536, 960], [1920, 1080], [1536, 864], [1280, 720], [932, 430, true], [844, 390, true]];
 const OUT = process.env.OUT || 'tools/eval/out/lobby-flavio';
-const TOQUE = 44;
 const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
@@ -42,16 +41,6 @@ const closeBrowser = async (instance) => {
 };
 let browser = await launchBrowser();
 
-const MUT = {
-  'card-resenha': [/\/js\/tp\/flavio\.js/, (t) => t.replace("card.id = 'tp-lobby-flavio';", "card.id = 'tp-resenha-botao';").replace("no('strong', 'tp-disp', tr('OPERAÇÃO FLÁVIO'))", "no('strong', 'tp-disp', tr('Resenha'))"), 'LFB1', 'telas'],
-  'card-depois': [/\/js\/tp\/lobby\.js/, (t) => t.replace('esq.appendChild(invasao);', 'esq.insertBefore(invasao, esq.firstChild);'), 'LFB1', 'telas'],
-  'quests-esquerda': [/\/js\/tp\/lobby\.js/, (t) => t.replace("if (getComputedStyle(dir).display !== 'none') dir.append(...blocos);", 'if (false) dir.append(...blocos);'), 'LFB6', 'telas'],
-  'modal-sem-imagem': [/\/js\/mode-announcements\.js/, (t) => t.replace('bg.src = imagem;', "bg.src = '';"), 'LFB2', 'telas'],
-  'modal-transborda': [/\/js\/mode-announcements\.js/, (t) => t.replace('@media (max-height:520px){.cs-modes-dialog--historia', '@media (max-height:1px){.cs-modes-dialog--historia'), 'LFB2', 'telas'],
-  'esc-sem-foco': [/\/js\/mode-announcements\.js/, (t) => t.replace('else if (c.foco?.isConnected) c.foco.focus({ preventScroll: true });', ''), 'LFB3', 'telas'],
-  'jogar-mapa-errado': [/\/js\/tp\/flavio\.js/, (t) => t.replace('modos.irMapa(MAPA_FLAVIO);', "modos.irMapa('piscina_treta');"), 'LFB4', 'jogar'],
-  'en-vaza': [/\/js\/i18n\.js/, (t) => t.replace("'OPERAÇÃO FLÁVIO': 'OPERATION FLÁVIO', ", ''), 'LFB5', 'idioma'],
-};
 
 async function lobby({ w = 1536, h = 960, toque = false, lang = 'pt', mutante = '' } = {}) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, ...(toque ? { hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : {}) });
@@ -97,74 +86,19 @@ async function abrirCard(page, toque) {
 /* A · 6 telas: posição, história, saída e as colunas. */
 async function telas(mutante, cap) {
   const e1 = [], e2 = [], e3 = [], e6 = [];
-  // Mantém as seis telas em paralelo: o caminho sequencial excedia o teto local
-  // antes mesmo de chegar aos oito controles causais.
   await Promise.all(TELAS.map(async ([w, h, toque]) => {
     const tag = `${w}x${h}`;
     const { page, ctx } = await lobby({ w, h, toque, mutante });
     if (cap) await page.screenshot({ path: `${OUT}/lobby-${tag}.png` });
-    const c = await page.evaluate(() => {
-      const card = document.getElementById('tp-lobby-flavio'), invasao = document.getElementById('tp-lobby-invasao');
-      const resenha = !!document.getElementById('tp-resenha-botao') || [...document.querySelectorAll('#main-menu button, #main-menu a')]
-        .some((e) => !e.closest('#tp-resenha') && e.checkVisibility() && /^\s*resenha\b/i.test(e.textContent));
-      const vis = (e) => !!e?.checkVisibility();
-      const caixa = (e) => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
-      const cruzam = (a, o) => o.l < a.r - 1 && a.l < o.r - 1 && o.t < a.b - 1 && a.t < o.b - 1;
-      /* colunas: Quests e skins na direita, depois de Amigos online, e nada dela dentro da partida */
-      const dir = document.querySelector('.tp-lobby-dir'), quests = document.getElementById('tp-lobby-quests'), skins = document.getElementById('tp-lobby-skins');
-      const partida = [...document.querySelectorAll('#menu-setup .pane-match > *')].filter(vis).map(caixa).filter((b) => b.b > b.t);
-      const amigos = document.getElementById('tp-lobby-online-amigos');
-      const colunas = {
-        dirVisivel: vis(dir), questsVisivel: vis(quests), questsNaDir: !!quests && !!dir?.contains(quests), skinsNaDir: !!skins && !!dir?.contains(skins),
-        depoisDosAmigos: [quests, skins].filter(Boolean).every((e) => !!(amigos?.compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING)),
-        naPartida: [quests, skins].filter(vis).filter((e) => partida.some((p) => cruzam(caixa(e), p))).map((e) => e.id),
-      };
-      if (!vis(card)) return { resenha, card: null, colunas };
-      const r = caixa(card), cruza = [];
-      for (const e of document.querySelectorAll('#main-menu a, #main-menu button, #main-menu input, #main-menu select, #main-menu [role=tab], #hub-ui a, #hub-ui button')) {
-        if (e === card || card.contains(e) || e.closest('#tp-resenha') || !vis(e)) continue;
-        const o = caixa(e);
-        if (o.r - o.l <= 0 || o.b - o.t <= 0) continue;
-        if (cruzam(r, o)) cruza.push((e.id || e.getAttribute('aria-label') || e.className || e.tagName).toString().split(' ')[0]);
-      }
-      const topo = document.elementFromPoint((r.l + r.r) / 2, (r.t + r.b) / 2);
-      const img = card.querySelector('img'), inv = vis(invasao) ? caixa(invasao) : null;
-      return { resenha, colunas, card: { ...r, h: r.b - r.t, cruza, coberto: !(topo && card.contains(topo)), arte: img?.complete && img.naturalWidth,
-        rotulo: card.textContent, invasao: !!inv, acima: !!inv && r.b <= inv.t + 1 && !!(card.compareDocumentPosition(invasao) & Node.DOCUMENT_POSITION_FOLLOWING) } };
-    });
-    if (c.resenha) e1.push(`${tag}: botão Resenha no lobby`);
-    if (!c.card) e1.push(`${tag}: painel da Operação Flávio ausente`);
-    else {
-      const k = c.card;
-      if (!k.invasao) e1.push(`${tag}: invasão fora da tela (sem referência de ordem)`);
-      else if (!k.acima) e1.push(`${tag}: painel do Flávio não está acima da invasão (topo ${k.t.toFixed(0)}, base ${k.b.toFixed(0)})`);
-      if (k.l < 0 || k.t < 0 || k.r > w || k.b > h) e1.push(`${tag}: painel fora da tela`);
-      if (k.cruza.length) e1.push(`${tag}: painel cobre ${k.cruza.join(', ')}`);
-      if (k.coberto) e1.push(`${tag}: algo cobre o painel`);
-      if (!(k.arte >= 1280)) e1.push(`${tag}: arte do painel não carregou (${k.arte || 0} px)`);
-      if (!/OPERAÇÃO FLÁVIO/.test(k.rotulo)) e1.push(`${tag}: painel diz "${k.rotulo}"`);
-      if (toque && k.h < TOQUE - 0.5) e1.push(`${tag}: painel com ${k.h.toFixed(0)} px de altura no toque`);
-    }
-    const col = c.colunas;
-    if (col.dirVisivel) {
-      if (!col.questsNaDir || !col.skinsNaDir) e6.push(`${tag}: coluna da direita à vista sem ${[!col.questsNaDir && 'Quests', !col.skinsNaDir && 'skins'].filter(Boolean).join(' e ')}`);
-      else if (!col.depoisDosAmigos) e6.push(`${tag}: Quests/skins antes de Amigos online`);
-      if (col.naPartida.length) e6.push(`${tag}: ${col.naPartida.join(', ')} dentro do painel da partida`);
-    } else if (h > 500 && !col.questsVisivel) e6.push(`${tag}: sem a coluna da direita, Quests sumiu`);
+    const c = await page.evaluate(inspectLobbyDOM);
+    const l = lobbyFailures(c, tag, w, h, toque);
+    e1.push(...l.e1); e6.push(...l.e6);
     if (!(await abrirCard(page, toque))) { e2.push(`${tag}: o card não abre a história`); await ctx.close(); return; }
-    await page.waitForFunction(() => { const i = document.querySelector('dialog[data-historia] .cs-modes-bg'); return i?.complete; }, null, { timeout: 15000 }).catch(() => {});
+    await page.waitForFunction(() => document.querySelector('dialog[data-historia] .cs-modes-bg')?.complete, null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(500);
     if (cap) await page.screenshot({ path: `${OUT}/historia-${tag}.png` });
-    const m = await page.evaluate(() => {
-      const d = document.querySelector('dialog[data-historia]'), p = d.querySelector('.cs-modes-painel'), img = d.querySelector('.cs-modes-bg');
-      const fora = [...d.querySelectorAll('button, h1, p, li')].filter((e) => { const b = e.getBoundingClientRect(); return b.width && (b.left < -0.5 || b.top < -0.5 || b.right > innerWidth + 0.5 || b.bottom > innerHeight + 0.5); }).map((e) => e.textContent.slice(0, 24));
-      return { img: img.complete ? img.naturalWidth : 0, src: img.getAttribute('src'), rola: [p.scrollHeight, p.clientHeight], fora, foco: d.contains(document.activeElement) ? document.activeElement.textContent : null };
-    });
-    if (m.img < 1280) e2.push(`${tag}: imagem da história com ${m.img} px (src "${m.src}")`);
-    if (m.rola[0] > m.rola[1] + 1) e2.push(`${tag}: história rola (${m.rola[0]} > ${m.rola[1]} px)`);
-    if (m.fora.length) e2.push(`${tag}: fora da tela: ${m.fora.join(' | ')}`);
-    if (!m.foco) e2.push(`${tag}: foco fora do diálogo ao abrir`);
-    /* foco preso: Tab e Shift+Tab não saem do diálogo */
+    const m = await page.evaluate(inspectModalDOM);
+    e2.push(...modalFailures(m, tag));
     for (const tecla of ['Tab', 'Tab', 'Tab', 'Shift+Tab']) {
       await page.keyboard.press(tecla);
       if (!(await page.evaluate(() => { const a = document.activeElement; return !!a?.closest('dialog[data-historia]') || a === document.body; }))) { e2.push(`${tag}: ${tecla} levou o foco para fora do diálogo`); break; }
@@ -173,34 +107,25 @@ async function telas(mutante, cap) {
     const gaveta = await page.evaluate(() => document.getElementById('tp-resenha')?.hasAttribute('data-aberta'));
     await page.keyboard.press('Escape'); await page.waitForTimeout(600);
     const s = await page.evaluate(() => ({ aberto: !!document.querySelector('dialog[open]'), foco: document.activeElement?.id || document.activeElement?.tagName }));
-    if (gaveta) e3.push(`${tag}: Y abriu a gaveta por baixo da história`);
-    if (s.aberto || s.foco !== 'tp-lobby-flavio') e3.push(`${tag}: Escape deixou ${s.aberto ? 'o diálogo aberto' : `o foco em ${s.foco}`}`);
+    e3.push(...escapeFailures(gaveta, s, tag));
     await ctx.close();
   }));
-  return [
-    { id: 'LFB1', ok: !e1.length, msg: e1.join('; ') || `${TELAS.length} telas: sem Resenha; painel do Flávio acima da invasão, livre, à vista, arte carregada` },
-    { id: 'LFB2', ok: !e2.length, msg: e2.join('; ') || `${TELAS.length} telas: história abre com a arte carregada, sem rolar nem sair da tela, foco preso no diálogo` },
-    { id: 'LFB3', ok: !e3.length, msg: e3.join('; ') || `${TELAS.length} telas: Escape fecha e devolve o foco ao painel; Y não abre a gaveta por baixo` },
-    { id: 'LFB6', ok: !e6.length, msg: e6.join('; ') || `${TELAS.length} telas: Quests e skins embaixo de Amigos online fora da partida; sem a coluna, Quests na esquerda` },
-  ];
+  return telaVerdicts(e1, e2, e3, e6);
 }
-
 /* B · JOGAR começa a partida da escolta. */
 async function jogar(mutante, cap) {
   const { page, ctx } = await lobby({ mutante });
-  let msg = '';
-  if (!(await abrirCard(page, false))) msg = 'o card não abre a história';
+  let c;
+  if (!(await abrirCard(page, false))) c = jogarVerdict(false, {});
   else {
     await page.click('dialog[data-historia] [data-jogar]');
     const ok = await page.waitForFunction(() => window.__game?._mapId, null, { timeout: 120000 }).then(() => true, () => false);
     const r = await page.evaluate(() => ({ mapa: window.__game?._mapId, modal: !!document.querySelector('dialog[open]') }));
     if (cap) await page.screenshot({ path: `${OUT}/jogar-1536x960.png` });
-    if (!ok) msg = 'JOGAR não começou partida em 120 s';
-    else if (r.mapa !== 'operacao_flavio') msg = `JOGAR começou ${r.mapa}`;
-    else if (r.modal) msg = 'história continua aberta por cima da partida';
+    c = jogarVerdict(ok, r);
   }
   await ctx.close();
-  return [{ id: 'LFB4', ok: !msg, msg: msg || 'JOGAR fecha a história e começa a partida no operacao_flavio' }];
+  return [c];
 }
 
 /* C · inglês. */
@@ -215,10 +140,7 @@ async function idioma(mutante, cap) {
   }
   const t = abriu ? await page.evaluate(() => document.querySelector('dialog[data-historia]').innerText) : '';
   await ctx.close();
-  const PT = /OPERAÇÃO|HISTÓRIA|comitiva|Escolha o Zero Um|Três rotas|Paródia|FECHAR|JOGAR/;
-  const vaza = (rotulo + '\n' + t).match(PT)?.[0];
-  const ok = abriu && /OPERATION FLÁVIO/.test(rotulo) && /OPERATION FLÁVIO/.test(t) && !vaza;
-  return [{ id: 'LFB5', ok, msg: ok ? 'EN: card e história sem frase em português' : `EN: ${abriu ? '' : 'história não abriu; '}card "${rotulo}"${vaza ? `; vaza "${vaza}"` : ''}` }];
+  return [idiomaVerdict(rotulo, t, abriu)];
 }
 
 const GRUPOS = { telas, jogar, idioma };
