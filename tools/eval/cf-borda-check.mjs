@@ -32,7 +32,7 @@ const MUTACOES = {
   'assets-intercepta-post': ['src/cf/worker.ts', 'return (prepararResposta(await astro.fetch(request, env, ctx), url.pathname)).saida;', 'return astro.fetch(request, env, ctx);'],
   'cache-ignora-etag': ['src/cf/worker.ts', "return etag && request.headers.get('if-none-match') === etag", 'return false'],
   'vm-sem-sha': ['src/cf/borda.mjs', 'if (sha256 !== entrada.sha256) {', 'if (false) {'],
-  'cache-sem-contadores': ['src/cf/worker.ts', "  pathname === '/api/online' || pathname === '/api/map-plays' ||\n", ''],
+  'cache-sem-contadores': ['src/cf/worker.ts', 'rotaContador(pathname) || ', ''],
   'cache-sem-stale': ['src/cf/worker.ts', 'if (agora <= staleAte) {', 'if (false) {'],
   'cache-revalida-condicional': ['src/cf/worker.ts', "headers.delete('if-none-match');", ''],
   'cache-preenche-condicional': ['src/cf/worker.ts', 'const nova = await produzir(new Request(request, { headers }), env, ctx, url);', 'const nova = await produzir(request, env, ctx, url);'],
@@ -177,11 +177,19 @@ await build({
   }],
 });
 let cacheEntry = null;
+let cacheCounterEntry = null;
 let falhaCachePut = false;
 const pendentes = [];
 Object.defineProperty(globalThis, 'caches', {
   configurable: true,
   value: {
+    open: async (nome) => {
+      check(nome === 'public-counters', 'B2', 'cache dos contadores tem outro namespace');
+      return {
+        match: async () => cacheCounterEntry?.clone(),
+        put: async (_request, response) => { cacheCounterEntry = response.clone(); },
+      };
+    },
     default: {
       match: async () => cacheEntry?.clone(),
       put: async (_request, response) => {
@@ -248,6 +256,7 @@ check(chamadasLegado === 1 && await assetAposLegado.text() === 'asset-renovado',
 await Promise.all(pendentes.splice(0));
 for (const [rota, ttl] of [['online', 30], ['map-plays', 300]]) {
   cacheEntry = null;
+  cacheCounterEntry = null;
   let chamadas = 0;
   const request = new Request(`https://www.csbrasil.online/api/${rota}`);
   const offline = { ASSETS: { fetch: async () => new Response('limite', {
@@ -255,12 +264,12 @@ for (const [rota, ttl] of [['online', 30], ['map-plays', 300]]) {
   }) } };
   const limitada = await workerReal.fetch(request, offline, ctx);
   await Promise.all(pendentes.splice(0));
-  check(limitada.status === 429 && !cacheEntry, 'B2', `/api/${rota} precisa deixar 429 fora do cache`);
+  check(limitada.status === 429 && !cacheEntry && !cacheCounterEntry, 'B2', `/api/${rota} precisa deixar 429 fora do cache`);
   const fallback = await workerReal.fetch(request, { ASSETS: { fetch: async () =>
     new Response('{}', { headers: { 'cache-control': 'no-store' } }),
   } }, ctx);
   await Promise.all(pendentes.splice(0));
-  check(fallback.status === 200 && !cacheEntry, 'B2', `/api/${rota} precisa respeitar no-store no fallback`);
+  check(fallback.status === 200 && !cacheEntry && !cacheCounterEntry, 'B2', `/api/${rota} precisa respeitar no-store no fallback`);
 
   const origem = { ASSETS: { fetch: async () => {
     chamadas++;
@@ -273,6 +282,8 @@ for (const [rota, ttl] of [['online', 30], ['map-plays', 300]]) {
   const segunda = await workerReal.fetch(request, origem, ctx);
   check(chamadas === 1 && (await primeira.json()).count === (await segunda.json()).count,
     'B2', `/api/${rota} precisa reutilizar uma resposta pública da origem`);
+  check(cacheCounterEntry && !cacheEntry, 'B2',
+    `/api/${rota} precisa usar cache separado para o Worker anterior ignorar a entrada no rollback`);
 }
 cacheEntry = null;
 let chamadasPreenchimento = 0;
