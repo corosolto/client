@@ -3,14 +3,14 @@
 <!-- BEGIN:GERADO — não edite à mão, rode `npm run arch` -->
 
 > Gerado por `node tools/gen-arch.mjs`. **Não edite este bloco à mão.**
-> Versão do jogo: 2.1.0-alpha.156 · `npm run arch` para regenerar · `npm run arch:check` no CI.
+> Versão do jogo: 2.1.0-alpha.157 · `npm run arch` para regenerar · `npm run arch:check` no CI.
 
 ## Tamanho dos arquivos indexados
 
 | Arquivo | Linhas | Símbolos |
 |---|---:|---:|
 | `public/js/game.js` | 10301 | 438 |
-| `public/js/main.js` | 5816 | 449 |
+| `public/js/main.js` | 5800 | 449 |
 | `public/js/glbchars.js` | 2170 | 156 |
 | `public/js/characters.js` | 1243 | 40 |
 | `public/js/vmattach.js` | 353 | 3 |
