@@ -54,12 +54,21 @@ export function rankingAvatar(player, { mini = false, size = 32, alt = '' } = {}
   const botArt = botId && (heroUrl(botId) ? player.avatar_url : retratoFontes(botId)[0]);
   const character = Object.hasOwn(PROFILE_CHARACTERS, player.last_character) ? bustoUrl(player.last_character) : null;
   const sources = [...new Set([upload, botArt, character, defaultAvatar].filter(Boolean))];
+  const nick = player.nick || '?';
+  const initials = mini ? nick.replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2) : Array.from(nick)[0];
+  const placeholder = node('span', (initials || '?').toUpperCase(), mini ? 'tp-disp' : '');
+  placeholder.setAttribute('aria-hidden', 'true');
 
+  image.className = 'ranking-avatar--loading';
   image.alt = alt;
   image.width = image.height = size;
   image.loading = 'lazy';
   image.decoding = 'async';
   image.referrerPolicy = 'no-referrer';
+  image.onload = () => {
+    image.className = '';
+    placeholder.hidden = true;
+  };
   let index = 0;
   image.onerror = () => {
     const next = sources[++index];
@@ -67,11 +76,10 @@ export function rankingAvatar(player, { mini = false, size = 32, alt = '' } = {}
       image.src = next;
       return;
     }
-    const nick = player.nick || '?';
-    const initials = mini ? nick.replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2) : Array.from(nick)[0];
-    avatar.replaceChildren(node('span', (initials || '?').toUpperCase(), mini ? 'tp-disp' : ''));
+    avatar.replaceChildren(placeholder);
   };
   image.src = sources[0];
+  avatar.append(placeholder);
   avatar.append(image);
   return avatar;
 }

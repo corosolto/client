@@ -42,6 +42,18 @@ try {
  assert.equal(avatarOf({...player,last_character:'et'}).src,player.avatar_url,'upload takes priority over last character');
  assert.equal(avatarOf({...player,avatar_url:null,last_character:'et'}).src,character,'player without upload must use the last character');
  assert.equal(avatarOf({...player,avatar_url:null,last_character:null}).src,defaultAvatar,'player without a public character must still have an avatar');
+ const rankingCss=readFileSync(new URL('public/css/tp/ranking.css',root),'utf8');
+ const socialCss=readFileSync(new URL('public/social.css',root),'utf8');
+ assert(socialCss.includes('img.ranking-avatar--loading{opacity:0}'),'loading image must not cover the placeholder');
+ assert(rankingCss.includes('.tp-rosto--mini>*{grid-area:1/1}'),'ticker image and placeholder must share the same tile');
+ const pending=helpers.rankingAvatar({...player,last_character:'et'}, {mini:true});
+ const [placeholder, pendingImage]=pending.children;
+ assert(placeholder.tag==='span' && placeholder.textContent && !placeholder.hidden,'still-loading avatar has no visible placeholder');
+ assert.equal(pendingImage.className,'ranking-avatar--loading','pending image must leave the placeholder visible');
+ pendingImage.onerror();
+ assert(!placeholder.hidden,'fallback still loading must leave the placeholder visible');
+ pendingImage.onload();
+ assert(placeholder.hidden && pendingImage.className==='','loaded portrait must replace the placeholder');
  const unavailable=avatarOf({...player,last_character:'et'});
  unavailable.onerror();
  assert.equal(unavailable.src,character,'failed upload must fall back to the last character');
