@@ -55,7 +55,7 @@ async function abrir(community, perfil, eu = null) {
     mountAccountEntry() {}, mountProfilePreferences() {}, mountAccountIntegrations() {}, acceptAccount() {}, logoutAccount() {},
     loadAccount: async () => (eu ? { authenticated: true, profile: { id: eu, nick: 'Eu' } } : { authenticated: false }), loadAuthOptions: async () => ({ providers: [] }),
   });
-  for (const f of ['profile-character-catalog', 'career-rank', 'account-verified', 'community-inbox', 'profile-character', 'ranking-player']) carregar(ctx, read(`public/js/${f}.js`));
+  for (const f of ['profile-character-catalog', 'career-rank', 'account-verified', 'community-inbox', 'profile-character', 'data/retratos', 'ranking-player']) carregar(ctx, read(`public/js/${f}.js`));
   vm.runInContext(semImport(community), ctx, { timeout: 1000 });
   for (let n = 0; n < 20; n++) await new Promise((r) => setImmediate(r));
   const raiz = ids['social-content'];
