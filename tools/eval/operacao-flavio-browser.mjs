@@ -226,6 +226,7 @@ let receiptData = null;
 const errors = [], failed = [], glbs = [];
 const escortTrace = [], rushTrace = [], exposedTrace = [];
 let escortStart = null, rushBefore = null, exposedBefore = null;
+const boardingTrace = {};
 const writeReceipt = (value) => {
   requireOwnedOut();
   writeFileSync(`${out}/receipt.json`, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
@@ -239,7 +240,7 @@ const writeFailureReceipt = (outcome) => {
         ...describeFailure(outcome), stage, platform: process.platform,
         actualGPU: observedGpu, testExecuted: false, exitCode: outcome.exitCode,
       },
-      escortStart, escortTrace, rushBefore, rushTrace, exposedBefore, exposedTrace, errors, failed,
+      escortStart, escortTrace, rushBefore, rushTrace, exposedBefore, exposedTrace, boardingTrace, errors, failed,
     });
     return { written: true };
   } catch (error) { return { written: false, error: describeThrowable(error) }; }
@@ -642,6 +643,11 @@ const views = [
       : g.world.objectivePlane;
     boardPlane.updateWorldMatrix(true, false);
     return {
+      active: !!cinematic,
+      winner: cinematic?.winner,
+      duration: g.stateUntil - cinematic?.startedAt,
+      result: g._resultado,
+      hud: g.objective?.hud?.textContent || '',
       elapsed: owner?._elapsedCinematic(),
       planeZ: boardPlane.getWorldPosition(boardPlane.position.clone()).z,
       activeIsBoardingPlane: boardPlane === boarding?.plane,
@@ -655,36 +661,22 @@ const views = [
   }, target, { timeout: 9000 });
   await waitForElapsed(1.0);
   const preDoorA = await sampleBoardingPlane();
+  boardingTrace.preDoorA = preDoorA;
   await waitForElapsed(6.1);
   const preDoorB = await sampleBoardingPlane();
+  boardingTrace.preDoorB = preDoorB;
   requireOwnedOut();
   await page.screenshot({ path: `${out}/06-cinematica-vitoria-porta.png` });
   await waitForElapsed(7.4);
   const taxi = await sampleBoardingPlane();
+  boardingTrace.taxi = taxi;
   requireOwnedOut();
   await page.screenshot({ path: `${out}/06-cinematica-vitoria.png` });
   assert.ok(preDoorA.planeZ === 55 && preDoorB.planeZ === 55, `FB_PRE_DOOR avião de embarque deve permanecer em z=55 antes da porta (A ${preDoorA.planeZ}, B ${preDoorB.planeZ})`);
   assert.equal(preDoorA.planeZ, preDoorB.planeZ, `avião de embarque deve ficar imóvel antes do fechamento da porta (${preDoorA.planeZ} vs ${preDoorB.planeZ})`);
   assert.ok(taxi.planeZ > 55, `FB_TAXI_ADVANCE avião deve avançar além de z=55 após o início do táxi em 6.8s (z ${taxi.planeZ})`);
-  const cinematic = await page.evaluate(() => {
-    const g = window.__game;
-    const c = g.objective?.cinematic;
-    const owner = c?.owner || g.objective;
-    const boarding = owner?._boarding;
-    const boardPlane = c && boarding?.session && boarding.stage?.visible && owner?._boardingSession === c && boarding.plane
-      ? boarding.plane
-      : g.world.objectivePlane;
-    boardPlane.updateWorldMatrix(true, false);
-    return {
-      active: !!c,
-      winner: c?.winner,
-      duration: g.stateUntil - c?.startedAt,
-      planeZ: boardPlane.getWorldPosition(boardPlane.position.clone()).z,
-      result: g._resultado,
-      hud: g.objective?.hud?.textContent || '',
-    };
-  });
-  cinematic.samples = { preDoorA, preDoorB, taxi };
+  // A captura pelo compositor pode terminar depois do fim da cinemática; o táxi já foi observado vivo.
+  const cinematic = { ...taxi, samples: boardingTrace };
   assert.equal(cinematic.active, true);
   assert.equal(cinematic.winner, 'B');
   assert.ok(cinematic.duration >= 8.9, `FB_DURATION duração da cinemática deve ser >= 8.9 (dur ${cinematic.duration})`);
