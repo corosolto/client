@@ -34,6 +34,7 @@ async function ui(value,{authValue=value,profile=true}={}){
  if(helperSource)vm.runInContext(helperSource.replace(/^import .*\n/gm,'').replace(/export\s+/g,''),context);
  const clean=s=>s.replace(/^import .*\n/gm,'').replace(/export\s+/g,'');
  if(!baseline)vm.runInContext('(function(){'+clean(source('career-rank.js'))+';Object.assign(globalThis,{careerRankBadge,careerRankTitle});})()',context,{timeout:1000});
+ if(!baseline)vm.runInContext(clean(source('data/retratos.js')),context,{timeout:1000});
  vm.runInContext('(function(){'+clean(ranking)+';Object.assign(globalThis,{rankingPlayerCell,rankingTable,...(typeof profileSocialLinks==="function"?{profileSocialLinks,profileSocialLink}:{})});})()',context,{timeout:1000});vm.runInContext('(function(){'+clean(account)+';Object.assign(globalThis,{mountAccountIntegrations,mountAccountEntry,mountProfilePreferences,loadAccount,loadAuthOptions,acceptAccount,logoutAccount});})()',context,{timeout:1000});
  vm.runInContext('loadAccount=async()=>fixtureAuth;loadAuthOptions=async()=>({providers:[],linking:false});acceptAccount=()=>{};questList=()=>document.createElement("div");',Object.assign(context,{fixtureAuth:auth}),{timeout:1000});
  const rankingCell=vm.runInContext('rankingPlayerCell(fixturePlayer)',Object.assign(context,{fixturePlayer:player}),{timeout:1000});
