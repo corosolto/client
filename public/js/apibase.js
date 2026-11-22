@@ -31,6 +31,9 @@ export function apiUrl(caminho) {
   if (['treta','passe','social','social-auth','social-avatar','gameplay-upload','register','avatar','mp-ticket','clans'].includes(nome)) return caminho;
   if (!NO_BACKEND.has(nome)) return caminho;
   if (VIA_SITE.has(nome) && !forcado) return caminho;
+  // Contadores públicos usam o cache da borda nos domínios do jogo.
+  if (!forcado && (nome === 'online' || nome === 'map-plays') &&
+      HOST_PROPRIO.test(globalThis.location?.hostname || '')) return caminho;
   return `${BASE}${caminho}`;
 }
 
