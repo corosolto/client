@@ -7083,7 +7083,7 @@ export class Game {
     const shoulder = this.camView === 'shoulder';
     const ads = p.scoped ? Math.min(1, (this._tpAdsF || 0) + dt / 0.11) : Math.max(0, (this._tpAdsF || 0) - dt / 0.11);
     this._tpAdsF = ads;
-    // Frame the living body more widely; leave the death camera and settled ADS alone.
+    // Abre o enquadramento do Reborn vivo sem alterar a câmera de morte nem a mira estabilizada.
     const rebornHip = !shoulder && p.alive && p.def?.id === 'bebe-reborn' ? 1 - ads : 0;
     const orbitBlend = Math.min(1, Math.abs(this._tpOrbitYaw) / 0.45);
     /* Dancando, a camera de COMBATE cola nas costas e esconde o passo: afasta e sobe
