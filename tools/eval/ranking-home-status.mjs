@@ -38,7 +38,7 @@ let astro=source('src/pages/index.astro'),peleV3=source('public/css/tp/ranking.c
 const hashes=Object.fromEntries(['src/pages/index.astro','public/js/main.js','public/js/community.js','public/js/ranking-player.js'].map(p=>[p,createHash('sha256').update(source(p)).digest('hex')]));
 if(mutant==='nonarray-guard'){const changed=main.replaceAll('!Array.isArray(data?.players)','!data?.players');assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
 // A tela do hub só pode ler a fonte verificada: /api/leaderboard não filtra ranking_exclusion (22/10).
-if(mutant==='hub-legacy-source'){const changed=main.replace("await api('/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all')","await api('/api/leaderboard')");assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
+if(mutant==='hub-legacy-source'){const changed=main.replace("await api(rankingPath('/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all'))","await api('/api/leaderboard')");assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}
 // Os três pedidos de 22/10 na aba RANKING: título, linha inteira clicável e avatar de personagem.
 if(mutant==='hub-title'){const changed=astro.replace('<h2>RANKING</h2>','<h2>PLACAR DA RUA</h2>');assert.notEqual(changed,astro,'MUTATION DID NOT APPLY');astro=changed;mutationsApplied++;}
 if(mutant==='hub-row-link'){const changed=main.replace("linha.setAttribute('role', 'link'); linha.setAttribute('tabindex', '0');","linha.dataset.mutante = '1';");assert.notEqual(changed,main,'MUTATION DID NOT APPLY');main=changed;mutationsApplied++;}

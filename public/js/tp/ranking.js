@@ -2,7 +2,7 @@
    já mostrava o mesmo placar. Tudo vem de UMA chamada /api/social?action=ranking. */
 import { tr, LANG } from '../i18n.js';
 import { apiUrl } from '../apibase.js';
-import { rankingAvatar } from '../ranking-player.js';
+import { rankingAvatar, rankingPath } from '../ranking-player.js';
 
 const ROTA = '/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all';
 
@@ -20,7 +20,7 @@ function no(tag, cls = '', texto = '') {
 }
 
 async function buscar() {
-  const r = await fetch(apiUrl(ROTA), { credentials: 'same-origin', signal: AbortSignal.timeout(12000) });
+  const r = await fetch(apiUrl(rankingPath(ROTA)), { credentials: 'same-origin', signal: AbortSignal.timeout(12000) });
   if (!r.ok) throw new Error(`ranking_${r.status}`);
   const d = await r.json();
   if (d?.disabled || !Array.isArray(d?.players)) throw new Error('ranking_indisponivel');
