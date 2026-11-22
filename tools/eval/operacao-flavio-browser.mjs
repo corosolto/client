@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { lstatSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
-import { chromium } from 'playwright';
+import { abrirOperacaoEgo } from './operacao-flavio-ego.mjs';
 
 const option = (name, fallback) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.split('=').slice(1).join('=') || fallback;
 const base = option('base', 'http://127.0.0.1:9326');
 const out = option('out', 'artifacts/operacao-flavio');
+const ego = globalThis.operacaoEgo != null || Object.hasOwn(process.env, 'EGO_TASK_SPACE');
 
 class EnvironmentUnavailable extends Error {}
 
@@ -220,6 +221,7 @@ if (process.argv.includes('--selftest-env')) {
 }
 
 let browser = null, context = null, closed = false, observedGpu = null, stage = 'setup';
+let egoBrowser = null;
 let receiptData = null;
 const errors = [], failed = [], glbs = [];
 const writeReceipt = (value) => {
@@ -241,26 +243,37 @@ const writeFailureReceipt = (outcome) => {
 };
 const cleanup = async () => {
   if (closed) return;
-  try { await closeResources(context, browser); } finally { closed = true; }
+  try {
+    if (egoBrowser) await egoBrowser.close();
+    else await closeResources(context, browser);
+  } finally { closed = true; }
 };
 const primary = async () => {
   reserveOut();
   if (!supportedPlatform(process.platform)) {
     throw new EnvironmentUnavailable(`stage=platform platform=${process.platform} reason=platform_not_supported: perfil suportado deste ensaio e Mac nativo atual (Apple M4 Pro|Metal + WebGL2)`);
   }
-  browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio'] });
   stage = 'browser';
-context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
-const page = await context.newPage();
-await page.route(/\.astro\/eval-vite|dev-toolbar/, (route) => route.fulfill({
-  contentType: 'text/javascript',
-  body: 'export default {};',
-}));
-page.on('pageerror', (error) => errors.push(error.message));
-page.on('response', (response) => {
-  if (response.status() >= 400) failed.push([response.status(), response.url()]);
-  if (response.status() === 200 && response.url().includes('.glb')) glbs.push(response.url());
-});
+  let page;
+  if (ego) {
+    if (!globalThis.operacaoEgo) throw new EnvironmentUnavailable('Execute o portão Operação com o launcher oficial');
+    egoBrowser = await abrirOperacaoEgo(globalThis.operacaoEgo, { base, errors, failed, glbs });
+    page = egoBrowser.page;
+  } else {
+    const { chromium } = await import('playwright');
+    browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio'] });
+    context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+    page = await context.newPage();
+    await page.route(/\.astro\/eval-vite|dev-toolbar/, (route) => route.fulfill({
+      contentType: 'text/javascript',
+      body: 'export default {};',
+    }));
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('response', (response) => {
+      if (response.status() >= 400) failed.push([response.status(), response.url()]);
+      if (response.status() === 200 && response.url().includes('.glb')) glbs.push(response.url());
+    });
+  }
 
 const views = [
   { id: '01-terminal', camera: [-24, 5.8, -50], target: [-3, 1.4, -27], description: 'fachada, portal, balcões e assentos do terminal sem trilha no chão' },

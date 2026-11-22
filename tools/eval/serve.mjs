@@ -67,6 +67,12 @@ async function currentRenderer() {
 }
 const server = http.createServer(async (req, res) => {
   try {
+    // Same dev-toolbar fixture as the Operação Playwright route. Serving it here
+    // lets the Ego tab complete navigation without a paused CDP request.
+    if (process.argv[3] === '--operacao-dev-stub' && /\.astro\/eval-vite|dev-toolbar/.test(req.url)) {
+      res.writeHead(200, { 'content-type': 'text/javascript' });
+      return res.end('export default {};');
+    }
     /* Pacotes do Studio (STUDIO_PACK_ROOT, fora de public/): o handler recebe o caminho
        CRU (sem normalizar `..` nem decodificar) e decide sozinho: canônico, contido,
        no-store. Sem raiz → 404. Mesmo handler do dev server do Astro. */
