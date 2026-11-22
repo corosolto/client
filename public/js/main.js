@@ -4219,8 +4219,9 @@ async function renderHubRanking() {
   };
   const global = $('hub-rank-global');
   global.textContent = 'Carregando o ranking global…';
-  // O hub usa o ranking verificado. O placar legado soma pontos da carreira.
-  const data = await api(rankingPath('/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all'));
+  /* Fonte verificada (22/10): /api/social?action=ranking é a única que filtra ranking_exclusion;
+     /api/leaderboard devolve pontos de carreira/legado e mostrava quem foi excluído. */
+  const data = await api('/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all');
   if (data?.disabled) {
     global.textContent = 'O ranking global está desligado enquanto a pontuação competitiva não for validada pelo servidor.';
     return;
@@ -4251,7 +4252,7 @@ async function renderHubRanking() {
   const proximaPagina = async () => {
     if (carregando) return;
     carregando = true; mais.disabled = true; mais.textContent = tr('CARREGANDO…');
-    const pagina = await api(rankingPath(`/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all&offset=${corpo.children.length}`));
+    const pagina = await api(`/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all&offset=${corpo.children.length}`);
     const vieram = Array.isArray(pagina?.players) ? pagina.players : null;
     if (!vieram) { mais.disabled = false; carregando = false; mais.textContent = tr('TENTAR DE NOVO'); return; }
     for (const [i, p] of vieram.entries()) corpo.append(linhaDoJogador(p, corpo.children.length + i));
@@ -4267,7 +4268,7 @@ async function renderHubRanking() {
 async function renderGlobal(nick) {
   const box = $('rank-global');
   box.innerHTML = '<h3>RANKING GLOBAL</h3><div class="rg-off">carregando…</div>';
-  const data = await api(rankingPath('/api/leaderboard'));
+  const data = await api('/api/leaderboard');
   /* `disabled` é escolha, `indisponível` é defeito — e o jogador lê a diferença.
      A flag mora só no servidor (src/lib/site.ts, RANKING_ON); aqui a gente só
      reage à resposta, pra não existirem duas fontes de verdade que divergem. */
@@ -5797,6 +5798,6 @@ const perfilCompartilhado = Boolean(params.get('perfil') || estadoDaUrl(location
   }
 }
 void window.__CS_LANG_READY__.then(finishBoot).catch((error) => window.__gameLaunch?.fail(error, 'boot'));
-import {rankingTable,playerProfilePath,rankingAvatar,rankingPath} from './ranking-player.js';
+import {rankingTable,playerProfilePath,rankingAvatar} from './ranking-player.js';
 import {accountVerifiedBadge} from './account-verified.js';
 import {careerRankBadge} from './career-rank.js';

@@ -69,9 +69,6 @@ try {
  context.rankingOffset=25;await weekly.onclick();assert.equal(context.rankingPeriod,'week');assert.equal(context.rankingOffset,0);
  content.replaceChildren();await vm.runInNewContext(`${body}\nshowRanking(0)`,context);
  assert(new URL(request,'https://fixture.test').searchParams.get('period')==='week','weekly tab must query weekly scores');
- const transmitted=new URL(request,'https://fixture.test').searchParams.get('portraits')?.split(',');
- const {PROFILE_CHARACTERS}=await import(new URL('public/js/profile-character-catalog.js',root));
- assert.deepEqual(transmitted,Object.keys(PROFILE_CHARACTERS),'ranking must send the deployed catalog so SQL can skip unavailable portraits');
  const weekNodes=tree(content);assert(weekNodes.some(n=>n.tag==='button' && n.textContent==='SEMANAL' && n.attributes['aria-pressed']==='true'));
  assert(weekNodes.some(n=>n.textContent.includes('12/10/2026') && n.textContent.includes('19/10/2026')),'weekly tab must show the server period');
  assert(!weekNodes.some(n=>n.textContent.includes('Últimos 7 dias')),'weekly must not be a rolling window');

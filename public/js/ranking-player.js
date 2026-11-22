@@ -41,11 +41,6 @@ export function playerProfilePath(player) {
   if(typeof player.url==='string' && /^\/u\/(?:[a-z][a-z0-9_]{2,23}|[0-9a-f-]{36})(?:\/|$)/i.test(player.url))return player.url;
   return /^[a-z][a-z0-9_]{2,23}$/.test(player.public_handle || player.handle || '') ? `/u/${player.public_handle || player.handle}` : `/u/${player.id}`;
 }
-export function rankingPath(path) {
-  const separator = path.includes('?') ? '&' : '?';
-  return `${path}${separator}portraits=${Object.keys(PROFILE_CHARACTERS).join(',')}`;
-}
-
 const defaultAvatar = bustoUrl('canarinho');
 
 export function rankingAvatar(player, { mini = false, size = 32, alt = '' } = {}) {
