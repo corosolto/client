@@ -90,6 +90,7 @@
 .tp-faixa__pts{color:var(--tp-tinta-3);font:700 calc(11px + 2px * var(--tp-faixa-grau))/1 var(--tp-num)}
 /* o rosto do tp/social é de 42 px; na faixa ele vai de 22 a 32 — a classe dobrada ganha da folha de social */
 .tp-rosto.tp-rosto--mini{width:var(--tp-faixa-rosto,26px);height:var(--tp-faixa-rosto,26px);border-radius:7px}
+.tp-rosto--mini>*{grid-area:1/1}
 .tp-rosto.tp-rosto--mini .tp-disp{font-size:calc(9px + 4px * var(--tp-faixa-grau,0))}
 @keyframes tp-faixa-rola{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 /* movimento reduzido: nada anda, a faixa vira lista rolável e a cópia do laço some do caminho */

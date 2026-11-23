@@ -35,6 +35,7 @@ if (mutante && !['sem-isencao', 'isencao-vazia', 'advisory-nova'].includes(mutan
    assinaturas (trecho de URL/título) que cobrem a isenção; entrada de cadeia
    (via só com nomes de pacote) não carrega advisory própria - a raiz carrega.
    Cada linha diz por que o risco não se realiza aqui - "é transitiva" não é motivo. */
+// GitHub withdrew GHSA-fc5q-39xc-vjpf on 2026-11-18; the audit no longer reports that chain.
 const ISENTAS = new Map();
 
 const GRAVES = new Set(['high', 'critical']);
@@ -49,9 +50,10 @@ let relatorio;
    lista virou no-op e os dois mutantes ficaram cegos — eles precisam TRAZER o vermelho. */
 const VULN_SINTETICA = { vulnerabilities: { 'pacote-sintetico': { severity: 'high', fixAvailable: true,
   via: [{ url: 'https://github.com/advisories/GHSA-sintetica-0000-0000', title: 'vulnerabilidade alta de mutante' }] } } };
+const ISENCAO_FIXTURE = new Map([['pacote-sintetico', { adv: ['GHSA-fixture-approved'], motivo: '' }]]);
 if (mutante === 'advisory-nova') {
-  /* Advisory fantasma num pacote ISENTO (o primeiro da lista): só DEP3 pode reprovar. */
-  relatorio = { vulnerabilities: { [ISENTAS.keys().next().value || 'path-to-regexp']: { severity: 'high', fixAvailable: false,
+  /* Advisory fantasma num pacote isento no fixture: só DEP3 pode reprovar. */
+  relatorio = { vulnerabilities: { 'pacote-sintetico': { severity: 'high', fixAvailable: false,
     via: [{ url: 'https://github.com/advisories/GHSA-fantasma-0000-0000', title: 'advisory que a isenção não conhece' }] } } };
 } else if (mutante === 'sem-isencao' || mutante === 'isencao-vazia') {
   relatorio = VULN_SINTETICA;
@@ -74,7 +76,7 @@ if (relatorio) {
      LISTA a advisory não perdoa (DEP3) — perdão por nome viraria `exit 0` disfarçado. */
   const isentas = mutante === 'sem-isencao' ? new Map()
     : mutante === 'isencao-vazia' ? new Map([['pacote-sintetico', { adv: [], motivo: '' }]])
-    : ISENTAS;
+    : mutante === 'advisory-nova' ? ISENCAO_FIXTURE : ISENTAS;
   const falhas = [];
   const perdoadas = [];
   for (const [nome, v] of Object.entries(relatorio.vulnerabilities || {})) {

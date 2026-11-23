@@ -11,7 +11,7 @@
 
    O QUE COBRA
      GP1 em produção, as rotas que gravam geo/IP (VIA_SITE) vão pelo proxy
-         same-origin; as outras migradas continuam indo direto ao backend
+         same-origin; uma rota migrada fora da política de proxy vai direto
      GP2 `?api=` (backend local/alternativo) continua valendo para todas
      GP3 toda rota VIA_SITE existe no proxy do site (senão 404)
      GP4 salto da Cloudflare: IP = cf-connecting-ip, geo = cf-* (cidade em UTF-8
@@ -72,8 +72,8 @@ await comLocation({ search: '', hostname: 'www.corosolto.com.br' }, async (api) 
     const url = api.apiUrl(`/api/${r}`);
     cobra(url === `/api/${r}`, `GP1 /api/${r} em produção vai para ${url} — run.app não tem borda, a geo morre (city_daily congelado desde 30/08)`);
   }
-  const direta = api.apiUrl('/api/online');
-  cobra(/^https:\/\//.test(direta), `GP1 /api/online deveria continuar direto no backend (veio ${direta}) — o recorte é só das rotas de geo`);
+  const direta = api.apiUrl('/api/health');
+  cobra(/^https:\/\//.test(direta), `GP1 /api/health deveria continuar direto no backend (veio ${direta})`);
 });
 await comLocation({ search: '?api=1', hostname: 'localhost' }, async (api) => {
   cobra(api.apiUrl('/api/telemetry') === 'http://localhost:8080/api/telemetry', `GP2 ?api=1 não aponta telemetry para o backend local (${api.apiUrl('/api/telemetry')})`);
