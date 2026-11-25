@@ -196,6 +196,28 @@ o pre-push continua sequencial por padrão para não aumentar contenção na má
 Use a branch `staging` para validar combinações de PRs antes de produção.
 O workflow de staging deve apontar para `STAGING_URL`.
 
+## Dependências do client
+
+O client fixa `npm@10.9.9` em `package.json` e usa `package-lock.json` v3. A troca de
+gerenciador precisa preservar as versões resolvidas, inclusive `overrides`, peers e
+dependências opcionais por plataforma. O lock marca scripts de instalação em `esbuild`,
+`fsevents` e `workerd`. Teste os binários nas plataformas que os usam antes de autorizar scripts.
+
+| Superfície | O que precisa continuar funcionando |
+| --- | --- |
+| `pr-fast` | `ci.yml` instala uma vez. A action `setup-ci-environment` restaura `node_modules` e falha se faltar cache. Mude produtor, consumidores e `cache-limpeza.yml` juntos; cache do store sozinho não fornece uma árvore instalada. O artefato de `dist` continua separado. |
+| Demais workflows | `smoke-web`, `portao-browser`, `staging`, `ui-regression`, `gauntlet-captura` e `ops-diag` usam npm, `npx` ou cache npm. `ui-regression` também instala o checkout base: use o gerenciador do lock de cada lado. Preserve `pr-fast`, `smoke-web`, `portao` e `dco`. |
+| Release e bots | `release.yml` e `scripts/release.mjs` mudam a versão raiz via `npm version`; `autofix.yml` copia o lock junto do manifesto. `csbrasil-bot-build-fix.yml` instala com `--ignore-scripts` e protege os dois arquivos. O pacote em `docs/` tem lock próprio e pode seguir em npm. |
+| Setup e pre-push | `scripts/setup.mjs` instala o projeto; `prepare` configura `.githooks`. O hook chama `eval:mapcontrato` e `check:prepush`; `selecao-pre-push.mjs`, `runner.mjs` e scripts do manifesto também chamam npm. Atualize as réguas que leem esses comandos (`eval:portaogatilho`, `eval:portaointeiro`) e o tratamento do lock em `eval:lixo`. |
+| Playwright | `scripts/ci-local.mjs` valida `npm ls` contra o lock e fixa o Playwright num prefixo privado; `.devcontainer/Dockerfile` também lê sua versão do lock. `setup-browser` e várias réguas em `tools/eval` usam `npm root -g` e `CHROME_BIN`. Prove que instalação, resolução e Chromium usam a mesma versão travada. |
+| Three.js | `tools/eval/invariants.mjs` cria pontes em `node_modules/three` no checkout e no diretório pai. `scripts/ci-local.mjs` valida a ponte que o harness usa. As duas apontam para `public/vendor/`, sem dependência `three` no manifesto. Verifique os destinos reais num worktree limpo, sem reaproveitar a ponte de outro checkout. |
+| WASM | `copy-wasm` roda no setup, em `dev` e em `build`; o manifesto não tem `postinstall` raiz. `scripts/copy-wasm.mjs` resolve `@resvg/resvg-wasm` e grava `public/wasm/resvg.wasm`. Confira o binário num checkout limpo: faltar a cópia não dá erro de saída no script. |
+| Cloudflare e Vercel | `cf-preview`, `cf-staging-deploy`, `cf-staging-paridade` e `cf-prod-deploy` instalam o client; `cf-preview-deploy` baixa o artefato e roda Wrangler fixado, sem instalar o client. Valide o build Cloudflare sem publicar. `scripts/ci/vercel-ignore.sh` pula todos os builds da Vercel, que conserva só o deploy de rollback. |
+
+Comece pelo linker isolado do pnpm. Use `node-linker=hoisted` só se uma régua reproduzir
+uma incompatibilidade com o linker isolado. Use um store no mesmo volume do worktree,
+com cache local e `node_modules` separados por cenário na comparação frio/quente.
+
 ## Depois do deploy
 
 Os checks acima param no merge. O app de loja é uma WebView apontada para a produção
