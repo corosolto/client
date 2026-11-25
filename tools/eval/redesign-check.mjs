@@ -610,7 +610,7 @@ const funcMap = blocoFuncao(main, 'renderMapScreen');
 const mainLoadingI18n = main.replace(/nomeTimeJavaporcos\(ehMapaJavaporcos\(currentMap\) \? 'horde' : '', '[EB]'\) \|\| /g, '')
   .replace("tr(ehMapaJavaporcos(currentMap) && settings.javaporcos?.times === 3 ? 'TIME B × JAVAPORCOS' : ", 'tr(');
 const i18nDinamico = /\$\{tr\('MAPA'\)\}[\s\S]{0,100}\$\{tr\('DE'\)\}/.test(main)
-  && /tr\(FACTION_NAME\[c\.team\] \|\| ''\)[\s\S]{0,160}tr\('PERSONAGENS'\)/.test(main)
+  && /char-faction-tag'\)\.textContent = tr\(FACTION_NAME\[c\.team\] \|\| c\.team\)/.test(main)
   && /a\.textContent = tr\(FACTION_NAME\[currentTeam\] \|\| ''\)/.test(mainLoadingI18n)
   && /b\.textContent = tr\(FACTION_NAME\[ladoDele\] \|\| ''\)/.test(mainLoadingI18n)
   && /chip\.textContent = `\$\{n\} \$\{tr\('PERSONAGENS'\)\}`/.test(main)
