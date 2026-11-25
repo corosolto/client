@@ -118,7 +118,7 @@ test('suites temáticas só reutilizam passos existentes, sem duplicar execuçã
   }
 });
 
-test('runner rejeita suite inválida antes de executar npm', () => {
+test('runner rejeita suite inválida antes de executar pnpm', () => {
   const r = spawnSync(process.execPath, ['tools/eval/runner.mjs', '--suite=nao-existe'], { encoding: 'utf8' });
   assert.equal(r.status, 2);
   assert.match(r.stderr, /suite desconhecida: nao-existe/);
@@ -128,7 +128,7 @@ test('runner rejeita suite inválida antes de executar npm', () => {
 test('runner não confunde saída verbosa de passo aprovado com infraestrutura quebrada', () => {
   const dir = mkdtempSync(join(tmpdir(), 'runner-buffer-'));
   try {
-    writeFileSync(join(dir, 'npm'), `#!${process.execPath}
+    writeFileSync(join(dir, 'pnpm'), `#!${process.execPath}
 process.stdout.write('x'.repeat(1_200_000));
 `, { mode: 0o755 });
     const r = spawnSync(process.execPath, ['tools/eval/runner.mjs', 'passo-verboso'], {
@@ -147,7 +147,7 @@ process.stdout.write('x'.repeat(1_200_000));
 test('runner expande suite e preserva duração, placar e exit 78 de não medido', () => {
   const dir = mkdtempSync(join(tmpdir(), 'runner-suite-'));
   try {
-    writeFileSync(join(dir, 'npm'), '#!/bin/sh\nexit 78\n', { mode: 0o755 });
+    writeFileSync(join(dir, 'pnpm'), '#!/bin/sh\nexit 78\n', { mode: 0o755 });
     const r = spawnSync(process.execPath, ['tools/eval/runner.mjs', '--suite=core'], {
       encoding: 'utf8',
       env: { ...process.env, PATH: `${dir}:${process.env.PATH}` },
@@ -162,13 +162,13 @@ test('runner expande suite e preserva duração, placar e exit 78 de não medido
   }
 });
 
-test('runner jobs=2 sobrepõe dois npm e preserva ordem, exit 78 e JSON completo', () => {
+test('runner jobs=2 sobrepõe dois pnpm e preserva ordem, exit 78 e JSON completo', () => {
   const dir = mkdtempSync(join(tmpdir(), 'runner-paralelo-'));
   try {
     const log = join(dir, 'eventos.jsonl');
     const jsonOut = join(dir, 'relatorios', 'core.json');
     writeFileSync(log, '');
-    writeFileSync(join(dir, 'npm'), `#!${process.execPath}
+    writeFileSync(join(dir, 'pnpm'), `#!${process.execPath}
 const fs = require('node:fs');
 const passo = process.argv[process.argv.length - 1];
 const inicio = Date.now();
@@ -200,7 +200,7 @@ process.exit(distintos >= 2 ? 78 : 97);
     const instante = (evento, passo) => eventos.find((e) => e.evento === evento && e.passo === passo)?.t;
     assert.ok(Number.isFinite(instante('inicio', a)) && Number.isFinite(instante('inicio', b)));
     assert.ok(Math.max(instante('inicio', a), instante('inicio', b)) < Math.min(instante('fim', a), instante('fim', b)),
-      'os timestamps do npm fake precisam comprovar overlap dos dois primeiros passos');
+      'os timestamps do pnpm fake precisam comprovar overlap dos dois primeiros passos');
 
     let posicaoAnterior = -1;
     for (const passo of SUITES.core) {
@@ -229,11 +229,11 @@ process.exit(distintos >= 2 ? 78 : 97);
   }
 });
 
-test('runner jobs=2 rejeita categoria não-core antes de executar npm', () => {
+test('runner jobs=2 rejeita categoria não-core antes de executar pnpm', () => {
   const dir = mkdtempSync(join(tmpdir(), 'runner-rejeita-paralelo-'));
   try {
-    const marca = join(dir, 'npm-executou');
-    writeFileSync(join(dir, 'npm'), `#!${process.execPath}
+    const marca = join(dir, 'pnpm-executou');
+    writeFileSync(join(dir, 'pnpm'), `#!${process.execPath}
 require('node:fs').writeFileSync(process.env.FAKE_NPM_MARCA, 'executou');
 `, { mode: 0o755 });
     const r = spawnSync(process.execPath, ['tools/eval/runner.mjs', '--jobs=2', '--suite=maps'], {
@@ -242,7 +242,7 @@ require('node:fs').writeFileSync(process.env.FAKE_NPM_MARCA, 'executou');
     });
     assert.equal(r.status, 2);
     assert.match(r.stderr, /--jobs=2 aceita somente passos da suite core/);
-    assert.equal(existsSync(marca), false, 'npm não pode ser chamado para uma seleção não-core');
+    assert.equal(existsSync(marca), false, 'pnpm não pode ser chamado para uma seleção não-core');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -321,11 +321,14 @@ test('caminho desconhecido cai no check:deploy completo e explica o fallback', (
   assert.equal(r.fallback, true);
   assert.match(r.motivo, /sem regra segura/);
   assert.deepEqual(r.passos, SUITES.deploy);
-  assert.deepEqual(r.comando, ['npm', ['run', '--silent', 'check:deploy']]);
+  assert.deepEqual(r.comando, ['pnpm', ['run', '--silent', 'check:deploy']]);
 });
 
 for (const arquivo of [
   'package-lock.json',
+  'pnpm-lock.yaml',
+  '.npmrc',
+  'pnpm-workspace.yaml',
   'yarn.lock',
   'public/js/game.js',
   'public/js/main.js',

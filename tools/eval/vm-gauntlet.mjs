@@ -77,8 +77,8 @@ const LUVA_MIN_PX = Math.round(2500 * (W * H) / (1440 * 960));
    leitura lateral do gabarito CS 1.6 (≤35°) fica bem abaixo. */
 const CANO_MAX_DEG = 60;
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 const srv = spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore', cwd: ROOT });

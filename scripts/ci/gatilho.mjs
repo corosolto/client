@@ -23,8 +23,8 @@
    package.json é caso à parte: quase todo PR de régua acrescenta um script, e se
    isso acordasse o portão ele rodaria em todo PR. Ele acorda quando muda um campo
    que não é `scripts` (dependência, versão, `type`...) ou quando muda um script que
-   o job usa: os passos declarados abaixo, os `npm run` aninhados neles, os pre/post
-   de cada um e os de ciclo de vida do `npm ci`.
+   o job usa: os passos declarados abaixo, os `pnpm run` aninhados neles, os pre/post
+   de cada um e os de ciclo de vida da instalação congelada (`pnpm install --frozen-lockfile`).
 
    NOME COM ACENTO: o `git diff --name-only` padrão (core.quotePath=true) devolve
    `"public/img/a\303\247\303\243o.png"`, entre aspas e em octal. Nada casa com isso e o
@@ -64,6 +64,9 @@ const COMUM = [
   /^tsconfig\.json$/,
   /^scripts\/(aeo|module-cache|copy-wasm|install-git-hooks|adaptador|studio-pack-serving)\.mjs$/,
   /^package-lock\.json$/,
+  /^pnpm-lock\.yaml$/,
+  /^pnpm-workspace\.yaml$/,
+  /^\.npmrc$/,
   /^scripts\/ci\/gatilho\.mjs$/,
 ];
 
@@ -85,7 +88,7 @@ export const GATILHOS = {
       /^tools\/ops\//,
       /^\.github\/workflows\/portao-browser\.yml$/,
     ],
-    /* `npm run` que o workflow chama. A régua cobra os dois lados: passo novo sem
+    /* `pnpm run` que o workflow chama. A régua cobra os dois lados: passo novo sem
        entrada aqui é vermelho, e entrada aqui sem passo também (passo que sumiu). */
     passos: ['eval:serve', 'eval:map-fauna-curated:runtime', 'eval:grafite-atual', 'eval:select', 'eval:lobbyarmamao', 'eval:mira-public', 'eval:entrada', 'eval:perfilmobile:browser', 'eval:toquecontroles', 'eval:passe:browser', 'eval:vm-maos-mobile-desktop', 'eval:armas', 'eval:boot', 'eval:sertao-livestock-runtime', 'eval:grafite:ar'],
     /* Jobs que rodam também em PR draft. Os demais (fora o decide) esperam o `pronto`. */
@@ -113,6 +116,9 @@ export const SITE = [
   /^wrangler\.preview\.toml$/,
   /^package\.json$/,
   /^package-lock\.json$/,
+  /^pnpm-lock\.yaml$/,
+  /^pnpm-workspace\.yaml$/,
+  /^\.npmrc$/,
   /^astro\.config\.mjs$/,
   /^middleware\.js$/,
   /^scripts\/fetch-/,
@@ -136,7 +142,7 @@ export function decidirSite(arquivos) {
   return { rodar: false, motivo: `nenhum dos ${lista.length} arquivos toca o site: preview pula` };
 }
 
-/* `npm ci` roda estes do próprio pacote; o resto entra pelo pre/post de cada passo. */
+/* A instalação congelada roda estes do próprio pacote; o resto entra pelo pre/post de cada passo. */
 const CICLO_DE_VIDA = ['preinstall', 'install', 'postinstall', 'prepublish', 'preprepare', 'prepare', 'postprepare'];
 
 export function casa(alvo, caminho) {
@@ -145,7 +151,7 @@ export function casa(alvo, caminho) {
   return g.padroes.some((re) => re.test(caminho));
 }
 
-/* Os scripts que o job executa de fato: passos, `npm run X` aninhados, pre/post. */
+/* Os scripts que o job executa de fato: passos, `pnpm run X` aninhados, pre/post. */
 export function scriptsUsados(alvo, scripts) {
   const usados = new Set();
   const fila = [...GATILHOS[alvo].passos, ...CICLO_DE_VIDA];
@@ -154,7 +160,7 @@ export function scriptsUsados(alvo, scripts) {
     if (usados.has(nome)) continue;
     usados.add(nome);
     for (const gancho of [`pre${nome}`, `post${nome}`]) if (scripts?.[gancho] !== undefined) fila.push(gancho);
-    for (const m of String(scripts?.[nome] ?? '').matchAll(/npm (?:run(?:-script)?|run-script)\s+(?:--?[\w-]+\s+)*([\w:.-]+)/g)) fila.push(m[1]);
+    for (const m of String(scripts?.[nome] ?? '').matchAll(/(?:pnpm|npm) (?:run(?:-script)?|run-script)\s+(?:--?[\w-]+\s+)*([\w:.-]+)/g)) fila.push(m[1]);
   }
   return usados;
 }

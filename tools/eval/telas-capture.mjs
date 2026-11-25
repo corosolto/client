@@ -16,8 +16,8 @@ import { pathToFileURL } from 'node:url';
 const OUT = process.env.OUT || '/tmp/telas';
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
 const AUTO = process.env.AUTO || 'E,esquerdomacho';
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 mkdirSync(OUT, { recursive: true });

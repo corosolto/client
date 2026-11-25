@@ -126,18 +126,19 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Packs Studio fixados (R2) no /packs/ do dev server
         uses: ./.github/actions/studio-packs
       - name: Setup Playwright Chromium
         uses: ./.github/actions/setup-browser
       - name: Start dev server
         run: |
-          npm run dev -- --host 127.0.0.1 --port 4321 >/tmp/csbrasil-dev.log 2>&1 &
+          pnpm run dev --host 127.0.0.1 --port 4321 >/tmp/csbrasil-dev.log 2>&1 &
       - name: Wait for app
         run: |
           for _ in $(seq 1 60); do
@@ -149,7 +150,7 @@ jobs:
           cat /tmp/csbrasil-dev.log
           exit 1
       - name: Run smoke test (web + chat no toque)
-        run: npx playwright test --config=playwright.smoke.config.mjs tests/smoke/web-smoke.spec.js tests/smoke/web-assets.spec.js tests/smoke/chat-sala.spec.js --grep-invert "chat de sala desktop:" --reporter=list --trace=on --output=test-results
+        run: pnpm exec playwright test --config=playwright.smoke.config.mjs tests/smoke/web-smoke.spec.js tests/smoke/web-assets.spec.js tests/smoke/chat-sala.spec.js --grep-invert "chat de sala desktop:" --reporter=list --trace=on --output=test-results
       - name: Upload smoke artifacts
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -167,18 +168,19 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Packs Studio fixados (R2) no /packs/ do dev server
         uses: ./.github/actions/studio-packs
       - name: Setup Playwright Chromium
         uses: ./.github/actions/setup-browser
       - name: Start dev server
         run: |
-          npm run dev -- --host 127.0.0.1 --port 4321 >/tmp/csbrasil-dev.log 2>&1 &
+          pnpm run dev --host 127.0.0.1 --port 4321 >/tmp/csbrasil-dev.log 2>&1 &
       - name: Wait for app
         run: |
           for _ in $(seq 1 60); do
@@ -190,7 +192,7 @@ jobs:
           cat /tmp/csbrasil-dev.log
           exit 1
       - name: Run smoke test (chat de sala, roteiro desktop)
-        run: npx playwright test --config=playwright.smoke.config.mjs tests/smoke/chat-sala.spec.js --grep "chat de sala desktop:" --reporter=list --trace=on --output=test-results
+        run: pnpm exec playwright test --config=playwright.smoke.config.mjs tests/smoke/chat-sala.spec.js --grep "chat de sala desktop:" --reporter=list --trace=on --output=test-results
       - name: Upload smoke artifacts
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -258,15 +260,16 @@ jobs:
             echo "::error::BASE_URL ausente no dispatch; informe inputs.host"
             exit 1
           fi
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Setup Playwright Chromium
         uses: ./.github/actions/setup-browser
       - name: Run smoke web no Cloudflare
-        run: npx playwright test --config=playwright.smoke.config.mjs tests/smoke/web-smoke.spec.js tests/smoke/web-assets.spec.js tests/smoke/chat-sala.spec.js --reporter=list --trace=on --output=test-results
+        run: pnpm exec playwright test --config=playwright.smoke.config.mjs tests/smoke/web-smoke.spec.js tests/smoke/web-assets.spec.js tests/smoke/chat-sala.spec.js --reporter=list --trace=on --output=test-results
       - name: Upload smoke Cloudflare
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

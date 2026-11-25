@@ -63,7 +63,7 @@ const { WEAPONS } = await import(pathToFileURL(path.join(ROOT, 'public/js/data/w
 const families = [...new Set(Object.values(VM_WEAPON).map((e) => e.family))];
 const query = new URLSearchParams({ debug: '1', auto: 'P,mst', map: 'piscina_treta', armaslazy: '0', vmauthored: '1',
   vmqa: 'precision', vmready: families.join(','), vmweapon: Object.keys(VM_WEAPON).join(',') }).toString();
-const pw = await import(pathToFileURL(`${execSync('npm root -g').toString().trim()}/playwright/index.js`).href);
+const pw = await import('playwright')
 const browser = await (pw.chromium || pw.default.chromium).launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
 if (MUTANTE === 'original') {

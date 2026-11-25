@@ -33,30 +33,39 @@ jobs:
         run: |
           set -o pipefail
           arquivos=$(git diff --name-only "$BASE...$HEAD") || { echo "::error::git diff falhou — não dá para decidir o pulo"; exit 1; }
-          if printf '%s\n' "$arquivos" | grep -qE '^(public/|src/|scripts/|astro\.config\.mjs$|tsconfig\.json$|package(-lock)?\.json$|tools/ui-regression/|\.github/workflows/ui-regression\.yml$)'; then
+          if printf '%s\n' "$arquivos" | grep -qE '^(public/|src/|scripts/|astro\.config\.mjs$|tsconfig\.json$|package(-lock)?\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|\.npmrc$|tools/ui-regression/|\.github/workflows/ui-regression\.yml$)'; then
             echo "ui=1" >> "$GITHUB_OUTPUT"
           else
             echo "::notice::nenhum arquivo de tela no diff — ui-regression pulado"
             echo "ui=0" >> "$GITHUB_OUTPUT"
           fi
       - if: steps.muda.outputs.ui == '1'
+        uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
+      - if: steps.muda.outputs.ui == '1'
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
       - name: Dependências e navegador
         if: steps.muda.outputs.ui == '1'
         run: |
-          npm ci --ignore-scripts
-          npx playwright install --with-deps chromium
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm exec playwright install --with-deps chromium
           git worktree add --detach "$RUNNER_TEMP/ui-base" "${{ github.event.pull_request.base.sha }}"
-          npm ci --ignore-scripts --prefix "$RUNNER_TEMP/ui-base"
+          # A base pode ser de uma main que ainda instalava com npm: escolhe pelo
+          # LOCK REAL da revisão base, não pela branch.
+          if [ -f "$RUNNER_TEMP/ui-base/pnpm-lock.yaml" ]; then
+            (cd "$RUNNER_TEMP/ui-base" && pnpm install --frozen-lockfile --ignore-scripts)
+          else
+            npm ci --ignore-scripts --prefix "$RUNNER_TEMP/ui-base"
+          fi
       - name: Subir base e proposta
         if: steps.muda.outputs.ui == '1'
         run: |
           mkdir -p artifacts/ui-regression
-          (cd "$RUNNER_TEMP/ui-base" && CS_CF_INSPECTOR_PORT=9231 npm run dev -- --host 127.0.0.1 --port 4321 > "$GITHUB_WORKSPACE/artifacts/ui-regression/base-server.log" 2>&1) &
-          (CS_CF_INSPECTOR_PORT=9232 npm run dev -- --host 127.0.0.1 --port 4322 > artifacts/ui-regression/head-server.log 2>&1) &
+          # O dev server da base obedece ao lock da própria revisão (npm ou pnpm).
+          (cd "$RUNNER_TEMP/ui-base" && if [ -f pnpm-lock.yaml ]; then CS_CF_INSPECTOR_PORT=9231 pnpm run dev --host 127.0.0.1 --port 4321; else CS_CF_INSPECTOR_PORT=9231 npm run dev -- --host 127.0.0.1 --port 4321; fi > "$GITHUB_WORKSPACE/artifacts/ui-regression/base-server.log" 2>&1) &
+          (CS_CF_INSPECTOR_PORT=9232 pnpm run dev --host 127.0.0.1 --port 4322 > artifacts/ui-regression/head-server.log 2>&1) &
           for port in 4321 4322; do
             ready=0
             for i in $(seq 1 90); do

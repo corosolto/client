@@ -18,12 +18,12 @@ const cobra = (ok, texto) => {
 const pacote = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
 if (mutante === 'suite-duplicada') pacote.scripts['check:fast'] += ' eval:operacao-online';
 const pai = pacote.scripts['eval:operacao-flavio'];
-const chamadasOnline = pai.match(/npm run eval:operacao-online(?=\s|$)/g) || [];
+const chamadasOnline = pai.match(/pnpm run eval:operacao-online(?=\s|$)/g) || [];
 const suporteUnico = chamadasOnline.length === 1
   && !pai.includes('eval:operacao-flavio-online')
   && !['check:fast', 'check:deploy'].some((gate) => pacote.scripts[gate].split(/\s+/).includes('eval:operacao-online'));
 cobra(suporteUnico, 'suíte online executa uma vez pelo pai eval:operacao-flavio');
-const fluxoPai = 'npm run eval:operacao-flavio-core && npm run eval:operacao-flavio-collider && npm run eval:operacao-flavio-menu && npm run eval:operacao-online && npm run eval:operacao-flavio-integracao && npm run eval:operacao-flavio-comportamento && npm run eval:operacao-flavio-escolta';
+const fluxoPai = 'pnpm run eval:operacao-flavio-core && pnpm run eval:operacao-flavio-collider && pnpm run eval:operacao-flavio-menu && pnpm run eval:operacao-online && pnpm run eval:operacao-flavio-integracao && pnpm run eval:operacao-flavio-comportamento && pnpm run eval:operacao-flavio-escolta';
 cobra(pai === fluxoPai, 'pai local executa core, collider completo, menu, online, integração, comportamento e escolta em sequência');
 const caminho = [{ x: 0, z: 0 }, { x: 0, z: 4 }, { x: 0, z: 8 }];
 const vivo = (x, z, team) => ({ x, z, team, alive: true });

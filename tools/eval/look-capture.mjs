@@ -10,8 +10,8 @@ import { pathToFileURL } from 'node:url';
 
 const OUT = process.argv[2] || '/tmp/look-shots';
 const BASE = process.env.BASE || 'http://localhost:8127';
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 // [mapa, rótulo, [x, y, z], yaw, pitch] — elevada de propósito: a costura névoa/céu

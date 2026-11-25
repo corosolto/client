@@ -12,7 +12,7 @@ import re
 import sys
 
 GERADOS = re.compile(
-    r"^(public/docs/|graphify-out/|docs/i18n/|package-lock\.json|CHANGELOG\.md"
+    r"^(public/docs/|graphify-out/|docs/i18n/|package-lock\.json|pnpm-lock\.yaml|CHANGELOG\.md"
     r"|STATUS\.md|tools/eval/ARCH\.md|public/js/version\.js)"
 )
 

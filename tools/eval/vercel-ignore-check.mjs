@@ -70,13 +70,13 @@ if (foraDoContrato.length || executaveis.filter((linha) => linha === 'exit 0').l
 const pacote = JSON.parse(readFileSync(PACKAGE, 'utf8'));
 if (mutante === 'build-sem-borda') {
   const atual = pacote.scripts?.['build:cf'] || '';
-  if (!atual.endsWith(' && npm run check:borda')) {
+  if (!atual.endsWith(' && pnpm run check:borda')) {
     console.error('MUTANTE NÃO APLICOU: build-sem-borda (âncora ausente)');
     process.exit(2);
   }
-  pacote.scripts['build:cf'] = atual.slice(0, -' && npm run check:borda'.length);
+  pacote.scripts['build:cf'] = atual.slice(0, -' && pnpm run check:borda'.length);
 }
-if (!pacote.scripts?.['build:cf']?.endsWith(' && npm run check:borda')) {
+if (!pacote.scripts?.['build:cf']?.endsWith(' && pnpm run check:borda')) {
   console.error('VI5: REPROVADO — build:cf não termina em check:borda');
   falhas++;
 }

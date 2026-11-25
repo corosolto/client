@@ -51,8 +51,8 @@ const JANELA_CONTROLE_MS = 25_000;
 const fonteHarness = readFileSync(new URL('../../public/js/qa-mobile.js', import.meta.url), 'utf8');
 const fonteGlcontext = readFileSync(new URL('../../public/js/glcontext.js', import.meta.url), 'utf8');
 
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const devices = pw.devices || pw.default?.devices;
 

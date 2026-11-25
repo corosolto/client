@@ -181,10 +181,11 @@ Cada lote junta blocos `# ── <unidade>` inteiros, escolhidos pela duração 
 manifesto do `eval-duration-calibration`, que o pr-fast não lê: manifesto vencido não reprova PR).
 Todo passo de lote roda com `!cancelled() && deps ok`, então régua vermelha não esconde as seguintes.
 Rebalancear é mover bloco entre lotes e atualizar o dono no PI4 (`tools/eval/portao-inteiro-check.mjs`).
-`node_modules` vem de cache pela hash do `package-lock.json` (gravada depois do `npm ci`, antes do
-build); o artefato do dist leva só o que o checkout do consumidor não tem
-(`scripts/ci/dist-compartilhado.mjs`: espelho `.vercel/output/static` e cópias de `public/` são
-refeitos e conferidos por sha256). `cache-limpeza` preserva a cache do lock atual da main.
+`setup` instala com lock congelado e cache do store do pnpm. Os consumidores restauram
+a árvore instalada pela chave que inclui `pnpm-lock.yaml`, `pnpm-workspace.yaml` e `.npmrc`.
+O artefato de `dist` leva só o que o checkout do consumidor não tem
+(`scripts/ci/dist-compartilhado.mjs`: espelho `.vercel/output/static` e cópias de `public/`
+são refeitos e conferidos por sha256). `cache-limpeza` preserva a árvore em uso na main.
 
 O `soundscape` é um job obrigatório separado no `build`, então falha externa de áudio não invalida
 um agregado inteiro. Packs de assets usam cache por tag exata e checksum quando existir; os asserts
@@ -198,25 +199,21 @@ O workflow de staging deve apontar para `STAGING_URL`.
 
 ## Dependências do client
 
-O client fixa `npm@10.9.9` em `package.json` e usa `package-lock.json` v3. A troca de
-gerenciador precisa preservar as versões resolvidas, inclusive `overrides`, peers e
-dependências opcionais por plataforma. O lock marca scripts de instalação em `esbuild`,
-`fsevents` e `workerd`. Teste os binários nas plataformas que os usam antes de autorizar scripts.
+O client fixa a versão do pnpm em `package.json` e instala com `pnpm install --frozen-lockfile`.
+`.npmrc` usa o linker isolado. `pnpm-workspace.yaml` preserva os `overrides` e autoriza os
+scripts de instalação das versões explícitas de `esbuild`, `fsevents` e `workerd`.
+O pacote em `docs/` tem lock próprio e continua em npm.
 
-| Superfície | O que precisa continuar funcionando |
+| Superfície | Contrato |
 | --- | --- |
-| `pr-fast` | `ci.yml` instala uma vez. A action `setup-ci-environment` restaura `node_modules` e falha se faltar cache. Mude produtor, consumidores e `cache-limpeza.yml` juntos; cache do store sozinho não fornece uma árvore instalada. O artefato de `dist` continua separado. |
-| Demais workflows | `smoke-web`, `portao-browser`, `staging`, `ui-regression`, `gauntlet-captura` e `ops-diag` usam npm, `npx` ou cache npm. `ui-regression` também instala o checkout base: use o gerenciador do lock de cada lado. Preserve `pr-fast`, `smoke-web`, `portao` e `dco`. |
-| Release e bots | `release.yml` e `scripts/release.mjs` mudam a versão raiz via `npm version`; `autofix.yml` copia o lock junto do manifesto. `csbrasil-bot-build-fix.yml` instala com `--ignore-scripts` e protege os dois arquivos. O pacote em `docs/` tem lock próprio e pode seguir em npm. |
-| Setup e pre-push | `scripts/setup.mjs` instala o projeto; `prepare` configura `.githooks`. O hook chama `eval:mapcontrato` e `check:prepush`; `selecao-pre-push.mjs`, `runner.mjs` e scripts do manifesto também chamam npm. Atualize as réguas que leem esses comandos (`eval:portaogatilho`, `eval:portaointeiro`) e o tratamento do lock em `eval:lixo`. |
-| Playwright | `scripts/ci-local.mjs` valida `npm ls` contra o lock e fixa o Playwright num prefixo privado; `.devcontainer/Dockerfile` também lê sua versão do lock. `setup-browser` e várias réguas em `tools/eval` usam `npm root -g` e `CHROME_BIN`. Prove que instalação, resolução e Chromium usam a mesma versão travada. |
-| Three.js | `tools/eval/invariants.mjs` cria pontes em `node_modules/three` no checkout e no diretório pai. `scripts/ci-local.mjs` valida a ponte que o harness usa. As duas apontam para `public/vendor/`, sem dependência `three` no manifesto. Verifique os destinos reais num worktree limpo, sem reaproveitar a ponte de outro checkout. |
-| WASM | `copy-wasm` roda no setup, em `dev` e em `build`; o manifesto não tem `postinstall` raiz. `scripts/copy-wasm.mjs` resolve `@resvg/resvg-wasm` e grava `public/wasm/resvg.wasm`. Confira o binário num checkout limpo: faltar a cópia não dá erro de saída no script. |
-| Cloudflare e Vercel | `cf-preview`, `cf-staging-deploy`, `cf-staging-paridade` e `cf-prod-deploy` instalam o client; `cf-preview-deploy` baixa o artefato e roda Wrangler fixado, sem instalar o client. Valide o build Cloudflare sem publicar. `scripts/ci/vercel-ignore.sh` pula todos os builds da Vercel, que conserva só o deploy de rollback. |
+| Local | Cada worktree instala a própria árvore. O store pode ficar no mesmo volume e compartilhar o conteúdo entre worktrees. `prepare` configura os hooks; o pre-push continua rodando `eval:mapcontrato` e `check:prepush`. |
+| Playwright | O browser das réguas vem do `playwright` local, travado no lock. `CHROME_BIN`, quando definido no diagnóstico do CI local, precisa apontar para o Chromium daquela versão. |
+| Three.js | As pontes dos harnesses apontam para os módulos de `public/vendor/`. A migração não instala um pacote `three` do registry. |
+| WASM | `copy-wasm` resolve `@resvg/resvg-wasm` e gera `public/wasm/resvg.wasm` no setup, em `dev` e em `build`. |
+| Cloudflare e Vercel | Os builds Cloudflare do client instalam com pnpm. O publisher de preview usa Wrangler fixado com a configuração da base confiável. `vercel-ignore.sh` continua pulando os builds da Vercel. |
 
-Comece pelo linker isolado do pnpm. Use `node-linker=hoisted` só se uma régua reproduzir
-uma incompatibilidade com o linker isolado. Use um store no mesmo volume do worktree,
-com cache local e `node_modules` separados por cenário na comparação frio/quente.
+Em comparações de instalação, use uma árvore vazia para cada cenário frio/quente. Registre
+se o store estava vazio e se os arquivos eram compartilhados por clone ou hard link.
 
 ## Depois do deploy
 

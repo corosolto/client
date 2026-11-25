@@ -17,10 +17,10 @@
          /api que o jogo chama no boot e os JSON que os arnêses leem. O fecho segue
          import estático, `import()` literal, `export … from` e `new URL(…,
          import.meta.url)`; caminho absoluto (`/js/x.js`) resolve em public/.
-   PG2 · todo `npm run`/`node`/spec dos workflows resolve para ponto de entrada
-         conhecido: o `npm run X` está em `passos` do gatilho, o `node arquivo` e o
+   PG2 · todo `pnpm run`/`node`/spec dos workflows resolve para ponto de entrada
+         conhecido: o `pnpm run X` está em `passos` do gatilho, o `node arquivo` e o
          spec casam com o gatilho, e todo script que o job usa (aninhado, pre/post,
-         ciclo de vida do `npm ci`) aponta para arquivo que casa. E o contrário:
+         ciclo de vida da instalação congelada) aponta para arquivo que casa. E o contrário:
          passo declarado que o workflow não roda mais é vermelho (passo que sumiu).
    PG3 · o `decide` falha FECHADO: `set -euo pipefail`, erro do `git diff` manda
          rodar, evento que não é PR roda sempre, só `rodar=false` exato pula, e todo
@@ -210,8 +210,8 @@ function conferirBootstrapDecals(wf) {
   const linhas = passos.flatMap((p) => p.comandos.map((cmd) => ({ cmd, passo: p })));
   const achar = (cmd) => linhas.flatMap((l, i) => l.cmd === cmd ? [i] : []);
   const fetch = achar(FETCH_DECALS), assert = achar(ASSERT_DECALS);
-  const serve = linhas.findIndex((l) => /^npm run eval:serve(?:\s|$)/.test(l.cmd));
-  const medir = linhas.findIndex((l) => l.cmd === 'npm run eval:grafite-atual');
+  const serve = linhas.findIndex((l) => /^pnpm run eval:serve(?:\s|$)/.test(l.cmd));
+  const medir = linhas.findIndex((l) => l.cmd === 'pnpm run eval:grafite-atual');
   if (fetch.length !== 1) falhas.push(`PG6 fetch público deve executar uma vez no job portao (encontrados ${fetch.length})`);
   if (assert.length !== 1) falhas.push(`PG6 assert nominal deve executar uma vez (encontrados ${assert.length})`);
   if (serve < 0 || medir < 0) falhas.push('PG6 serve/medição ausentes — régua perdeu consumidor');
@@ -281,7 +281,7 @@ for (const [alvo, g] of Object.entries(GATILHOS)) {
   if (!wf) { falhas.push(`PG0 ${g.workflow} não existe — a régua perdeu o alvo`); continue; }
   if (MUT === 'passo-novo' && alvo === 'portao') {
     if (wf.includes('eval:passo-novo')) erroInstrumento(MUT, 'passo novo já existe');
-    wf += '\n      - name: passo novo\n        if: ${{ !cancelled() }}\n        run: npm run eval:passo-novo\n';
+    wf += '\n      - name: passo novo\n        if: ${{ !cancelled() }}\n        run: pnpm run eval:passo-novo\n';
   }
   if (MUT === 'diff-aberto' && alvo === 'portao') wf = substituirUma(wf, /if ! git [^\n]*diff[^\n]*\n(?:[^\n]*\n){0,2}?[^\n]*rodar=true/, (m) => m.replace(/rodar=true$/, 'rodar=false'), MUT);
   if (MUT === 'quotepath-volta' && alvo === 'smoke') wf = substituirUma(wf, 'git -c core.quotePath=false diff', 'git diff', MUT);
@@ -295,7 +295,7 @@ for (const [alvo, g] of Object.entries(GATILHOS)) {
   if (alvo === 'portao') conferirBootstrapDecals(wf);
 
   /* ---- PG2: o que o workflow roda é conhecido ---- */
-  const npmRun = [...cmd.matchAll(/npm run\s+([\w:.-]+)/g)].map((m) => m[1]);
+  const npmRun = [...cmd.matchAll(/(?:pnpm|npm) run\s+([\w:.-]+)/g)].map((m) => m[1]);
   for (const s of new Set(npmRun)) {
     if (!g.passos.includes(s)) falhas.push(`PG2 ${g.workflow} roda \`npm run ${s}\`, que não está em GATILHOS.${alvo}.passos (scripts/ci/gatilho.mjs) — o gatilho não sabe o que esse passo carrega`);
     if (!pkg.scripts[s]) falhas.push(`PG2 ${g.workflow} roda \`npm run ${s}\`, que não existe em package.json`);
@@ -316,7 +316,7 @@ for (const [alvo, g] of Object.entries(GATILHOS)) {
     else if (!casa(alvo, a)) falhas.push(`PG2 ${alvo}: \`${a}\` roda no job e não casa com o gatilho`);
   }
   const specs = [];
-  for (const m of cmd.matchAll(/npx playwright test([^\n]*)/g)) {
+  for (const m of cmd.matchAll(/(?:pnpm exec|npx) playwright test([^\n]*)/g)) {
     for (const t of m[1].split(/\s+/)) {
       const c = t.replace(/^--config=/, '');
       if (/\.(spec\.js|config\.mjs)$/.test(c)) specs.push(c);

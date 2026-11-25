@@ -112,7 +112,7 @@ done <<< "$entrada"
 echo "pre-push: núcleo + suites do diff via check:prepush (fallback: check:deploy; PREPUSH=0 pula)"
 
 # Trailer `Agent:` em TODO commit que sobe: o commit-msg não roda em rebase nem em
-# clone sem `npm run setup`. Merge que traz a main injeta história alheia no
+# clone sem `pnpm run setup`. Merge que traz a main injeta história alheia no
 # intervalo — `--not --remotes` só cobra o que o remoto AINDA não tem.
 #
 # `--no-merges` pelo mesmo motivo do dco_check.py/agente_check.py: merge não escreve
@@ -129,7 +129,7 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
       falhas+=("commit ${sha:0:8} sem trailer 'Agent:' — $(git show -s --format='%s' "$sha" | cut -c1-50)")
     fi
     # `Co-Authored-By:` de agente de IA: o commit-msg já recusa, mas ele não roda em
-    # rebase nem em clone sem `npm run setup`, e `--no-verify` pula os dois. Mesma
+    # rebase nem em clone sem `pnpm run setup`, e `--no-verify` pula os dois. Mesma
     # lista do commit-msg e do CI — scripts/coautoria-ia.re, lida, não copiada.
     if ! linha=$(git show -s --format='%B' "$sha" | sh "$RAIZ/scripts/checa-coautoria-ia.sh" 2>&1 >/dev/null); then
       falhas+=("commit ${sha:0:8} com co-autoria de IA — ${linha%%$'\n'*}")
@@ -145,28 +145,31 @@ if [ -f package.json ] && [ -f public/js/version.js ]; then
 fi
 
 
+tmpdir_cs=${TMPDIR:-/tmp}
+log=$(mktemp "$tmpdir_cs/prepush.XXXXXXXX") || exit 1
+trap 'rm -f "$log"' EXIT INT TERM
+
 for portao in eval:mapcontrato check:prepush; do
-  if ! PREPUSH_REMOTE="$remoto" PREPUSH_REFS="$entrada" npm run "$portao" --silent >/tmp/prepush-$$.log 2>&1; then
+  if ! PREPUSH_REMOTE="$remoto" PREPUSH_REFS="$entrada" pnpm run --silent "$portao" >"$log" 2>&1; then
     # O motivo tem de ser a linha que REPROVOU. O padrão anterior incluía `error`
     # solto e casava com `eval:error-console verde: ...` — uma régua que PASSOU —
     # então o hook acusava o portão errado e mandava o dono caçar no lugar errado.
     # Aqui só marcador de reprovação; sem nenhum, o fim do log é mais honesto que
     # uma linha verde escolhida a esmo.
-    motivo=$(grep -m1 -E '✗|REPROV|FALHA|VERMELHO|ERRO:|Error:' /tmp/prepush-$$.log | cut -c1-90)
-    [ -z "$motivo" ] && motivo=$(tail -n1 /tmp/prepush-$$.log | cut -c1-90)
+    motivo=$(grep -m1 -E '✗|REPROV|FALHA|VERMELHO|ERRO:|Error:' "$log" | cut -c1-90)
+    [ -z "$motivo" ] && motivo=$(tail -n1 "$log" | cut -c1-90)
     falhas+=("$portao — $motivo")
   elif [ "$portao" = "check:prepush" ]; then
-    grep '^pre-push: ' /tmp/prepush-$$.log || true
+    grep '^pre-push: ' "$log" || true
   fi
 done
-rm -f /tmp/prepush-$$.log
 
 if [ ${#falhas[@]} -gt 0 ]; then
   echo ""
   echo "  PUSH BLOQUEADO — ${#falhas[@]} portão(ões) reprovando:"
   for f in "${falhas[@]}"; do echo "    x $f"; done
   echo ""
-  echo "  docs/ARCH desatualizado:  npm run docs && node tools/gen-arch.mjs"
+  echo "  docs/ARCH desatualizado:  pnpm run docs && node tools/gen-arch.mjs"
   echo "  trailer faltando:         git commit --amend --trailer 'Agent: <nome>'"
   echo "  pular mesmo assim:        git push --no-verify"
   exit 1

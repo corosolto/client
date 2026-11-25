@@ -31,8 +31,8 @@ const OUT = process.env.OUT || '';
 const [W, H] = (process.env.VIEWPORT || '1536x1024').split('x').map(Number);
 const ESCOLHIDO = 'amazonia';
 
-const root = execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim();
-const playwright = await import(pathToFileURL(`${root}/playwright/index.js`).href);
+
+const playwright = await import('playwright')
 const chromium = playwright.chromium || playwright.default?.chromium;
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

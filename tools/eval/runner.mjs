@@ -30,7 +30,7 @@
      node tools/eval/runner.mjs --suite=core --json-out=/tmp/core.json
      node tools/eval/runner.mjs --suite=fast --shard=1/4
      node tools/eval/runner.mjs --suite=fast --shard=off  (ignora o manifesto)
-     node tools/eval/runner.mjs --npm syntax audio:check      (padrão: são scripts npm)
+     node tools/eval/runner.mjs syntax audio:check      (padrão: são scripts pnpm)
    ============================================================================ */
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -89,7 +89,7 @@ try {
   process.exit(2);
 }
 if (!passos.length) {
-  console.error('uso: node tools/eval/runner.mjs [--suite=<nome>] [--jobs=1|2] [--shard=i/n|off] [--durations=<caminho>] [--json-out=<caminho>] [<script npm> …]');
+  console.error('uso: node tools/eval/runner.mjs [--suite=<nome>] [--jobs=1|2] [--shard=i/n|off] [--durations=<caminho>] [--json-out=<caminho>] [<script pnpm> …]');
   process.exit(2);
 }
 if (shard) {
@@ -113,7 +113,7 @@ function classificar(p, r, s) {
   const saida = ((r.stdout || '') + (r.stderr || '')).trim();
   /* 78 = EX_CONFIG: nada foi medido — nem verde, nem vermelho (o conteúdo
      não foi julgado). Terceira cor, contagem própria. A causa decide ANTES
-     do status (docs/docs/sonda-processos.md): o npm pode tratar SIGTERM e
+     do status (docs/docs/sonda-processos.md): o gerenciador (pnpm) pode tratar SIGTERM e
      sair 0 com ENOBUFS e saída parcial — status 0 aí não é veredito. */
   const causa = causaNaoMedivel(r);
   const pulou = !!causa || r.status === SAIDA_SKIP;
@@ -133,7 +133,7 @@ function imprimir(r) {
 
 function spawnAssincrono(p) {
   return new Promise((resolve) => {
-    const filho = spawn('npm', ['run', '--silent', p], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const filho = spawn('pnpm', ['run', '--silent', p], { stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '', stderr = '', resolvido = false;
     filho.stdout.setEncoding('utf8');
     filho.stderr.setEncoding('utf8');
@@ -183,7 +183,7 @@ if (jobs === 2) {
   for (const [indice, p] of passos.entries()) {
     process.stdout.write(`  ${p} … `);
     const t = Date.now();
-    const r = spawnSync('npm', ['run', '--silent', p], {
+    const r = spawnSync('pnpm', ['run', '--silent', p], {
       encoding: 'utf8',
       maxBuffer: MAX_BUFFER_PASSO,
     });

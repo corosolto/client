@@ -34,6 +34,9 @@ PROIBIDOS = (
     "supabase/",
     "package.json",
     "package-lock.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    ".npmrc",
     "borda.json",
 )
 
@@ -76,6 +79,8 @@ def selftest() -> int:
         ("workflow NÃO passa", [".github/workflows/ci.yml"], False),
         ("script de CI NÃO passa", ["scripts/ci/pr_classify.py"], False),
         ("package.json NÃO passa", ["package.json"], False),
+        ("lock pnpm NÃO passa", ["pnpm-lock.yaml"], False),
+        ("config do workspace NÃO passa", ["pnpm-workspace.yaml", ".npmrc"], False),
         ("uma proibida contamina o lote", ["STATUS.md", "public/js/game.js"], False),
         ("nada mexido é lote vazio", [], True),
         ("CHANGELOG não é gerado por ferramenta nossa", ["CHANGELOG.md"], False),

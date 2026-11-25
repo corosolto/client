@@ -134,8 +134,8 @@ process.exit(ok ? 0 : 1);
 async function mede_tela() {
   const { execSync } = await import('node:child_process');
   const { pathToFileURL } = await import('node:url');
-  const gRoot = execSync('npm root -g').toString().trim();
-  const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+  
+  const pw = await import('playwright')
   const chromium = pw.chromium || pw.default?.chromium;
   const BASE = process.env.BASE;
   if (!BASE) throw new Error('--tela pede BASE explícito');

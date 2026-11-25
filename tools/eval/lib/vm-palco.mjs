@@ -24,8 +24,8 @@ import { pathToFileURL } from 'node:url';
 export const ASPECTOS = { '3x2': [1440, 960], '16x9': [1440, 810] };
 
 export async function abrirNavegador() {
-  const gRoot = execSync('npm root -g').toString().trim();
-  const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+  
+  const pw = await import('playwright')
   const chromium = pw.chromium || pw.default?.chromium;
   return chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 }

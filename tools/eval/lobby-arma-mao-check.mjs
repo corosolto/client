@@ -103,8 +103,8 @@ const CASOS = [
 const TETO_PEGADA = { canarinho: 20 };
 const TETO = { pegadaGraus: 10, palmaM: 0.10, caixaM: 0.02, canoZmin: 0.594, derivaGraus: 2, derivaM: 0.01 };
 
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 let browser;
 try {

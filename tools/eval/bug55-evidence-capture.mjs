@@ -37,8 +37,8 @@ const POSES = [
 ];
 console.log(`casa-alvo: cx=${cx.toFixed(2)} cz=${cz.toFixed(2)} fachada z=${fz.toFixed(2)}`);
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 mkdirSync(OUT, { recursive: true });
 

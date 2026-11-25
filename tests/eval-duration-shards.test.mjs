@@ -36,10 +36,10 @@ function manifesto(dir, duracoes, geradoEm = new Date().toISOString()) {
   return caminho;
 }
 
-function npmFake(dir) {
-  const log = join(dir, 'npm.jsonl');
-  writeFileSync(join(dir, 'npm'), `#!${process.execPath}
-require('node:fs').appendFileSync(process.env.FAKE_NPM_LOG, JSON.stringify(process.argv.at(-1)) + '\\n');
+function pnpmFake(dir) {
+  const log = join(dir, 'pnpm.jsonl');
+  writeFileSync(join(dir, 'pnpm'), `#!${process.execPath}
+require('node:fs').appendFileSync(process.env.FAKE_PNPM_LOG, JSON.stringify(process.argv.at(-1)) + '\\n');
 `, { mode: 0o755 });
   return log;
 }
@@ -47,7 +47,7 @@ require('node:fs').appendFileSync(process.env.FAKE_NPM_LOG, JSON.stringify(proce
 function rodarRunner(dir, args, log) {
   return spawnSync(process.execPath, ['tools/eval/runner.mjs', ...args], {
     encoding: 'utf8',
-    env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, FAKE_NPM_LOG: log },
+    env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, FAKE_PNPM_LOG: log },
   });
 }
 
@@ -155,7 +155,7 @@ test('manifesto válido carrega durações; ausente, velho, futuro ou malformado
 test('runner distribui shards sem perda ou duplicata e preserva o JSON por shard', () => {
   const dir = mkdtempSync(join(tmpdir(), 'runner-shards-'));
   try {
-    const log = npmFake(dir);
+    const log = pnpmFake(dir);
     const passos = ['alpha', 'beta', 'gamma', 'delta'];
     const duracoes = { alpha: 8, beta: 7, gamma: 6, delta: 5 };
     const caminho = manifesto(dir, duracoes);
@@ -180,7 +180,7 @@ test('runner distribui shards sem perda ou duplicata e preserva o JSON por shard
 test('runner preserva --jobs=2 depois do shard', () => {
   const dir = mkdtempSync(join(tmpdir(), 'runner-shard-jobs-'));
   try {
-    const log = npmFake(dir);
+    const log = pnpmFake(dir);
     const passos = ['syntax', 'arch:check', 'docs:check', 'media:check'];
     const duracoes = Object.fromEntries(passos.map((passo) => [passo, 1]));
     const caminho = manifesto(dir, duracoes);
@@ -193,11 +193,11 @@ test('runner preserva --jobs=2 depois do shard', () => {
   }
 });
 
-test('runner não executa npm com manifesto ausente, vencido, inválido ou passo sem histórico', () => {
+test('runner não executa pnpm com manifesto ausente, vencido, inválido ou passo sem histórico', () => {
   for (const caso of ['ausente', 'vencido', 'invalido', 'incompleto']) {
     const dir = mkdtempSync(join(tmpdir(), `runner-shard-${caso}-`));
     try {
-      const log = npmFake(dir);
+      const log = pnpmFake(dir);
       const caminho = caso === 'ausente' ? join(dir, 'missing.json')
         : caso === 'invalido' ? join(dir, 'invalido.json')
           : manifesto(dir, caso === 'incompleto' ? { alpha: 1 } : { alpha: 1, beta: 1 },
@@ -212,7 +212,7 @@ test('runner não executa npm com manifesto ausente, vencido, inválido ou passo
         incompleto: /sem duração válida para: beta/,
       }[caso]);
       assert.match(r.stderr, /--shard=off/);
-      assert.equal(existsSync(log), false, `${caso}: npm não pode executar`);
+      assert.equal(existsSync(log), false, `${caso}: pnpm não pode executar`);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -222,7 +222,7 @@ test('runner não executa npm com manifesto ausente, vencido, inválido ou passo
 test('--shard=off escapa do manifesto e executa a seleção completa', () => {
   const dir = mkdtempSync(join(tmpdir(), 'runner-shard-off-'));
   try {
-    const log = npmFake(dir);
+    const log = pnpmFake(dir);
     const jsonOut = join(dir, 'off.json');
     const r = rodarRunner(dir, ['alpha', 'beta', '--shard=off', '--durations=/nao/existe.json', `--json-out=${jsonOut}`], log);
     assert.equal(r.status, 0, r.stderr);
@@ -232,10 +232,10 @@ test('--shard=off escapa do manifesto e executa a seleção completa', () => {
   }
 });
 
-test('runner rejeita índice fora do intervalo antes de executar npm', () => {
+test('runner rejeita índice fora do intervalo antes de executar pnpm', () => {
   const dir = mkdtempSync(join(tmpdir(), 'runner-shard-index-'));
   try {
-    const log = npmFake(dir);
+    const log = pnpmFake(dir);
     const caminho = manifesto(dir, { alpha: 1, beta: 1 });
     const r = rodarRunner(dir, ['alpha', 'beta', '--shard=3/2', `--durations=${caminho}`], log);
     assert.equal(r.status, 2);

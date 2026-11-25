@@ -88,8 +88,8 @@ const MEDE_MAOS = `window.__medeMaos = (THREE, raiz, pele, clips) => {
   return { pior, estado, arestas: arestas.length };
 };`;
 
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 
 const servidor = spawn(process.execPath, ['tools/eval/serve.mjs', PORTA], { cwd: ROOT, stdio: 'ignore', env: { ...process.env, STUDIO_PACK_ROOT: RAIZ } });

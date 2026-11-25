@@ -2,13 +2,9 @@
 // Sonda da malha da AK golden (coro/ak-hires.glb) no espaço do osso da arma (Rifle_metarig), no
 // idle: caixa e perfil de altura ao longo do cano — de onde saem alça e massa medidas.
 // Uso: node tools/fabrica/captura/sonda-golden.mjs [--porta=4671] [--osso=Rifle_metarig]
-import { execSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
 
 const arg = (n, d = '') => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `--${n}=${d}`).split('=').slice(1).join('=');
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = pw.chromium || pw.default?.chromium;
+const { chromium } = await import('playwright');
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
 await page.goto(`http://127.0.0.1:${arg('porta', '4671')}/?debug=1&auto=E&map=piscina_treta&armaslazy=0&vmauthored=1`, { waitUntil: 'load', timeout: 180000 });

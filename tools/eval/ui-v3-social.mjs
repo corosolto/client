@@ -15,8 +15,8 @@ const GAVETA_W = 780, CARTAO_W = 1120;
 /* Tela 24/25 no celular deitado; alvo de toque mínimo do briefing (pointer: coarse). */
 const TOQUE = 44;
 const LIMA = 'rgb(180, 217, 46)';
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

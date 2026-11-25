@@ -102,8 +102,8 @@ const FOLGA = 1.25;   // 25% acima do pior elogiado: acusa o que é PIOR que o b
 const DIVIDA = JSON.parse(fs.readFileSync('tools/eval/select_inflate_debt.json', 'utf8'));
 const DIVIDA_POR_ID = new Map(Object.entries(DIVIDA.personagens));
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 const browser = await chromium.launch({

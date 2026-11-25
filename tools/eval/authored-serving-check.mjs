@@ -45,7 +45,7 @@ const PORTA = arg('porta') || await portaLivre();
 let BASE = '';
 let srv = null;
 try {
-  const status = execSync('npx astro dev status', { encoding: 'utf8', timeout: 20000 });
+  const status = execSync('pnpm exec astro dev status', { encoding: 'utf8', timeout: 20000 });
   // `[\d.]+` só casa IP, e o astro anuncia `http://localhost:PORTA`. A régua
   // ignorava o servidor do dono e tentava subir o dela — mas a instância é ÚNICA,
   // o segundo não sobe, e TUDO respondia 404: o vermelho parecia defeito de
@@ -55,7 +55,7 @@ try {
 } catch { /* nenhum servidor vivo */ }
 if (!BASE) {
   BASE = `http://127.0.0.1:${PORTA}`;
-  srv = spawn('npx', ['astro', 'dev', '--port', PORTA, '--host', '127.0.0.1'], {
+  srv = spawn('pnpm', ['exec', 'astro', 'dev', '--port', PORTA, '--host', '127.0.0.1'], {
     stdio: 'ignore',
     env: { ...process.env, PORT: PORTA },
   });
@@ -121,8 +121,8 @@ for (const [path, minBytes] of compartilhados) {
 
 if (srv) {
   srv.kill();
-  // Astro sobe um daemon: matar só o processo npx deixa o servidor vivo.
-  try { execSync('npx astro dev stop', { stdio: 'ignore', timeout: 20000 }); } catch { /* já parou */ }
+  // Astro sobe um daemon: matar só o processo pnpm deixa o servidor vivo.
+  try { execSync('pnpm exec astro dev stop', { stdio: 'ignore', timeout: 20000 }); } catch { /* já parou */ }
 }
 console.log(JSON.stringify({ mutante: MUT || null, armas: armas.length, failures }, null, 2));
 process.exit(failures ? 1 : 0);

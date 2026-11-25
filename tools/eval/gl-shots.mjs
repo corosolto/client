@@ -13,8 +13,8 @@ const chromeBin = process.env.CHROME_BIN ||
     ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
     : undefined);
 mkdirSync(OUT, { recursive: true });
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 const args = ['--headless=new', '--mute-audio', '--no-sandbox'];
 if (SWIFT) args.push('--use-angle=swiftshader', '--enable-unsafe-swiftshader');

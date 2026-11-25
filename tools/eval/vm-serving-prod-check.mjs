@@ -144,7 +144,7 @@ function checkConfig() {
   checkHeaderTable(headerTable(gerar(lerVercel()).headers, '_headers gerado de borda.json'));
   // cf-prod-deploy/cf-staging-deploy publicam o `build:cf`: _headers e viewmodel têm de estar em public/ antes do build.
   const build = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')).scripts?.['build:cf'] || '';
-  const antes = (trecho) => build.includes(trecho) && build.indexOf(trecho) < build.indexOf('npm run build');
+  const antes = (trecho) => build.includes(trecho) && build.indexOf(trecho) < build.indexOf('pnpm run build');
   check(antes('tools/cf/gen-headers-redirects.mjs') && antes('scripts/fetch-viewmodels.sh'), 'SP3',
     'build:cf gera o _headers e baixa o viewmodel antes do build', build.slice(0, 160));
   const wrangler = readFileSync(path.join(ROOT, 'wrangler.prod.toml'), 'utf8');
@@ -263,7 +263,7 @@ if (URL_BASE) {
     if (['arquivo-faltando', 'hash-errado', 'vazamento'].includes(MUT)) { console.error(`mutante ${MUT} precisa do publicado (sem --config)`); process.exit(2); }
   } else {
     const dists = alvo ? [path.resolve(alvo)] : [path.join(ROOT, 'dist/client')].filter(existsSync);
-    if (!dists.length) check(false, 'SP1', 'nenhum publicado encontrado', 'rode `npm run build:cf` (ou passe --dist=<dir>)');
+    if (!dists.length) check(false, 'SP1', 'nenhum publicado encontrado', 'rode `pnpm run build:cf` (ou passe --dist=<dir>)');
     for (const d of dists) await checkDist(d);
   }
 }

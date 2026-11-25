@@ -13,8 +13,8 @@ const OUT = process.env.ARTIFACT_DIR || 'artifacts/sertao-casas/contrast-final';
 const MUT = process.argv.find(a => a.startsWith('--mutante='))?.slice(10) || '';
 if (MUT && !['sem-rim', 'sem-inimigo'].includes(MUT)) throw Error(`Mutante desconhecido: ${MUT}`);
 mkdirSync(OUT, { recursive: true });
-const root = execSync('npm root -g').toString().trim();
-const { chromium } = await import(pathToFileURL(`${root}/playwright/index.mjs`).href);
+
+const { chromium } = await import('playwright')
 const browser = await chromium.launch({ executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--mute-audio'] });
 
 const labL = ([R, G, B]) => {

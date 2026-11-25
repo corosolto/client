@@ -69,8 +69,8 @@ for (const id of originais) {
 console.log(`OM3 spawn.yaw: ${yawTotal - yawErrados}/${yawTotal} combatentes alinhados`);
 if (yawErrados) falhas.push(`OM3 ${yawErrados}/${yawTotal} combatentes ignoram spawn.yaw; use o yaw do ponto escolhido em reset e respawn`);
 
-const root = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${root}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 if (!chromium) throw new Error('Playwright/Chromium indisponível: OM1 não pode medir GLBs');
 const browser = await chromium.launch({

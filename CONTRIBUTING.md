@@ -51,8 +51,8 @@ acceptance criteria; compare them with existing issues before opening another on
 4. **Fork previews require human review**: `cs-brasil-ai-bot` (`preview-bot.yml`)
    classifies the diff without executing it. A maintainer reviews the current SHA and applies
    `preview-autorizado`; any push revokes the approval.
-5. **Local quality gates before opening**: `npm run check:fast` (seconds) and, if you changed
-   the game, `npm run check:deploy` (the same gate run by the `pre-push` hook). A new
+5. **Local quality gates before opening**: `pnpm run check:fast` (seconds) and, if you changed
+   the game, `pnpm run check:deploy` (the same gate run by the `pre-push` hook). A new
    quality-gate failure = PR sent back.
 6. **No em dashes `—` in site text (`src/`)**. Use a hyphen with spaces (` - `). The
    em dash is a hallmark of AI-generated text and, in a game that presents itself as original, reveals
@@ -65,32 +65,31 @@ acceptance criteria; compare them with existing issues before opening another on
 ```bash
 git clone https://github.com/corosolto/client.git
 cd client
-npm ci
-npm run fetch-audio       # opcional — sem o pacote, o jogo usa sons sintetizados
-npm run dev               # http://localhost:4321 · o JOGO está na rota /
+pnpm install --frozen-lockfile
+pnpm run fetch-audio      # opcional — sem o pacote, o jogo usa sons sintetizados
+pnpm run dev              # http://localhost:4321 · o JOGO está na rota /
 ```
 
-Check the Node requirement in the [README quickstart](README.md#rodar-localmente)
-and run `node --version` and `npm --version` in the terminal you will use to install dependencies.
+Check the Node and pnpm requirements in the [README quickstart](README.md#run-locally)
+and run `node --version` and `pnpm --version` in the terminal you will use to install dependencies.
 
 To reproduce the CI environment without hunting down Chromium versions or libraries, open the clone in a
-**Dev Container**. The image uses Node 22, the npm version from `packageManager`, and the exact Playwright version from
-the lockfile; `postCreateCommand` runs the same `scripts/setup.mjs` shown above and finishes with
+**Dev Container**. The image uses Node 22, the pnpm version from `packageManager`, and the exact Playwright version from
+`pnpm-lock.yaml`; `postCreateCommand` runs `scripts/setup.mjs` and finishes with
 browser diagnostics. In an already configured terminal, the equivalent path is:
 
 ```bash
-node scripts/ci-local.mjs --setup       # setup + Playwright do lock num prefixo privado + Chromium (sem root)
+node scripts/ci-local.mjs --setup       # setup + Chromium para o Playwright local (sem root)
 node scripts/ci-local.mjs --setup-system  # Linux: Playwright eleva só a instalação das libs nativas
 node scripts/ci-local.mjs --diagnose    # só ambiente; não roda teste
 node scripts/ci-local.mjs               # diagnóstico e check:fast
-node scripts/ci-local.mjs eval:boot     # qualquer script npm, com CHROME_BIN já descoberto
+node scripts/ci-local.mjs eval:boot     # qualquer script pnpm, com CHROME_BIN já descoberto
 ```
 
-The private prefix in `node_modules/.ci-local-prefix` supports gates that query
-`npm root -g` without writing to the system's global npm installation. A `CHROME_BIN`
-override is only accepted when it resolves to the same Chromium installed by the lockfile's Playwright version.
+A `CHROME_BIN` override is only accepted when it resolves to the same Chromium
+installed by the lockfile's Playwright version.
 
-The runner does not set `PREPUSH=0` or any other way to skip a gate. Missing Node/npm, packages,
+The runner does not set `PREPUSH=0` or any other way to skip a gate. Missing Node/pnpm, packages,
 Chromium, or native libraries produces `⊘ SKIP` with exit code **78** (`EX_CONFIG`) before the tests;
 after diagnostics pass, the exit code and verdict come from the script being run.
 
@@ -99,7 +98,7 @@ after diagnostics pass, the exit code and verdict come from the script being run
 not the game. (The previous version of this file pointed to exactly the wrong
 place.)
 
-### One worktree per feature: `npm ci` is mandatory
+### One frozen install per worktree
 
 The house rule is a fresh worktree for each feature, created from `origin/main`:
 
@@ -107,7 +106,7 @@ The house rule is a fresh worktree for each feature, created from `origin/main`:
 git fetch origin main
 git worktree add -b fix/meu-defeito ../worktrees/meu-defeito origin/main
 cd ../worktrees/meu-defeito
-npm ci                    # obrigatório, uma vez por worktree
+pnpm install --frozen-lockfile
 ```
 
 **Never** run `ln -s ../outra-worktree/node_modules .`. That shortcut saves a
@@ -125,7 +124,7 @@ minute and costs a day:
 
 Today, this second case produces `⊘ SKIP` with the cause and the command that fixes it, and
 the process exits with **78** (`EX_CONFIG`), which is neither green nor red. If one
-of your gates skips with 78, read it as "not measured": run `npm ci` and run it again. The
+of your gates skips with 78, read it as "not measured": run `pnpm install --frozen-lockfile` and run it again. The
 mechanism lives in `tools/eval/sonda-filho.mjs`, and the reason SKIP has its own code
 instead of becoming 0 or 1 is in `docs/docs/sonda-processos.md`.
 
@@ -214,8 +213,8 @@ on a gate that runs in **5 seconds** locally: `docs:check` twice,
 
 The hook runs the core checks and the suites affected by the diff. Any unknown or
 cross-cutting path (`package.json`, `game.js`, `main.js`, boot/network, workflows) triggers the full
-`check:deploy`. Selection is local only; CI still runs everything. Run `npm run check:fast` or
-`npm run check:deploy` directly whenever you want the full suite before the first push.
+`check:deploy`. Selection is local only; CI still runs everything. Run `pnpm run check:fast` or
+`pnpm run check:deploy` directly whenever you want the full suite before the first push.
 
 For a proven pre-existing failure, `PREPUSH=0 git push` skips the hook — and CI remains
 the safety net. Do not use this escape hatch for a failure caused by your own diff.
@@ -223,13 +222,13 @@ the safety net. Do not use this escape hatch for a failure caused by your own di
 Before opening the PR, the rest is still up to you:
 
 ```bash
-npm run check:deploy # quality gate completo (check:fast é a versão rápida)
-npm run arch         # se você mexeu em public/js, o ARCH.md precisa ser regerado
-npm run build        # o site tem que buildar
-npm run check:seo    # se você mexeu em src/ (inclui src/pages/llms.txt.ts)
+pnpm run check:deploy # quality gate completo (check:fast é a versão rápida)
+pnpm run arch         # se você mexeu em public/js, o ARCH.md precisa ser regerado
+pnpm run build        # o site tem que buildar
+pnpm run check:seo    # se você mexeu em src/ (inclui src/pages/llms.txt.ts)
 ```
 
-`check:seo` runs `npm run build` and then measures the **published HTML**, not the
+`check:seo` runs `pnpm run build` and then measures the **published HTML**, not the
 `.astro`. That is intentional: it is how a static `sitemap.xml` shadowing the
 dynamic route was caught, and how the AEO1 clause catches a page promising a
 global ranking with `RANKING_ON = false`. **Do not loosen a limit just to make the score pass.**

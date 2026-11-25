@@ -4,15 +4,11 @@
 // (SIGHT → MUZZLE), no espaço da vmCamera, no idle, e o eixo do cano projetado na tela.
 // Mede os produtos da fábrica; a M4 aprovada é a referência (a AK golden não tem os sockets).
 // Uso: node tools/fabrica/captura/rolagem.mjs --armas=m4,g3 [--porta=4671]
-import { execSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
 
 const arg = (n, d = '') => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `--${n}=${d}`).split('=').slice(1).join('=');
 const PORTA = arg('porta', '4671');
 const ARMAS = arg('armas', 'm4').split(',').filter(Boolean);
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = pw.chromium || pw.default?.chromium;
+const { chromium } = await import('playwright');
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
 const q = new URLSearchParams({ debug: '1', auto: 'E', map: 'piscina_treta', armaslazy: '0', vmauthored: '1', vmqa: 'precision', vmfabrica: ARMAS.join(',') });

@@ -92,11 +92,11 @@ async function noAr() {
 async function sobeServidor() {
   if (EXTERNO) return true;
   try { if ((await fetch(BASE + '/robots.txt')).status) return true; } catch { /* não estava no ar */ }
-  spawn('npx', ['astro', 'dev', '--port', String(PORTA)], { stdio: 'ignore', detached: false }).on('error', () => {});
+  spawn('pnpm', ['exec', 'astro', 'dev', '--port', String(PORTA)], { stdio: 'ignore', detached: false }).on('error', () => {});
   subiuAqui = true;
   return noAr();
 }
-function derrubaServidor() { if (subiuAqui) spawnSync('npx', ['astro', 'dev', 'stop'], { stdio: 'ignore' }); }
+function derrubaServidor() { if (subiuAqui) spawnSync('pnpm', ['exec', 'astro', 'dev', 'stop'], { stdio: 'ignore' }); }
 
 const falhas = [];
 
@@ -199,8 +199,8 @@ try {
     console.error(`✗ CTRLW0  o site não subiu em ${BASE} (90 s de espera)`);
     process.exit(1);
   }
-  const gRoot = execSync('npm root -g').toString().trim();
-  const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+  
+  const _pw = await import('playwright')
   const chromium = _pw.chromium || _pw.default?.chromium;
   browser = await chromium.launch({
     executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

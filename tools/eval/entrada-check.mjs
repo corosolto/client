@@ -34,8 +34,8 @@ const MUT = arg('mutante');
 const PORTA = arg('porta') || '8131';
 const BASE = `http://127.0.0.1:${PORTA}`;
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 const srv = spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });

@@ -8,8 +8,8 @@ import { pathToFileURL } from 'node:url';
 
 const BASE = process.env.BASE || 'http://127.0.0.1:9427';
 const OUT = process.env.OUT || 'tools/eval/out/ui-v3-perfil';
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

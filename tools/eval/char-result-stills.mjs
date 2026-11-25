@@ -47,8 +47,8 @@ const MARGIN_RIGHT = 24;     // ~1024 × 0.023 — o quantile .998 da régua des
 /* Margens aceitas pela UIA19 — se a arte cair fora, o script reprova sozinho. */
 const LIMITES = { top: [.015, .20], bottom: [.015, .20], left: [.015, .65], right: [.015, .08], uso: .72 };
 
-const gRoot = execSync('npm root -g').toString().trim();
-const { default: pw } = await import(`${gRoot}/playwright/index.js`).catch(() => ({ default: null }));
+
+const { default: pw } = await import('playwright').catch(() => ({ default: null }))
 const chromiumMod = pw?.chromium || chromium;
 
 const browser = await chromiumMod.launch({

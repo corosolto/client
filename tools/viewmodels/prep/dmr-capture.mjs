@@ -5,7 +5,7 @@
 //   node tools/viewmodels/prep/dmr-capture.mjs [porta] [--sem-override]
 import path from 'node:path';
 import { execSync } from 'node:child_process';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 
@@ -21,9 +21,7 @@ const ARSENAL = {
   g3sg1: { familia: 'g3', recarga: ['reload_tactical'], tiros: [0.05, 0.11] },
 };
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = _pw.chromium || _pw.default?.chromium;
+const { chromium } = await import('playwright');
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 
 fs.rmSync(OUT, { recursive: true, force: true });

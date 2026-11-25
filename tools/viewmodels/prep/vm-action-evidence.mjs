@@ -32,8 +32,8 @@ const shootFractions = arg('shoot-frames', '0.3').split(',').map(Number);
 if (shootFractions.some((f) => !Number.isFinite(f) || f < 0 || f > 1.5)) throw new Error('Fração de tiro inválida');
 const reloadFractions = arg('reload-frames', '0,0.15,0.25,0.35,0.45,0.55,0.65,0.75,0.85,1').split(',').map(Number);
 if (reloadFractions.some((f) => !Number.isFinite(f) || f < 0 || f > (sequence ? 1.5 : 1))) throw new Error('Fração de recarga inválida');
-const gRoot = execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim();
-const playwright = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const playwright = await import('playwright')
 const chromium = playwright.chromium || playwright.default.chromium;
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });

@@ -60,10 +60,10 @@ export const LX1_PREFIXOS = ['plans/', 'progress/', 'prompts/', 'content/', 'ref
 /* Raiz rastreada em 09/11/2026 menos o que o bloco 1 da limpeza tira
    (bun.lock, .dockerignore, playwright.config.mjs, OPERACAO-*.md). */
 export const ALLOW_RAIZ = new Set([
-  '.env.example', '.gitignore', '.mailmap',
+  '.env.example', '.gitignore', '.mailmap', '.npmrc',
   'AGENTS.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'ROADMAP.md', 'SECURITY.md',
   'astro.config.mjs', 'borda.json', 'knip.json', 'mint-assets.json',
-  'package.json', 'package-lock.json', 'playwright.smoke.config.mjs', 'renovate.json',
+  'package.json', 'playwright.smoke.config.mjs', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'renovate.json',
   'skills-lock.json', 'tsconfig.json', 'wrangler.toml', 'wrangler.preview.toml', 'wrangler.staging.toml', 'wrangler.prod.toml',
 ]);
 /* workers/: Workers da Cloudflare fora do site (vigia-cron, o relógio do monitoramento).

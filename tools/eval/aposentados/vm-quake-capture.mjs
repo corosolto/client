@@ -14,8 +14,8 @@ const LIST = (process.argv[3] || 'svd,ak').split(',');
 const [W, H] = (process.argv[4] || '1200,800').split(',').map(Number);   // 1200×800 = 3:2
 const XQS = process.argv[5] ? `&${process.argv[5]}` : '';
 const BASE = process.env.BASE || 'http://localhost:8123';
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 rmSync(OUT, { recursive: true, force: true });

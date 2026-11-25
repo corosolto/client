@@ -2,7 +2,7 @@
 #
 # POR QUE EXISTE (medido em 21/08/2026, nos últimos 29 PRs): nenhum bot deste
 # repositório jamais commitou um conserto. O #405 ficou vermelho por
-# `DOCS1: documentação DESATUALIZADA`, cujo conserto é `npm run docs` mais um
+# `DOCS1: documentação DESATUALIZADA`, cujo conserto é `pnpm run docs` mais um
 # commit — trabalho sem julgamento nenhum, que hoje ou espera um mantenedor ou
 # devolve o PR para o autor.
 #
@@ -13,7 +13,7 @@
 #
 # `pull_request_target` porque é o único gatilho que enxerga secret em PR de fork
 # (ver a régua WSEC1). O checkout é do MERGE do PR e roda apenas ferramentas do
-# repositório base sobre ele — nunca `npm run` de script vindo do fork.
+# repositório base sobre ele — nunca script vindo do fork (`npm run`/`pnpm run`).
 name: autofix
 
 on:
@@ -197,36 +197,18 @@ jobs:
                      -m "Signed-off-by: csbrasil-bot <csbrasil-bot@users.noreply.github.com>"
           echo "mesclou=1" >> "$GITHUB_OUTPUT"
 
-      # As ferramentas que vão rodar têm de ser as da BASE, nunca as do fork — senão
-      # um PR malicioso reescreve o gerador e o bot executa o que ele mandou.
-      # EXCEÇÃO (25/08, medida no #399): PR de BRANCH DA MESMA CASA mantém as
-      # ferramentas E o package.json do PR. Restaurar os da base aqui regenerava a doc
-      # com a contagem de scripts da MAIN (124) sobre uma árvore que tem os do PR (186)
-      # — o commit do autofix deixava o branch vermelho no próprio docs:check, em loop.
-      # A proteção anti-fork não se aplica: quem abre PR de branch da casa já tem write
-      # no repo e pode editar este workflow diretamente.
-      # O MESMO LOOP no fork (22/09, #610): aqui o package.json da base continuava valendo
-      # NA HORA DE GERAR, então o gen-docs escrevia 242 scripts numa árvore com 243 e o bot
-      # commitava o número errado por cima do certo — DOCS1 vermelho para sempre, e o autor
-      # do fork sem como consertar, porque quem regenera é o bot. O manifesto do fork volta
-      # ao seu lugar DEPOIS da instalação e ANTES dos geradores (passo abaixo): quem instala
-      # dependência continua sendo o manifesto da BASE, e quem é MEDIDO passa a ser o do PR.
+      # No fork roda apenas o gerador da base. As duas ferramentas não precisam
+      # de node_modules e leem o manifesto e os insumos do PR como dados.
       - name: Restaura as ferramentas da base (somente fork)
         if: env.pular != '1' && env.HEAD_REPO != env.REPO
         run: |
           git fetch base "${{ github.event.pull_request.base.ref || 'main' }}"
-          # O lock vem JUNTO com o package.json: `npm ci` exige que os dois batam, e
-          # restaurar só um deles quebra a instalação (medido em 22/08, 2 de 10 runs).
-          git checkout FETCH_HEAD -- tools/ scripts/ package.json package-lock.json
+          git checkout FETCH_HEAD -- tools/ scripts/
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         if: env.pular != '1'
         with: { node-version: 22 }
-      - name: Instala dependências
-        if: env.pular != '1'
-        # `npm ci` morre se lock e manifesto divergirem; aqui a instalação é meio para
-        # rodar o gerador, não o alvo da medição, então cair para `install` é aceitável.
-        run: npm ci --ignore-scripts || npm install --ignore-scripts --no-audit --no-fund
+
 
       # RESOLVE CONFLITO DE ARQUIVO GERADO. Todo `chore(release)` na main reescreve
       # README, STATUS, ARCH e docs/, e reabre conflito em TODO PR aberto ao mesmo
@@ -243,18 +225,11 @@ jobs:
           gh pr comment "$PR_NUMBER" --repo "$REPO" --body \
             "🤖 **autofix**: the base branch advanced and a conflict affects source code. Human review is required. The run log lists the conflicting files. Run \`git merge origin/${{ github.event.pull_request.base.ref || 'main' }}\` and resolve the conflict."
 
-      # O manifesto do fork volta antes de gerar: o que a doc afirma é o que a ÁRVORE tem.
-      # Seguro porque a instalação já aconteceu (com o lock da base) e os dois geradores
-      # importam só builtin de node — nada de package.json do fork chega a ser executado.
-      # O MESMO VALE para o insumo que o gen-docs LÊ dentro de tools/ (10/10, #805): o
-      # passo acima traz o `tools/eval/invariants.mjs` da base junto com os geradores, mas
-      # é dele que sai a contagem de linhas e de ids do bloco `invariantes` — o bot media
-      # o da BASE (2.405 linhas), commitava por cima do número do PR (2.401) e o DOCS1
-      # reprovava o próprio conserto, em loop. O arquivo não é executado, só lido:
-      # devolvê-lo ao estado do PR não abre porta de fork nenhuma.
-      - name: Devolve o manifesto e o insumo medido do PR antes de gerar (somente fork)
+      # gen-docs lê o conteúdo deste arquivo para medir invariantes. Devolva
+      # o insumo do PR; os geradores executados continuam sendo os da base.
+      - name: Devolve o insumo medido do PR antes de gerar (somente fork)
         if: env.pular != '1' && env.HEAD_REPO != env.REPO && steps.merge.outputs.humano != '1'
-        run: git checkout HEAD -- package.json package-lock.json tools/eval/invariants.mjs
+        run: git checkout HEAD -- tools/eval/invariants.mjs
 
       - name: Conserta o mecânico
         if: env.pular != '1' && steps.merge.outputs.humano != '1'
@@ -262,8 +237,7 @@ jobs:
           node tools/gen-docs.mjs   || echo "::warning::gen-docs falhou"
           node tools/gen-arch.mjs   || echo "::warning::gen-arch falhou"
 
-      # As ferramentas foram restauradas da base só para rodar; o que volta ao PR é
-      # apenas o resultado delas. (O manifesto já voltou no passo anterior aos geradores.)
+      # Só as alterações geradas devem permanecer antes de aplicar a allowlist.
       - name: Devolve as ferramentas ao estado do PR
         if: env.pular != '1' && env.HEAD_REPO != env.REPO && steps.merge.outputs.humano != '1'
         run: git checkout HEAD -- tools/ scripts/
@@ -289,7 +263,7 @@ jobs:
         if: env.pular != '1' && steps.trava.outputs.bloqueado == '1'
         run: |
           gh pr comment "$PR_NUMBER" --repo "$REPO" --body \
-            "🤖 **autofix**: the proposed fix changed a file outside the allowlist, so **no commit was created**. Run \`npm run docs && node tools/gen-arch.mjs\` and review the changes."
+            "🤖 **autofix**: the proposed fix changed a file outside the allowlist, so **no commit was created**. Run \`pnpm run docs && node tools/gen-arch.mjs\` and review the changes."
 
       - name: Empurra o conserto
         if: env.pular != '1' && (steps.trava.outputs.commitar == '1' || steps.merge.outputs.mesclou == '1') && env.PODE_EDITAR == 'true'
@@ -313,4 +287,4 @@ jobs:
         if: env.pular != '1' && (steps.trava.outputs.commitar == '1' || steps.merge.outputs.mesclou == '1') && env.PODE_EDITAR != 'true'
         run: |
           gh pr comment "$PR_NUMBER" --repo "$REPO" --body \
-            "🤖 **autofix**: a mechanical fix is available, but *allow edits by maintainers* is disabled for this PR. Run \`npm run docs && node tools/gen-arch.mjs\` and commit the result, or enable maintainer edits."
+            "🤖 **autofix**: a mechanical fix is available, but *allow edits by maintainers* is disabled for this PR. Run \`pnpm run docs && node tools/gen-arch.mjs\` and commit the result, or enable maintainer edits."

@@ -2,9 +2,7 @@
 // Uso: node tools/capture-character-game.mjs <id> <enemyFaction> <outDir> [map]
 // Mutante: --mutante=arma-aleatoria restaura a arma sorteada do bot e DEVE falhar.
 import { createHash } from 'node:crypto';
-import { execSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 
 globalThis.location ||= { search: '' };
@@ -22,9 +20,7 @@ const weaponModelFile = new URL(`../public/models/weapons/${expectedWeapon}.glb`
 const characterModelSha256 = createHash('sha256').update(readFileSync(characterModelFile)).digest('hex');
 const weaponModelSha256 = createHash('sha256').update(readFileSync(weaponModelFile)).digest('hex');
 const base = process.env.BASE || 'http://localhost:8123';
-const root = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${root}/playwright/index.js`).href);
-const chromium = pw.chromium || pw.default?.chromium;
+const { chromium } = await import('playwright');
 mkdirSync(out, { recursive: true });
 
 const browser = await chromium.launch({

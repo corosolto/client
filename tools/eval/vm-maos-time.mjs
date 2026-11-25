@@ -269,7 +269,7 @@ async function mutar(page, P) {
   }
 }
 
-const playwright = await import(pathToFileURL(`${execFileSync('npm', ['root', '-g']).toString().trim()}/playwright/index.js`));
+const playwright = await import('playwright')
 const chromium = playwright.chromium || playwright.default?.chromium;
 await fs.mkdir(path.join(out, 'fotos'), { recursive: true });
 const srv = await servidor();

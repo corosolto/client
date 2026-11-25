@@ -136,7 +136,7 @@ if (!flag('sem-capturas')) {
 const regressao = flag('sem-regressao') ? (fs.existsSync(path.join(QA, 'resumo.json')) ? lerJson(path.join(QA, 'resumo.json')).regressao || {} : {}) : {};
 if (!flag('sem-regressao')) {
   for (const s of ['eval:vm-cache', 'eval:vm-launch', 'eval:vm-rig', 'eval:vm-orientacao', 'eval:vm-manga-oca', 'eval:vm-placar']) {
-    const r = rodar(`regressao-${s.replace(/[:]/g, '_')}`, 'npm', ['run', '-s', s]);
+    const r = rodar(`regressao-${s.replace(/[:]/g, '_')}`, 'pnpm', ['run', '-s', s]);
     regressao[s] = { ok: r.status === 0, log: r.log };
   }
 }

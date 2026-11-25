@@ -9,8 +9,8 @@ const OUTSHEET = process.argv[2] || '/tmp/weapon-sheet.png';
 const BASE = process.env.BASE || 'http://localhost:8123';
 const SKIN = process.env.SKIN || '';
 const DIR = '/tmp/wt';
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 // discover weapon ids from the page itself

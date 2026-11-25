@@ -36,7 +36,7 @@ test('prod-watch.yml: aquece o edge depois do purge, só no deployment_status, s
 
 test('portao-browser.yml: eval:boot e os cenários de navegador do selftest rodam no PR que toca o boot', () => {
   const s = wf('portao-browser.yml');
-  assert.match(s, /run: npm run eval:boot/); assert.match(s, /run: node tools\/ops\/selftest\.mjs --so=navegador/);
+  assert.match(s, /run: pnpm run eval:boot/); assert.match(s, /run: node tools\/ops\/selftest\.mjs --so=navegador/);
   // O filtro saiu do `paths:` para scripts/ci/gatilho.mjs (job `decide`): o contrato é o mesmo.
   assert.match(s, /node scripts\/ci\/gatilho\.mjs portao/);
   for (const p of ['public/js/main.js', 'public/js/ops.js', 'src/pages/index.astro', 'tools/eval/boot-check.mjs', 'tools/ops/selftest.mjs']) assert.ok(casa('portao', p), `gatilho sem ${p}`);
@@ -53,13 +53,13 @@ test('portao-browser.yml: Sertão em dois shards balanceados, cobertura exata e 
     const id = /^ {2}([\w-]+):\s*$/.exec(l);
     if (id) { atual = id[1]; jobs[atual] = ''; } else if (atual) jobs[atual] += `${l}\n`;
   }
-  const PASSOS = ['npm run eval:grafite-atual', 'npm run eval:select', 'npm run eval:entrada', 'npm run eval:armas', 'npm run eval:boot', 'node tools/ops/selftest.mjs --so=navegador', 'npm run eval:sertao-livestock-runtime', 'npm run eval:grafite:ar'];
+  const PASSOS = ['pnpm run eval:grafite-atual', 'pnpm run eval:select', 'pnpm run eval:entrada', 'pnpm run eval:armas', 'pnpm run eval:boot', 'node tools/ops/selftest.mjs --so=navegador', 'pnpm run eval:sertao-livestock-runtime', 'pnpm run eval:grafite:ar'];
   const todos = Object.values(jobs).join('');
   for (const p of PASSOS) assert.ok(new RegExp(`run: ${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`).test(todos), `passo sumiu: ${p}`);
-  const sertao = Object.entries(jobs).find(([, c]) => c.includes('run: npm run eval:sertao-livestock-runtime'));
+  const sertao = Object.entries(jobs).find(([, c]) => c.includes('run: pnpm run eval:sertao-livestock-runtime'));
   assert.ok(sertao, 'sem job com o Sertão');
   const corpo = sertao[1];
-  assert.ok(!/run: npm run eval:(grafite|select|entrada|armas|boot)\b/.test(corpo), 'o Sertão divide job com o resto do portão');
+  assert.ok(!/run: pnpm run eval:(grafite|select|entrada|armas|boot)\b/.test(corpo), 'o Sertão divide job com o resto do portão');
   assert.match(corpo, /^ {4}needs: decide$/m);
   assert.match(corpo, /^ {4}if: needs\.decide\.outputs\.rodar == 'true' && needs\.decide\.outputs\.pronto != 'false'$/m);
   assert.match(corpo, /^ {6}fail-fast: false$/m);
@@ -82,7 +82,7 @@ test('portao-browser.yml: Sertão em dois shards balanceados, cobertura exata e 
   assert.match(jobs.portao, /^ {4}needs: \[decide, portao-fauna, portao-armas, portao-controles, portao-core, portao-passe, sertao\]$/m, 'agregação do portao mudou');
 
   for (const [nome, corpoJob] of Object.entries(jobs)) {
-    if (!/run: npm run eval:/.test(corpoJob)) continue;
+    if (!/run: pnpm run eval:/.test(corpoJob)) continue;
     assert.match(corpoJob, /CHROME_BIN=/, `${nome} roda eval:* sem resolver o CHROME_BIN`);
   }
 });
@@ -122,7 +122,7 @@ test('package.json: ops:aquecer existe e aponta para o script', () => {
    filtros sumiria do CI sem vermelho nenhum. */
 test('smoke-web.yml: chat desktop em job próprio, partição exata, nenhum spec saiu', () => {
   const s = wf('smoke-web.yml');
-  const execs = [...s.matchAll(/run: npx playwright test ([^\n]+)/g)].map((m) => m[1]);
+  const execs = [...s.matchAll(/run: pnpm exec playwright test ([^\n]+)/g)].map((m) => m[1]);
   assert.ok(execs.length >= 2, 'o smoke ainda roda num job só');
   const SPECS = ['tests/smoke/web-smoke.spec.js', 'tests/smoke/web-assets.spec.js', 'tests/smoke/chat-sala.spec.js'];
   for (const spec of SPECS) assert.ok(execs.some((e) => e.includes(spec)), `spec sumiu: ${spec}`);

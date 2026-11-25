@@ -92,7 +92,7 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
          um artefato escrito por job que rodou código do fork, a URL é saída de comando).
          O CodeQL pegou exatamente isso aqui, como injeção crítica, antes do merge.
     PRV3 quem PUBLICA não executa NADA do PR: sem checkout da branch do fork, sem
-         `npm ci`, sem `npm run`, e o deploy é `--prebuilt` (só envia arquivo).
+         `pnpm install`, sem `pnpm run`, e o deploy é `--prebuilt` (só envia arquivo).
          Furar isto devolve o token para as mãos de quem abriu o PR.
     """
     errors = []
@@ -195,6 +195,9 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
         ('actions/checkout', 'faz checkout — traria código do PR para o job que tem o token'),
         ('npm ci', 'roda npm ci — executaria script do PR'),
         ('npm run', 'roda npm run — executaria script do PR'),
+        ('pnpm install', 'roda pnpm install — executaria script do PR'),
+        ('pnpm run', 'roda pnpm run — executaria script do PR'),
+        ('pnpm exec', 'roda pnpm exec — executaria binário instalado pelo PR'),
         ('vercel build', 'roda vercel build — é o build do fork com o token no ambiente'),
     ):
         if proibido in deploy:

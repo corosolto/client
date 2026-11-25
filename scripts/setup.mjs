@@ -21,10 +21,10 @@
    **a mensagem final diz o que fazer** — não só o que quebrou.
 
    O fetch de áudio e o de decalques podem falhar por rede ou por release movida.
-   Isso não impede `npm run dev`: o jogo sobe mudo e com parede pelada, que é
+   Isso não impede `pnpm run dev`: o jogo sobe mudo e com parede pelada, que é
    exatamente o que precisa ser DITO, não escondido.
 
-   Uso:  npm run setup
+   Uso:  pnpm run setup
    ============================================================================ */
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
@@ -37,9 +37,9 @@ const CYAN = '\x1b[36m', VERDE = '\x1b[32m', VERM = '\x1b[31m', AMAR = '\x1b[33m
 const PASSOS = [
   {
     nome: 'dependências',
-    cmd: ['npm', ['ci', '--no-audit', '--no-fund']],
+    cmd: ['pnpm', ['install', '--frozen-lockfile']],
     ok: () => existsSync('node_modules/astro'),
-    falha: 'rode `npm install` e leia o erro — provavelmente Node < 22 ou rede.',
+    falha: 'rode `pnpm install` e leia o erro — provavelmente Node < 22 ou rede.',
   },
   {
     nome: 'wasm (og:image e badge)',
@@ -87,8 +87,8 @@ const chk = spawnSync('node', ['tools/eval/assets-check.mjs'], { stdio: 'inherit
 const ruins = resultado.filter((r) => !r.bom);
 console.log('');
 if (!ruins.length && chk.status === 0) {
-  console.log(`${VERDE}Pronto.${OFF} \`npm run dev\` e abra http://localhost:4321\n`);
-  console.log(`  ${AMAR}opcional${OFF}  \`npm run check:fast\` roda o portão (~5 min, precisa de nada além disto)`);
+  console.log(`${VERDE}Pronto.${OFF} \`pnpm run dev\` e abra http://localhost:4321\n`);
+  console.log(`  ${AMAR}opcional${OFF}  \`pnpm run check:fast\` roda o portão (~5 min, precisa de nada além disto)`);
   console.log(`  ${AMAR}opcional${OFF}  \`FEEDBACK_TO=voce@exemplo.com\` liga a notificação do formulário`);
   console.log(`             (o formsubmit.co exige ATIVAR o endereço: ele manda um link de`);
   console.log(`             confirmação no primeiro envio, e até você clicar nada chega)`);
@@ -97,6 +97,6 @@ if (!ruins.length && chk.status === 0) {
   console.log(`${AMAR}O jogo roda assim mesmo — mas com buraco:${OFF}`);
   for (const r of ruins) console.log(`  ${VERM}·${OFF} ${r.nome}: ${r.falha}`);
   if (chk.status !== 0) console.log(`  ${VERM}·${OFF} a conferência acima listou o que veio incompleto.`);
-  console.log(`\n  \`npm run dev\` funciona; conserte o que estiver acima quando puder.\n`);
+  console.log(`\n  \`pnpm run dev\` funciona; conserte o que estiver acima quando puder.\n`);
   process.exitCode = 1;
 }

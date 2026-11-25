@@ -1,13 +1,9 @@
 #!/usr/bin/env node
 // Selo de depuração (vm-debug-badge) por arma no jogo real: o que o runtime diz que serve.
 // Uso: node tools/fabrica/captura/selo.mjs --armas=ak,m4 [--query=vmfabrica=1] [--porta=4671]
-import { execSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
 
 const arg = (n, d = '') => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `--${n}=${d}`).split('=').slice(1).join('=');
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = pw.chromium || pw.default?.chromium;
+const { chromium } = await import('playwright');
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
 const q = new URLSearchParams({ debug: '1', auto: 'E', map: 'piscina_treta', armaslazy: '0', vmauthored: '1' });

@@ -9,7 +9,7 @@ import { estadoPt } from '../../playwright.smoke.config.mjs';
    viewports. Mutantes por page.route (SMOKE_MUTANTE=<nome>): painel-largo, innerhtml,
    foco-preso, so-mousedown, reduzido-eterno, redesenho-novo, redesenho-falante,
    esc-so-keydown, foco-no-toque, fecha-atira, hud-sem-handler e aviso-sumido; cada um DEVE reprovar.
-   Uso local: CHROME_BIN=/caminho/do/chrome npx playwright test -c playwright.smoke.config.mjs tests/smoke/chat-sala.spec.js
+   Uso local: CHROME_BIN=/caminho/do/chrome pnpm exec playwright test -c playwright.smoke.config.mjs tests/smoke/chat-sala.spec.js
    Figuras: CHAT_FIGURAS=/pasta guarda os PNG abertos e fechados de cada viewport. */
 
 const MUTANTE = process.env.SMOKE_MUTANTE || '';

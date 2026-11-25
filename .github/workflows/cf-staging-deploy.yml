@@ -20,11 +20,14 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
+      # pnpm antes do setup-node: o cache: pnpm do setup-node precisa do binário.
+      # A versão vem do campo packageManager do package.json (pin da migração).
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Baixa pacote de áudio privado
         env:
           AUDIO_PACK_URL: ${{ vars.AUDIO_PACK_URL }}
@@ -52,7 +55,7 @@ jobs:
           set -euo pipefail
           CS_BUILD_SHA="$(git rev-parse HEAD)"
           echo "sha=$CS_BUILD_SHA" >> "$GITHUB_OUTPUT"
-          CS_BUILD_SHA="$CS_BUILD_SHA" npm run build:cf
+          CS_BUILD_SHA="$CS_BUILD_SHA" pnpm run build:cf
       - name: Envia versão candidata de csb-staging
         id: upload
         env:
@@ -62,8 +65,8 @@ jobs:
         run: |
           set -euo pipefail
           bash tools/cf/bootstrap-worker.sh csb-staging
-          npx wrangler triggers deploy --config wrangler.staging.toml
-          npx wrangler versions upload \
+          pnpm exec wrangler triggers deploy --config wrangler.staging.toml
+          pnpm exec wrangler versions upload \
             --config wrangler.staging.toml \
             --message "staging $CS_BUILD_SHA" 2>&1 | tee "$RUNNER_TEMP/wrangler-staging-upload.log"
           VERSION_ID=$(grep 'Worker Version ID:' "$RUNNER_TEMP/wrangler-staging-upload.log" | grep -Eo '[0-9a-fA-F]{8}-[0-9a-fA-F-]{27,}' | tail -n 1)
@@ -93,6 +96,6 @@ jobs:
         run: |
           set -euo pipefail
           node tools/cf/assert-branch-head.mjs --branch=staging --sha="$CS_BUILD_SHA"
-          npx wrangler versions deploy "$VERSION_ID@100" \
+          pnpm exec wrangler versions deploy "$VERSION_ID@100" \
             --config wrangler.staging.toml \
             --yes

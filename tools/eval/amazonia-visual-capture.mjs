@@ -1,8 +1,8 @@
 // Captura de rodada: jogo real, câmeras fixas 3:2 e soma dos passes por frame.
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-const globalRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${globalRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';

@@ -88,7 +88,7 @@ async function sobeServidor() {
       throw new Error(`a porta ${PORTA} já serve outra árvore; use --porta=<livre>`);
     }
   } catch (e) { if (/já serve outra árvore/.test(e.message)) throw e; }
-  spawn('npx', ['astro', 'dev', '--port', String(PORTA)], { stdio: 'ignore' }).on('error', () => {});
+  spawn('pnpm', ['exec', 'astro', 'dev', '--port', String(PORTA)], { stdio: 'ignore' }).on('error', () => {});
   subiuAqui = true;
   const fim = Date.now() + 90_000;
   while (Date.now() < fim) { if (await arvoreCorreta()) return true; await new Promise((r) => setTimeout(r, 700)); }
@@ -106,8 +106,8 @@ try {
   }
   if (!(await sobeServidor())) { console.error(`✗ TB0  o site não subiu em ${BASE}`); process.exit(1); }
 
-  const gRoot = execSync('npm root -g').toString().trim();
-  const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+  
+  const _pw = await import('playwright')
   const chromium = _pw.chromium || _pw.default?.chromium;
   /* JANELA DE VERDADE, e não é preciosismo: em `--headless=new` esta página congela —
      rAF e `setTimeout` param de disparar depois do boot, o jogo não avança um quadro e a
@@ -496,6 +496,6 @@ try {
   console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);
 } finally {
   await browser?.close();
-  if (subiuAqui) spawnSync('npx', ['astro', 'dev', 'stop'], { stdio: 'ignore' });
+  if (subiuAqui) spawnSync('pnpm', ['exec', 'astro', 'dev', 'stop'], { stdio: 'ignore' });
 }
 process.exit(falhas ? 1 : 0);

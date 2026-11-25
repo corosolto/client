@@ -51,8 +51,8 @@ import { pathToFileURL } from 'node:url';
 
 const BASE = process.env.BASE || 'http://localhost:4321';
 const OUT = process.env.OUT || 'artifacts/miticos-browser';
-const root = execSync('npm root -g').toString().trim();
-const playwright = await import(pathToFileURL(`${root}/playwright/index.js`).href);
+
+const playwright = await import('playwright')
 const chromium = playwright.chromium || playwright.default?.chromium;
 mkdirSync(OUT, { recursive: true });
 

@@ -22,8 +22,8 @@ const BASE = process.env.BASE || 'http://127.0.0.1:9428';
 const TELAS = [[1536, 960], [1920, 1080], [1536, 864], [1280, 720], [932, 430, true], [844, 390, true]];
 const OUT = process.env.OUT || 'tools/eval/out/lobby-flavio';
 const TOQUE = 44;
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const launchBrowser = () => chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

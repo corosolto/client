@@ -55,8 +55,8 @@ const tipo = (u) =>
   /\.js(\?|$)/.test(u) ? 'js' :
   /\.(css|json|wasm|txt|html)(\?|$)/.test(u) ? 'dados' : 'outro';
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 const srv = arg('base') ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });

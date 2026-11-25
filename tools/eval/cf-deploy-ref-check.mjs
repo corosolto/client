@@ -30,7 +30,7 @@ if (mutante === 'prod-dispatch-arbitrario') {
   producao = producao.replace('    branches: [main]', '    branches: [main]\n  workflow_dispatch:');
 }
 if (mutante === 'prod-sem-candidato') {
-  producao = producao.replace('npx wrangler versions upload', 'npx wrangler versions deploy');
+  producao = producao.replace('pnpm exec wrangler versions upload', 'pnpm exec wrangler versions deploy');
 }
 if (mutante === 'prod-sem-preview-url') {
   producaoConfig = producaoConfig.replace('preview_urls = true', 'preview_urls = false');
@@ -148,11 +148,11 @@ const validaWorkflow = (fonte, ramo, id, { aceitaDispatch = false } = {}) => {
   const especificacoes = [
     ['build', /^CS_BUILD_SHA="\$\(git rev-parse HEAD\)"$/],
     ['bootstrap', new RegExp(`^bash tools/cf/bootstrap-worker\\.sh csb-${alvo}$`)],
-    ['provisionamento', new RegExp(`^npx wrangler triggers deploy --config wrangler\\.${alvo}\\.toml$`)],
-    ['upload', /^npx wrangler versions upload \\$/],
+    ['provisionamento', new RegExp(`^pnpm exec wrangler triggers deploy --config wrangler\\.${alvo}\\.toml$`)],
+    ['upload', /^pnpm exec wrangler versions upload \\$/],
     ['verificação', /^node tools\/cf\/verifica-deploy\.mjs --base="\$CANDIDATE_URL" --sha="\$CS_BUILD_SHA" \| tee -a "\$GITHUB_STEP_SUMMARY"$/],
     ['vigência do ramo', new RegExp(`^node tools/cf/assert-branch-head\\.mjs --branch=${ramo} --sha="\\$CS_BUILD_SHA"$`)],
-    ['promoção', /^npx wrangler versions deploy "\$VERSION_ID@100" \\$/],
+    ['promoção', /^pnpm exec wrangler versions deploy "\$VERSION_ID@100" \\$/],
   ];
   const incondicional = ({ step } = {}) => step && !Object.hasOwn(step, 'if')
     && (!Object.hasOwn(step, 'continue-on-error') || step['continue-on-error'] === false);

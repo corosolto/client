@@ -7,8 +7,8 @@ import { pathToFileURL } from 'node:url';
 const OUT = process.argv[2] || '/tmp/fv';
 const XQS = process.argv[3] ? `?${process.argv[3]}` : '';
 const BASE = process.env.BASE || 'http://localhost:8123';
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 rmSync(OUT, { recursive: true, force: true });

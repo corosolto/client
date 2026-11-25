@@ -15,8 +15,8 @@ const FRAMES = parseInt(process.env.FRAMES || '48', 10);
 const VIEW = process.env.VIEW || 'tq';
 const ORBIT = process.env.ORBIT || '0';
 const DIR = `/tmp/walkvid-${CHAR}`;
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 rmSync(DIR, { recursive: true, force: true });

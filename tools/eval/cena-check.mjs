@@ -101,11 +101,11 @@ async function ehOJogo() {
 async function sobeServidor() {
   if (EXTERNO) return true;
   try { if ((await fetch(BASE + '/robots.txt')).status) return true; } catch { /* não estava no ar */ }
-  spawn('npx', ['astro', 'dev', '--port', String(PORTA)], { stdio: 'ignore', detached: false }).on('error', () => {});
+  spawn('pnpm', ['exec', 'astro', 'dev', '--port', String(PORTA)], { stdio: 'ignore', detached: false }).on('error', () => {});
   subiuAqui = true;
   return noAr();
 }
-function derrubaServidor() { if (subiuAqui) spawnSync('npx', ['astro', 'dev', 'stop'], { stdio: 'ignore' }); }
+function derrubaServidor() { if (subiuAqui) spawnSync('pnpm', ['exec', 'astro', 'dev', 'stop'], { stdio: 'ignore' }); }
 
 const semTeto = ALVOS.filter((m) => !TETOS[m.id] || TETOS[m.id].calls == null || TETOS[m.id].tris == null);
 if (!MEDIR && semTeto.length) {
@@ -129,8 +129,8 @@ try {
     derrubaServidor();
     process.exit(1);
   }
-  const gRoot = execSync('npm root -g').toString().trim();
-  const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+  
+  const _pw = await import('playwright')
   const chromium = _pw.chromium || _pw.default?.chromium;
   /* BACKEND DE GL, e por que o padrão NÃO é swiftshader.
 

@@ -179,43 +179,44 @@ needs to run in CI reads the JSON, never the PNG.
 ```bash
 git clone https://github.com/corosolto/client.git
 cd client
-npm ci
-npm run fetch-audio       # opcional: sem o pacote, o jogo usa sons sintetizados
-npm run dev               # http://localhost:4321 — o jogo está em /
+pnpm install --frozen-lockfile
+pnpm run fetch-audio      # opcional: sem o pacote, o jogo usa sons sintetizados
+pnpm run dev              # http://localhost:4321 — o jogo está em /
 ```
 
-Use Node/npm versions compatible with the `engines` in `package-lock.json`, including Astro and
-its dependencies. Installation was verified on 10/10/2026 with Node `23.6.0` and npm `11.6.0`.
-Check `node --version` and `npm --version` in the same terminal before installing.
+Use Node 22 (the CI version) and the [pnpm version](https://pnpm.io/installation) pinned in
+`package.json`. Check `node --version` and `pnpm --version` before installing.
+On a separate volume, set `npm_config_store_dir` to a path on that volume to share
+package files across worktrees. Each worktree still gets its own `node_modules`.
 
 Build and preview:
 
 ```bash
-npm run build             # gera dist/ (client + server)
-npm run preview           # serve dist/client estaticamente
+pnpm run build            # gera dist/ (client + server)
+pnpm run preview          # serve dist/client estaticamente
 ```
 
 `python3 -m http.server -d public` serves **only the game assets** — the HTML is not
-there. Use `npm run dev`.
+there. Use `pnpm run dev`.
 
 ## Quality gates
 
 For the current quality gate commands, see the generated block in [`AGENTS.md`](AGENTS.md) and [`docs/docs/comecando.md`](docs/docs/comecando.md).
 
 ```bash
-npm run arch         # regenera tools/eval/ARCH.md (índice + tabela de conflito)
-npm run docs         # regenera os blocos numéricos deste README e de docs/
+pnpm run arch        # regenera tools/eval/ARCH.md (índice + tabela de conflito)
+pnpm run docs        # regenera os blocos numéricos deste README e de docs/
 ```
 
 Nothing gets committed with a failing invariant. The harness catalog is in
 [`tools/eval/README.md`](tools/eval/README.md).
 
-**Documentation containing numbers is generated.** `npm run docs:check` (part of
+**Documentation containing numbers is generated.** `pnpm run docs:check` (part of
 `check:fast`) fails when a generated block diverges from the code — that is how
 a line claiming "`game.js` has 3,234 lines" survived until the file
 doubled in size.
 
-> `npm run eval:vm` and `npm run eval:invariants` read GLBs from `public/models/`. In a
+> `pnpm run eval:vm` and `pnpm run eval:invariants` read GLBs from `public/models/`. In a
 > tree without the downloaded assets, both fail with `ENOENT` — that is an environment issue, not a
 > regression.
 

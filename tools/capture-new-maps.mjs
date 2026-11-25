@@ -1,9 +1,7 @@
 // Captura 3:2 no jogo real das cinco arenas novas. Os bots percorrem o mapa por alguns
 // segundos; a câmera usa o par de posições vivas mais distante para mostrar duas zonas.
 // Uso: node tools/capture-new-maps.mjs [saida]
-import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
 import { MAPS as REGISTERED_MAPS } from '../public/js/maps.js';
 
 const OUT = process.argv[2] || '/tmp/newmaps-game';
@@ -15,9 +13,7 @@ for (const map of MAPS) {
   if (!Object.hasOwn(REGISTERED_MAPS, map)) throw new Error(`mapa desconhecido para captura: ${map}`);
 }
 mkdirSync(OUT, { recursive: true });
-const root = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${root}/playwright/index.js`).href);
-const chromium = pw.chromium || pw.default?.chromium;
+const { chromium } = await import('playwright');
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio'],

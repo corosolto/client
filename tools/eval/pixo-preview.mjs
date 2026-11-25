@@ -17,8 +17,8 @@ const ROOT = path.resolve(HERE, '../..');
 const OUT = process.argv[2] || path.join(ROOT, 'tools', 'eval', 'out', 'pixo.png');
 mkdirSync(path.dirname(OUT), { recursive: true });
 
-const gRoot = execSync('npm root -g', { encoding: 'utf8' }).trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 // recorta do textures.js o alfabeto e o desenhador — mesma técnica do mode-check:

@@ -37,8 +37,8 @@ const TARGETS = Object.values(WEAPON_SKINS)
   .flatMap((skin) => skin.targetWeapons.map((weapon) => ({ skin, weapon })));
 if (!TARGETS.length) throw new Error('nenhuma skin com imagem para medir');
 
-const gRoot = execSync('npm root -g').toString().trim();
-const playwright = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const playwright = await import('playwright')
 const chromium = playwright.chromium || playwright.default?.chromium;
 const server = REMOTE ? null : spawn(process.execPath, ['tools/eval/serve.mjs', PORT], { cwd: ROOT, stdio: 'ignore' });
 const stopServer = () => {

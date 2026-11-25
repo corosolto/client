@@ -48,7 +48,7 @@ if (!origem) {
 if (!origem) {
   console.warn('[copy-wasm] resvg-wasm não encontrado no node_modules — ' +
     '/api/badge vai depender de public/wasm/resvg.wasm já existir. ' +
-    'Rode `npm install` e repita.');
+    'Rode `pnpm install` e repita.');
   process.exit(0);   // NÃO derruba o build: o site inteiro não pode cair por causa da badge
 }
 

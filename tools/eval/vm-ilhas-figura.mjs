@@ -22,8 +22,8 @@ const SAIDA = arg('saida', '/tmp/ilhas');
 const VISTAS = arg('vistas', 'lado,baixo').split(',').filter(Boolean);
 const ARMAS = arg('armas', 'm4,scar,uzi,mp5,md97,m92,p90,ak').split(',').filter(Boolean);
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 fs.mkdirSync(SAIDA, { recursive: true });

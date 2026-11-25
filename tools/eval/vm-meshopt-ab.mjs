@@ -33,8 +33,8 @@ const srv = arg('base') ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], 
 process.on('exit', () => srv?.kill());
 if (srv) { await new Promise((r) => setTimeout(r, 800)); for (let i = 0; i < 60; i++) { try { const r = await fetch(`${BASE}/`); if (r.ok) break; } catch {} await new Promise((r) => setTimeout(r, 1000)); } }
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const sharp = (await import('sharp')).default;
