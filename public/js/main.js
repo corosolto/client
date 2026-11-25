@@ -1160,17 +1160,21 @@ function showStaticPreview(def) {
 function syncCompactPreview(def) {
   const skin=tretaSkinPresentation(def.skinId,def.id),weapon=armaDoPreview(def.id);
   const paint=tretaWeaponPresentation(weapon.weaponId,weapon.weaponSkinId);
-  const caption=[skin?.name,paint?previewPaintCaption(weapon,paint):null].filter(Boolean).join(' · ');
-  const src=portraitUrl(def),key=JSON.stringify([def.id,def.skinId,src,caption]);
+  const paintName=paint?previewPaintCaption(weapon,paint):null;
+  const src=portraitUrl(def);
   const hub=(pvCompact.matches || pvNarrow.matches) && previewHubVisible();
-  const selection=pvCompact.matches && $('char-select')?.classList.contains('hidden')===false;
-  for(const [imageId,labelId,active] of [['hub-character-portrait','hub-character-equipment',hub],['char-select-portrait','char-select-equipment',selection]]){
+  const selection=$('char-select')?.classList.contains('hidden')===false;
+  const skinName=skin?.name || tr('VISUAL ORIGINAL');
+  if(selection) $('char-info-skin').textContent=skinName;
+  for(const [imageId,labelId,active] of [['hub-character-portrait','hub-character-equipment',hub],['char-select-portrait','char-select-equipment',pvCompact.matches && selection]]){
     const image=$(imageId),label=$(labelId);if(!image || !label)continue;
+    const caption=[imageId==='char-select-portrait'?skinName:skin?.name,paintName].filter(Boolean).join(' · ');
     if(!active){
       image.dataset.previewKey='';image.dataset.previewToken='';image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;
       const desktopHub=imageId==='hub-character-portrait' && previewHubVisible();
       label.textContent=desktopHub?caption:'';label.hidden=!desktopHub || !caption;continue;
     }
+    const key=JSON.stringify([def.id,def.skinId,src,caption]);
     if(image.dataset.previewKey===key)continue;
     image.dataset.previewKey=key;const my=String(++pvCompactToken);image.dataset.previewToken=my;let fallback=false;
     image.onload=image.onerror=null;image.removeAttribute('src');image.hidden=true;
@@ -3706,17 +3710,6 @@ $('char-back').onclick = () => {
   }
   show('team-select');
 };
-// Setas do filmstrip: movem a SELEÇÃO (não só o scroll) e garantem a linha visível.
-const stripStep = (dir) => {
-  const rows = [...document.querySelectorAll('.char-row')];
-  if (!rows.length) return;
-  const i = Math.max(0, rows.findIndex(r => r.classList.contains('sel')));
-  const next = rows[(i + dir + rows.length) % rows.length];
-  next.click();
-  next.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-};
-$('strip-up').onclick = () => { ui.click(); stripStep(-1); };
-$('strip-down').onclick = () => { ui.click(); stripStep(1); };
 // Contador de personagens disponíveis nos dois cards de time.
 for (const f of ['e', 'b']) {
   const lado = f.toUpperCase();
@@ -4325,6 +4318,10 @@ function ensureTeamPreviews() {
     }).catch(() => {}).finally(() => teamPreviewsPending.delete(lado));
   }
 }
+function filtrarElenco(lista, faccao) {
+  for (const row of lista.children) row.hidden = !!faccao && row.dataset.faction !== faccao;
+  lista.scrollTop = 0;
+}
 function pickTeam(faction) {
   const lado = faction === 'E' || faction === 'B' ? faction : null;
   /* Time ou grupo sem elenco disponível não abre lista vazia. */
@@ -4343,15 +4340,20 @@ function pickTeam(faction) {
     hideLoading();
     const list = $('char-list');
     list.innerHTML = '';
+    const filtro = $('char-faction-filter');
+    filtro.replaceChildren(new Option(tr('TODAS AS FACÇÕES'), ''));
+    for (const faccao of new Set(chars.map(c => c.team))) {
+      filtro.add(new Option(tr(FACTION_NAME[faccao] || faccao), faccao));
+    }
+    filtro.onchange = () => filtrarElenco(list, filtro.value);
     let firstRow = null, firstChar = null;
     chars.forEach((c) => {
       const row = document.createElement('button');
       row.className = 'char-row';
-      // Avatar = busto cortado da ARTE APROVADA (molde/neutro), não do GLB low-poly —
-      // referência 03: a coluna da esquerda é uma fileira de retratos, não de modelos 3D.
       const thumb0 = `/img/chars/avatars/${c.id}.webp?v=${VERSION}`;
       row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false'); row.title = c.name;
-      row.innerHTML = `<img src="${thumb0}" alt="${c.name}" loading="lazy"><span>${c.name}</span>`;
+      row.dataset.id = c.id; row.dataset.faction = c.team;
+      row.innerHTML = `<img src="${thumb0}" alt="" loading="lazy"><span>${c.name}</span>`;
       if (personagemTravado(c)) {
         row.classList.add('char-row--travado'); row.setAttribute('aria-disabled', 'true');
         const trava = document.createElement('b'); trava.className = 'hub-roster-trava';
@@ -4360,9 +4362,8 @@ function pickTeam(faction) {
         row.append(trava);
       }
       row.onmouseenter = () => ui.hover();
-      // A faixa é horizontal, mas ↑↓ continuam aceitos para quem já usava o fluxo antigo.
       row.onkeydown = (e) => {
-        const rows = [...list.children];
+        const rows = [...list.children].filter(r => !r.hidden);
         const k = rows.indexOf(row);
         let n = -1;
         if (e.key === 'ArrowRight' || e.key === 'ArrowDown') n = (k + 1) % rows.length;
@@ -4377,9 +4378,9 @@ function pickTeam(faction) {
       list.appendChild(row);
       if (!firstRow && !personagemTravado(c)) { firstRow = row; firstChar = c; }
     });
-    // seleciona DEPOIS de gerar todos os thumbs — senão o preview fica com o último
     show('char-select');
     if (firstRow) selectChar(firstChar, firstRow);
+    list.scrollTop = 0;
   };
   if (navOnly || previewUsesStills()) { mountCharList(); return; }
   // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
@@ -4433,16 +4434,13 @@ function renderCharAttrs(c) {
 }
 function selectChar(c, row) {
   selChar = c;
-  // aria-selected além da classe: estado de seleção legível por teclado/leitor de tela
-  document.querySelectorAll('.char-row').forEach(r => { r.classList.remove('sel'); r.setAttribute('aria-selected', 'false'); });
+  const anterior = $('char-list').querySelector('.sel');
+  anterior?.classList.remove('sel');
+  anterior?.setAttribute('aria-selected', 'false');
   row.classList.add('sel'); row.setAttribute('aria-selected', 'true');
   pvSetChar(c);
   if (staticPreviews) pvSetVideo(c); else pvStopVideo();
-  // Grupo editorial do personagem; Time E/Time B já foi escolhido na etapa anterior.
-  const tagEl = $('char-faction-tag');
-  const nGrupo = CHARACTERS.filter(x => x.team === c.team).length;
-  if (tagEl) tagEl.innerHTML = `<span class="cft-fac">${tr(FACTION_NAME[c.team] || '')}</span>`
-    + `<span class="cft-sep"> · </span><span class="cft-count">${nGrupo} ${tr('PERSONAGENS')}</span>`;
+  $('char-faction-tag').textContent = tr(FACTION_NAME[c.team] || c.team);
   $('char-info-name').textContent = c.name;
   $('char-info-blurb').textContent = tr(c.blurb);
   renderCharAttrs(c);
@@ -4760,8 +4758,7 @@ async function openInspectionScreen(target) {
       for (let i = 0; i < 180 && $('char-select')?.classList.contains('hidden') !== false; i++) {
         await new Promise((resolve) => requestAnimationFrame(resolve));
       }
-      const roster = CHARACTERS.filter((c) => c.team === faction);
-      const row = [...$('char-list').children][roster.findIndex((c) => c.id === character.id)];
+      const row = [...$('char-list').children].find(entry => entry.dataset.id === character.id);
       if (row) selectChar(character, row);
     }
     return;

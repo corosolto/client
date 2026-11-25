@@ -210,6 +210,37 @@ try {
   }
   console.log('✓ seleção: Punk/Gotinha usam os avatares próprios e a ficha não mostra DIFICULDADE/undefined');
 
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await open('character', 'personagem&time=E&char=gotinha', '#char-select');
+  const allCharacters = await page.locator('#char-list .char-row').count();
+  const layout = await page.evaluate(() => {
+    const list = document.getElementById('char-list');
+    const [first, ...rest] = list.children;
+    const rect = list.getBoundingClientRect();
+    const confirm = document.getElementById('char-confirm');
+    const box = confirm.getBoundingClientRect();
+    return {
+      multirow: rest.some(row => row.offsetTop > first.offsetTop && row.getBoundingClientRect().bottom <= rect.bottom),
+      scrolls: list.scrollHeight > list.clientHeight,
+      confirms: document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2) === confirm,
+    };
+  });
+  if (!layout.multirow || !layout.scrolls || !layout.confirms) throw new Error(`seleção cortada: ${JSON.stringify(layout)}`);
+  await page.selectOption('#char-faction-filter', 'U');
+  const filteredCharacters = await page.locator('#char-list .char-row:visible').evaluateAll(rows => rows.map(row => row.dataset.faction));
+  const selectedName = page.locator('#char-info-name');
+  if (!filteredCharacters.length || filteredCharacters.length >= allCharacters
+    || filteredCharacters.some(faction => faction !== 'U') || !(await selectedName.textContent()).includes('Gotinha')) {
+    throw new Error(`filtro alterou a escolha ou exibiu facções fora do recorte: ${filteredCharacters}`);
+  }
+  await page.locator('#char-list .char-row[title=Punk]').click();
+  await page.selectOption('#char-faction-filter', '');
+  if (await page.locator('#char-list .char-row:visible').count() !== allCharacters
+    || await selectedName.textContent() !== 'Punk'
+    || !await page.locator('#char-info-skin').isVisible()) {
+    throw new Error('limpar o filtro perdeu a escolha, a skin ou parte do elenco');
+  }
+
   await open('maps', 'mapas&map=quebrada', '#map-screen');
   const maps = await page.evaluate(() => {
     const preview = document.querySelector('.ms-bg').getBoundingClientRect();
