@@ -27,6 +27,7 @@
 .tp-carga__lado[data-time="B"] .tp-carga__elenco{flex-direction:row-reverse}
 
 .tp-carga__vaga{animation:tpCargaEntra var(--tp-d-cena) var(--tp-ease-saida) both;animation-delay:calc(var(--i,0) * var(--tp-carga-passo,60ms))}
+.tp-carga__vaga[data-voce]{animation-name:none}
 @keyframes tpCargaEntra{from{opacity:0;transform:translateY(calc(28px * var(--tp-mov)))}to{opacity:1;transform:none}}
 
 .tp-carga__ban{position:relative;overflow:hidden;border-radius:6px;background:var(--tp-painel);
@@ -39,6 +40,12 @@
 .tp-carga__n{font:400 20px/.92 var(--tp-display);text-transform:uppercase;overflow:hidden;text-overflow:ellipsis}
 .tp-carga__ban[data-voce]{outline:3px solid var(--tp-lima);outline-offset:-3px}
 .tp-carga__ban[data-voce] .tp-carga__k{color:var(--tp-ambar)}
+.tp-carga__ban[data-voce] .tp-carga__nm{background:linear-gradient(transparent,var(--tp-carga-base))}
+.tp-carga #load-character-3d{position:absolute;inset:0;height:88%;visibility:hidden}
+.tp-carga[data-forma="banners"] #load-character-3d{transform:skewX(8deg)}
+.tp-carga[data-forma="grade"] #load-character-3d{transform:skewX(6deg)}
+.tp-carga[data-tela="mesa"] #load-character-3d[data-ready="1"]{visibility:visible}
+.tp-carga[data-tela="mesa"] #load-character-3d[data-ready="1"]+.tp-carga__retrato{visibility:hidden}
 
 /* tela 04: até 5 por lado, banners altos inclinados; o retrato e o nome voltam ao prumo */
 .tp-carga[data-forma="banners"] .tp-carga__lado{width:calc(50% - 158px)}

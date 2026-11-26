@@ -17,13 +17,15 @@ const el = (tag, cls, txt) => {
   return e;
 };
 
-function retrato(id) {
-  const img = el('img');
+function retrato(id, fontes) {
+  const img = el('img', 'tp-carga__retrato');
   img.alt = ''; img.decoding = 'async';
-  /* só fontes que existem (data/retratos.js): hero, busto da arte aprovada, recorte do modelo */
-  const fontes = [heroUrl(id), bustoUrl(id), recorteUrl(id)].filter(Boolean).map((u) => `${u}?v=${VERSION}`);
-  img.src = fontes.shift();
-  img.addEventListener('error', () => { if (fontes.length) img.src = fontes.shift(); });
+  const urls = fontes ?? [heroUrl(id), bustoUrl(id), recorteUrl(id)].filter(Boolean).map((u) => `${u}?v=${VERSION}`);
+  let i = 0;
+  if (urls.length) {
+    img.src = urls[i];
+    img.addEventListener('error', () => { if (urls[++i]) img.src = urls[i]; else img.hidden = true; });
+  } else img.hidden = true;
   return img;
 }
 
@@ -36,9 +38,11 @@ function cartao(p, i) {
     c.append(el('span', 'tp-carga__k', tr('VAGA DE BOT ENTRANDO')));
   } else {
     if (p.voce) { c.dataset.voce = ''; vaga.dataset.voce = ''; }
-    const portrait = p.javaporco ? el('img') : retrato(p.id);
+    const portrait = p.javaporco ? el('img') : retrato(p.id, p.retratos);
     if (p.javaporco) { c.dataset.javaporco = ''; portrait.src = JAVAPORCO_RETRATO; portrait.alt = 'Javaporco'; }
-    c.append(portrait, el('span', 'tp-carga__sombra'));
+    if (p.modelo) c.append(p.modelo);
+    c.append(portrait);
+    if (!p.voce) c.append(el('span', 'tp-carga__sombra'));
     const nm = el('span', 'tp-carga__nm');
     if (p.rotulo) nm.append(el('span', 'tp-carga__k', p.rotulo));
     nm.append(el('span', 'tp-carga__n', p.nome));
@@ -86,7 +90,6 @@ export function ligar() {
   const palco = q('.tp-carga__palco');
   const arte = q('.tp-carga__arte');
   q('.tp-carga__dica b').textContent = tr('DICA');
-  let elencoEm = -1;
 
   /* palco no tamanho do artboard do pacote, escalado pela altura: 3:2 sai igual à referência */
   const escala = () => {
@@ -132,13 +135,13 @@ export function ligar() {
   };
 
   const monta = (d) => {
-    elencoEm = performance.now();
     const meuLado = d.lado === 'B' ? 'B' : 'E';
     const outro = meuLado === 'E' ? 'B' : 'E';
     /* online o elenco do servidor não diz quem é bot: sem rótulo em vez de chutar */
     const rotuloBot = d.online ? '' : tr('BOT');
     const gente = (defs) => defs.map((c) => ({ id: c.id, nome: tr(c.name || c.id), rotulo: rotuloBot }));
-    const meus = [{ id: d.eu?.id, nome: tr(d.eu?.name || ''), rotulo: tr('VOCÊ'), voce: true }, ...gente(d.aliados || [])];
+    const modelo = document.getElementById('load-character-3d');
+    const meus = [{ id: d.eu?.id, nome: tr(d.eu?.name || ''), retratos: d.retratos, modelo, rotulo: tr('VOCÊ'), voce: true }, ...gente(d.aliados || [])];
     const horde = box.dataset.mode === 'horde';
     const times = horde && d.javaporcosTimes === 3 ? 3 : 2;
     raiz.dataset.times = String(times);
@@ -183,7 +186,7 @@ export function ligar() {
   const obs = new MutationObserver((lista) => {
     if (lista.every((m) => raiz.contains(m.target))) return;
     const agora = !box.classList.contains('hidden');
-    if (agora && !visivel && performance.now() - elencoEm > 250) limpa();
+    if (agora !== visivel && (!agora || !window.__tpElenco)) limpa();
     visivel = agora;
     espelha();
   });
