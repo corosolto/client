@@ -40,6 +40,7 @@ GLTFLoader.prototype.load = function (url, done, progress, fail) {
   }).catch((e) => fail?.(e));
 };
 const G = await import('../../public/js/glbchars.js');
+const { weaponModel } = await import('../../public/js/weapons.js');
 const { makeNetcode } = await import('../../public/js/netgame.js');
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
@@ -47,7 +48,7 @@ if (MUT && MUT !== 'fade') throw new Error(`mutante desconhecido: ${MUT}`);
 const CHAR = 'mst', ARMA = 'ak', DT = 1 / 60, PESO_MIN = 0.99, MAO_MAX_CM = 2;
 const CADENCIA_AK = 0.1;
 
-await G.preloadCharacterAssets([CHAR], { weapons: [ARMA] });
+await G.preloadCharacterAssets([CHAR], { weapons: [ARMA, 'pistol', 'm4', 'awp'] });
 if (!G.hasModel(CHAR)) throw new Error(`${CHAR}.glb não carregou — a régua não sabe medir`);
 const def = CHARACTERS.find((c) => c.id === CHAR);
 
@@ -82,6 +83,26 @@ function mede(m) {
   _a.copy(c.ikL.endOffset); c.ikL.end.localToWorld(_a);
   _b.copy(c.ikL.fore); c.ikL.gun.localToWorld(_b);
   return { peso, mao: _a.distanceTo(_b) * 100, clip: Object.keys(c.actions).find((k) => c.actions[k] === c.cur) };
+}
+for (const [weaponId, minZ, maxZ] of [['pistol',0,0], ['m4',0.25,0.29], ['awp',0.24,0.28]]) {
+  const { ctrl, group } = G.buildCharacterModel(def, {weaponId});
+  for (let i=0; i<36; i++) ctrl.update(DT, i<18 ? 0 : 1, false, i<18 ? 0 : 2.4);
+  if (weaponId === 'pistol') {
+    if (ctrl.ikL) throw Error('a pistola puxou a mão de apoio');
+    continue;
+  }
+  const { gun, end, endOffset } = ctrl.ikL;
+  group.updateMatrixWorld(true);
+  const palm = gun.worldToLocal(end.localToWorld(endOffset.clone())).multiplyScalar(gun.scale.x);
+  const mesh = weaponModel(weaponId);
+  mesh.updateMatrixWorld(true);
+  const touches = [-0.007,0,0.007].some(dz => {
+    const surface = new THREE.Raycaster(new THREE.Vector3(palm.x,-0.4,palm.z+dz),new THREE.Vector3(0,1,0)).intersectObject(mesh,true)[0];
+    return surface && Math.abs(palm.y - surface.point.y + 0.012) < 0.025;
+  });
+  if (!(palm.z >= minZ && palm.z <= maxZ && touches)) {
+    throw Error(`${weaponId}: palma não toca o guarda-mão (${palm.toArray().map(v=>v.toFixed(3)).join(', ')} m)`);
+  }
 }
 {
   const tardio = monta(), fallback = monta();
@@ -181,9 +202,7 @@ cobra('TPR3', 'rajada MP na cadência da AK (0,1 s), Netcode.updateRemoteBot', m
   if (!ok) falhas.push('TPR4');
 }
 
-/* Locomoção não passa pelo shoot(): a mão L de cada estado fica onde estava na main
-   890ddd060 (medido por este script), com folga de 0,05 cm. */
-const LOCO_MAIN = { idle: 2.38, walk: 0.10, run: 0.96, death: 55.67 };
+// Em vida, a palma acompanha o socket; na morte o clipe manda e a mão pode sair da arma.
 for (const [cod, estado, txt, opts] of [
   ['TPR5a', 'idle', 'idle 1,5 s', { segundos: 1.5 }],
   ['TPR5b', 'walk', 'walk 1,1 m/s, 1 s', { segundos: 1.0, vf: 1.1 }],
@@ -192,8 +211,10 @@ for (const [cod, estado, txt, opts] of [
 ]) {
   const serie = sp(monta(), opts);
   const pMin = Math.min(...serie.map((s) => s.peso)), mMax = Math.max(...serie.map((s) => s.mao));
-  const ok = pMin >= PESO_MIN && Math.abs(mMax - LOCO_MAIN[estado]) <= 0.05;
-  console.log(`${cod} · ${txt} inalterado\n   peso mín ${fmt(pMin)} · mão L máx ${fmt(mMax)} cm (main ${fmt(LOCO_MAIN[estado])})\n   ${ok ? 'PASSA' : 'FALHA'}`);
+  const clipeEstavel = serie.slice(-12).every(s => s.clip === estado);
+  const ok = pMin >= PESO_MIN && clipeEstavel && (opts.morre || mMax <= MAO_MAX_CM);
+  console.log(`${cod} · ${txt}\n   peso mín ${fmt(pMin)} · clipe final ${serie.at(-1).clip}`
+    + `${opts.morre ? '' : ` · mão L máx ${fmt(mMax)} cm (teto ${MAO_MAX_CM})`}\n   ${ok ? 'PASSA' : 'FALHA'}`);
   if (!ok) falhas.push(cod);
 }
 
@@ -226,7 +247,7 @@ if (MUT) {
   process.exit(0);
 }
 if (falhas.length) {
-  console.error(`\n✗ TPR reprovado: ${falhas.join(', ')} — a rajada 3P mistura com a bind. Conserto: em CharController.shoot() (glbchars.js), com o shoot já corrente, reinicie o tempo sem recomeçar o fadeIn.`);
+  console.error(`\n✗ TPR reprovado: ${falhas.join(', ')} — veja peso, clipe e distância da mão acima.`);
   process.exit(1);
 }
-console.log('\n✓ TPR: rajada 3P segura peso e mão de apoio em SP e MP; tiro único e locomoção inalterados.');
+console.log('\n✓ TPR: rajada 3P segura peso e mão de apoio em SP e MP; tiro único, clipes e contato sem rajada preservados.');
