@@ -239,7 +239,7 @@ try {
     const promesaFaca = new Promise((r) => (liberarFaca = () => { if (!facaPronta) { facaPronta = true; ordem.push('faca pronta'); r(); } }));
     const env = {
       ordem,
-      navOnly: false,
+      navOnly: false, LEAN: true,
       ehMapaJavaporcos, currentMap: 'posto_treta',
       aguardarPreloads: (loads) => { cargas.push([...loads]); return fonte.aguardarPreloads(loads); },
       preloadCharacterAssets: () => Promise.resolve(), _charsToLoad: [], _armasDaPartida: [], _vmBootWeapons: [],
