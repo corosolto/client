@@ -106,6 +106,28 @@ const passo = (g, n = 1, eye = 1.62) => { for (let i = 0; i < n; i++) Game.proto
     { selfOccluded: g.playerTP.selfOccluded, visiveis, meshes: g.playerTP.selfMeshes.length });
 }
 
+{
+  const g = boot({});
+  g.camView = 'third';
+  g.world.occluders.length = 0;
+  g.world.camBlockers = [];
+  passo(g);
+  const eye = eyePos(g);
+  const dir = g.camera.position.clone().sub(eye).normalize();
+  const center = eye.clone().addScaledVector(dir, 0.43);
+  g.world.camBlockers.push(new THREE.Box3(center.clone().addScalar(-0.03), center.clone().addScalar(0.03)));
+  passo(g);
+  const left = g.camera.position.clone().sub(eye).dot(g._tpRight);
+  check('quina que fecha um ombro usa o outro sem ocultar o jogador',
+    left < -0.4 && !g.playerTP.selfOccluded && g.playerTP.selfMeshes.some(item => item.object.visible),
+    { left, oculto: g.playerTP.selfOccluded });
+  g.world.camBlockers.length = 0;
+  passo(g, 2);
+  check('uma abertura curta não faz a câmera pular de ombro', g.camera.position.clone().sub(eye).dot(g._tpRight) < -0.4);
+  passo(g, 40);
+  check('sair da quina devolve o ombro escolhido', g.camera.position.clone().sub(eye).dot(g._tpRight) > 0.25 && !g.playerTP.selfOccluded);
+}
+
 /* ---- (2) varal da favela: pano para a CÂMERA, não para a BALA ---- */
 {
   const g = boot({ mapId: 'campomorro' });
@@ -198,13 +220,20 @@ const passo = (g, n = 1, eye = 1.62) => { for (let i = 0; i < n; i++) Game.proto
     code: 'KeyN', shiftKey, repeat, target: null, preventDefault() {},
   });
   g.setCamView('third');
+  passo(g);
+  const terceira = g.camera.position.clone();
   teclaN();
   check('N sem Shift alterna o modo', g.camView === 'shoulder', { camView: g.camView });
   passo(g, 1);
+  check('transição 3P → ombro começa sem salto', g.camera.position.distanceTo(terceira) < 0.3 && !g.playerTP.selfOccluded);
+  passo(g, 30);
   const eye = eyePos(g);
   const ladoAntes = g.camera.position.clone().sub(eye).dot(g._tpRight);
   teclaN({ shiftKey: true });
   passo(g, 1);
+  const primeiroQuadro = g.camera.position.clone().sub(eye).dot(g._tpRight);
+  check('primeiro quadro da troca continua no ombro que está saindo', primeiroQuadro > 0 && primeiroQuadro < ladoAntes);
+  passo(g, 30);
   const ladoDepois = g.camera.position.clone().sub(eye).dot(g._tpRight);
   check('Shift+N mantém câmera de ombro', g.camView === 'shoulder', { camView: g.camView });
   check('Shift+N inverte lado do enquadramento',
@@ -214,6 +243,13 @@ const passo = (g, n = 1, eye = 1.62) => { for (let i = 0; i < n; i++) Game.proto
   teclaN({ shiftKey: true, repeat: true });
   check('repeat de Shift+N não troca de novo', g._tpShoulderSide === ladoAposTroca,
     { antes: ladoAposTroca, depois: g._tpShoulderSide });
+  const hip = g.camera.position.clone();
+  g._eyeWorld.copy(eye);
+  g.player.scoped = true;
+  passo(g);
+  const deltaAds = g.camera.position.distanceTo(hip);
+  passo(g, 25);
+  check('ADS percorre a transição sem mover o raio do olho', deltaAds > 0 && deltaAds < 0.1 && g.camera.position.distanceTo(hip) > 0.25 && g._eyeWorld.equals(eye));
   const mode = g.camView, side = g._tpShoulderSide;
   for (const shiftKey of [false,true]) g._kd({code:'KeyB',shiftKey,repeat:false,target:null,preventDefault(){}});
   check('B e Shift+B não mexem na câmera',g.camView===mode && g._tpShoulderSide===side,

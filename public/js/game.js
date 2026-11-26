@@ -820,6 +820,42 @@ export function aguardarPreloads(loads) {
    dev.html: reduzido ~metade do pico percebido; mínimo deixa rastro sem estourar. */
 const FX_CLARAO = { normal: 1, reduzido: 0.45, minimo: 0.15 };
 
+function tpBoomClearance(game, origin, dir, right, length) {
+  const { world, ray } = game;
+  if (!world.occluders?.length && !world.camBlockers?.length) return length;
+  const probeOrigin = game._tpBoomProbe ||= new THREE.Vector3();
+  const probeRight = game._tpBoomProbeRight ||= new THREE.Vector3();
+  const probeUp = game._tpBoomProbeUp ||= new THREE.Vector3();
+  const hits = game._tpBoomHits ||= [];
+  const point = game._tpBoxPt ||= new THREE.Vector3();
+  probeRight.copy(right).addScaledVector(dir, -right.dot(dir)).normalize();
+  probeUp.crossVectors(dir, probeRight).normalize();
+  let clear = length;
+  ray.far = length;
+  // Probes paralelos dão volume à lente. camBlockers detêm a câmera, não os disparos.
+  for (let i = 0; i < 5; i++) {
+    const x = i === 1 ? 0.12 : i === 2 ? -0.12 : 0;
+    const y = i === 3 ? 0.10 : i === 4 ? -0.10 : 0;
+    probeOrigin.copy(origin).addScaledVector(probeRight, x).addScaledVector(probeUp, y);
+    ray.set(probeOrigin, dir);
+    if (world.occluders?.length) {
+      hits.length = 0;
+      ray.intersectObjects(world.occluders, true, hits);
+      if (hits[0]?.distance < clear) clear = hits[0].distance;
+    }
+    if (world.camBlockers?.length) {
+      for (const box of world.camBlockers) {
+        if (ray.ray.intersectBox(box, point)) clear = Math.min(clear, probeOrigin.distanceTo(point));
+      }
+    }
+  }
+  return clear;
+}
+
+function tpPoseToward(from, to, mix) {
+  return Math.abs(to - from) < 0.003 ? to : from + (to - from) * mix;
+}
+
 export class Game {
   constructor({ renderer, textures, sfx, settings, playerCharId, playerSkinId = null, playerEyewearId = null, playerGloveId = null, playerWeaponSkins = {}, playerKnifeSkinId = null, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, arena = false, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null, economia = false }) {
     this._ctfOpt = ctf;
@@ -6933,19 +6969,18 @@ export class Game {
   }
   _swapShoulder() {
     this._tpShoulderSide = -(this._tpShoulderSide || 1);
-    this._tpBoomClear = undefined;
-    this._tpBoomBlockedGrace = 0;
-    this._tpBoomLastBlocked = undefined;
     return this._tpShoulderSide;
   }
   setCamView(mode) {
     if (!['first', 'third', 'shoulder'].includes(mode)) return false;
+    if ((this.camView === 'first') !== (mode === 'first')) {
+      this._tpOrbitYaw = this._tpOrbitPitch = 0;
+      this._tpBoomClear = this._tpBoomLastBlocked = undefined;
+      this._tpBoomBlockedGrace = 0;
+      this._tpPose = null;
+      this._tpAvoidSide = this._tpAvoidClearFor = 0;
+    }
     this.camView = mode;
-    this._tpOrbitYaw = 0;
-    this._tpOrbitPitch = 0;
-    this._tpBoomClear = undefined;
-    this._tpBoomBlockedGrace = 0;
-    this._tpBoomLastBlocked = undefined;
     this.settings.camView = mode;
     if (mode !== 'first') this._ensurePlayerTP();
     this._syncCamViewVis();
@@ -7094,45 +7129,53 @@ export class Game {
     const eyePos = this._tpEyePos || (this._tpEyePos = new THREE.Vector3());
     if (anchor) eyePos.copy(anchor);
     else eyePos.set(p.pos.x, p.pos.y + eye, p.pos.z);
-    cam.position.copy(eyePos).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE * (this._tpShoulderSide || 1));
-    cam.position.y += TP_UP - 0.45 * orbitBlend + 0.35 * danca;
+    const side = this._tpShoulderSide || 1;
+    const userX = TP_SIDE * side;
+    if (!p.alive) this._tpAvoidSide = 0;
+    const goalX = this._tpAvoidSide ? 0.60 * this._tpAvoidSide : userX;
+    const goalY = TP_UP - 0.45 * orbitBlend + 0.35 * danca;
+    const pose = this._tpPose ||= new THREE.Vector3(goalX, goalY, TP_DIST);
+    const mix = -Math.expm1(-dt * 18);
+    pose.set(tpPoseToward(pose.x, goalX, mix), tpPoseToward(pose.y, goalY, mix), tpPoseToward(pose.z, TP_DIST, mix));
+    cam.position.copy(eyePos).addScaledVector(fwd, -pose.z).addScaledVector(right, pose.x);
+    cam.position.y += pose.y;
     const gy = this.world.groundHeightAt(cam.position.x, cam.position.z, cam.position.y) + 0.2;
-    if (cam.position.y < gy) cam.position.y = gy;   // não atravessa o chão
+    cam.position.y = Math.max(cam.position.y, gy);
     /* OCLUSÃO DO BOOM: câmera de 3ª pessoa não entra em prop atrás do jogador (relato
        out/2026). Occluders seguram bala; world.camBlockers é PANO (câmera para, tiro passa). */
     const boom = this._tpBoom || (this._tpBoom = new THREE.Vector3());
     boom.copy(cam.position).sub(eyePos);
-    const boomLen = boom.length();
+    let boomLen = boom.length();
+    const minBodyGap = 0.38 + cam.near;
     if (boomLen > 1e-4) {
       boom.multiplyScalar(1 / boomLen);
-      let claro = boomLen;
-      // Cinco probes paralelos dão 12 cm de volume à lente e seguram quinas que o raio
-      // central atravessava, sem criar geometria ou outra convenção de collider.
-      const probeOrigin = this._tpBoomProbe || (this._tpBoomProbe = new THREE.Vector3());
-      const probeRight = this._tpBoomProbeRight || (this._tpBoomProbeRight = new THREE.Vector3());
-      const probeUp = this._tpBoomProbeUp || (this._tpBoomProbeUp = new THREE.Vector3());
-      probeRight.copy(right).addScaledVector(boom, -right.dot(boom)).normalize();
-      probeUp.crossVectors(boom, probeRight).normalize();
-      const hits = this._tpBoomHits || (this._tpBoomHits = []);
-      const pt = this._tpBoxPt || (this._tpBoxPt = new THREE.Vector3());
-      for (let probe = 0; probe < 5; probe++) {
-        const lateral = probe === 1 ? 0.12 : probe === 2 ? -0.12 : 0;
-        const vertical = probe === 3 ? 0.10 : probe === 4 ? -0.10 : 0;
-        probeOrigin.copy(eyePos).addScaledVector(probeRight, lateral).addScaledVector(probeUp, vertical);
-        this.ray.set(probeOrigin, boom);
-        this.ray.far = boomLen;
-        if (this.world.occluders?.length) {
-          hits.length = 0;
-          this.ray.intersectObjects(this.world.occluders, true, hits);
-          const hit = hits[0];
-          if (hit && hit.distance < claro) claro = hit.distance;
-        }
-        if (this.world.camBlockers?.length) {
-          for (const box of this.world.camBlockers) {
-            if (this.ray.ray.intersectBox(box, pt)) {
-              const d = probeOrigin.distanceTo(pt);
-              if (d < claro) claro = d;
-            }
+      let claro = tpBoomClearance(this, eyePos, boom, right, boomLen);
+      const pertoDoCorpo = claro < boomLen - 1e-3 && claro - 0.18 < minBodyGap;
+      if (p.alive && (pertoDoCorpo || this._tpAvoidSide)) {
+        const trial = this._tpBoomTrial ||= new THREE.Vector3();
+        const trialX = this._tpAvoidSide ? userX : -side * 0.60;
+        trial.copy(eyePos).addScaledVector(fwd, -pose.z).addScaledVector(right, trialX);
+        trial.y += pose.y;
+        trial.y = Math.max(trial.y, this.world.groundHeightAt(trial.x, trial.z, trial.y) + 0.2);
+        trial.sub(eyePos);
+        const trialLen = trial.length();
+        if (trialLen > 1e-4) {
+          trial.multiplyScalar(1 / trialLen);
+          const trialClear = tpBoomClearance(this, eyePos, trial, right, trialLen);
+          const trialFree = trialClear >= trialLen - 1e-3;
+          if (this._tpAvoidSide) {
+            this._tpAvoidClearFor = trialFree ? (this._tpAvoidClearFor || 0) + dt : 0;
+            if (this._tpAvoidClearFor >= 0.08) this._tpAvoidSide = 0;
+          } else if (trialFree) {
+            this._tpAvoidSide = -side;
+            this._tpAvoidClearFor = 0;
+            pose.x = trialX;
+            boom.copy(trial);
+            boomLen = trialLen;
+            claro = trialClear;
+            cam.position.copy(eyePos).addScaledVector(boom, boomLen);
+            this._tpBoomBlockedGrace = 0;
+            this._tpBoomClear = Math.max(minBodyGap + 0.03, this._tpBoomClear ?? boomLen);
           }
         }
       }
@@ -7157,9 +7200,8 @@ export class Game {
       if (this._tpBoomClear < boomLen - 1e-3)
         cam.position.copy(eyePos).addScaledVector(boom, this._tpBoomClear);
     }
-    // Dentro da cápsula local não existe enquadramento útil: oculta só as malhas próprias
-    // até o boom recuperar, sem afetar o rig, a arma dos demais ou a silhueta à distância.
-    const selfOccluded = (this._tpBoomClear ?? boomLen) < 0.38 + cam.near;
+    // Só oculta se nem o ombro alternativo couber fora da cápsula.
+    const selfOccluded = (this._tpBoomClear ?? boomLen) < minBodyGap;
     if (selfOccluded) {
       for (const item of tp.selfMeshes) item.object.visible = false;
     } else if (tp.selfOccluded) {
