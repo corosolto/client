@@ -243,6 +243,17 @@ const passo = (g, n = 1, eye = 1.62) => { for (let i = 0; i < n; i++) Game.proto
   teclaN({ shiftKey: true, repeat: true });
   check('repeat de Shift+N não troca de novo', g._tpShoulderSide === ladoAposTroca,
     { antes: ladoAposTroca, depois: g._tpShoulderSide });
+  const mode = g.camView, side = g._tpShoulderSide;
+  for (const shiftKey of [false,true]) g._kd({code:'KeyB',shiftKey,repeat:false,target:null,preventDefault(){}});
+  check('B e Shift+B não mexem na câmera',g.camView===mode && g._tpShoulderSide===side,
+    {mode,givenMode:g.camView,side,givenSide:g._tpShoulderSide});
+}
+
+{
+  const g = boot({});
+  g.setCamView('shoulder');
+  passo(g);
+  const eye = eyePos(g);
   const hip = g.camera.position.clone();
   g._eyeWorld.copy(eye);
   g.player.scoped = true;
@@ -250,10 +261,7 @@ const passo = (g, n = 1, eye = 1.62) => { for (let i = 0; i < n; i++) Game.proto
   const deltaAds = g.camera.position.distanceTo(hip);
   passo(g, 25);
   check('ADS percorre a transição sem mover o raio do olho', deltaAds > 0 && deltaAds < 0.1 && g.camera.position.distanceTo(hip) > 0.25 && g._eyeWorld.equals(eye));
-  const mode = g.camView, side = g._tpShoulderSide;
-  for (const shiftKey of [false,true]) g._kd({code:'KeyB',shiftKey,repeat:false,target:null,preventDefault(){}});
-  check('B e Shift+B não mexem na câmera',g.camView===mode && g._tpShoulderSide===side,
-    {mode,givenMode:g.camView,side,givenSide:g._tpShoulderSide});
+}
 
 /* ---- (3) Piscina: o volume visual do armário para o boom antes de tomar a tela ---- */
 {
@@ -276,8 +284,6 @@ const passo = (g, n = 1, eye = 1.62) => { for (let i = 0; i < n; i++) Game.proto
       g.camera.position.z <= box.min.z + 0.02 && g.camera.position.z > g.player.pos.z,
       { cameraZ: +g.camera.position.z.toFixed(3), armarioMinZ: +box.min.z.toFixed(3), playerZ: +g.player.pos.z.toFixed(3) });
   } else check('boom da Piscina para antes do fundo do armário', false, { armarios: 0 });
-}
-
 }
 
 const result = {
