@@ -352,7 +352,7 @@ async function worker(fixture, mutant) {
       const { ehMapaJavaporcos } = await import('../../public/js/maps.js');
       const settingsOffline = { ...settings };
       const env = {
-        navOnly, aguardarPreloads: ls => { loads = ls; return actual.aguardarPreloads(ls); },
+        navOnly, LEAN: true, aguardarPreloads: ls => { loads = ls; return actual.aguardarPreloads(ls); },
         preloadCharacterAssets: G.preloadCharacterAssets, _charsToLoad: ['barbudo', 'capitao'], _armasDaPartida: ['pistol', 'awp', 'ak'],
         preloadCosmeticAssets: () => cosmeticError ? Promise.reject(cosmeticError) : Promise.resolve(),
         matchSkins: [], preloadEyewearAssets: noop, matchEyewear: [], playerGloveId: hasSelection ? 'luvas-brasil' : null, charId: 'barbudo',
