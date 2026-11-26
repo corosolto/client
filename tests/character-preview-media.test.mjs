@@ -46,7 +46,18 @@ function fixture({ lang = 'pt', reduced = false, compact = false, narrow = false
   const motion=query(reduced),compactQuery=query(compact),narrowQuery=query(narrow);
   const classes = () => { const values = new Set(); return { add: value => values.add(value), remove: value => values.delete(value), contains: value => values.has(value), toggle(value, force) { if (force ?? !values.has(value)) values.add(value); else values.delete(value); } }; };
   const nodes = new Map();
-  const node = id => { if (!nodes.has(id)) nodes.set(id, { id, dataset: {}, children: [], classList: classes(), src: '', alt: '', innerHTML:'',textContent: '', hidden: false, loads: 0, style:{}, setAttribute(){}, appendChild(child){this.children.push(child);}, pause() {}, play, load() { this.loads++; }, removeAttribute(name) { this[name] = ''; } }); return nodes.get(id); };
+  const node = id => {
+    if (!nodes.has(id)) nodes.set(id, {
+      id, dataset: {}, children: [], classList: classes(), src: '', alt: '', innerHTML:'',textContent: '', hidden: false, loads: 0, style:{},
+      setAttribute(){},
+      appendChild(child){this.children.push(child);},
+      replaceChildren(...children){this.children=children;},
+      add(option){this.appendChild(option);},
+      querySelector(selector){return this.children.find(child => child.classList?.contains(selector.slice(1))) || null;},
+      pause() {}, play, load() { this.loads++; }, removeAttribute(name) { this[name] = ''; },
+    });
+    return nodes.get(id);
+  };
   const show=id=>{for(const [key,page] of [['selection','char-select'],['hub','main-menu'],['team','team-select']])node(page).classList.toggle('hidden',id!==page);};
   show({selection:'char-select',hub:'main-menu',team:'team-select'}[screen]);
   node('main-menu').dataset.hubTab='jogar';node('main-menu').dataset.hubNet='sp';
@@ -65,6 +76,7 @@ function fixture({ lang = 'pt', reduced = false, compact = false, narrow = false
     + '\n' + raw.slice(raw.indexOf('  const setHubNet ='),raw.indexOf("  $('hub-sp').onclick"))
     + '\nfunction frame(dtReal){' + raw.slice(raw.indexOf('      const pvDt = pv.travado'),raw.indexOf('      pv.r.render(pv.scene, pv.cam);')+'      pv.r.render(pv.scene, pv.cam);'.length)+'\n}';
   const context = vm.createContext({ VERSION: 'fixture', retratoFontes, staticPreviews: lean, LANG: resolveLang(lang), $: node,
+    Option: class { constructor(textContent, value) { this.textContent = textContent; this.value = value; } },
     document: { getElementById:node,dispatchEvent(){},querySelector: selector => {if(selector==='.char-preview-box')return box;if(selector.includes('.team-chars')){const team=node(selector);const visible=()=>typeof teamVisible==='object'?teamVisible[selector.includes('team-e')?'E':'B']:teamVisible;team.checkVisibility=teamVisibilityAPI?visible:undefined;team.getClientRects=()=>visible()?[{}]:[];return team;}return hints;},querySelectorAll:()=>[],createElement:()=>node('row-'+nodes.size) },
     matchMedia: query => query.includes('pointer: coarse')?compactQuery:query.includes('max-width')?narrowQuery:motion,
     tretaSkinPresentation: (id, character) => id === 'lula-cyborg' && character === 'barbudo' ? presentation : null,
@@ -253,8 +265,10 @@ for(const [lang, paintCaption, unavailableCaption] of previewLangCases){
 test('the real character caller resolves the equipped skin and preserves an explicit base trial', () => {
   const f=fixture();f.api.pvSetChar(base);
   assert.equal(f.node('char-preview-static').src,presentation.poster+'?v=fixture');
+  assert.equal(f.node('char-info-skin').textContent,presentation.name);
   f.api.pvSetChar({...base,skinId:null});
   assert.equal(f.node('char-preview-static').src,'/img/chars/barbudo.webp?v=fixture');
+  assert.equal(f.node('char-info-skin').textContent,'VISUAL ORIGINAL');
 });
 test('compact cards outside the hidden hero keep a faithful skin portrait and weapon identity',()=>{
   for(const [screen,prefix] of [['hub','hub-character'],['selection','char-select']]){
