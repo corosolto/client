@@ -1364,6 +1364,7 @@ export function setEmoteDriver(api) { _emoteDriver = (api && api.pose) ? api : n
 export function temEmoteDriver() { return !!_emoteDriver; }
 
 const FADE = 0.16;
+const SHOOT_FADE = 0.06;
 
 class CharController {
   constructor(mixer, actions, group, headBone, head, charId, model, bodyId = charId) {
@@ -1527,14 +1528,14 @@ class CharController {
     if (!this._setLocoPar(nomes[setor], nomes[(setor + 1) % 4], mix)) this._to(base);
   }
 
-  _to(name, once = false, restart = true) {
+  _to(name, once = false, restart = true, fade = FADE) {
     const a = this.actions[name];
     if (!a || (this.cur === a && !this._locoA && !this._locoB)) return;
     // Sair do par 8-way para um clipe que já toca nele (fallback sem strafe, LOD≥2) segue a
     // fase: reiniciar ali congelava o ciclo de pernas a cada troca de setor.
     const herda = !once && (a === this._locoA || a === this._locoB) && a.isRunning();
-    if (this._locoA && this._locoA !== a) this._locoA.fadeOut(FADE);
-    if (this._locoB && this._locoB !== a) this._locoB.fadeOut(FADE);
+    if (this._locoA && this._locoA !== a) this._locoA.fadeOut(fade);
+    if (this._locoB && this._locoB !== a) this._locoB.fadeOut(fade);
     this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
     if (a !== this.actions.jump) this.jumping = false;
     // O par escreve `weight` (1−mix / mix): sem devolver 1, o clipe voltava com o peso velho
@@ -1546,9 +1547,9 @@ class CharController {
         a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
         a.clampWhenFinished = once;
       }
-      a.enabled = true; a.fadeIn(FADE); a.play();
+      a.enabled = true; a.fadeIn(fade); a.play();
     }
-    if (this.cur && this.cur !== a) this.cur.fadeOut(FADE);
+    if (this.cur && this.cur !== a) this.cur.fadeOut(fade);
     this.cur = a;
     this.curName = name;   // nome do estado atual — o clamp de frente do mount lê daqui
     // pé no chão: o offset do clipe que ENTRA (ver footOffset)
@@ -1727,14 +1728,14 @@ class CharController {
       return;
     }
     this.jumping = false;
-    if (this._locoA) this._locoA.fadeOut(0.06);
-    if (this._locoB) this._locoB.fadeOut(0.06);
+    if (this._locoA) this._locoA.fadeOut(SHOOT_FADE);
+    if (this._locoB) this._locoB.fadeOut(SHOOT_FADE);
     this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
     this.curName = 'shoot';
     if (this.cur === shot) { shot.time = 0; shot.paused = false; return; }
     shot.reset();
-    shot.enabled = true; shot.fadeIn(0.06).play();
-    if (this.cur && this.cur !== shot) this.cur.fadeOut(0.06);
+    shot.enabled = true; shot.fadeIn(SHOOT_FADE).play();
+    if (this.cur && this.cur !== shot) this.cur.fadeOut(SHOOT_FADE);
     this.cur = shot;
   }
 
@@ -1821,11 +1822,12 @@ class CharController {
         this._to('walkfire');
       } else if (this.shooting && !this._legsMoving
         && (this._movingShot || this.cur === this.actions.walkfire) && this.actions.shoot) {
+        const fade = this._movingShot ? SHOOT_FADE : FADE;
         this._movingShot = false;
         this._fireDur = this._fireT = 0;
         this.actions.shoot.time = this.actions.shoot.getClip().duration - (this._shootUntil - this.mixer.time);
         this.actions.shoot.paused = false;
-        this._to('shoot', true, false);
+        this._to('shoot', true, false, fade);
       } else if (this._ar && this.actions.jump) {
         if (this.cur !== this.actions.jump) { this._to('jump'); this.jumping = false; }
         const jump = this.actions.jump;
