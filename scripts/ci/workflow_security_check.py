@@ -26,7 +26,7 @@ except ImportError:
 
 
 WORKFLOW = Path('.github/workflows/preview-bot.yml')
-PNPM_INSTALL = re.compile(r'\bpnpm[ \t]+(?:install|i)(?=$|[ \t;&|])', re.MULTILINE)
+PNPM_COMMAND = re.compile(r'(?<![\w.-])pnpm(?![\w.-])')
 
 
 def _parse_guardado(source: str, label: str, errors: list[str]) -> dict:
@@ -35,6 +35,17 @@ def _parse_guardado(source: str, label: str, errors: list[str]) -> dict:
     except ValueError as exc:
         errors.append(f'{label}: {exc}')
         return {}
+
+
+def _usa_pnpm(workflow: Mapping) -> bool:
+    # O publicador não precisa de pnpm. Vete o nome do comando, não uma lista de aliases.
+    for _, step in iter_steps(workflow):
+        run = step.get('run')
+        if isinstance(run, str) and any(
+            PNPM_COMMAND.search(line) for line in run.splitlines() if not line.lstrip().startswith('#')
+        ):
+            return True
+    return False
 
 
 def preview_failures(source: str) -> list[str]:
@@ -92,8 +103,8 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
          comando — e no caminho de deploy os valores vêm de fora (o número do PR atravessa
          um artefato escrito por job que rodou código do fork, a URL é saída de comando).
          O CodeQL pegou exatamente isso aqui, como injeção crítica, antes do merge.
-    PRV3 quem PUBLICA não executa NADA do PR: sem checkout da branch do fork, sem
-         `pnpm install`, sem `pnpm run`, e o deploy é `--prebuilt` (só envia arquivo).
+    PRV3 quem PUBLICA não executa NADA do PR: sem checkout da branch do fork e sem
+         `pnpm`; o deploy é `--prebuilt` (só envia arquivo).
          Furar isto devolve o token para as mãos de quem abriu o PR.
     """
     errors = []
@@ -196,14 +207,12 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
         ('actions/checkout', 'faz checkout — traria código do PR para o job que tem o token'),
         ('npm ci', 'roda npm ci — executaria script do PR'),
         ('npm run', 'roda npm run — executaria script do PR'),
-        ('pnpm run', 'roda pnpm run — executaria script do PR'),
-        ('pnpm exec', 'roda pnpm exec — executaria binário instalado pelo PR'),
         ('vercel build', 'roda vercel build — é o build do fork com o token no ambiente'),
     ):
         if proibido in deploy:
             errors.append(f'PRV3 o job que PUBLICA {motivo}')
-    if PNPM_INSTALL.search(deploy):
-        errors.append('PRV3 o job que PUBLICA roda instalação pnpm — executaria script do PR')
+    if _usa_pnpm(deploy_doc):
+        errors.append('PRV3 o job que PUBLICA roda pnpm — só pode enviar o artefato')
     return errors
 
 
@@ -284,12 +293,8 @@ def cloudflare_failures(build: str, deploy: str, smoke: str) -> list[str]:
     destino = download.get('with', {}).get('path') if isinstance(download.get('with'), dict) else None
     if destino != 'dist':
         errors.append('CF3 artefato do PR precisa ficar isolado em dist, fora do checkout confiável')
-    for _, step in iter_steps(deploy_doc):
-        run = step.get('run')
-        if isinstance(run, str) and any(
-            PNPM_INSTALL.search(line) for line in run.splitlines() if not line.lstrip().startswith('#')
-        ):
-            errors.append('CF3 deploy Cloudflare não pode instalar dependências com pnpm')
+    if _usa_pnpm(deploy_doc):
+        errors.append('CF3 deploy Cloudflare não pode executar pnpm no job que publica o artefato')
     if 'python3 scripts/ci/cf_preview_comment.py' not in deploy:
         errors.append('CF4 comentário precisa executar o script do checkout confiável')
     sticky = named_step(smoke_doc, 'Aguarda URL sticky do Cloudflare')
@@ -390,12 +395,12 @@ def selftest(source: str) -> list[str]:
                 cf_build,
                 cf_deploy.replace(
                     '          bash tools/cf/bootstrap-worker.sh csb-preview',
-                    f'          pnpm {command} --ignore-scripts\n          bash tools/cf/bootstrap-worker.sh csb-preview',
+                    f'          pnpm {command} --help\n          bash tools/cf/bootstrap-worker.sh csb-preview',
                     1,
                 ),
                 smoke,
             )
-            for command in ('install', 'i')
+            for command in ('install', 'i', 'add', 'sync', 'dlx')
         },
         'cf-dispatch-espera-sticky': (cf_build, cf_deploy, smoke.replace("- name: Aguarda URL sticky do Cloudflare\n        if: github.event_name == 'pull_request'", '- name: Aguarda URL sticky do Cloudflare')),
         'cf-dispatch-sem-host': (cf_build, cf_deploy, smoke.replace('${BASE_URL:-}', '${BASE_URL}')),
