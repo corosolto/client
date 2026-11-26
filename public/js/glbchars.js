@@ -223,6 +223,7 @@ const TINT_3P = {
 };
 
 let _clips = null;                 // { idle: AnimationClip, ... } shared fallback
+let _sharedClipsRequest;
 const _clipsByChar = {};           // id -> per-character retargeted clip set (fallback to _clips)
 const _extraClips = {};
 const _upperClips = new Map();
@@ -785,41 +786,9 @@ const torsoRadiusAt = (prof, y) => {
 // Release do Studio é tudo ou nada: falha rejeita esta chamada depois que os outros ids
 // assentam (StudioCharacterError, ou AggregateError para vários).
 export async function preloadCharacterAssets(ids, opts = {}) {
-  /* Armas FORA do bootstrap de clipes: a 1ª chamada é a da tela de carregamento, e prender as
-     armas ao `if (!_clips)` fazia a partida herdar a lista errada (ou as 26). Idempotente. */
   const armas = preloadWeapons(opts.weapons);
-  if (!_clips) {
-    _clips = {};
-    await Promise.all([
-      armas,
-      // Pack compartilhado em 1 GLB MESCLADO (tools/merge-anims.mjs): os 11 requests de
-      // clipe viram 1. O THREE amarra o clipe no esqueleto pelo NOME do osso, então
-      // basta ler as animações nomeadas. Se o mesclado faltar (deploy velho, ?animdir=
-      // experimental), o per-estado de sempre cobre o que faltou.
-      (async () => {
-        try {
-          const g = await loadGLB(assetUrl(`${ANIM_DIR}.glb`));
-          for (const c of g.animations) _clips[c.name] = c;
-        } catch (e) { /* fallback: per-estado abaixo */ }
-        await Promise.all([
-          ...STATES.filter((s) => !_clips[s]).map(async (s) => {
-            try {
-              const g = await loadGLB(assetUrl(`${ANIM_DIR}/${s}.glb`));
-              if (g.animations[0]) { g.animations[0].name = s; _clips[s] = g.animations[0]; }
-            } catch (e) { console.warn('anim load failed', s, e); }
-          }),
-          // Opcionais (idle/walk de 1 mão p/ pistolas): ausência NÃO é erro — sem warn.
-          ...OPT_STATES.filter((s) => !_clips[s]).map(async (s) => {
-            try {
-              const g = await loadGLB(assetUrl(`${ANIM_DIR}/${s}.glb`));
-              if (g.animations[0]) { g.animations[0].name = s; _clips[s] = g.animations[0]; }
-            } catch (e) { /* fallback: idle/walk de 2 mãos */ }
-          }),
-        ]);
-      })(),
-    ]);
-  } else await armas;
-  const wanted = [...new Set(ids)].filter((id) => GLB_CHARS.has(id) && !_base.has(id));
+  await Promise.all([armas, _sharedClipsRequest ??= preloadSharedClips()]);
+  const wanted = [...new Set(ids)].filter(id => GLB_CHARS.has(id) && !_base.has(id));
   const studioFailures = [];
   await Promise.all(wanted.map(async (id) => {
     const release = characterRelease(id);
@@ -828,17 +797,35 @@ export async function preloadCharacterAssets(ids, opts = {}) {
       catch (e) { console.error(`[studio] ${id}@${release.version}: ${e?.code || 'studio_load_failed'}`, e); studioFailures.push(e); }
       return;
     }
+    await preloadLegacyCharacter(id);
+  }));
+  if (studioFailures.length === 1) throw studioFailures[0];
+  if (studioFailures.length) throw new AggregateError(studioFailures, 'studio_character_preload_failed');
+}
+
+async function preloadSharedClips() {
+  _clips = {};
+  try {
+    const g = await loadGLB(assetUrl(`${ANIM_DIR}.glb`));
+    for (const c of g.animations) _clips[c.name] = c;
+  } catch { /* fallback: per-estado */ }
+  await Promise.all([...STATES, ...OPT_STATES].filter(s => !_clips[s]).map(async s => {
     try {
-      const path = `models/characters/${id}.glb`;
-      const origin = Object.freeze({ kind: 'base', character: id, path: `public/${path}`, revision: revDe(path) });
-      const g = await loadGLB(assetUrl(path));
-      _bodyOrigins.set(g.scene, origin);
-      _base.set(id, g.scene);
-    } catch (e) { console.warn('model load failed', id, e); }
-    // Clipes retargetados POR PERSONAGEM (models/anims/<id>/): cada rig do Meshy tem
-    // proporção de esqueleto diferente, então o pack único (assado contra 1 referência)
-    // deformava quem divergia (doutora agachada, dollynho dobrado). Aqui cada char usa
-    // seus próprios clipes; qualquer estado ausente cai no pack compartilhado (_clips).
+      const g = await loadGLB(assetUrl(`${ANIM_DIR}/${s}.glb`));
+      if (g.animations[0]) { g.animations[0].name = s; _clips[s] = g.animations[0]; }
+    } catch (e) { if (STATES.includes(s)) console.warn('anim load failed', s, e); }
+  }));
+}
+
+const _legacyRequests = new Map();
+function preloadLegacyCharacter(id) {
+  const pending = _legacyRequests.get(id);
+  if (pending) return pending;
+  const request = (async () => {
+    const path = `models/characters/${id}.glb`;
+    let body;
+    try { body = (await loadGLB(assetUrl(path))).scene; }
+    catch (e) { console.warn('model load failed', id, e); }
     const set = { ..._clips };
     // GUARDA DE DISPONIBILIDADE — ver o comentário do animIndex(). `disponiveis === null`
     // (manifesto ausente ou fetch falhou) mantém o comportamento antigo: pede tudo.
@@ -867,9 +854,13 @@ export async function preloadCharacterAssets(ids, opts = {}) {
       } catch (e) { /* fallback: clipe compartilhado */ }
     }));
     _clipsByChar[id] = set;
-  }));
-  if (studioFailures.length === 1) throw studioFailures[0];
-  if (studioFailures.length) throw new AggregateError(studioFailures, 'studio_character_preload_failed');
+    if (body) {
+      _bodyOrigins.set(body, Object.freeze({ kind: 'base', character: id, path: `public/${path}`, revision: revDe(path) }));
+      _base.set(id, body);
+    }
+  })().finally(() => _legacyRequests.delete(id));
+  _legacyRequests.set(id, request);
+  return request;
 }
 
 /* Modelo e 11 clipes só das Blob URLs verificadas (sem animIndex, mesclado ou compartilhado);

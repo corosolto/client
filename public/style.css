@@ -1008,6 +1008,11 @@ html[data-ui="legacy"] .char-spec small::before,html[data-ui="legacy"] .char-att
 #char-preview-static{width:auto;height:min(72vh,calc(100% - 28px));max-width:100%;max-height:calc(100% - 28px);object-fit:contain;object-position:center bottom;
   -webkit-mask-image:radial-gradient(78% 92% at 50% 56%,#000 52%,transparent 96%);
   mask-image:radial-gradient(78% 92% at 50% 56%,#000 52%,transparent 96%)}
+#char-preview-placeholder:not([hidden]){display:grid;justify-items:center;align-content:center;gap:var(--s-3);
+  width:min(320px,100%);min-height:min(240px,75%);color:var(--ink-300);font-weight:700;text-align:center}
+#char-preview-placeholder::before{content:"";width:var(--s-8);aspect-ratio:1;
+  background:radial-gradient(circle at 50% 27%,var(--line-2) 21%,transparent 23%),
+    radial-gradient(ellipse 48% 38% at 50% 94%,var(--line-2) 98%,transparent 100%)}
 /* O loop de vídeo (640×854, do molde) toma o lugar do canvas: mais alto que largo,
    ancorado embaixo como o retrato estático. `.has-video` esconde os dois rivais. */
 #char-preview-video{width:auto;max-width:100%;height:min(60vh,calc(100% - 28px));max-height:calc(100% - 28px);aspect-ratio:640/854;object-fit:contain;object-position:center bottom;

@@ -51,7 +51,7 @@ function fixture({ lang = 'pt', reduced = false, compact = false, narrow = false
   show({selection:'char-select',hub:'main-menu',team:'team-select'}[screen]);
   node('main-menu').dataset.hubTab='jogar';node('main-menu').dataset.hubNet='sp';
   const box = node('box'), video = node('char-preview-video'), hints = node('hints');
-  const previewState={scene:{add(){},remove(){}},model:previousModel};
+  const previewState={scene:{add(){},remove(){}},r:{render(){}},model:previousModel};
   box.checkVisibility=()=>!compactQuery.matches && (!node('char-select').classList.contains('hidden') || (!node('main-menu').classList.contains('hidden')&&!narrowQuery.matches));
   const block = raw.slice(raw.indexOf('const screens ='),raw.indexOf('const $ = id =>'))
     + '\n' + raw.slice(raw.indexOf('const ORDEM_ARMA_EQUIPADA'),raw.indexOf('let pvToken ='))
@@ -304,6 +304,47 @@ test('first team selection opens before it starts the visible static video',()=>
   assert.equal(f.node('char-select').classList.contains('hidden'),false);
   assert.equal(f.video.src,presentation.video.webm+'?v=fixture');
 });
+
+test('selection opens and shows a named silhouette while the first GLB is pending', async () => {
+  let release;
+  const pending = new Promise(resolve => { release = resolve; });
+  const f = fixture({ screen:'team', lean:false, threeD:true, realModel:true, preload:() => pending });
+  f.api.pickTeam('E');
+  const placeholder = f.node('char-preview-placeholder');
+  assert.equal(f.node('char-select').classList.contains('hidden'), false);
+  assert.equal(placeholder.hidden, false);
+  assert.equal(placeholder.textContent, presentation.name);
+  assert.equal(f.node('char-preview').classList.contains('hidden'), true);
+  release();
+  await tick();
+  assert.equal(placeholder.hidden, true);
+  assert.equal(f.node('char-preview').dataset.character, 'barbudo');
+});
+
+test('hover and click share the in-flight GLB and wait for the shared idle clip', async () => {
+  let finishAnimations, finishBody;
+  const animations = new Promise(resolve => { finishAnimations = resolve; });
+  const body = new Promise(resolve => { finishBody = resolve; });
+  const loads = [];
+  const start = glbRaw.indexOf('export async function preloadCharacterAssets(');
+  const end = glbRaw.indexOf('/* Modelo e 11 clipes', start);
+  const preload = vm.runInNewContext('let _clips, _sharedClipsRequest;\n'
+    + glbRaw.slice(start, end).replace('export ', '') + '\npreloadCharacterAssets', {
+    ANIM_DIR:'shared', STATES:['idle'], OPT_STATES:[], GLB_CHARS:new Set(['barbudo']),
+    _base:new Map(), _bodyOrigins:new WeakMap(), _clipsByChar:{},
+    preloadWeapons:async()=>{}, characterRelease:()=>null, assetUrl:id=>id, revDe:()=>null,
+    animIndex:async()=>({clipes:{}}),
+    loadGLB:url=>{loads.push(url);return url==='shared.glb'?animations:body;},
+  });
+  const hover = preload(['barbudo']), click = preload(['barbudo']);
+  await tick();
+  assert.deepEqual(loads, ['shared.glb']);
+  finishAnimations({animations:[{name:'idle'}]});
+  await tick();
+  assert.deepEqual(loads, ['shared.glb','models/characters/barbudo.glb']);
+  finishBody({scene:{}});
+  await Promise.all([hover,click]);
+});
 test('compact media assigns only the visible card and leaves the hidden hero without an image',()=>{
   const f=fixture({compact:true});f.api.pvSetChar(base);
   assert.equal(f.node('char-preview-static').src,'');
@@ -398,7 +439,7 @@ for(const [name,mutate,probe,options={}] of [
   ['3D return leaves canvas hidden',replace("$('char-preview')?.classList.remove('hidden');$('char-preview-static')?.classList.add('hidden');",''),f=>{f.api.pvSetChar(base);f.compact(false);f.api.refreshMenuEquipment();assert.equal(f.node('char-preview').classList.contains('hidden'),false);},{compact:true,lean:false,threeD:true}],
   ['team preview preloads hidden models',replace('const ready = previewUsesStills() ?','const ready = false ?'),async f=>{f.api.ensureTeamPreviews();await tick();assert.equal(f.preloads(),0);},{compact:true,lean:false,teamVisible:true}],
   ['width change listener removed',replace("pvNarrow.addEventListener?.('change',()=>refreshMenuEquipment());",''),f=>{f.narrow(false);assert.equal(f.homeRefreshes(),1);},{narrow:true,screen:'hub'}],
-  ['selection opens after video setup',replace("show('char-select');\n    if (firstRow) selectChar(firstChar, firstRow);","if (firstRow) selectChar(firstChar, firstRow);\n    show('char-select');"),f=>{f.api.pickTeam('E');assert.equal(f.video.src,presentation.video.webm+'?v=fixture');},{screen:'team'}],
+  ['selection opens after video setup',replace("show('char-select');\n  if (firstRow) selectChar(firstChar, firstRow);","if (firstRow) selectChar(firstChar, firstRow);\n  show('char-select');"),f=>{f.api.pickTeam('E');assert.equal(f.video.src,presentation.video.webm+'?v=fixture');},{screen:'team'}],
   ['hidden hero image still loads',replace('if(!previewHeroVisible()){','if(false){'),f=>{f.api.pvSetChar(base);assert.equal(f.node('char-preview-static').src,'');},{compact:true}],
   ['inactive compact card still loads',replace('if(!active){','if(false){'),f=>{f.api.pvSetChar(base);assert.equal(f.node('hub-character-portrait').src,'');},{compact:true}],
   ['idle overwrites the selected angle',replace('if (!pv.travado && !pvReducedMotion.matches) {\n        if (pv.ctrl)','pv.model.rotation.y += pvDt * 0.9;\n      if (!pv.travado && !pvReducedMotion.matches) {\n        if (pv.ctrl)'),f=>{const model={rotation:{y:0}};f.api.preview({model,r:{render(){}}});f.api.frame(0.05);assert.equal(model.rotation.y,0);}],
@@ -631,11 +672,16 @@ test('causal mutant rejects redrawing an unchanged reduced-motion frame',()=>{
  f.api.preview({model:{rotation:{y:0}},r:{render(){renders++;}}});f.api.frame(.05);f.api.frame(.05);
  assert.throws(()=>assert.equal(renders,1),{name:'AssertionError'});
 });
-test('new model invalidates an already rendered reduced-motion preview',async()=>{
- const f=fixture({reduced:true,lean:false,threeD:true,realModel:true});let renders=0;
- const p=f.previewDescriptor();p.r={render(){renders++;}};f.api.preview(p);f.api.frame(.05);
- f.api.pvSetChar(cyborg);await tick();assert.equal(f.renderDirty(),true);
- f.api.frame(.05);f.api.frame(.05);assert.equal(renders,2);
+test('the new 3D model is painted while the canvas is still hidden',async()=>{
+ const f=fixture({reduced:true,lean:false,threeD:true,realModel:true}),canvas=f.node('char-preview');
+ const samples=[];
+ const p=f.previewDescriptor();p.r={render(){samples.push({hidden:canvas.classList.contains('hidden'),model:p.model});}};f.api.preview(p);
+ f.api.pvSetChar(cyborg);await tick();
+ assert.deepEqual(samples,[{hidden:true,model:p.model}]);
+ assert.ok(p.model);
+ assert.equal(canvas.classList.contains('hidden'),false);
+ f.api.frame(.05);
+ assert.equal(samples.length,1);
 });
 
 function previewInput(mutate=value=>value){
@@ -668,10 +714,11 @@ test('causal mutant rejects checkVisibility-only team thumbnails on older browse
  f.api.ensureTeamPreviews();await tick();assert.throws(()=>assert.equal(f.preloads(),2),{name:'AssertionError'});
 });
 
-test('causal mutant rejects mounting a new model without invalidating its frame',async()=>{
- const f=fixture({reduced:true,lean:false,threeD:true,realModel:true,mutate:replace('    p.renderDirty = true;\n','')});
- const p=f.previewDescriptor();p.r={render(){}};f.api.preview(p);f.api.frame(.05);
- f.api.pvSetChar(cyborg);await tick();assert.throws(()=>assert.equal(f.renderDirty(),true),{name:'AssertionError'});
+test('causal mutant rejects exposing the canvas without painting the new model',async()=>{
+ const f=fixture({reduced:true,lean:false,threeD:true,realModel:true,mutate:replace('    p.r.render(p.scene, p.cam);\n','')});
+ let renders=0;
+ const p=f.previewDescriptor();p.r={render(){renders++;}};f.api.preview(p);
+ f.api.pvSetChar(cyborg);await tick();assert.throws(()=>assert.equal(renders,1),{name:'AssertionError'});
 });
 
 async function emoteFixture({reduced=false,mutate=value=>value,mutateListener=value=>value}={}){
