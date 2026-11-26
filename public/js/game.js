@@ -7135,7 +7135,7 @@ export class Game {
     const goalX = this._tpAvoidSide ? 0.60 * this._tpAvoidSide : userX;
     const goalY = TP_UP - 0.45 * orbitBlend + 0.35 * danca;
     const pose = this._tpPose ||= new THREE.Vector3(goalX, goalY, TP_DIST);
-    const mix = -Math.expm1(-dt * 18);
+    const mix = -Math.expm1(-dt * 12);
     pose.set(tpPoseToward(pose.x, goalX, mix), tpPoseToward(pose.y, goalY, mix), tpPoseToward(pose.z, TP_DIST, mix));
     cam.position.copy(eyePos).addScaledVector(fwd, -pose.z).addScaledVector(right, pose.x);
     cam.position.y += pose.y;
