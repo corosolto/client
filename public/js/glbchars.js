@@ -786,7 +786,7 @@ const torsoRadiusAt = (prof, y) => {
 // Release do Studio é tudo ou nada: falha rejeita esta chamada depois que os outros ids
 // assentam (StudioCharacterError, ou AggregateError para vários).
 export async function preloadCharacterAssets(ids, opts = {}) {
-  const armas = preloadWeapons(opts.weapons);
+  const armas = opts.weapons?.length === 0 ? null : preloadWeapons(opts.weapons);
   await Promise.all([armas, _sharedClipsRequest ??= preloadSharedClips()]);
   const wanted = [...new Set(ids)].filter(id => GLB_CHARS.has(id) && !_base.has(id));
   const studioFailures = [];

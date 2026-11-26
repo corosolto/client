@@ -325,20 +325,21 @@ test('hover and click share the in-flight GLB and wait for the shared idle clip'
   let finishAnimations, finishBody;
   const animations = new Promise(resolve => { finishAnimations = resolve; });
   const body = new Promise(resolve => { finishBody = resolve; });
-  const loads = [];
+  const loads = [], weapons = [];
   const start = glbRaw.indexOf('export async function preloadCharacterAssets(');
   const end = glbRaw.indexOf('/* Modelo e 11 clipes', start);
   const preload = vm.runInNewContext('let _clips, _sharedClipsRequest;\n'
     + glbRaw.slice(start, end).replace('export ', '') + '\npreloadCharacterAssets', {
     ANIM_DIR:'shared', STATES:['idle'], OPT_STATES:[], GLB_CHARS:new Set(['barbudo']),
     _base:new Map(), _bodyOrigins:new WeakMap(), _clipsByChar:{},
-    preloadWeapons:async()=>{}, characterRelease:()=>null, assetUrl:id=>id, revDe:()=>null,
+    preloadWeapons:async ids=>{weapons.push(ids);}, characterRelease:()=>null, assetUrl:id=>id, revDe:()=>null,
     animIndex:async()=>({clipes:{}}),
     loadGLB:url=>{loads.push(url);return url==='shared.glb'?animations:body;},
   });
-  const hover = preload(['barbudo']), click = preload(['barbudo']);
+  const hover = preload(['barbudo'], {weapons:[]}), click = preload(['barbudo'], {weapons:['pistol']});
   await tick();
   assert.deepEqual(loads, ['shared.glb']);
+  assert.deepEqual(weapons, [['pistol']], 'hover não dispara o preload padrão do catálogo de armas');
   finishAnimations({animations:[{name:'idle'}]});
   await tick();
   assert.deepEqual(loads, ['shared.glb','models/characters/barbudo.glb']);
