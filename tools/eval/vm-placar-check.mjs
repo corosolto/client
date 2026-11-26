@@ -16,7 +16,7 @@
    --mutante=celula-nova (vermelho novo), --mutante=pose-defeituosa (devolve a
    receita de foco do ADS sem o off[1] = -0,08 — o defeito do #679),
    --mutante=quadro-pistola (mexe no goldFrame da PT-38) — todos reprovam.
-   Conserto quando P1 reprova: `npm run eval:vm-reguas -- --placar` (local).
+   Conserto quando P1 reprova: `pnpm run eval:vm-reguas --placar` (local).
    ============================================================================ */
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -61,7 +61,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   const extras = ['tools/eval/vm-reguas-placar-16x9.json'].filter((f) => fs.existsSync(f));
   const falhas = [];
   if (!fs.existsSync(placarArq)) {
-    console.log(`FALHA P1: ${placarArq} ausente — rode \`npm run eval:vm-reguas -- --placar\` com o catálogo privado.`);
+    console.log(`FALHA P1: ${placarArq} ausente — rode \`pnpm run eval:vm-reguas --placar\` com o catálogo privado.`);
     process.exit(1);
   }
   const placares = [placarArq, ...extras].map((f) => ({ arq: f, ...JSON.parse(fs.readFileSync(f, 'utf8')) }));
@@ -106,7 +106,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
   for (const placar of placares) {
     const asp = placar.aspecto || '3x2';
     if (placar.entradas !== atual) {
-      falhas.push(`P1 placar ${asp} velho: medido sobre ${placar.entradas}, entradas atuais ${atual} (${entradasDoPlacar().arquivos.join(', ')} ou FAMILY_FRAME mudou). Re-meça: \`npm run eval:vm-reguas -- --placar${asp === '3x2' ? '' : ` --aspecto=${asp}`}\`.`);
+      falhas.push(`P1 placar ${asp} velho: medido sobre ${placar.entradas}, entradas atuais ${atual} (${entradasDoPlacar().arquivos.join(', ')} ou FAMILY_FRAME mudou). Re-meça: \`pnpm run eval:vm-reguas --placar${asp === '3x2' ? '' : ` --aspecto=${asp}`}\`.`);
     }
     for (const [arma, rr] of Object.entries(placar.resultados)) {
       for (const [r, x] of Object.entries(rr)) {
