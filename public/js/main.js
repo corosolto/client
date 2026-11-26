@@ -4361,7 +4361,7 @@ function pickTeam(faction) {
   hideLoading();
   const list = $('char-list');
   list.innerHTML = '';
-  let firstRow = null, firstChar = null, hoverTimer;
+  let firstRow = null, firstChar = null;
   for (const c of chars) {
     const row = document.createElement('button');
     row.className = 'char-row';
@@ -4378,13 +4378,8 @@ function pickTeam(faction) {
     row.onmouseenter = () => {
       ui.hover();
       if (navOnly || previewUsesStills() || !GLB_CHARS.has(c.id) || hasModel(c.id) || personagemTravado(c)) return;
-      hoverTimer = setTimeout(() => {
-        if (row.isConnected && !$('char-select').classList.contains('hidden')) {
-          void preloadCharacterAssets([c.id], { weapons: [] }).catch(() => {});
-        }
-      }, 120);
+      void preloadCharacterAssets([c.id], { weapons: [] }).catch(() => {});
     };
-    row.onmouseleave = () => clearTimeout(hoverTimer);
     row.onkeydown = (e) => {
       const rows = [...list.children];
       const k = rows.indexOf(row);
@@ -4395,7 +4390,6 @@ function pickTeam(faction) {
       e.preventDefault(); rows[n].focus(); rows[n].click();
     };
     row.onclick = () => {
-      clearTimeout(hoverTimer);
       if (personagemTravado(c)) { $('char-info-blurb').textContent = frase('passeTravadoAviso', c.name, nivelDoPersonagem(c) || '?'); return; }
       selectCharacterFromAvatar(c, row, chars);
     };
