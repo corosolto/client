@@ -1,5 +1,5 @@
 // As mesmas chaves que `_sendAcquisition` lê em public/js/main.js; régua: convite-origem-check.
-export const CHAVES_ORIGEM = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ref', 'treta'];
+export const CHAVES_ORIGEM = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ttclid', 'fbclid', 'twclid', 'ref', 'treta'];
 
 export function hrefEntrarNaSala(convite, origem) {
   const destino = new URLSearchParams({ sala: convite });
