@@ -189,7 +189,10 @@ for (const id of ['sertanejo', 'gotinha']) {
       const row = {frame, entry, sp: speed, mixer: c.mixer.time, deadline: c._shootUntil,
         shooting: c.shooting, clip, curName: c.curName, shootTime: a.time, paused: a.paused,
         resets, loop: a.loop, clamp: a.clampWhenFinished,
-        walkfireWeight: c.actions.walkfire?.getEffectiveWeight(), calls: {...t.calls}};
+        strideWeight: ['walk','walk1h','run'].reduce((sum,key)=>{
+          const action = c.actions[key];
+          return sum + (action && c.mixer._isActiveAction(action) ? action.getEffectiveWeight() : 0);
+        },0), calls: {...t.calls}};
       frames.push(row);
       if (['walk-stop', 'short-stop', 'latest-repeat'].includes(spec.name)
         && frame >= spec.stop && speed <= .6 && row.shooting && firstStop === null) firstStop = frame;
@@ -212,7 +215,7 @@ for (const id of ['sertanejo', 'gotinha']) {
         check(label + ' clock/loop', Object.is(f.mixer, f.entry.mixer + dt)
           && Object.is(f.deadline, f.entry.deadline) && f.loop === f.entry.loop
           && f.clamp === f.entry.clamp && !f.paused);
-        check(label + ' completed fade', afterFade.clip === 'shoot' && afterFade.walkfireWeight === 0);
+        check(label + ' completed fade', afterFade.clip === 'shoot' && afterFade.strideWeight === 0);
       }
       check(label + ' idle return', /^(idle|idle1h)$/.test(last.clip));
     }

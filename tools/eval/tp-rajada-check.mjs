@@ -7,7 +7,7 @@
 
    Mede em node, quadro a quadro (dt 1/60), o mst + AK pelo buildCharacterModel real:
      TPR1 · rajada SP parado, 0,1 s           peso ≥ 0,99 e mão L ≤ 2 cm em todo quadro
-     TPR1b · rajada SP andando (walkfire)     idem
+     TPR1b · rajada SP preserva a passada direcional enquanto o tronco reage
      TPR2 · rajada MP, tiro a cada snapshot   idem: o tiro entra como no applySnapshot (ctrl.shoot) e
             a pose sai do Netcode.prototype.updateRemoteBot real
      TPR3 · rajada MP na cadência da AK       idem
@@ -167,7 +167,7 @@ function cobra(cod, txt, serie, { exigeClipe } = {}) {
 }
 
 cobra('TPR1', 'rajada SP parado, tiro a cada 0,1 s por 0,6 s + 0,6 s depois', sp(monta(), { segundos: 1.2, tiroACada: CADENCIA_AK, tiros: 6 }), { exigeClipe: 'shoot' });
-cobra('TPR1b', 'rajada SP andando 1,6 m/s, tiro a cada 0,1 s (walkfire)', sp(monta(), { segundos: 1.2, tiroACada: CADENCIA_AK, tiros: 6, vf: 1.6 }), { exigeClipe: 'walkfire' });
+cobra('TPR1b', 'rajada SP em movimento a 1,6 m/s preserva a passada', sp(monta(), { segundos: 1.2, tiroACada: CADENCIA_AK, tiros: 6, vf: 1.6 }), { exigeClipe: 'run' });
 cobra('TPR2', 'rajada MP, tiro a cada snapshot (20 Hz), Netcode.updateRemoteBot', mp(monta(), { segundos: 1.2, tiroACada: 0.05 }), { exigeClipe: 'shoot' });
 cobra('TPR3', 'rajada MP na cadência da AK (0,1 s), Netcode.updateRemoteBot', mp(monta(), { segundos: 1.2, tiroACada: CADENCIA_AK }), { exigeClipe: 'shoot' });
 
@@ -195,6 +195,27 @@ for (const [cod, estado, txt, opts] of [
   const ok = pMin >= PESO_MIN && Math.abs(mMax - LOCO_MAIN[estado]) <= 0.05;
   console.log(`${cod} · ${txt} inalterado\n   peso mín ${fmt(pMin)} · mão L máx ${fmt(mMax)} cm (main ${fmt(LOCO_MAIN[estado])})\n   ${ok ? 'PASSA' : 'FALHA'}`);
   if (!ok) falhas.push(cod);
+}
+
+const loadStride = () => G.buildCharacterModel(def, {weaponId:ARMA}).ctrl;
+const strideProbe = loadStride();
+strideProbe._requestExtras();
+for (let i=0; i<100 && !strideProbe.actions.strafe_right; i++) await new Promise(resolve=>setTimeout(resolve,10));
+for (const [name, speed, back, lateral] of [
+  ['walk',1.1,false,0], ['run',3,false,0], ['run_back',2.1,true,0],
+  ['strafe_right',1.8,false,1.8], ['strafe_left',1.8,false,-1.8],
+]) {
+  const ctrl = loadStride(), passo = () => ctrl.update(DT, 1, true, speed, back, lateral);
+  for (let i=0; i<18; i++) passo();
+  const stride = ctrl.cur, before = stride.time, rate = stride.getEffectiveTimeScale();
+  if (ctrl.curName !== name) throw Error(`${name}: clipe da direção indisponível (${ctrl.curName})`);
+  ctrl.shoot();
+  passo();
+  const duration = stride.getClip().duration;
+  const expected = ((before + rate * DT) % duration + duration) % duration;
+  if (ctrl.cur !== stride || Math.abs(stride.time-expected)>0.001 || !ctrl._fireDur) {
+    throw Error(`${name}: o disparo reiniciou a passada ou perdeu o recuo`);
+  }
 }
 
 const esperadas = ['TPR1', 'TPR2', 'TPR3'];
