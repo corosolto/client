@@ -8,6 +8,9 @@ Por isso cada host de portal entra em `frame-ancestors` no `vercel.json`
 
 | portal | pacote | envio |
 |---|---|---|
-| itch.io | `cd tools/portal/itch && zip -j ../itch.zip index.html` | New project → Kind: HTML → upload `itch.zip` → Embed: "Click to launch in fullscreen", Mobile friendly. O envio é do dono. |
+| itch.io | `python3 tools/distribution-web/package.py build --portal itch` → `dist/portal/itch-wrapper/corosolto-itch.zip` | New project → Kind: HTML → upload `corosolto-itch.zip` → Embed: "Click to launch in fullscreen", Mobile friendly. O envio é do dono. |
+
+O empacotador (`docs/docs/distribuicao-web.md`) gera ZIP determinístico com `LICENSE` e
+`SOURCE.txt`, manifesto de hashes, orçamento do portal e o teto de 250 MB (#1110).
 
 Links de saída e texto da página ficam no portal (descrição), não no wrapper.
