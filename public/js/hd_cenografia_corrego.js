@@ -1,12 +1,5 @@
-// Cenografia HD do Córrego (só com ?hd=1). NADA aqui tem colisão nem raycast: fios, luminária e nó de fiação nos postes do
-// mapa, dois postes de concreto com feixe de cabos na rua do spawn oeste, cano/relógio/gato nas fachadas, caixa d'água azul
-// sobre tijolo e varal nas lajes e no tabuleiro da travessia, lastro de tijolo nos telhados de zinco, guia, esgoto e lixo do
-// canal, lixo da margem, nó dos sacos autorais, varal com caimento, pano no varal autoral (linha baixa), toldo, boca de comércio
-// (porta de enrolar + placa + freezer), portões/basculantes de tela nas fachadas livres, ferragem do portão do barraco, kit de
-// viela nos becos, guia de sarjeta nas fachadas de rua, guarda tubular das rampas da travessia (a pedido do kit) e skyline de SP.
-// Lê a planta pelos colisores do mundo (casas = caixas ≥ 2,6 m com base ≤ 1,1 m; postes = 0,26 m × 9,4 m).
-// r26 (opts.r26 do kit; some inteira com ?hdr26=0): tijolo = capa de argamassa da mureta; obra = guarda de uma cor (malha própria),
-// vigas, travessas, buzinotes e adutora da travessia; telha = caibros, mãos-francesas e lastro; tapume = quadro de caibro; estaca = palafitas.
+// Cenografia HD do Córrego (só com ?hd=1): NADA aqui tem colisão nem raycast. Lê a planta pelos colisores do mundo (casasDe, postesDe).
+// Itens (opts.<item> === false desliga), frentes r26 e o que cada um desenha: docs/hd-kit/corrego.md#cenografia e #interruptores.
 import * as THREE from 'three';
 import { soltaAoSubir } from './hd_cenografia_lajes.js';
 import { pintaLetreiro } from './hd_detalhes_lajes.js';
@@ -16,10 +9,8 @@ function rngDe(semente) { let s = semente; return () => { s = (s * 16807) % 2147
 const hash2 = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const lerp = (a, b, t) => a + (b - a) * t;
-// Malha fundida com cor e normal por vértice (mesmo desenho do Lajes): caixas, tubos, sólidos de revolução e grades suaves
-// num draw call. A normal é explícita: a grade (pano com bojo) precisa de normal média, o resto leva a normal da face.
-// comEixo: grava em hdEixo o deslocamento de cada vértice ao eixo da peça (caixa: aresta mais longa; tubo: o segmento), para o
-// material engrossar barra fina no vertex shader. Peça emitida por tri/quad/torno/grade/tuboG fica com zero (não engrossa).
+// Malha fundida com cor e normal por vértice (mesmo desenho do Lajes): caixas, tubos, sólidos de revolução e grades num draw call.
+// comEixo grava em hdEixo o deslocamento do vértice ao eixo da peça (caixa e tubo), para o shader engrossar barra fina; o resto fica com zero.
 function fundidor(comEixo = false) {
   const pos = [], cor = [], nrm = [], eix = [], c = new THREE.Color(), m = new THREE.Matrix4(), e = new THREE.Euler(), q = new THREE.Quaternion();
   const v = Array.from({ length: 8 }, () => new THREE.Vector3()), p3 = new THREE.Vector3(), s3 = new THREE.Vector3(), fn = new THREE.Vector3(), t1 = new THREE.Vector3(), t2 = new THREE.Vector3();
@@ -110,8 +101,7 @@ function fundidor(comEixo = false) {
 }
 const catenaria = (A, B, barriga, piso, n = 10) => { const pts = []; for (let i = 0; i <= n; i++) { const t = i / n, p = new THREE.Vector3().lerpVectors(A, B, t); p.y = Math.max(piso, p.y - barriga * 4 * t * (1 - t)); pts.push(p); } return pts; };
 
-// Fios: fita virada para a câmera (2 vértices por ponto, abertos no vertex shader) com largura real perto e piso de
-// FIO_PX px longe. Tubo de 1 cm a 30 m media 0,4 px e virava linha pontilhada que cintila. Um draw call, sem luz.
+// Fios: fita virada para a câmera, com largura real perto e piso de FIO_PX px longe (tubo fino a 30 m vira pontilhado que cintila).
 const FIO_PX = 0.75;   // meia largura mínima em pixels (1,5 px de traço contínuo)
 function fiador() {
   const pos = [], dir = [], lado = [], cor = [], idx = [], c = new THREE.Color();
@@ -192,8 +182,7 @@ const postesDe = (cols) => cols.filter((c) => c.minY < .05 && Math.abs(c.maxY - 
 const bracoA = (p, s) => [p.x + s * .75 * p.cA, p.z - s * .75 * p.sA];
 const bracoB = (p, s) => [p.x + s * .52 * p.cB, p.z - s * .52 * p.sB];
 const ISO_A = 8.84 + .12, ISO_B = 8.12 + .12;   // topo do isolador = ponto de chegada do cabo
-// Topo real em (x, z) por raio para baixo: altura, chave de material do que bateu (telha de zinco não recebe caixa) e normal
-// de mundo da face (inclinação do telhado, para deitar chapa e tijolo no plano certo).
+// Topo real em (x, z) por raio para baixo: altura, chave de material do que bateu e normal de mundo da face (inclinação do telhado).
 function medidor(scene) {
   const alvos = [], raio = new THREE.Raycaster(), de = new THREE.Vector3(), baixo = new THREE.Vector3(0, -1, 0);
   const fora = (o) => { for (let p = o; p; p = p.parent) if (/SKY|PIPA|AMBIENT|hd-|HELI|DUMONT/i.test(p.name || '')) return true; return false; };
@@ -219,15 +208,14 @@ export const folgaPass = (pts) => pts.every((p) => Math.abs(p.z - PASS.z) > PASS
 // Panos lavados (saturação ≤ 0,22): roupa de varal ao sol de SP é desbotada; os tons puros liam como bandeirinha.
 const PANOS = [0xd9d5c8, 0x6b7784, 0xb5ae95, 0x7f8f88, 0xb9c4cf, 0x8c8090, 0x4a525c, 0xd2cbb6, 0x6d8186, 0xc9c0b8];
 const PREGADOR = [0xb08a5a, 0x8fa0b0, 0xc9b8a0, 0x9aa88a];
-// Piso dos cabos entre postes: 5,0 m — a folga sobre a travessia alta (5,6 + 2,6) é garantida por folgaPass, que encolhe a barriga
-// até passar. Com piso em 7,7 m a cruzeta baixa (8,24) ficava com cabo reto esticado (`parede`): a flecha agora é 2–4 % do vão.
+// Piso dos cabos entre postes: 5,0 m. A folga sobre a travessia alta (5,6 + 2,6) é de folgaPass, que encolhe a barriga até passar;
+// mais alto, a cruzeta baixa (8,24) fica com cabo reto esticado. Ver docs/hd-kit/corrego.md#fios.
 const CABO_MIN = 5.0;
 // Pose `alto` da bancada (hd_lab.js): (−4,6, 5,6, −11) olhando (+x, −z). Prioriza laje/telhado dentro desse cone.
 const noAlto = (x, z) => { const dx = x + 4.6, dz = z + 11, d = Math.hypot(dx, dz); return d > 4 && d < 48 && (dx * .7071 - dz * .7071) / d > .72; };
 
-// Postes do mapa: isolador em cada braço real das cruzetas, luminária, transformador, caixa e nó de fiação (caixa de emenda
-// com três laços de sobra pendurados); cabos em catenária entre vizinhos, sempre de isolador a isolador (cruzeta alta: um
-// cabo por lado; cruzeta baixa: braço virado para o vizinho). Sobre a travessia alta a barriga encolhe até dar folga.
+// Postes do mapa: isolador em cada braço das cruzetas, luminária, transformador, caixa e nó de fiação; cabos em catenária entre vizinhos,
+// sempre de isolador a isolador. Sobre a travessia alta a barriga encolhe até dar folga (folgaPass). Ver docs/hd-kit/corrego.md#postes.
 function postes(F, W, rng, lista, ctf) {
   let cabos = 0;
   const livre = (a, b) => !(ctf || []).some((p) => { const dx = b[0] - a[0], dz = b[1] - a[1], t = Math.min(1, Math.max(0, ((p.x - a[0]) * dx + (p.z - a[1]) * dz) / (dx * dx + dz * dz || 1))); return Math.hypot(a[0] + dx * t - p.x, a[1] + dz * t - p.z) < 3.5; });
@@ -249,8 +237,8 @@ function postes(F, W, rng, lista, ctf) {
       W.cor(k ? ESCURO : 0x1a1b1d).fio(pts, .009);
     }
     W.cor(ESCURO).fio([V(cx, 5.95, cz), V(cx + qx * .06 + p.cA * .05, 5.3, cz + qz * .06 - p.sA * .05), V(cx + qx * .04, 4.75 + rng() * .3, cz + qz * .04)], .008);
-    // Nó alto: caixa de emenda sob a cruzeta baixa (7,42–7,68 m) com dois laços de sobra e a descida de cada isolador baixo até ela
-    // — o cabo chegava à cruzeta sem nó nem caixa (`parede` 1230,170).
+    // Nó alto: caixa de emenda sob a cruzeta baixa (7,42–7,68 m) com dois laços de sobra e a descida de cada isolador baixo até ela,
+    // senão o cabo chega à cruzeta sem nó nem caixa.
     { const nx2 = p.sB, nz2 = p.cB, ex2 = p.x + nx2 * .17, ez2 = p.z + nz2 * .17;
       F.cor(0x5f6361, .9 + rng() * .2).caixa(ex2, 7.42, ez2, .2, .26, .12, p.th2).cor(0x3a3c3c).caixa(ex2 + nx2 * .065, 7.46, ez2 + nz2 * .065, .14, .18, .01, p.th2);
       for (let k = 0; k < 2; k++) { const r = .14 + rng() * .06, cy = 7.3 - k * .06 - r, pts = []; for (let t = 0; t <= 12; t++) { const a = t / 12 * Math.PI * 2; pts.push(V(ex2 + nx2 * (.02 + k * .02) + p.cB * Math.cos(a) * r * 1.1, cy + Math.sin(a) * r, ez2 + nz2 * (.02 + k * .02) - p.sB * Math.cos(a) * r * 1.1)); } W.cor(ESCURO).fio(pts, .008); }
@@ -271,12 +259,8 @@ function postes(F, W, rng, lista, ctf) {
   });
   return cabos;
 }
-// Dois postes de concreto da rua do spawn oeste (pose `rua`, (−21; −5) olhando +x): P1 no canto do barraco de passagem
-// (−16,3; −8,0), P2 na calçada da casa B (−16,95; 1,9) em (−19,4; −0,7) — fora de rota. Cruzeta dupla, luminária, caixa cinza,
-// relógio com eletroduto no P1; 9 cabos entre eles (4 nas cruzetas, 5 em feixe a 7,0–7,5 m) e descidas P1 → bar A(−9,75; 2,6)
-// (3,75 m, acima da placa) e P2 → face −z da casa B (relógio a 1,3 m). Posições copiadas da planta; sem casas, só postes e cabos.
-// Postes da rua da pose rua: P1/P2 no corredor B–C e P3 na borda da viela A–B (−12,6; −7,0, braço para a viela), para a fiação cruzar o quadro a 4–5 m
-// (os ramais a 3,3–3,75 m liam como fio rasteiro). P1→P3: 5 catenárias (feixe a 7,0–7,5 m); P3→caixa do bar a 4,6 m; P2→B a 4,4 m.
+// Postes de concreto da rua do spawn oeste (pose `rua`): P1 (−16,3; −8,0), P2 (−19,4; −0,7) e P3 (−12,6; −7,0), todos fora de rota.
+// Posições copiadas da planta; sem casas, só postes e cabos. Cabos e descidas: docs/hd-kit/corrego.md#postes-da-rua.
 function postesRua(F, W, rng, casas) {
   const P = [[-16.3, -8.0, 1], [-19.4, -0.7, -1], [-12.6, -7.0, -1]], d = Math.hypot(P[1][0] - P[0][0], P[1][1] - P[0][1]);
   const ux = (P[1][0] - P[0][0]) / d, uz = (P[1][1] - P[0][1]) / d, px = uz, pz = -ux, ry = Math.atan2(-pz, px);
@@ -309,10 +293,8 @@ function postesRua(F, W, rng, casas) {
   return cabos;
 }
 
-// Fachadas voltadas para ±x (as que o jogador vê): cano de PVC de descida, relógio de luz com eletroduto, gato pendurado
-// e ramal até o poste mais próximo. Tudo com ≤ 12 cm de saliência; o ramal sobe da fachada para o poste (7,85 m, sob a
-// cruzeta baixa). Se cruzar a travessia alta com menos de 2,6 m de folga, sai do alto do eletroduto estendido até a laje; se
-// nem assim, não é desenhado: cabo a 1,2 m do piso da travessia era o que a pose `alto` mostrava.
+// Fachadas ±x: cano de PVC, relógio de luz com eletroduto, gato e ramal até o poste mais próximo; tudo com ≤ 12 cm de saliência.
+// Ramal que cruza a travessia alta com menos de 2,6 m de folga sai do alto da laje ou não é desenhado. Ver docs/hd-kit/corrego.md#fachadas.
 function fachadas(F, W, rng, casas, lista, relogios) {
   let n = 0;
   for (const k of casas) for (const s of [-1, 1]) {
@@ -320,7 +302,7 @@ function fachadas(F, W, rng, casas, lista, relogios) {
     const [cx, cz] = mundoDe(k, a, (rng() < .5 ? 1 : -1) * (k.hz - .35));
     F.cor(PVC[Math.floor(rng() * 2.999)], .85 + rng() * .25).tubo([V(cx, .03, cz), V(cx, topo, cz), V(cx - nx * .09, topo + .09, cz - nz * .09)], .045, 5);
     for (let y = .5; y < topo; y += 1.4) F.cor(0x3a3d3f).caixa(cx - nx * .03, y, cz - nz * .03, .12, .035, .12);
-    {   // relógio em TODA fachada ±x (era 80 %): 1 relógio + conduíte por fachada no térreo das casas visíveis.
+    {   // relógio em TODA fachada ±x: 1 relógio + conduíte por fachada, no térreo
       const b = (rng() < .5 ? 1 : -1) * (k.hz - 1.0), [rx, rz] = mundoDe(k, s * (k.hx + .055), b), y = 1.25 + rng() * .2;
       F.cor(0x8a8d8c, .9 + rng() * .2).caixa(rx, y, rz, .11, .42, .3, k.ry).cor(0x1b1d1e).caixa(rx + nx * .056, y + .2, rz + nz * .056, .012, .14, .16, k.ry)
         .cor(0x767978).tubo([V(rx, y + .43, rz), V(rx, 3.25, rz)], .016, 4).tubo([V(rx, y, rz), V(rx, .06, rz)], .013, 4);
@@ -353,11 +335,8 @@ function fachadas(F, W, rng, casas, lista, relogios) {
   return n;
 }
 
-// Laje plana: caixa d'água de polietileno azul de 1 000 L (24 lados, Ø 1,1 × 0,95 m) ou de fibrocimento cinza sobre duas
-// fiadas de tijolo com tampo de concreto, no canto oposto ao cubo autoral; antena de TV em metade, parabólica em um quarto;
-// varal de laje (dois T de cano, cabo e 3–4 panos) nas lajes dentro do cone da pose `alto` e em 1 em 3 das outras.
-// No cone da pose `alto` a única laje plana (9,75; −34,35; topo 8,6) fica ACIMA do olho (7,2 m): só o que passa de ~1 m sobre a
-// platibanda (9,0) aparece. Por isso ali vão duas caixas azuis sobre 6 fiadas (topo 10,0), parabólica com braço e o varal.
+// Laje plana: caixa d'água azul de 1 000 L ou de fibrocimento sobre fiadas de tijolo, no canto oposto ao cubo autoral; antena, parabólica e varal.
+// No cone da pose `alto` a laje fica acima do olho: só aparece o que passa de ~1 m sobre a platibanda. Ver docs/hd-kit/corrego.md#lajes.
 function base(F, rng, x, y, z, w, d, g, fiadas) {
   const h = fiadas * .07, ga = Math.cos(g), gs = Math.sin(g);
   for (let f = 0; f < fiadas; f += 3) {
@@ -381,7 +360,7 @@ function lajes(F, W, rng, casas, topo) {
     // Sobrados jogáveis têm laje andável: nada em cima deles. Laje plana = raio bate na laje de 20 cm (topo + 0,2); telha de zinco bate mais alto.
     if (k.topo < 2.6 || SOBRADOS.some(([sx, sz]) => Math.abs(k.x - sx) < .6 && Math.abs(k.z - sz) < .6)) continue;
     const [x, z] = mundoDe(k, -k.hx * .5, k.hz * .5), h = topo(x, z, k.topo + .8, k.topo - .4);
-    // Casa térrea de laje plana também recebe caixa (antes só topo ≥ 5 m: 1 laje em 10 tinha caixa); tolerância 12 cm para puxadinho.
+    // Casa térrea de laje plana também recebe caixa; tolerância de 12 cm para puxadinho.
     if (!h || /tex_zinco/.test(h.chave) || Math.abs(h.y - (k.topo + .2)) > .12) continue;
     const y = h.y, alto = noAlto(k.x, k.z), azul = alto || hash2(k.x, k.z) < .7, tom = .85 + rng() * .3, g = k.ry + (rng() - .5) * .3;
     if (alto) {
@@ -391,7 +370,7 @@ function lajes(F, W, rng, casas, topo) {
       const [qx, qz] = mundoDe(k, k.hx * .4 - .6, k.hz * .5 + .5), [q2x, q2z] = mundoDe(k, k.hx * .4 - .6, k.hz * .5 + .8);
       F.cor(0x8d9290).tubo([V(qx, yb + .7, qz), V(q2x, yb + .7, q2z), V(q2x, y - .02, q2z)], .02, 4);
       // Caixa de escada em −a/−b (2,0 × 2,4 × 2,3 m): bloco cerâmico aparente com cinta, laje de 12 cm e porta escura na face +a;
-      // a parabólica sobe para a laje dela (mastro de 1,0 m). Laje sem caixa de escada lia como cartão (`alto`).
+      // a parabólica sobe para a laje dela (mastro de 1,0 m).
       const [ex, ez] = mundoDe(k, -k.hx * .62, -k.hz * .45), hE = 2.3, cE = Math.cos(k.ry), sE = Math.sin(k.ry);
       F.cor(0x6a3a26, .9 + rng() * .2).caixa(ex, y, ez, 2.0, hE - .12, 2.4, k.ry).cor(0x8b8983).caixa(ex, y + hE - .12, ez, 2.12, .12, 2.52, k.ry).cor(0x7f7d77).caixa(ex, y + 1.05, ez, 2.03, .14, 2.43, k.ry);
       F.cor(0x1a1917).caixa(ex + 1.01 * cE, y, ez - 1.01 * sE, .03, 2.05, .85, k.ry).cor(0x6e6c66).caixa(ex + 1.02 * cE, y + 2.05, ez - 1.02 * sE, .06, .1, .95, k.ry);
@@ -426,13 +405,8 @@ function lajes(F, W, rng, casas, topo) {
   return { lajes: n, varaisLaje: varais };
 }
 
-// Telhado de zinco (duas águas): chapa de fibrocimento 1,1 × 2,44 m remendando uma água, e tijolo baiano deitado como lastro
-// (2–3 por chapa, mais 3–5 soltos na onda), tudo deitado no plano medido pela normal do raio. Tijolos vão para `L` (uma
-// InstancedMesh, um draw call); a chapa vai à malha fundida. O referência (Jaqueline/Vila Sônia) é cinza + laranja.
-// Zinco = chave `tex_zinco` OU plano inclinado acima da laje (a chave só existe depois que a textura chega; sem o fallback, a
-// cenografia, que roda antes, não punha nada). No cone da pose `alto` a chapa vai na água virada para a câmera, com 4–6 tijolos.
-// 1 telhado em 4 (ordem das casas com zinco) vai para `ceram`: o shader da chapa (map_corrego_hd.js) o pinta de TELHA CERÂMICA na
-// caixa orientada (centro, cos/sin, meios-lados + 1,1 m de beiral); nele não vai chapa de remendo nem lastro.
+// Telhado de zinco: chapa de fibrocimento remendando uma água e tijolo baiano de lastro (vai para `L`, uma InstancedMesh), no plano do raio.
+// Zinco = chave `tex_zinco` OU plano inclinado acima da laje; 1 telhado em 4 vai para `ceram`, sem lastro. Ver docs/hd-kit/corrego.md#telhados.
 function telhados(F, rng, casas, topo, L, ceram) {
   let n = 0;
   const X = new THREE.Vector3(), Y = new THREE.Vector3(), Z = new THREE.Vector3(), P = new THREE.Vector3(), dh = new THREE.Vector3();
@@ -477,11 +451,8 @@ function lastro(L, rng) {
   return im;
 }
 
-// Guia de concreto na beira do canal (|x| = 3,17; 24 cm): pula pontes (z = −22, 0, 22) e rampas (RAMPAS de map_corrego.js) e as pontas assoreadas.
-// Afundada 2 cm, encardida (0x62625c) e contínua (segmentos emendados, sem giro nem altura por segmento); tampa escura 1 cm para dentro.
-// Junta de piche em |x| = 5: o topo do muro/rampa do canal (caixa, y = 0, |x| ≤ 5) encosta no plano de asfalto (y = 0,01, |x| ≥ 5)
-// com um degrau de 1 cm ABERTO pelo lado — da ponte o raio passa entre a quina da caixa e a borda do plano e vê o céu (linha branca
-// pontilhada de 1 px na aresta, `ponte`/`alto`; com clear magenta a linha ficava magenta). A tira de 8 cm cobre o degrau (y −0,03…0,012).
+// Guia de concreto na beira do canal (|x| = 3,17; 24 cm): pula pontes (z = −22, 0, 22), rampas (RAMPAS) e as pontas assoreadas.
+// A tira de 8 cm em |x| = 5 cobre o degrau aberto de 1 cm entre o muro e o asfalto (via-se o céu por ele). Ver docs/hd-kit/corrego.md#canal.
 function guiaCanal(F, rng) {
   let n = 0;
   for (const lado of [-1, 1]) {
@@ -491,16 +462,15 @@ function guiaCanal(F, rng) {
       if ([-22, 0, 22].some((b) => Math.abs(zm - b) < 2.1) || RAMPAS.some(([l, a, b]) => l === lado && zm > a - 1 && zm < b + 1)) continue;
       F.cor(0x62625c, .9 + rng() * .14).caixa(lado * 3.17, -.02, zm, .3, h, z1 - z + .02);
       F.cor(0x47473f, .9 + rng() * .14).caixa(lado * 3.17, h - .02, zm, .28, .012, z1 - z + .02);
-      // Mancha no topo em 2 borrões redondos desalinhados (o retângulo de 0,27 × 0,6 lia como quadrado escuro sob a taboa, pose ponte).
+      // Mancha no topo em 2 borrões redondos desalinhados (retângulo lê como quadrado escuro sob a taboa).
       if (rng() < .3) for (let b = 0; b < 2; b++) F.cor(0x3a3a33, .9 + rng() * .2).torno(lado * 3.17 + (rng() - .5) * .12, h - .012, zm + (rng() - .5) * .9, [[.05 + rng() * .05, 0], [.08 + rng() * .07, .006], [.03, .012]], 7, rng() * 6.28);
       n++;
     }
   }
   return n;
 }
-// Esgoto e lixo no canal (pose `ponte`, de z 0 para −z): tubo de PVC Ø 20 cm saindo do muro (x = ∓3) a −0,95 m com escorrido
-// escuro até a lâmina (−1,61), fio de despejo e espuma; 4 sacos/sacolas e 2 garrafas PET presos junto aos muros, meio afundados.
-// Longe de pontes (z −22, 0, 22) e dos pilares da travessia (z −11 ± 1,6).
+// Esgoto e lixo no canal (pose `ponte`): tubo de PVC Ø 20 cm saindo do muro a −0,95 m, escorrido até a lâmina (−1,61), sacos e PET.
+// Longe de pontes (z −22, 0, 22) e dos pilares da travessia (z −11 ± 1,6). Ver docs/hd-kit/corrego.md#canal.
 function esgotoCanal(F, rng) {
   for (const [lado, z] of [[-1, -6.5], [1, -16]]) {
     const xw = lado * 3, s = -lado;   // s = sentido para dentro do canal
@@ -546,9 +516,8 @@ function margem(F, rng) {
   }
   return n;
 }
-// Sacos de lixo autorais (map_corrego.js: 3 dodecaedros de raio s no grupo (−18,05; 0; −3,05), escala (0,75; 1; 0,62), cor pura
-// `|252925` `|3d4435` `|24211f`): map_corrego_hd.js achata (y × 0,8) e varia o tamanho (sz) pela chave; aqui vai o nó amarrado
-// com duas orelhas no topo de cada um. [x, z, s, sz, chave, cor do kit]. Se a planta mover o trio, isto move junto.
+// Sacos de lixo autorais [x, z, s, sz, chave, cor do kit, some]: o kit achata e varia o tamanho pela chave; aqui vai o nó amarrado no topo.
+// Posições copiadas de map_corrego.js: se a planta mover o trio, isto move junto. Ver docs/hd-kit/corrego.md#sacos.
 export const SACOS_AUTORAIS = [[-17.70, -2.77, .42, 1.0, '|252925', 0x2c3238], [-17.33, -3.17, .34, 1.14, '|3d4435', 0x363d40, true], [-17.87, -3.47, .30, .86, '|24211f', 0x282c31, true]];
 function nosDeSaco(F, rng) {
   for (const [x, z, s, sz, , cor, some] of SACOS_AUTORAIS) {
@@ -557,9 +526,7 @@ function nosDeSaco(F, rng) {
     F.cor(cor, 1.15).torno(x, y, z, [[.22 * s, 0], [.13 * s, .06 * s], [.19 * s, .12 * s], [.09 * s, .2 * s], [.04 * s, .26 * s]], 7, g);
     for (const e of [-1, 1]) F.cor(cor, 1.2).caixa(x + Math.cos(g) * e * .08 * s, y + .14 * s, z - Math.sin(g) * e * .08 * s, .2 * s, .012, .09 * s, g, 0, e * .55);
   }
-  // No lugar dos dois sacos que somem: sacolas de mercado (branco sujo, azul; 12 lados e achatadas — com 7 liam como poliedro),
-  // papelão dobrado encostado e seis tijolos (19 × 9 × 9), dois deles sobre o papelão deitado: 3 inteiros, 2 com o canto
-  // quebrado (caixa curta + lasca de meia espessura sobrepostas) e 1 meio tijolo com a quebra em degrau; tudo na malha fundida.
+  // No lugar dos dois sacos que somem: sacolas de mercado (12 lados, achatadas), papelão dobrado e seis tijolos, alguns quebrados.
   for (const [x, z, s, cor] of [[-17.3, -3.2, .2, 0xb8b6ad], [-17.05, -3.45, .17, 0x2f4a7a], [-17.6, -3.75, .19, 0xc2bfb3]]) {
     const g = rng() * 6.28; F.cor(cor, .9 + rng() * .2).torno(x, 0, z, [[s * .55, 0], [s * 1.1, s * .28], [s * 1.05, s * .62], [s * .5, s * .88], [s * .14, s * 1.0], [s * .11, s * 1.12]], 12, g);
     F.cor(cor, .95).caixa(x + Math.cos(g) * s * .3, s * 1.1, z + Math.sin(g) * s * .3, s * .25, .01, s * .12, g);
@@ -574,10 +541,8 @@ function nosDeSaco(F, rng) {
   }
   return SACOS_AUTORAIS.length;
 }
-// Guia de sarjeta: canaleta de 30 cm junto à fachada (a faixa úmida é do shader do chão) fechada por guia de concreto de
-// 12 × 7 cm, só nas faces de rua/largo (fileira B para a rua do spawn, barracos da fileira C (|x| 23,05, 1 m de fundo, fora de
-// `casas`) para a mesma rua; faces ±z de A e B para beco transversal e largo). A ponta só dobra a esquina (+54 cm) quando a face
-// perpendicular também tem guia; senão termina no canto da fachada com um rebaixo de 12 cm (ponta solta lia mal na pose `rua`).
+// Guia de sarjeta: canaleta de 30 cm fechada por guia de 12 × 7 cm, só nas faces de rua/largo (a faixa úmida é do shader do chão).
+// A ponta só dobra a esquina quando a face perpendicular também tem guia; senão termina com rebaixo de 12 cm. Ver docs/hd-kit/corrego.md#guias.
 function guias(F, rng, casas, cols) {
   let n = 0;
   const guia = (f, dg, e0, e1) => {
@@ -593,8 +558,7 @@ function guias(F, rng, casas, cols) {
     const livres = faces.filter((f) => faceLivre(f, casas)), tem = (eixo, s) => livres.some((f) => f.eixo === eixo && f.s === s);
     for (const f of livres) {
       // t = s·(+a) na face z e −s·(+b) na face x: a face perpendicular na ponta e tem sinal s·e (z) ou −s·e (x).
-      // Guia a 1,26 m da fachada quando há rua à frente (nada a 3,4 m): fecha a calçada de 1,2 m que o shader do chão pinta em
-      // concreto claro; beco transversal estreito mantém a guia a 48 cm. A esquina só dobra à mesma distância da face perpendicular.
+      // Guia a 1,26 m quando há rua à frente (fecha a calçada de 1,2 m do shader do chão); em beco transversal estreito fica a 48 cm.
       const dg = faceLivre({ ...f, fx: f.fx + f.nx * 1.8, fz: f.fz + f.nz * 1.8 }, casas) ? 1.26 : .48;
       const ext = (e) => (f.eixo === 'z' ? tem('x', f.s * e) : tem('z', -f.s * e)) ? dg + .06 : 0;
       guia(f, dg, ext(-1), ext(1));
@@ -603,17 +567,14 @@ function guias(F, rng, casas, cols) {
   // Fileira C: a face de rua (|x| ≈ 22,45) fecha a calçada que o shader pinta até lá; sem esquina, rebaixo nas duas pontas.
   for (const c of cols || []) {
     if (!(c.minY <= 1.1 && c.maxY >= 2.2)) continue;
-    const k = caixaDe(c); if (Math.abs(k.x) < 22.5 || Math.abs(k.x) > 23.6 || k.hx > .9 || k.hz < 1.2) continue;   // o muro externo (|x| 24, hx 0,25) fica de fora
+    const k = caixaDe(c); if (Math.abs(k.x) < 22.5 || Math.abs(k.x) > 23.6 || k.hx > .9 || k.hz < 1.2) continue;   // sem o muro externo (|x| 24)
     guia(faceDe({ ...k, ry: Math.atan2(k.sn, k.cs) }, 'x', -Math.sign(k.x)), 1.26, 0, 0);
   }
   return n;
 }
 
-// Guarda das rampas da travessia alta (só com a travessia de concreto de map_corrego_hd.js, que descarta a mureta autoral da
-// rampa): GRADE DE FERRO CHATO — corrimão chato 50 × 8 mm a 0,80–0,85, barra inferior a 0,10–0,14, barras verticais de 25 × 8 mm
-// a cada 14 cm e 7 montantes de 5 cm (o último em |x| 13,52, o mesmo do shader), seguindo pisoPass de |x| 5 ao pé; cinza-chumbo
-// com tinta azul descascada (por barra) e ferrugem nos 12 cm do pé. Sem placa de base aparafusada (lia como industrial). No vão
-// a mureta de bloco do shader ganha pingadeira de concreto de 16 × 5 cm. z −11 ± 1,25, como a caixa autoral.
+// Guarda das rampas da travessia (só com a travessia de concreto do kit, que descarta a mureta autoral): grade de ferro chato seguindo
+// pisoPass, último montante em |x| 13,52 como no shader; no vão, pingadeira de 16 × 5 cm sobre a mureta. Ver docs/hd-kit/corrego.md#guarda.
 function guardaTravessia(F, rng, { grade = true, capa = true, degraus = true } = {}) {
   let n = 0;
   const CHUMBO = 0x2e3136, AZUL = 0x27476a, FERRO_PE = 0x4a2e1e, L = PASS.x0 - PASS.x1, incl = Math.atan2(PASS.y, L), hip = Math.hypot(L - .14, PASS.y * (L - .14) / L);
@@ -642,8 +603,7 @@ function guardaTravessia(F, rng, { grade = true, capa = true, degraus = true } =
   return n;
 }
 // ───────────── r26 (opts.r26.{tijolo,obra,telha,tapume,estaca}, vindas do kit; nada aqui tem colisão) ─────────────
-// Capa de argamassa da mureta do vão: peças de 1,5–3 m de 14 × 4–5 cm (pingadeira de 2 cm de cada lado da mureta de 10 cm), tom e
-// altura variando e uma falha de 4–14 cm em metade das emendas (lasca). Fica no lugar da pingadeira lisa de concreto.
+// Capa de argamassa da mureta do vão, no lugar da pingadeira lisa: peças de 1,5–3 m de 14 × 4–5 cm, com falha em metade das emendas.
 function capaMuretaR26(F, rng) {
   for (const dz of [-PASS.meiaL, PASS.meiaL]) { let x = -PASS.x1;
     while (x < PASS.x1 - .05) { const L = Math.min(1.5 + rng() * 1.5, PASS.x1 - x), falha = rng() < .5 ? .04 + rng() * .1 : 0;
@@ -669,7 +629,7 @@ function guardaR26Cen(F2, rng) {
 function materialFerroR26(res) {
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .6, metalness: .25, side: THREE.DoubleSide, name: 'hd-ferro-r26' });
   mat.onBeforeCompile = (s) => {
-    // Piso de 1,5 px de largura: barra de 16 mm a 15 m media 0,7 px e virava pontilhado que faz moiré sobre os degraus (mesma conta do hd-fios).
+    // Piso de 1,5 px de largura (mesma conta do hd-fios): barra de 16 mm ao longe vira pontilhado com moiré sobre os degraus.
     s.uniforms.hdRes = res;
     s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vHdP; attribute vec3 hdEixo; uniform vec2 hdRes;').replace('#include <begin_vertex>', `#include <begin_vertex>
       vHdP = (modelMatrix * vec4(position, 1.0)).xyz;
@@ -827,11 +787,8 @@ function quadroBarracoR26(F, rng) {
   for (let x = Math.ceil(x0 / 1.1) * 1.1; x < x1 - .7; x += 2.2) F.cor(MAD, .9 + rng() * .2).tubo([V(x + .03, 2.15, zf + .05), V(x + .6, 2.74, zf + .05)], .02, 4);
   return 1;
 }
-// Palafitas (map_corrego.js: corpo a 2,2 m sobre 4 pilares de 18 cm em ±0,4·w/±0,4·d, colisores girados com maxY 2,2): cada grupo
-// de 4 pilares vira PILOTIS de concreto de 28 cm com sapata, e VIGA DE TRANSIÇÃO de 26 × 35 cm ligando os pilotis sob o corpo —
-// a caixa sobre 4 palitos de 8 cm lia como maquete (`alto` 370,430; `parede` 440,400). Na face do canal (tapume de compensado em
-// x − s·(w/2 + 0,06), 3 painéis de d·0,62 girados ry + k·0,05, alturas 1,7/1,3/1,7) vão réguas de 4 cm (topo, pé, meio) e
-// cantoneira escura nas pontas. PALAFITAS = tabela da planta; ry medido nos colisores. A mais próxima de (5,5; −19) vai à cerâmica.
+// Palafitas [x, z, w, d, h] da planta (ry medido nos colisores): cada grupo de 4 pilares vira pilotis de 28 cm com sapata e viga de transição;
+// réguas e cantoneiras no tapume do lado do canal. A mais próxima de (5,5; −19) vai à cerâmica. Ver docs/hd-kit/corrego.md#palafitas.
 const PALAFITAS = [[-5.4, -27, 4.4, 4.2, 2.8], [5.5, -19, 4.6, 4.4, 3.1], [-5.6, 18, 4.5, 4.0, 2.8], [5.3, 24, 4.3, 4.6, 3.2], [-5.2, 4.5, 4.4, 4.2, 3.0], [5.45, -34, 4.2, 4.0, 2.8]];
 function palafitas(F, rng, cols, ceram) {
   let n = 0;
@@ -862,9 +819,8 @@ function palafitas(F, rng, cols, ceram) {
   }
   return n;
 }
-// Pano pendurado em (cx, y, cz) com o varal na direção (dx, dz): lençol (listra opcional), camisa ou calça, em grade 4×3 com
-// bojo de 5–8 cm (mais embaixo e no meio, com uma dobra de 3 ondas) e normal média; dois pregadores no topo. `tipoFixo` força o
-// tipo (< 0,4 lençol) sem mudar o consumo do rng.
+// Pano pendurado em (cx, y, cz) com o varal na direção (dx, dz): lençol, camisa ou calça em grade com bojo e normal média, dois pregadores.
+// `tipoFixo` força o tipo (< 0,4 lençol) sem mudar o consumo do rng.
 function pano(F, rng, cx, y, cz, dx, dz, w, h, cor, tipoFixo) {
   const nx = -dz, nz = dx, vai = (rng() - .5) * .05, tipoR = rng(), tipo = tipoFixo ?? tipoR, bojo = .05 + rng() * .03, fase = rng() * 6.28;
   const Q = (u, v, fora = 0) => { const b = bojo * Math.sin(Math.PI * Math.min(1, Math.max(0, u + .5))) * (.25 + .75 * v) + bojo * .35 * Math.sin(3.1 * Math.PI * (u + .5) + fase) * v;
@@ -872,8 +828,8 @@ function pano(F, rng, cx, y, cz, dx, dz, w, h, cor, tipoFixo) {
   // quadrilátero (u, v) nos cantos [s0t0, s1t0, s0t1, s1t1] como grade bilinear
   const bil = (c, nu, nv, fora = 0) => F.grade((s, t) => Q(lerp(lerp(c[0][0], c[1][0], s), lerp(c[2][0], c[3][0], s), t), lerp(lerp(c[0][1], c[1][1], s), lerp(c[2][1], c[3][1], s), t), fora), nu, nv);
   let preg = [-.42, .42];
-  // Listra do lençol: só em 1 em 3, em altura sorteada (v 0,25–0,75) e 1,5 cm à frente (a 4 mm brigava no z a 9 m). Com a
-  // listra fixa em v 0,58–0,74 todos os lençóis do varal alinhavam a mesma linha e ela lia como a laje atravessando o pano.
+  // Listra do lençol: só em 1 em 3, em altura sorteada (v 0,25–0,75) e 1,5 cm à frente (a 4 mm briga no z a 9 m).
+  // Listra em altura fixa alinha todos os lençóis do varal numa linha só. Ver docs/hd-kit/corrego.md#panos.
   if (tipo < .4) { F.cor(cor, .85 + rng() * .3); bil([[-.5, 0], [.5, 0], [-.5, 1], [.5, 1]], 4, 3); if (rng() < .34) { const v0 = .25 + rng() * .5; F.cor(PANOS[Math.floor(rng() * PANOS.length)], .9); bil([[-.5, v0], [.5, v0], [-.5, v0 + .1], [.5, v0 + .1]], 4, 1, .015); } }
   else if (tipo < .76) { F.cor(cor, .85 + rng() * .3); bil([[-.34, .06], [.34, .06], [-.36, 1], [.36, 1]], 4, 3);
     F.quad(Q(-.34, 0), Q(-.12, 0), Q(-.12, .08), Q(-.34, .08)).quad(Q(.12, 0), Q(.34, 0), Q(.34, .08), Q(.12, .08));
@@ -903,9 +859,8 @@ function varais(F, W, rng, casas) {
   return n;
 }
 
-// Pano no varal autoral (map_corrego.js: cabo reto de 4,2 m a 3,2 m, 12 varais): os retângulos de cor pura vão a escala
-// zero no kit. O cabo autoral fica vazio; uma linha baixa a 2,62 m, amarrada a ele por duas descidas, leva camisa, calça, um
-// lençol grande claro de 1,1 m e os pregadores, com a barra dos panos em ≥ 2,1 m (a 3,2 m liam como peças chapadas a 5 m, `rua`).
+// Varal autoral (cabo reto a 3,2 m; o kit zera os retângulos de cor pura): linha baixa a 2,62 m, amarrada a ele, com camisa, calça e lençol.
+// A barra dos panos fica em ≥ 2,1 m (fora da faixa do corpo). Ver docs/hd-kit/corrego.md#panos.
 const VARAIS_AUTORAIS = [[-18.4, 13.65], [-3.2, 13.65], [16.8, 13.65], [28.4, 13.65], [-29.0, 6.0], [9.6, 6.0]];
 function roupas(F, W, rng) {
   let n = 0;
@@ -920,10 +875,8 @@ function roupas(F, W, rng) {
   }
   return n;
 }
-// Laje do tabuleiro da travessia (pose `alto`: (−4,6; 5,6; −11) olhando +x −z): caixa d'água azul de 500 L sobre 2 fiadas
-// na ponta oposta do vão (x 4,4, a 9 m da câmera, ~40° à direita: a −2,2 m ficava a 2,5 m e tomava um quarto do quadro),
-// encostada no guarda de z −12,25; varal de dois T na mesma borda (x −1…2,2) com o braço cruzando o guarda e o cabo 20 cm para
-// FORA (z −12,45): os panos pendem sobre o vazio, não sobre a rota. Cano do ladrão desce pela borda. Posições de PASS.
+// Tabuleiro da travessia (pose `alto`): caixa d'água azul de 500 L em x 4,4, encostada no guarda de z −12,25, e varal de dois T na mesma borda.
+// O cabo fica 20 cm para FORA (z −12,45): os panos pendem sobre o vazio, não sobre a rota. Ver docs/hd-kit/corrego.md#mirante.
 function mirante(F, W, rng) {
   const y = PASS.y, z = PASS.z - PASS.meiaL, tx = 4.4, tz = z + .5, cor = 0x1b4f9c, r = .42, alt = .8;
   const yb = base(F, rng, tx, y, tz, 1.0, 1.0, 0, 2);
@@ -972,10 +925,8 @@ function texturador() {
   };
   return T;
 }
-// Tela 1024 × 1024 (flipY: v = 1 − y/1024): porta de aço de enrolar cinza (0,0–512,512) e variante pintada/riscada com respingo
-// da cor da fachada (0,512–512,1024); duas placas de letrista de 512 × 120 (512,0 / 512,128; proporção 4,2:1 da placa de
-// 2,2 × 0,52 m; frases genéricas, sem marca); basculante 1 × 1 m sem e com grade (512,256 / 768,256, 256²); portão de grade
-// cinza 1 × 2 m (512,512–768,1024) e portão de chapa óxido 1 × 2 m (768,512–1024,1024). Letras de hd_detalhes_lajes.js.
+// Tela 1024 × 1024 (flipY: v = 1 − y/1024): portas de enrolar, duas placas de letrista de 512 × 120, basculantes e dois portões de 1 × 2 m.
+// As UVs de comercio, portoes e basculantes dependem destas células. Mapa: docs/hd-kit/corrego.md#comercio.
 function telaComercio() {
   const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const g = c.getContext('2d'), r = rngDe(8821);
   const enrolar = (y0, base, lam, passo, tinta) => {
@@ -1028,17 +979,15 @@ function telaComercio() {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.name = 'hd-comercio';
   return t;
 }
-// Boca de comércio em fachadas que as poses da bancada enquadram: `rua`/`parede` veem a face −z da casa A(−9,75; 2,6) no
-// largo do spawn; `ponte` vê a face +x (lado do canal) da casa A(−9,75; −24,9). Cada boca: faixa pintada na parede, porta de
-// enrolar 1,6 × 2,2 m com batente, placa de letrista 2,2 × 0,52 m acima da cinta da laje (à FRENTE do fundo escuro: antes o
-// fundo de 4 cm cobria a tela e a fascia ficava sem letreiro), toldo, freezer branco com caixa de isopor em cima e engradado.
-// A porta autoral da casa fica na face +z (local a = 0,6), fora destas duas faces.
+// Boca de comércio nas fachadas que as poses enquadram (BOCAS): faixa pintada, porta de enrolar, placa de letrista, toldo, freezer e engradado.
+// A placa fica à FRENTE do fundo escuro; a porta autoral da casa fica na face +z, fora destas faces. Ver docs/hd-kit/corrego.md#comercio.
 const BOCAS = [{ x: -9.75, z: 2.6, eixo: 'z', s: -1, faixa: 0x1f6a3a }, { x: -9.75, z: -24.9, eixo: 'x', s: 1, faixa: 0x1d3f8a }];
 function comercio(F, T, rng, casas) {
   let n = 0;
   for (const b of BOCAS) {
     const k = maisPerto(casas, b.x, b.z); if (!k) continue;
-    const f = faceDe(k, b.eixo, b.s), { fx, fz, nx, nz, tx, tz } = f, P = (u, y, fora) => V(fx + tx * u + nx * fora, y, fz + tz * u + nz * fora), v0 = n ? .7578125 : .8828125;   // tela: flipY, placa 1 em cima
+    // v0 = base da célula da placa na tela (flipY; a placa 1 fica em cima).
+    const f = faceDe(k, b.eixo, b.s), { fx, fz, nx, nz, tx, tz } = f, P = (u, y, fora) => V(fx + tx * u + nx * fora, y, fz + tz * u + nz * fora), v0 = n ? .7578125 : .8828125;
     // Faixa pintada colada na alvenaria acima do embasamento (que avança 8 cm até 1,05 m; a face fx já está 2 cm à frente da parede).
     F.cor(b.faixa, .8).caixa(fx - nx * .012, 1.05, fz - nz * .012, 2.6, 1.51, .016, f.ry);
     // batente e soleira de concreto à frente do embasamento (8 cm); porta de enrolar 10,5 cm à frente da face
@@ -1048,7 +997,7 @@ function comercio(F, T, rng, casas) {
     F.cor(0x5a5d60, .95).caixa(fx + nx * .13, 2.24, fz + nz * .13, 1.96, .27, .26, f.ry).cor(0x3e4144).caixa(fx + nx * .265, 2.24, fz + nz * .265, 1.96, .05, .012, f.ry);
     for (const u of [-.86, .86]) F.cor(0x4a4d50).caixa(fx + tx * u + nx * .11, .06, fz + tz * u + nz * .11, .05, 2.26, .07, f.ry);
     F.cor(0x3c3e40).caixa(fx + nx * .012, 2.95, fz + nz * .012, 2.28, .58, .03, f.ry);
-    T.quad(P(-1.1, 2.98, .05), P(1.1, 2.98, .05), P(1.1, 3.5, .05), P(-1.1, 3.5, .05), .5, v0, 1, v0 + .1171875);   // 120 px: com 240 a placa 1 cabia só na metade de baixo
+    T.quad(P(-1.1, 2.98, .05), P(1.1, 2.98, .05), P(1.1, 3.5, .05), P(-1.1, 3.5, .05), .5, v0, 1, v0 + .1171875);   // célula de 120 px de altura
     toldoEm(F, f, 2.42, CORES_TOLDO[(n + 1) % 3], false);
     // Freezer horizontal (0,95 × 0,86 × 0,58) encostado à direita da porta, com isopor em cima; engradado à esquerda.
     const ux = fx + tx * 1.5 + nx * .36, uz = fz + tz * 1.5 + nz * .36;
@@ -1069,9 +1018,8 @@ function facesDe(k, casas) {
   if (Math.abs(Math.abs(k.x) - 9.75) < 1.2) faces.push(faceDe(k, 'x', -Math.sign(k.x)));
   return faces.filter((f) => faceLivre(f, casas) && !BOCAS.some((b) => b.eixo === f.eixo && b.s === f.s && maisPerto(casas, b.x, b.z) === k));
 }
-// Portão no térreo das fachadas livres (1 por face de ≥ 3,2 m, 2 a partir de 7 m): batente de concreto de 14 cm saindo 22 cm da
-// face (passa o embasamento de 8 cm), folha da tela 11 cm atrás do batente, soleira e cadeado. Grade de 1 × 2 m, chapa de
-// 1 × 2 m ou chapa de 2 folhas 2,2 × 2,1 m (célula espelhada). Na face +z a porta autoral está em u = 0,6: nada a < 1,3 m dela.
+// Portão no térreo das fachadas livres (1 por face de ≥ 3,2 m, 2 a partir de 7 m): batente de concreto, folha da tela, soleira e cadeado.
+// Na face +z a porta autoral está em u = 0,6: nada a < 1,3 m dela. Tipos e medidas: docs/hd-kit/corrego.md#portoes.
 function portoes(F, T, rng, casas) {
   let n = 0;
   for (const k of casas) for (const f of facesDe(k, casas)) {
@@ -1095,9 +1043,8 @@ function portoes(F, T, rng, casas) {
   }
   return n;
 }
-// Parede +z do barraco de passagem (map_corrego.js: x −20,3…−16,1, face em z −8,62, tapume de compensado) lida como portão
-// na pose `rua`: ganha a ferragem de portão de correr — trilho no alto com suportes e roldanas, quadro de cantoneira (3 montantes,
-// 3 travessas), 3 dobradiças de chapa com pino na ponta esquerda e cadeado com corrente no montante do meio. Nada tem colisão.
+// Parede +z do barraco de passagem (x −20,3…−16,1, face em z −8,62), lida como portão na pose `rua`: ferragem de portão de correr.
+// Posição copiada de map_corrego.js; nada tem colisão. Peças: docs/hd-kit/corrego.md#portoes.
 function portaoBarraco(F, W, rng) {
   const x0 = -20.3, x1 = -16.1, xm = -18.2, zf = -8.62;
   F.cor(0x3f3b36).caixa(xm, 3.02, zf + .075, 4.5, .06, .05);
@@ -1158,10 +1105,8 @@ function becos(F, rng, casas) {
   return n;
 }
 
-// Skyline de SP: caixas instanciadas num anel de 70–185 m (fora do mundo jogável, atrás dos muros de 8 m), com grade de
-// janelas por shader (fiada a cada 3 m, 2 colunas por 5 m, 30 % escuras / 70 % médias) e varanda como faixa clara em metade
-// dos prédios. A névoa (72 %) entra DEPOIS do tonemap e lavava a janela do albedo: a grade também desconta sobre a cor final,
-// senão a torre lia como bloco bege liso.
+// Skyline de SP: caixas instanciadas num anel de 70–185 m (fora do mundo jogável), com grade de janelas e varanda por shader.
+// A névoa entra DEPOIS do tonemap e lava a janela do albedo: a grade também desconta sobre a cor final. Ver docs/hd-kit/corrego.md#skyline.
 function skyline(grupo, rng) {
   const N = 150, lista = [];
   for (let i = 0; i < N; i++) {
@@ -1179,7 +1124,7 @@ function skyline(grupo, rng) {
       .replace('#include <color_fragment>', `#include <color_fragment>
       float hdJanE = 0.0, hdJanM = 0.0, hdVar = 0.0;
       // 3 variantes por prédio (hdSem): 0 = janela em grade 2,5 × 3,0; 1 = fita horizontal contínua a cada 3,2 m (pavimento
-      // de laje marcada); 2 = janelas estreitas 1,6 × 2,9 em faixa clara — as torres idênticas liam como cópia (pose alto).
+      // de laje marcada); 2 = janelas estreitas 1,6 × 2,9 em faixa clara. Torres idênticas leem como cópia.
       if (vHdLado < 0.5) { float hdSem = vHdYUS.z, hdTipo = floor(hdSem * 3.0);
         vec2 hdPasso = hdTipo < 0.5 ? vec2(2.5, 3.0) : hdTipo < 1.5 ? vec2(3.4, 3.2) : vec2(1.6, 2.9);
         float hdFy = fract(vHdYUS.x / hdPasso.y), hdFu = fract(vHdYUS.y / hdPasso.x);
@@ -1213,7 +1158,7 @@ export function cenografiaCorrego(scene, opts = {}) {
   if (lig('postes') && lista.length) info.cabos = postes(F, W, rngDe(7717), lista, mundo?.ctfPoints);
   if (lig('postes')) info.cabosRua = postesRua(F, W, rngDe(6161), casas);
   if (lig('fachadas') && casas.length) info.fachadas = fachadas(F, W, rngDe(9311), casas, lista, relogios);
-  // `ceramicos` (array do kit): caixas orientadas que o shader da chapa pinta de telha cerâmica — palafita da pose `alto` primeiro, depois 1 telhado em 4.
+  // `ceramicos` (array do kit): caixas orientadas que o shader da chapa pinta de telha cerâmica; a palafita da pose `alto` entra primeiro.
   if (lig('palafitas')) info.palafitas = palafitas(F, rngDe(8117), cols, opts.ceramicos);
   if (lig('lajes') && topo) Object.assign(info, lajes(F, W, rngDe(40123), casas, topo));
   if (lig('lajes')) info.mirante = mirante(F, W, rngDe(7177));
