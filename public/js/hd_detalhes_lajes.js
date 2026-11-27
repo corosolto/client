@@ -257,8 +257,12 @@ const GLIFOS = {
 };
 const LARG = { I: 4, 1: 6, '-': 10, '·': 6, '!': 6, ' ': 5 };
 // Letra pintada à mão: pincel redondo com duas passadas desencontradas, altura e giro por letra, escorrido e falha.
-function letreiro(g, r, texto, x, y, larg, px, cor) {
+// `y` é o MEIO da letra. Com `faixa` [y0, y1], corpo e altura encolhem até acento, cedilha e pincel caberem nela.
+function letreiro(g, r, texto, x, y, larg, px, cor, faixa = null) {
   const letras = [...texto.normalize('NFD')].reduce((l, ch) => { if (GLIFOS[ch] && ch.charCodeAt(0) < 0x300) l.push({ ch, acentos: [] }); else if (ch === ' ') l.push({ ch: ' ', acentos: [] }); else if (GLIFOS[ch] && l.length) l[l.length - 1].acentos.push(ch); return l; }, []);
+  if (faixa) { let a = 0, b = 14; for (const l of letras) for (const ch of [l.ch, ...l.acentos]) for (const t of GLIFOS[ch] || []) for (const [, py] of t) { a = Math.min(a, py); b = Math.max(b, py); }
+    const cima = (7.6 - a) * 1.08 / 14 + .14, baixo = (b - 6.4) * 1.08 / 14 + .14;
+    px = Math.min(px, (faixa[1] - faixa[0]) / (cima + baixo)); y = Math.min(Math.max(y, faixa[0] + cima * px), faixa[1] - baixo * px); }
   const e = px / 14, cond = .68, avanco = (ch) => ((LARG[ch] ?? 10) + 4.5) * e * cond;
   const total = letras.reduce((s, l) => s + avanco(l.ch), 0), k = Math.min(1, larg / total); let cx = x + (larg - total * k) / 2;
   g.save(); g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = cor; g.fillStyle = cor;
@@ -296,14 +300,14 @@ function montaAtlas(imgs) {
   ARTE.forEach(([nome, h, tinta, cat], i) => { const im = imgs[i]; if (!im) return; const w = Math.round(h * im.width / im.height);
     itens.push({ id: nome, cat, w, h, pinta(x, y) { if (!tinta) { g.drawImage(im, x, y, w, h); return; }
       const t = tela(w, h), tg = t.getContext('2d'); tg.drawImage(im, 0, 0, w, h); tg.globalCompositeOperation = 'source-in'; tg.fillStyle = tinta; tg.fillRect(0, 0, w, h); g.drawImage(t, x, y); t.width = t.height = 0; } }); });
-  FRASES.forEach(([a, b, cor], i) => itens.push({ id: `frase${i}`, cat: 'frase', w: 520, h: 132, pinta(x, y) {
-    if (b) { letreiro(g, r, a, x + 8, y + 36, 504, 58, cor); letreiro(g, r, b, x + 8, y + 96, 504, 62, cor); } else letreiro(g, r, a, x + 8, y + 68, 504, 84, cor);
-    gasta(g, r, x, y, 520, 132, 60); falhas(g, r, x, y, 520, 132, 70); } }));
-  itens.push({ id: 'fogao', cat: 'fixa', w: 800, h: 112, pinta(x, y) { letreiro(g, r, 'CONSERTA-SE FOGÃO', x + 10, y + 64, 780, 76, '#363430'); gasta(g, r, x, y, 800, 112, 70); falhas(g, r, x, y, 800, 112, 120); } });
+  FRASES.forEach(([a, b, cor], i) => itens.push({ id: `frase${i}`, cat: 'frase', w: 520, h: 148, pinta(x, y) {
+    if (b) { letreiro(g, r, a, x + 8, y + 39, 504, 58, cor, [y + 2, y + 76]); letreiro(g, r, b, x + 8, y + 109, 504, 62, cor, [y + 72, y + 146]); } else letreiro(g, r, a, x + 8, y + 74, 504, 84, cor, [y + 2, y + 146]);
+    gasta(g, r, x, y, 520, 148, 60); falhas(g, r, x, y, 520, 148, 70); } }));
+  itens.push({ id: 'fogao', cat: 'fixa', w: 800, h: 124, pinta(x, y) { letreiro(g, r, 'CONSERTA-SE FOGÃO', x + 10, y + 62, 780, 76, '#363430', [y + 2, y + 122]); gasta(g, r, x, y, 800, 124, 70); falhas(g, r, x, y, 800, 124, 120); } });
   // Placa do mercadinho pintada direto no reboco: fundo amarelo-ocre irregular e letras verde-escuras à mão, sem marca.
-  itens.push({ id: 'mercadinho', cat: 'fixa', w: 920, h: 104, pinta(x, y) { g.fillStyle = 'rgba(196,172,88,.92)'; g.fillRect(x + 3, y + 3, 914, 98);
-    for (let i = 0; i < 9; i++) { g.fillStyle = `rgba(150,130,60,${.12 + r() * .18})`; g.fillRect(x + 3 + r() * 880, y + 3, 10 + r() * 60, 98); }
-    letreiro(g, r, 'MERCADINHO 2 IRMÃOS', x + 22, y + 58, 876, 70, '#1e4a2a'); gasta(g, r, x, y, 920, 104, 90); falhas(g, r, x, y, 920, 104, 60); } });
+  itens.push({ id: 'mercadinho', cat: 'fixa', w: 920, h: 120, pinta(x, y) { g.fillStyle = 'rgba(196,172,88,.92)'; g.fillRect(x + 3, y + 3, 914, 114);
+    for (let i = 0; i < 9; i++) { g.fillStyle = `rgba(150,130,60,${.12 + r() * .18})`; g.fillRect(x + 3 + r() * 880, y + 3, 10 + r() * 60, 114); }
+    letreiro(g, r, 'MERCADINHO 2 IRMÃOS', x + 22, y + 60, 876, 70, '#1e4a2a', [y + 5, y + 115]); gasta(g, r, x, y, 920, 120, 90); falhas(g, r, x, y, 920, 120, 60); } });
   itens.push({ id: 'reclame', cat: 'reclame', w: 684, h: 252, pinta(x, y) { g.fillStyle = 'rgba(206,190,104,.94)'; g.fillRect(x + 4, y + 4, 676, 244); g.strokeStyle = 'rgba(29,63,138,.95)'; g.lineWidth = 7; g.strokeRect(x + 14, y + 14, 656, 224);
     letreiro(g, r, 'MATERIAL DE CONSTRUÇÃO', x + 28, y + 68, 628, 60, '#1d3f8a'); letreiro(g, r, 'AREIA · PEDRA · CIMENTO', x + 28, y + 140, 628, 50, '#1c1c1c'); letreiro(g, r, 'ENTREGA NA LAJE', x + 28, y + 202, 628, 46, '#1d3f8a');
     gasta(g, r, x, y, 684, 252, 500); } });
@@ -312,7 +316,8 @@ function montaAtlas(imgs) {
   itens.sort((p, q) => q.h - p.h);
   let x = 2, y = 2, linha = 0; const ok = [];
   for (const it of itens) { if (x + it.w + 2 > NA) { x = 2; y += linha + 4; linha = 0; } if (y + it.h + 2 > NA) { fora.push(it.id); continue; }
-    it.pinta(x, y); it.uv = [x / NA, 1 - (y + it.h) / NA, (x + it.w) / NA, 1 - y / NA]; ok.push(it); x += it.w + 4; linha = Math.max(linha, it.h); }
+    g.save(); g.beginPath(); g.rect(x, y, it.w, it.h); g.clip(); it.pinta(x, y); g.restore();
+    it.uv = [x / NA, 1 - (y + it.h) / NA, (x + it.w) / NA, 1 - y / NA]; ok.push(it); x += it.w + 4; linha = Math.max(linha, it.h); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.name = 'hd-pichacao';
   t.onUpdate = () => { c.width = c.height = 0; t.onUpdate = null; };
   return { t, itens: ok, fora };
