@@ -2,18 +2,18 @@
 // Interruptores ?hd*=0 e chaves de material: docs/hd-kit/lajes.md#interruptores e #materiais.
 import * as THREE from 'three';
 import { cenografiaLajes, ceuLajes, fundidor, ruidoTex, RUIDO_PARS, soltaAoSubir } from './hd_cenografia_lajes.js';
-import { pbrTex, materiaisDe } from './map_sertao_hd.js';
+import { pbrTex, texHD, materiaisDe } from './map_sertao_hd.js';
 import { atlasJanelas, atlasPortas, pichacoes, pintaLetreiro } from './hd_detalhes_lajes.js';
 
 // Conjuntos CC0 em public/img/textures/hd_lajes (FONTE.md). `media` = cor média linear do mapa de cor: o shader
 // divide por ela, então `cor` é o albedo final. `cor_rug` leva a rugosidade no alfa (uma leitura a menos).
 const CONJ = {
-  reboco: { media: [.523, .471, .406], metros: 1.7, cor: 'reboco_cor_rug', normal: 'reboco_normal' },
-  piso: { media: [.142, .126, .095], metros: 1.9, cor: 'piso_cor_rug', normal: 'piso_normal' },
-  forma: { media: [.147, .129, .105], metros: 1.8, cor: 'forma_color', normal: 'forma_normal' },
-  chapa: { media: [.161, .159, .152], cor: 'chapa_color', normal: 'chapa_normal' },
+  reboco: { media: [.523, .471, .406], metros: 1.7, cor: texHD('hd_lajes/reboco_cor_rug'), normal: texHD('hd_lajes/reboco_normal') },
+  piso: { media: [.142, .126, .095], metros: 1.9, cor: texHD('hd_lajes/piso_cor_rug'), normal: texHD('hd_lajes/piso_normal') },
+  forma: { media: [.147, .129, .105], metros: 1.8, cor: texHD('hd_lajes/forma_color'), normal: texHD('hd_lajes/forma_normal') },
+  chapa: { media: [.161, .159, .152], cor: texHD('hd_lajes/chapa_color'), normal: texHD('hd_lajes/chapa_normal') },
 };
-const tex = (arquivo) => pbrTex(`hd_lajes/${arquivo}`, !arquivo.endsWith('_normal'));
+const tex = (url) => pbrTex(url, !url.endsWith('_normal.webp'));
 // Chave = nome do material do mapa (lajes_houses.js nomeia todos); tabela em docs/hd-kit/lajes.md#materiais.
 // O tijolo NÃO muda de escala nem de UV (fiada de 19,3 cm no tile de 2 m); reboco e cimento puxam para o frio.
 const REGRAS = {
