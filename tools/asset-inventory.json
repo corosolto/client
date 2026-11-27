@@ -12,7 +12,6 @@
     "img/textures/concrete_br.webp",
     "img/textures/corrego_streetart_pixo.webp",
     "img/textures/dirt_field.webp",
-    "img/textures/escadao_streetart_azulejo.webp",
     "img/textures/faixa_aviao.webp",
     "img/textures/folhagem_mata.webp",
     "img/textures/lajes_tijolo_baiano_color.webp",
@@ -1378,6 +1377,7 @@
   ],
   "unreferenced": {
     "img/textures/azulejo.webp": "ef2bf1a4655934d3e79e77716214f904c1471141e2bd04572179cd94a3fe2b5b",
+    "img/textures/escadao_streetart_azulejo.webp": "24e5e71e7bae586e227ac7b0dc3a6dca6f19c3f8106a4ac152ba8b74093be3f4",
     "img/textures/favela_wall.webp": "da3a901f51359d3ac6635033f57c68003aa4ea7dae08d2357321d7eb30ee9a98",
     "img/textures/horizonte_rio.webp": "d2bc81b8e8bd13d50ba179c61bf381bdb8f0639fdbc13930b9236eb729293377",
     "img/textures/lajes_streetart_mural.webp": "2cfba9f721e7a5dca720df8718291a002108537c54d59e4424d871112efeb197",
