@@ -27,6 +27,7 @@ eval:passe
 eval:fora-do-ar
 eval:packpublish
 eval:cfborda
+eval:urlassinada
 `);
 const studioDepoisDeCharacterKit = FAST_SEM_STUDIO.indexOf('eval:characterkit') + 1;
 const FAST = Object.freeze([
