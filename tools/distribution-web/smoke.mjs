@@ -7,7 +7,7 @@ import path from 'node:path';
 import { chromium } from 'playwright';
 
 const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
-if ((!args.site && !args.package) || (args.site && args.package) || !args.out) throw Error('Use --package=dist/portal --out=dist/portal-smoke; --site somente para baseline');
+if ((!args.site && !args.package) || (args.site && args.package) || !args.out) throw Error('Use --package=dist/portal/itch-site --out=dist/portal-smoke; --site somente para baseline');
 let temporary, packageProof;
 if (args.package) {
   temporary = await mkdtemp(path.join(tmpdir(), 'corosolto-portal-'));
@@ -15,9 +15,11 @@ if (args.package) {
   const result = spawnSync('python3', [fileURLToPath(new URL('./package.py', import.meta.url)), 'extract', '--output', path.resolve(args.package), '--extract-to', args.site], { encoding: 'utf8', timeout: 60000 });
   if (result.status !== 0) { await rm(temporary, { recursive: true, force: true }); throw Error(result.stderr || 'ZIP não verificado'); }
   packageProof = JSON.parse(result.stdout);
+  // O wrapper só embeda o site de produção (rede externa fica bloqueada aqui); quem o prova é o eval:portalembed.
+  if (packageProof.kind !== 'site') { await rm(temporary, { recursive: true, force: true }); throw Error(`smoke prova pacote site; recebeu ${packageProof.kind}`); }
 }
 const site = path.resolve(args.site), out = path.resolve(args.out), prefix = '/html/12345/';
-const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.wasm': 'application/wasm', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.glb': 'model/gltf-binary' };
+const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.wasm': 'application/wasm', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.glb': 'model/gltf-binary' };
 const gameServer = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');

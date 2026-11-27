@@ -12,9 +12,11 @@ def plan(directory, target, version):
     if not re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9._+-]{0,99}', version):
         raise ValueError('versão inválida')
     report = verify(directory)
+    if report['portal'] != 'itch':
+        raise ValueError(f"pacote gerado para {report['portal']}, não para itch")
     return {'dry_run': True, 'executed': False, 'publish_ready': report['publish_ready'],
-            'budget': report['profiles']['itch'], 'artifact_sha256': report['archive']['sha256'],
-            'argv_for_operator_after_review': ['butler', 'push', str(Path(directory).absolute() / 'corosolto-web.zip'), target, '--userversion', version],
+            'kind': report['kind'], 'budget': report['profiles']['itch'], 'artifact_sha256': report['archive']['sha256'],
+            'argv_for_operator_after_review': ['butler', 'push', str(Path(directory).absolute() / report['archive']['path']), target, '--userversion', version],
             'credential_environment': 'BUTLER_API_KEY',
             'warning': 'butler push publica o build. Este adapter somente planeja; nenhum subprocesso, rede ou leitura de segredo.',
             'source': 'https://itch.io/docs/butler/pushing.html'}
