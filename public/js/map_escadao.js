@@ -281,10 +281,7 @@ export function buildEscadao(scene, T) {
       tex.repeat.set(rx, ry);
     };
     // Mesmos parâmetros do procedural de textures.js; zinco com rough perto de 1 para não lustrar.
-    // Intensidade calibrada com sol rasante e sem grão:
-    // com .4/.65 o ganho de contraste local (sd L* 8x8) contra ?escrelevo=0 era +1 a +2 %, invisível.
-    // Escolhido o menor valor com >= +15 % em toda vista ao sol, sem pixel quase branco a mais:
-    // asfalto 3,2 (+16 a +29 %), concreto 2,4 (+18 %), zinco 1,0 com Sobel a 128 (+19 a +36 %).
+    // normalScale: menor valor com >= +15 % de contraste local ao sol rasante (?escrelevo=0 = liso).
     external(MAT.asphalt, '/img/textures/asphalt_br.webp', 6, 6, [2.0, .66, .99, 3.2]);
     external(MAT.concrete, '/img/textures/concrete_br.webp', 4, 4, [2.4, .58, .97, 2.4]);
     external(MAT.concreteDark, '/img/textures/concrete_br.webp', 5, 5, [2.4, .60, .98, 2.4]);
