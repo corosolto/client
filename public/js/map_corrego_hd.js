@@ -1,7 +1,7 @@
 // Kit visual HD do Córrego, atrás de ?hd=1 (desligado por padrão): casa material por `arquivo da textura|cor` (REGRAS); tudo volta em desliga().
 // Interruptores ?hd*=0, opts.* e chaves de material: docs/hd-kit/corrego.md#interruptores e #materiais.
 import * as THREE from 'three';
-import { pbrTex, materiaisDe, projetaMundo, RUIDO_GLSL, GRAO_GLSL } from './map_sertao_hd.js';
+import { pbrTex, texHD, materiaisDe, projetaMundo, RUIDO_GLSL, GRAO_GLSL } from './map_sertao_hd.js';
 import { atlasJanelas, atlasPortas } from './hd_detalhes_lajes.js';
 import { cenografiaCorrego, SACOS_AUTORAIS, folgaPass } from './hd_cenografia_corrego.js';
 
@@ -581,7 +581,7 @@ function chapaHD(m, r, U) {
 // Madeira: tábua cinza desbotada (ponte, tapume) ou compensado claro em chapas de 1,10 × 2,20 m, projetado no mundo e deslocado por chapa.
 // Escorrido e sujeira só fora da faixa do corpo; AO de vértice a 35 %. Ver docs/hd-kit/corrego.md#madeira.
 function madeiraHD(m, r, texR26) {
-  const tabua = r.colcha ? pbrTex('hd_corrego/tabua_cor_rug', true) : null; if (tabua) texR26.push(tabua);
+  const tabua = r.colcha ? pbrTex(texHD('hd_corrego/tabua_cor_rug'), true) : null; if (tabua) texR26.push(tabua);
   const comp = r.madeira === 'compensado';
   m.roughness = .9; m.metalness = 0;
   m.onBeforeCompile = (s) => { mundo(s, comp ? 1.1 : 0, false, r.colcha ? R26_GLSL : '');
@@ -942,7 +942,7 @@ const VALA_R26 = `{ float hdZsV = vHdPos.z - (vHdPos.x < 0.0 ? 3.7 : 0.0) - 0.75
 // Tijolo cru (pbr_bricks051), r26: regra única do bloco + respingo no pé e eflorescência sob a cinta (y = k·2,8 − 0,17).
 // Faixa do corpo por pavimento (mod 2,8): só tom igualado, junta e relevo; cinta, verga e topo de concreto como na blocoHD.
 function tijoloR26(m, texR26) {
-  const cor = pbrTex('hd_corrego/bloco_cor_rug', true), nor = pbrTex('hd_corrego/bloco_normal', false); texR26.push(cor, nor);
+  const cor = pbrTex(texHD('hd_corrego/bloco_cor_rug'), true), nor = pbrTex(texHD('hd_corrego/bloco_normal'), false); texR26.push(cor, nor);
   m.map = cor; m.normalMap = nor; m.roughnessMap = null; m.roughness = 1; m.normalScale.set(1, 1); m.color.setHex(0xffffff);
   m.onBeforeCompile = (s) => { mundo(s, 1.0, false, R26_GLSL);
     s.fragmentShader = s.fragmentShader.replace('#include <map_fragment>', `
@@ -972,7 +972,7 @@ function tijoloR26(m, texR26) {
 // Mureta do vão da travessia, r26: por dentro o bloco da regra única (tom uniforme acima de 0,6 m do tabuleiro); por fora, com
 // `obra`, bloco de concreto rebocado em panos de ≈ 3 m com 1 pano de tijolo por lado. A grade da rampa é a mesma da guardaHD.
 function guardaR26(m, rampa, obra, texR26) {
-  const cor = pbrTex('hd_corrego/bloco_cor_rug', true), nor = pbrTex('hd_corrego/bloco_normal', false); texR26.push(cor, nor);
+  const cor = pbrTex(texHD('hd_corrego/bloco_cor_rug'), true), nor = pbrTex(texHD('hd_corrego/bloco_normal'), false); texR26.push(cor, nor);
   m.map = cor; m.normalMap = nor; m.normalScale.set(1, 1);
   m.onBeforeCompile = (s) => { mundo(s, 1.0, false, R26_GLSL);
     s.fragmentShader = s.fragmentShader.replace('#include <map_fragment>', `
@@ -1156,7 +1156,7 @@ function chaoR26(m, poca, campo, texR26) {
 // Telhado, r26: chapas de 1,06 × 2,24 m — 4 em 5 de fibrocimento (hd_corrego/fibro, 12 ondas × 1 recobrimento = 2,124 × 2,24 m), 1 em 5 de
 // zinco. Na placa instanciada (USE_INSTANCING = addPlacaSB) a lateral é pintada como borda de chapa sobre terça; parede de chapa não muda.
 function chapaR26(m, r, U, texR26) {
-  const fibro = pbrTex('hd_corrego/fibro_cor_rug', true), fibroN = pbrTex('hd_corrego/fibro_normal', false); texR26.push(fibro, fibroN);
+  const fibro = pbrTex(texHD('hd_corrego/fibro_cor_rug'), true), fibroN = pbrTex(texHD('hd_corrego/fibro_normal'), false); texR26.push(fibro, fibroN);
   m.map = tex('chapa_color'); m.normalMap = tex('chapa_normal', false); m.roughnessMap = null; m.roughness = .66; m.metalness = .35; m.normalScale.set(.6, .6);
   m.onBeforeCompile = (s) => { mundo(s, 1.0, 'caimento');
     s.uniforms.hdCerA = U.cerA; s.uniforms.hdCerB = U.cerB; s.uniforms.hdFibro = { value: fibro }; s.uniforms.hdFibroN = { value: fibroN };
@@ -1234,7 +1234,7 @@ function chapaR26(m, r, U, texR26) {
 // Barraco de passagem (matBar), r26: colcha de panos de 1,10 m (tábua hd_corrego/tabua, madeirite, zinco) no lugar do compensado claro.
 // Faixa do corpo: mesma luma em todo pano, croma à metade; rodapé podre e remendo quente (OSB, lona) ficam fora dela.
 function tapumeR26(m, texR26) {
-  const cor = pbrTex('hd_corrego/tabua_cor_rug', true), nor = pbrTex('hd_corrego/tabua_normal', false); texR26.push(cor, nor);
+  const cor = pbrTex(texHD('hd_corrego/tabua_cor_rug'), true), nor = pbrTex(texHD('hd_corrego/tabua_normal'), false); texR26.push(cor, nor);
   m.map = cor; m.normalMap = nor; m.roughnessMap = null; m.roughness = .9; m.metalness = .5; m.normalScale.set(1, 1); m.color.setHex(0xffffff);
   m.onBeforeCompile = (s) => { mundo(s, 1.0, false, R26_GLSL);
     s.fragmentShader = s.fragmentShader.replace('#include <map_fragment>', `
