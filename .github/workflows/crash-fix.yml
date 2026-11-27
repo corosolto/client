@@ -11,8 +11,10 @@
 #     Vercel é imutável por deploy; o mix venenoso mora no cache. Se o probe
 #     fecha verde depois do purge, o incidente se encerrou sozinho.
 #   · código (qualquer outro erro): abre issue `crash-auto` com fingerprint,
-#     stack e versão, DEDUPLICADA por fingerprint. Corrigir código não é
-#     determinístico e a casa proíbe conserto sem régua — humano/agente local
+#     stack e versão, DEDUPLICADA pela família do crash (`crashFamily`: a mesma
+#     falha em outra língua do navegador ou outra engine comenta a issue aberta
+#     em vez de abrir outra; #1425/#1435/#1436/#1439/#1445 eram uma só). Corrigir
+#     código não é determinístico e a casa proíbe conserto sem régua — humano/agente local
 #     pega da issue. NENHUM commit na main sai daqui.
 #   · externo (extensão ou script cross-origin): preservado na telemetria bruta,
 #     mas encerra sem issue porque não pertence ao jogo.
@@ -107,11 +109,14 @@ jobs:
           # Migalhas sao acao de JOGO, nunca texto do jogador (topo da migration 015).
           MIGALHAS: ${{ join(github.event.client_payload.breadcrumbs, '\n') }}
           CLASSE: ${{ steps.cls.outputs.classe }}
+          FAMILIA: ${{ steps.cls.outputs.familia }}
+          CHAVE: ${{ steps.cls.outputs.chave }}
         run: |
           gh label create crash-auto --color B60205 --description "crash de produção reportado por /api/jserror ou prod-watch" --force
-          EXISTENTE=$(gh issue list --label crash-auto --state open --search "$FP" --json number --jq '.[0].number // empty')
+          EXISTENTE=$(gh issue list --label crash-auto --state open --search "$CHAVE in:body" --json number --jq '.[0].number // empty')
           CORPO=$(cat <<EOF
           **Fingerprint:** \`$FP\`
+          **Família:** \`$CHAVE\` ($FAMILIA)
           **Classe:** $CLASSE
           **Versão do jogo:** $VER
           **Origem:** $SRC
