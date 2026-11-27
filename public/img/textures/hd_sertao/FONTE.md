@@ -14,7 +14,6 @@ anteriores e JPG 1K para `dry_ground_01`, e convertidas para WebP 1024 px (`shar
 | `white_rough_plaster_normal.webp` | `white_rough_plaster` | https://polyhaven.com/a/white_rough_plaster | 246 KB |
 | `clay_block_wall_cor.webp` | `clay_block_wall` | https://polyhaven.com/a/clay_block_wall | 184 KB |
 | `dry_ground_rocks_cor.webp` | `dry_ground_rocks` | https://polyhaven.com/a/dry_ground_rocks | 350 KB |
-| `dry_ground_rocks_normal.webp` | `dry_ground_rocks` | https://polyhaven.com/a/dry_ground_rocks | 482 KB |
 | `old_planks_02_cor.webp` | `old_planks_02` | https://polyhaven.com/a/old_planks_02 | 76 KB |
 | `old_planks_02_normal.webp` | `old_planks_02` | https://polyhaven.com/a/old_planks_02 | 158 KB |
 | `clay_roof_tiles_02_cor.webp` | `clay_roof_tiles_02` | https://polyhaven.com/a/clay_roof_tiles_02 | 164 KB |
