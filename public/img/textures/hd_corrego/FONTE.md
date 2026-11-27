@@ -21,7 +21,10 @@ Peso novo em disco: 0 B. O resto da cenografia (`hd_cenografia_corrego.js`) é c
 Gerados por texto (sem imagem de referência) em 27/11/2026 na conta Pro do dono, projeto "CORO SOLTO — Mapas HD", 100 créditos
 cada. PNG 1024 px do Mint convertidos para WebP com `sharp`: cor (RGB) + rugosidade (alfa) num arquivo, normal em outro.
 Originais (cor, normal, rugosidade, altura, metalness) e manifestos em `scratchpad/lane/r26/mint-materiais/` (local).
-Licença: conteúdo gerado sob os termos de uso do Mint; **conferir os termos para repositório público AGPL antes de publicar**.
+Licença: Termos de Serviço do Mint (https://docs.mint.gg/terms-of-service, vigentes desde 24/04/2026, lidos em 27/11/2026), seção 4:
+o usuário mantém os direitos sobre o seu conteúdo e o Mint cede a ele os direitos que tiver sobre a saída gerada por IA. Os termos não
+restringem redistribuir nem publicar; também não garantem que a saída seja única ou livre de direitos de terceiros. O titular é o dono
+da conta: publicar sob a licença do repositório é decisão dele, tomada no merge.
 
 | Arquivo | Material no Mint | ID do asset | Uso previsto | Peso |
 |---|---|---|---|---|
