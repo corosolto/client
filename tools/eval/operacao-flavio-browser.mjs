@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { lstatSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
-import { chromium } from 'playwright';
+import { abrirOperacaoEgo } from './operacao-flavio-ego.mjs';
 
 const option = (name, fallback) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.split('=').slice(1).join('=') || fallback;
 const base = option('base', 'http://127.0.0.1:9326');
 const out = option('out', 'artifacts/operacao-flavio');
+const ego = globalThis.operacaoEgo != null || Object.hasOwn(process.env, 'EGO_TASK_SPACE');
 
 class EnvironmentUnavailable extends Error {}
 
@@ -220,8 +221,12 @@ if (process.argv.includes('--selftest-env')) {
 }
 
 let browser = null, context = null, closed = false, observedGpu = null, stage = 'setup';
+let egoBrowser = null;
 let receiptData = null;
 const errors = [], failed = [], glbs = [];
+const escortTrace = [], rushTrace = [], exposedTrace = [];
+let escortStart = null, rushBefore = null, exposedBefore = null;
+const boardingTrace = {};
 const writeReceipt = (value) => {
   requireOwnedOut();
   writeFileSync(`${out}/receipt.json`, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
@@ -235,32 +240,44 @@ const writeFailureReceipt = (outcome) => {
         ...describeFailure(outcome), stage, platform: process.platform,
         actualGPU: observedGpu, testExecuted: false, exitCode: outcome.exitCode,
       },
+      escortStart, escortTrace, rushBefore, rushTrace, exposedBefore, exposedTrace, boardingTrace, errors, failed,
     });
     return { written: true };
   } catch (error) { return { written: false, error: describeThrowable(error) }; }
 };
 const cleanup = async () => {
   if (closed) return;
-  try { await closeResources(context, browser); } finally { closed = true; }
+  try {
+    if (egoBrowser) await egoBrowser.close();
+    else await closeResources(context, browser);
+  } finally { closed = true; }
 };
 const primary = async () => {
   reserveOut();
   if (!supportedPlatform(process.platform)) {
     throw new EnvironmentUnavailable(`stage=platform platform=${process.platform} reason=platform_not_supported: perfil suportado deste ensaio e Mac nativo atual (Apple M4 Pro|Metal + WebGL2)`);
   }
-  browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio'] });
   stage = 'browser';
-context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
-const page = await context.newPage();
-await page.route(/\.astro\/eval-vite|dev-toolbar/, (route) => route.fulfill({
-  contentType: 'text/javascript',
-  body: 'export default {};',
-}));
-page.on('pageerror', (error) => errors.push(error.message));
-page.on('response', (response) => {
-  if (response.status() >= 400) failed.push([response.status(), response.url()]);
-  if (response.status() === 200 && response.url().includes('.glb')) glbs.push(response.url());
-});
+  let page;
+  if (ego) {
+    if (!globalThis.operacaoEgo) throw new EnvironmentUnavailable('Execute o portão Operação com o launcher oficial');
+    egoBrowser = await abrirOperacaoEgo(globalThis.operacaoEgo, { base, errors, failed, glbs });
+    page = egoBrowser.page;
+  } else {
+    const { chromium } = await import('playwright');
+    browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio'] });
+    context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+    page = await context.newPage();
+    await page.route(/\.astro\/eval-vite|dev-toolbar/, (route) => route.fulfill({
+      contentType: 'text/javascript',
+      body: 'export default {};',
+    }));
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('response', (response) => {
+      if (response.status() >= 400) failed.push([response.status(), response.url()]);
+      if (response.status() === 200 && response.url().includes('.glb')) glbs.push(response.url());
+    });
+  }
 
 const views = [
   { id: '01-terminal', camera: [-24, 5.8, -50], target: [-3, 1.4, -27], description: 'fachada, portal, balcões e assentos do terminal sem trilha no chão' },
@@ -427,7 +444,11 @@ const views = [
   ]) {
     assert.ok(glbs.some((url) => url.includes(file)), `${file} não carregou por HTTP 200`);
   }
-  await page.evaluate(() => {
+  // Em render lento o loop descarta tempo real acima do teto; meça cada janela no relógio do jogo.
+  const waitForSim = (target) => page.waitForFunction(
+    (t) => window.__game?.time >= t, target, { timeout: 12000 },
+  );
+  escortStart = await page.evaluate(() => {
     const g = window.__game;
     g.player.pos.set(-40, g.world.groundHeightAt(-40, -55), -55);
     let side = -1;
@@ -438,10 +459,11 @@ const views = [
       bot.path = null;
       side *= -1;
     }
+    return { simTime: g.time, wallMs: performance.now() };
   });
-  const escortTrace = [];
+
   for (let second = 0; second < 8; second++) {
-    await page.waitForTimeout(1000);
+    await waitForSim(escortStart.simTime + second + 1);
     escortTrace.push(await page.evaluate(() => {
       const g = window.__game;
       const vip = g.objective.vip;
@@ -455,6 +477,8 @@ const views = [
         && c.minY < 1.8 && c.maxY > 0.1
       )).length;
       return {
+        simTime: g.time, wallMs: performance.now(),
+        paused: g.paused, state: g.state, visibility: document.visibilityState,
         x: vip.pos.x, z: vip.pos.z,
         checkpoint: g.objective.state.checkpoint,
         escortCount: g.objective.state.escortCount,
@@ -481,21 +505,31 @@ const views = [
     const g = window.__game;
     const vip = g.objective.vip;
     const threat = g.bots.find((bot) => bot.team === 'E');
+    // O timer de mira não congela a navegação de objetivo; use corpos sem input local.
+    for (const bot of g.bots) if (bot.team === 'E') {
+      if (!g.online && !bot._netInput) bot._remote = true;
+      else throw new Error('A ameaça roteirizada exige corpos offline sem input');
+    }
     threat.alive = true; threat.hp = 1000; threat.protUntil = Infinity;
-    threat.pos.set(vip.pos.x + dx, 0, vip.pos.z + dz);
+    const x = vip.pos.x + dx, z = vip.pos.z + dz;
+    threat.pos.set(x, g.world.groundHeightAt(x, z), z);
     threat.nextShotAt = Infinity; threat.reloadUntil = Infinity;
-    threat.target = null; threat.path = null; threat.think = Infinity;
-    for (const bot of g.bots) if (bot.team === 'E' && bot !== threat) { bot.pos.set(38, 0, 54); bot.think = Infinity; bot.nextShotAt = Infinity; }
-    return { checkpoint: g.objective.state.checkpoint, x: vip.pos.x, z: vip.pos.z, threat: { x: threat.pos.x, z: threat.pos.z } };
+    for (const bot of g.bots) if (bot.team === 'E' && bot !== threat) bot.pos.set(38, 0, 54);
+    return { simTime:g.time, checkpoint: g.objective.state.checkpoint, x: vip.pos.x, z: vip.pos.z, threat: { x: threat.pos.x, z: threat.pos.z } };
   }, { dx, dz });
   const amostraEscolta = () => page.evaluate(() => {
     const g = window.__game;
     const vip = g.objective.vip;
     return {
+      simTime:g.time, wallMs:performance.now(),
+      coverTarget:g.objective._vipAbrigo, routeIndex:g.objective._vipRoute?.index ?? null,
+      stuckFor:g.objective._vipStuckFor ?? 0,
       checkpoint: g.objective.state.checkpoint,
       x: vip.pos.x, z: vip.pos.z,
       threatened: g.objective.state.threatened,
       contested: g.objective.state.contested,
+      nearestEnemyM: Math.min(...g.bots.filter(bot => bot.alive && bot.team === 'E')
+        .map(bot => Math.hypot(bot.pos.x - vip.pos.x, bot.pos.z - vip.pos.z))),
       inCover: g.objective.state.inCover,
       crouched: Boolean(vip.mesh?.ctrl?.crouch),
       hud: document.getElementById('escort-objective')?.textContent || '',
@@ -503,20 +537,23 @@ const views = [
         && Math.hypot(bot.pos.x - vip.pos.x, bot.pos.z - vip.pos.z) <= 6.1).length,
     };
   });
-  const fixarAmeaca = (point) => page.evaluate((point) => {
+  const fixarAmeaca = (dx, dz) => page.evaluate(({ dx, dz }) => {
     const g = window.__game, threat = g.bots.find((bot) => bot.team === 'E');
-    threat.pos.set(point.x, 0, point.z); threat.path = null; threat.think = Infinity;
-  }, point);
+    const vip = g.objective.vip;
+    const x = vip.pos.x + dx, z = vip.pos.z + dz;
+    threat.pos.set(x, g.world.groundHeightAt(x, z), z);
+  }, { dx, dz });
 
-  // Lateral: andar pela rota não traz o atacante para o raio de contestação (4 m).
-  const rushBefore = await ameacaEm(8, 0);
-  const rushTrace = [];
+  // Sustenta a ameaça lateral a 8 m sem deixar que a rota a leve para a contestação.
+  rushBefore = await ameacaEm(8, 0);
   for (let slice = 0; slice < 8; slice++) {
-    await fixarAmeaca(rushBefore.threat);
-    await page.waitForTimeout(1000);
+    await fixarAmeaca(8, 0);
+    await waitForSim(rushBefore.simTime + slice + 1);
     rushTrace.push(await amostraEscolta());
   }
   const rushAfter = rushTrace.at(-1);
+  assert.ok(rushTrace.every(sample => !sample.contested && sample.nearestEnemyM > 4),
+    `ameaça lateral entrou na contestação: ${JSON.stringify(rushTrace)}`);
   assert.ok(rushTrace.some((sample) => sample.threatened), `ameaça a 8 m não foi vista: ${JSON.stringify(rushTrace)}`);
   assert.ok(Math.hypot(rushAfter.x - rushBefore.x, rushAfter.z - rushBefore.z) > 3,
     `Flávio parou sob ameaça vista mesmo escoltado (rush): ${JSON.stringify({ rushBefore, rushTrace })}`);
@@ -524,13 +561,16 @@ const views = [
   assert.ok(rushTrace.every((sample) => !/ESCOLT|COBERTURA|CONTESTAD/.test(sample.hud)),
     `HUD entrega a tática da escolta: ${JSON.stringify(rushTrace.map((sample) => sample.hud))}`);
 
-  const exposedBefore = await ameacaEm(0, 3);
-  const exposedTrace = [];
+  // Ameaça lateral a 3 m: o VIP entra em contestação sem fugir além da memória de exposição antes do abrigo.
+  exposedBefore = await ameacaEm(3, 0);
+  await waitForSim(exposedBefore.simTime + 0.05);
+  exposedTrace.push(await amostraEscolta());
   for (let slice = 0; slice < 10; slice++) {
-    await fixarAmeaca(exposedBefore.threat);
-    await page.waitForTimeout(500);
+    await waitForSim(exposedBefore.simTime + (slice + 1) * 0.5);
     exposedTrace.push(await amostraEscolta());
   }
+  assert.ok(exposedTrace[0].contested && exposedTrace.every(sample => sample.nearestEnemyM < 10),
+    `ameaça de exposição escapou da janela: ${JSON.stringify(exposedTrace)}`);
   assert.ok(exposedTrace.some((sample) => sample.threatened && sample.inCover && sample.crouched),
     `Flávio exposto não buscou cobertura: ${JSON.stringify({ exposedBefore, exposedTrace })}`);
   assert.ok(exposedTrace.every((sample) => sample.checkpoint === exposedBefore.checkpoint),
@@ -539,6 +579,8 @@ const views = [
   await page.evaluate(() => {
     const g = window.__game;
     for (const bot of g.bots) if (bot.team === 'E') {
+      bot._remote = false;
+      bot.think = 0;
       bot.protUntil = 0; bot.hp = 100; bot.pos.set(bot.pos.x < 0 ? -38 : 38, 0, 54);
       bot.target = null; bot.path = null;
     }
@@ -601,6 +643,11 @@ const views = [
       : g.world.objectivePlane;
     boardPlane.updateWorldMatrix(true, false);
     return {
+      active: !!cinematic,
+      winner: cinematic?.winner,
+      duration: g.stateUntil - cinematic?.startedAt,
+      result: g._resultado,
+      hud: g.objective?.hud?.textContent || '',
       elapsed: owner?._elapsedCinematic(),
       planeZ: boardPlane.getWorldPosition(boardPlane.position.clone()).z,
       activeIsBoardingPlane: boardPlane === boarding?.plane,
@@ -614,36 +661,22 @@ const views = [
   }, target, { timeout: 9000 });
   await waitForElapsed(1.0);
   const preDoorA = await sampleBoardingPlane();
+  boardingTrace.preDoorA = preDoorA;
   await waitForElapsed(6.1);
   const preDoorB = await sampleBoardingPlane();
+  boardingTrace.preDoorB = preDoorB;
   requireOwnedOut();
   await page.screenshot({ path: `${out}/06-cinematica-vitoria-porta.png` });
   await waitForElapsed(7.4);
   const taxi = await sampleBoardingPlane();
+  boardingTrace.taxi = taxi;
   requireOwnedOut();
   await page.screenshot({ path: `${out}/06-cinematica-vitoria.png` });
   assert.ok(preDoorA.planeZ === 55 && preDoorB.planeZ === 55, `FB_PRE_DOOR avião de embarque deve permanecer em z=55 antes da porta (A ${preDoorA.planeZ}, B ${preDoorB.planeZ})`);
   assert.equal(preDoorA.planeZ, preDoorB.planeZ, `avião de embarque deve ficar imóvel antes do fechamento da porta (${preDoorA.planeZ} vs ${preDoorB.planeZ})`);
   assert.ok(taxi.planeZ > 55, `FB_TAXI_ADVANCE avião deve avançar além de z=55 após o início do táxi em 6.8s (z ${taxi.planeZ})`);
-  const cinematic = await page.evaluate(() => {
-    const g = window.__game;
-    const c = g.objective?.cinematic;
-    const owner = c?.owner || g.objective;
-    const boarding = owner?._boarding;
-    const boardPlane = c && boarding?.session && boarding.stage?.visible && owner?._boardingSession === c && boarding.plane
-      ? boarding.plane
-      : g.world.objectivePlane;
-    boardPlane.updateWorldMatrix(true, false);
-    return {
-      active: !!c,
-      winner: c?.winner,
-      duration: g.stateUntil - c?.startedAt,
-      planeZ: boardPlane.getWorldPosition(boardPlane.position.clone()).z,
-      result: g._resultado,
-      hud: g.objective?.hud?.textContent || '',
-    };
-  });
-  cinematic.samples = { preDoorA, preDoorB, taxi };
+  // A captura pelo compositor pode terminar depois do fim da cinemática; o táxi já foi observado vivo.
+  const cinematic = { ...taxi, samples: boardingTrace };
   assert.equal(cinematic.active, true);
   assert.equal(cinematic.winner, 'B');
   assert.ok(cinematic.duration >= 8.9, `FB_DURATION duração da cinemática deve ser >= 8.9 (dur ${cinematic.duration})`);

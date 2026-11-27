@@ -11,6 +11,7 @@ import {createGuestProfileObserver,readGuestPageIdentity} from './boot-guest-pro
 import {instrumentPosterIntent,collectPosterProof,lazyPosterSubset} from './boot-poster-intent.mjs';
 import {awaitLocalModuleProof} from './boot-local-proof.mjs';
 
+const EGO_CONFIG=globalThis.__BOOT_EGO_CONFIG__||null;
 const args = process.argv.slice(2), vistos = new Set(), opcoes = {};
 for (const a of args) {
   const m=a.match(/^--(base|api-base|mutante)=(.+)$/);
@@ -18,16 +19,20 @@ for (const a of args) {
   if (!k || vistos.has(k)) { console.error('uso: --base=URL --api-base=ORIGIN --mutante=cartaz-ansioso|fauna-cedo --self-test (sem duplicatas)'); process.exit(2); }
   vistos.add(k); opcoes[k]=m?.[2] ?? true;
 }
-const MUTANTE=opcoes.mutante || '', BASE=opcoes.base ?? process.env.BOOT_CANDIDATE_BASE ?? process.env.BASE ?? 'https://www.corosolto.com.br';
+const MUTANTE=EGO_CONFIG?.MUTANTE ?? opcoes.mutante ?? '', BASE=EGO_CONFIG?.BASE ?? opcoes.base ?? process.env.BOOT_CANDIDATE_BASE ?? process.env.BASE ?? 'https://www.corosolto.com.br';
 if (!['','cartaz-ansioso','fauna-cedo'].includes(MUTANTE)) { console.error('mutante desconhecido');process.exit(2); }
 try { if (!['http:','https:'].includes(new URL(BASE).protocol)) throw Error(); }
 catch { console.error('BASE inválida');process.exit(2); }
 let API_BASE;
-try { API_BASE=publicApiOrigin(opcoes['api-base'] ?? process.env.BOOT_API_BASE ?? new URL(BASE).origin); }
+try { API_BASE=publicApiOrigin(EGO_CONFIG?.API_BASE ?? opcoes['api-base'] ?? process.env.BOOT_API_BASE ?? new URL(BASE).origin); }
 catch { console.error('API_BASE inválida');process.exit(2); }
 if (opcoes['self-test']) {
   if (args.length !== 1) { console.error('--self-test exige uso isolado');process.exit(2); }
   const {selfTest}=await import('./boot-overlay.mjs');process.exit(selfTest().length?1:0);
+}
+if (!EGO_CONFIG && process.env.EGO_TASK_SPACE !== undefined) {
+  const { runEgo } = await import('./boot-orcamento-ego.mjs');
+  process.exit(await runEgo({ BASE, API_BASE, MUTANTE, proofDir: process.env.BOOT_PROOF_DIR || null }));
 }
 
 // Tetos e procedência: docs/visual-consistency/BOOT-COHERENT-OVERLAY.md.
@@ -67,17 +72,22 @@ try {SNAPSHOT=snapshotPublicJs(PUBLIC_ROOT);}catch(e){console.error('INFRA78 sna
 const RUN_ID=randomUUID();
 let browser;
 try {
-  const gRoot=execSync('npm root -g').toString().trim();
-  const pw=await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-  const chromium=pw.chromium||pw.default?.chromium;
-  const softwareGLArgs=process.platform==='darwin'?[]:['--use-angle=swiftshader','--enable-unsafe-swiftshader'];
-  browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    args:[...softwareGLArgs,'--headless=new','--mute-audio','--disable-dev-shm-usage']});
+  if (EGO_CONFIG) {
+    const { createEgoBrowser } = await import('./boot-orcamento-ego-adapter.mjs');
+    browser = await createEgoBrowser(EGO_CONFIG);
+  } else {
+    const gRoot=execSync('npm root -g').toString().trim();
+    const pw=await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+    const chromium=pw.chromium||pw.default?.chromium;
+    const softwareGLArgs=process.platform==='darwin'?[]:['--use-angle=swiftshader','--enable-unsafe-swiftshader'];
+    browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      args:[...softwareGLArgs,'--headless=new','--mute-audio','--disable-dev-shm-usage']});
+  }
 } catch(e) {console.error(`INFRA78 browser indisponível: ${e.message}`);process.exit(78);}
 
 async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
   assertSnapshotLive(SNAPSHOT);
-  const label=refPoolAnsioso?'reference':mutante||'nominal',passId=label+'-'+randomUUID(),proofDir=process.env.BOOT_PROOF_DIR?process.env.BOOT_PROOF_DIR+'/'+RUN_ID+'/'+passId:null;
+  const label=refPoolAnsioso?'reference':mutante||'nominal',passId=label+'-'+randomUUID(),proofRoot=EGO_CONFIG?.BOOT_PROOF_DIR ?? process.env.BOOT_PROOF_DIR,proofDir=proofRoot?proofRoot+'/'+RUN_ID+'/'+passId:null;
   if(proofDir)mkdirSync(proofDir,{recursive:true});
   console.log('BOOT_PASS '+JSON.stringify({runId:RUN_ID,passId,label,proofDir,snapshot:SNAPSHOT.fingerprint}));
   let context,origin,page,guest,terminalCapture=null,localProof=null,diagnostic=()=>({});
@@ -336,9 +346,15 @@ async function mede({ refPoolAnsioso = false, mutante = '' } = {}) {
       if(proofDir) {
         const abortTrace=terminalCapture?terminalCapture.abortTrace:page?await page.evaluate(()=>window.__bootTrace||[]).catch(e=>({error:e.message})):null;
         const fetchBodies=terminalCapture?terminalCapture.fetchBodies:page?await page.evaluate(()=>window.__bootFetchBodies||[]).catch(e=>({error:e.message})):null;
-        writeFileSync(proofDir+'/diagnostic.json',JSON.stringify({runId:RUN_ID,passId,label,origin:origin?.url,...diagnostic(),abortTrace,fetchBodies,readyExact:terminalCapture?.readyExact??null},null,2));
+        writeFileSync(proofDir+'/diagnostic.json',JSON.stringify({runId:RUN_ID,passId,label,origin:origin?.url,...diagnostic(),abortTrace,fetchBodies,readyExact:terminalCapture?.readyExact??null,transport:page?.transportDiagnostics?.()},null,2));
       }
-    } finally {await context?.close().catch(()=>{});await origin?.close();}
+    } finally {
+      try {
+        const cleanup = context?.close();
+        if (EGO_CONFIG) await cleanup;
+        else await cleanup?.catch(()=>{});
+      } finally { await origin?.close(); }
+    }
   }
 }
 

@@ -11,7 +11,7 @@ import {initLoginPrompt,noteLoginPromptMatch} from './login-prompt.js';
 import {analyticsAllowed} from './privacy-preferences.js';
 import { contagem } from './contagem.js';   // contagem agregada sem id, independe do consentimento
 import { clientUuid, getAnonId } from './client-id.js';
-import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin} from './treta-store.js';
+import {initTretaStore,equippedTretaSkin,equippedTretaEyewear,equippedTretaGlove,equippedTretaWeaponSkin,equippedTretaPack,tretaSkinPresentation,tretaWeaponPresentation,tretaVitrine,tretaSkinsDoArmario,equiparTretaSkin,desequiparTretaSkin,tretaEquipmentReady} from './treta-store.js';
 import {carregarPasse,trocarContaPasse,acompanharPartidaPasse,personagemTravado as travadoNoPasse,nivelDoPersonagem,PASSE_EVENTO} from './passe.js';
 import { passeDebugAtivo } from './passe-debug.js';
 /* QA local (passe-debug.js): só loopback + ?debug=1&passeDev=1 joga com o elenco do passe sem resgate. */
@@ -1560,7 +1560,9 @@ function openHubRoster(updateRoute = true) {
   hubRosterLado = ladoValido(CHARACTERS.find((c) => c.id === currentChar) || CHARACTERS[0], currentTeam);
   const temPoliticos = (lado) => CHARACTERS.some((c) => c.team === 'P' && podeNoLado(c, lado));
   hubRosterCat = temPoliticos(hubRosterLado) ? 'P' : null;
+  let rosterActionRevision = 0;
   const lados = $('hub-roster-lados'), filters = $('hub-roster-factions'), grid = $('hub-roster-grid');
+  // O redesenho após gravar na loja não pode cancelar a intenção que o disparou.
   const render = () => {
     lados.replaceChildren(); filters.replaceChildren(); grid.replaceChildren();
     for (const lado of ['E', 'B']) {
@@ -1569,7 +1571,7 @@ function openHubRoster(updateRoute = true) {
       button.append(crest, tr(FACTION_NAME[lado]));
       button.style.setProperty('--lado', PALETA[lado].base);
       button.setAttribute('aria-selected', String(lado === hubRosterLado));
-      button.onclick = () => { hubRosterLado = lado; hubRosterCat = temPoliticos(lado) ? 'P' : null; render(); };
+      button.onclick = () => { ++rosterActionRevision; hubRosterLado = lado; hubRosterCat = temPoliticos(lado) ? 'P' : null; render(); };
       lados.appendChild(button);
     }
     const doLado = CHARACTERS.filter((c) => podeNoLado(c, hubRosterLado));
@@ -1582,7 +1584,7 @@ function openHubRoster(updateRoute = true) {
       const button = document.createElement('button'); button.type = 'button';
       button.textContent = cat ? tr(FACTION_NAME[cat] || cat) : tr('TODOS');
       button.setAttribute('aria-pressed', String(cat === hubRosterCat));
-      button.onclick = () => { hubRosterCat = cat; render(); };
+      button.onclick = () => { ++rosterActionRevision; hubRosterCat = cat; render(); };
       filters.appendChild(button);
     }
     /* Armário: skin de personagem comprada é personagem selecionável aqui (dono, 23/10).
@@ -1623,13 +1625,21 @@ function openHubRoster(updateRoute = true) {
         button.append(trava);
       }
       button.onclick = async () => {
+        const action = ++rosterActionRevision;
         ui.click();
         if (personagemTravado(def)) { $('hub-roster-selected').textContent = frase('passeTravadoAviso', def.name, nivel || '?'); return; }
-        // Voltar ao personagem base com skin equipada TIRA a skin no servidor antes de trocar.
-        if (equipada) {
-          try { if (!await desequiparTretaSkin()) throw new Error('unequip_recusado'); }
-          catch { $('hub-roster-selected').textContent = frase('skinTirarErro'); return; }
+        // A gravação pode ter começado antes de o redesenho ler a skin equipada.
+        try {
+          await tretaEquipmentReady();
+          if (action !== rosterActionRevision) return;
+          const equipadaAgora = tretaSkinsDoArmario().find(s => s.equipped && s.character === def.id);
+          if (equipadaAgora && !await desequiparTretaSkin()) throw new Error('unequip_recusado');
+          if (action !== rosterActionRevision) return;
+        } catch {
+          if (action === rosterActionRevision) $('hub-roster-selected').textContent = frase('skinTirarErro');
+          return;
         }
+        if (action !== rosterActionRevision) return;
         escolher(def.id);
       };
       cell.appendChild(button);
@@ -1649,7 +1659,7 @@ function openHubRoster(updateRoute = true) {
           settings.pinnedChars = ehPin
             ? settings.pinnedChars.filter((id) => id !== def.id)
             : [...settings.pinnedChars, def.id];
-          saveSettings(); ui.click(); render();
+          saveSettings(); ui.click(); ++rosterActionRevision; render();
         };
         cell.appendChild(pin);
       }
@@ -1663,9 +1673,15 @@ function openHubRoster(updateRoute = true) {
         const skinName = document.createElement('span'); skinName.textContent = skin.name;
         skinButton.append(skinArt, skinName);
         skinButton.onclick = async () => {
+          const action = ++rosterActionRevision;
           ui.click();
-          try { if (!await equiparTretaSkin(skin.id)) throw new Error('equip_recusado'); }
-          catch { $('hub-roster-selected').textContent = frase('skinEquiparErro'); return; }
+          try {
+            if (!await equiparTretaSkin(skin.id)) throw new Error('equip_recusado');
+            if (action !== rosterActionRevision) return;
+          } catch {
+            if (action === rosterActionRevision) $('hub-roster-selected').textContent = frase('skinEquiparErro');
+            return;
+          }
           escolher(def.id);
         };
         skinCell.appendChild(skinButton);
