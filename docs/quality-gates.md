@@ -196,6 +196,29 @@ o pre-push continua sequencial por padrão para não aumentar contenção na má
 Use a branch `staging` para validar combinações de PRs antes de produção.
 O workflow de staging deve apontar para `STAGING_URL`.
 
+## Medir custo e espera do CI
+
+Para comparar uma mudança de CI, guarde os IDs de uma janela de 14 dias por
+workflow (`gh run list --workflow <workflow> --created '<início>..<fim>' --json databaseId,attempt,event,createdAt,startedAt,headSha,conclusion`).
+Se a consulta atingir o limite, divida a janela. Para cada ID, leia de `1` até
+`attempt` com `gh run view <id> --attempt <n> --json jobs,conclusion`.
+
+- **Espera inicial:** `startedAt - createdAt` na primeira tentativa. A espera
+  entre jobs pode incluir dependências; só chame de fila o que conseguir separar.
+- **Tempo e custo:** publique mediana, p90 e tamanho da amostra por job. Some
+  `completedAt - startedAt` dos jobs executados para obter runner-min observados,
+  inclusive falhas e reruns. Trate esse total como tempo de execução, sem os
+  multiplicadores e arredondamentos da cobrança.
+- **Rerun verde:** conte runs cuja primeira tentativa falhou e uma tentativa
+  posterior do mesmo run passou. Mostre o denominador de runs que falharam e
+  quantos foram reexecutados; recuperação no mesmo SHA é um sinal de flake.
+- **Draft:** confirme o estado no log histórico de `portao-decide` ou
+  `smoke-decide`. Um `SKIPPED` também pode vir do diff ou de uma dependência.
+  Compare runs do mesmo evento, classe de PR e seleção de jobs.
+- **Pre-push:** guarde `pre-push: ok (…s)` do push normal e os tempos do
+  `runner-latest.json`. Compare a mesma seleção de suites e separe a espera pela
+  trava do tempo do hook.
+
 ## Depois do deploy
 
 Os checks acima param no merge. O app de loja é uma WebView apontada para a produção
