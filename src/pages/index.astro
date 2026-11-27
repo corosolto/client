@@ -319,7 +319,7 @@ window.__GEO_LANG__ = (function () {
     if (carteira.test(sourceText + '\n' + String(stack || '') + '\n' + String(mensagem || ''))) return false;
     // MESMA redação da `PONTE_INJETADA_RE` de `src/lib/error-provenance.mjs` - se os dois
     // lados discordarem, a ponte come cota aqui ou volta a abrir issue lá (BUG-76).
-    var injetado = /\b(?:__gCrWeb[A-Za-z0-9_$]*|__firefox__|DarkReader|__REACT_DEVTOOLS_GLOBAL_HOOK__|__VUE_DEVTOOLS_GLOBAL_HOOK__|webkit\.messageHandlers)\b/;
+    var injetado = /\b(?:__gCrWeb[A-Za-z0-9_$]*|__firefox__|DarkReader|__REACT_DEVTOOLS_GLOBAL_HOOK__|__VUE_DEVTOOLS_GLOBAL_HOOK__|__XL_CALLBACK_xl(?:ReportStatistics|GetAppMetaData)_[0-9a-f]+|addEL_hook|webkit\.messageHandlers)\b/;
     if (injetado.test(sourceText + '\n' + String(stack || '') + '\n' + String(mensagem || ''))) return false;
     // MESMA redação da `AUTOMACAO_RE` de `src/lib/error-provenance.mjs`: se os dois lados
     // discordarem, o arnês come cota aqui ou volta a abrir issue lá (BUG-151).
