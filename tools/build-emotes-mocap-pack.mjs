@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { lerBiblioteca, montarPack, gravarPack, LICENCAS } from './anim-pack.mjs';
+import { validarFonteEmote } from './emote-pack-validation.mjs';
 
 const { index, libraryDir, clipsOut } = lerBiblioteca(process.argv,
   'uso: node tools/build-emotes-mocap-pack.mjs --library=<caminho>/library/index.json');
@@ -28,9 +29,7 @@ const pack = await montarPack({
   index, libraryDir, clipsOut,
   fontes: FONTES.map(([nome, id]) => [nome, id]),
   validar(nome, meta) {
-    if (meta.key !== chave.get(nome) || meta.keyStatus !== 'emote') throw new Error(`${nome}: catálogo ${meta.id} declara key=${meta.key}/${meta.keyStatus}`);
-    const qa = Object.entries(meta.qa || {});
-    if (!qa.length || qa.some(([, v]) => v.verdict !== 'pass')) throw new Error(`${nome}: QA de conversão não aprovada (${JSON.stringify(meta.qa)})`);
+    validarFonteEmote(nome, meta, chave.get(nome));
   },
 });
 const saida = path.resolve('public/models/anims/emotes-mocap.glb');

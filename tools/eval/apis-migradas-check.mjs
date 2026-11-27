@@ -48,7 +48,8 @@ if (mut === 'proxy-vaza-cookie') proxy = proxy.replace(
 /* As rotas que ficam, e o motivo de cada uma. Esta lista é a documentação executável do
    recorte: acrescentar rota aqui é uma decisão, não um esquecimento. */
 const FICAM = {
-  'geo-lang.ts': 'lê o país no header da borda da Vercel; fora de lá não há o que ler',
+  'geo-lang.ts': 'lê o país no header da borda; fora dela não há o que ler',
+  'usage-script.js.ts': 'script primário do consentimento de uso: preserva same-origin, CSP e token por host sem expor o upstream ao cliente',
   og: 'cartão social DO SITE; servi-lo de outro domínio faria o compartilhamento depender de uma VM',
   badge: 'crachá DO SITE, mesma razão do og',
   'profile-card': 'OG DO PERFIL no domínio do site; consulta somente projeção anônima pela API existente, sem credencial de banco',

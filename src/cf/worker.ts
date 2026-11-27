@@ -81,7 +81,8 @@ type Produzida = { saida: Response; cliente: string; ttl: number; stale: number 
 const OPERACOES_CACHE = new Map<string, Promise<Produzida>>();
 const rotaContador = (pathname: string) => pathname === '/api/online' || pathname === '/api/map-plays';
 const rotaTemCache = (pathname: string) =>
-  rotaContador(pathname) || pathname === '/mapa' || pathname.startsWith('/api/og/') || pathname.startsWith(PREFIXO_VM);
+  rotaContador(pathname) || pathname === '/mapa' || pathname === '/api/usage-script.js' ||
+  pathname.startsWith('/api/og/') || pathname.startsWith(PREFIXO_VM);
 const podeGuardar = (saida: Response, ttl: number) =>
   ttl > 0 && saida.status === 200 && !saida.headers.has('set-cookie');
 const guardar = async (cache: Cache, request: Request, saida: Response, cliente: string, ttl: number, stale: number) => {
