@@ -12,7 +12,7 @@ const end=source.indexOf(receiptAnchor,source.indexOf(anchor));
 const start=source.lastIndexOf('  await page.evaluate(',source.indexOf(anchor));
 assert(start>0 && end>start);
 const body=source.slice(start,end);
-const run=new (Object.getPrototypeOf(async function(){}).constructor)('page','assert','out','requireOwnedOut',body+'\nreturn cinematic;');
+const run=new (Object.getPrototypeOf(async function(){}).constructor)('page','assert','out','requireOwnedOut','boardingTrace',body+'\nreturn cinematic;');
 const positivesOnly=process.argv.includes('--positivos');
 const scenarios=[['boarding',false],['fallback',false],...positivesOnly?[]:[
  ['taxi-cedo',true],['sem-taxi',true],['original-oculto-move',true],['prazo-curto',true],['placa-boiando',true],
@@ -51,7 +51,7 @@ for(const [scenario,reject] of scenarios){
  try{
   let ownedChecks=0;
   const requireOwnedOut=()=>{ownedChecks++;}; // dependência explícita, sem IO nesta fixture
-  let error=null;try{await run(page,assert,'/tmp/no-browser-capture',requireOwnedOut);}catch(e){error=e;}
+  let error=null;try{await run(page,assert,'/tmp/no-browser-capture',requireOwnedOut,{});}catch(e){error=e;}
   assert.equal(ownedChecks,2,'victory probe keeps both owned-output guards');
   if(reject){const expectedPrefix={'taxi-cedo':'FB_PRE_DOOR','sem-taxi':'FB_TAXI_ADVANCE','original-oculto-move':'FB_TAXI_ADVANCE','prazo-curto':'FB_DURATION','placa-boiando':'FB_LABEL_HIDDEN'}[scenario];assert(error instanceof assert.AssertionError && typeof error.message==='string' && error.message.startsWith(expectedPrefix),'invalid timeline must fail the expected assertion ('+scenario+'=>'+expectedPrefix+'): '+(error&&error.message));}
   else if(error)throw error;

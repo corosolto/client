@@ -7083,14 +7083,17 @@ export class Game {
     const shoulder = this.camView === 'shoulder';
     const ads = p.scoped ? Math.min(1, (this._tpAdsF || 0) + dt / 0.11) : Math.max(0, (this._tpAdsF || 0) - dt / 0.11);
     this._tpAdsF = ads;
+    // Abre o enquadramento do Reborn vivo sem alterar a câmera de morte nem a mira estabilizada.
+    const rebornHip = !shoulder && p.alive && p.def?.id === 'bebe-reborn' ? 1 - ads : 0;
     const orbitBlend = Math.min(1, Math.abs(this._tpOrbitYaw) / 0.45);
     /* Dancando, a camera de COMBATE cola nas costas e esconde o passo: afasta e sobe
        enquanto o emote roda (rampa pra nao dar solavanco). */
     this._emoteCamK = (this._emoteCamK || 0) + ((this._emoteAtual ? 1 : 0) - (this._emoteCamK || 0)) * Math.min(1, dt * 5);
     const danca = this._emoteCamK;
-    const TP_DIST = (shoulder ? 0.85 : 1.7) + (shoulder ? 0.30 : 0.50) * ads + (shoulder ? 0.85 : 0) * orbitBlend + 1.5 * danca;
-    const TP_UP = shoulder ? 0.10 : 0.18;
-    const TP_SIDE = (shoulder ? 0.34 : 0.28) + (shoulder ? 0.16 : 0.22) * ads;
+    const TP_DIST = (shoulder ? 0.85 : 1.7) + 0.35 * rebornHip
+      + (shoulder ? 0.30 : 0.50) * ads + (shoulder ? 0.85 : 0) * orbitBlend + 1.5 * danca;
+    const TP_UP = shoulder ? 0.10 : 0.18 - 0.14 * rebornHip;
+    const TP_SIDE = (shoulder ? 0.34 : 0.28 - 0.06 * rebornHip) + (shoulder ? 0.16 : 0.22) * ads;
     const eyePos = this._tpEyePos || (this._tpEyePos = new THREE.Vector3());
     if (anchor) eyePos.copy(anchor);
     else eyePos.set(p.pos.x, p.pos.y + eye, p.pos.z);
