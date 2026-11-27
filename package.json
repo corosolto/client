@@ -988,8 +988,8 @@
     "eval:retratohero": "node tools/eval/retrato-hero-check.mjs && node tools/eval/retrato-hero-check.mjs --mutante=hero-fantasma && node tools/eval/retrato-hero-check.mjs --mutante=helper-cego && node tools/eval/retrato-hero-check.mjs --mutante=consumidor-cru",
     "//eval:xpixel": "Código-base do pixel do X insere o <script> do uwt.js (ops-diag #1231: insertBefore recebia a função twq). Mutante: insere-funcao.",
     "eval:xpixel": "node tools/eval/x-pixel-snippet-check.mjs && node tools/eval/x-pixel-snippet-check.mjs --mutante=insere-funcao",
-    "//eval:urlassinada": "Alerta #17: link pré-assinado de CDN (task record do Tripo/Meshy com Key-Pair-Id, X-Amz-Signature ou X-Goog-Signature na query) não entra em arquivo versionado, de qualquer tamanho; o erro cita só arquivo:linha, nunca a URL. Mutantes: url-assinada e url-assinada-grande.",
-    "eval:urlassinada": "node tools/eval/url-assinada-check.mjs && node tools/eval/url-assinada-check.mjs --mutante=url-assinada && node tools/eval/url-assinada-check.mjs --mutante=url-assinada-grande",
+    "//eval:urlassinada": "Alerta #17: link pré-assinado de CDN (task record do Tripo/Meshy com Key-Pair-Id, X-Amz-Signature ou X-Goog-Signature na query) não entra em arquivo versionado, de qualquer tamanho, nem no worktree nem no índice; o erro cita só arquivo:linha, nunca a URL. Mutantes: url-assinada, url-assinada-grande e url-assinada-indice.",
+    "eval:urlassinada": "node tools/eval/url-assinada-check.mjs && node tools/eval/url-assinada-check.mjs --mutante=url-assinada && node tools/eval/url-assinada-check.mjs --mutante=url-assinada-grande && node tools/eval/url-assinada-check.mjs --mutante=url-assinada-indice",
     "//eval:servertraffic": "Classificação de user-agent da contagem de borda (src/lib/server-traffic.mjs): bots de busca/IA/preview/automação fora, navegador interno de app (app/tiktok, app/instagram…) nomeado e continuando como browser. Nunca esteve em script desde a #988.",
     "eval:servertraffic": "node --test tools/eval/server-traffic-check.mjs",
     "eval:dispose": "node tools/eval/dispose-vram-check.mjs && node tools/eval/dispose-vram-check.mjs --mutante=sem-registro"

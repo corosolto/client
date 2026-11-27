@@ -15,8 +15,10 @@
 
    ── COMO ELA MEDE ──────────────────────────────────────────────────────────
    Varre TODO arquivo versionado (`git ls-files`), não só public/docs/tools/scripts:
-   o registro pode nascer em qualquer pasta, e de qualquer tamanho. Pula só binário
-   (byte NUL nos primeiros 8 KB, a mesma heurística do git). Reprova qualquer linha
+   o registro pode nascer em qualquer pasta, e de qualquer tamanho. Lê a cópia do
+   worktree e, quando o índice difere dela (`git diff`), também o blob preparado: o
+   que vai para o commit é o índice. Pula só binário (byte NUL nos primeiros 8 KB,
+   a mesma heurística do git). Reprova qualquer linha
    com parâmetro de assinatura de URL de CDN seguido de `=`: Key-Pair-Id (CloudFront),
    X-Amz-Signature (S3 SigV4 pré-assinado) e X-Goog-Signature (GCS V4).
    Cabeçalho `Authorization: AWS4-HMAC-SHA256 … Signature=` não é URL e não casa.
@@ -28,17 +30,19 @@
    Cada um exige vermelho (sai 0 só se a régua morder):
    · `url-assinada` injeta em memória um task record com link pré-assinado;
    · `url-assinada-grande` grava em tmp um registro de 3 MB com o link no fim e o
-     lê pela MESMA função da varredura: um teto de tamanho voltaria a ser ponto cego.
-   `npm run eval:urlassinada` roda a árvore real (verde) e os dois mutantes.
+     lê pela MESMA função da varredura: um teto de tamanho voltaria a ser ponto cego;
+   · `url-assinada-indice` monta um repo em tmp com o link só no índice (worktree
+     limpo) e o varre pela mesma função do repo real.
+   `npm run eval:urlassinada` roda a árvore real (verde) e os três mutantes.
 
-   Uso: node tools/eval/url-assinada-check.mjs [--mutante=url-assinada|url-assinada-grande]
+   Uso: node tools/eval/url-assinada-check.mjs [--mutante=url-assinada|url-assinada-grande|url-assinada-indice]
    ============================================================================ */
 import { execFileSync } from 'node:child_process';
 import { openSync, readSync, closeSync, statSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-const MUTANTES = ['url-assinada', 'url-assinada-grande'];
+const MUTANTES = ['url-assinada', 'url-assinada-grande', 'url-assinada-indice'];
 const mutante = process.argv.find((a) => a.startsWith('--mutante='))?.slice(10) || '';
 if (mutante && !MUTANTES.includes(mutante)) {
   console.error(`mutante desconhecido: ${mutante}`);
@@ -62,13 +66,24 @@ function lerTexto(caminho) {
   return readFileSync(caminho, 'latin1');
 }
 
-const versionados = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
-  .split('\0').filter(Boolean);
-const alvos = [];
-for (const rel of versionados) {
-  const texto = lerTexto(rel);
-  if (texto !== null) alvos.push({ rel, texto });
+const git = (raiz, args, opcoes = {}) => execFileSync('git', ['-C', raiz, ...args], { maxBuffer: 64 * 1024 * 1024, ...opcoes });
+const lista = (saida) => saida.split('\0').filter(Boolean);
+
+function alvosDoRepo(raiz, prefixo = '') {
+  const alvos = [];
+  for (const rel of lista(git(raiz, ['ls-files', '-z'], { encoding: 'utf8' }))) {
+    const texto = lerTexto(path.join(raiz, rel));
+    if (texto !== null) alvos.push({ rel: prefixo + rel, texto });
+  }
+  for (const rel of lista(git(raiz, ['diff', '--name-only', '--no-renames', '-z'], { encoding: 'utf8' }))) {
+    let blob;
+    try { blob = git(raiz, ['cat-file', 'blob', `:${rel}`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { continue; } // conflito, gitlink
+    if (!blob.subarray(0, 8000).includes(0)) alvos.push({ rel: `${prefixo}${rel} [índice]`, texto: blob.toString('latin1') });
+  }
+  return alvos;
 }
+
+const alvos = alvosDoRepo('.');
 if (!alvos.length) {
   console.error('url-assinada: nenhum arquivo de texto versionado lido — `git ls-files` fora de um checkout?');
   process.exit(2);
@@ -77,13 +92,21 @@ if (!alvos.length) {
 const falsa = `https://cdn.exemplo/x.glb?${['Key-Pair-', 'Id=K1&', 'Policy=eyJ9&', 'Signature=abc'].join('')}`;
 if (mutante === 'url-assinada') {
   alvos.unshift({ rel: 'mutante://task-record.json', texto: `{"model":"${falsa}"}` });
-} else if (mutante === 'url-assinada-grande') {
+} else if (mutante) {
   const dir = mkdtempSync(path.join(tmpdir(), 'url-assinada-'));
   try {
     const arquivo = path.join(dir, 'task-record.json');
-    writeFileSync(arquivo, `${'{"log":"lote"}\n'.repeat(200_000)}{"model":"${falsa}"}\n`); // ~3 MB
-    const texto = lerTexto(arquivo);
-    if (texto !== null) alvos.unshift({ rel: 'mutante://task-record-3mb.json', texto });
+    if (mutante === 'url-assinada-grande') {
+      writeFileSync(arquivo, `${'{"log":"lote"}\n'.repeat(200_000)}{"model":"${falsa}"}\n`); // ~3 MB
+      const texto = lerTexto(arquivo);
+      if (texto !== null) alvos.unshift({ rel: 'mutante://task-record-3mb.json', texto });
+    } else {
+      git(dir, ['init', '-q']);
+      writeFileSync(arquivo, `{"model":"${falsa}"}\n`);
+      git(dir, ['add', 'task-record.json']);
+      writeFileSync(arquivo, '{"model":"https://cdn.exemplo/x.glb"}\n');
+      alvos.unshift(...alvosDoRepo(dir, 'mutante://'));
+    }
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 
