@@ -6,7 +6,10 @@ import { cenografiaSertaoHD } from './hd_cenografia_sertao.js';
 const TEX = '/img/textures/pbr_';
 const loader = new THREE.TextureLoader();
 const cacheTex = new Map();
+// Caminho inteiro da textura: os kits que importam pbrTex pedem por aqui, que é a forma que o eval:assetinventory lê.
+export const texHD = (nome) => `/img/textures/${nome}.webp`;
 export function pbrTex(nome, srgb = false, rep = 1) {
+  if (nome.endsWith('.webp')) nome = nome.slice('/img/textures/'.length, -'.webp'.length);
   const [rx, ry] = Array.isArray(rep) ? rep : [rep, rep], chave = `${nome}|${rx}|${ry}`;
   if (!cacheTex.has(chave)) {
     const t = loader.load(nome.startsWith('/') ? `/img/textures${nome}.webp` : nome.includes('/') ? `/img/textures/${nome}.webp` : `${TEX}${nome}.webp`);
