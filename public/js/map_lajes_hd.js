@@ -8,12 +8,12 @@ import { atlasJanelas, atlasPortas, pichacoes, pintaLetreiro } from './hd_detalh
 // Conjuntos CC0 em public/img/textures/hd_lajes (FONTE.md). `media` = cor média linear do mapa de cor: o shader
 // divide por ela, então `cor` é o albedo final. `cor_rug` leva a rugosidade no alfa (uma leitura a menos).
 const CONJ = {
-  reboco: { media: [.523, .471, .406], metros: 1.7, cor: 'cor_rug' },
-  piso: { media: [.142, .126, .095], metros: 1.9, cor: 'cor_rug' },
-  forma: { media: [.147, .129, .105], metros: 1.8, cor: 'color' },
-  chapa: { media: [.161, .159, .152], cor: 'color' },
+  reboco: { media: [.523, .471, .406], metros: 1.7, cor: 'reboco_cor_rug', normal: 'reboco_normal' },
+  piso: { media: [.142, .126, .095], metros: 1.9, cor: 'piso_cor_rug', normal: 'piso_normal' },
+  forma: { media: [.147, .129, .105], metros: 1.8, cor: 'forma_color', normal: 'forma_normal' },
+  chapa: { media: [.161, .159, .152], cor: 'chapa_color', normal: 'chapa_normal' },
 };
-const tex = (conj, mapa) => pbrTex(`hd_lajes/${conj}_${mapa}`, mapa !== 'normal');
+const tex = (arquivo) => pbrTex(`hd_lajes/${arquivo}`, !arquivo.endsWith('_normal'));
 // Chave = nome do material do mapa (lajes_houses.js nomeia todos); tabela em docs/hd-kit/lajes.md#materiais.
 // O tijolo NÃO muda de escala nem de UV (fiada de 19,3 cm no tile de 2 m); reboco e cimento puxam para o frio.
 const REGRAS = {
@@ -360,7 +360,7 @@ function concretoHD(m, r, U, o) {
   // ?hdpiso: -5 % só no chão da rua (regras com poça até 0,3 m); a laje andável mantém a luminância da placa.
   const k = (CONJ.piso.metros / CONJ.forma.metros).toFixed(4), piso = r.piso ? r.piso.map((v) => v * (o.pisoEscuro && r.concreto[2] < 1 ? .95 : 1)) : null;
   m.onBeforeCompile = (shader) => { comMundo(shader, U, CONJ.piso.metros, `${PISO_PARS}\nuniform sampler2D hdForma; uniform sampler2D hdFormaN;`);
-    Object.assign(shader.uniforms, { hdForma: { value: tex('forma', 'color') }, hdFormaN: { value: tex('forma', 'normal') }, hdPisoP: { value: new THREE.Vector3(...r.concreto) }, hdPisoT: { value: new THREE.Vector3(...(piso || [1, 1, 1])) }, hdPisoA: { value: new THREE.Vector3(...(r.amb || [1, 1, 1])) } });
+    Object.assign(shader.uniforms, { hdForma: { value: tex(CONJ.forma.cor) }, hdFormaN: { value: tex(CONJ.forma.normal) }, hdPisoP: { value: new THREE.Vector3(...r.concreto) }, hdPisoT: { value: new THREE.Vector3(...(piso || [1, 1, 1])) }, hdPisoA: { value: new THREE.Vector3(...(r.amb || [1, 1, 1])) } });
     shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `${CABECA} float hdPoca = 0.0, hdMolhado = 0.0, hdCanal = 0.0; hdLuzRel = 0.8;
       float hdNy = normalize(cross(dFdx(vHdPos), dFdy(vHdPos))).y, hdPiso = step(0.7, abs(hdNy));
       hdRel = mix(0.65, 1.0, hdNitido());
@@ -684,7 +684,7 @@ export function aplicaLajesHD(scene, renderer, opts = {}) {
       antes.push({ m, map: m.map, normalMap: m.normalMap, roughnessMap: m.roughnessMap, bumpMap: m.bumpMap, cor: m.color.getHex(), roughness: m.roughness,
         metalness: m.metalness, ns: m.normalScale.x, obc: m.onBeforeCompile, key: m.customProgramCacheKey });
       const conj = r.reboco ? 'reboco' : r.concreto ? 'piso' : r.chapa ? 'chapa' : null;
-      if (conj) { m.map = tex(conj, CONJ[conj].cor); m.normalMap = tex(conj, 'normal'); m.roughnessMap = null; m.roughness = 1; }
+      if (conj) { m.map = tex(CONJ[conj].cor); m.normalMap = tex(CONJ[conj].normal); m.roughnessMap = null; m.roughness = 1; }
       if (r.cor !== undefined) m.color.setHex(r.cor);
       if (r.relevo && m.normalMap) m.normalScale.set(r.relevo, r.relevo);
       if (r.rugosidade !== undefined) m.roughness = r.rugosidade;
