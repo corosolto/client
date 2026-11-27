@@ -1,9 +1,11 @@
 # Teto de 10 GB por repositório: passar dele faz o GitHub despejar por LRU, e o build
 # fica lento sem erro. Guarda os 3 caches mais recentes do main (o mais novo serve de
 # restore-key às PRs) e descarta o resto. O node_modules do pr-fast é exceção nos dois
-# sentidos: a entrada do package-lock.json ATUAL da main nunca sai (todo PR com o mesmo
-# lock a restaura), e qualquer outra `pr-fast-node-` da main é velha e sai sempre (lock
-# antigo ou o esquema por run_id de antes de 17/11/2026). Ver docs/quality-gates.md.
+# sentidos: a entrada do pnpm-lock.yaml/.npmrc/pnpm-workspace.yaml ATUAIS da main nunca
+# sai (todo PR com o mesmo lock a restaura), e qualquer outra `pr-fast-node-` da main é
+# velha e sai sempre (lock antigo ou o esquema v2 por package-lock.json de antes da
+# migração pnpm). O store do pnpm (pr-fast-store-) segue a poda normal dos 3 mais
+# recentes. Ver docs/quality-gates.md.
 name: cache-limpeza
 
 on:
@@ -36,12 +38,18 @@ jobs:
           for id in $ids; do gh api -X DELETE "repos/$REPO/actions/caches/$id" && n=$((n+1)); done
           echo "apagados $n cache(s) de $REF"
 
-      # Só o package-lock.json: a chave em uso é a hash dele (mesma expressão do ci.yml).
+      # Só os arquivos que entram na chave da cache em uso (mesma expressão do ci.yml).
+      # Ainda sem os arquivos do pnpm na main (migração não mergeada), a hash sai vazia
+      # e a poda aborta — main antiga em npm continua segura.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         if: github.event_name != 'pull_request'
         with:
           ref: main
-          sparse-checkout: package-lock.json
+          sparse-checkout: |
+            package-lock.json
+            pnpm-lock.yaml
+            pnpm-workspace.yaml
+            .npmrc
           sparse-checkout-cone-mode: false
 
       - name: poda do main (guarda os 3 mais recentes e o node_modules em uso)
@@ -49,7 +57,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          NODE_EM_USO: pr-fast-node-v2-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
+          NODE_EM_USO: pr-fast-node-v3-${{ runner.os }}-node22-${{ hashFiles('pnpm-lock.yaml', '.npmrc', 'pnpm-workspace.yaml') }}
         run: |
           set -euo pipefail
           # Sem lock a hash sai vazia e a chave "em uso" não casaria com nada: aí não poda.

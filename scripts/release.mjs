@@ -49,7 +49,7 @@ const roda = (cmd, args) => {
   if (r.error || r.status !== 0) throw new Error(`${cmd} ${args.join(' ')} falhou`);
 };
 const ARQUIVOS_RELEASE = [
-  'package.json', 'package-lock.json', 'public/js/version.js', 'CHANGELOG.md',
+  'package.json', 'public/js/version.js', 'CHANGELOG.md',
   'README.md', 'AGENTS.md', 'STATUS.md', 'docs', 'public/docs',
   'tools/eval/ARCH.md', 'tools/eval/README.md',
 ].filter(existsSync);   // STATUS.md saiu do repo; add de ausente derrubava o release
@@ -78,8 +78,12 @@ if (sujo.length && !SECO) {
 const pkgTxt = readFileSync('package.json', 'utf8');
 const atual = JSON.parse(pkgTxt).version;
 const nova = (() => {
-  const explicita = val('versao');
-  if (explicita) return explicita;
+  const explicita = val('versao')?.trim().replace(/^v/, '');
+  if (explicita) {
+    if (!/^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(explicita))
+      morre(`versão inválida: '${explicita}'. Use --versao <x.y.z>.`);
+    return explicita;
+  }
   const m = /^(\d+)\.(\d+)\.(\d+)(?:-([a-z]+)\.(\d+))?$/.exec(atual);
   if (!m) morre(`não sei ler a versão atual '${atual}'. Use --versao <x.y.z>.`);
   const [, MA, MI, PA, pre, n] = m;
@@ -117,7 +121,10 @@ if (SECO) {
 
 const headAntes = sh('git rev-parse HEAD');
 try {
-  roda('npm', ['version', nova, '--no-git-tag-version']);
+  /* O bump escreve SÓ o package.json, direto em node (mesma formatação do `npm
+     version`): a raiz é pnpm e o pnpm-lock.yaml não registra a versão da raiz,
+     então um bump de versão não pode regenerar o lock. */
+  writeFileSync('package.json', JSON.stringify({ ...JSON.parse(pkgTxt), version: nova }, null, 2) + '\n');
   writeFileSync(VERSAO_JS, vTxt.replace(linha[0], `export const VERSION = '${nova}';`));
   roda('node', ['scripts/sync-changelog.mjs']);
 

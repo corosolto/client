@@ -94,8 +94,8 @@ const AUTO = { praca_poderes: 'P,mst', piscina_treta: 'P,mst', loja_h: 'B,bozo',
    PREENCHIDO PELO SCOUT + REVISÃO VISUAL (12/08). */
 const POSES = JSON.parse(readFileSync(new URL('./gl-poses.json', import.meta.url), 'utf8'));
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 /* GPU=1 troca o SwiftShader pelo backend nativo — mesmo contrato do gl-shots:

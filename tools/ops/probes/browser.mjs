@@ -17,14 +17,10 @@
    e deixa o ops.js amostrar FPS por alguns segundos. Em headless sem GPU
    (SwiftShader) o FPS não representa jogador — o relatório marca `headless`.
 
-   Como acha o Playwright (nessa ordem): PLAYWRIGHT_MODULE, `playwright` e
-   `playwright-core` resolvíveis da árvore, depois `npm root -g` (o padrão do
-   eval:boot na máquina do dono). CHROME_BIN aponta o executável; sem ele usa o
-   Chromium empacotado do Playwright.
+   Usa PLAYWRIGHT_MODULE quando configurado, ou o `playwright` do lock.
+   CHROME_BIN aponta o executável; sem ele usa o Chromium do Playwright.
    ============================================================================ */
-import { execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const CHROME_MAC = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
@@ -56,11 +52,7 @@ export function executavelChrome({ plataforma = process.platform, chromeBin = pr
 export async function carregaPlaywright() {
   const candidatos = [];
   if (process.env.PLAYWRIGHT_MODULE) candidatos.push(process.env.PLAYWRIGHT_MODULE);
-  candidatos.push('playwright', 'playwright-core');
-  try {
-    const gRoot = execSync('npm root -g', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
-    candidatos.push(join(gRoot, 'playwright/index.js'), join(gRoot, 'playwright-core/index.js'));
-  } catch { /* sem npm global */ }
+  candidatos.push('playwright');
   const tentativas = [];
   for (const c of candidatos) {
     try {

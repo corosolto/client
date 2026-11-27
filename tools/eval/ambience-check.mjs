@@ -163,8 +163,8 @@ if (preFalhas.length) {
   process.exit(1);
 }
 
-const globalRoot = execSync('npm root -g').toString().trim();
-const playwright = await import(pathToFileURL(`${globalRoot}/playwright/index.js`).href);
+
+const playwright = await import('playwright')
 const chromium = playwright.chromium || playwright.default?.chromium;
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

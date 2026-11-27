@@ -26,6 +26,7 @@ except ImportError:
 
 
 WORKFLOW = Path('.github/workflows/preview-bot.yml')
+PNPM_COMMAND = re.compile(r'(?<![\w.-])pnpm(?![\w.-])')
 
 
 def _parse_guardado(source: str, label: str, errors: list[str]) -> dict:
@@ -34,6 +35,17 @@ def _parse_guardado(source: str, label: str, errors: list[str]) -> dict:
     except ValueError as exc:
         errors.append(f'{label}: {exc}')
         return {}
+
+
+def _usa_pnpm(workflow: Mapping) -> bool:
+    # O publicador não precisa de pnpm. Vete o nome do comando, não uma lista de aliases.
+    for _, step in iter_steps(workflow):
+        run = step.get('run')
+        if isinstance(run, str) and any(
+            PNPM_COMMAND.search(line) for line in run.splitlines() if not line.lstrip().startswith('#')
+        ):
+            return True
+    return False
 
 
 def preview_failures(source: str) -> list[str]:
@@ -91,8 +103,8 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
          comando — e no caminho de deploy os valores vêm de fora (o número do PR atravessa
          um artefato escrito por job que rodou código do fork, a URL é saída de comando).
          O CodeQL pegou exatamente isso aqui, como injeção crítica, antes do merge.
-    PRV3 quem PUBLICA não executa NADA do PR: sem checkout da branch do fork, sem
-         `npm ci`, sem `npm run`, e o deploy é `--prebuilt` (só envia arquivo).
+    PRV3 quem PUBLICA não executa NADA do PR: sem checkout da branch do fork e sem
+         `pnpm`; o deploy é `--prebuilt` (só envia arquivo).
          Furar isto devolve o token para as mãos de quem abriu o PR.
     """
     errors = []
@@ -199,6 +211,8 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
     ):
         if proibido in deploy:
             errors.append(f'PRV3 o job que PUBLICA {motivo}')
+    if _usa_pnpm(deploy_doc):
+        errors.append('PRV3 o job que PUBLICA roda pnpm — só pode enviar o artefato')
     return errors
 
 
@@ -279,6 +293,8 @@ def cloudflare_failures(build: str, deploy: str, smoke: str) -> list[str]:
     destino = download.get('with', {}).get('path') if isinstance(download.get('with'), dict) else None
     if destino != 'dist':
         errors.append('CF3 artefato do PR precisa ficar isolado em dist, fora do checkout confiável')
+    if _usa_pnpm(deploy_doc):
+        errors.append('CF3 deploy Cloudflare não pode executar pnpm no job que publica o artefato')
     if 'python3 scripts/ci/cf_preview_comment.py' not in deploy:
         errors.append('CF4 comentário precisa executar o script do checkout confiável')
     sticky = named_step(smoke_doc, 'Aguarda URL sticky do Cloudflare')
@@ -374,6 +390,18 @@ def selftest(source: str) -> list[str]:
     cf_mutants = {
         'cf-artefato-na-raiz': (cf_build, cf_deploy.replace('path: dist', 'path: .', 1), smoke),
         'cf-path-dist-em-outro-passo': (cf_build, cf_deploy.replace('          path: dist\n', '', 1) + '\n      - name: Upload posterior\n        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02\n        with:\n          path: dist\n', smoke),
+        **{
+            f'cf-deploy-pnpm-{command}': (
+                cf_build,
+                cf_deploy.replace(
+                    '          bash tools/cf/bootstrap-worker.sh csb-preview',
+                    f'          pnpm {command} --help\n          bash tools/cf/bootstrap-worker.sh csb-preview',
+                    1,
+                ),
+                smoke,
+            )
+            for command in ('install', 'i', 'add', 'sync', 'dlx')
+        },
         'cf-dispatch-espera-sticky': (cf_build, cf_deploy, smoke.replace("- name: Aguarda URL sticky do Cloudflare\n        if: github.event_name == 'pull_request'", '- name: Aguarda URL sticky do Cloudflare')),
         'cf-dispatch-sem-host': (cf_build, cf_deploy, smoke.replace('${BASE_URL:-}', '${BASE_URL}')),
         'cf-guarda-no-evento-errado': (cf_build, cf_deploy, smoke.replace("- name: Confirma host do smoke manual\n        if: github.event_name == 'workflow_dispatch'", "- name: Confirma host do smoke manual\n        if: github.event_name == 'pull_request'")),

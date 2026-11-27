@@ -52,8 +52,8 @@ const ESPERADO = { 'glifo-cru': 'TQ1', 'mira-lenta': 'TQ2', 'gatilho-mudo': 'TQ3
 if (MUT && !ESPERADO[MUT]) throw new Error(`mutante desconhecido: ${MUT}`);
 
 const PARTIDA = 'ui=v3&debug=1&auto=E,esquerdomacho&map=praca_poderes&lang=pt';
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const devices = pw.devices || pw.default?.devices;
 

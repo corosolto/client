@@ -3,11 +3,9 @@
 // externo ao Git. Os clipes são pausados em tempos determinísticos.
 import path from 'node:path';
 import { execSync } from 'node:child_process';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const PORT = process.argv[2] || '4401';
 const BASE = `http://127.0.0.1:${PORT}`;
 const OUT = path.resolve(process.env.CSBRASIL_VM_EVIDENCE_DIR
@@ -15,11 +13,7 @@ const OUT = path.resolve(process.env.CSBRASIL_VM_EVIDENCE_DIR
 const errors = [];
 const records = [];
 const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
-const localPlaywright = path.join(ROOT, 'node_modules/playwright/index.js');
-const playwrightEntry = fs.existsSync(localPlaywright) ? localPlaywright
-  : `${execSync('npm root -g').toString().trim()}/playwright/index.js`;
-const playwright = await import(pathToFileURL(playwrightEntry).href);
-const chromium = playwright.chromium || playwright.default?.chromium;
+const { chromium } = await import('playwright');
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 
 fs.rmSync(OUT, { recursive: true, force: true });

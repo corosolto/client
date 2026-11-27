@@ -38,8 +38,8 @@ const HOST_DO_JOGO = new URL(BASE).host;
    Só nesse caso existe ruído ESTRUTURAL do ambiente — e ele some contra produção. */
 const ENSAIO_LOCAL = /^(127\.0\.0\.1|localhost|0\.0\.0\.0|\[::1\])$/.test(new URL(BASE).hostname);
 
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const devices = pw.devices || pw.default?.devices;
 

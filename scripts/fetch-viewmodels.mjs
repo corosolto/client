@@ -84,7 +84,7 @@ async function downloadR2(entry, tmp) {
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
       rmSync(tmp, { force: true });
-      await executa('npx', ['--no-install', 'wrangler', 'r2', 'object', 'get', `${R2_BUCKET}/${blobPathOf(entry)}`, '--file', tmp, '--remote'],
+      await executa('pnpm', ['exec', 'wrangler', 'r2', 'object', 'get', `${R2_BUCKET}/${blobPathOf(entry)}`, '--file', tmp, '--remote'],
         { cwd: ROOT, timeout: 180000, maxBuffer: 4 * 1024 * 1024 });
       const buf = readFileSync(tmp);
       const sha = createHash('sha256').update(buf).digest('hex');

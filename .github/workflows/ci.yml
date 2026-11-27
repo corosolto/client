@@ -27,10 +27,15 @@ concurrency:
 
 jobs:
   # Instalação e build acontecem uma vez por run; os jobs abaixo recebem o resultado.
-  # node_modules: cache pela hash do package-lock.json (Node 22 fixo), gravado logo depois
-  # do `npm ci` e ANTES do build — o que entra na cache é só o que o `npm ci` escreveu.
-  # Cache de PR só é lida pelo próprio PR; a da main, por todos (escopo de cache do
-  # GitHub). dist: scripts/ci/dist-compartilhado.mjs sobe só o que o checkout do
+  # Duas caches (pnpm@10, isolated linker):
+  # · store do pnpm: cache do setup-node pela hash do pnpm-lock.yaml, usada quando
+  #   a instalação congelada precisa montar a árvore;
+  # · node_modules (a árvore instalada compartilhada): chaveada pela hash do lock +
+  #   .npmrc + pnpm-workspace.yaml (overrides e allowlist de build entram na chave),
+  #   gravada logo depois da instalação e ANTES do build — o que entra na cache é só o
+  #   que a instalação escreveu; restore→save-condicional grava a chave uma vez por
+  #   lock, sem duplicata por run. Cache de PR só é lida pelo próprio PR; a da main,
+  #   por todos (escopo de cache do GitHub). dist: scripts/ci/dist-compartilhado.mjs sobe só o que o checkout do
   # consumidor não tem (espelho .vercel/output/static e cópias de public/ ficam de fora).
   # O artefato não leva run_attempt no nome: `gh run rerun --failed` não refaz o setup e
   # os jobs rerodados baixam o dist da tentativa que o construiu; rerun completo sobrescreve.
@@ -39,19 +44,20 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - name: Cache das dependências pelo package-lock.json
+          cache: pnpm
+      - name: Cache das dependências pelo lock + .npmrc + workspace
         id: deps-cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: node_modules
-          key: pr-fast-node-v2-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
-      - name: Dependências (npm ci)
+          key: pr-fast-node-v3-${{ runner.os }}-node22-${{ hashFiles('pnpm-lock.yaml', '.npmrc', 'pnpm-workspace.yaml') }}
+      - name: Dependências (pnpm install --frozen-lockfile)
         if: steps.deps-cache.outputs.cache-hit != 'true'
-        run: npm ci
+        run: pnpm install --frozen-lockfile
       - name: Guarda as dependências antes do build
         if: steps.deps-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
@@ -64,7 +70,7 @@ jobs:
           SUPABASE_URL: SENTINEL_ci_supabase_url
           SUPABASE_SERVICE_ROLE_KEY: SENTINEL_ci_supabase_key
           X_PIXEL_TOKEN: SENTINEL_ci_x_pixel
-        run: npm run build
+        run: pnpm run build
       - name: Empacota o dist sem o que o checkout já tem
         run: node scripts/ci/dist-compartilhado.mjs empacota "$RUNNER_TEMP/pr-fast-dist"
       - name: Publica o dist compartilhado
@@ -115,10 +121,10 @@ jobs:
       # (scripts/ci/gatilho.mjs). Node puro, < 1 s.
       - name: Gatilho do portão e do smoke cobre o que eles medem
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:portaogatilho
+        run: pnpm run eval:portaogatilho
       - name: Ciclo de vida do Keyboard Lock (node puro, com mutantes)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:ctrlwlifecycle
+        run: pnpm run eval:ctrlwlifecycle
       # Réguas de workflow e as de contrato em node puro (< 2 s, sem npm ci). Ficavam só no
       # check:fast, que roda na máquina de quem lembra: PR que quebrasse workflow passava
       # aqui verde. O runner roda todas e só reprova no fim (PI3 cobra esta lista).
@@ -128,29 +134,29 @@ jobs:
       # Job que só lê histórico ou poucos arquivos faz checkout leve (CL1). Node puro.
       - name: Checkout leve nos jobs que só leem histórico
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:wfcheckout
+        run: pnpm run eval:wfcheckout
       - name: Syntax check do jogo (public/js)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run syntax
+        run: pnpm run syntax
       - name: Classificador do smoke pós-deploy
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:smoke-network
+        run: pnpm run eval:smoke-network
       - name: Taxa de rede (FPS, travada, relógio congelado e mutantes)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:netrate
+        run: pnpm run eval:netrate
       - name: Estados remotos v9, compatibilidade v8 e mutantes
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:netcodecbin eval:rede3p
       - name: Contrato de famílias e marcas do áudio
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:audiomarcas
+        run: pnpm run eval:audiomarcas
       - name: Studio pack verification and immutable install
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:studiopack
+        run: pnpm run eval:studiopack
       - name: Dependências e reconstrução do fundo do menu
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: |
-          npm run eval:menuprops
+          pnpm run eval:menuprops
           node tools/eval/menu-map-props-check.mjs --mutantes
           node tools/eval/menu-map-props-check.mjs --autoteste
       - name: Mutantes do orçamento exigem a falha correta
@@ -168,13 +174,13 @@ jobs:
         run: node tools/eval/boot-ready-check.mjs --mutantes
       - name: Enquadramento e limite do stream WebTransport
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:transport-stream
+        run: pnpm run eval:transport-stream
       - name: Regras da horda e consumo de objetivo no cliente
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:javaporcos
+        run: pnpm run eval:javaporcos
       - name: Origem da versão nos payloads reais de perf e match
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:versaoorigem
+        run: pnpm run eval:versaoorigem
       - name: Arena, formato melhor-de e preload
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:arena-mode eval:formatomelhorde eval:preload
@@ -183,86 +189,86 @@ jobs:
         run: node tools/eval/runner.mjs eval:mapjson eval:mapjsonboot
       - name: Grafo de módulos da árvore fecha (import nomeado tem export, #524)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:modgraph
+        run: pnpm run eval:modgraph
       # As réguas de telemetria/identidade/proveniência migraram com as rotas para o
       # corosolto/backend (api/reguas/); aqui fica o portão de que a migração não regride
       # e o pedaço da proveniência que continua no cliente (hook de console.error).
       - name: Rotas de banco fora do cliente (18 migradas, 307 em dia)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:apis
+        run: pnpm run eval:apis
       - name: Proveniência de erros — lado do cliente (hook de console)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:error-console
+        run: pnpm run eval:error-console
       - name: UUID compatível com navegadores antigos
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:uuid
+        run: pnpm run eval:uuid
       - name: Loja sem fila de próximas skins
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:treta-fila
+        run: pnpm run eval:treta-fila
       - name: Sete moedas da loja com arte própria
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:treta-coins
+        run: pnpm run eval:treta-coins
       - name: Skin equipada aguarda manifesto e conta vigente no boot
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:treta-manifest-ready
+        run: pnpm run eval:treta-manifest-ready
       - name: Preview mobile preserva skin e propriedade da mídia
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:character-preview-media
+        run: pnpm run eval:character-preview-media
       - name: Retrato hero só para personagem com arquivo (#1231, com mutantes)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:retratohero
+        run: pnpm run eval:retratohero
       - name: Rig por transplante encaixa cotovelo e punho, mão sem lâmina (com mutantes)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:rigmaos
+        run: pnpm run eval:rigmaos
       - name: Personagem do Studio por release fixada, verificação fail-closed, /packs/ e origem R2 (com mutantes)
         if: always()
-        run: npm run eval:studiochar
+        run: pnpm run eval:studiochar
       - name: Publicador R2 dos pacotes do Studio — imutável, MIME, Cache-Control, CORS, SHA (com mutantes)
         if: always()
-        run: npm run eval:packpublish
+        run: pnpm run eval:packpublish
       - name: Fora do Ar — registro, packs, arte, passe e catálogo (com mutantes)
         if: always()
-        run: npm run eval:fora-do-ar
+        run: pnpm run eval:fora-do-ar
       - name: Pixel do X insere o script do uwt.js (#1231, com mutante)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:xpixel
+        run: pnpm run eval:xpixel
       - name: Acúmulo de armas no chão tem teto
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:drop
+        run: pnpm run eval:drop
       - name: Loja sem nome de político real
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:treta-nomes
+        run: pnpm run eval:treta-nomes
       - name: Proxy de captura grava só dentro da pasta de saída
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:capturecodex
+        run: pnpm run eval:capturecodex
       - name: Aba da loja no hub diz só LOJA
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:hub-loja
+        run: pnpm run eval:hub-loja
       # Mede só o que o PR ADICIONA; o checkout é raso, então a base vem do evento
       # (PR ou lote) e a régua a busca com --depth=1. Push na main: base = o próprio SHA.
       - name: PR não nasce com lixo (diário, raiz, régua órfã, doc histórico, asset sem dono)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         env:
           FILA_BASE: ${{ github.event.merge_group.base_sha || github.event.pull_request.base.sha || github.sha }}
-        run: npm run eval:lixo
+        run: pnpm run eval:lixo
       - name: Integração Vercel permanece congelada, sem build (com mutantes)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:vercelignore
+        run: pnpm run eval:vercelignore
       - name: Segredo de SSR é lido em runtime, não inlinado no build (com mutantes)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:envruntime
+        run: pnpm run eval:envruntime
       - name: Allowlist de divergências conhecidas do staging Cloudflare
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:cfallowlist
+        run: pnpm run eval:cfallowlist
       - name: Borda Cloudflare — cache, viewmodel do R2 e apex (com mutantes)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:cfborda
+        run: pnpm run eval:cfborda
       - name: Fixture do viewmodel publicado retenta só 5xx, corte e timeout (com mutantes)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:vm-rede
+        run: pnpm run eval:vm-rede
       - name: Wrapper de portal embeda o site (frame-ancestors, UTM, pointer-lock)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:portalembed
+        run: pnpm run eval:portalembed
       # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
       # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
       - name: Telemetria preserva modo real e consentimento
@@ -270,7 +276,7 @@ jobs:
         run: node tools/eval/telemetry-mode-check.mjs
       - name: Todo mapa devolve o que o game.js consome
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:mapcontrato
+        run: pnpm run eval:mapcontrato
       - name: Spawns orientam jogador e bots pelo consumidor real
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: |
@@ -286,17 +292,17 @@ jobs:
         run: node --test tests/eval-suites.test.mjs
       - name: Structured workflow guards reject unsafe merges
         if: ${{ always() && !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:workflowguards
+        run: pnpm run eval:workflowguards
       - name: Duration-based sharding preserves full coverage
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node --test tests/eval-duration-shards.test.mjs
       - name: Asset manifests and orphan ratchets stay exact
         if: ${{ always() && !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:assetinventory
+        run: pnpm run eval:assetinventory
 
       - name: Passe Sessão da Treta obedece ao servidor (sem XP do client, com mutantes)
         if: always()
-        run: npm run eval:passe
+        run: pnpm run eval:passe
       # ── invariantes-fonte ─────────────────────────────────────────────────────
       - name: Seletores e invariantes de fonte
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
@@ -332,10 +338,10 @@ jobs:
       # ── mapas-e-site ──────────────────────────────────────────────────────────
       - name: Pichação colada na parede e sem vazar pela quina da frente
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:pichacao-parede
+        run: pnpm run eval:pichacao-parede
       - name: Amazônia acessível e bots entre palafitas
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:amazonia
+        run: pnpm run eval:amazonia
       - name: Escadão — circulação, estrutura e casa
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:escadao-graph eval:escadao-home eval:escadao-structure eval:escadao-descent eval:escadao-details
@@ -348,39 +354,39 @@ jobs:
       # o PR com condição mais forte que o código de saída: saída 0 E a linha ✓.
       - name: Fauna curada no mapa e preload mobile
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:map-fauna-curated
+        run: pnpm run eval:map-fauna-curated
       - name: Lajes — geometria, ambiência, integração e preview
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:lajes-cache eval:lajes-visual eval:lajes-ruas eval:lajes-game eval:lajes-ambiencia eval:lajes-santos eval:lajes-airspace eval:lajes-soundscape eval:mappreview
       - name: Sertão (tema, rotas, criação e integração)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: |
-          npm run eval:sertao
-          npm run eval:velhooeste
-          npm run eval:sertao-livestock
-          npm run eval:sertao-integration
-          npm run eval:sertao-sky-lifecycle
+          pnpm run eval:sertao
+          pnpm run eval:velhooeste
+          pnpm run eval:sertao-livestock
+          pnpm run eval:sertao-integration
+          pnpm run eval:sertao-sky-lifecycle
       - name: Veículos do estacionamento em escala de fábrica
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:escala
+        run: pnpm run eval:escala
       - name: Loja, vídeos de hover das skins (VP9 + H.264 + poster, até 400 KB)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:treta-video
+        run: pnpm run eval:treta-video
       - name: Censo de rig, deformação de skin nunca piora (tetos congelados por sha + mutantes)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:rig-census
+        run: pnpm run eval:rig-census
       - name: Pesos de skin, manga não segue a perna (tetos congelados + mutantes)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:pesos-braco-perna
+        run: pnpm run eval:pesos-braco-perna
       - name: Orçamento de shader WebGL1
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:shaderbudget
+        run: pnpm run eval:shaderbudget
       - name: Sitemap pagina além do max-rows do PostgREST
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:sitemap-paginacao
+        run: pnpm run eval:sitemap-paginacao
       - name: Sitemap só com URL final e sem lastmod inventado
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:sitemap-higiene
+        run: pnpm run eval:sitemap-higiene
 
       # O ARCH.md (índice por linha + tabela de conflito) é GERADO. Escrito à
       # mão ele desatualiza no primeiro commit, e uma tabela de conflito com
@@ -396,38 +402,38 @@ jobs:
       # No PR só a estrutura confere; contagem e linha (classe em tools/gen-docs.mjs) só no release.
       - name: Documentação gerada está em dia (estrutura)
         if: github.event_name != 'push'
-        run: npm run docs:check
+        run: pnpm run docs:check
       - name: ARCH.md gerado está em dia (estrutura)
         if: github.event_name != 'push'
-        run: npm run arch:check
+        run: pnpm run arch:check
       - name: Documentação gerada inteira em dia no commit do release
         if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(release):')
-        run: npm run docs:check:release
+        run: pnpm run docs:check:release
       - name: ARCH.md inteiro em dia no commit do release
         if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(release):')
-        run: npm run arch:check:release
+        run: pnpm run arch:check:release
       - name: hreflang dos docs resolve nas duas línguas
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:docs-hreflang
+        run: pnpm run eval:docs-hreflang
       # Precisa de rede, por isso NÃO entra no check:deploy (que roda dentro do
       # build da Vercel). Vulnerabilidade nova em dep de produção reprova aqui.
       - name: Dependência de produção sem vulnerabilidade nova
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:deps
+        run: pnpm run eval:deps
       - name: Manifesto de wallpapers está em dia
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run media:check
+        run: pnpm run media:check
       - name: Brasão servido com ?v= do conteúdo atual
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:brasao-versao
+        run: pnpm run eval:brasao-versao
       - name: Texto público sem travessão
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run travessao:check
+        run: pnpm run travessao:check
       # Hash das skills de terceiros confere com o skills-lock.json (issue #42):
       # lock que ninguém verifica não detecta conteúdo trocado depois de travado.
       - name: Skills de terceiros conferem com o lock
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run verify:skills
+        run: pnpm run verify:skills
 
       - name: Build não inlina segredo (varre os artefatos com as sentinelas)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
@@ -501,7 +507,7 @@ jobs:
       # Supabase, que é exatamente o estado do CI.
       - name: Páginas do lobby e cobertura SEO/AEO
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:game-pages
+        run: pnpm run eval:game-pages
 
       - name: Smoke do site (13 rotas, contrato + JSON-LD)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
@@ -792,17 +798,17 @@ jobs:
       # ── economia-ak-hud ───────────────────────────────────────────────────────
       - name: TRETA$ da partida segue o CS e não toca a carteira do menu
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:economia
+        run: pnpm run eval:economia
       - name: TRETA$ da partida dentro do Game real (compra, morte, rodada)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:economia-jogo
+        run: pnpm run eval:economia-jogo
       - name: Flash, fluidez e ADS da AK pública
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:flashbang mut:flashbang eval:movimento-fluidez eval:ads1p-public eval:posto-board-support eval:preview-grip-phase eval:armadura eval:ads1p-runtime-public --json-out=tools/eval/out/economia-ak-hud.json
       - name: Câmera, atalhos e HUD com mutantes
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: |
-          npm run eval:cameraoclusao
+          pnpm run eval:cameraoclusao
           node tools/eval/camera-oclusao-mutate.mjs
           node tools/eval/camera-hud-check.mjs
           node tools/eval/camera-hud-check.mjs --mutantes
@@ -835,10 +841,10 @@ jobs:
           exit "$(cat "$SAIDA.code")"
       - name: Faca construída e transições sem bind pose
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:melee-vm
+        run: pnpm run eval:melee-vm
       - name: Chave tudo-ou-nada do viewmodel (sem ativação parcial)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:vm-launch
+        run: pnpm run eval:vm-launch
       - name: Arma visível no mobile e desktop, inclusive sem assets
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         env:
@@ -851,7 +857,7 @@ jobs:
       # catálogo privado e navegador; aqui o CI cobra o RESULTADO assado delas.
       - name: Placar das réguas de imagem do viewmodel em dia
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:vm-placar
+        run: pnpm run eval:vm-placar
       - name: Evidências das invariantes de viewmodel
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -982,7 +988,7 @@ jobs:
           if-no-files-found: warn
       - name: Penitenciária liga o look do próprio mapa (mutante corrego)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:lookbinding
+        run: pnpm run eval:lookbinding
 
   contratos-visuais-mapas:
     runs-on: ubuntu-latest
@@ -1118,7 +1124,7 @@ jobs:
       # ── soundscape ────────────────────────────────────────────────────────────
       - name: Loops de áudio de todos os mapas usam src carregável
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run eval:soundscape-contract
+        run: pnpm run eval:soundscape-contract
 
   # O AGREGADOR. É ele que responde pelo contexto obrigatório `build` da main (DG4/DG5).
   # `if: always()` é o que impede o pulo: sem ele, job necessário vermelho deixa este
@@ -1164,7 +1170,7 @@ jobs:
         id: deps
         uses: ./.github/actions/setup-ci-environment
       - name: Bloco de autoria em dia (derivável só depois do merge)
-        run: npm run docs:check:autoria
+        run: pnpm run docs:check:autoria
 
   dco:
     runs-on: ubuntu-latest

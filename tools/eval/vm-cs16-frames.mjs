@@ -36,8 +36,8 @@ let gabarito = null;
 try { gabarito = JSON.parse(await fs.readFile(relatorioPath, 'utf8')); }
 catch { gabarito = { gabarito_centro_cam: [0, 0, -0.4], gabarito_dim_m: [0, 0.5, 0], cano_gabarito_pitch_yaw_deg: [0, 0] }; }
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 const srv = spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });

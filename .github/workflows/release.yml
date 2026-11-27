@@ -3,7 +3,9 @@
 # consistência, nenhum PR precisa mais bumpa à mão.
 #
 # O que este workflow faz, em ordem:
-#   1. bump alpha.N -> alpha.N+1 (npm version atualiza package.json E package-lock.json)
+#   1. bump alpha.N -> alpha.N+1 (comando node dedicado atualiza só o package.json:
+#      o lock pnpm da raiz não registra a versão, então um bump só de versão NÃO
+#      regenera pnpm-lock.yaml)
 #      + public/js/version.js + blocos gerados de docs (a versão mora em bloco gerado
 #      do README/comecando — sem rodar o gen-docs aqui, o docs:check do PR seguinte
 #      reprova). gen-docs é node puro, não precisa de npm ci.
@@ -232,7 +234,21 @@ jobs:
           git config user.email "${{ secrets.BOT_GIT_EMAIL || vars.BOT_GIT_EMAIL || '41898282+github-actions[bot]@users.noreply.github.com' }}"
           # O bump inteiro mora numa função porque ele é REFEITO a cada tentativa de push.
           refaz_bump() {
-            NEW=$(npm version prerelease --no-git-tag-version)
+            # Bump só do package.json em node puro (mesma derivação e formatação do
+            # `npm version prerelease --no-git-tag-version`): a raiz é pnpm e o lock
+            # pnpm não registra a versão da raiz, então um bump de versão não pode
+            # regenerar pnpm-lock.yaml nem depende do npm instalado.
+            NEW=$(node -e "
+              const fs = require('fs');
+              const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+              const m = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+)\.(\d+))?$/.exec(pkg.version);
+              if (!m) throw new Error('versão ilegível: ' + pkg.version);
+              const [, MA, MI, PA, pre, n] = m;
+              const nova = pre ? MA + '.' + MI + '.' + PA + '-' + pre + '.' + (+n + 1) : MA + '.' + MI + '.' + PA + '-0';
+              pkg.version = nova;
+              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+              process.stdout.write('v' + nova);
+            ")
             V=${NEW#v}
             node -e "
               const fs = require('fs');
@@ -258,7 +274,8 @@ jobs:
               echo "::error::tag $NEW já existe no remoto — bump manual necessário."
               exit 1
             fi
-            git add package.json package-lock.json public/js/version.js CHANGELOG.md README.md AGENTS.md docs/ public/docs/ tools/eval/ARCH.md tools/eval/README.md
+            # Sem lock npm da raiz: o lock pnpm não muda num bump só de versão.
+            git add package.json public/js/version.js CHANGELOG.md README.md AGENTS.md docs/ public/docs/ tools/eval/ARCH.md tools/eval/README.md
             # O `Agent:` vai explícito — a AF7 cobra os dois trailers em todo commit de
             # workflow desde o #451. O Signed-off-by fica com o `-s` porque o e-mail desta
             # identidade vem de secret (BOT_GIT_EMAIL); grafá-lo na mensagem congelaria o

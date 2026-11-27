@@ -181,10 +181,11 @@ Cada lote junta blocos `# ── <unidade>` inteiros, escolhidos pela duração 
 manifesto do `eval-duration-calibration`, que o pr-fast não lê: manifesto vencido não reprova PR).
 Todo passo de lote roda com `!cancelled() && deps ok`, então régua vermelha não esconde as seguintes.
 Rebalancear é mover bloco entre lotes e atualizar o dono no PI4 (`tools/eval/portao-inteiro-check.mjs`).
-`node_modules` vem de cache pela hash do `package-lock.json` (gravada depois do `npm ci`, antes do
-build); o artefato do dist leva só o que o checkout do consumidor não tem
-(`scripts/ci/dist-compartilhado.mjs`: espelho `.vercel/output/static` e cópias de `public/` são
-refeitos e conferidos por sha256). `cache-limpeza` preserva a cache do lock atual da main.
+`setup` instala com lock congelado e cache do store do pnpm. Os consumidores restauram
+a árvore instalada pela chave que inclui `pnpm-lock.yaml`, `pnpm-workspace.yaml` e `.npmrc`.
+O artefato de `dist` leva só o que o checkout do consumidor não tem
+(`scripts/ci/dist-compartilhado.mjs`: espelho `.vercel/output/static` e cópias de `public/`
+são refeitos e conferidos por sha256). `cache-limpeza` preserva a árvore em uso na main.
 
 O `soundscape` é um job obrigatório separado no `build`, então falha externa de áudio não invalida
 um agregado inteiro. Packs de assets usam cache por tag exata e checksum quando existir; os asserts
@@ -195,6 +196,24 @@ o pre-push continua sequencial por padrão para não aumentar contenção na má
 
 Use a branch `staging` para validar combinações de PRs antes de produção.
 O workflow de staging deve apontar para `STAGING_URL`.
+
+## Dependências do client
+
+O client fixa a versão do pnpm em `package.json` e instala com `pnpm install --frozen-lockfile`.
+`.npmrc` usa o linker isolado. `pnpm-workspace.yaml` preserva os `overrides` e autoriza os
+scripts de instalação das versões explícitas de `esbuild`, `fsevents` e `workerd`.
+O pacote em `docs/` tem lock próprio e continua em npm.
+
+| Superfície | Contrato |
+| --- | --- |
+| Local | Cada worktree instala a própria árvore. O store pode ficar no mesmo volume e compartilhar o conteúdo entre worktrees. `prepare` configura os hooks; o pre-push continua rodando `eval:mapcontrato` e `check:prepush`. |
+| Playwright | O browser das réguas vem do `playwright` local, travado no lock. `CHROME_BIN`, quando definido no diagnóstico do CI local, precisa apontar para o Chromium daquela versão. |
+| Three.js | As pontes dos harnesses apontam para os módulos de `public/vendor/`. A migração não instala um pacote `three` do registry. |
+| WASM | `copy-wasm` resolve `@resvg/resvg-wasm` e gera `public/wasm/resvg.wasm` no setup, em `dev` e em `build`. |
+| Cloudflare e Vercel | Os builds Cloudflare do client instalam com pnpm. O publisher de preview usa Wrangler fixado com a configuração da base confiável. `vercel-ignore.sh` continua pulando os builds da Vercel. |
+
+Em comparações de instalação, use uma árvore vazia para cada cenário frio/quente. Registre
+se o store estava vazio e se os arquivos eram compartilhados por clone ou hard link.
 
 ## Depois do deploy
 

@@ -51,9 +51,9 @@ const falhas = [];
 
 /* ---- DG1: o CI constrói no PR ---- */
 let ci = ler('.github/workflows/ci.yml');
-if (MUT === 'ci-sem-build') ci = ci.replace('run: npm run build', 'run: echo pulei o build');
+if (MUT === 'ci-sem-build') ci = ci.replace('run: pnpm run build', 'run: echo pulei o build');
 const on = (ci.match(/^on:\n([\s\S]*?)(?=^\S)/m) || [])[1] || '';
-if (!/^\s{2}pull_request:/m.test(on) || !/run:\s*npm run build/.test(ci)) {
+if (!/^\s{2}pull_request:/m.test(on) || !/run:\s*pnpm run build/.test(ci)) {
   falhas.push('DG1 ci.yml não constrói o site em pull_request — sem isso a Vercel não pode sair do bloqueio');
 }
 

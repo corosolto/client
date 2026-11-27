@@ -86,7 +86,7 @@ else
       exit 1
     fi
     CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-${CF_API_TOKEN:-}}" \
-      npx --no-install wrangler r2 object get "$bucket/$key" --file /tmp/csbrasil-audio.zip --remote
+      pnpm exec wrangler r2 object get "$bucket/$key" --file /tmp/csbrasil-audio.zip --remote
   else
     curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL \
       "${AUTH_ARGS[@]}" "$URL" -o /tmp/csbrasil-audio.zip

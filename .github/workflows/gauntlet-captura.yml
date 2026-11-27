@@ -24,10 +24,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: Qual mapa nesta hora
         id: mapa
@@ -39,11 +40,10 @@ jobs:
           echo "id=$M" >> "$GITHUB_OUTPUT"
           echo "mapa da hora: $M"
 
-      - name: Dependências + Playwright global (gl-shots resolve pelo npm root -g)
-        run: |
-          npm ci --ignore-scripts --no-audit --no-fund
-          npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
-          npx playwright install --with-deps chromium
+      - name: Dependências do client
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Chromium do Playwright travado
+        uses: ./.github/actions/setup-browser
 
       # BUILD DE PRODUÇÃO servido estático — não o `astro dev` do serve.mjs. Medido em
       # 13/10 num Linux headless limpo (o que é todo runner): no dev o Vite otimiza deps na
@@ -57,7 +57,7 @@ jobs:
       - name: Build de produção
         run: |
           bash scripts/fetch-decals.sh
-          npm run build
+          pnpm run build
 
       - name: Sobe o build estático e fotografa
         env:

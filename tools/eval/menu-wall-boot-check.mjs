@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 
 const BASE = process.env.BASE || 'http://localhost:4321';
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const pw = await import(pathToFileURL(`${execSync('npm root -g').toString().trim()}/playwright/index.js`).href);
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

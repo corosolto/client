@@ -64,8 +64,8 @@ const DY = num('dy', 0.045);
    confirmar que a touca é volume e não textura chapada antes de mandar pro gerador. */
 const YAWS = (val('yaws', '0,-20,20,-35') || '').split(',').map(Number);
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

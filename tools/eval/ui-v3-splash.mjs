@@ -16,8 +16,8 @@ const VIEWPORTS = [[1536, 1024], [1920, 1080], [1280, 720], [844, 390]];
 const NARTES = JSON.parse(readFileSync('public/img/walls.json', 'utf8')).loading.length;
 const CAIXA_LOGO = [0.02, 0.15, 0.13];
 const LOGO = Object.fromEntries(Array.from({ length: NARTES }, (_, i) => [i + 1, CAIXA_LOGO]));
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

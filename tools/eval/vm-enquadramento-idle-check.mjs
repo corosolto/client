@@ -66,7 +66,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   let up = false;
   for (let i = 0; i < 240 && !up; i++) { try { up = (await fetch(base)).ok; } catch { /* subindo */ } if (!up) await new Promise((r) => setTimeout(r, 250)); }
   if (!up) throw new Error(`servidor de eval não subiu na porta ${PORTA}`);
-  const pw = await import(pathToFileURL(`${execSync('npm root -g').toString().trim()}/playwright/index.js`).href);
+  const pw = await import('playwright')
   const chromium = pw.chromium || pw.default.chromium;
   const MAC_CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
   const chrome = process.env.CHROME_BIN || (process.platform === 'darwin' && fs.existsSync(MAC_CHROME) ? MAC_CHROME : '');

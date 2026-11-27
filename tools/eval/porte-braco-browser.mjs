@@ -71,8 +71,8 @@ let PORTA = process.env.PORTA;
 for (let p = 9481; !PORTA && p < 9900; p++) if (await livre(p)) PORTA = String(p);
 const BASE = `http://127.0.0.1:${PORTA}`;
 
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 
 const servidor = spawn(process.execPath, ['tools/eval/serve.mjs', PORTA], { cwd: ROOT, stdio: 'ignore', env: { ...process.env, STUDIO_PACK_ROOT: RAIZ } });

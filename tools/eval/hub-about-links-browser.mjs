@@ -14,8 +14,8 @@
 import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
-const root = execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim();
-const playwright = await import(pathToFileURL(`${root}/playwright/index.js`).href);
+
+const playwright = await import('playwright')
 const chromium = playwright.chromium || playwright.default?.chromium;
 const base = process.env.BASE || 'http://127.0.0.1:4339';
 const mutant = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice('--mutante='.length) ?? null;

@@ -10,7 +10,7 @@ export const SAIDA_SKIP = 78;
 const FALTA_MODULO = /ERR_MODULE_NOT_FOUND|ERR_DLOPEN_FAILED|MODULE_NOT_FOUND|Cannot find package|Cannot find module/;
 const NOME_PACOTE = /Cannot find (?:package|module) '([^']+)'/;
 
-const CONSERTO = 'rode `npm ci` na raiz desta worktree';
+const CONSERTO = 'rode `pnpm install --frozen-lockfile` na raiz desta worktree';
 
 /* Devolve a causa de "não consegui medir", ou null se o filho realmente mediu.
    Aceita tanto o objeto de retorno de spawnSync quanto a exceção de execFileSync. */

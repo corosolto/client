@@ -49,8 +49,8 @@ const VIEWPORTS = [
   { name: '3:2', width: 1290, height: 860 },
 ];
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 const srv = spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });

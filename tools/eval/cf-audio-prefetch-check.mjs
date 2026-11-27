@@ -20,10 +20,10 @@ const executavel = (nome, fonte) => {
   writeFileSync(arquivo, fonte);
   chmodSync(arquivo, 0o755);
 };
-executavel('npx', `#!/usr/bin/env bash
+executavel('pnpm', `#!/usr/bin/env bash
 set -euo pipefail
 [ "\${CLOUDFLARE_API_TOKEN:-}" = token-sentinela ]
-[ "$1" = --no-install ]; shift
+[ "$1" = exec ]; shift
 [ "$1" = wrangler ]; shift
 [ "$1" = r2 ]; shift
 [ "$1" = object ]; shift

@@ -45,8 +45,8 @@ if(only && runTargets.length!==only.length)throw new Error(`--ids com itens fora
 await rm(TMP,{recursive:true,force:true});
 await mkdir(TMP,{recursive:true});
 await mkdir(OUTPUT_DIR,{recursive:true});
-const gRoot=execSync('npm root -g').toString().trim();
-const playwright=await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const playwright = await import('playwright')
 const chromium=playwright.chromium || playwright.default?.chromium;
 const browser=await chromium.launch({args:['--use-angle=swiftshader','--enable-unsafe-swiftshader','--mute-audio']});
 const entries=[];

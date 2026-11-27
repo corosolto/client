@@ -32,8 +32,8 @@ const PORTA = process.env.PORTA || '9371';
 const BASE = BASE_EXTERNA || `http://127.0.0.1:${PORTA}`;
 
 mkdirSync(SAIDA, { recursive: true });
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 
 const servidor = BASE_EXTERNA ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });

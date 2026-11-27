@@ -4,7 +4,7 @@
    POR QUE ESTA RÉGUA EXISTE (issue #82)
 
    A colocação do grafite dos 5 mapas é ASSADA em `public/js/graffiti_layout.js`:
-   ~2.000 retângulos gerados por `npm run grafite`, que roda a passada NUM NAVEGADOR
+   ~2.000 retângulos gerados por `pnpm run grafite`, que roda a passada NUM NAVEGADOR
    de verdade (único lugar onde os GLB existem). O jogo só monta a geometria pronta.
    O preço está escrito no cabeçalho do `gen-graffiti-layout.mjs`: LAYOUT VELHO É
    PEÇA NO LUGAR ERRADO. Mexeu na geometria de um mapa, na passada ou no pool de
@@ -12,7 +12,7 @@
    nada no portão percebe, porque o `check:fast` não abre navegador e o `decal-probe`
    roda em node, onde nenhum GLB carrega.
 
-   Hoje isso dependia de alguém LEMBRAR de rodar `npm run grafite`. Memória de pessoa
+   Hoje isso dependia de alguém LEMBRAR de rodar `pnpm run grafite`. Memória de pessoa
    não é mecanismo. Esta régua é o mecanismo — node puro, milissegundos, no portão.
 
    ── O QUE ELA COBRA (e o que NÃO cobra, honestamente) ───────────────────────
@@ -92,7 +92,7 @@ function avaliar() {
   const mapasFonte = Object.keys(MAP_SOURCES).sort();
 
   // M1
-  for (const id of mapasFonte) if (!GRAFITE[id]) falhas.push(`M1 mapa '${id}' chama grafitar mas não está no layout — rode 'npm run grafite ${id}'`);
+  for (const id of mapasFonte) if (!GRAFITE[id]) falhas.push(`M1 mapa '${id}' chama grafitar mas não está no layout — rode 'pnpm run grafite ${id}'`);
   for (const id of mapasLayout) if (!MAP_SOURCES[id]) falhas.push(`M1 mapa '${id}' está no layout mas nenhum fonte o declara`);
 
   for (const [id, e] of Object.entries(GRAFITE)) {
@@ -112,7 +112,7 @@ function avaliar() {
     e.arquivos.forEach((nome, idx) => {
       if (!usados.has(idx)) falhas.push(`M3 ${id} arquivo '${nome}' (idx ${idx}) não é usado por nenhuma peça — nome morto`);
       const ok = nome.startsWith('poster:') ? universo.posters.has(nome.slice(7)) : universo.decals.has(nome);
-      if (!ok) falhas.push(`M4 ${id} arquivo '${nome}' não existe mais no pool (DECAL_FILES/POSTER_FILES) — peça órfã, PNG 404. Regere: 'npm run grafite ${id}'`);
+      if (!ok) falhas.push(`M4 ${id} arquivo '${nome}' não existe mais no pool (DECAL_FILES/POSTER_FILES) — peça órfã, PNG 404. Regere: 'pnpm run grafite ${id}'`);
     });
     // M5
     for (const m of (e.murais || [])) if (!universo.murais.has(m[0])) falhas.push(`M5 ${id} mural '${m[0]}' não está em MURAIS_HOM`);
@@ -122,11 +122,11 @@ function avaliar() {
 
   // F1 + F2
   if (!FP_GRAVADO) {
-    falhas.push('F1 layout não tem GRAFITE_FP gravado — rode \'npm run grafite\' para gravar a impressão das entradas');
+    falhas.push('F1 layout não tem GRAFITE_FP gravado — rode \'pnpm run grafite\' para gravar a impressão das entradas');
   } else {
-    if (FP_GRAVADO.pass !== FP_ATUAL.pass) falhas.push(`F1 graffiti_pass.js mudou (${FP_GRAVADO.pass} → ${FP_ATUAL.pass}) e o layout não foi regerado. Se a mudança move parede, assar ('npm run grafite', com o acervo completo) e revisar a diferença de peças; se não move, reassinar sem reassar ('npm run grafite -- --so-impressao --motivo="…"'), que não toca arte aprovada`);
+    if (FP_GRAVADO.pass !== FP_ATUAL.pass) falhas.push(`F1 graffiti_pass.js mudou (${FP_GRAVADO.pass} → ${FP_ATUAL.pass}) e o layout não foi regerado. Se a mudança move parede, assar ('pnpm run grafite', com o acervo completo) e revisar a diferença de peças; se não move, reassinar sem reassar ('pnpm run grafite --so-impressao --motivo="…"'), que não toca arte aprovada`);
     for (const id of mapasFonte) {
-      if (FP_GRAVADO.maps?.[id] !== FP_ATUAL.maps[id]) falhas.push(`F2 ${id} (map_*.js) mudou (${FP_GRAVADO.maps?.[id]} → ${FP_ATUAL.maps[id]}) e o layout não foi regerado. Se a mudança move parede, assar ('npm run grafite ${id}', com o acervo completo) e revisar a diferença de peças; se não move, reassinar sem reassar ('npm run grafite -- --so-impressao --motivo="…"'), que não toca arte aprovada`);
+      if (FP_GRAVADO.maps?.[id] !== FP_ATUAL.maps[id]) falhas.push(`F2 ${id} (map_*.js) mudou (${FP_GRAVADO.maps?.[id]} → ${FP_ATUAL.maps[id]}) e o layout não foi regerado. Se a mudança move parede, assar ('pnpm run grafite ${id}', com o acervo completo) e revisar a diferença de peças; se não move, reassinar sem reassar ('pnpm run grafite --so-impressao --motivo="…"'), que não toca arte aprovada`);
     }
   }
   return falhas;

@@ -10,8 +10,8 @@ const OUT = process.argv[2] || '/tmp/gauntlet/g2';
 const [VW, VH] = (process.argv[3] || '1600,900').split(',').map(Number);
 const LIST = (process.argv[4] || 'ak,akm,m4,mp5,g3,scar,famas,p90,deagle,pistol,revolver38,shotgun,md97,awp,knife').split(',');
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 rmSync(OUT, { recursive: true, force: true });

@@ -11,8 +11,8 @@ const BASE_EXTERNA = arg('base') || process.env.BASE;
 const BASE = BASE_EXTERNA || `http://127.0.0.1:${PORTA}`;
 const MUTANTE = arg('mutante');
 if (MUTANTE && MUTANTE !== 'sem-perfil') throw new Error(`mutante desconhecido: ${MUTANTE}`);
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const devices = pw.devices || pw.default?.devices;
 const fonteGlcontext = readFileSync(new URL('../../public/js/glcontext.js', import.meta.url), 'utf8');

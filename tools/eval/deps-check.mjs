@@ -7,9 +7,10 @@
    auditoria manual. A régua acompanha o audit e exige a remoção de isenções
    quando a vulnerabilidade correspondente desaparece.
 
-   O QUE ELA MEDE: `npm audit --omit=dev`, alta ou crítica, fora da lista de
-   isenção. A lista é nominal e datada; vulnerabilidade nova reprova mesmo que
-   pareça parecida com uma isenta.
+   O QUE ELA MEDE: `pnpm audit --prod`, alta ou crítica, fora da lista de
+   isenção.
+   A lista é nominal e datada; vulnerabilidade nova reprova mesmo que pareça
+   parecida com uma isenta.
 
    FORA DO `check:deploy` DE PROPÓSITO: o audit precisa de REDE, e o check:deploy
    roda dentro do build da Vercel, onde o contrato é "sem browser e sem rede".
@@ -30,45 +31,44 @@ if (mutante && !['sem-isencao', 'isencao-vazia', 'advisory-nova'].includes(mutan
   throw new Error(`mutante desconhecido: ${mutante}`);
 }
 
-/* Isenção amarrada à ADVISORY, não só ao nome: pacote perdoado hoje pode ganhar
-   amanhã uma advisory nova, e isenção por nome a esconderia. `adv` lista as
-   assinaturas (trecho de URL/título) que cobrem a isenção; entrada de cadeia
-   (via só com nomes de pacote) não carrega advisory própria - a raiz carrega.
-   Cada linha diz por que o risco não se realiza aqui - "é transitiva" não é motivo. */
+/* Isenção amarrada à assinatura da advisory (trecho de URL/título), por pacote.
+   Cada linha diz por que o risco não se realiza aqui. */
 // GitHub withdrew GHSA-fc5q-39xc-vjpf on 2026-11-18; the audit no longer reports that chain.
 const ISENTAS = new Map();
 
 const GRAVES = new Set(['high', 'critical']);
 
-/* Advisory de objeto carrega `url`/`title`; string na via é elo de cadeia. */
-const assinaturas = (via) => (Array.isArray(via) ? via : [])
-  .filter((e) => e && typeof e === 'object')
-  .map((e) => JSON.stringify([e.url || '', e.title || '']));
+const assinatura = (advisory) => JSON.stringify([advisory.url || '', advisory.title || '']);
+const registro = (valor) => valor && typeof valor === 'object' && !Array.isArray(valor);
+const relatorioValido = (valor) => registro(valor?.advisories) && !valor.error
+  && Object.values(valor.advisories).every((a) => registro(a)
+    && typeof a.module_name === 'string' && a.module_name && typeof a.severity === 'string');
 
 let relatorio;
 /* Vulnerabilidade sintética: com a lista de isenções vazia (as três saíram no #363), mutar a
    lista virou no-op e os dois mutantes ficaram cegos — eles precisam TRAZER o vermelho. */
-const VULN_SINTETICA = { vulnerabilities: { 'pacote-sintetico': { severity: 'high', fixAvailable: true,
-  via: [{ url: 'https://github.com/advisories/GHSA-sintetica-0000-0000', title: 'vulnerabilidade alta de mutante' }] } } };
+const VULN_SINTETICA = { advisories: { 1: { module_name: 'pacote-sintetico', severity: 'high',
+  url: 'https://github.com/advisories/GHSA-sintetica-0000-0000', title: 'vulnerabilidade alta de mutante' } } };
 const ISENCAO_FIXTURE = new Map([['pacote-sintetico', { adv: ['GHSA-fixture-approved'], motivo: '' }]]);
 if (mutante === 'advisory-nova') {
   /* Advisory fantasma num pacote isento no fixture: só DEP3 pode reprovar. */
-  relatorio = { vulnerabilities: { 'pacote-sintetico': { severity: 'high', fixAvailable: false,
-    via: [{ url: 'https://github.com/advisories/GHSA-fantasma-0000-0000', title: 'advisory que a isenção não conhece' }] } } };
+  relatorio = { advisories: { 2: { module_name: 'pacote-sintetico', severity: 'high',
+    url: 'https://github.com/advisories/GHSA-fantasma-0000-0000', title: 'advisory que a isenção não conhece' } } };
 } else if (mutante === 'sem-isencao' || mutante === 'isencao-vazia') {
   relatorio = VULN_SINTETICA;
 } else try {
-  relatorio = JSON.parse(execFileSync('npm', ['audit', '--omit=dev', '--json'], {
+  relatorio = JSON.parse(execFileSync('pnpm', ['audit', '--prod', '--json'], {
     encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 32 * 1024 * 1024,
   }));
 } catch (erro) {
-  /* `npm audit` sai != 0 QUANDO ACHA ALGO: a saída ainda é o JSON, e é ela que
-     interessa. Só é falha de verdade quando não veio JSON nenhum. */
-  try { relatorio = JSON.parse(erro.stdout || ''); } catch {
-    console.error('  \x1b[31m✗\x1b[0m DEP0 npm audit não devolveu JSON (rede?):', String(erro.message).split('\n')[0]);
-    process.exitCode = 1;
-    relatorio = null;
-  }
+  // Audit também sai != 0 quando encontra advisory; o JSON distingue isso de erro de execução.
+  try { relatorio = JSON.parse(erro.stdout || ''); } catch { relatorio = null; }
+}
+
+if (!relatorioValido(relatorio)) {
+  console.error('  \x1b[31m✗\x1b[0m DEP0 pnpm audit não devolveu um relatório válido (rede ou formato do registry)');
+  process.exitCode = 1;
+  relatorio = null;
 }
 
 if (relatorio) {
@@ -78,34 +78,30 @@ if (relatorio) {
     : mutante === 'isencao-vazia' ? new Map([['pacote-sintetico', { adv: [], motivo: '' }]])
     : mutante === 'advisory-nova' ? ISENCAO_FIXTURE : ISENTAS;
   const falhas = [];
-  const perdoadas = [];
-  for (const [nome, v] of Object.entries(relatorio.vulnerabilities || {})) {
-    if (!GRAVES.has(v.severity)) continue;
-    if (isentas.has(nome)) {
-      const esperadas = isentas.get(nome).adv;
-      const desconhecidas = assinaturas(v.via).filter((s) => !esperadas.some((a) => s.includes(a)));
-      if (desconhecidas.length) {
-        falhas.push(`DEP3 advisory NOVA em \`${nome}\` (isento de outra advisory) — ${desconhecidas[0].slice(0, 120)}`);
-        continue;
-      }
-      perdoadas.push(nome);
-      continue;
-    }
-    falhas.push(`DEP1 ${v.severity} em \`${nome}\` — fix: ${v.fixAvailable === true ? 'npm audit fix' : (v.fixAvailable ? `${v.fixAvailable.name}@${v.fixAvailable.version}${v.fixAvailable.isSemVerMajor ? ' (MAJOR)' : ''}` : 'nenhum')}`);
+  const perdoadas = new Set();
+  const correspondem = new Set();
+  for (const advisory of Object.values(relatorio.advisories)) {
+    const nome = advisory.module_name;
+    const id = assinatura(advisory);
+    const isencao = isentas.get(nome);
+    const isenta = isencao?.adv.some((trecho) => id.includes(trecho));
+    if (isenta) correspondem.add(nome);
+    if (!GRAVES.has(advisory.severity)) continue;
+    if (isenta) perdoadas.add(nome);
+    else if (isencao) falhas.push(`DEP3 advisory NOVA em \`${nome}\` (isento de outra advisory) — ${id.slice(0, 120)}`);
+    else falhas.push(`DEP1 ${advisory.severity} em \`${nome}\` — ${advisory.url || advisory.title || 'advisory sem URL'}`);
   }
-  /* Isenção que não corresponde a nada vira letra morta e some da revisão. */
   if (!mutante) {
     for (const nome of ISENTAS.keys()) {
-      if (!(relatorio.vulnerabilities || {})[nome]) falhas.push(`DEP2 isenção de \`${nome}\` não corresponde a nenhuma vulnerabilidade — tire da lista`);
+      if (!correspondem.has(nome)) falhas.push(`DEP2 isenção de \`${nome}\` não corresponde a nenhuma advisory — tire da lista`);
     }
   }
-
   for (const f of falhas) console.error(`  \x1b[31m✗\x1b[0m ${f}`);
   if (falhas.length) {
     console.error(`\x1b[31mDEPS ${falhas.length} VERMELHA(S)\x1b[0m${mutante ? ` (mutante=${mutante})` : ''}`);
     console.error('  Conserte, ou isente NOMINALMENTE em tools/eval/deps-check.mjs dizendo por que o risco não se realiza aqui.');
     process.exitCode = 1;
   } else {
-    console.log(`\x1b[32mDEPS verde: nenhuma vulnerabilidade alta fora da lista (${perdoadas.length} isenta[s])\x1b[0m`);
+    console.log(`\x1b[32mDEPS verde: nenhuma vulnerabilidade alta fora da lista (${perdoadas.size} isenta[s])\x1b[0m`);
   }
 }

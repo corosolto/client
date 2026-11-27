@@ -15,7 +15,7 @@ const EXPECTED = { 'ctf-obstruido': 'RV12', 'igreja-sem-oclusao': 'RV11', 'sem-c
 if (MUT && !EXPECTED[MUT]) throw Error('Mutante desconhecido');
 const OUT = process.env.ARTIFACT_DIR || `artifacts/sertao-astra/runtime${MUT ? `-${MUT}` : ''}`;
 mkdirSync(OUT, { recursive: true });
-const { chromium } = await import(pathToFileURL(`${execSync('npm root -g').toString().trim()}/playwright/index.mjs`).href);
+const { chromium } = await import('playwright')
 const browser = await chromium.launch({ executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--mute-audio'] });
 try {
  const page = await browser.newPage({ viewport: { width: 1536, height: 1024 } });

@@ -16,8 +16,8 @@ const SALVO = { map: 'praca_poderes', mapPinned: true, wpnMode: 'all', allyBots:
 const SO_PT = /\b(ESCOLHA A TRETA|FAVORITOS|NOVOS|Buscar mapa|MAPA ALEATÓRIO|SALA PRIVADA|Salas públicas|INIMIGOS|SEU TIME|ARMAS|PISTOLAS|FACA|DE BOA|INSANO|ESCALAÇÃO|Escalação|EDITAR|JOGAR|você|CAPTURA|MATA-MATA|VIRA-CASACA|TODOS|OFICIAIS|COMUNIDADE)\b/;
 const SO_EN = /\b(PICK YOUR FIGHT|FAVORITES|Search map|RANDOM MAP|PRIVATE ROOM|Public rooms|ENEMIES|YOUR TEAM|WEAPONS|PISTOLS|KNIFE|CHILL|INSANE|LINEUP|Lineup|EDIT|PLAY|you|CAPTURE|DEATHMATCH|TURNCOAT|ALL|OFFICIAL|COMMUNITY)\b/;
 
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

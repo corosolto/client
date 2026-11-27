@@ -52,8 +52,8 @@ const mockNoAr = (opcoes) => criarPasseMock({
   inicio: Math.min(Date.parse('2026-11-05T03:00:00Z'), Date.now() - 5 * DIA),
   fim: Math.max(Date.parse('2027-01-10T03:00:00Z'), Date.now() + 60 * DIA), ...opcoes,
 });
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const CHROME_MAC = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const chromeBin = process.env.CHROME_BIN || (existsSync(CHROME_MAC) ? CHROME_MAC : '');

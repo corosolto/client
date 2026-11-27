@@ -83,7 +83,7 @@ const NOMES_DO_NAVEGADOR = Object.values(ident).map((i) => i.nome);
 /* ---------- nó e site ---------- */
 const filhos = [];
 const portasMinhas = [];
-/* O astro dev se relança numa sessão própria, fora do grupo do npx: quem diz qual processo
+/* O astro dev se relança numa sessão própria, fora do grupo do pnpm: quem diz qual processo
    é o servidor é a porta. Só mata o que esta régua subiu (portasMinhas). */
 const pidsNaPorta = (porta) => {
   try { return [...execSync(`ss -ltnpH "sport = :${porta}"`).toString().matchAll(/pid=(\d+)/g)].map((m) => Number(m[1])); }
@@ -131,7 +131,7 @@ async function sobeSite() {
     }
   } catch (e) { if (/já serve outra árvore/.test(e.message)) throw e; }
   const log = createWriteStream(path.join(FIGURAS, 'astro.log'));
-  const p = spawn('npx', ['astro', 'dev', '--port', String(PORTA)], { cwd: RAIZ, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  const p = spawn('pnpm', ['exec', 'astro', 'dev', '--port', String(PORTA)], { cwd: RAIZ, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
   p.stdout.pipe(log); p.stderr.pipe(log);
   filhos.push(p);
   portasMinhas.push(PORTA);
@@ -403,9 +403,7 @@ try {
   cobra(Array.isArray(h.features) && h.features.includes('chat'), `CE0 · /health anuncia chat (features ${JSON.stringify(h.features)})`);
   await sobeSite();
 
-  let pw;
-  try { pw = await import('playwright'); }
-  catch { pw = await import(pathToFileURL(`${execSync('npm root -g').toString().trim()}/playwright/index.js`).href); }
+  const pw = await import('playwright');
   const chromium = pw.chromium || pw.default?.chromium;
   const lancar = () => chromium.launch({
     headless: !VISIVEL,

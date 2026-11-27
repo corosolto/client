@@ -127,8 +127,8 @@ if (ONLY && !CHECKPOINT_ONLY && previousFingerprint?.pass !== inputFingerprint.p
   throw Error('A passada mudou: regerar um mapa não pode reassinar os demais. Regere todos ou use --checkpoint-only para diagnosticar.');
 let browser;
 if (!EGO_SPACE) {
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 browser = await chromium.launch({
   ...(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : { channel: 'chrome' }), headless: true,

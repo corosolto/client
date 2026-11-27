@@ -13,8 +13,8 @@ const VIEWPORTS = [[1536, 1024], [1920, 1080], [1280, 720], [844, 390]];
 /* Tamanho do VITÓRIA: 168 px no artboard 1536×1024 (06-resultado.html) e 72 px no 844×390 (22-mresultado.html). */
 const TITULO = { desktop: 168, mobile: 72 };
 const FACES = { Anton: [400], 'Barlow Semi Condensed': [500, 600, 700, 800], 'JetBrains Mono': [500, 700, 800] };
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

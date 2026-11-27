@@ -54,7 +54,7 @@ const REGRAS = [
   ['vm', /^(?:tools\/viewmodels\/|tools\/eval\/(?:lib\/vm-enquadramento|vm|tp-|authored|weapon|recoil|ballistics|firing|character|meshopt|glb-peso|normal-only|skin-profile|death-camera|ads1p|posto|preview-grip|knife-skin)|tools\/fabrica\/fabrica-candidates(?:\.json)?$|public\/models\/viewmodels\/coro(?:\/|$)|public\/js\/(?:vm|authoredvm|fparms|fpsrig|meleevm|recoil|weapons|weapon|glove|handik|look))/],
 ];
 
-const transversal = (arquivo) => /^(?:package-lock\.json|yarn\.lock|\.github\/|\.githooks\/|tools\/eval\/(?:runner|suites|selecao-pre-push)|tests\/eval-suites\.test\.mjs|public\/js\/(?:(?:game|main)\.js|(?:boot|net)(?:[^/]*\.js|\/)))/.test(arquivo);
+const transversal = (arquivo) => /^(?:package-lock\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|\.npmrc|yarn\.lock|\.github\/|\.githooks\/|tools\/eval\/(?:runner|suites|selecao-pre-push)|tests\/eval-suites\.test\.mjs|public\/js\/(?:(?:game|main)\.js|(?:boot|net)(?:[^/]*\.js|\/)))/.test(arquivo);
 
 function fallback(motivo, regras = []) {
   return {
@@ -63,7 +63,7 @@ function fallback(motivo, regras = []) {
     regras,
     suites: ['deploy'],
     passos: [...SUITES.deploy],
-    comando: ['npm', ['run', '--silent', 'check:deploy']],
+    comando: ['pnpm', ['run', '--silent', 'check:deploy']],
   };
 }
 
@@ -111,8 +111,8 @@ function selecionarPackage(par) {
       || (Object.hasOwn(scriptsAntes, nome) && typeof scriptsAntes[nome] !== 'string')) {
       return { erro: `script inválido exige cobertura completa: ${nome}` };
     }
-    if (/\bnpm\s+run\b|tools\/eval\/runner\.mjs/.test(scriptsAntes[nome])
-      || /\bnpm\s+run\b|tools\/eval\/runner\.mjs/.test(scriptsDepois[nome])) {
+    if (/\b(?:npm|pnpm)\s+run\b|tools\/eval\/runner\.mjs/.test(scriptsAntes[nome])
+      || /\b(?:npm|pnpm)\s+run\b|tools\/eval\/runner\.mjs/.test(scriptsDepois[nome])) {
       return { erro: `agregador alterado exige cobertura completa: ${nome}` };
     }
     passos.push(nome);

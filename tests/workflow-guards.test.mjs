@@ -359,7 +359,7 @@ test('pre-push lockf fallback waits for the current gate owner', async (t) => {
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const bin = join(dir, 'bin');
   mkdirSync(bin);
-  const commands = ['bash', 'cat', 'cut', 'date', 'env', 'grep', 'head', 'mkdir', 'node', 'ps', 'rm', 'rmdir', 'sleep', 'stat', 'tail', 'tr'];
+  const commands = ['bash', 'cat', 'cut', 'date', 'env', 'grep', 'head', 'mkdir', 'mktemp', 'node', 'ps', 'rm', 'rmdir', 'sleep', 'stat', 'tail', 'tr'];
   for (const command of commands) {
     const found = spawnSync('/bin/bash', ['-lc', `command -v ${command}`], { encoding: 'utf8' }).stdout.trim();
     assert.ok(found, `missing fixture command ${command}`);
@@ -375,7 +375,7 @@ if [[ "$1" == rev-parse && "$2" == --show-toplevel ]]; then pwd; exit 0; fi
 if [[ "$1" == rev-list ]]; then exit 0; fi
 exit 1
 `);
-  executable('npm', `#!/bin/bash
+  executable('pnpm', `#!/bin/bash
 echo "$LOCK_RUN_ID" >> "$LOCK_TRACE"
 sleep 0.2
 `);
@@ -396,7 +396,7 @@ echo "$LOCK_RUN_ID" > "$LOCK_ACQUIRED"
 trap 'rmdir "$lock"' EXIT
 "$@"
 `);
-  const trace = join(dir, 'npm.log');
+  const trace = join(dir, 'pnpm.log');
   const suffix = `${process.pid}-${Date.now()}`;
   const acquired = join(dir, 'acquired');
   const runHook = (id) => new Promise((resolve) => {
@@ -404,6 +404,7 @@ trap 'rmdir "$lock"' EXIT
       cwd: dir,
       env: {
         PATH: bin,
+        TMPDIR: dir,
         LOCK_ACQUIRED: acquired,
         LOCK_RUN_ID: id,
         LOCK_TRACE: trace,

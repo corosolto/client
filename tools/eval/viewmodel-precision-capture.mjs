@@ -10,8 +10,8 @@ import { pathToFileURL } from 'node:url';
 
 const OUT = path.resolve(process.argv[2] || 'artifacts/viewmodels/integration/precision/captures');
 const BASE = process.env.BASE || 'http://127.0.0.1:4401';
-const gRoot = execSync('npm root -g').toString().trim();
-const playwright = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const playwright = await import('playwright')
 const chromium = playwright.chromium || playwright.default?.chromium;
 const dimensions = [[1440, 960], [1440, 810]];
 const records = [];

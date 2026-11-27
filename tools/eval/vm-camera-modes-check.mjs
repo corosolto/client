@@ -15,8 +15,8 @@ const base = `http://127.0.0.1:${port}`;
 const captureDir = path.join(ROOT, 'artifacts/vm-camera');
 fs.mkdirSync(captureDir, { recursive: true });
 
-const globalRoot = (await import('node:child_process')).execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim();
-const playwright = await import(pathToFileURL(path.join(globalRoot, 'playwright/index.js')).href);
+
+const playwright = await import('playwright')
 const chromium = playwright.chromium || playwright.default?.chromium;
 const server = spawn(process.execPath, ['tools/eval/serve.mjs', port], { cwd: ROOT, stdio: 'ignore' });
 let browser;

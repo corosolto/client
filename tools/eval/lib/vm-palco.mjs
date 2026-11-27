@@ -13,7 +13,7 @@
    ?vmauthored=1&vmqa=precision, relógio do controlador segurado e avançado em
    passos de 1/60 s — quadro determinístico sem pular a lógica real.
    ============================================================================ */
-import { execFileSync, execSync, spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -24,9 +24,7 @@ import { pathToFileURL } from 'node:url';
 export const ASPECTOS = { '3x2': [1440, 960], '16x9': [1440, 810] };
 
 export async function abrirNavegador() {
-  const gRoot = execSync('npm root -g').toString().trim();
-  const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-  const chromium = pw.chromium || pw.default?.chromium;
+  const { chromium } = await import('playwright');
   return chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 }
 

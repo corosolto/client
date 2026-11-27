@@ -12,14 +12,16 @@ reverter. O porquê de cada sonda está no cabeçalho do arquivo dela.
 ## 1. Diagnosticar
 
 ```bash
-npm run ops:diag                 # produção (www.csbrasil.online) + árvore local, sem browser
-npm run ops:diag:local           # só a árvore: versão, index.astro, grafo de módulos, assets, partida sintética
-npm run ops:diag -- --browser    # + Chromium: o main.js AVALIA? erros, recursos falhos, snapshot do ops.js
-npm run ops:diag -- --browser --partida   # + entra numa partida (?debug=1&auto=E) e amostra FPS
-npm run ops:diag -- --remoto --base=https://<preview>.vercel.app   # um preview em vez da produção
-npm run ops:diag -- --json       # saída para máquina
-npm run ops:aquecer              # depois de um deploy: aquece o edge (o prod-watch já faz no deployment_status)
+pnpm run ops:diag                # produção (www.csbrasil.online) + árvore local, sem browser
+pnpm run ops:diag:local          # só a árvore: versão, index.astro, grafo de módulos, assets, partida sintética
+pnpm run ops:diag --browser      # + Chromium: o main.js AVALIA? erros, recursos falhos, snapshot do ops.js
+pnpm run ops:diag --browser --partida    # + entra numa partida (?debug=1&auto=E) e amostra FPS
+pnpm run ops:diag --remoto --base=https://<preview>.vercel.app
+pnpm run ops:diag --json         # saída para máquina
+pnpm run ops:aquecer             # depois de um deploy: aquece o edge
 ```
+
+Para a sonda de navegador, instale o Chromium da versão local com `pnpm exec playwright install chromium`.
 
 Navegador: no macOS com Chrome a sonda liga a GPU sozinha (medido em 06/09/2026: SwiftShader
 dá `main_ready` 21 s e FPS p50 3; GPU, 2,5 s e 108). `--gpu`/`--sem-gpu` mandam; no CI
@@ -36,7 +38,7 @@ de GET/HEAD/OPTIONS recebe 204 sem sair e `sendBeacon` é substituído; o que a 
 mandar aparece como `escritas bloqueadas` na linha do navegador. A sonda nunca aparece como
 jogador no painel nem abre issue crash-auto.
 
-Atrás de proxy corporativo: `NODE_USE_ENV_PROXY=1 npm run ops:diag` (o `fetch` do Node não
+Atrás de proxy corporativo: `NODE_USE_ENV_PROXY=1 pnpm run ops:diag` (o `fetch` do Node não
 lê `HTTPS_PROXY` sozinho).
 
 ### O que cada sonda mede
@@ -99,9 +101,9 @@ Quando o quality gate está verde e o dono diz que está errado, o defeito é do
 
 **Site (Cloudflare Workers).** Produção é o Worker `csb-prod`. Reverter = no painel da
 Cloudflare, Workers & Pages → `csb-prod` → Deployments, promover a versão anterior; pela CLI,
-`npx wrangler rollback --config wrangler.prod.toml --message "rollback <motivo>"`. Depois,
-purgar `/js/*`, `/style.css` e `/models/skins/manifest.json` e rodar `npm run prod:coherence`
-e `npm run ops:diag -- --remoto`. O último deploy da Vercel fica congelado durante os 30 dias
+`pnpm exec wrangler rollback --config wrangler.prod.toml --message "rollback <motivo>"`. Depois,
+purgar `/js/*`, `/style.css` e `/models/skins/manifest.json` e rodar `pnpm run prod:coherence`
+e `pnpm run ops:diag --remoto`. O último deploy da Vercel fica congelado durante os 30 dias
 de transição, mas não é caminho de publicação.
 
 **Edge (Cloudflare).** Purge corrige cache, não código: use-o antes de rollback quando só

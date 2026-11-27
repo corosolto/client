@@ -170,7 +170,7 @@ const validaGerados = () => {
       if (!condicao?.startsWith('if:')) continue;
       for (let j = i + 2; j < linhas.length; j++) {
         const atual = linhas[j].trim();
-        if (atual === `run: npm run ${script}`) return condicao;
+        if (atual === `run: pnpm run ${script}`) return condicao;
         if (atual.startsWith('run:') || atual.startsWith('- name:')) break;
       }
     }
@@ -506,11 +506,11 @@ if (mutante) {
     tremRelease = validaTrem();
   }
   else if (mutante === 'gerado-trava-trem') {
-    workflowCi = workflowCi.replace(`${SO_PR}\n        run: npm run docs:check\n`, 'run: npm run docs:check\n');
+    workflowCi = workflowCi.replace(`${SO_PR}\n        run: pnpm run docs:check\n`, 'run: pnpm run docs:check\n');
     geradosNoTrem = validaGerados();
   }
   else if (mutante === 'gerado-fora-do-pr') {
-    workflowCi = workflowCi.replace(`${SO_PR}\n        run: npm run arch:check\n`, "if: startsWith(github.event.head_commit.message, 'chore(release):')\n        run: npm run arch:check\n");
+    workflowCi = workflowCi.replace(`${SO_PR}\n        run: pnpm run arch:check\n`, "if: startsWith(github.event.head_commit.message, 'chore(release):')\n        run: pnpm run arch:check\n");
     geradosNoTrem = validaGerados();
   }
   else if (mutante === 'autoria-trava-trem') {
@@ -522,7 +522,7 @@ if (mutante) {
     geradosNoTrem = validaGerados();
   }
   else if (mutante === 'release-confere-so-estrutura') {
-    workflowCi = workflowCi.replace('run: npm run docs:check:release\n', 'run: npm run docs:check\n');
+    workflowCi = workflowCi.replace('run: pnpm run docs:check:release\n', 'run: pnpm run docs:check\n');
     geradosNoTrem = validaGerados();
   }
   else if (mutante === 'release-sem-modo') {

@@ -19,7 +19,7 @@
  * POR QUE PLAYWRIGHT E NÃO `canvas`
  *   Não existe a lib `canvas` neste node. O padrão da casa para "preciso de um canvas
  *   de verdade" é subir o Chrome pelo playwright global — igual `tools/eval/pixo-preview.mjs`
- *   e `tools/eval/g2-capture.mjs` (import de `npm root -g`, `executablePath` do Chrome).
+ *   e `tools/eval/g2-capture.mjs` (import local resolvido pelo lock, `executablePath` do Chrome).
  *
  * REGRA DA CASA
  *   Recorte mal feito não dá erro — dá franja branca em volta, e franja branca na parede
@@ -216,8 +216,8 @@ for (const k of INTEIRO) if (!todos.has(k)) console.warn(`[decals] AVISO INTEIRO
 console.log(`[decals] ${fontes.length} fontes · ${Object.keys(EXCLUIDOS).length} fora por procedência`
   + ` · ${Object.keys(RUINS).length} fora por qualidade`);
 
-const gRoot = execSync('npm root -g', { encoding: 'utf8' }).trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 const browser = await chromium.launch({

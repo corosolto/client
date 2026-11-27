@@ -51,12 +51,14 @@ jobs:
         with:
           node-version: 22
 
-      # tools/ops é node puro; só o navegador precisa do Playwright (global, como o eval:boot
-      # e o portao-browser: o `npm root -g` é o caminho que browser.mjs procura).
+      # tools/ops é node puro; só o navegador precisa do Playwright. Este job não instala
+      # as dependências do root, então mantém a instalação global explícita (npm i -g) —
+      # independência delimitada, não a resolução local do node_modules que o portão usa.
       - name: Playwright global (mesma versão do devDependency) + Chromium
         run: |
           npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
           npx playwright install --with-deps chromium
+          echo "PLAYWRIGHT_MODULE=$(npm root -g)/playwright/index.js" >> "$GITHUB_ENV"
 
       - name: diagnose (produção + árvore + navegador + partida)
         id: diag

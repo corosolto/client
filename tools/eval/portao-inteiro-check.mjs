@@ -21,10 +21,10 @@
          `wflocal`, `wftimeout`, `wfconcurrency`, `deploygate`, `autofix`, `mutcega`,
          `portaointeiro`, `privacy` e `noescolha` só existiam no `check:fast`, que roda
          na máquina de quem lembra de rodar. Um PR que quebrasse workflow passava no CI
-         verde. Somam menos de 2 s em node puro, sem `npm ci`.
+         verde. Somam menos de 2 s em node puro, sem instalar nada.
 
    PI4 · independentes rodam após falha; erro fica vermelho, cancelamento e setup
-         incompleto impedem execução (#1188). O produtor instala com npm ci e cada
+         incompleto impedem execução (#1188). O produtor instala com pnpm install --frozen-lockfile e cada
          consumidor restaura o ambiente pela action composta exata. Mutantes:
          sucesso-implicito, always, erro-ignorado, setup e sem-setup-compartilhado.
 
@@ -129,7 +129,7 @@ if (MUT === 'regua-fora-do-pr-fast') ci = ci.replace(/ eval:wfsecret\b/g, '');
 const comandosCi = ci.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
 for (const regua of REGUAS_PR_FAST) {
   if (!scripts[regua]) { falhas.push(`PI3 \`${regua}\` não está definido em scripts`); continue; }
-  const citada = new RegExp(`(?:npm run|runner\\.mjs[^\\n]*)\\s${regua.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$)`, 'm');
+  const citada = new RegExp(`(?:pnpm run|npm run|runner\\.mjs[^\\n]*)\\s${regua.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$)`, 'm');
   if (!citada.test(comandosCi)) falhas.push(`PI3 \`${regua}\` não roda no pr-fast (ci.yml) — régua de workflow que só o check:fast roda não segura PR nenhum`);
 }
 
@@ -185,7 +185,7 @@ const COMANDOS_VISUAIS_BASE = Object.freeze([
   'eval:piscina-graffiti-batch',
 ]);
 const SETUP_COMPARTILHADO = './.github/actions/setup-ci-environment';
-const ehNpmCi = (p) => p.run?.trim() === 'npm ci';
+const ehNpmCi = (p) => ['npm ci', 'pnpm install --frozen-lockfile'].includes(String(p.run || '').trim());
 const ehSetupCompartilhado = (p) => p.uses === SETUP_COMPARTILHADO;
 function blocoDoJob(texto, job) {
   const bloco = texto.match(new RegExp(`^  ${job}:\\n([\\s\\S]*?)(?=^  [\\w-]+:|$(?![\\s\\S]))`, 'm'))?.[1];
@@ -249,7 +249,7 @@ try {
   if (!TODOS_JOBS.length) throw new Error('PI4 seção jobs: ausente ou sem jobs reais no ci.yml');
   const passosGlobais = Object.fromEntries(TODOS_JOBS.map((j) => [j, passosDoJob(ci, j)]));
   const npmCiProdutor = (passosGlobais.setup || []).filter(ehNpmCi);
-  if (npmCiProdutor.length !== 1) falhas.push(`PI4 setup: produtor precisa executar npm ci exatamente uma vez; encontrados ${npmCiProdutor.length}`);
+  if (npmCiProdutor.length !== 1) falhas.push(`PI4 setup: produtor precisa executar a instalação congelada (pnpm install --frozen-lockfile) exatamente uma vez; encontrados ${npmCiProdutor.length}`);
   const consumidoresSetup = TODOS_JOBS.filter((job) => /^    needs:\s*setup\s*$/m.test(blocoDoJob(ci, job)));
   if (!consumidoresSetup.length) falhas.push('PI4 setup: nenhum consumidor direto do ambiente compartilhado encontrado');
   for (const job of consumidoresSetup) {
@@ -309,7 +309,7 @@ try {
       }
       return i;
     });
-    const deps = unico((p) => ehNpmCi(p) || ehSetupCompartilhado(p), 'npm ci ou setup compartilhado');
+    const deps = unico((p) => ehNpmCi(p) || ehSetupCompartilhado(p), 'instalação congelada ou setup compartilhado');
     if (!passos[deps].id) falhas.push(`PI4 ${jobDoGrupo}: setup de dependências precisa de id para guardar setup concluído`);
     const ids = passos.map((p) => p.id).filter(Boolean);
     if (new Set(ids).size !== ids.length) throw new Error(`PI4 ${jobDoGrupo}: ids de steps duplicados`);

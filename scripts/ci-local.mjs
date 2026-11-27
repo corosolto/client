@@ -1,27 +1,75 @@
 #!/usr/bin/env node
 /* Ambiente do CI antes do veredito: exit 78 (EX_CONFIG) significa "não mediu".
-   Uso: node scripts/ci-local.mjs [--setup|--setup-system|--diagnose|--selftest] [script-npm] */
+   Uso: node scripts/ci-local.mjs [--setup|--setup-system|--diagnose|--selftest] [script-pnpm] */
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { accessSync, constants, lstatSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { accessSync, constants, existsSync, lstatSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const SAIDA_AMBIENTE = 78;
-const USO = 'Uso: node scripts/ci-local.mjs [--setup|--setup-system|--diagnose|--selftest] [script-npm]';
+const USO = 'Uso: node scripts/ci-local.mjs [--setup|--setup-system|--diagnose|--selftest] [script-pnpm]';
 const NODE_CI = 22;
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-// Várias réguas legadas consultam `npm root -g`; o prefixo privado as mantém no
-// Playwright do lock sem exigir escrita no npm global do sistema.
-const PREFIXO_NPM = path.join(RAIZ, 'node_modules', '.ci-local-prefix');
-const ROOT_GLOBAL_PRIVADO = path.join(PREFIXO_NPM, ...(process.platform === 'win32' ? ['node_modules'] : ['lib', 'node_modules']));
 process.chdir(RAIZ);
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
-const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'));
-const NPM_CI = pkg.packageManager?.split('@')[1] || '';
-const PW_CI = lock.packages?.['node_modules/playwright']?.version || '';
-if (!NPM_CI || !PW_CI) throw new Error('packageManager npm e Playwright do lock são obrigatórios');
+const TEXTO_LOCK = readFileSync('pnpm-lock.yaml', 'utf8');
+const PNPM_CI = pkg.packageManager?.split('@')[1] || '';
+const PW_CI = versaoImportador('playwright');
+if (!PNPM_CI || !PW_CI) throw new Error('packageManager pnpm e Playwright do lock são obrigatórios');
+
+/* pnpm-lock.yaml v9: o bloco `importers:` declara, por dependência direta da raiz,
+   `specifier` e a `version` resolvida (com sufixo de peers que descartamos). As
+   seções `packages:`/`snapshots:` listam todo grafo permitido como `nome@versão`.
+   É contra esse inventário que a árvore instalada é conferida — sem reparsed YAML
+   além do necessário. */
+function blocoImportadores(texto = TEXTO_LOCK) {
+  const linhas = texto.split('\n');
+  const ini = linhas.indexOf('importers:');
+  const fim = linhas.findIndex((l) => l === 'packages:' || l === 'snapshots:');
+  if (ini === -1 || fim === -1 || fim < ini) throw new Error('pnpm-lock.yaml sem bloco importers');
+  return linhas.slice(ini + 1, fim);
+}
+
+function versaoImportador(nome, linhas = blocoImportadores()) {
+  for (let i = 0; i < linhas.length; i++) {
+    const casamento = /^ {6}(?:'([^']+)'|([^':]+)):$/.exec(linhas[i]);
+    if (!casamento || (casamento[1] ?? casamento[2]) !== nome) continue;
+    const versao = linhas.slice(i + 1, i + 6)
+      .map((l) => /^ {8}version: (.+)$/.exec(l)?.[1])
+      .find(Boolean);
+    return versao ? versao.split('(')[0] : '';
+  }
+  return '';
+}
+
+function importadores(linhas = blocoImportadores()) {
+  const nomes = {};
+  for (let i = 0; i < linhas.length; i++) {
+    const casamento = /^ {6}(?:'([^']+)'|([^':]+)):$/.exec(linhas[i]);
+    const nome = casamento && (casamento[1] ?? casamento[2]);
+    if (!nome) continue;
+    const versao = linhas.slice(i + 1, i + 6)
+      .map((l) => /^ {8}version: (.+)$/.exec(l)?.[1])
+      .find(Boolean);
+    if (versao) nomes[nome] = versao.split('(')[0];
+  }
+  return nomes;
+}
+
+function chavesSnapshots(texto = TEXTO_LOCK) {
+  const chaves = new Set();
+  let dentro = false;
+  for (const linha of texto.split('\n')) {
+    if (!linha.trim()) continue;
+    if (linha[0] !== ' ') { dentro = linha === 'packages:' || linha === 'snapshots:'; continue; }
+    if (!dentro) continue;
+    const casamento = /^ {2}(?:'([^']+)'|([^'\s:]+)):$/.exec(linha);
+    if (casamento) chaves.add(casamento[1] ?? casamento[2]);
+  }
+  return chaves;
+}
 
 function bibliotecasAusentes(texto) {
   return [...new Set(String(texto).split('\n')
@@ -34,7 +82,7 @@ function erroNativoNavegador(texto) {
 }
 
 function ambienteFilho(base, chromeBin) {
-  return { ...base, CHROME_BIN: chromeBin, NPM_CONFIG_PREFIX: PREFIXO_NPM };
+  return { ...base, CHROME_BIN: chromeBin };
 }
 
 function mesmoArquivo(a, b) {
@@ -66,10 +114,20 @@ function versaoLocal(nome) {
   return versaoPacote(path.join('node_modules', nome));
 }
 
-const NPM_LS_ARGS = [
-  'ls', '--all', '--json', '--long', '--offline',
-  '--include=prod', '--include=dev', '--include=optional', '--include=peer',
-];
+const PNPM_LS_ARGS = ['ls', '--json', '--depth', 'Infinity'];
+
+function falhasLockOculto(raiz = RAIZ) {
+  const oculto = path.join(raiz, 'node_modules', '.pnpm', 'lock.yaml');
+  const congelado = path.join(raiz, 'pnpm-lock.yaml');
+  if (!existsSync(congelado)) return ['pnpm-lock.yaml ausente — rode `node scripts/ci-local.mjs --setup`'];
+  if (!existsSync(oculto)) {
+    return ['node_modules/.pnpm/lock.yaml ausente — a árvore instalada não registra o estado do lock; rode `node scripts/ci-local.mjs --setup`'];
+  }
+  if (!readFileSync(oculto).equals(readFileSync(congelado))) {
+    return ['node_modules/.pnpm/lock.yaml diverge de pnpm-lock.yaml — a árvore instalada não corresponde ao lock congelado; rode `node scripts/ci-local.mjs --setup`'];
+  }
+  return [];
+}
 
 function inspecionarShimThree(raiz = RAIZ) {
   try {
@@ -89,94 +147,106 @@ function inspecionarShimThree(raiz = RAIZ) {
   } catch { return ''; }
 }
 
-function artefatoThree(local, item, destinoShim) {
-  if (item.version !== '0.160.0' || !destinoShim) return false;
-  if (path.dirname(destinoShim) !== path.join(RAIZ, 'node_modules') || !path.basename(destinoShim).startsWith('.cs-three-node-')) return false;
-  return local === 'node_modules/three' || path.resolve(item.path) === destinoShim;
-}
-
-function falhasArvoreDependencias(r, destinoShim) {
+/* Confere a árvore instalada (pnpm ls --json) contra o inventário derivado do
+   pnpm-lock.yaml: todo pacote instalado precisa existir como snapshot
+   `nome@versão` do lock, toda dependência direta precisa estar presente na
+   versão exata do importador e nada além delas (exceto o shim vendido do Three)
+   pode estar na raiz. Falha fechada: qualquer divergência reprova. */
+function falhasEstadoInstalado(ls, chaves, destinoShim) {
+  if (Array.isArray(ls) && ls.length === 1) ls = ls[0];
+  const registro = (item) => item && typeof item === 'object' && !Array.isArray(item);
+  const grupos = ['dependencies', 'devDependencies', 'optionalDependencies'];
+  if (!registro(ls) || grupos.some((g) => ls[g] !== undefined && !registro(ls[g]))) {
+    return ['pnpm ls não produziu a árvore completa de dependências'];
+  }
   const falhas = [];
-  const extraneousPermitidos = new Set();
-  if (r.error) falhas.push(`npm ls não executou: ${r.error.message}`);
-
-  let arvore;
-  try { arvore = JSON.parse(r.stdout || ''); }
-  catch {
-    const detalhe = String(r.stderr || '').trim().slice(0, 800);
-    falhas.push(`npm ls não produziu JSON válido${detalhe ? `: ${detalhe}` : ''}`);
-    return falhas;
-  }
-  if (!arvore || typeof arvore !== 'object' || Array.isArray(arvore)) {
-    falhas.push('npm ls produziu uma árvore JSON inválida');
-    return falhas;
-  }
-  if (arvore.problems !== undefined && !Array.isArray(arvore.problems)) {
-    falhas.push('npm ls produziu uma lista de problemas inválida');
-  }
-  if (!arvore.dependencies || typeof arvore.dependencies !== 'object' || Array.isArray(arvore.dependencies)) {
-    falhas.push('npm ls não produziu a árvore completa de dependências');
-    return [...new Set(falhas)];
-  }
-  if (r.status !== 0 && (!Array.isArray(arvore.problems) || arvore.problems.length === 0)) {
-    falhas.push(`npm ls terminou com status ${r.status ?? 'desconhecido'} sem diagnosticar o problema`);
-  }
-
-  let destinoThree = destinoShim || '';
-  if (destinoShim === undefined) destinoThree = inspecionarShimThree();
-  function percorrer(dependencias) {
+  const raiz = { ...ls.dependencies, ...ls.devDependencies, ...ls.optionalDependencies };
+  const chavesBase = new Set([...chaves].map((k) => k.split('(')[0]));
+  const aceitarShim = destinoShim === undefined ? inspecionarShimThree() : destinoShim;
+  const esperados = importadores();
+  function percorrer(dependencias, topo = false) {
     for (const [nome, item] of Object.entries(dependencias)) {
+      if (topo && nome === 'three' && aceitarShim) continue;
       if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        falhas.push(`npm ls produziu um registro inválido para ${nome}`);
+        falhas.push(`pnpm ls produziu um registro inválido para ${nome}`);
         continue;
       }
-      // Dependência opcional ausente aparece como um objeto vazio.
-      if (Object.keys(item).length === 0) continue;
-      if (item.missing) falhas.push(`dependência ausente: ${nome}`);
-      if (item.invalid) falhas.push(`dependência inválida: ${nome} (${item.invalid})`);
-      if (typeof item.version !== 'string' || !item.version || typeof item.path !== 'string' || !path.isAbsolute(item.path)) {
-        if (!item.missing) falhas.push(`npm ls não informou versão e caminho válidos para ${nome}`);
-        if (item.extraneous) falhas.push(`dependência não declarada (extraneous): ${nome}`);
-      } else {
-        const local = path.relative(RAIZ, item.path).split(path.sep).join('/');
-        const travado = lock.packages?.[local];
-        const opcionalTravado = travado?.optional === true && travado.version === item.version;
-        const runtimeThree = artefatoThree(local, item, destinoThree);
-        const extraneousAceito = item.extraneous && (opcionalTravado || runtimeThree);
-        if (item.extraneous && !extraneousAceito) falhas.push(`dependência não declarada (extraneous): ${nome}`);
-        if (extraneousAceito) extraneousPermitidos.add(item.path);
-        if (!travado && !extraneousAceito) {
-          falhas.push(`${nome}@${item.version} instalado em ${local} não consta no package-lock`);
-        } else if (travado && travado.version !== item.version) {
-          falhas.push(`${local}: instalado ${item.version}, package-lock exige ${travado.version || 'sem versão'}`);
-        }
+      if (typeof item.version !== 'string' || !item.version) {
+        falhas.push(`pnpm ls não informou versão válida para ${nome}`);
+        continue;
       }
+      const chave = `${nome}@${item.version}`;
+      if (!chavesBase.has(chave)) falhas.push(`${chave} instalado não consta no pnpm-lock.yaml`);
       if (item.dependencies !== undefined) {
         if (!item.dependencies || typeof item.dependencies !== 'object' || Array.isArray(item.dependencies)) {
-          falhas.push(`npm ls produziu dependências filhas inválidas para ${nome}`);
+          falhas.push(`pnpm ls produziu dependências filhas inválidas para ${nome}`);
         } else {
           percorrer(item.dependencies);
         }
       }
     }
   }
-  percorrer(arvore.dependencies);
-  for (const problema of arvore.problems || []) {
-    const permitido = typeof problema === 'string' && problema.startsWith('extraneous:')
-      && [...extraneousPermitidos].some((caminho) => problema.endsWith(` ${caminho}`));
-    if (!permitido) falhas.push(`npm: ${problema}`);
+  percorrer(raiz, true);
+  for (const [nome, versao] of Object.entries(esperados)) {
+    if (!Object.hasOwn(raiz, nome)) {
+      falhas.push(`dependência ausente: ${nome}`);
+    } else if (raiz[nome].version !== versao) {
+      falhas.push(`${nome}: instalado ${raiz[nome].version}, pnpm-lock.yaml exige ${versao}`);
+    }
+  }
+  for (const nome of Object.keys(raiz)) {
+    if (esperados[nome] === undefined && !(nome === 'three' && aceitarShim)) {
+      falhas.push(`dependência não declarada (extraneous): ${nome}`);
+    }
   }
   return [...new Set(falhas)];
 }
 
+function falhasModulosDiretos(raiz = RAIZ) {
+  const modules = path.join(raiz, 'node_modules');
+  const esperados = importadores();
+  const falhas = [];
+  if (!existsSync(modules)) return ['node_modules ausente'];
+  for (const nome of Object.keys(esperados)) {
+    const instalado = versaoPacote(path.join(modules, nome));
+    if (instalado !== esperados[nome]) falhas.push(`${nome}: link local ausente ou versão diferente do lock`);
+  }
+  for (const entrada of readdirSync(modules)) {
+    if (entrada.startsWith('.')) continue;
+    if (entrada === 'three' && inspecionarShimThree(raiz)) continue;
+    const nomes = entrada.startsWith('@') ? readdirSync(path.join(modules, entrada)).map((nome) => `${entrada}/${nome}`) : [entrada];
+    for (const nome of nomes) {
+      if (!Object.hasOwn(esperados, nome)) falhas.push(`dependência não declarada (extraneous): ${nome}`);
+    }
+  }
+  return falhas;
+}
+
 function validarDependencias(problemas) {
-  const falhas = falhasArvoreDependencias(captura('npm', NPM_LS_ARGS));
+  const falhas = [...falhasLockOculto()];
+  if (!falhas.length) {
+    const r = captura('pnpm', PNPM_LS_ARGS);
+    if (r.error) {
+      falhas.push(`pnpm ls não executou: ${r.error.message}`);
+    } else if (r.status !== 0) {
+      const detalhe = String(r.stderr || '').trim().slice(0, 800);
+      falhas.push(`pnpm ls terminou com status ${r.status}${detalhe ? `: ${detalhe}` : ''}`);
+    } else {
+      let arvore;
+      try { arvore = JSON.parse(r.stdout || ''); }
+      catch {
+        falhas.push(`pnpm ls não produziu JSON válido${String(r.stderr || '').trim() ? `: ${String(r.stderr).trim().slice(0, 300)}` : ''}`);
+      }
+      if (arvore) falhas.push(...falhasEstadoInstalado(arvore, chavesSnapshots()));
+      falhas.push(...falhasModulosDiretos());
+    }
+  }
   const depsOk = falhas.length === 0;
-  console.log(`  ${depsOk ? '✓' : '✗'} árvore completa de dependências conferida com package-lock (offline)`);
+  console.log(`  ${depsOk ? '✓' : '✗'} árvore instalada conferida com pnpm-lock.yaml (grafo e versões derivados do lock)`);
   if (!depsOk) {
     for (const falha of falhas.slice(0, 8)) console.error(`    ${falha}`);
     if (falhas.length > 8) console.error(`    … e mais ${falhas.length - 8} problema(s) de dependências`);
-    problemas.push('dependências ausentes, inválidas ou divergentes do package-lock; rode `node scripts/ci-local.mjs --setup`');
+    problemas.push('dependências ausentes, inválidas ou divergentes do pnpm-lock.yaml; rode `node scripts/ci-local.mjs --setup`');
   }
   return depsOk;
 }
@@ -185,11 +255,11 @@ function validarRuntime(problemas) {
   const nodeOk = process.versions.node.split('.')[0] === String(NODE_CI);
   console.log(`  ${nodeOk ? '✓' : '✗'} Node ${process.versions.node} (CI: ${NODE_CI}.x)`);
   if (!nodeOk) problemas.push(`Node ${NODE_CI} é obrigatório; abra o Dev Container ou instale a versão do CI`);
-  const r = captura('npm', ['--version']);
-  const npm = r.status === 0 ? r.stdout.trim() : '';
-  const npmOk = npm === NPM_CI;
-  console.log(`  ${npmOk ? '✓' : '✗'} npm ${npm || 'não encontrado'} (packageManager: ${NPM_CI})`);
-  if (!npmOk) problemas.push(`npm ${NPM_CI} é obrigatório; o Dev Container instala a versão de packageManager`);
+  const r = captura('pnpm', ['--version']);
+  const pnpm = r.status === 0 ? r.stdout.trim() : '';
+  const pnpmOk = pnpm === PNPM_CI;
+  console.log(`  ${pnpmOk ? '✓' : '✗'} pnpm ${pnpm || 'não encontrado'} (packageManager: pnpm@${PNPM_CI})`);
+  if (!pnpmOk) problemas.push(`pnpm ${PNPM_CI} é obrigatório; o Dev Container instala a versão de packageManager`);
 }
 
 async function diagnosticar() {
@@ -200,19 +270,18 @@ async function diagnosticar() {
   validarDependencias(problemas);
 
   const pwLocal = versaoLocal('playwright');
-  const pwPrivado = versaoPacote(path.join(ROOT_GLOBAL_PRIVADO, 'playwright'));
   const localOk = pwLocal === PW_CI;
   console.log(`  ${localOk ? '✓' : '✗'} Playwright local ${pwLocal || 'não encontrado'} (lock: ${PW_CI})`);
   if (!localOk) problemas.push(`Playwright local ${PW_CI} ausente; rode \`node scripts/ci-local.mjs --setup\``);
 
   let chromium;
   try {
-    const modulo = await import(pathToFileURL(path.join(ROOT_GLOBAL_PRIVADO, 'playwright', 'index.js')).href);
+    const modulo = await import(pathToFileURL(path.join(RAIZ, 'node_modules', 'playwright', 'index.js')).href);
     chromium = modulo.chromium || modulo.default?.chromium;
   } catch { /* diagnosticado abaixo sem transformar import ausente em falha de teste */ }
-  const privadoOk = pwPrivado === PW_CI && !!chromium;
-  console.log(`  ${privadoOk ? '✓' : '✗'} Playwright do prefixo privado ${pwPrivado || 'não encontrado'} (lock: ${PW_CI})`);
-  if (!privadoOk) problemas.push(`Playwright ${PW_CI} ausente do prefixo privado das réguas; rode \`node scripts/ci-local.mjs --setup\``);
+  const importOk = pwLocal === PW_CI && !!chromium;
+  console.log(`  ${importOk ? '✓' : '✗'} Playwright local importável e na versão do lock (${PW_CI})`);
+  if (!importOk) problemas.push(`Playwright ${PW_CI} não importável de node_modules; rode \`node scripts/ci-local.mjs --setup\``);
 
   let chromeBin = '';
   if (chromium) {
@@ -271,11 +340,6 @@ async function preparar() {
   }
   let status = executa(process.execPath, ['scripts/setup.mjs']);
   if (status) return SAIDA_AMBIENTE;
-  status = executa('npm', [
-    'install', '--global', '--prefix', PREFIXO_NPM,
-    '--no-audit', '--no-fund', `playwright@${PW_CI}`,
-  ]);
-  if (status) return SAIDA_AMBIENTE;
   const cli = path.join(RAIZ, 'node_modules', 'playwright', 'cli.js');
   status = executa(process.execPath, [cli, 'install', 'chromium']);
   if (status) return SAIDA_AMBIENTE;
@@ -306,63 +370,57 @@ async function selftest() {
   assert.equal(erroNativoNavegador('Expected button to be visible'), false);
   const env = ambienteFilho({ PATH: '/bin' }, '/opt/chrome');
   assert.equal(env.CHROME_BIN, '/opt/chrome');
-  assert.equal(env.NPM_CONFIG_PREFIX, PREFIXO_NPM);
   assert.equal('PREPUSH' in env, false);
   assert.equal(ambienteFilho({ PREPUSH: '1' }, '/opt/chrome').PREPUSH, '1');
   assert.equal(mesmoArquivo(process.execPath, process.execPath), true);
   assert.equal(mesmoArquivo(process.execPath, fileURLToPath(import.meta.url)), false);
   assert.equal(mesmoArquivo(process.execPath, path.join(RAIZ, 'nao-existe')), false);
-  const rootPrivado = spawnSync('npm', ['root', '-g'], {
-    env: ambienteFilho(process.env, ''), encoding: 'utf8',
-  });
-  assert.equal(rootPrivado.status, 0, rootPrivado.stderr);
-  assert.equal(rootPrivado.stdout.trim(), ROOT_GLOBAL_PRIVADO);
-  assert.equal(lock.packages['node_modules/playwright'].version, PW_CI);
-  assert.equal(lock.packages['node_modules/playwright-core'].version, PW_CI);
-  assert(NPM_LS_ARGS.includes('--all') && NPM_LS_ARGS.includes('--offline'));
+  assert.ok([...chavesSnapshots()].some((k) => k.startsWith(`playwright@${PW_CI}`)));
+  assert.equal(importadores()['playwright'], PW_CI);
+  assert.equal(versaoImportador('playwright'), PW_CI);
+  assert.equal(versaoImportador('pacote-fora-do-lock'), '');
 
-  const arvoreComPlaywright = (versaoCore) => JSON.stringify({
-    name: pkg.name,
-    dependencies: {
-      playwright: {
-        version: PW_CI,
-        path: path.join(RAIZ, 'node_modules', 'playwright'),
-        dependencies: {
-          'playwright-core': {
-            version: versaoCore,
-            path: path.join(RAIZ, 'node_modules', 'playwright-core'),
-          },
-        },
-      },
-    },
-  });
-  assert.deepEqual(falhasArvoreDependencias({ status: 0, stdout: arvoreComPlaywright(PW_CI) }), []);
-  const transitivaDefasada = falhasArvoreDependencias({ status: 0, stdout: arvoreComPlaywright('0.0.0') });
-  assert(transitivaDefasada.some((f) => f.includes('playwright-core') && f.includes(PW_CI)),
-    'transitiva defasada deve falhar mesmo com Playwright igual ao lock');
-  const arvoreExtraneous = (entradas) => JSON.stringify({
-    dependencies: Object.fromEntries(entradas.map(([nome, local, versao]) => [nome, {
-      version: versao, path: path.join(RAIZ, local), extraneous: true,
+  const dirLock = mkdtempSync(path.join(tmpdir(), 'cs-ci-local-lock-'));
+  try {
+    writeFileSync(path.join(dirLock, 'pnpm-lock.yaml'), 'lockfileVersion: \'9.0\'\n');
+    mkdirSync(path.join(dirLock, 'node_modules', '.pnpm'), { recursive: true });
+    const oculto = path.join(dirLock, 'node_modules', '.pnpm', 'lock.yaml');
+    assert.deepEqual(falhasLockOculto(dirLock), ['node_modules/.pnpm/lock.yaml ausente — a árvore instalada não registra o estado do lock; rode `node scripts/ci-local.mjs --setup`']);
+    writeFileSync(oculto, 'lockfileVersion: \'9.0\'\n');
+    assert.deepEqual(falhasLockOculto(dirLock), []);
+    writeFileSync(oculto, 'lockfileVersion: \'9.1\'\n');
+    assert.deepEqual(falhasLockOculto(dirLock).length, 1);
+    assert.match(falhasLockOculto(dirLock)[0], /diverge de pnpm-lock\.yaml/);
+    rmSync(path.join(dirLock, 'pnpm-lock.yaml'));
+    assert.match(falhasLockOculto(dirLock)[0], /pnpm-lock\.yaml ausente/);
+  } finally { rmSync(dirLock, { recursive: true, force: true }); }
+
+  const chaves = chavesSnapshots();
+  const arvoreConforme = () => [{
+    dependencies: Object.fromEntries(Object.keys(pkg.dependencies).map((nome) => [nome, { version: versaoImportador(nome) }])),
+    devDependencies: Object.fromEntries(Object.keys(pkg.devDependencies).map((nome) => [nome, {
+      version: versaoImportador(nome),
+      ...(nome === 'playwright' ? { dependencies: { 'playwright-core': { version: PW_CI } } } : {}),
     }])),
-    problems: entradas.map(([nome, local, versao]) => `extraneous: ${nome}@${versao} ${path.join(RAIZ, local)}`),
-  });
-  const opcional = lock.packages['node_modules/@img/sharp-wasm32'];
-  assert.deepEqual(falhasArvoreDependencias({
-    status: 1,
-    stdout: arvoreExtraneous([['@img/sharp-wasm32', 'node_modules/@img/sharp-wasm32', opcional.version]]),
-  }), []);
-  const arvoreDesconhecida = falhasArvoreDependencias({
-    status: 1,
-    stdout: arvoreExtraneous([['pacote-soltinho', 'node_modules/pacote-soltinho', '1.0.0']]),
-  });
-  assert(arvoreDesconhecida.some((f) => f.includes('extraneous') || f.includes('não consta no package-lock')));
+  }];
+  assert.deepEqual(falhasEstadoInstalado(arvoreConforme(), chaves, ''), []);
+  const arvoreCoreDefasado = arvoreConforme();
+  arvoreCoreDefasado[0].devDependencies.playwright.dependencies['playwright-core'].version = '0.0.0';
+  const defasada = falhasEstadoInstalado(arvoreCoreDefasado, chaves, '');
+  assert(defasada.some((f) => f.includes('playwright-core') && f.includes('não consta no pnpm-lock.yaml')),
+    'transitiva defasada deve falhar mesmo com Playwright igual ao lock');
+  const raizSolta = arvoreConforme();
+  raizSolta[0].dependencies['pacote-soltinho'] = { version: '1.0.0' };
+  assert(falhasEstadoInstalado(raizSolta, chaves, '').some((f) => f.includes('extraneous') || f.includes('não consta no pnpm-lock.yaml')));
+  const semPlaywright = arvoreConforme();
+  delete semPlaywright[0].devDependencies.playwright;
+  assert(falhasEstadoInstalado(semPlaywright, chaves, '').some((f) => f.includes('dependência ausente: playwright')));
+  const comThree = arvoreConforme();
+  comThree[0].dependencies.three = { version: '0.160.0' };
+  assert(falhasEstadoInstalado(comThree, chaves, '').some((f) => f.includes('three')));
   const stageThree = path.join(RAIZ, 'node_modules', '.cs-three-node-teste');
-  const shimThree = arvoreExtraneous([
-    ['three', 'node_modules/three', '0.160.0'],
-    ['.cs-three-node-teste', 'node_modules/.cs-three-node-teste', '0.160.0'],
-  ]);
-  assert.deepEqual(falhasArvoreDependencias({ status: 1, stdout: shimThree }, stageThree), []);
-  assert(falhasArvoreDependencias({ status: 1, stdout: shimThree }, '').length > 0);
+  assert.deepEqual(falhasEstadoInstalado(comThree, chaves, stageThree), []);
+  assert.equal(falhasEstadoInstalado(null, chaves, '').length, 1);
 
   const fixture = mkdtempSync(path.join(tmpdir(), 'cs-ci-local-shim-'));
   try {
@@ -400,11 +458,7 @@ async function selftest() {
     mkdirSync(shim);
     assert.equal(inspecionarShimThree(fixture), '');
   } finally { rmSync(fixture, { recursive: true, force: true }); }
-  const ausente = JSON.parse(arvoreComPlaywright(PW_CI));
-  ausente.problems = ['missing: exemplo@1.0.0, required by dependente@1.0.0'];
-  assert(falhasArvoreDependencias({ status: 1, stdout: JSON.stringify(ausente) }).some((f) => f.includes('missing:')));
-  assert(falhasArvoreDependencias({ status: 0, stdout: '{json quebrado' }).some((f) => f.includes('JSON válido')));
-  console.log('CI-ENV selftest ok: ambiente privado, Chromium fixado, dependências e shim do Three cobertos.');
+  console.log('CI-ENV selftest ok: pnpm do packageManager, lock congelado vs. árvore instalada, Chromium fixado e shim do Three cobertos.');
   for (const modo of ['--diagnose', '--selftest']) {
     const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), modo, 'check:fast'], { encoding: 'utf8' });
     assert.equal(r.status, 64, `${modo} com script extra deve ser rejeitado em vez de ignorar o script`);
@@ -434,13 +488,13 @@ async function main() {
   }
   const script = args[0] || 'check:fast';
   if (!pkg.scripts?.[script]) {
-    console.error(`[ambiente] script npm inexistente: ${script}`);
+    console.error(`[ambiente] script pnpm inexistente: ${script}`);
     return 64;
   }
   const diag = await diagnosticar();
   if (!diag.ok) return SAIDA_AMBIENTE;
-  console.log(`\n[testes] npm run ${script}`);
-  const status = executa('npm', ['run', script], { env: ambienteFilho(process.env, diag.chromeBin) });
+  console.log(`\n[testes] pnpm run ${script}`);
+  const status = executa('pnpm', ['run', '--silent', script], { env: ambienteFilho(process.env, diag.chromeBin) });
   if (status) console.error(`[testes] ${script} terminou com ${status}; o ambiente já havia passado no diagnóstico.`);
   return status;
 }

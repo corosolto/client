@@ -41,8 +41,8 @@ const BASE = process.env.BASE || `http://127.0.0.1:${PORTA}`;
 const OUT_DIR = join(ROOT, 'artifacts', 'gauntlet', LABEL);
 mkdirSync(OUT_DIR, { recursive: true });
 
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 
 const servidor = SEM_SERVIDOR ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });

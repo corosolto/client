@@ -159,7 +159,11 @@ jobs:
           token: ${{ github.token }}
           persist-credentials: false
           filter: blob:none
-          sparse-checkout: scripts/ci
+          # package.json entra só para o pnpm/action-setup ler o packageManager
+          # pinado da branch default confiável — nada do PR ainda foi executado.
+          sparse-checkout: |
+            scripts/ci
+            package.json
 
       - name: Preserve prompt helper outside PR workspace
         run: cp scripts/ci/build_fix_guard.py /tmp/csbrasil-build-fix-propose-guard.py
@@ -168,6 +172,11 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
+
+      # pnpm vem do packageManager do package.json da default branch confiável,
+      # lido no sparse-checkout acima — a versão não depende do checkout do PR.
+      - name: Set up trusted pnpm before PR code
+        uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
 
       - name: Preinstall pinned Codex outside PR workspace
         id: codex_tools
@@ -185,6 +194,7 @@ jobs:
           sha256sum "$codex" > /tmp/csbrasil-codex.sha256
           echo "codex=$codex" >> "$GITHUB_OUTPUT"
           echo "node_dir=$(dirname "$(command -v node)")" >> "$GITHUB_OUTPUT"
+          echo "pnpm_dir=$(dirname "$(command -v pnpm)")" >> "$GITHUB_OUTPUT"
 
       - name: Checkout exact PR commit without credentials
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -213,15 +223,16 @@ jobs:
 
       - name: Install baseline dependencies without PR lifecycle scripts
         continue-on-error: true
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts --ignore-pnpmfile --config.manage-package-manager-versions=false
 
       - name: Run Codex build repair
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           TRUSTED_CODEX: ${{ steps.codex_tools.outputs.codex }}
           TRUSTED_NODE_DIR: ${{ steps.codex_tools.outputs.node_dir }}
+          TRUSTED_PNPM_DIR: ${{ steps.codex_tools.outputs.pnpm_dir }}
         run: |
-          export PATH="${TRUSTED_NODE_DIR}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          export PATH="${TRUSTED_NODE_DIR}:${TRUSTED_PNPM_DIR}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
           sha256sum --check /tmp/csbrasil-codex.sha256
           "$TRUSTED_CODEX" exec \
             --sandbox workspace-write \
@@ -235,14 +246,14 @@ jobs:
 
       - name: Reject protected edits before dependency installation
         run: |
-          test -z "$(/usr/bin/git status --porcelain=v1 -- package.json package-lock.json)"
+          test -z "$(/usr/bin/git status --porcelain=v1 -- package.json package-lock.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc .pnpmfile.cjs .pnpmfile.mjs)"
           test -z "$(/usr/bin/git status --porcelain=v1 -- .github/workflows .github/actions .githooks scripts/ci tools/eval)"
 
       - name: Reinstall repaired dependencies without lifecycle scripts
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts --ignore-pnpmfile --config.manage-package-manager-versions=false
 
       - name: Independently run fast checks
-        run: npm run check:fast
+        run: pnpm run check:fast
 
       - name: Create binary patch and exact metadata without committing
         run: |
@@ -407,7 +418,7 @@ jobs:
             "HEAD:refs/heads/${HEAD_BRANCH}"
           commit_sha="$(git rev-parse HEAD)"
           touch /tmp/build-fix-publish-success
-          echo "Codex proposed a scoped repair. The independent npm run check:fast passed in the isolated proposal job, and verified commit ${commit_sha} was pushed normally to the PR branch. This workflow did not merge the PR." > /tmp/build-fix-publish-result.txt
+          echo "Codex proposed a scoped repair. The independent pnpm run check:fast passed in the isolated proposal job, and verified commit ${commit_sha} was pushed normally to the PR branch. This workflow did not merge the PR." > /tmp/build-fix-publish-result.txt
 
       - name: Report one English publication result
         if: always()

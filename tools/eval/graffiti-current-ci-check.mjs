@@ -110,8 +110,8 @@ async function main() {
     parseSerializados({ measure, instrument, mutador, egoScript: 'await null' });
     new vm.Script('(' + measure + ')(' + JSON.stringify({ id: 'x', inventorySource: invSource }) + ')', { filename: 'chamada-medida.js' });
     if (args.json) { const abs = path.resolve(args.json); mkdirSync(abs, { recursive: true }); args.json = abs; }
-    const gRoot = execSync('npm root -g').toString().trim();
-    const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+    
+    const _pw = await import('playwright')
     const chromium = _pw.chromium || _pw.default?.chromium;
     origin = new URL(process.env.BASE).origin;
 

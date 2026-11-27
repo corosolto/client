@@ -67,8 +67,8 @@ try {SNAPSHOT=snapshotPublicJs(PUBLIC_ROOT);}catch(e){console.error('INFRA78 sna
 const RUN_ID=randomUUID();
 let browser;
 try {
-  const gRoot=execSync('npm root -g').toString().trim();
-  const pw=await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+  
+  const pw = await import('playwright')
   const chromium=pw.chromium||pw.default?.chromium;
   const softwareGLArgs=process.platform==='darwin'?[]:['--use-angle=swiftshader','--enable-unsafe-swiftshader'];
   browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

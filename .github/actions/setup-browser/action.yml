@@ -1,5 +1,8 @@
 name: Setup Playwright Chromium
-description: Installs the repository Playwright version and exports a validated CHROME_BIN.
+description: >-
+  Installs the Chromium pinned by the repository's locked Playwright (resolved from the root
+  node_modules — no npm global) and exports a validated CHROME_BIN. Requires the root
+  dependencies to be installed first (pnpm install --frozen-lockfile).
 runs:
   using: composite
   steps:
@@ -7,20 +10,23 @@ runs:
       shell: bash
       run: echo "PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright" >> "$GITHUB_ENV"
 
-    - name: Playwright global (mesma versão do devDependency)
+    - name: Playwright travado no lock (resolvido do node_modules do repo)
       shell: bash
       run: |
         set -euo pipefail
-        VERSION="$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
-        if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
-          echo "::error::devDependencies.playwright não resolveu para uma versão exata: [$VERSION]"
-          exit 1
-        fi
-        npm install --global "playwright@$VERSION"
+        test -x node_modules/.bin/playwright || { echo "::error::instale as dependências do client antes desta action"; exit 1; }
+        node --input-type=commonjs <<'NODE'
+        const { readFileSync } = require('node:fs');
+        const { parse } = require('yaml');
+        const lock = parse(readFileSync('pnpm-lock.yaml', 'utf8'));
+        const expected = lock.importers['.'].devDependencies.playwright.version;
+        const installed = require('playwright/package.json').version;
+        if (installed !== expected) throw new Error(`Playwright instalado ${installed}; lock exige ${expected}`);
+        NODE
 
     - name: Instala Chromium + libs do sistema
       shell: bash
-      run: npx --no-install playwright install --with-deps chromium
+      run: pnpm exec playwright install --with-deps chromium
 
     - name: Resolve CHROME_BIN (Chromium do Playwright)
       shell: bash

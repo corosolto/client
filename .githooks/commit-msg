@@ -13,7 +13,7 @@ TETO_LINHAS=800
 
 if ! grep -Eqi '^Agent:[[:space:]]*[^[:space:]]' "$mensagem"; then
   echo "commit-msg: falta o trailer 'Agent:' (quem escreveu — nome do agente ou 'humano')." >&2
-  echo "  O hook .githooks/prepare-commit-msg preenche sozinho: rode 'npm run setup'," >&2
+  echo "  O hook .githooks/prepare-commit-msg preenche sozinho: rode 'pnpm run setup'," >&2
   echo "  ou commite com --trailer \"Agent: <nome>\". Ver CONTRIBUTING.md." >&2
   exit 1
 fi
@@ -28,17 +28,17 @@ done
 # `Co-Authored-By:` de agente de IA é redundante com o `Agent:` acima, e inventa um
 # co-autor sem conta no "Contributors" do GitHub. A lista de agentes mora em
 # scripts/coautoria-ia.re, compartilhada com o pre-push e com o agente_check.py do CI.
-if ! sh "$AQUI/../scripts/checa-coautoria-ia.sh" "$mensagem" 2>/tmp/coautoria-ia.$$; then
+tmp_coautoria=$(mktemp "${TMPDIR:-/tmp}/coautoria-ia.XXXXXXXX") || exit 1
+trap 'rm -f "$tmp_coautoria"' EXIT INT TERM
+if ! sh "$AQUI/../scripts/checa-coautoria-ia.sh" "$mensagem" 2>"$tmp_coautoria"; then
   echo "commit-msg: co-autoria de agente de IA na mensagem:" >&2
-  sed 's/^/    /' /tmp/coautoria-ia.$$ >&2
-  rm -f /tmp/coautoria-ia.$$
+  sed 's/^/    /' "$tmp_coautoria" >&2
   echo "  Quem escreveu já está no trailer 'Agent:' — este par é ruído (CONTRIBUTING.md)." >&2
   echo "  Tire a linha da mensagem, ou desligue na origem:" >&2
   echo "    Claude Code: \"includeCoAuthoredBy\": false em .claude/settings.json (já está no repo)" >&2
   echo "    outros: a opção equivalente da ferramenta, ou --trailer nenhum" >&2
   exit 1
 fi
-rm -f /tmp/coautoria-ia.$$
 
 case $(head -n 1 "$mensagem") in
   'chore(release):'*) exit 0 ;;

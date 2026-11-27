@@ -31,8 +31,8 @@ const ESPERADAS = 15;
 // Mutante que nega o GLB nunca completa: nao vale esperar os 150 s do caso bom.
 const ESPERA = +arg('espera', MUTANTE ? 40000 : 150000);
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 const nav = await chromium.launch();

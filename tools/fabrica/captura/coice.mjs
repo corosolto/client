@@ -3,17 +3,13 @@
 // skin, pela vmCamera) após um tiro em câmera lenta, em % da diagonal da arma na tela.
 // Referência: P7 do vm-gauntlet (≥ 4%); a AK golden mede ~9%.
 // Uso: node tools/fabrica/captura/coice.mjs --armas=ak,m4 [--query=vmfabrica=m4] [--porta=4671] [--total]
-import { execSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
 
 const arg = (n, d = '') => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `--${n}=${d}`).split('=').slice(1).join('=');
 const PORTA = arg('porta', '4671');
 const ARMAS = arg('armas', '').split(',').filter(Boolean);
 const EXTRA = arg('query', '');
 const TIROS = Number(arg('tiros', '3'));
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = pw.chromium || pw.default?.chromium;
+const { chromium } = await import('playwright');
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
 const q = new URLSearchParams({ debug: '1', auto: 'E', map: 'piscina_treta', armaslazy: '0', vmauthored: '1', vmqa: 'precision' });

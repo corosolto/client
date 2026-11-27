@@ -24,8 +24,6 @@
      Para repetir exatamente, acrescente --software; sem ele a medição usa a GPU, que é
      o caminho do jogador comum e liga o MOBILE_AUTO nos cenários de celular.
    ═══════════════════════════════════════════════════════════════════════════════ */
-import { execSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
@@ -95,9 +93,7 @@ const UA_MOBILE = 'Mozilla/5.0 (Linux; Android 13; Moto G54) AppleWebKit/537.36 
 const alvos = flag('todos') ? Object.keys(CENARIOS) : [val('cenario', 'desktop-cabo')];
 for (const c of alvos) if (!CENARIOS[c]) { console.error(`cenário desconhecido: ${c}\nconhecidos: ${Object.keys(CENARIOS).join(', ')}`); process.exit(2); }
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = _pw.chromium || _pw.default?.chromium;
+const { chromium } = await import('playwright');
 
 const fmtKB = (b) => `${(b / 1024).toFixed(0)} KB`;
 const fmtMB = (b) => `${(b / 1048576).toFixed(2)} MB`;

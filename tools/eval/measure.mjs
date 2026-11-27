@@ -16,8 +16,8 @@ const requested = process.argv.slice(2).filter((arg) => !arg.startsWith('--'));
 const chars = requested.length ? requested : ALL;
 const MUTANT_BG = process.argv.includes('--mutante=fundopreto');
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 const hasFFmpeg = (()=>{ try{ execSync('which ffmpeg',{stdio:'ignore'}); return true;}catch{return false;} })();
 

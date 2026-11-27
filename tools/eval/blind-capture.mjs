@@ -26,8 +26,8 @@ const rnd = mulberry32(SEED);
 const shuffled = WEAPONS.slice();
 for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });

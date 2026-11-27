@@ -22,8 +22,8 @@ const BASE = process.env.BASE || 'http://localhost:4321';
 const OUT = process.env.OUT || '/tmp/loading-wallpaper';
 mkdirSync(OUT, { recursive: true });
 
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',

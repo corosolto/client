@@ -72,8 +72,8 @@ if (process.argv[2] === '--write') {
 /* ---------------- modo captura ---------------- */
 const LIST = (process.argv[2] || 'praca_poderes,piscina_treta,loja_h,ferro_velho,quebrada').split(',');
 const YAWS = (process.argv[3] || '-2.4,-1.8,-1.2,-0.6,0,0.6,1.2,1.8,2.4,3.0').split(',').map(Number);
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 mkdirSync(OUT, { recursive: true });

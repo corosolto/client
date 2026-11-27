@@ -61,11 +61,7 @@ const probeOf = (file) => {
 // gravação corta a recarga longa (lmg/g3/svd fecham em 4,667 s).
 const reloadWindow = (weapon) => Math.max(2.2, VM_FAMILY[VM_WEAPON[weapon]?.family]?.cs16?.reload || 3.2) + 1.2;
 
-const localPlaywright = path.join(ROOT, 'node_modules/playwright/index.js');
-const playwrightEntry = fs.existsSync(localPlaywright) ? localPlaywright
-  : `${execSync('npm root -g').toString().trim()}/playwright/index.js`;
-const playwright = await import(pathToFileURL(playwrightEntry).href);
-const chromium = playwright.chromium || playwright.default?.chromium;
+const { chromium } = await import('playwright');
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 
 fs.mkdirSync(OUT, { recursive: true });

@@ -34,11 +34,14 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
           persist-credentials: false
+      # pnpm antes do setup-node: o cache: pnpm do setup-node precisa do binário.
+      # A versão vem do campo packageManager do package.json (pin da migração).
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Baixa pacote de áudio privado
         env:
           AUDIO_PACK_URL: ${{ vars.AUDIO_PACK_URL }}
@@ -65,7 +68,7 @@ jobs:
           CS_BUILD_SHA="$(git rev-parse HEAD)"
           export CS_BUILD_SHA
           echo "sha=$CS_BUILD_SHA" >> "$GITHUB_OUTPUT"
-          npm run build:cf
+          pnpm run build:cf
       - name: Envia versão candidata de csb-prod
         id: upload
         env:
@@ -75,8 +78,8 @@ jobs:
         run: |
           set -euo pipefail
           bash tools/cf/bootstrap-worker.sh csb-prod
-          npx wrangler triggers deploy --config wrangler.prod.toml
-          npx wrangler versions upload \
+          pnpm exec wrangler triggers deploy --config wrangler.prod.toml
+          pnpm exec wrangler versions upload \
             --config wrangler.prod.toml \
             --message "release $CS_BUILD_SHA" 2>&1 | tee "$RUNNER_TEMP/wrangler-prod-upload.log"
           VERSION_ID=$(grep 'Worker Version ID:' "$RUNNER_TEMP/wrangler-prod-upload.log" | grep -Eo '[0-9a-fA-F]{8}-[0-9a-fA-F-]{27,}' | tail -n 1)
@@ -104,7 +107,7 @@ jobs:
         run: |
           set -euo pipefail
           node tools/cf/assert-branch-head.mjs --branch=main --sha="$CS_BUILD_SHA"
-          npx wrangler versions deploy "$VERSION_ID@100" \
+          pnpm exec wrangler versions deploy "$VERSION_ID@100" \
             --config wrangler.prod.toml \
             --yes
       # BUG-39: o HTML antigo ainda pode pedir URLs versionadas de /js/; o manifesto de skins

@@ -125,16 +125,17 @@ jobs:
     timeout-minutes: 30
     env:
       BASE: http://localhost:8123
-      # Os arnêses de navegador importam o Playwright do root GLOBAL (npm root -g) e
-      # dirigem o Chromium por CHROME_BIN; PLAYWRIGHT_BROWSERS_PATH fixa onde ele instala.
+      # Os arnêses de navegador resolvem o Playwright do node_modules do repo (install
+      # congelado pelo pnpm) e dirigem o Chromium por CHROME_BIN; PLAYWRIGHT_BROWSERS_PATH fixa onde ele instala.
       PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Packs Studio fixados (R2) no /packs/ do eval:serve
         uses: ./.github/actions/studio-packs
       - name: Setup Playwright Chromium
@@ -144,7 +145,7 @@ jobs:
         run: |
           test -n "${CHROME_BIN:-}" || { echo '::error::CHROME_BIN ausente depois do setup-browser'; exit 1; }
           printf 'CHROME_BIN=%s\n' "$CHROME_BIN"
-          npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+          pnpm run eval:serve >/tmp/eval-serve.log 2>&1 &
 
       - name: Espera o servidor responder
         run: |
@@ -159,7 +160,7 @@ jobs:
 
       - name: Fauna curada — GLBs, texturas decodificadas e rig dos cinco mapas
         if: ${{ !cancelled() }}
-        run: npm run eval:map-fauna-curated:runtime
+        run: pnpm run eval:map-fauna-curated:runtime
 
       - name: Guarda captura e auditoria runtime da fauna
         if: ${{ !cancelled() }}
@@ -176,16 +177,17 @@ jobs:
     timeout-minutes: 30
     env:
       BASE: http://localhost:8123
-      # Os arnêses de navegador importam o Playwright do root GLOBAL (npm root -g) e
-      # dirigem o Chromium por CHROME_BIN; PLAYWRIGHT_BROWSERS_PATH fixa onde ele instala.
+      # Os arnêses de navegador resolvem o Playwright do node_modules do repo (install
+      # congelado pelo pnpm) e dirigem o Chromium por CHROME_BIN; PLAYWRIGHT_BROWSERS_PATH fixa onde ele instala.
       PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Packs Studio fixados (R2) no /packs/ do eval:serve
         uses: ./.github/actions/studio-packs
       - name: Setup Playwright Chromium
@@ -195,7 +197,7 @@ jobs:
         run: |
           test -n "${CHROME_BIN:-}" || { echo '::error::CHROME_BIN ausente depois do setup-browser'; exit 1; }
           printf 'CHROME_BIN=%s\n' "$CHROME_BIN"
-          npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+          pnpm run eval:serve >/tmp/eval-serve.log 2>&1 &
 
       - name: Espera o servidor responder
         run: |
@@ -210,13 +212,13 @@ jobs:
 
       - name: Pegada do lobby nos 11 casos públicos
         if: ${{ !cancelled() }}
-        run: npm run eval:lobbyarmamao
+        run: pnpm run eval:lobbyarmamao
 
       - name: Mira1P da AK pública
         if: ${{ !cancelled() }}
         run: |
           mkdir -p artifacts
-          npm run eval:mira-public
+          pnpm run eval:mira-public
 
       - name: Guarda a medição da mira pública
         if: ${{ !cancelled() }}
@@ -230,11 +232,11 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           VM_PUBLIC_ASSETS: https://www.corosolto.com.br
-        run: npm run eval:vm-maos-mobile-desktop
+        run: pnpm run eval:vm-maos-mobile-desktop
 
       - name: eval:armas (preload de arma por partida)
         if: ${{ !cancelled() }}
-        run: npm run eval:armas
+        run: pnpm run eval:armas
 
   portao-controles:
     needs: decide
@@ -243,16 +245,17 @@ jobs:
     timeout-minutes: 30
     env:
       BASE: http://localhost:8123
-      # Os arnêses de navegador importam o Playwright do root GLOBAL (npm root -g) e
-      # dirigem o Chromium por CHROME_BIN; PLAYWRIGHT_BROWSERS_PATH fixa onde ele instala.
+      # Os arnêses de navegador resolvem o Playwright do node_modules do repo (install
+      # congelado pelo pnpm) e dirigem o Chromium por CHROME_BIN; PLAYWRIGHT_BROWSERS_PATH fixa onde ele instala.
       PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Packs Studio fixados (R2) no /packs/ do eval:serve
         uses: ./.github/actions/studio-packs
       - name: Setup Playwright Chromium
@@ -262,7 +265,7 @@ jobs:
         run: |
           test -n "${CHROME_BIN:-}" || { echo '::error::CHROME_BIN ausente depois do setup-browser'; exit 1; }
           printf 'CHROME_BIN=%s\n' "$CHROME_BIN"
-          npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+          pnpm run eval:serve >/tmp/eval-serve.log 2>&1 &
 
       - name: Espera o servidor responder
         run: |
@@ -277,23 +280,23 @@ jobs:
 
       - name: eval:select (silhueta da tela de seleção)
         if: ${{ !cancelled() }}
-        run: npm run eval:select
+        run: pnpm run eval:select
 
       # A porta de entrada do funil: o gesto que tira a splash não pode apertar o menu
       # por baixo (medido no runner do #368 — ver tools/eval/entrada-check.mjs).
       - name: eval:entrada (o gesto que entra não aperta botão do menu)
         if: ${{ !cancelled() }}
-        run: npm run eval:entrada
+        run: pnpm run eval:entrada
 
       # Perfil móvel real: toque/coarse entra leve antes do primeiro GLB e continua leve
       # dentro da partida. O mutante prova que a régua acusa quando main.js deixa de ligá-lo.
       - name: eval:perfilmobile:browser (perfil leve desde o boot)
         if: ${{ !cancelled() }}
-        run: npm run eval:perfilmobile:browser
+        run: pnpm run eval:perfilmobile:browser
 
       - name: Controles mobile sem disparo involuntário e câmera por toque
         if: ${{ !cancelled() }}
-        run: npm run eval:toquecontroles
+        run: pnpm run eval:toquecontroles
 
   # Job próprio, e não um passo do portao-controles: as 20 aberturas do lobby real
   # (12 cláusulas + 8 mutantes) mediram 17 min num Mac com Chrome de GPU, e o
@@ -311,11 +314,12 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Packs Studio fixados (R2) no /packs/ do eval:serve
         uses: ./.github/actions/studio-packs
       - name: Setup Playwright Chromium
@@ -325,7 +329,7 @@ jobs:
         run: |
           test -n "${CHROME_BIN:-}" || { echo '::error::CHROME_BIN ausente depois do setup-browser'; exit 1; }
           printf 'CHROME_BIN=%s\n' "$CHROME_BIN"
-          npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+          pnpm run eval:serve >/tmp/eval-serve.log 2>&1 &
 
       - name: Espera o servidor responder
         run: |
@@ -343,7 +347,7 @@ jobs:
       - name: eval:passe:browser (passe no lobby real, com mutantes)
         env:
           OUT: /tmp/passe-browser
-        run: npm run eval:passe:browser
+        run: pnpm run eval:passe:browser
 
       - name: Guarda as capturas do passe
         if: ${{ failure() }}
@@ -360,16 +364,17 @@ jobs:
     timeout-minutes: 30
     env:
       BASE: http://localhost:8123
-      # Os arnêses de navegador importam o Playwright do root GLOBAL (npm root -g) e
-      # dirigem o Chromium por CHROME_BIN; PLAYWRIGHT_BROWSERS_PATH fixa onde ele instala.
+      # Os arnêses de navegador resolvem o Playwright do node_modules do repo (install
+      # congelado pelo pnpm) e dirigem o Chromium por CHROME_BIN; PLAYWRIGHT_BROWSERS_PATH fixa onde ele instala.
       PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Packs Studio fixados (R2) no /packs/ do eval:serve
         uses: ./.github/actions/studio-packs
       - name: Tag exata do pacote de decalques
@@ -401,7 +406,7 @@ jobs:
         run: |
           test -n "${CHROME_BIN:-}" || { echo '::error::CHROME_BIN ausente depois do setup-browser'; exit 1; }
           printf 'CHROME_BIN=%s\n' "$CHROME_BIN"
-          npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+          pnpm run eval:serve >/tmp/eval-serve.log 2>&1 &
 
       - name: Espera o servidor responder
         run: |
@@ -416,7 +421,7 @@ jobs:
 
       # Contrato vigente: 14 nominais completos, sem meta histórica de saturação.
       - name: eval:grafite-atual (arte única e suporte real, 14 mapas)
-        run: npm run eval:grafite-atual
+        run: pnpm run eval:grafite-atual
 
       - name: Guarda o contrato atual de grafite
         if: ${{ !cancelled() }}
@@ -438,7 +443,7 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           BASE: ''
-        run: npm run eval:boot
+        run: pnpm run eval:boot
 
       # As provas de navegador da camada operacional: boot provado + ops.js lido, TDZ vira
       # crítico, e a sonda barra POST/beacon (o contrato "só lê"). Sem Playwright são puladas.
@@ -450,7 +455,7 @@ jobs:
         if: failure()
         env:
           JSON: '1'
-        run: npm run eval:grafite:ar -- --fotos 6 || true
+        run: pnpm run eval:grafite:ar --fotos 6 || true
 
       - name: Anexa capturas e números da falha
         if: failure()
@@ -502,11 +507,12 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Packs Studio fixados (R2) no /packs/ do eval:serve
         uses: ./.github/actions/studio-packs
 
@@ -517,7 +523,7 @@ jobs:
         run: |
           test -n "${CHROME_BIN:-}" || { echo '::error::CHROME_BIN ausente depois do setup-browser'; exit 1; }
           printf 'CHROME_BIN=%s\n' "$CHROME_BIN"
-          npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+          pnpm run eval:serve >/tmp/eval-serve.log 2>&1 &
 
       - name: Espera o servidor responder
         run: |
@@ -533,7 +539,7 @@ jobs:
       - name: Criação do Sertão (GLBs servidos, caminhada, percurso e contato)
         env:
           ARTIFACT_DIR: artifacts/sertao-astra/livestock-runtime-${{ matrix.shard.nome }}
-        run: npm run eval:sertao-livestock-runtime -- --checks=${{ matrix.shard.checks }}
+        run: pnpm run eval:sertao-livestock-runtime --checks=${{ matrix.shard.checks }}
 
       - name: Evidência visual da criação do Sertão
         if: ${{ !cancelled() }}

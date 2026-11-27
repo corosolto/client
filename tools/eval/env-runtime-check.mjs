@@ -129,7 +129,7 @@ if (mutante === 'inlina-sentinela') {
   }
 } else if (process.argv.includes('--com-build')) {
   er2Medido = true;
-  const comando = process.env.ENVRUNTIME_BUILD_CMD || 'npm run build';
+  const comando = process.env.ENVRUNTIME_BUILD_CMD || 'pnpm run build';
   const build = spawnSync(comando, { shell: true, stdio: 'inherit', env: { ...process.env, ...SENTINELAS } });
   if (build.status !== 0) {
     falhas.push(`ER2 build com sentinelas falhou (status ${build.status})`);

@@ -18,8 +18,8 @@ const SCEN = process.argv[5] === '1';
 const BASE = process.env.BASE || 'http://localhost:8123';
 const QS = process.env.QS ? `&${process.env.QS}` : '';
 const SWEEP = process.env.SWEEP ? process.env.SWEEP.split('|') : null;
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const _pw = await import('playwright')
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 rmSync(OUT, { recursive: true, force: true });

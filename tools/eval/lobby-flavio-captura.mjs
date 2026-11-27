@@ -18,8 +18,8 @@ const W = 2560, H = 1440;
 const CAMERA = { p: [5, 1.4, 47.5], l: [3.2, 2.4, 52.2], fov: 48 };
 const MEIO_DA_SUBIDA = 3.7;   // s da cinemática: WALK_END (flavio-boarding.js) é 5,4
 
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio'] });
 try {

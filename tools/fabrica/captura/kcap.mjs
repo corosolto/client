@@ -3,8 +3,6 @@
 // arremesso de granada e golpes da faca, no jogo real com ?vmauthored=1.
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
 
 const arg = (n, d = '') => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `--${n}=${d}`).split('=').slice(1).join('=');
 const PORTA = arg('porta', '4371');
@@ -13,9 +11,7 @@ const OUT = path.resolve(arg('out'));
 const ARMAS = arg('armas', '').split(',').filter(Boolean);
 const EXTRA = arg('query', '');
 const VIEWPORT = ASPECTO === '32' ? { width: 1440, height: 960 } : { width: 1440, height: 810 };
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = pw.chromium || pw.default?.chromium;
+const { chromium } = await import('playwright');
 await fs.mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage({ viewport: VIEWPORT });

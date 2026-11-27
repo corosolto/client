@@ -1,15 +1,19 @@
 name: Shared pr-fast environment
 description: >-
-  Restores the node_modules cached by package-lock.json and the dist built by the setup job
+  Restores the node_modules cached by the pnpm lock/config and the dist built by the setup job
   (public/ copies come back from this checkout, checked by sha256; see scripts/ci/dist-compartilhado.mjs).
+  Also installs pnpm (version from packageManager) so consumers run `pnpm run` after the restore.
 runs:
   using: composite
   steps:
+    - name: Install pnpm
+      uses: pnpm/action-setup@a15d269cd4658e1107c09f1fabf4cbd7bd1f308a
+
     - name: Restore shared node_modules
       uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
       with:
         path: node_modules
-        key: pr-fast-node-v2-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
+        key: pr-fast-node-v3-${{ runner.os }}-node22-${{ hashFiles('pnpm-lock.yaml', '.npmrc', 'pnpm-workspace.yaml') }}
         fail-on-cache-miss: true
 
     - name: Download shared dist

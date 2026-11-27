@@ -1,0 +1,10 @@
+overrides:
+  workerd: 1.20261117.1
+  zod: ^4.6.7
+  undici: ^8.12.2
+
+onlyBuiltDependencies:
+  - esbuild@0.28.2
+  - fsevents@2.3.2
+  - fsevents@2.3.3
+  - workerd@1.20261117.1

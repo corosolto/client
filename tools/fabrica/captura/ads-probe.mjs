@@ -1,6 +1,5 @@
 // Sonda de ADS no jogo real: projeta alça/massa (nó ref + coordenada local) na vmCamera.
 import path from 'node:path';
-import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 const opt = (n, d = '') => { const h = process.argv.find((v) => v.startsWith(`--${n}=`)); return h ? h.slice(n.length + 3) : d; };
 const PORT = opt('porta', '4641');
@@ -8,8 +7,8 @@ const ROOT = process.cwd();
 const { VM_WEAPON } = await import(pathToFileURL(path.join(ROOT, 'public/js/data/vmconfig.js')).href);
 const families = [...new Set(Object.values(VM_WEAPON).map((e) => e.family))];
 const query = new URLSearchParams({ debug: '1', auto: 'P,mst', map: 'piscina_treta', armaslazy: '0', vmauthored: '1', vmqa: 'precision', vmready: families.join(','), vmweapon: Object.keys(VM_WEAPON).join(',') }).toString();
-const pw = await import(pathToFileURL(`${execSync('npm root -g').toString().trim()}/playwright/index.js`).href);
-const browser = await (pw.chromium || pw.default.chromium).launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
+const { chromium } = await import('playwright');
+const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
 await page.goto(`http://127.0.0.1:${PORT}/?${query}`, { waitUntil: 'domcontentloaded', timeout: 240000 });
 await page.waitForFunction(() => window.__game?.state === 'live' && window.__vmPrecisionQa && window.__authoredVm, null, { timeout: 240000 });

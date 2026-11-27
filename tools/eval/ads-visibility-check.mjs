@@ -29,8 +29,8 @@ const TETO_JANELA_BAIXA = L.ADS_JANELA_BAIXA_MAX;
 const out = path.join(root, 'artifacts/vm-ads-visibility', auto === 'E' ? '' : auto.replace(/[^a-z0-9_-]+/gi, '-'));
 fs.mkdirSync(out, { recursive: true });
 const assetDir = assetBase ? fs.mkdtempSync(path.join(os.tmpdir(), 'csbr-ads-assets-')) : null;
-const playwrightRoot = execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim();
-const playwright = await import(pathToFileURL(path.join(playwrightRoot, 'playwright/index.js')).href);
+
+const playwright = await import('playwright')
 const chromium = playwright.chromium || playwright.default?.chromium;
 const port = remote ? null : await new Promise((resolve, reject) => {
   const probe = net.createServer();

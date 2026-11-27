@@ -16,8 +16,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { MEDIR } from './vm-frame-measure.mjs';
-import { execSync } from 'node:child_process';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const arg = (n, d = '') => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `--${n}=${d}`).split('=').slice(1).join('=');
@@ -35,9 +34,7 @@ const BASE = `http://127.0.0.1:${PORTA}`;
 // 3:2 é como o dono joga (CONTRIBUTING: validar só em 16:9 já custou uma rodada).
 const VIEWPORT = ASPECTO === '32' ? { width: 1440, height: 960 } : { width: 1440, height: 810 };
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = _pw.chromium || _pw.default?.chromium;
+const { chromium } = await import('playwright');
 
 const ok = await fetch(BASE).then((r) => r.ok).catch(() => false);
 if (!ok) { console.error(`ERRO: nada servindo em ${BASE}. Suba o servidor antes.`); process.exit(2); }

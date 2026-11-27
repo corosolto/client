@@ -11,8 +11,8 @@ const BASE = process.env.BASE || 'http://127.0.0.1:9417';
 const OUT = process.env.OUT || 'tools/eval/out/ui-v3';
 const MUTANTES = process.argv.includes('--mutantes');
 const FAMILIAS = ['Anton', 'Barlow Semi Condensed', 'JetBrains Mono'];
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 
 const browser = await chromium.launch({

@@ -2,10 +2,8 @@
 // Usa mapview.html: mesmo builder, texturas e GLBs do jogo, com câmera livre reprodutível.
 // Diferente de uma câmera aleatória de bot, cada quadro tem intenção declarada e viaja
 // com um manifest JSON. Uso: `ONLY=corrego,mansao node tools/capture-map-evidence.mjs`.
-import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
 import { MAP_EVIDENCE_ORDER, MAP_EVIDENCE_SHOTS } from './eval/map-evidence-views.mjs';
 import { MAPS } from '../public/js/maps.js';
 
@@ -69,9 +67,7 @@ if (process.argv.includes('--plan')) {
   process.exit(0);
 }
 
-const root = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${root}/playwright/index.js`).href);
-const chromium = pw.chromium || pw.default?.chromium;
+const { chromium } = await import('playwright');
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio'],

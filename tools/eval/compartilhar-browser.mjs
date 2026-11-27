@@ -9,8 +9,8 @@ import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 
-const root = execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim();
-const playwright = await import(pathToFileURL(`${root}/playwright/index.js`).href);
+
+const playwright = await import('playwright')
 const chromium = playwright.chromium || playwright.default?.chromium;
 const base = process.env.BASE;
 if (!base) { console.error('BASE obrigatório (porta própria; a 8123 é de outra sessão)'); process.exit(2); }

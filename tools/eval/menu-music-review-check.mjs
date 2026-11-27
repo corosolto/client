@@ -130,8 +130,8 @@ try {
 // (pacote privado de áudio instalado antes de compilar) mora no `build:cf`.
 const buildSteps = (JSON.parse(readFileSync('package.json', 'utf8')).scripts['build:cf'] || '').split(' && ');
 const fetchStep = buildSteps.indexOf('bash scripts/fetch-audio.sh');
-const audioCheckStep = buildSteps.indexOf('npm run audio:check');
-const buildStep = buildSteps.findIndex((s) => /astro build|npm run build/.test(s));
+const audioCheckStep = buildSteps.indexOf('pnpm run audio:check');
+const buildStep = buildSteps.findIndex((s) => /astro build|pnpm run build/.test(s));
 if (!(fetchStep >= 0 && buildStep > fetchStep)) {
   erros.push('MMR13 build:cf não instala o pacote privado de áudio antes de compilar.');
 }

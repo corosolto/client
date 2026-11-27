@@ -28,8 +28,8 @@ const SALDO = 1240, GANHO_HOJE = 70, AMIGOS = 2;
 const PT_MINHAS = ['LOJA DA', 'ARMÁRIO', 'GANHAR MAIS', 'NO SEU ARMÁRIO', 'VISUAIS', 'EQUIPAR', 'EQUIPADO', 'Partidas hoje', 'Chame sua turma', 'Sem compra de moeda', 'COPIAR CONVITE', 'MEUS', 'VER EM 3D', 'só cosmético'];
 const EN_MINHAS = ['SHOP', 'LOCKER', 'EARN MORE', 'IN YOUR LOCKER', 'OUTFITS', 'EQUIP', 'Matches today', 'Bring your crew', 'No currency', 'COPY INVITE', 'MINE', 'VIEW IN 3D', 'cosmetic only'];
 
-const gRoot = execSync('npm root -g').toString().trim();
-const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+
+const pw = await import('playwright')
 const chromium = pw.chromium || pw.default?.chromium;
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
