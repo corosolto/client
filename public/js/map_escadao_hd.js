@@ -1,20 +1,5 @@
-// Kit visual HD do Escadão, atrás de ?hd=1 (demo de gráficos, desligado por padrão). O mapa autoral não nomeia
-// materiais: o casamento vai pelas chaves abaixo (regraDe). Projeta reboco/cimento em metros de mundo, janelas e
-// portas por atlas, cenografia sem colisão (hd_cenografia_escadao.js). Tudo volta em desliga().
-// Chaves de casamento (public/js/map_escadao.js):
-//   degrau   canvas 256 + userData.metricTile 1.6 + cor c5c2b9        cimento  idem, cor b5b2a8
-//   reboco   canvas 128 + cor em {8ba7a4, d7ccb1, bf9176, a9b38d}     tijolo   metricTile 1.65 ou src lajes_tijolo_baiano
-//   guarda   cor c2baa7 com mapa (T.concrete)                         concreto src concrete_br ou canvas tilePuro cinza (256 claro / 512 escuro)
-//   vidro    sem mapa, cor 273b42 (atlas só nas células 0,2,3,5,6; caixa sem hdJc/hdJs = tinta lisa)
-//   porta    sem mapa, cor 49372a      ferro  sem mapa, cor 38413c (portão 0,6–1,5 x 1,4–2,3 m e veneziana autoral já têm frisos em
-//            geometria: só acabamento; só o painel liso 0,72 x 0,85 m recebe basculante do atlas)      zinco  cor 777a76 + metalness .35
-//   lixeira  malha sob userData.mapPropId === 'dumpster' (pichação legível vira mancha)
-//   casa     malha sob userData.casario === 'casa_favela_tijolo' (atlas cozido do GLB: faces laranja ganham junta de bloco)
-//   casaAzul malha sob userData.casario === 'casa_favela_azul' (faces azul-marinho viram pintura azul lavada com reboco; r24)
-// Kill-switches: ?hdreboco=0 ?hdpiso=0 ?hdjanela=0 ?hdporta=0 ?hdtijolo=0 ?hdchapa=0 ?hdregua=0 (réguas de zinco da veneziana voltam)
-// ?hdlixeira=0 ?hdcasa=0 ?hdcasaazul=0 ?hdcoluna=1 (DESLIGADO por padrão: pilares do molde em caixa de concreto + ferragem; opts.colunas = true) ?hdr23=0 (cenografia r23: fios finos, parapeitos,
-// muretas, bicicleta, caixilhos, mão-francesa) ?hdr24=0 (cenografia r24: poste de laje, fachada do spawn, bueiro, sarjetas) ?hdr26=0 (casario
-// do morro volta do bloco cerâmico à vista ao reboco da r24e) ?hdcen=0[,item] e os mesmos em opts.
+// Kit visual HD do Escadão, atrás de ?hd=1 (desligado por padrão). O mapa não nomeia materiais: casa por regraDe; tudo volta em desliga().
+// Interruptores ?hd*=0 e chaves de casamento: docs/hd-kit/escadao.md#interruptores e #materiais.
 import * as THREE from 'three';
 import { pbrTex, materiaisDe } from './map_sertao_hd.js';
 import { ruidoTex, RUIDO_PARS } from './hd_cenografia_lajes.js';
@@ -57,8 +42,8 @@ const PARS = `varying vec3 vHdPos; varying vec3 vHdJc; varying vec3 vHdJs; varyi
   vec3 hdBarro(vec3 c, float k){ return mix(c, dot(c, ${LUMA}) * vec3(0.58, 0.56, 0.52), k); }
   float hdFaixaCorpo(float y){ return smoothstep(0.40, 0.55, y) * (1.0 - smoothstep(2.0, 2.2, y)); }
   float hdVis(float tam, vec2 q){ return clamp(tam / max(max(fwidth(q.x), fwidth(q.y)), 1e-6) - 1.0, 0.0, 1.0); }
-  // r24: grão de alta frequência por leitura do hdRuido com UV escalado (canal r = 4 oitavas de 8 texels/feição: sem quadriculado
-  // de texel como o canal b); 1 tap sempre + 1 tap girado só quando o período cabe em ≥ 2,5 px. per = período em metros; devolve 0–1.
+  // Grão de alta frequência: hdRuido com UV escalado (canal r: sem o quadriculado de texel do canal b); 2º tap girado só com
+  // período ≥ 2,5 px. per = período em metros; devolve 0–1. Ver docs/hd-kit/escadao.md#grao.
   float hdGraoP(vec2 q, float per){ float fw = max(max(fwidth(q.x), fwidth(q.y)), 1e-6), vis = smoothstep(1.0, 2.5, per / fw);
     vec2 u = q / (per * 32.0); float g = texture2D(hdRuido, u).r;
     if (vis > 0.01) g = 0.5 * g + 0.5 * texture2D(hdRuido, vec2(u.y, -u.x) * 1.7 + 0.37).g;
@@ -80,7 +65,7 @@ const PARS = `varying vec3 vHdPos; varying vec3 vHdJc; varying vec3 vHdJs; varyi
     if (ax < 1.9 && ((p.z > 10.5 && p.z < 14.05) || (p.z > 3.0 && p.z < 6.55) || (p.z > -5.5 && p.z < -1.9))) d = abs(ax - 1.55);
     float bx = abs(ax - 12.0); if (bx < 1.6 && ((p.z > 7.4 && p.z < 11.1) || (p.x < 0.0 && ((p.z > 1.8 && p.z < 5.35) || (p.z > -5.5 && p.z < -1.9))))) d = min(d, abs(bx - 1.29));
     return d; }
-  // r23: canaleta de esgoto de 15 cm no EIXO dos 3 lances centrais: distância ao eixo x = 0 (10 = fora dos lances).
+  // Canaleta de esgoto de 15 cm no EIXO dos 3 lances centrais: distância ao eixo x = 0 (10 = fora dos lances).
   float hdCanalC(vec3 p){ float ax = abs(p.x); return ax < 1.9 && ((p.z > 10.5 && p.z < 14.05) || (p.z > 3.0 && p.z < 6.55) || (p.z > -5.5 && p.z < -1.9)) ? ax : 10.0; }
   // Poça rasa no patamar 1 (piso y = 2,53): elipse 1,24 x 0,84 m em (0,85; 8,55), borda ±4 cm; .x = água, .y = halo úmido (10 cm).
   vec2 hdPoca(vec2 p, float y, vec4 n){ if (abs(y - 2.53) > 0.08) return vec2(0.0); vec2 d = (p - vec2(0.85, 8.55)) / vec2(0.62, 0.42);
@@ -106,9 +91,8 @@ const PARS = `varying vec3 vHdPos; varying vec3 vHdJc; varying vec3 vHdJs; varyi
     float ja = smoothstep(0.06, 0.02, max(px.x, px.y));
     float j = max(1.0 - smoothstep(0.005, 0.008 + px.x, (0.5 - f.x) * 0.40), 1.0 - smoothstep(0.005, 0.008 + px.y, (0.5 - f.y) * 0.20)) * ja;
     return vec4(mix(vec3(0.80 + v * (hdH(floor(b)) - 0.5) * ja), vec3(1.04, 1.02, 0.98), j), j); }
-  // Tijolo baiano 19 x 14 cm (passo 21 x 16) com junta ESCURA de 1 cm (cinza-chumbo: a clara de 1,7 cm lia como junta larga rosa-lavada
-  // na casa GLB), sobra de argamassa, ranhuras, respingo, remendo e pó (12 %) fora do corpo; croma ×1,2 sobre a luma (S ≥ 0,35 sob AgX):
-  // rgb = albedo, a = relevo em metros; jun = máscara da junta. Serve tijoloHD e casaTijoloHD (mesma escala nos dois).
+  // Tijolo baiano 19 x 14 cm (passo 21 x 16), junta ESCURA de 1 cm, croma ×1,2; remendo e pó (12 %) só fora do corpo. rgb = albedo,
+  // a = relevo em metros, jun = máscara da junta. Mesma escala em tijoloHD e casaTijoloHD. Ver docs/hd-kit/escadao.md#tijolo.
   vec4 hdBaiano(vec2 q, float cs, float corpo, vec4 a, vec4 m, out float jun){ vec4 mic = texture2D(hdRuido, q * 5.3 + 0.11); float fora = 1.0 - corpo;
     vec2 px = fwidth(q); float ja = smoothstep(0.03, 0.01, max(px.x, px.y)), qy = q.y + 0.004 * sin((q.x + cs * 3.0) * 2.7 + floor(q.y / 0.16) * 1.7);
     vec2 b = vec2((q.x + cs * 3.0) / 0.21 + 0.5 * floor(qy / 0.16), qy / 0.16), id = floor(b), f = (fract(b) - 0.5) * vec2(0.21, 0.16) + 0.004 * (mic.rg - 0.5);
@@ -182,30 +166,18 @@ function comMundo(shader, U, metros = 0, extra = '', nrm = 1) {
   shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>\n${PARS}\n${extra}`);
 }
 
-// Reboco (PAREDES, cimento, guarda): cor + rugosidade de concrete_wall_003 em metros de mundo, tom por caixa e máscara lenta
-// (período ≥ 3 m, ±8 %). Na faixa do corpo (0,4–2,1 m): grão fino ±6 %, média frequência ±7 % (15–40 cm, hdMeio, sem ladrilho)
-// e relevo ×1,5; mancha lenta/média da textura só fora dela (× (1 − hdFaixaCorpo)). Fora, por célula: rasgo de eletroduto
-// (> 2,1 m), remendo de tijolo com borda irregular (12 %), escorrido da laje (≤ 12 %), trinca, rodapé (−15 %) e musgo (< 0,3 m).
-// Família de acabamento por caixa (hdFam): 35 % pintura lisa com pintura sobre pintura (barrado até 1,2 m 5 % mais escuro, borda de
-// rolo clara), 35 % chapisco (grão SÓ de alta frequência ±5 %, some quando o período < 3 px; relevo ×1,6; no corpo NENHUM albedo vindo
-// da normal), 30 % cimento queimado (mesma luminância sem cor, juntas 1,1 x 1,25 m) SÓ em caixa de cor com S < 0,15 (hdQueiOk: branco de
-// cal, cimento, guarda); nas coloridas essa fatia vira pintura lisa. 15 % das caixas: platibanda sem reboco (tijolo nos 0,55–0,9 m de
-// cima, acima de 2,1 m). Bloco cru em caixas marcadas (hdVar.y). Mercearia do mirante: pintura comercial por posição de mundo
-// (|x| ≤ 2,4, face z −23,3 ± 7 cm): cobre parede e pilastras da quina, inclusive 7 cm da face lateral.
-// Batente (caixa ≤ 16 cm x ≤ 1,24 m: marcos, caixilhos, pilastras, canos): concreto 14 % mais escuro com lascas na aresta, sem remendo,
-// rasgo, platibanda nem tijolo. Chapisco: grão de 6,5 mm, remendo de cimento liso acima de 2,1 m (50 % das caixas), umidade 0,7 no pé.
-// Todas: respingo de barro < 0,42 m, sombra de contato sob beiral (hdCob, 0–30 cm, caixas ≥ 1,5 m) e no pé (≤ 22 cm), friso de
-// platibanda a 30 cm do topo (caixas ≥ 2,5 m), descascado da pintura lisa acima de 2,1 m. Guarda ≥ 1,4 m: marca de tábua + barbacãs (hdBarbaca).
+// Reboco (PAREDES, cimento, guarda) em metros de mundo; na faixa do corpo só grão fino e relevo, mancha de albedo só fora dela.
+// Famílias por caixa, batente, mercearia e guarda: docs/hd-kit/escadao.md#reboco.
 function rebocoHD(m, r, U, queiOk) {
   m.onBeforeCompile = (shader) => { comMundo(shader, U, CONJ.reboco.metros, 'uniform vec4 hdRebP; uniform float hdQueiOk; uniform float hdR26;', 8);
     shader.uniforms.hdRebP = { value: new THREE.Vector4(r.remendo, r.descasca, r.cru, r.umid) }; shader.uniforms.hdQueiOk = { value: queiOk };
     shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `${CABECA} { float hdY = hdAltura(vHdPos);
       vec3 hdGn = normalize(cross(dFdx(vHdPos), dFdy(vHdPos))); float hdCima = step(0.7, abs(hdGn.y));
       float hdS = vHdVar.x, hdCru = step(0.5, vHdVar.y) * hdRebP.z; vec4 hdT = texture2D(map, vMapUv);
-      // r24: projeção pelo eixo de mundo da face (x ou z pela normal geométrica) + deslocamento por caixa: x + z dava emenda vertical
-      // onde duas faces da mesma prumada se encontram (beco, x ≈ 1132–1145 px) e repetia o mesmo decal em caixas vizinhas.
+      // Projeção pelo eixo de mundo da face (x ou z pela normal geométrica) + deslocamento por caixa: somar x + z dá emenda
+      // vertical onde duas faces da mesma prumada se encontram e repete o decal em caixas vizinhas.
       vec2 hdQ = vec2((abs(hdGn.x) > abs(hdGn.z) ? vHdPos.z : vHdPos.x) + hdS * 23.0, vHdPos.y);
-      // r24: bairro instanciado (vHdInst): dessaturado 55 % e 8 % mais escuro (o verde-musgo 8fa07a lia como verde-lima ao sol).
+      // Bairro instanciado (vHdInst): dessaturado 55 % e 8 % mais escuro; sem isso o verde-musgo 8fa07a lê como verde-lima ao sol.
       diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dot(diffuseColor.rgb, ${LUMA})) * vec3(0.95, 0.94, 0.91), 0.55 * vHdInst);
       // Máscara lenta: ladrilho de 12,5 m lido com viés de mip 4 (sobra a oitava de ~3 m); hdM = meio-tom e grão (.b, < 2 cm).
       vec4 hdA = texture2D(hdRuido, hdQ * 0.08 + hdS * 3.0, 4.0), hdM = texture2D(hdRuido, hdQ * 0.83 + 0.37 + hdS * 7.0), hdM2 = hdMeio(hdQ, hdS);
@@ -214,11 +186,11 @@ function rebocoHD(m, r, U, queiOk) {
       // Batente: caixa fina (≤ 16 cm) e estreita (≤ 1,24 m) = marco de porta/janela, pilastra, cano: concreto sem remendo, rasgo nem tijolo.
       float hdBat = step(0.001, vHdJs.y) * step(min(vHdJs.x, vHdJs.z), 0.08) * step(max(vHdJs.x, vHdJs.z), 0.62);
       float hdFam = hdH(vec2(floor(hdS * 97.0), 2.0)), hdNcru = (1.0 - hdCru) * (1.0 - hdLoja) * (1.0 - hdBat);
-      // r23: 3 variantes de albedo por caixa: 0 remendo de reboco com borda dura, 1 escorrido longo de calha, 2 tijolo aparente no pé.
+      // 3 variantes de albedo por caixa: 0 remendo de reboco com borda dura, 1 escorrido longo de calha, 2 tijolo aparente no pé.
       float hdVarA = floor(hdH(vec2(floor(hdS * 97.0), 23.0)) * 2.999);
       float hdQuei = step(0.70, hdFam) * hdNcru * hdQueiOk, hdChap = step(0.35, hdFam) * step(hdFam, 0.70) * hdNcru;
       float hdLiso = (step(hdFam, 0.35) + step(0.70, hdFam) * (1.0 - hdQueiOk)) * hdNcru * hdAltoBox();
-      // r22 chapisco-esponja: ≥ 50 % de cada caixa de chapisco vira reboco liso por máscara de 2–3 m (reboco novo sobre chapisco);
+      // Chapisco: ≥ 50 % de cada caixa vira reboco liso por máscara de 2–3 m (reboco novo sobre chapisco; inteiro lê como esponja).
       // hdChap0 = família original (rodapé de bloco aparente < 0,45 m só nela).
       float hdChap0 = hdChap, hdChMix = smoothstep(0.44, 0.56, texture2D(hdRuido, hdQ * 0.37 + hdS * 2.0, 2.0).g + 0.08) * hdChap;
       hdChap -= hdChMix; hdLiso += hdChMix * hdAltoBox();
@@ -227,28 +199,27 @@ function rebocoHD(m, r, U, queiOk) {
       float hdPd = hdPw - abs(fract(hdPcx) * 2.2 - 1.1 - (hdH(vec2(hdPci, 8.0)) - 0.5) * 0.6) + 0.05 * (hdM.g - 0.5);
       float hdPdy = 0.3 + 0.3 * hdH(vec2(hdPci, 9.0)) - abs(hdY - 2.6 - 0.5 * hdH(vec2(hdPci, 10.0))) + 0.05 * (hdM.r - 0.5);
       float hdRemC = step(0.5, hdH(vec2(floor(hdS * 97.0), 6.0))) * step(0.5, hdH(vec2(hdPci, 11.0))) * max(hdChap, 0.7 * hdLiso) * hdFora * smoothstep(2.1, 2.2, hdY) * smoothstep(0.0, hdWy, min(hdPd, hdPdy));
-      // Grão HF (período 1,9 cm; chapisco 6,5 mm = grão real de 3–8 mm): amplitude some quando o período fica abaixo de 3 px: nunca cintila.
-      // r24: procedural (hdGraoP), não mais o canal b do hdRuido (texel de 4,7 mm magnificado em quadriculado).
+      // Grão HF (período 1,9 cm; chapisco 6,5 mm = grão real de 3–8 mm): a amplitude some com o período abaixo de 3 px, nunca cintila.
+      // Procedural (hdGraoP): o canal b do hdRuido magnificado vira quadriculado. Ver docs/hd-kit/escadao.md#grao.
       float hdFw = max(max(fwidth(hdQ.x), fwidth(hdQ.y)), 1e-6), hdGv = smoothstep(1.0, 2.4, mix(0.019, 0.0065, hdChap) / hdFw);
       float hdMed = 0.5 * (hdM.r + hdM2.r), hdFinoG = mix(mix(0.12, 0.08, hdQuei), mix(0.11, 0.065, hdCorpo), hdChap) * hdGv * (1.0 - hdRemC);
       float hdG = mix(hdGraoP(hdQ, 0.019), hdGraoP(hdQ + 3.0, 0.0065), hdChap), hdChapC = hdChap * hdCorpo;
       hdRug = mix(hdT.a, 1.0, 0.5 * hdChap) * mix(1.0, 0.8, hdQuei);
-      // Textura: no corpo só o grão; fora dele a mancha da concrete_wall_003 entra a 45 % (eram duas colunas escuras a cada 1,7 m).
+      // Textura: no corpo só o grão; fora dele a mancha da concrete_wall_003 entra a 45 % (inteira dá duas colunas escuras a cada 1,7 m).
       vec3 hdTb = texture2D(map, vMapUv, 6.0).rgb, hdTex = mix(hdGrao(hdT.rgb, hdTb) * mix(vec3(1.0), hdTb / ${v3(CONJ.reboco.media)}, 0.45 * hdFora), vec3(1.0), hdChapC);
-      // r23: média frequência no corpo ±3,5 % (era ±7–8 %: lia como grão de 7 cm); o grão real vem do normal map 8× mais fino (comMundo nrm).
+      // Média frequência no corpo ±3,5 % (acima disso lê como grão de 7 cm); o grão real vem do normal map 8× mais fino (comMundo nrm).
       vec3 hdReb = hdTex * mix(0.92, 1.06, hdS) * mix(mix(0.87, 1.10, hdA.r), 1.0, hdCorpo) * (1.0 + hdFinoG * (hdG - 0.5)) * mix(mix(0.96, 1.03, hdM.r), mix(mix(0.965, 1.035, hdMed), mix(mix(0.975, 1.025, hdMed), mix(0.96, 1.04, hdMed) * mix(0.985, 1.015, hdM2.g), 1.0 - hdGv), hdChap), hdCorpo);
       vec3 hdEmboco = vec3(0.43, 0.41, 0.375) * (0.76 + 0.48 * hdM.r) * mix(0.9, 1.1, hdTex.g);
       vec3 hdPint = diffuseColor.rgb * hdReb;
-      // r23: emboço nunca mais claro que 92 % da luma da pintura (no salmão/verde lia como mancha branca de 60 px).
+      // Emboço nunca mais claro que 92 % da luma da pintura: no salmão/verde lê como mancha branca.
       hdEmboco *= min(1.0, 0.92 * dot(hdPint, ${LUMA}) / max(dot(hdEmboco, ${LUMA}), 1e-3));
-      // Batente de concreto: tom de cimento 14 % mais escuro que a parede (lê como recesso), lascas de 1–3 cm na aresta mostrando brita.
-      // Aresta = borda vertical da FACE vista (pela normal geométrica): medir pela caixa dava 0 na face inteira do pilar quadrado = coluna
-      // de manchas. No corpo, lasca rara (hdM2.r > 0,9) e ≤ 1,8 cm.
+      // Batente de concreto: 14 % mais escuro que a parede (lê como recesso), lascas de 1–3 cm na aresta; no corpo, lasca rara e ≤ 1,8 cm.
+      // Aresta = borda vertical da FACE vista (normal geométrica); medir pela caixa dá 0 na face inteira do pilar quadrado.
       if (hdBat > 0.5) { float hdDe = abs(hdGn.x) > abs(hdGn.z) ? vHdJs.z - abs(vHdPos.z - vHdJc.z) : vHdJs.x - abs(vHdPos.x - vHdJc.x);
         float hdChip = (1.0 - smoothstep(0.012, mix(0.03, 0.018, hdCorpo), hdDe + 0.02 * (hdM.b - 0.5))) * step(mix(0.72, 0.9, hdCorpo), hdM2.r) * hdVis(0.012, hdQ);
         hdPint = mix(vec3(0.44, 0.43, 0.40) * hdReb / mix(0.92, 1.06, hdS) * (0.9 + 0.2 * hdM.g), vec3(0.30, 0.29, 0.27) * (0.8 + 0.4 * hdM.b), hdChip); hdAlt -= 0.006 * hdChip; }
       hdPint = mix(hdPint, vec3(dot(hdPint, ${LUMA})) * vec3(0.97, 0.97, 0.95) * 0.92 * (0.9 + 0.2 * hdM.r), hdRemC);
-      // r23 variante 0: remendo de reboco novo com borda DURA (0,9–1,6 x 0,8–1,3 m, 1 por célula de 2,9 m em 55 %), acima de 2,1 m, luma −8 %.
+      // Variante 0: remendo de reboco novo com borda DURA (0,9–1,6 x 0,8–1,3 m, 1 por célula de 2,9 m em 55 %), acima de 2,1 m, luma −8 %.
       float hdV0x = (hdQ.x + hdS * 10.0) / 2.9, hdV0i = floor(hdV0x), hdV0w = 0.45 + 0.35 * hdH(vec2(hdV0i, 31.0)), hdV0h = 0.4 + 0.25 * hdH(vec2(hdV0i, 32.0));
       float hdV0d = min(hdV0w - abs(fract(hdV0x) * 2.9 - 1.45 - (hdH(vec2(hdV0i, 33.0)) - 0.5) * 1.2), hdV0h - abs(hdY - 2.6 - hdV0h - 0.4 * hdH(vec2(hdV0i, 34.0))));
       float hdRemD = step(hdVarA, 0.5) * hdNcru * hdFora * step(0.45, hdH(vec2(hdV0i, 35.0))) * smoothstep(0.0, hdWy, hdV0d) * smoothstep(2.1, 2.14, hdY);
@@ -281,19 +252,17 @@ function rebocoHD(m, r, U, queiOk) {
       float hdTopo = vHdJs.y > 0.001 ? vHdJc.y + vHdJs.y - vHdPos.y : 1000.0;
       float hdDt = min(0.5 + 0.6 * hdH(vec2(hdC2, 11.0)) - hdTopo + hdJit, hdDl), hdDp = min(0.12 + 0.25 * hdH(vec2(hdC2, 13.0)) - hdY + hdJit, hdDl);
       float hdPt = step(1.0 - 0.12 * hdRebP.y, hdH(vec2(hdC2, 12.0))) * smoothstep(0.0, hdWy, hdDt) * smoothstep(2.1, 2.2, hdY);
-      // r23 variante 2: tijolo aparente no pé em 70 % das células (as outras variantes ficam nos 12 % de hdRebP.y).
+      // Variante 2: tijolo aparente no pé em 70 % das células (as outras variantes ficam nos 12 % de hdRebP.y).
       float hdPp = max(step(1.0 - 0.12 * hdRebP.y, hdH(vec2(hdC2, 14.0))), step(1.5, hdVarA) * step(0.3, hdH(vec2(hdC2, 14.0)))) * hdNcru * smoothstep(0.0, hdWy, hdDp) * hdAltoBox();
-      // Platibanda sem reboco (r24: 32 % das caixas, era 15 %): 0,55–0,9 m de cima, borda inferior irregular (±6 cm), aro de emboço.
+      // Platibanda sem reboco (32 % das caixas): 0,55–0,9 m de cima, borda inferior irregular (±6 cm), aro de emboço.
       float hdDpl = 0.55 + 0.35 * hdH(vec2(floor(hdS * 97.0), 5.0)) - hdTopo + 0.08 * (hdM.g - 0.5) + 0.05 * (hdA.g - 0.5);
       float hdPl = step(0.68, hdH(vec2(floor(hdS * 97.0), 3.0))) * hdNcru * smoothstep(0.0, hdWy, hdDpl) * smoothstep(2.1, 2.2, hdY) * hdAltoBox();
       float hdPele = max(max(hdPt, hdPp) * hdNcru, hdPl) * hdFora, hdRim = 1.0 - smoothstep(0.06, 0.09 + 0.03 * hdM.r, max(max(hdDt * hdPt, hdDp * hdPp), hdDpl * hdPl));
-      // Tijolo exposto mais escuro e dessaturado (0,7× do 1,4 anterior) que o tijolo aparente autoral.
+      // Tijolo exposto: dessaturado a 60 % e mais escuro que o tijolo aparente autoral.
       vec4 hdTj = hdTijolo(hdQ + 3.7, hdM.r, 0.5); vec3 hdTjx = mix(vec3(dot(hdTj.rgb, ${LUMA})), hdTj.rgb, 0.6) * 0.98;
       diffuseColor.rgb = mix(diffuseColor.rgb, mix(hdTjx, hdEmboco, hdRim), hdPele);
-      // r26 (hdR26 = 0 desliga): o bairro instanciado fora da arena (|x| > 19,5 ou z > 43) deixa de ser todo pintado: 62 % das caixas em
-      // bloco cerâmico à vista e 16 % só no último pavimento. Esqueleto de concreto: viga de 22 cm a cada 2,9 m (laje) e pilar de 18 cm
-      // nas quinas e a cada ~3,1 m (as janelas autorais em u = −1,25 / 1,1 caem entre pilares). r26b: hdBaiano recebe hdCorpo: remendo
-      // e pó de argamassa ficam fora da faixa do corpo (na r26a um remendo cinza de 38 cm caía a 1,2–1,5 m no prédio do spawn).
+      // Bairro instanciado fora da arena (|x| > 19,5 ou z > 43; hdR26 = 0 desliga): 62 % das caixas em bloco cerâmico à vista, 16 % só
+      // no último pavimento, viga a cada 2,9 m e pilar a cada ~3,1 m. hdBaiano recebe hdCorpo. Ver docs/hd-kit/escadao.md#bairro-instanciado.
       float hdBairro = hdR26 * vHdInst * max(step(19.5, abs(vHdJc.x)), step(43.0, vHdJc.z)) * (1.0 - hdCima);
       if (hdBairro > 0.5) { float hdHc = hdH(vec2(floor(hdS * 97.0), 61.0)), hdBy = vHdPos.y - (vHdJc.y - vHdJs.y);
         float hdBx = abs(hdGn.x) > abs(hdGn.z) ? vHdPos.z - vHdJc.z : vHdPos.x - vHdJc.x, hdBm = abs(hdGn.x) > abs(hdGn.z) ? vHdJs.z : vHdJs.x;
@@ -310,7 +279,7 @@ function rebocoHD(m, r, U, queiOk) {
       float hdPlL = (1.0 - smoothstep(0.008, 0.014 + hdWy, abs(hdTopo - 0.30 - 0.02 * (hdA.g - 0.5)))) * hdPlat * hdVis(0.012, hdQ);
       diffuseColor.rgb *= (1.0 + 0.03 * hdPlat * step(hdTopo, 0.30)) * (1.0 - 0.25 * hdPlL); hdAlt -= 0.006 * hdPlL;
       // Descascado da pintura lisa no terço de cima (> 2,1 m): emboço à vista em manchas de 10–30 cm com borda levantada clara.
-      // r22: 3 variantes por faixa de 1,5 m (ruído girado 0,6 / 1,7 / 2,8 rad e deslocado): o mesmo decal repetia 4× na prumada.
+      // 3 variantes por faixa de 1,5 m (ruído girado 0,6 / 1,7 / 2,8 rad e deslocado): senão o mesmo decal repete na prumada.
       float hdPk = mod(floor((hdY + hdS * 4.0) / 1.5), 3.0), hdPa = 0.6 + 1.1 * hdPk;
       vec2 hdPq = mat2(cos(hdPa), sin(hdPa), -sin(hdPa), cos(hdPa)) * (hdQ * 0.55) + hdPk * 0.37 + hdS * 3.0;
       float hdPeelN = texture2D(hdRuido, hdPq).g * 0.55 + hdA.r * 0.45, hdPeelOk = hdLiso * hdFora * smoothstep(2.1, 2.3, hdY) * step(0.5, hdH(vec2(floor(hdS * 97.0), 19.0)));
@@ -319,27 +288,27 @@ function rebocoHD(m, r, U, queiOk) {
       // Guarda alta (≥ 1,4 m, hdRebP.w = 1): concreto de forma com marca de tábua e barbacãs de PVC com escorrido e musgo ao pé.
       float hdGua = step(0.99, hdRebP.w) * step(0.7, vHdJs.y) * (1.0 - hdBat) * (1.0 - hdCima);
       if (hdGua > 0.5) { float hdAro; vec4 hdFo = hdBarbaca(hdQ, hdY, hdS, hdM, hdA, hdWy, hdAro);
-        // r23: escorrido sob o cano 0,8 / −45 % (era 0,6 / −30 %: na pose da escada o cano ficava sem escorrido legível).
+        // Escorrido sob o cano a 0,8 / −45 %: mais fraco que isso não lê na pose da escada.
         diffuseColor.rgb *= (1.0 + 0.06 * hdFo.y) * (1.0 - 0.18 * hdFo.x); diffuseColor.rgb = hdUmido(diffuseColor.rgb, 0.8 * hdFo.w) * (1.0 - 0.45 * hdFo.w);
         diffuseColor.rgb = mix(diffuseColor.rgb, dot(diffuseColor.rgb, ${LUMA}) * vec3(0.5, 0.66, 0.3), 0.6 * hdFo.w * smoothstep(0.30, 0.05, hdY));
         diffuseColor.rgb = mix(mix(diffuseColor.rgb, vec3(0.55, 0.53, 0.48), hdAro), vec3(0.05, 0.05, 0.045), hdFo.z); hdAlt += 0.012 * hdAro - 0.012 * hdFo.z - 0.002 * hdFo.x; hdRel *= 1.0 - 0.5 * hdFo.z; }
       // Sombra de contato: sob beiral/laje (cobertura acima, 0–30 cm, caixas ≥ 1,5 m) e no pé da parede (≤ 22 cm).
-      // r24: rodapé escuro de 10 cm com borda dura (cimento queimado sujo, −32 %) em toda caixa que toca o piso: o encontro parede/chão era cru.
+      // Rodapé escuro de 10 cm com borda dura (cimento queimado sujo, −32 %) em toda caixa que toca o piso.
       float hdBei = hdBeiral(vHdPos) * step(0.75, vHdJs.y) * (1.0 - hdCima), hdPe = smoothstep(0.22, 0.0, hdY) * hdAltoBox() * (1.0 - hdCima);
       float hdRod = (1.0 - smoothstep(0.10, 0.11 + hdWy, hdY + 0.006 * (hdM.g - 0.5))) * hdAltoBox() * (1.0 - hdCima) * (1.0 - hdBat);
       diffuseColor.rgb *= (1.0 - 0.28 * hdBei) * (1.0 - 0.18 * hdPe);
       diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dot(diffuseColor.rgb, ${LUMA})) * vec3(0.62, 0.62, 0.60) * (0.9 + 0.2 * hdM.r), hdRod); hdRug = mix(hdRug, 0.75, hdRod);
-      // r22: relevo do chapisco −40 % (×1,6 fora / ×1,2 no corpo → ×0,96 / ×0,75): lia como esponja.
-      // r23: normal map 8× mais fino (feições de 0,6–5 cm): no corpo ×1,0 (era ×1,5), nunca amplificado.
+      // Relevo do chapisco contido (×0,96 fora / ×0,75 no corpo): acima disso lê como esponja.
+      // Normal map 8× mais fino (feições de 0,6–5 cm): no corpo ×1,0, nunca amplificado.
       hdRel *= (1.0 - 0.5 * hdPele) * (1.0 - 0.5 * hdRemC) * mix(0.6, 1.0, hdNit) * mix(1.0, mix(1.0, 0.75, hdChap), hdCorpo) * (1.0 - 0.04 * hdChap * hdFora) * (1.0 - 0.4 * hdChapC) * mix(1.0, 0.65, hdQuei); hdAlt -= 0.012 * hdPele + 0.003 * hdJun; hdLuzRel = 1.0 - 0.5 * hdChapC;
       float hdEsc = hdEscorrido(hdQ, hdTopo, hdS) * hdFora * hdAltoBox() * (1.0 - hdCru);
       diffuseColor.rgb = hdUmido(diffuseColor.rgb, 0.45 * hdEsc) * (1.0 - 0.18 * hdEsc);
-      // r23 variante 1: escorrido de calha a partir do topo, 1 coluna por 3 m (8–11 cm), desce 1,6–2,6 m; no corpo é só um fio ≤ 11 cm, −12 %.
+      // Variante 1: escorrido de calha a partir do topo, 1 coluna por 3 m (8–11 cm), desce 1,6–2,6 m; no corpo é só um fio ≤ 11 cm, −12 %.
       float hdV1x = (hdQ.x + hdS * 7.0) / 3.0, hdV1i = floor(hdV1x), hdV1w = 0.04 + 0.015 * hdH(vec2(hdV1i, 42.0)), hdV1l = 1.6 + hdH(vec2(hdV1i, 43.0));
       float hdV1d = abs(fract(hdV1x) * 3.0 - 1.5 - (hdH(vec2(hdV1i, 41.0)) - 0.5) * 2.0 + 0.02 * (hdM.g - 0.5) + 0.03 * (hdA.g - 0.5));
       float hdEscL = step(0.5, hdVarA) * step(hdVarA, 1.5) * hdNcru * hdAltoBox() * (1.0 - hdCima) * step(0.001, vHdJs.y) * (1.0 - smoothstep(hdV1w * 0.6, hdV1w + fwidth(hdQ.x), hdV1d)) * smoothstep(hdV1l, hdV1l * 0.45, hdTopo) * smoothstep(0.0, 0.05, hdTopo) * (0.6 + 0.4 * hdM.r);
       diffuseColor.rgb = hdUmido(diffuseColor.rgb, 0.5 * hdEscL) * (1.0 - mix(0.22, 0.12, hdCorpo) * hdEscL);
-      // r24 bairro instanciado: escorrido fino de sujeira sob os peitoris autorais (janelas em u = −1,25 / 1,1 da face, peitoril em
+      // Bairro instanciado: escorrido fino de sujeira sob os peitoris autorais (janelas em u = −1,25 / 1,1 da face, peitoril em
       // 1,4 + 2,9·andar − 0,48 m): 3 fios de 1–2,5 cm por janela descendo 0,75 m, −20 %.
       if (vHdInst > 0.5) { float hdU = abs(hdGn.x) > abs(hdGn.z) ? vHdPos.z - vHdJc.z : vHdPos.x - vHdJc.x, hdYb = vHdPos.y - (vHdJc.y - vHdJs.y);
         float hdAnd = floor((hdYb - 0.85) / 2.9), hdSill = 1.4 + 2.9 * hdAnd - 0.48, hdDy = hdSill - hdYb;
@@ -351,7 +320,7 @@ function rebocoHD(m, r, U, queiOk) {
       float hdTr = hdTrinca(hdQ + hdS * 5.0, hdA.a, hdS, hdY); diffuseColor.rgb *= 1.0 - 0.42 * mix(1.0, 0.25, hdCorpo) * hdTr; hdAlt -= 0.003 * hdTr;
       float hdSuj = smoothstep(0.50, 0.04, hdY) * (0.45 + 0.55 * hdA.r) * (1.0 - 0.35 * hdPele) * hdAltoBox() * hdFora;
       diffuseColor.rgb = hdUmido(diffuseColor.rgb, 0.45 * hdSuj) * (1.0 - 0.15 * hdSuj);
-      // Mofo cinza-verde no rodapé (< 0,45 m, r22: era musgo verde até 0,3 m a 45 %).
+      // Mofo cinza-verde no rodapé (< 0,45 m).
       float hdMusgo = smoothstep(0.45, 0.05, hdY) * smoothstep(0.40, 0.65, hdM.a) * hdAltoBox();
       // Respingo de barro nos 40 cm de baixo (fora do corpo): mancha parda de ruído médio.
       float hdBarroM = smoothstep(0.42, 0.10, hdY) * smoothstep(0.48, 0.70, hdM2.g * 0.6 + hdM.a * 0.4) * hdAltoBox() * (1.0 - hdCima);
@@ -367,12 +336,8 @@ function rebocoHD(m, r, U, queiOk) {
   m.customProgramCacheKey = () => 'escadao-hd-reboco18';
 }
 
-// Concreto serve piso e parede (orientação pela derivada da posição). Piso: cimentado concrete_floor_02, junta de desempenadeira
-// a 1,5 m, 2 remendos fixos no mirante (hdRemendo), mancha leve, canaleta de água dos lances (faixa úmida de 15 cm, rugosidade 0,3,
-// fio d'água escuro no eixo e limo nas bordas; o espelho do degrau continua a faixa), poça rasa no patamar 1 (hdPoca, rugosidade
-// 0,25, sem relevo), água escura/musgo só no encontro com a parede (hdCob no mip 1, ≤ 20 cm),
-// quina de degrau com linha clara de 1–2 cm e lasca em 20 % dos degraus (borda +z da caixa). Parede: concreto de forma ou,
-// no espelho, o próprio cimentado com sujeira de contato. Grão e relevo somem com a distância (hdNitido).
+// Concreto serve piso e parede (orientação pela derivada da posição); grão e relevo somem com a distância (hdNitido).
+// Piso: junta, remendos, canaletas, poça; parede: concreto de forma ou espelho do degrau. Ver docs/hd-kit/escadao.md#concreto.
 function concretoHD(m, r, U, o) {
   const k = (CONJ.piso.metros / CONJ.forma.metros).toFixed(4);
   m.onBeforeCompile = (shader) => { comMundo(shader, U, CONJ.piso.metros, 'uniform sampler2D hdForma; uniform sampler2D hdFormaN; uniform vec3 hdPisoT; uniform vec3 hdParT; uniform vec3 hdPisoP;');
@@ -380,7 +345,7 @@ function concretoHD(m, r, U, o) {
     shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `${CABECA} hdLuzRel = 0.8;
       vec3 hdGn = normalize(cross(dFdx(vHdPos), dFdy(vHdPos))); float hdPiso = step(0.7, abs(hdGn.y)), hdNariz = hdPisoP.y, hdNit = hdNitido(), hdFino = mix(0.55, 0.85, hdNit);
       hdRel = mix(0.45, 1.0, hdNit);
-      // Piso lido com viés de mip +1 (o speckle branco vinha do grão da cor + normal do concrete_floor_02 e de pixels lisos do alfa): sd ≤ 30.
+      // Piso lido com viés de mip +1: sem ele o grão da cor + normal do concrete_floor_02 dá speckle branco.
       if (hdPiso > 0.5) { vec4 hdT = texture2D(map, vMapUv, 1.0); hdT.rgb = mix(texture2D(map, vMapUv, 3.5).rgb, hdT.rgb, hdFino); hdRug = max(hdT.a, 0.72); vec2 p = vHdPos.xz; float hdS = vHdVar.x;
         vec4 a = texture2D(hdRuido, p * 0.071 + hdS), m2 = texture2D(hdRuido, p * 0.53 + 0.19);
         // Junta de desempenadeira: malha de 1,5 m com fiadas desencontradas, reta com ±2 cm de deriva lenta + ±5 mm de ruído, 35 % das
@@ -390,13 +355,11 @@ function concretoHD(m, r, U, o) {
         float djy = min(f.y, 1.0 - f.y) * 1.5 + 10.0 * max(step(hdH(vec2(id.x, floor(g.y + 0.5)) + 5.0), 0.35), step(hdH(vec2(floor(g.x * 3.0), floor(g.y + 0.5)) + 11.0), 0.3));
         float dj = min(djx, djy), rem = hdRemendo(p, m2);
         // Remendo de asfalto (3 fixos no mirante, y = 7,56; dois no quadro da pose, entre a câmera em z −30 e a mercearia): quase preto,
-        // borda ruidosa, 6 mm acima, sem grão.
-        // r23: os dois do quadro da pose cresceram (2,6 x 1,5 e 2,2 x 1,4 m) e ficaram 1 m mais perto da câmera.
+        // borda ruidosa, 6 mm acima, sem grão. Ver docs/hd-kit/escadao.md#piso-mirante.
         float hdAsf = 0.0; if (abs(vHdPos.y - 7.58) < 0.1) { for (int i = 0; i < 3; i++) { vec2 cc = i == 0 ? vec2(-2.6, -27.4) : i == 1 ? vec2(3.6, -25.8) : vec2(-2.0, -14.5), hh = i == 0 ? vec2(1.3, 0.75) : i == 1 ? vec2(1.1, 0.7) : vec2(1.1, 0.75);
           vec2 d = abs(p - cc) - hh + 0.10 * (m2.rb - 0.5); hdAsf = max(hdAsf, 1.0 - smoothstep(-0.03, 0.03, max(d.x, d.y))); } }
-        // Calçada da mercearia (z −24,25..−23,3, |x| < 2,9): rebaixo de 2 cm (degrau na borda) e canaleta de esgoto de 18 cm em z −24,25
-        // (fundo úmido escuro 3,5 cm abaixo, bordas claras de 1 cm, fio d'água no eixo). Ficava em z −22,95: atrás da fachada, invisível.
-        // r23: canaleta legível: corre por |x| < 7 (era 2,9), 22 cm, fundo −60 %.
+        // Calçada da mercearia (z −24,25..−23,3): rebaixo de 2 cm e canaleta de esgoto de 22 cm em z −24,25 por |x| < 7 (fundo úmido
+        // escuro, bordas claras de 1 cm, fio d'água no eixo). Atrás da fachada ela não aparece. Ver docs/hd-kit/escadao.md#piso-mirante.
         float hdNaM = step(abs(vHdPos.y - 7.58), 0.1) * step(abs(p.x), 7.0);
         float hdCanM = hdNaM * (1.0 - smoothstep(0.09, 0.12, abs(p.y + 24.25))), hdCanF = hdNaM * (1.0 - smoothstep(0.008, 0.016 + px, abs(p.y + 24.25 + 0.01 * (m2.g - 0.5))));
         float hdCanB = hdNaM * (1.0 - smoothstep(0.008, 0.012 + px, abs(abs(p.y + 24.25) - 0.095)));
@@ -410,18 +373,18 @@ function concretoHD(m, r, U, o) {
         float hdCd = hdCanalD(vHdPos), canal = (1.0 - smoothstep(0.085, 0.16, hdCd)) * hdPisoP.z, hdFio = (1.0 - smoothstep(0.006, 0.014 + px, hdCd)) * hdPisoP.z;
         float hdLimo = smoothstep(0.04, 0.10, hdCd) * (1.0 - smoothstep(0.14, 0.22, hdCd)) * smoothstep(0.35, 0.6, m2.a) * hdPisoP.z;
         vec2 hdPo = hdPoca(p, vHdPos.y, m2) * hdPisoP.z;
-        // Grão do cimentado (r24: procedural hdGraoP, 1,6 cm; o canal b do hdRuido lia como quadriculado de perto), ±22 % de média zero.
+        // Grão do cimentado: procedural (hdGraoP, período 1,6 cm), média zero; o canal b do hdRuido lê como quadriculado de perto.
         float gr = hdGraoP(p, 0.016);
         vec3 c = hdPisoT * hdT.rgb / ${v3(CONJ.piso.media)} * (1.0 + 0.16 * (gr - 0.5) * (1.0 - hdAsf));
         c *= mix(0.92, 1.06, hdH(id + hdS)) * mix(0.88, 1.10, a.g) * mix(0.92, 1.07, m2.r) * (1.0 - 0.45 * hdTrinca(p + hdS * 3.0, a.a, hdS)) * (1.0 - 0.45 * hdTrinca(p.yx + 5.3 + hdS, a.g, hdS));
         // Remendo: cimento mais novo, 10 % mais escuro e frio, grão próprio, 4 mm acima do piso.
         c = mix(c, c * vec3(0.88, 0.89, 0.92) * (1.0 + 0.16 * (m2.g - 0.5)), rem); hdAlt += 0.004 * rem;
-        // r23: 1 degrau remendado (lance 2, k = 7, centro z 4,635): cimento novo de 60 cm em x −0,55, borda dura, sem grão, 5 mm acima.
+        // 1 degrau remendado (lance 2, k = 7, centro z 4,635): cimento novo de 60 cm em x −0,55, borda dura, sem grão, 5 mm acima.
         float hdRemDg = hdNariz * step(abs(vHdJc.z - 4.635), 0.05) * (1.0 - smoothstep(0.30, 0.31 + px, abs(p.x + 0.55)));
         c = mix(c, hdPisoT * 0.95 * vec3(0.90, 0.91, 0.95) * (0.96 + 0.08 * m2.g), hdRemDg); hdAlt += 0.005 * hdRemDg;
         c = mix(c, vec3(0.055, 0.053, 0.05) * (0.8 + 0.4 * m2.g) * (1.0 + 0.3 * (gr - 0.5)), hdAsf); hdAlt += 0.006 * hdAsf;
-        // r24 mirante (y 7,58): mancha de óleo (elipse 1,1 x 0,7 em (−1,2; −28,6), quase preta, brilhante, halo pardo) e remendo de
-        // areia/brita (elipse 1,6 x 1,1 em (4,1; −29,4), clara e granulada, borda esfarelada); areia encostada ao muro (≤ 35 cm da parede, hdCob).
+        // Mirante (y 7,58): mancha de óleo (elipse 1,1 x 0,7 em (−1,2; −28,6), quase preta, brilhante, halo pardo), remendo de areia/brita
+        // (elipse 1,6 x 1,1 em (4,1; −29,4), clara, borda esfarelada) e areia encostada ao muro (≤ 35 cm da parede, hdCob).
         float hdOleo = 0.0, hdOleoH = 0.0, hdBrita = 0.0, hdAreia = 0.0;
         if (abs(vHdPos.y - 7.58) < 0.1) { vec2 dO = (p - vec2(-1.2, -28.6)) / vec2(0.55, 0.35); float rO = length(dO) + 0.12 * (m2.r - 0.5) + 0.08 * (a.g - 0.5);
           hdOleo = 1.0 - smoothstep(0.85, 1.0, rO); hdOleoH = (1.0 - smoothstep(1.0, 1.35, rO)) * (1.0 - hdOleo);
@@ -432,7 +395,7 @@ function concretoHD(m, r, U, o) {
         c = mix(c, vec3(0.40, 0.36, 0.29) * (0.85 + 0.3 * hdGraoP(p + 5.0, 0.014)), 0.75 * hdAreia); hdAlt += 0.004 * hdAreia;
         c = hdBarro(c, 0.3 * mancha) * (1.0 - 0.20 * mancha) * (1.0 - 0.72 * junta) * (1.0 - 0.14 * hdAnel - 0.05 * hdMiolo);
         c = hdUmido(c, 0.7 * canal) * (1.0 - 0.5 * canal) * (1.0 - 0.3 * hdFio);
-        // r23: canaleta central de esgoto (15 cm, 2 cm rebaixada, fio d'água escuro, limo nas bordas) e musgo no pé do corrimão/mureta (|x| > 1,55).
+        // Canaleta central de esgoto (15 cm, 2 cm rebaixada, fio d'água escuro, limo nas bordas) e musgo no pé do corrimão/mureta (|x| > 1,55).
         float hdCc = hdCanalC(vHdPos), hdCanC = (1.0 - smoothstep(0.065, 0.085 + px, hdCc)) * hdNariz * hdPisoP.z, hdFioC = (1.0 - smoothstep(0.006, 0.014 + px, hdCc)) * hdNariz * hdPisoP.z;
         float hdLimoC = smoothstep(0.05, 0.09, hdCc) * (1.0 - smoothstep(0.11, 0.17, hdCc)) * smoothstep(0.3, 0.55, m2.a) * hdNariz * hdPisoP.z;
         c = hdUmido(c, 0.85 * hdCanC) * (1.0 - 0.5 * hdCanC) * (1.0 - 0.35 * hdFioC); c = mix(c, dot(c, ${LUMA}) * vec3(0.42, 0.58, 0.28), 0.6 * hdLimoC); hdAlt -= 0.02 * hdCanC;
@@ -478,7 +441,7 @@ function concretoHD(m, r, U, o) {
         float hdMusgo = smoothstep(0.30, 0.03, hdY) * smoothstep(0.50, 0.70, hdM.a) * hdAltoBox(); c = mix(c, dot(c, ${LUMA}) * vec3(0.83, 1.10, 0.50), 0.45 * hdMusgo);
         // Espelho do degrau: a faixa úmida da canaleta desce pelo espelho (continuidade da água), com limo onde o ruído deixa.
         float hdCanE = max(1.0 - smoothstep(0.075, 0.14, hdCanalD(vHdPos)), 1.0 - smoothstep(0.065, 0.09, hdCanalC(vHdPos))) * hdNariz * hdPisoP.z;
-        // r23: espelho do degrau remendado (k = 7 do lance 2, z 4,78) acompanha o remendo do piso.
+        // Espelho do degrau remendado (k = 7 do lance 2, z 4,78) acompanha o remendo do piso.
         float hdRemE = hdNariz * step(abs(vHdJc.z - 4.78), 0.05) * (1.0 - smoothstep(0.30, 0.31 + fwidth(vHdPos.x), abs(vHdPos.x + 0.55)));
         c = mix(c, hdParT * 0.95 * vec3(0.90, 0.91, 0.95) * (0.96 + 0.08 * hdM.g), hdRemE);
         c = hdUmido(c, 0.5 * hdCanE) * (1.0 - 0.3 * hdCanE); c = mix(c, dot(c, ${LUMA}) * vec3(0.45, 0.62, 0.30), 0.35 * hdCanE * smoothstep(0.4, 0.6, hdM.a)); hdRug = mix(hdRug, 0.45, hdCanE);
@@ -492,20 +455,15 @@ function concretoHD(m, r, U, o) {
   m.customProgramCacheKey = () => 'escadao-hd-concreto12';
 }
 
-// Tijolo aparente procedural (a textura do mapa fica ligada mas não é lida): hdBaiano (PARS) = bloco cerâmico 19 x 14 cm a meio tijolo
-// (fiadas com ±4 mm de onda), junta CLARA de 1,5–2 cm com sobra de argamassa em 50 % das fiadas, salmão-rosado 7 % mais escuro que a r15
-// e dessaturado 20 % em 2 famílias + tom por tijolo (±5 % no corpo, ±10 % fora), 3 ranhuras do 6 furos, pó branco e remendo fora do corpo.
-// Aqui por cima: escorrido, trinca, pé úmido com musgo. Batente/empena fina (hdBat) vira concreto com lasca na aresta (sem tijolo).
-// m.color vira branco em aplica(): o albedo sai inteiro daqui (restaurado em desliga()).
+// Tijolo aparente procedural (hdBaiano; a textura do mapa fica ligada mas não é lida). m.color vira branco em aplica():
+// o albedo sai inteiro daqui (restaurado em desliga()). Batente/empena fina (hdBat) vira concreto. Ver docs/hd-kit/escadao.md#tijolo.
 function tijoloHD(m, U) {
   m.onBeforeCompile = (shader) => { comMundo(shader, U);
     shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `${CABECA} { float hdY = hdAltura(vHdPos); vec2 hdQ = vec2(vHdPos.x + vHdPos.z, vHdPos.y); float hdS = vHdVar.x;
       vec4 hdA = texture2D(hdRuido, hdQ * 0.137 + hdS * 3.0), hdM = texture2D(hdRuido, hdQ * 0.83 + 0.37 + hdS * 7.0), hdM2 = hdMeio(hdQ, hdS);
       float hdCorpo = hdFaixaCorpo(hdY), hdFora = 1.0 - hdCorpo, hdTopo = vHdJs.y > 0.001 ? vHdJc.y + vHdJs.y - vHdPos.y : 1000.0;
-      // Batente (≤ 16 cm x ≤ 1,24 m), empena de 20–50 cm de espessura com ≥ 3 m de altura e ≥ 5 m de comprimento, as moradias de
-      // tijolo dos becos (caixas com |x| 13,5–16 e z 6–15: parede de 0,62 x 2,4 m + pavimento de cima, a face de 2,4 m lia como
-      // empena de tijolo no beco) e pilar (≤ 0,8 x 0,8 m, ≥ 2 m: o de tijolo cru sob o pergolado do spawn): concreto 14 % mais
-      // escuro com lasca na aresta vertical da face vista, sem tijolo.
+      // hdBat (concreto 14 % mais escuro, lasca na aresta, sem tijolo): batente ≤ 16 cm x ≤ 1,24 m, empena de 20–50 cm (≥ 3 m x ≥ 5 m),
+      // moradias dos becos (|x| 13,5–16, z 6–15) e pilar ≤ 0,8 x 0,8 m com ≥ 2 m. Ver docs/hd-kit/escadao.md#tijolo.
       vec3 hdGn = normalize(cross(dFdx(vHdPos), dFdy(vHdPos))); float hdFino = min(vHdJs.x, vHdJs.z), hdLargo = max(vHdJs.x, vHdJs.z);
       float hdBeco = step(13.5, abs(vHdJc.x)) * step(abs(vHdJc.x), 16.0) * step(6.0, vHdJc.z) * step(vHdJc.z, 15.0), hdPilar = step(hdLargo, 0.4) * step(1.0, vHdJs.y);
       float hdBat = step(0.001, vHdJs.y) * max(max(max(step(hdFino, 0.08) * step(hdLargo, 0.62), step(0.1, hdFino) * step(hdFino, 0.25) * step(1.5, vHdJs.y) * step(2.5, hdLargo)), hdBeco), hdPilar);
@@ -514,9 +472,8 @@ function tijoloHD(m, U) {
         vec3 hdCim = vec3(0.44, 0.43, 0.40) * (0.9 + 0.2 * hdM.g) * mix(mix(0.92, 1.08, hdA.r), 1.0, hdCorpo) * mix(0.95, 1.05, 0.5 * (hdM.r + hdM2.r));
         diffuseColor.rgb *= mix(hdCim, vec3(0.30, 0.29, 0.27) * (0.8 + 0.4 * hdM.b), hdChip); hdAlt = -0.006 * hdChip + 0.004 * (hdM2.r - 0.5) * hdVis(0.02, hdQ); hdRug = 0.95; hdRel = 0.6; }
       else { float hdJ; vec4 hdBai = hdBaiano(hdQ, hdS, hdCorpo, hdA, hdM, hdJ);
-        // r24: argamassa escorrida sob a junta horizontal (35 % das fiadas, 1–3 cm, cinza-chumbo); reboco parcial (emboço cinza em manchas de
-        // 0,5–1,5 m) só acima de 2,1 m em 50 % das caixas; na QUINA (face cuja normal segue a dimensão fina da caixa, ≤ 35 cm) os 6 furos
-        // do bloco (2 x 3 de Ø 2,2 cm por 9 x 14 cm) em escuro e relevo.
+        // Argamassa escorrida sob a junta (35 % das fiadas, 1–3 cm); reboco parcial só acima de 2,1 m em 50 % das caixas; na QUINA
+        // (face cuja normal segue a dimensão fina da caixa, ≤ 35 cm) os 6 furos do bloco (2 x 3 de Ø 2,2 cm) em escuro e relevo.
         vec2 hdBq = vec2((hdQ.x + hdS * 3.0) / 0.21 + 0.5 * floor(hdQ.y / 0.16), hdQ.y / 0.16), hdBid = floor(hdBq), hdBf = (fract(hdBq) - 0.5) * vec2(0.21, 0.16);
         float hdSmL = 0.01 + 0.02 * hdH(hdBid + 41.0), hdSm = step(0.65, hdH(vec2(hdBid.y, 44.0))) * step(0.4, hdH(hdBid + 45.0)) * (1.0 - smoothstep(hdSmL * 0.5, hdSmL, 0.08 - hdBf.y - 0.006)) * step(0.0, hdBf.y) * smoothstep(0.012, 0.004, fwidth(hdQ.y)) * (1.0 - hdJ);
         hdBai.rgb = mix(hdBai.rgb, vec3(0.19, 0.185, 0.17) * (0.85 + 0.3 * hdM.g), 0.8 * hdSm); hdBai.a += 0.002 * hdSm;
@@ -539,12 +496,8 @@ function tijoloHD(m, U) {
   m.customProgramCacheKey = () => 'escadao-hd-tijolo9';
 }
 
-// Janela: o painel escuro do mapa vira caixilho + vidro do atlas (cor + altura no alfa), célula sorteada pela posição
-// do vão, vidro 4,5 cm atrás do caixilho por paralaxe e reflexo de céu por Fresnel. Painel largo repete a célula.
-// Só células que leem inteiras de longe (correr, basculante, veneziana, tijolo, madeirite); folha aberta, vitrô com
-// vidro faltando, lençol+ventilador e papelão pareciam célula vizinha cortada. UV recortado a 0,02–0,98 da célula.
-// Caixa sem hdJc/hdJs (vHdJs = 0) não entra no if: fica a tinta lisa do material. Por cima do atlas: aro de 5 cm em relevo
-// (+2,5 cm) e peitoril escuro de 7 cm com aresta clara. Sem grade: as células do atlas já trazem barras e a grade duplicava.
+// Janela: o painel escuro do mapa vira caixilho + vidro do atlas (cor + altura no alfa), célula pela posição do vão, UV recortado
+// a 0,02–0,98. Caixa sem hdJc/hdJs fica tinta lisa. Células permitidas e o porquê: docs/hd-kit/escadao.md#janela.
 const CEL_JANELA = [[.26, 0], [.50, 2], [.70, 3], [.84, 5], [1.01, 6]];
 function janelaHD(m, U) {
   m.onBeforeCompile = (shader) => { comMundo(shader, U, 0, 'uniform sampler2D hdJanelas;');
@@ -566,7 +519,7 @@ function janelaHD(m, U) {
             hdTx = mix(hdTx2, hdTx, hdSol); hdSol = step(0.5, hdTx.a);
             hdAlt = hdSol > 0.5 ? (hdTx.a - 0.55) * 0.05 : hdTx.a * 0.008;
             diffuseColor.rgb = hdTx.rgb * (0.80 + 0.36 * hdId) * (1.0 - 0.45 * smoothstep(0.78, 1.0, hdU0.y) * (1.0 - hdSol)) * mix(1.0, 0.7, (1.0 - hdSol) * hdU0.y);
-            // r23: de longe (pixel ≥ 1,5 cm) a célula lia como retângulo cinza: vidro −45 %, caixilho +30 %, sombra da verga nos 12 % de cima (−40 %).
+            // De longe (pixel ≥ 1,5 cm) a célula lê como retângulo cinza: vidro −45 %, caixilho +30 % e sombra da verga no topo.
             float hdLonge = smoothstep(0.008, 0.02, max(length(dFdx(vHdPos)), length(dFdy(vHdPos))));
             diffuseColor.rgb *= mix(1.0, mix(0.55, 1.3, hdSol), hdLonge) * (1.0 - 0.25 * smoothstep(0.80, 0.9, hdU0.y) * (1.0 - hdSol));
             // Fresnel leve sem cubo: reflexo do céu (gradiente vertical: mais no alto do vidro) + 15 % de reflexo difuso no rasante.
@@ -603,13 +556,8 @@ function portaHD(m, U) {
   m.customProgramCacheKey = () => 'escadao-hd-porta1';
 }
 
-// Ferro: a mesma cor serve portão, veneziana, grade e corrimão; a caixa decide. Portão autoral (0,6–1,5 x 1,4–2,3 m, fino): quadro de
-// metalon de 5 cm nas bordas + travessa central de 4 cm em relevo (aresta clara, AO de 3 cm para dentro), tinta em camadas (cor atual
-// S ≈ 0,25 sobre cor antiga nos descascados < 6 cm), rebites a cada 25 cm com escorrido de ferrugem (≤ 12 cm) e escorrido sob a travessa,
-// sombra de recesso (14 cm sob a verga, 10 cm no lado das dobradiças), 3 dobradiças de 9 cm, ferrolho com cadeado de 6 x 8 cm e corrente
-// em U, ferrugem do pé até 0,4 m, trilho escuro na base. Veneziana autoral (painel 1,04 x 0,96 m): 2 folhas com montantes/travessas de
-// 3,5 cm e 21 lâminas de 4,2 cm em relevo (sombra no vão, aresta clara), oliva/verde/cinza por caixa, ferrugem no pé; as 6 réguas de zinco
-// autorais em frente somem em chapaHD (descard). Só o painel liso de 0,72 x 0,85 m vira basculante do atlas (célula 2). O resto, tinta com ferrugem.
+// Ferro: a mesma cor serve portão, veneziana, grade e corrimão; a caixa decide (portão 0,6–1,5 x 1,4–2,3 m, veneziana 1,04 x 0,96 m,
+// painel liso 0,72 x 0,85 m = basculante do atlas). O resto é tinta com ferrugem. Ver docs/hd-kit/escadao.md#ferro.
 function ferroHD(m, U) {
   m.onBeforeCompile = (shader) => { comMundo(shader, U, 0, 'uniform sampler2D hdJanelas;');
     shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
@@ -649,10 +597,8 @@ function ferroHD(m, U) {
             // 3 dobradiças (3 x 9 cm, nó com brilho) no lado oposto ao cadeado, a 0,25 / 0,95 / 1,65 m da base.
             float hdHg = 0.0; for (int i = 0; i < 3; i++) { vec2 hp = vec2(hdBx + hdS.x - 0.03, hdHb - (0.25 + 0.7 * float(i))); hdHg = max(hdHg, 1.0 - smoothstep(0.0, hdPxl, length(max(abs(hp) - vec2(0.008, 0.035), 0.0)) - 0.007)); }
             diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.12, 0.12, 0.11) * (0.8 + 0.4 * hdN.r) * (1.0 + 0.6 * (1.0 - smoothstep(0.0, 0.005, abs(hdBx + hdS.x - 0.03)))), hdHg);
-            // Ferrolho junto à borda (lado por caixa), cadeado de latão 6 x 8 cm (SDF com aro escuro e furo) sob a barra, alça em arco
-            // de 4,8 cm que entra na barra e corrente em U do corpo do cadeado ao quadro (batente): fita contínua pela distância a 8
-            // segmentos da curva, elos de 2,4 cm alternando face (9 mm) e perfil (5 mm) com vão escuro de 1,5 mm; o último elo entra na
-            // argola (Ø 2,4 cm, 3 mm) presa na borda da folha (hdCx 0,12 = face do quadro/batente): nenhuma ponta no ar.
+            // Ferrolho junto à borda (lado por caixa), cadeado de latão 6 x 8 cm sob a barra e corrente em U até a argola na borda da
+            // folha (hdCx 0,12 = face do batente): nenhuma ponta no ar. Medidas: docs/hd-kit/escadao.md#ferro.
             float hdCx = hdBx - (hdS.x - 0.12);
             float hdBar = step(hdS.x - 0.30, hdBx) * step(hdBx, hdS.x - 0.06) * step(abs(hdHb - 1.05), 0.016);
             vec2 hdCp = vec2(hdCx, hdHb - 0.975), hdAp = vec2(hdCx, hdHb - 1.02);
@@ -699,9 +645,8 @@ function ferroHD(m, U) {
   m.customProgramCacheKey = () => 'escadao-hd-ferro8';
 }
 
-// Chapa de zinco: tom por painel e ferrugem escorrida; o mapa (tex_zinco) e o UV ficam como estão. Régua fina (caixa com
-// ≤ 4 cm de altura: réguas da veneziana; telha de 9 cm e beiral não entram): com `semRegua` some (discard: a veneziana de
-// 4 cm vem do painel de ferro atrás, as 6 réguas de 14 cm por cima liam como grelha); senão fica galvanizada clara e sem ferrugem.
+// Chapa de zinco: tom por painel e ferrugem escorrida; mapa (tex_zinco) e UV ficam como estão. Régua fina (caixa ≤ 4 cm de altura)
+// some com `semRegua` (discard), senão fica galvanizada clara e sem ferrugem. Ver docs/hd-kit/escadao.md#chapa.
 function chapaHD(m, U, semRegua) {
   m.onBeforeCompile = (shader) => { comMundo(shader, U);
     shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
@@ -715,8 +660,8 @@ function chapaHD(m, U, semRegua) {
   m.customProgramCacheKey = () => 'escadao-hd-chapa3' + (semRegua ? 'r' : '');
 }
 
-// Lixeira (GLB dumpster): a pichação legível da textura vira mancha — leitura com mip 4,5 (borrão) mais sujeira. r22: a caçamba
-// verde-oliva vira laranja de coleta desbotado (luma da textura × laranja escuro saturado; o AgX lava), mais pardo onde a sujeira acumula.
+// Lixeira (GLB dumpster): a pichação legível da textura vira mancha (leitura com mip 4,5) mais sujeira; a caçamba verde-oliva
+// vira laranja de coleta desbotado (luma da textura × laranja escuro saturado: o AgX lava).
 function lixeiraHD(m, U) {
   m.onBeforeCompile = (shader) => { comMundo(shader, U);
     shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `#ifdef USE_MAP
@@ -728,12 +673,8 @@ function lixeiraHD(m, U) {
   m.customProgramCacheKey = () => 'escadao-hd-lixeira2';
 }
 
-// Casa GLB casa_favela_tijolo (atlas cozido laranja vivo, esticado pela escala não uniforme do molde): nas faces verticais laranja
-// entra o mesmo tijolo baiano 19 x 14 do tijoloHD (hdBaiano) projetado no mundo, croma ×1,15 (r22: lia rosa-lavado), com relevo da junta; o atlas
-// só dá a máscara (amostra com viés de mip +3). Máscara por croma (≥ 0,13) e matiz (g − b)/croma ≤ 0,26; o resto (madeira, zinco, vidro) não muda.
-// r23: toras redondas do molde (hdCol = eixo x, eixo z, raio, 1 por vértice; marcaColunas) viram pilar QUADRADO de concreto no vértice
-// (sign() do deslocamento radial ×raio; normal = normal geométrica no fragmento) com cimento de forma e pé sujo; o miolo do molde
-// (≥ 0,4 m para dentro da caixa local: paredes sob a laje/mezanino) escurece 40 % (AO: lia tão claro quanto a fachada).
+// Casa GLB casa_favela_tijolo: nas faces verticais laranja do atlas cozido (máscara por croma e matiz, mip +3) entra o hdBaiano do
+// tijoloHD projetado no mundo. Toras do molde (hdCol) viram pilar quadrado. Ver docs/hd-kit/escadao.md#casas-glb.
 function casaTijoloHD(m, U) {
   m.onBeforeCompile = (shader) => { comMundo(shader, U);
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 hdCol; varying float vHdCol; varying vec3 vHdLoc;')
@@ -760,11 +701,8 @@ function casaTijoloHD(m, U) {
   m.customProgramCacheKey = () => 'escadao-hd-casa6';
 }
 
-// r24: casa GLB casa_favela_azul (a do mirante em (7; −24) é o "volume azul-marinho" da pose: parede lisa azul-escura de 4 x 3 m).
-// Faces de croma azul (b > r e b > g, croma ≥ 0,12) viram pintura azul lavada sobre reboco: albedo azul-acinzentado escuro e saturado
-// (o AgX lava), grão procedural, descascado com emboço cinza em manchas (> 2,1 m local e no topo), escorrido da laje, sujeira e mofo
-// no pé (< 0,45 m), luma da textura só como máscara (mip 3). Faces horizontais azuis (telhado/beiral de zinco pintado): sujeira de
-// pó e ferrugem no topo. Madeira, vidro e o resto do atlas não mudam.
+// Casa GLB casa_favela_azul (a do mirante em (7; −24)): faces de croma azul (b > r e b > g, croma ≥ 0,12) viram pintura azul lavada
+// sobre reboco; madeira, vidro e o resto do atlas não mudam. Ver docs/hd-kit/escadao.md#casas-glb.
 function casaAzulHD(m, U) {
   m.onBeforeCompile = (shader) => { comMundo(shader, U);
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vHdLoc;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHdLoc = position;');
@@ -795,11 +733,8 @@ function casaAzulHD(m, U) {
   m.customProgramCacheKey = () => 'escadao-hd-casaazul1';
 }
 
-// r23b: coluna = ≥ 2 ANÉIS cilíndricos a ≥ 0,3 (local) de distância no mesmo eixo vertical; anel = ≥ 8 vértices na mesma altura
-// (±2,5 mm), equidistantes (±25 %) de um centro, raio 0,05–0,25 m de mundo (`escala` = maior escala xz da malha) e normais radiais
-// (cos ≥ 0,8). Vértice fora de um anel válido fica hdCol = 0 (geometria intocada). A 1ª versão (eixo estimado + células) marcava
-// quads de PAREDE e a porta do mirante como coluna. No GLB atual (anéis sujos, com costuras) isto acha 0 colunas: nada muda.
-// Grava hdCol = (eixo x, eixo z, raio, 1) e devolve topos [x, yTopo, z, raio] LOCAIS (geometria partilhada pelas 2 casas).
+// Coluna = ≥ 2 ANÉIS cilíndricos no mesmo eixo a ≥ 0,3 (local) de distância; vértice fora de anel válido fica hdCol = 0 (intocado).
+// Grava hdCol = (eixo x, eixo z, raio, 1) e devolve topos LOCAIS [x, yTopo, z, raio]. Critério: docs/hd-kit/escadao.md#colunas.
 function marcaColunas(g, escala = 1) {
   if (g.attributes.hdCol) return g.userData.hdColunas || [];
   const P = g.attributes.position, N = g.attributes.normal, n = P.count, col = new Float32Array(n * 4), topos = [];
@@ -822,8 +757,8 @@ function marcaColunas(g, escala = 1) {
     topos.push([c.cx, topo, c.cz, c.r]); }
   g.attributes.hdCol.needsUpdate = true; return topos;
 }
-// r23: ferragem de espera no topo de cada pilar (4 vergalhões Ø 12 mm, 25–40 cm, tortos) numa malha fundida só para TODAS as casas
-// (+1 draw call, 'hd-ferragem'; refeita quando chega outra casa). `topos` em mundo [x, yTopo, z, raio]. Sem colisão.
+// Ferragem de espera no topo de cada pilar (4 vergalhões Ø 12 mm, tortos) numa malha fundida só para TODAS as casas (+1 draw call,
+// 'hd-ferragem'; refeita quando chega outra casa). `topos` em mundo [x, yTopo, z, raio]. Sem colisão.
 function toposMundo(malha, locais) {
   const q = new THREE.Vector3(), p = new THREE.Vector3(), s = new THREE.Vector3(); malha.updateWorldMatrix(true, false); malha.matrixWorld.decompose(p, new THREE.Quaternion(), s);
   return locais.map(([lx, ly, lz, lr]) => { q.set(lx, ly, lz).applyMatrix4(malha.matrixWorld); return [q.x, q.y, q.z, lr * Math.max(s.x, s.z)]; });
@@ -940,7 +875,7 @@ export function aplicaEscadaoHD(scene, renderer, opts = {}) {
       for (const m of materiaisDe(ob)) { if (vistos.has(m)) continue; const r = regraDe(m); if (r && ativa[r]) { vistos.add(m); (porRegra.get(r) || porRegra.set(r, new Set()).get(r)).add(m); aplica(r, m); novos++; } } });
     // Props: a textura do GLB continua, lida pelo clone do material (lixeira borrada, casa com junta); o original volta em desliga().
     for (const [ob, t] of props.splice(0)) { const velho = ob.material; if (!propMats.has(velho)) { const n = velho.clone(); n.name = 'hd-' + t; n.defaultAttributeValues = DEFAULTS; (t === 'casa' ? casaTijoloHD : t === 'casaAzul' ? casaAzulHD : lixeiraHD)(n, U); propMats.set(velho, n); criadas.push(n); } trocas.push([ob, velho]); ob.material = propMats.get(velho);
-      // r23: pilares do molde viram quadrados (atributo hdCol na geometria partilhada) e ganham ferragem no topo (1 malha para todas as casas).
+      // Pilares do molde viram quadrados (atributo hdCol na geometria partilhada) e ganham ferragem no topo (1 malha para todas as casas).
       if (t === 'casa' && o.colunas && ob.geometry) { ob.updateWorldMatrix(true, false); const sc = new THREE.Vector3().setFromMatrixScale(ob.matrixWorld);
         const topos = marcaColunas(ob.geometry, Math.max(sc.x, sc.z)); colGeos.add(ob.geometry); if (topos.length) { ferrTopos.push(...toposMundo(ob, topos)); refazFerragem(); } } }
     if (novos) tiraCaixas.push(marcaCaixas(scene, new Set([...porRegra.values()].flatMap((s) => [...s])), porRegra.get('reboco') || new Set()));
@@ -949,8 +884,8 @@ export function aplicaEscadaoHD(scene, renderer, opts = {}) {
   casa();
   const laco = setInterval(() => { if (vivo) casa(); }, 1000); timers.push(setTimeout(() => clearInterval(laco), 40000));
   const cob = o.piso ? cobertura(scene, renderer, U, () => vivo) : null;
-  // Cenografia sem colisão (hd_cenografia_escadao.js). Desliga tudo: opts.cenografia === false ou ?hdcen=0;
-  // por item: opts.cenografia.{morro,casario,mata,telhados,fachada,postes,vida} === false ou ?hdcen=morro,postes (só os listados).
+  // Cenografia sem colisão (hd_cenografia_escadao.js). Desliga tudo: opts.cenografia === false ou ?hdcen=0; por item:
+  // opts.cenografia.<item> === false ou ?hdcen=morro,postes (só os listados). Itens: docs/hd-kit/escadao.md#interruptores.
   const qCen = hdq.get('hdcen'), soEstes = qCen && qCen !== '0' && qCen !== '1' ? qCen.split(',') : null;
   const oCen = opts.cenografia === false || qCen === '0' ? null : { ...(opts.cenografia || {}) };
   if (oCen && soEstes) for (const k of ['morro', 'casario', 'mata', 'telhados', 'fachada', 'postes', 'vida']) if (!soEstes.includes(k)) oCen[k] = false;
