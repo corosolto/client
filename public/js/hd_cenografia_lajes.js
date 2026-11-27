@@ -1,10 +1,5 @@
-// Cenografia HD do Lajes (só com ?hd=1). NADA aqui tem colisão: só fora de `bounds`, em telhado inalcançável (topo >= 5,3 m),
-// acima de 3,6 m sobre os becos centrais, acima de 5,4 m no resto, ou colado à parede (até 12 cm de saliência).
-// ?hdnevoa=0 restaura a névoa lavada anterior para diagnóstico; ?hdprops=0 tira objetos de calçada/laje e o varal do Beco do Varal; ?hdsombra=0 tira a sombra projetada.
-// ?hddenso=0 volta ao morro ralo (casario 440, sem mata no topo); ?hdcaixa=0 mantém o tambor galvanizado autoral das lajes (±11,4; ±7);
-// ?hdvaral=0 mantém o varal autoral (lajes_varal.glb, corda em fita e toalhas texturizadas); ?hdloja=0 tira toldo, cadeira e engradado do mercadinho do beco oeste.
-// Objetos de laje/calçada/beco novos (props, varais, caixas das lajes, esgoto do beco) só entram no quadro das poses de captura (POSES/noQuadro).
-// O varal do beco em z = 19,6–20,3 (atrás da pose `beco`, fora de todas) saiu para pagar os três props de viela do beco sul.
+// Cenografia HD do Lajes (só com ?hd=1). NADA aqui tem colisão; objeto novo de laje, calçada ou beco só entra no quadro
+// das poses (POSES/noQuadro). Limites de altura e interruptores: docs/hd-kit/lajes.md#cenografia e #interruptores.
 import * as THREE from 'three';
 import { preloadMapProps, PropBatch } from './mapprops.js';
 
@@ -17,9 +12,8 @@ function ruido2(x, y) {
   return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
 }
 const suave = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-// Poses de captura (hd_lab VISTAS.lajes: x, z, yaw; frente = (-sin, -cos)). Cenografia nova de laje, calçada e beco só entra
-// onde uma delas enquadra (meio campo horizontal ≤ 51°): fora do quadro é só heap e triângulo sem retorno. A pose `beco` está
-// entre paredes (|x| ≤ 1): só vê o que está dentro do beco.
+// Poses de captura (hd_lab VISTAS.lajes: x, z, yaw, |x| máximo; frente = (-sin, -cos)); meio campo horizontal ≤ 51°.
+// A pose `beco` fica entre paredes e só vê o que está dentro do beco. Ver docs/hd-kit/lajes.md#poses.
 const POSES = [[-2, 17, -0.0208, 1.3], [-9, -14, -2.0, 0], [-7.2, -3.5, 0.9, 0], [-6.5, -12.8, -2.0, 0]];
 function noQuadro(x, z, quais = null) {
   for (const [i, [px, pz, yaw, lx]] of POSES.entries()) { if (quais && !quais.includes(i)) continue; const dx = x - px, dz = z - pz, l = Math.hypot(dx, dz) || 1;
@@ -52,7 +46,7 @@ export function soltaAoSubir(g) { g.computeBoundingSphere(); for (const a of [..
 export function fundidor() {
   const suaves = [], c = new THREE.Color(), m = new THREE.Matrix4(), e = new THREE.Euler(), q = new THREE.Quaternion();
   const v = Array.from({ length: 8 }, () => new THREE.Vector3()), p3 = new THREE.Vector3(), s3 = new THREE.Vector3();
-  // Buffers Float32 crescendo ×1,5 (antes arrays JS de doubles: 8 B por número + cópia para Float32 em geo()): metade do pico de heap na montagem.
+  // Buffers Float32 crescendo ×1,5 (não arrays JS de doubles): metade do pico de heap na montagem.
   let pos = new Float32Array(9 * 1024), cor = new Float32Array(9 * 1024), n = 0;
   const cresce = () => { const p2 = new Float32Array(Math.ceil(pos.length * 1.5 / 9) * 9); p2.set(pos); pos = p2; const c2 = new Float32Array(p2.length); c2.set(cor); cor = c2; };
   const tri = (a, b, d) => { if (n + 9 > pos.length) cresce();
@@ -82,7 +76,7 @@ export function fundidor() {
       return F;
     },
     // Sólido de revolução: perfil [[raio, altura], ...] a partir da base em (x, y, z), com tampa no último anel (tampa = false pula).
-    // Normal suave por anel (inclinação do perfil): a caixa d'água de 24 lados lia as facetas. `corDe(k)` = [hex, ganho] por anel (sujeira/desbote).
+    // Normal suave por anel (inclinação do perfil), senão a caixa d'água mostra as facetas. `corDe(k)` = [hex, ganho] por anel.
     torno(x, y, z, perfil, lados = 10, a0 = 0, tampa = true, corDe = null) {
       const np = perfil.length, anel = (k) => { const o = []; for (let i = 0; i < lados; i++) { const a = a0 + i / lados * Math.PI * 2; o.push(new THREE.Vector3(x + Math.cos(a) * perfil[k][0], y + perfil[k][1], z + Math.sin(a) * perfil[k][0])); } return o; };
       const nrm = (k) => { const p0 = perfil[Math.max(0, k - 1)], p1 = perfil[Math.min(np - 1, k + 1)], dr = p1[0] - p0[0], dy = p1[1] - p0[1], l = Math.hypot(dr, dy) || 1; return [dy / l, -dr / l]; };
@@ -102,7 +96,7 @@ export function fundidor() {
   return F;
 }
 // Fio de varal: fita virada para a câmera (2 vértices por ponto, abertos no vertex shader), largura real perto e piso
-// de 1,5 px longe (tubo de 6 mm a 10 m virava pontilhado). Um draw call, sem luz.
+// de 1,5 px longe (tubo de 6 mm a 10 m vira pontilhado). Um draw call, sem luz.
 const FIO_PX = 0.75;
 function fiador() {
   const pos = [], dir = [], lado = [], pxm = [], cor = [], idx = [], c = new THREE.Color();
@@ -150,7 +144,7 @@ function juntaGeos(partes) {
 }
 
 // Três cristas em anel (perto, meio, fundo), cada uma com altura própria por ângulo; a névoa separa os planos.
-// Alturas a 68 % da rodada r6 (céu da pose `laje` de ~12 % para ~19 %, casario visível de novo).
+// Mais altas, tapam o céu e o casario da pose `laje`. Ver docs/hd-kit/lajes.md#morro.
 const CRISTAS = [{ r0: 56, rc: 84, h: [13, 20], k: [3, 7, 11], f: 0.7 }, { r0: 88, rc: 128, h: [34, 46], k: [2, 5, 9], f: 2.9 }, { r0: 130, rc: 192, h: [56, 72], k: [1, 4, 6], f: 5.3 }];
 const R_FIM = 236;
 function alturaMorro(x, z) {
@@ -163,8 +157,7 @@ function alturaMorro(x, z) {
   }
   return h + (ruido2(x * .05, z * .05) - .5) * 5 * suave(56, 90, r);
 }
-// Mata fechada: fração da altura da crista do mesmo anel e azimute (só acima de 0,76 do topo; abaixo é casario) e o anel final (serra).
-// r24: linha da mata 0,62 → 0,76 (da lajesol só se via a faixa de mata acima dos telhados: lobo liso sem casa).
+// Mata fechada: só acima de 0,76 da altura da crista do mesmo anel e azimute (abaixo é casario) e no anel final (serra).
 function mata(x, z, h) {
   const r = Math.hypot(x, z), a = Math.atan2(z, x), c = r < 88 ? CRISTAS[0] : r < 130 ? CRISTAS[1] : CRISTAS[2];
   const ref = Math.max(1, alturaMorro(Math.cos(a) * c.rc, Math.sin(a) * c.rc));
@@ -184,7 +177,7 @@ function atlasCopas(rng) {
 }
 const adensado = (x, z) => ruido2(x / 46 + 3.1, z / 46 + 7.7) * .7 + ruido2(x / 17, z / 17) * .3;
 
-// Névoa própria do morro (mais rala que a do mapa, que lavava o casario em pastel); o material fica com fog: false.
+// Névoa própria do morro (mais rala que a do mapa, que lava o casario em pastel); o material fica com fog: false.
 function nevoa(s, U) {
   Object.assign(s.uniforms, U);
   s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nvarying float vHdD;').replace('#include <project_vertex>', '#include <project_vertex>\nvHdD = length(mvPosition.xyz);');
@@ -209,14 +202,15 @@ function morro(grupo, rng, U, denso = true) {
     return Math.min(h(i0, j0), h(i0 + 1, j0), h(i0, j0 + 1), h(i0 + 1, j0 + 1)); };
   gT.setAttribute('hdVila', new THREE.Float32BufferAttribute(vila, 2)); gT.setIndex(idx); gT.computeVertexNormals();
   const mT = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0, fog: false, name: 'hd-morro' });
-  // Mato em tufo escuro, pouco capim seco (era o que lia como colina bege ao sol) e terra escura onde há vila; hdVila = (vila, mata).
+  // Mato em tufo escuro, pouco capim seco (lê como colina bege ao sol) e terra escura onde há vila; hdVila = (vila, mata).
   mT.onBeforeCompile = (s) => { nevoa(s, U);
     s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 hdVila; varying vec3 vHdM; varying vec2 vHdV;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHdM = position; vHdV = hdVila;');
     s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vHdM; varying vec2 vHdV;')
       .replace('#include <color_fragment>', `#include <color_fragment>
         { vec4 hdA = texture2D(hdRuido, vHdM.xz * 0.0125), hdB = texture2D(hdRuido, vHdM.xz * 0.061), hdD = texture2D(hdRuido, vHdM.xz * 0.17 + 0.3);
           vec3 hdC = mix(diffuseColor.rgb, vec3(0.19, 0.17, 0.08), 0.35 * smoothstep(0.50, 0.66, hdA.a) * (1.0 - vHdV.y)) * (0.62 + 0.62 * hdB.r);
-          // Mata fechada: cachos de copas (2 leituras, 2–6 m) em dois tons escuros (o sol a ganho 4 lavava o verde anterior em pastel) no próprio terreno.
+          // Mata fechada: cachos de copas (2 leituras, 2–6 m) em dois tons escuros no próprio terreno;
+          // verde claro vira pastel com o sol a ganho 4.
           float hdCopa = smoothstep(0.30, 0.80, hdD.a * 0.55 + hdD.g * 0.25 + 0.2 * texture2D(hdRuido, vHdM.xz * 0.45 + 0.7).a);
           hdC = mix(hdC, mix(vec3(0.010, 0.026, 0.008), vec3(0.046, 0.088, 0.026), hdCopa) * (0.6 + 0.8 * hdB.g), 0.85 * vHdV.y);
           diffuseColor.rgb = mix(hdC, vec3(0.17, 0.13, 0.09) * (0.65 + 0.7 * hdB.r), 0.55 * vHdV.x * smoothstep(0.48, 0.56, hdA.r));
@@ -225,13 +219,11 @@ function morro(grupo, rng, U, denso = true) {
   mT.customProgramCacheKey = () => 'hd-morro9';
   const terreno = new THREE.Mesh(gT, mT); terreno.name = 'hd-morro'; grupo.add(terreno);
 
-  // Casinhas: grade de 4,6 m (6,4 no modo ralo) em tapete contínuo abaixo da linha da mata (fora da mancha adensada entra 85 %); cada célula só recebe uma.
-  // Paleta terracota / cimento / branco sujo: tijolo saturado com ganho alto virava pastel rosa atrás da névoa azulada.
-  // Heap r22: árvores 500 → 280 e casario 840/900 → 590/630 (-30 %). r23: 700/740, copas 168. r24: casario 760/800 (tapete até 0,76 da crista),
-  // copas 168 → 118 (-30 %) e viram cartões cruzados (4 vértices em vez de 4 icosaedros): 68 na linha das cristas 2 e 3 (silhueta recortada), 50 soltas.
+  // Casinhas: grade de 4,6 m (6,4 no modo ralo), uma por célula, em tapete contínuo abaixo da linha da mata.
+  // NCASAS, NTOPO e NARV são orçamento de heap: antes de subir, ver docs/hd-kit/lajes.md#morro-orcamento.
   const casas = [], arvores = [], ocupado = new Set(), CEL = denso ? 4.6 : 6.4, NCASAS = denso ? 760 : 440, NTOPO = denso ? 800 : 540, NARV = denso ? 50 : 340, esc = denso ? .85 : 1;
   const TIJOLO = [0x7e4a34, 0x72422c, 0x885238, 0x66392a], CRU = [0x6f685e, 0x7b7469, 0x5c5850], TINTA = [0xcfcabd, 0xd6d1c4, 0xb8b3a6, 0xc4bfb2, 0xa39d90, 0xb0a99b, 0x8e8d84];
-  // Raio uniforme (antes pow 1,2 puxava para o pé): o casario sobe a encosta até a linha da mata (~76 % da crista) em vez de ficar só embaixo.
+  // Raio uniforme (pow 1,2 puxa o casario para o pé): ele sobe a encosta até a linha da mata (~76 % da crista).
   for (let t = 0; t < NCASAS * 32 && casas.length < NCASAS; t++) {
     const a = rng() * Math.PI * 2, r = 60 + rng() * (R_FIM - 68), x0 = Math.cos(a) * r, z0 = Math.sin(a) * r;
     if (adensado(x0, z0) < LIM && rng() > .85) continue;
@@ -256,7 +248,7 @@ function morro(grupo, rng, U, denso = true) {
   const o = new THREE.Object3D(), cc = new THREE.Color();
   const mC = new THREE.MeshStandardMaterial({ roughness: .95, metalness: 0, fog: false, name: 'hd-morro-casa' });
   // Janela, viga de laje aparente e mancha saem da posição local da caixa em metros (escala da instância).
-  // hdLiso por vértice: 0 pinta casa, 1 cor lisa da instância (caixa d'água, antena), 3 concreto de laje e platibanda (copas: material hd-morro-mata).
+  // hdLiso por vértice: 0 pinta casa, 1 cor lisa da instância, 3 concreto de laje e platibanda (copas: material hd-morro-mata).
   mC.onBeforeCompile = (s) => { nevoa(s, U);
     s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute float hdLiso; varying float vHdLiso; varying vec3 vHdC; varying vec3 vHdCN; varying vec2 vHdCI;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
@@ -298,7 +290,7 @@ function morro(grupo, rng, U, denso = true) {
     for (const [dx, dz] of [[.5, 0], [0, .5]]) { const k = pos.length / 3; pos.push(-dx, 0, -dz, dx, 0, dz, dx, 1, dz, -dx, 1, -dz); uv.push(0, 0, 1, 0, 1, 1, 0, 1); for (let i = 0; i < 4; i++) nor.push(0, 1, 0); idx.push(k, k + 1, k + 2, k, k + 2, k + 3); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); return g; };
   const mA = new THREE.MeshStandardMaterial({ map: atlasCopas(rngDe(9173)), alphaTest: .5, side: THREE.DoubleSide, roughness: 1, metalness: 0, fog: false, name: 'hd-morro-mata' });
-  // Normal para cima nas duas faces (DoubleSide invertia a normal na face de costas: copa cinza-chumbo só com o hemisfério de baixo).
+  // Normal para cima nas duas faces: com DoubleSide a normal inverte na face de costas e a copa fica cinza-chumbo.
   mA.onBeforeCompile = (s) => { nevoa(s, U);
     s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute float hdCel;').replace('#include <uv_vertex>', '#include <uv_vertex>\nvMapUv = vec2((hdCel + 0.02 + uv.x * 0.96) * 0.25, uv.y);');
     s.fragmentShader = s.fragmentShader.replace('#include <normal_fragment_begin>', '#include <normal_fragment_begin>\nnormal = normalize(vNormal); nonPerturbedNormal = normal;'); };
@@ -314,8 +306,8 @@ function morro(grupo, rng, U, denso = true) {
   comAntena.forEach((k, i) => { const cs = Math.cos(k.ry), sn = Math.sin(k.ry), u = (hash2(k.x, k.z + 5) - .5) * .7 * k.w, v = (hash2(k.z, k.x + 8) < .5 ? -1 : 1) * .36 * k.d;
     o.position.set(k.x + u * cs + v * sn, k.y + k.h + .05, k.z - u * sn + v * cs); o.rotation.set(0, k.ry + (hash2(k.x + 1, k.z) - .5) * 1.2, 0); o.scale.setScalar(.8 + hash2(k.x + 2, k.z) * .5); o.updateMatrix(); iN.setMatrixAt(i, o.matrix);
     iN.setColorAt(i, cc.setHex(0x6f7275).multiplyScalar(.8 + hash2(k.x, k.z + 4) * .4)); });
-  // Assenta pela altura REAL dos vértices da geometria desenhada (position do hd-morro): MÍNIMO dos 4 nós da célula do anel (na crista o bilinear ficava
-  // acima da face triangulada e a copa flutuava com céu por baixo), y = mínimo − 25 % da copa; copa fora da malha ou com base < 1 m é descartada.
+  // Assenta pelo MÍNIMO dos 4 nós da célula do anel na geometria desenhada (o bilinear fica acima da face na crista
+  // e a copa flutua), y = mínimo − 25 % da copa; copa fora da malha ou com base < 1 m é descartada.
   const vivas = arvores.filter((k) => Number.isFinite(k.yM = alturaMalha(k.x, k.z)) && k.yM >= 1.0);
   const iA = new THREE.InstancedMesh(copaGeo(), mA, vivas.length); iA.name = 'hd-morro-mato'; iA.userData.hdAtlas = true;
   const celA = new Float32Array(vivas.length);
@@ -387,10 +379,8 @@ function pertoDeBandeira(ax, az, bx, bz, pontos) {
 }
 const catenaria = (A, B, barriga, piso, n = 10) => { const pts = []; for (let i = 0; i <= n; i++) { const t = i / n, p = new THREE.Vector3().lerpVectors(A, B, t); p.y = Math.max(piso, p.y - barriga * 4 * t * (1 - t)); pts.push(p); } return pts; };
 
-// Becos centrais (x de -1 a 1, |z| de 8,5 a 26, paredes de 6,1 m): fio de parede a parede, feixe corrido junto
-// à fachada e varal alto. Tudo acima de BECO_MIN; `s` espelha para o beco do outro lado.
-// Roupa lavada e desbotada ([cor, listra]; S ≤ 0,22, luminância linear ≥ 0,39 para aguentar o ganho 0,9): nada saturado nem escuro na faixa do corpo.
-// (o par rosa-bege 0xd4b5b0 saiu: pendurado na faixa do corpo lia como pele; entrou cinza-azulado)
+// Becos centrais (x de -1 a 1, |z| de 8,5 a 26, paredes de 6,1 m): tudo acima de BECO_MIN; `s` espelha o outro beco.
+// PANOS = [cor, listra] de roupa lavada: nada saturado, escuro ou cor de pele. Ver docs/hd-kit/lajes.md#becos.
 const PANOS = [[0xd8d4c8, 0xc4c0b4], [0xcfc3aa, 0xbdb29b], [0xa9b4bc, 0xa0acb4], [0xb4bcc6, 0xa6aeb8], [0xb3cbc0, 0xa2bbb0], [0xbdbdb6, 0xadada6], [0xd4cda8, 0xc4bd9a], [0xa8b6a3, 0xa2ae9e]];
 const JEANS = [0xa7b0b8, 0xa2abb3];
 // Peças [largura, altura] em metros: 0 camisa de manga curta, 1 calça, 2 toalha dobrada na corda, 3 lençol (um só, em telhado), 4 pano de prato.
@@ -416,12 +406,12 @@ function pano(F, rng, cx, y, cz, dx, dz, forma, [cor, cor2], dobra = false) {
   else if (forma === 2) faixa(-.5, .5, 0, 1, 4, 5, (k, j) => j === 4 || (s < .5 && j === 3));
   else if (forma === 3) faixa(-.5, .5, 0, 1, 8, 5);
   else faixa(-.5, .5, 0, 1, 3, 3, s < .5 ? (k) => k === 1 : null);
-  // Pregador de plástico (2 x 7 cm, azul/verde/amarelo) nas pontas; o lençol leva mais dois no meio: o de 1,4 cm na cor do pano não aparecia.
+  // Pregador de plástico (2 x 7 cm, azul/verde/amarelo) nas pontas; o lençol leva mais dois no meio.
   const pr = [.30, .42, .44, .46, .40][forma], us = forma === 3 ? [-pr, -pr * .35, pr * .35, pr] : [-pr, pr]; F.cor([0x2a5a9a, 0x3f7a4a, 0xb9a83c][Math.floor(s * 2.999)], .95);
   for (const u of us) F.caixa(cx + dx * u * w, y - .03, cz + dz * u * w, .02, .07, .015);
 }
-// Corda: fita de 1,5 px (FR) quando há fiador; sem ele, tubo de 1 cm. Peças em sequência (camisa, calça, toalha) só onde cabem
-// acima de `piso`: o que não cabe inteiro vai dobrado na corda; a calça vai sempre dobrada (0,4 x 0,52); `lencol` abre a corda com o único lençol do kit.
+// Corda: fita de 1,5 px (FR) quando há fiador; sem ele, tubo de 1 cm. Peças em sequência só onde cabem acima de `piso`:
+// o que não cabe inteiro vai dobrado; a calça vai sempre dobrada; `lencol` abre a corda com o único lençol do kit.
 function varal(F, rng, x0, z0, x1, z1, y, FR = null, piso = BECO_MIN, lencol = false) {
   const A = V(x0, y, z0), B = V(x1, y, z1), L = A.distanceTo(B), dx = (x1 - x0) / L, dz = (z1 - z0) / L, barriga = .13, alt = (t) => y - barriga * 4 * t * (1 - t), fio = catenaria(A, B, barriga, piso + .6);
   if (FR) FR.cor(0xa89f8a).fio(fio, .003); else F.cor(0x1c1b1a).tubo(fio, .005, 3);
@@ -457,7 +447,8 @@ function beco(F, rng, s, FR) {
   for (const [z0, z1, y] of [[8.75, 9.25, 4.46], [10.3, 9.7, 4.40], [12.0, 12.7, 4.7], [15.0, 15.6, 4.85]]) panos += varal(F, rng, -X - .02, s * z0, X + .02, s * z1, y, FR);
   // Caixa de passagem e medidor no alto da fachada, com o feixe descendo até ela.
   for (const [lado, z, y] of [[-1, 12.4, 4.0], [1, 16.8, 4.2], [-1, 22.6, 3.95]]) F.cor(0x6a6c69).caixa(lado * (X + .01), y, s * z, .09, .34, .26).cor(ESCURO).tubo([V(lado * X, y + .34, s * z), V(lado * X, 4.3 + (lado > 0 ? .5 : 0), s * z)], .012, 3);
-  // Tubo de queda de esgoto (PVC marrom de 7,5 cm) na junta entre casas, abraçadeira a cada 1,2 m e curva no pé: 8 cm de saliência, sem colisão. Só no quadro da pose `beco`.
+  // Tubo de queda de esgoto (PVC de 7,5 cm) na junta entre casas, com abraçadeira a cada 1,2 m e curva no pé:
+  // 8 cm de saliência, sem colisão, só no quadro da pose `beco`.
   for (const [lado, z] of [[-1, 14.0], [1, 11.4], [-1, 19.3], [1, 22.0]]) { const x = lado * (X + .04); if (!noQuadro(x, s * z, [0])) continue;
     F.cor(0x5a3d2c, .9 + rng() * .2).tubo([V(x, .25, s * z), V(x, 5.9, s * z)], .037, 6).tubo([V(x, .25, s * z), V(x, .10, s * (z + .18))], .037, 5);
     for (let yy = .7; yy < 5.8; yy += 1.2) F.cor(0x6f7271).caixa(lado * (X + .02), yy, s * z, .05, .035, .11); }
@@ -473,7 +464,7 @@ function relogio(F, rng, x, n, y, z, topo, evita) {
   F.cor(0x6c7884).caixa(x + n * .094, y + .245, z + .045, .004, .03, .06).cor(0x55585a).caixa(x + n * .045, y + .2, z, .012, .16, .18);
   for (const dz of [-.04, .05]) { const pts = []; for (let i = 0; i <= 6; i++) { const t = i / 6; pts.push(V(xm + n * (.03 + .09 * Math.sin(t * Math.PI)), y + .43 + .28 * t, z + dz + .06 * t * t)); } F.cor(dz < 0 ? 0x1b1c1e : 0x23262b).tubo(pts, .005, 3); }
   F.cor(0x6b665e, .9).caixa(x + n * .002, y - .2, z + .02, .004, .40, .04);
-  // Braçadeira de eletroduto a cada 60 cm: sem ela o tubo lia como decalque na parede.
+  // Braçadeira de eletroduto a cada 60 cm: sem ela o tubo lê como decalque na parede.
   for (let yy = y + .95; yy < topo - .25; yy += .6) F.cor(0x7c7f7e).caixa(x + n * .025, yy, z - .08, .036, .03, .05);
   return xm;
 }
@@ -489,10 +480,10 @@ function fios(grupo, rng, topo, mundo, mat, evita, FR, scene = null) {
     for (let k = 0; k < n; k++) {
       const off = (k - (n - 1) / 2) * .11, A = V(ax + px * off, ya + ha - .2 - (k % 2) * .13, az + pz * off), B = V(bx + px * off, yb + hb - .2 - ((k + 1) % 2) * .13, bz + pz * off);
       const pts = catenaria(A, B, Math.max(0, Math.min(vao * (.03 + rng() * .03), Math.min(A.y, B.y) - CABO_MIN)), CABO_MIN, Math.max(8, Math.round(vao * .9)));
-      // r24: cabo de longe em fita com piso de 1,2 px (FR) em vez de tubo de 6 mm (a 20–40 m virava tracejado); cinza-azulado (preto lia como risco
-      // sem perspectiva aérea; a névoa do mapa entra no MeshBasicMaterial). Sem FR, tubo como antes.
+      // Cabo de longe em fita com piso de 1,2 px (FR): tubo de 6 mm vira tracejado a 20–40 m. Sem FR, tubo.
+      // Cinza-azulado: preto lê como risco sem perspectiva aérea (a névoa do mapa entra no MeshBasicMaterial).
       if (FR) FR.cor(0x5a6068).fio(pts, .004 + rng() * .003, .6); else F.cor(ESCURO).tubo(pts, .006 + rng() * .004, 3);
-      // Nó de amarração a 25 cm do poste e caixa de emenda preta no meio do vão (o feixe lia como linhas paralelas soltas).
+      // Nó de amarração a 25 cm do poste e caixa de emenda preta no meio do vão: sem eles o feixe lê como linhas soltas.
       if (k === 0 || k === n - 1) for (const p of [pts[1], pts[pts.length - 2]]) F.cor(0x151618).caixa(p.x, p.y, p.z, .05, .04, .05, ry);
       if (k === 1) { const p = pts[pts.length >> 1]; F.cor(0x121314).caixa(p.x, p.y - .03, p.z, .09, .06, .05, ry); }
     }
@@ -507,12 +498,12 @@ function fios(grupo, rng, topo, mundo, mat, evita, FR, scene = null) {
     }
   }
   const cols = mundo?.colliders || [];
-  // Ponta dos fios autorais poste -> casa (±12,9; 2,8; z = -17 + 6k) acabava no ar: roldana na parede, descida e relógio no térreo do beco lateral.
+  // Ponta dos fios autorais poste -> casa (±12,9; 2,8; z = -17 + 6k): roldana na parede, descida e relógio no térreo do beco lateral.
   const temParede = (x, z) => cols.some((c) => c.casa && Math.abs((x > 0 ? c.maxX : c.minX) - x) < .15 && z > c.minZ && z < c.maxZ && c.maxY > 2.9);
   for (const side of [-1, 1]) for (let k = 0; k < 6; k++) { const z = -17 + k * 6, x = side * 12.8; if (!temParede(x, z)) continue;
     const yr = 1.3 + rng() * .3, xm = relogio(F, rng, x, side, yr, z + .1, 2.6, evita), xc = xm + side * .02, yt = yr + .42;
     F.cor(0xd8d5ca).caixa(x + side * .04, 2.72, z, .07, .12, .07);
-    // Feixe de 3 cabos (3–4,5 mm) da roldana ao relógio, abraçadeira a cada 1 m na descida (antes: um traço solto).
+    // Feixe de 3 cabos (3–4,5 mm) da roldana ao relógio, com abraçadeira a cada 1 m na descida.
     for (let k = 0; k < 3; k++) { const dz = (k - 1) * .013; F.cor(k === 1 ? 0x23262b : ESCURO).tubo([V(side * 12.9, 2.8, z + dz), V(x + side * .09, 2.76, z + dz), V(xc, 2.6, z + .02 + dz), V(xc, yt, z + .02 + dz)], .0045 - k * .0005, 3); }
     for (let yy = 2.35; yy > yt + .2; yy -= 1.0) F.cor(0x7c7f7e).caixa(xm + side * .008, yy, z + .02, .03, .03, .06); }
   // Postes autorais (±14,8; z = -26,15, 0, 26,15): caixa de passagem, caixa de telefonia, eletroduto, isoladores sob a cruzeta e gato enrolado.
@@ -531,10 +522,8 @@ function fios(grupo, rng, topo, mundo, mat, evita, FR, scene = null) {
   const malha = new THREE.Mesh(F.geo(), mat); malha.name = 'hd-fios';
   grupo.add(malha); return { tris: F.tris(), panos };
 }
-// Passarelas/lajes que cruzam o beco central (caixas de parede a parede, |x| ≥ 0,8, |z| 8,3–26, fundo ≥ 3,4 m): liam como chapa sem espessura.
-// Entra, por laje: viga de concreto sob a laje (22 x 16 cm), platibanda de 12 cm nas duas bordas (espessura contra o céu), 2 cabos em
-// catenária e 1 cano de PVC pendurado por baixo com 2 abraçadeiras. Tudo acima de BECO_MIN. Lajes vêm dos colisores ou, sem colisor, das caixas
-// fundidas de lajes-alvenaria (24 vértices cada, como porCaixa de map_lajes_hd.js).
+// Passarelas/lajes que cruzam o beco central ganham espessura: viga sob a laje, platibanda nas duas bordas, cabos e
+// cano pendurado, tudo acima de BECO_MIN. Fonte das lajes e medidas: docs/hd-kit/lajes.md#passarelas.
 function passarelas(F, rng, cols, scene) {
   const lajes = [], ehLaje = (x0, x1, y0, y1, z0, z1) => x0 <= -.8 && x1 >= .8 && x1 - x0 < 3.2 && y0 >= 3.4 && y1 - y0 <= .6 && z1 - z0 >= .5 && z1 - z0 <= 4 && Math.abs((z0 + z1) / 2) > 8.3 && Math.abs((z0 + z1) / 2) < 26;
   for (const c of cols) if (ehLaje(c.minX, c.maxX, c.minY, c.maxY, c.minZ, c.maxZ)) lajes.push([c.minX, c.maxX, c.minY, c.maxY, c.minZ, c.maxZ]);
@@ -598,8 +587,8 @@ function lavar(F, x, y, z, rng, ry) {
   const bx = x + .62 * cs + .1 * sn, bz = z - .62 * sn + .1 * cs, cor = rng() < .5 ? 0x3c5f9a : 0x9aa0a4, pts = (r, y0, y1) => [V(bx, y + y0, bz), V(bx, y + y1, bz)];
   F.cor(cor).tubo(pts(.16, .04, .44), .16, 8).tubo(pts(.11, .44, .52), .11, 8).cor(0x2c2e30).tubo(pts(.14, 0, .05), .14, 6).tubo(pts(.1, .52, .62), .1, 6);
 }
-// Torre de tijolo baiano: fiadas de 19 cm com junta de argamassa recuada e tom por fiada; `tijolos` recorta cada bloco (19 x 9 cm, fiada de 10 cm,
-// amarração corrida) em placa 1 cm à frente do miolo de argamassa (a fiada de 19 cm recortada em 27 cm lia como bloco 2,5x o tijolo da parede).
+// Torre de tijolo baiano: fiadas de 19 cm com junta de argamassa recuada e tom por fiada; `tijolos` recorta cada bloco
+// (19 x 9 cm, fiada de 10 cm, amarração corrida) em placa 1 cm à frente do miolo. Escala: docs/hd-kit/lajes.md#caixa-dagua.
 function torreTijolo(F, x, y, z, w, h, rng, tijolos = false, ry = 0) {
   const n = Math.max(1, Math.round(h / (tijolos ? .10 : .193))), fh = h / n, cores = [0x87604f, 0x7c5646, 0x90675a, 0x80594b];
   if (tijolos) F.cor(0x8d8a82, .95).caixa(x, y, z, w - .02, h, w - .02, 0);
@@ -609,9 +598,8 @@ function torreTijolo(F, x, y, z, w, h, rng, tijolos = false, ry = 0) {
       F.cor(cores[Math.floor(rng() * 4)], .88 + rng() * .24);
       if (f < 2) F.caixa(x + (f ? -1 : 1) * (w / 2 - .01), yb + .012, z + c, .02, fh - .012, e - b); else F.caixa(x + c, yb + .012, z + (f === 2 ? 1 : -1) * (w / 2 - .01), e - b, fh - .012, .02); } }
 }
-// Caixa d'água de polietileno azul (500 ou 1000 L) com tampa, sobre torre de tijolo ou direto na laje; `lados` 24 nas vistas de perto.
-// Azul menos saturado (0x1a5cb4 virava chapado no AgX), entrada com boia por cima e saída de PVC; `cor` cinza = fibrocimento (sem nervura, tampa chata).
-// A torre é sempre de tijolo recortado (bloco 19 x 9 cm, fiada de 10 cm): a fiada lisa de 1,2 m lia como tijolo 3x a escala e a recortada de 27 x 19 cm como 2,5x.
+// Caixa d'água de polietileno (500 ou 1000 L) com tampa, boia e saída de PVC, sobre torre de tijolo ou direto na laje;
+// `lados` 24 de perto; `cor` cinza = fibrocimento. Azul e escala do tijolo: docs/hd-kit/lajes.md#caixa-dagua.
 function caixaAzul(F, x, y, z, rng, cor = 0x1d5498, comTorre = 1, g0 = 0, lados = 10) {
   const g = g0 || (rng() < .5 ? 1 : .8), torre = comTorre && (comTorre > 1 || rng() < .55) ? .5 + rng() * .7 : 0, r = .62 * g, h = .86 * g, tom = .85 + rng() * .3, fibro = cor === 0x8a8781;
   if (torre) { torreTijolo(F, x, y - .05, z, 1.2 * g, torre + .05, rng, true); F.cor(0x6b675f).caixa(x, y + torre, z, 1.36 * g, .08, 1.36 * g, 0); }
@@ -652,9 +640,8 @@ const TANQUES = ['caixa_dagua_azul', 'caixa_dagua_preta', 'caixa_dagua_azul', 'c
 const NOVOS = new Set(['caixa_dagua_azul', 'caixa_dagua_preta']);
 // Caixas na beira do telhado que fecha cada beco central: são as que aparecem no fundo de quem olha do beco oposto.
 const TANQUES_BECO = [[1.75, 9.25, 'caixa_dagua_azul', .75], [3.45, 9.4, 'caixa_dagua_preta', .35], [-1.7, 9.3, 'caixa_dagua_azul', .55], [-3.6, 9.5, 'caixa_dagua_azul', .3]];
-// Tambor galvanizado autoral (±11,4; ±7, colisor r 0,70) sai de cena: caixa azul de 1 000 L sobre torre de tijolo, botijão e engradado
-// no canto livre do mesmo colisor, mastro com parabólica em duas. O tambor oculto segue barrando tiros; a caixa acima de 0,9 m não.
-// O tambor do fundo (±11,4; ±16, r 0,76) vira caixa de fibrocimento cinza em dois tons sobre base de concreto (lia como lata lisa a 10 m).
+// Tambor galvanizado autoral (±11,4; ±7 e ±16) sai de cena, mas segue barrando tiros; a caixa que entra no lugar
+// não barra acima de 0,9 m. O que entra em cada tambor: docs/hd-kit/lajes.md#caixas-laje.
 function caixasLaje(F, scene, rng) {
   const ocultos = [], cx = new THREE.Box3();
   scene.traverse((o) => { if (o.userData.lajesAuthored !== 'caixa_dagua' || !o.visible) return; cx.setFromObject(o);
@@ -675,21 +662,20 @@ function caixasLaje(F, scene, rng) {
   return () => { for (const o of ocultos) o.visible = true; };
 }
 function telhados(grupo, rng, topo, mundo, vivo, mat, scene, comCaixas, FR) {
-  // Filtro e lista iguais à r21 (mudar a lista ou os tetos embaralha tudo: a parabólica e o puxadinho da laje da lajesol sumiram na r22).
+  // NÃO mexer no filtro nem na lista: mudar um deles embaralha o sorteio de todos os telhados. Ver docs/hd-kit/lajes.md#telhados.
   const tetos = (mundo?.colliders || []).filter((c) => c.minY < .5 && c.maxY >= 5.9 && c.maxX - c.minX >= 3.5 && c.maxZ - c.minZ >= 3.5)
     .map((c) => ({ c, a: Math.atan2((c.minZ + c.maxZ) / 2, (c.minX + c.maxX) / 2) })).sort((p, q) => p.a - q.a).map((p) => p.c);
   if (!tetos.length) return { tris: 0, volta: () => {} };
   const lista = [...TANQUES.map((id) => ['tanque', id]), ...Array(18).fill(['caixa']), ...Array(11).fill(['antena']), ...Array(6).fill(['parabolica']), ...Array(8).fill(['esperas']), ...Array(4).fill(['pilha']), ...Array(5).fill(['puxadinho']), ...Array(5).fill(['lavar']), ...Array(4).fill(['esperas']), ...Array(7).fill(['varal'])];
   for (let i = lista.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [lista[i], lista[j]] = [lista[j], lista[i]]; }
   const F = fundidor(), tanques = [], usos = new Map(), comLista = new Set(lista.map(([tipo], i) => tipo === 'caixa' ? tetos[Math.floor((i + .5) * tetos.length / lista.length) % tetos.length] : null));
-  // Passe garantido (rng próprio: não mexe na sequência da lista) nas lajes vistas das poses laje/lajesol/parede que a lista não serve com caixa:
-  // 70 % caixa azul (1/4 fibrocimento) direto na laje a 0,75 m da borda do miolo, 35 % parabólica no canto oposto e, na primeira laje da lajesol, telha de fibrocimento com lastro.
-  // r24: raio 22 → 36 m (as 6 lajes de fundo da lajesol estavam peladas) e, no quadro da lajesol, caixa azul sobre torre de tijolo em todas (1,1 m da borda),
-  // parabólica em 60 % e fibrocimento com lastro em metade das lajes ≥ 4 m.
+  // Passe garantido (rng próprio: não mexe na sequência da lista) nas lajes vistas das poses laje/lajesol/parede
+  // que a lista deixa sem caixa. Proporções e raio: docs/hd-kit/lajes.md#telhados.
   const rg = rngDe(40124); let fibro = false;
   for (const c of tetos) { const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2, w = c.maxX - c.minX, d = c.maxZ - c.minZ; if (Math.abs(cx) > 36 || w > 30 || d > 30 || !noQuadro(cx, cz, [1, 2, 3])) continue;
     const dentroX = Math.abs(cx) > Math.abs(cz) * .6, sx = Math.sign(cx) || 1, sz = Math.sign(cz) || 1, lado = (rg() - .5) * .5, sol = noQuadro(cx, cz, [2]) ? 1 : 0, rec = sol ? 1.1 : .75;
-    // 0,75–1,05 m da borda (era 1,2–1,6): vista de baixo (lajesol) a caixa ficava cortada pela platibanda da própria laje; sem torre, o pé fica ≥ 0,13 m dentro da borda.
+    // Caixa a 0,75–1,05 m da borda: mais longe, a platibanda da própria laje a corta vista de baixo (lajesol);
+    // sem torre, o pé fica ≥ 0,13 m dentro da borda.
     const px = dentroX ? cx - sx * (w / 2 - rec - rg() * .3) : cx + lado * (w - 2.6), pz = dentroX ? cz + lado * (d - 2.6) : cz - sz * (d / 2 - rec - rg() * .3);
     const y = topo(px, pz); if (y === null) continue;
     if (!comLista.has(c) && (sol || rg() < .7)) caixaAzul(F, px, y - .03, pz, rg, rg() < .25 ? 0x8a8781 : 0x1d5498, sol && w >= 3.2 && d >= 3.2 ? 2 : 0, 0, 12);
@@ -781,7 +767,7 @@ function fachada(grupo, rng, mundo, janelas, mat, evita, vergas = []) {
       const piso = pisoDe(c, x, n); if (piso === null) continue;
       const z = (rng() < .5 ? c.minZ + .34 : c.maxZ - .34), topo = c.maxY - .35;
       if (rng() < .7) { const y = piso + 1.28 + rng() * .2, xm = relogio(F, rng, x, n, y, z, topo, evita);
-        // Feixe preso com abraçadeira a cada 60 cm; entre elas o cabo só barriga 1,5 cm (solto, serpenteava como decalque).
+        // Feixe preso com abraçadeira a cada 60 cm; entre elas o cabo só barriga 1,5 cm (solto, serpenteia como decalque).
         for (let k = 0; k < 4; k++) { const pts = [], dz = .05 + k * .03 + (rng() - .5) * .01; for (let yy = topo; yy > y + .4; yy -= .15) pts.push(V(xm + n * .012, yy, z + dz + (.012 + .004 * k) * Math.sin((topo - yy) / .6 * 6.2832)));
           pts.push(V(xm + n * .02, y + .34, z + dz * .5)); F.cor(k % 2 ? 0x15161a : 0x2a2420).tubo(pts, .006, 3); }
         for (let yy = topo - .6; yy > y + .7; yy -= .6) F.cor(0x2d2d2b).caixa(xm + n * .006, yy - .015, z + .095, .024, .03, .15);
@@ -805,8 +791,8 @@ function fachada(grupo, rng, mundo, janelas, mat, evita, vergas = []) {
     for (let k = 0; k < 5; k++) F.cor(0x8d8b82).caixa(x + n * .352, y + .09 + k * .05, j.z - .05, .012, .014, .44);
     F.cor(0x3a3d3f).caixa(x + n * .15, y - .035, j.z - .24, .3, .035, .03).caixa(x + n * .15, y - .035, j.z + .24, .3, .035, .03);
   }
-  // Emenda vertical tijolo→reboco entre casas vizinhas do miolo, na face voltada à laje (|x| = 5,2): pilar fino de concreto (12 cm, sem colisão)
-  // com pingadeira no topo; antes a emenda era uma linha de 6 px (pose `laje`).
+  // Emenda vertical tijolo→reboco entre casas vizinhas do miolo, na face voltada à laje (|x| = 5,2): pilar fino de
+  // concreto (12 cm, sem colisão) com pingadeira no topo, visto da pose `laje`.
   for (const a of casas) for (const b of casas) { if (a === b || Math.abs(a.minX - b.minX) > .05 || Math.abs(a.maxX - b.maxX) > .05 || Math.abs(a.maxZ - b.minZ) > .05) continue;
     const sx = Math.sign(a.minX + a.maxX) || 1, xf = sx > 0 ? a.maxX : a.minX; if (Math.abs(Math.abs(xf) - 5.2) > .4) continue;
     const h = Math.min(a.maxY, b.maxY), z = a.maxZ; F.cor(0x8d8a82, .95).caixa(xf + sx * .06, 3.1, z, .12, h - 3.1 - .06, .12).cor(0x7c7a74).caixa(xf + sx * .07, h - .06, z, .14, .06, .2); }
@@ -817,8 +803,8 @@ function fachada(grupo, rng, mundo, janelas, mat, evita, vergas = []) {
     const n = ex ? Math.sign(j.x - (c.minX + c.maxX) / 2) : Math.sign(j.z - (c.minZ + c.maxZ) / 2), p = (ex ? j.x : j.z) + n * ((j.e || .04) / 2 + .015), y0 = j.y - j.h / 2, g = .9 + rng() * .2;
     const barra = (u, y, w, h) => (ex ? F.caixa(p, y, j.z + u, .03, h, w) : F.caixa(j.x + u, y, p, w, h, .03));
     F.cor(cor, g); barra(-j.w / 2 + .022, y0, .044, j.h); barra(j.w / 2 - .022, y0, .044, j.h); barra(0, y0 + j.h - .044, j.w, .044); F.cor(cor, g * .86); barra(0, y0, j.w, .05); }
-  // Verga de concreto (14 cm, 6 cm de saliência, 15 cm além de cada ombreira) sobre as portas de madeira velha do beco central (opts.vergas, map_lajes_hd.js);
-  // pingadeira escura de 1 cm por baixo. Colada à parede: sem colisão.
+  // Verga de concreto (14 cm, 6 cm de saliência, 15 cm além de cada ombreira) sobre as portas de madeira velha do beco
+  // central (opts.vergas, map_lajes_hd.js), com pingadeira escura por baixo. Colada à parede: sem colisão.
   for (const v of vergas) { const ux = Math.abs(v.nz), uz = Math.abs(v.nx), W = v.w + .3;
     F.cor(0x8f8b82, .95 + rng() * .1).caixa(v.x + v.nx * .03, v.y + .01, v.z + v.nz * .03, ux * W + uz * .06, .14, uz * W + ux * .06).cor(0x4a4844).caixa(v.x + v.nx * .035, v.y + .005, v.z + v.nz * .035, ux * W + uz * .07, .008, uz * W + ux * .07); }
   const malha = new THREE.Mesh(F.geo(), mat); malha.name = 'hd-fachada'; malha.receiveShadow = true; malha.userData.hdSombra = true;
@@ -855,9 +841,8 @@ function cadeira(F, x, y, z, rng, ry) {
   F.caixa(x - .19 * sn, y + .45, z - .19 * cs, .42, .40, .03, ry, .12).cor(cor, .8).caixa(x - .2 * sn, y + .62, z - .2 * cs, .40, .025, .03, ry, .12);
   for (const a of [-1, 1]) F.caixa(x + (a * .21) * cs - .02 * sn, y + .45, z - (a * .21) * sn - .02 * cs, .03, .03, .38, ry);
 }
-// O varal autoral (lajes_varal.glb, curva de Bézier do Sketchfab) desenha a corda como fita bege de 4 cm torcida: sai de cena e entra
-// varal de poste de concreto de 9 cm (lê a 1 200 px; o tubo de 3,6 cm sumia) com travessa galvanizada e corda de 1,5 px, recuado 0,5 m para fora (±7,5; ±11)
-// e com roupa só na metade externa (|x| ≥ 7): da pose rente à parede (hd_lab `parede`: -6,5/3,1/-12,8, yaw -2) nada entra no corredor da laje; calça sempre dobrada. Volta em desliga().
+// O varal autoral (lajes_varal.glb) sai de cena e volta em desliga(): entra varal de poste de concreto recuado 0,5 m
+// (±7,5; ±11), com roupa só em |x| ≥ 7: nada no corredor da laje. Ver docs/hd-kit/lajes.md#varal.
 function varais(scene, F, FR, rng, R) {
   const ocultos = [], cx = new THREE.Box3(), PREG = [0x2a5a9a, 0x3f7a4a, 0xb9a83c];
   scene.traverse((o) => { if (o.userData.lajesAuthored !== 'lajes_varal' || !o.visible) return; cx.setFromObject(o);
@@ -866,7 +851,8 @@ function varais(scene, F, FR, rng, R) {
     for (const [dz, formas] of [[-.2, [0, 2]], [.2, [1, 0]]]) { const A = V(x - 1.1, y + h, z + dz), B = V(x + 1.1, y + h, z + dz), L = 2.2, barriga = .04;
       FR.cor(0xa89f8a).fio(catenaria(A, B, barriga, 0, 12), .003);
       let s = .72;
-      // Peças do roupeiro (malha com caimento + atlas): camisa = camiseta do atlas, calça dobrada e toalha = célula retangular; pregador de plástico nas pontas.
+      // Peças do roupeiro (malha com caimento + atlas): camisa = camiseta do atlas; calça dobrada e toalha = célula
+      // retangular; pregador de plástico nas pontas.
       for (const forma of formas) { const [w] = PECAS[forma]; if (s + w > L - .12) break; const t = (s + w / 2) / L, yy = y + h - barriga * 4 * t * (1 - t) - .01;
         const P = R.peca(rng, sx * (6.4 + s + w / 2), yy, z + dz, 1, 0, w, forma === 1 ? .52 : forma === 0 ? .66 : .55, forma === 0 ? 0 : 3, rng() < .3 ? 1 : 0, (forma === 1 ? JEANS : PANOS[Math.floor(rng() * PANOS.length)])[0], .9 + rng() * .2);
         for (const u of [-.38, .38]) { const p = P(u, 0); F.cor(PREG[Math.floor(rng() * 2.999)], .95).caixa(p.x, yy - .03, p.z, .02, .07, .015); }
@@ -874,9 +860,8 @@ function varais(scene, F, FR, rng, R) {
   for (const o of ocultos) o.visible = false;
   return () => { for (const o of ocultos) o.visible = true; };
 }
-// Roupas do varal reposto (pose laje): port do roupeiro do Escadão (hd_cenografia_escadao.js) — atlas de tecido 512 px gerado em runtime
-// (colunas: camiseta, calça, lençol, toalha, pano de prato; 2ª linha estampada) e malha 6 x 8 por peça com barriga, dobra lateral, torção ±4°
-// e AO por vértice nas dobras. Um draw call a mais (`hd-roupas`); os quads de pano() seguem nos becos e telhados.
+// Roupas do varal reposto (pose laje): mesmo roupeiro do Escadão (hd_cenografia_escadao.js), atlas de tecido gerado em
+// runtime. Um draw call a mais (`hd-roupas`); pano() segue nos becos e telhados. Ver docs/hd-kit/lajes.md#roupas.
 function atlasRoupas(rng) {
   const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d'); g.clearRect(0, 0, 512, 512);
   const cel = (col, lin, alpha, estampa) => { const x0 = 0, y0 = 0; g.save(); g.translate(col * 102.4, lin * 128); g.scale(.8, 1); g.beginPath();
@@ -938,30 +923,28 @@ function props(grupo, rng, topo, mundo, mat, FR, scene, liga) {
     // Canto do quadrado de colisão da caixa d'água (fora do cilindro) e tampo do pilar de cada laje; só no quadro das poses.
     for (const [zt, r, k] of [[16, .76, 0], [7, .70, 1]]) { const cx = side * 11.4, cz = end * zt, c = colEm(cx, cz, 3.8, 4.6); if (!c || c.minY < 2.9 || !noQuadro(cx, cz)) continue;
       const x = cx + side * (r - .14), z = cz + end * (r - .14); if (k) bacia(F, x, c.minY, z, rng); else balde(F, x, c.minY, z, rng);
-      // Laje do fundo: cadeira plástica branca e pilha de 4 blocos de concreto na faixa de 58 cm entre o quadrado da caixa e a mureta (|x| 12,2–12,7): fora da rota.
+      // Laje do fundo: cadeira plástica branca e pilha de 4 blocos de concreto na faixa de 58 cm entre o quadrado
+      // da caixa e a mureta (|x| 12,2–12,7): fora da rota.
       if (!k) { cadeira(F, cx + side * 1.05, c.minY, cz - end * .95, rng, (side > 0 ? -Math.PI / 2 : Math.PI / 2) + (rng() - .5) * .5);
         for (let i = 0; i < 4; i++) F.cor([0x8a8780, 0x7f7c75][i % 2], .9 + rng() * .2).caixa(cx + side * (1.05 + (i < 2 ? -.11 : .11)), c.minY + (i % 2) * .19, cz + end * (.95 + (rng() - .5) * .03), .19, .19, .39, (rng() - .5) * .15); } }
     const c2 = noQuadro(side * 11.6, end * 4.3) && colEm(side * 11.6, end * 4.3, 3.85, 4.0); if (c2) { if (side === end) sacoCimento(F, side * 11.6, c2.maxY + .08, end * 4.3, rng, rng() * .6, .08); else balde(F, side * 11.6 - side * .08, c2.maxY + .08, end * 4.3 + end * .05, rng); }
   }
   // Botijão no balcão de gás da praça (bloco baixo de 32 cm).
   const c3 = colEm(4.95, -6.02, .28, .36); if (c3) botijao(F, 4.95, c3.maxY, -6.0, rng);
-  // Viela do beco central (paredes em |x| = 1, piso y = 0): caixa de feira, balde e botijão encostados à parede, nos vãos entre janela e porta
-  // (nunca na frente de uma), só no quadro da pose `beco`. Sem colisão: saliência de 28–36 cm numa viela de 2 m — fora da linha de andar do meio.
-  // rSemVermelho (sorteio ≥ 0,5) pula a caixa vermelha e o balde vinho: a 3–5 m da câmera nada cor de sangue.
-  // Só o beco sul (z > 0): o espelhado fica a 29 m, atrás do próprio beco, e passaria em noQuadro por estar no eixo da câmera.
+  // Viela do beco central: caixa de feira, balde e botijão encostados à parede, nunca na frente de janela ou porta,
+  // só no beco sul e no quadro da pose `beco`; nada cor de sangue. Ver docs/hd-kit/lajes.md#props-viela.
   if (noQuadro(-.8, 12, [0])) { const rSemVermelho = () => .5 + rng() * .5;
     caixaFeira(F, -.80, 0, 11.75, rSemVermelho, Math.PI / 2); balde(F, -.83, 0, 13.72, rSemVermelho); botijao(F, .81, 0, 13.6, rSemVermelho); }
-  // Lajes inalcançáveis dos quartos de fundo (±6,5; ∓17), só no quadro: no lado do Beco do Varal, varal com roupa pendendo; do outro, cadeira, caixas de feira e saco.
+  // Lajes inalcançáveis dos quartos de fundo (±6,5; ∓17), só no quadro: no lado do Beco do Varal, varal com roupa;
+  // do outro, cadeira, caixas de feira e saco.
   for (const side of [-1, 1]) { const x = side * 6.5, z = -side * 17, y = noQuadro(x, z) ? topo(x, z) : null; if (y === null) continue;
     if (side > 0) { for (const dz of [-1.45, 1.45]) F.cor(0x55585a).caixa(x + .25, y, z + dz, .04, 1.72, .04).caixa(x + .25, y + 1.68, z + dz, .5, .04, .04);
       varal(F, rng, x + .1, z - 1.4, x + .1, z + 1.4, y + 1.64, FR, y, true); varal(F, rng, x + .4, z - 1.4, x + .4, z + 1.4, y + 1.66, FR, y);
       botijao(F, x - .65, y, z - 1.3, rng); balde(F, x - .7, y, z + 1.1, rng); }
     else { cadeira(F, x + .35, y, z - .8, rng, 2.4 + rng()); caixaFeira(F, x - .6, y, z + 1.1, rng, .3); caixaFeira(F, x - .62, y + .31, z + 1.08, rng, .9); sacoCimento(F, x + .45, y, z + 1.2, rng, .4); balde(F, x - .25, y, z - 1.35, rng); }
   }
-  // Laje da pose lajesol (-7,2; 3,1; -3,5, yaw 0,9) lia vazia: mancha de água (polígono 1,3 x 0,9 m a 3 mm do piso, 2 m à frente — plano, não é obstáculo),
-  // e na faixa de 58 cm entre o pilar (-11,6; -4,3) e a mureta (|x| 12,2–12,7, fora da rota): saco de material, botijão, balde e antena velha deitada ao pé da mureta.
-  // r24: `topo()` devolve null abaixo de TETO_MIN (5,3 m) e a laje andável fica a 3,1: o passe da r23 nunca entrava. O piso vem do colisor da laje (maxY 2,9–3,3).
-  // Entram também: musgo/mancha escura em volta da base da caixa d'água (±11,4; -7, a 2 mm do piso) e ralo de ferro 15 x 15 cm junto à mureta.
+  // Laje da pose lajesol: props planos ou na faixa de 58 cm junto à mureta (fora da rota). O piso vem do colisor
+  // da laje (lajeEm), porque topo() devolve null abaixo de TETO_MIN. Ver docs/hd-kit/lajes.md#props-lajesol.
   const lajeEm = (x, z) => { const c = cols.find((o) => x > o.minX && x < o.maxX && z > o.minZ && z < o.maxZ && o.maxY > 2.9 && o.maxY < 3.3); return c ? c.maxY : null; };
   if (noQuadro(-12.4, -3.6, [2])) { const yl = lajeEm(-8.9, -4.9);
     if (yl !== null) { const cm = [-8.9, -4.9], pts = []; for (let i = 0; i < 14; i++) { const a = i / 14 * 6.283, r = (.55 + .25 * Math.sin(a * 3 + 1.2) + .12 * Math.sin(a * 7)) * (1 + .3 * Math.cos(a)); pts.push(V(cm[0] + Math.cos(a) * r * 1.1, yl + .003, cm[1] + Math.sin(a) * r * .8)); }
@@ -977,8 +960,8 @@ function props(grupo, rng, topo, mundo, mat, FR, scene, liga) {
         F.cor(0x44463f, .9); for (let i = 0; i < 24; i++) F.tri(V(cq[0], yc + .002, cq[1]), an[(i + 1) % 24], an[i]);
         F.cor(0x3a3f34, .9); for (let i = 0; i < 24; i++) F.tri(V(cq[0] + .05, yc + .003, cq[1] - .05), V(cq[0] + .05 + (an[(i + 1) % 24].x - cq[0]) * .92, yc + .003, cq[1] - .05 + (an[(i + 1) % 24].z - cq[1]) * .92), V(cq[0] + .05 + (an[i].x - cq[0]) * .92, yc + .003, cq[1] - .05 + (an[i].z - cq[1]) * .92)); }
       F.cor(0x2b2b2a).caixa(-12.0, yp + .003, -5.6, .15, .006, .15).cor(0x4a4c4b); for (let i = 0; i < 4; i++) F.caixa(-12.0, yp + .008, -5.655 + i * .037, .13, .006, .014); } }
-  // Cobertura da laje (caixa de zinco autoral 2,7 x 4,5 m a y 5,32 sobre 4 postes de madeira em ±6,9/±11): 5 caibros de 5 x 7 cm sob a telha, braçadeira
-  // galvanizada no topo de cada poste, testeira de 2 cm no beiral (espessura contra o céu). Tudo acima de 5,2 m; só se os postes existem e a pose enquadra.
+  // Cobertura da laje (caixa de zinco autoral sobre 4 postes de madeira em ±6,9/±11): caibros sob a telha, braçadeira
+  // no topo dos postes e testeira no beiral. Tudo acima de 5,2 m; só se os postes existem e a pose enquadra.
   for (const side of [-1, 1]) { const cx = side * 6.9, cz = side * 11; if (!noQuadro(cx, cz, [1, 3]) || !colEm(cx - 1.25, cz - 2.1, 5.2, 5.5)) continue;
     for (let i = 0; i < 5; i++) F.cor([0x4a3626, 0x553e2c, 0x3f2e20][i % 3], .9 + rng() * .2).caixa(cx, 5.21, cz - 2.0 + i * 1.0, 2.62, .07, .05);
     for (const dx of [-1.25, 1.25]) for (const dz of [-2.1, 2.1]) F.cor(0x8d9290).caixa(cx + dx, 5.19, cz + dz, .10, .04, .10);

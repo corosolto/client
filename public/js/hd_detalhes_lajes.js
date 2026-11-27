@@ -120,7 +120,7 @@ function peitoril(P) {
 // Ar-condicionado de janela (caixa 55 x 38 cm no canto inferior direito do vão, grelha, pingadeira escura) sobre o correr de vidro liso.
 function arCondicionado(P, r) {
   P.ret(.52, .50, .44, .40, '#b8bab6', 1); P.ret(.535, .515, .41, .37, '#9ea09c', .95);
-  // r24: grelha com lâminas recuadas (altura 0,55, 3 px de sombra e 1 px de fio claro) em vez de traços rasos; gotejo fino (1 cm) sob a pingadeira.
+  // Grelha com lâminas recuadas (altura 0,55, 3 px de sombra e 1 px de fio claro) e gotejo fino (1 cm) sob a pingadeira.
   for (let y = .54; y < .84; y += .028) { P.ret(.55, y, .25, .012, '#4e504d', .55); P.ret(.55, y + .011, .25, .004, '#c4c6c2', .95); }
   P.ret(.82, .54, .10, .30, '#86888a', .95); P.ret(.845, .60, .05, .05, '#2b2d2e', 1);
   P.so((C) => { C.fillStyle = 'rgba(40,36,30,.35)'; C.fillRect(.56, .90, .36, .02 + r() * .03); C.fillStyle = 'rgba(0,0,0,.25)'; C.fillRect(.52, .88, .44, .02);
@@ -162,21 +162,20 @@ function madeiraVelha(P, r) {
       const y0 = .70 + r() * .04; C.fillStyle = `rgba(${tinta.join(',')},${.55 + r() * .25})`; C.fillRect(x + .004, y0, w - .008, 1 - y0);
       for (let k = 0; k < 14; k++) { C.fillStyle = `rgba(${base.join(',')},${.5 + r() * .5})`; C.fillRect(x + .01 + r() * (w - .05), y0 - .01 + r() * .12, .01 + r() * .035, .006 + r() * .03); }
       if (r() < .5) { C.fillStyle = 'rgba(30,24,18,.75)'; C.beginPath(); C.ellipse(x + w * (.3 + r() * .4), .15 + r() * .7, .012, .009, 0, 0, 6.3); C.fill(); } }); }
-  // Travessas de 4,6 cm (metade da antiga) com parafuso em cada tábua; trava de ferro chato com suporte e argola de cadeado.
+  // Travessas de 4,6 cm com parafuso em cada tábua; trava de ferro chato com suporte e argola de cadeado.
   for (const y of [.1, .5, .87]) { P.ret(0, y, 1, .022, '#6e6454', .95); P.ret(0, y + .022, 1, .005, '#1c1611', .3);
     for (let i = 0; i < 6; i++) { const x = .008 + i * .166 + .072; P.ret(x, y + .006, .012, .011, '#2a2420', 1); P.ret(x + .003, y + .008, .005, .004, '#8a857c', 1); } }
   P.ret(.52, .452, .46, .022, '#3a3835', 1); P.ret(.56, .443, .04, .04, FER, 1); P.ret(.9, .443, .04, .04, FER, 1); P.ret(.93, .474, .03, .034, '#6a6560', 1); P.ret(.935, .486, .02, .018, '#2a2623', .6);
   P.so((C) => { const g = C.createLinearGradient(0, .82, 0, 1); g.addColorStop(0, 'rgba(22,18,14,0)'); g.addColorStop(1, 'rgba(22,18,14,.3)'); C.fillStyle = g; C.fillRect(0, .82, 1, .18); });
 }
-// Aço de enrolar: lâminas galvanizadas, metade de cima pintada (2º tom com luma -12 %) com transição em linha contínua (seno de baixa
-// frequência ±2 cm) e 2–3 lascas arredondadas de 8–15 cm; nada por pixel (o ruído do canvas ampliado virava blocos de 3 px na captura).
-// Ferrugem = um gradiente vertical contínuo nos 30 cm do pé, modulado por gradiente horizontal suave; fechadura preta com miolo a 0,9 m do piso.
+// Aço de enrolar: lâminas galvanizadas, metade de cima pintada com corte em linha contínua e 2–3 lascas; ferrugem em
+// gradiente no pé. NADA por pixel: ruído de canvas ampliado vira bloco na captura. Ver docs/hd-kit/lajes.md#porta-de-enrolar.
 function enrolar(P, r) {
   P.ret(0, 0, 1, 1, '#50565a', .95);
-  // Dois tons com luma ±20 % (galvanizado 150/158/162 ≈ 156; tinta 84/98/104 ou 80/92/118 ≈ 95): a 3 m o par 141/123 lia como chapa uniforme cinza-azul.
+  // Dois tons com luma ±20 % (galvanizado ≈ 156; tinta ≈ 95): com menos contraste a porta lê como chapa uniforme a 3 m.
   const tinta = r() < .5 ? [84, 98, 104] : [80, 92, 118], corte = .50 + r() * .06, fase = r() * 6.28, lascas = 2 + Math.floor(r() * 2);
-  // r24: cada lâmina com sombra escura na dobra de baixo (altura 0,3 = recuo no relevo) e fio claro no topo; 3 amassados nos 40 cm do pé (v ≥ 0,8),
-  // retângulos 10–18 cm mais escuros e recuados (altura 0,5) com borda de baixo clara.
+  // Cada lâmina com sombra escura na dobra de baixo (altura 0,3 = recuo no relevo) e fio claro no topo; 3 amassados
+  // nos 40 cm do pé (v ≥ 0,8), mais escuros e recuados (altura 0,5), com borda de baixo clara.
   for (let y = .012; y < .93; y += .043) { const g = .92 + r() * .12; P.ret(.07, y, .86, .028, tom([150, 158, 162], g), .85); P.ret(.07, y + .001, .86, .004, tom([176, 184, 188], g), .9); P.ret(.07, y + .028, .86, .015, '#3e4347', .3); P.ret(.07, y + .039, .86, .004, '#585e62', .5); }
   for (let i = 0; i < 3; i++) { const u = .12 + r() * .7, v = .80 + r() * .12, w = .05 + r() * .04, h = .03 + r() * .025; P.ret(u, v, w, h, '#454b4f', .5); P.ret(u, v + h - .006, w, .006, '#8a9094', .7); }
   P.so((C) => {
@@ -213,7 +212,8 @@ function ondulada(P, r) {
     // Ferrugem de base: gradiente contínuo de 1 m (0 em 1,03 m) até -25 % de luminância no pé, por onda e seguindo a corrugação.
     for (let i = 0; i < 9; i++) for (let k = 0; k < 4; k++) { const x = .05 + i * .1 + k * .025, a = [.6, .3, .4, .75][k] * (.75 + r() * .4), g = C.createLinearGradient(0, .50, 0, 1);
       g.addColorStop(0, 'rgba(96,62,38,0)'); g.addColorStop(.45, `rgba(100,64,40,${(a * .22).toFixed(2)})`); g.addColorStop(.8, `rgba(84,54,32,${(a * .6).toFixed(2)})`); g.addColorStop(1, `rgba(62,40,24,${a.toFixed(2)})`); C.fillStyle = g; C.fillRect(x, .50, .0255, .50); }
-    // Escorrido fino (0,5–1 cm) só na metade de baixo, nascendo das arestas das ondas abaixo de 0,8 m e sumindo no pé: nada de mancha na faixa do corpo.
+    // Escorrido fino (0,5–1 cm) só na metade de baixo, das arestas das ondas abaixo de 0,8 m até sumir no pé:
+    // nada de mancha na faixa do corpo.
     for (let i = 0; i < 14; i++) { const x = .05 + Math.floor(r() * 9) * .1 + (r() < .5 ? .0 : .05), y0 = .60 + r() * .2, len = .08 + r() * .22, g = C.createLinearGradient(0, y0, 0, y0 + len);
       g.addColorStop(0, `rgba(92,60,36,${(.3 + r() * .3).toFixed(2)})`); g.addColorStop(1, 'rgba(92,60,36,0)'); C.fillStyle = g; C.fillRect(x, y0, .006 + r() * .005, len); }
     const g = C.createLinearGradient(0, .93, 0, 1); g.addColorStop(0, 'rgba(40,32,26,0)'); g.addColorStop(1, 'rgba(40,32,26,.55)'); C.fillStyle = g; C.fillRect(0, .93, 1, .07);
@@ -227,9 +227,8 @@ export function atlasPortas() {
   return funde(P, 'hd-portas');
 }
 
-// Pichação. [arquivo em /img/decals, altura no atlas (px), tinta de uma cor só ou null, categoria]
-// `reto` = pixo reto paulista (alto da empena, preto ou branco); `xarpi` = assinatura carioca de traço único.
-// Tinta "preta" é cinza-escuro (#363430 nas frases): preta pura saía p5 = 9 na captura; o desbote irregular vem de gasta() + falhas().
+// Pichação: [arquivo em /img/decals, altura no atlas (px), tinta de uma cor só ou null, categoria]. `reto` = pixo reto
+// paulista (alto da empena); `xarpi` = assinatura carioca. Tinta "preta" é cinza-escuro: docs/hd-kit/lajes.md#pichacao.
 const PRETO = '#2a2927', ARTE = [['or-graf-coro', 300, null, 'graf'], ['or-graf-treta', 300, null, 'graf'], ['or-mitico-mural', 380, null, 'graf'], ['or-stencil-capivara', 220, PRETO, 'estencil'], ['or-stencil-pomba', 220, PRETO, 'estencil'],
   ...['telha', 'varal', 'tijolo', 'escada', 'reboco', 'ladeira', 'telhado', 'quintal', 'muro', 'travessa', 'esquina', 'janela', 'laje', 'morro', 'antena', 'andaime'].map((n) => [`or-pixo-sp-${n}`, 270, PRETO, 'reto']),
   ...['subida', 'colina', 'encosta', 'alto', 'fundo', 'lua'].map((n, i) => [`or-pixo-rj-${n}`, n === 'lua' ? 200 : 100, i % 3 === 1 ? '#1b3a80' : PRETO, 'xarpi'])];
@@ -321,9 +320,8 @@ function montaAtlas(imgs) {
 
 const PAREDES = new Set(['cream', 'ochre', 'rose', 'sage', 'adobe', 'brick', 'concrete']), TIJOLO = new Set(['brick', 'ochre', 'rose']), UMA_COR = new Set(['xarpi', 'reto', 'estencil']);
 const MEDIDAS = { xarpi: [1.2, 1.7, 1.2, 1.8], frase: [1.7, 2.2, 2.25, 2.5], estencil: [.8, 1.1, 0, 0], reclame: [2.7, 3.1, 0, 0] }, CHEIA = new Set(['frase', 'reclame', 'graf']);
-// Decalques colados à parede (1 cm), sem colisão. Cada lugar é conferido com raios a cada 12 cm de altura e 22 cm
-// de largura, com 4 cm de folga: cinta, viga ou pilar no caminho recusa o lugar. Na faixa do corpo só entra xarpi.
-// opts.loja: placa pintada do mercadinho na fachada de entorno 41 (x = -14,85), entre o toldo (2,60 m) e a cinta do andar (2,95 m).
+// Decalques colados à parede (1 cm), sem colisão; cada lugar é conferido com raios e recusado se houver cinta, viga
+// ou pilar no caminho. Na faixa do corpo só entra xarpi. opts.loja e a grade de raios: docs/hd-kit/lajes.md#decalques.
 export function pichacoes(scene, mundo, U, evita = [], janelas = [], opts = {}) {
   let vivo = true, malha = null, tex = null, mat = null; const info = { n: 0, usados: [] };
   const carrega = (nome) => new Promise((ok) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = `/img/decals/${nome}.png`; });
@@ -362,7 +360,7 @@ export function pichacoes(scene, mundo, U, evita = [], janelas = [], opts = {}) 
     for (let i = fila.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [fila[i], fila[j]] = [fila[j], fila[i]]; }
     const postas = [], perto = (f, d) => postas.some((p) => Math.hypot(p.x - f.x, p.z - f.z) < d && Math.abs(p.b - f.b) < 1);
     const fogao = itens.find((q) => q.id === 'fogao'), merc = opts.loja ? itens.find((q) => q.id === 'mercadinho') : null;
-    // Letreiro fixo com op 1,25: passa pelo desbote em mancha do shader (op 2 saía chapado).
+    // Letreiro fixo com op 1,25: passa pelo desbote em mancha do shader (com op 2 sai chapado).
     if (fogao) for (const z of [-12.9, -12.3, -13.5, -11.7, -14.1]) if (cola(fogao, -5.2, 5.19, z, -1, 0, 2.5, 2.5 * fogao.h / fogao.w, 1.25)) { postas.push({ x: -5.2, z, b: 3.1 }); break; }
     if (merc) for (const z of [-9.85, -9.6, -10.1]) if (cola(merc, -14.85, 2.76, z, 1, 0, 2.3, 2.3 * merc.h / merc.w, 1.25)) { postas.push({ x: -14.85, z, b: 0 }); info.mercadinho = z; break; }
     // Grafite grande primeiro, em parede alta (acima de 2,1 m), antes que o resto ocupe o lugar.
