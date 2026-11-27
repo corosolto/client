@@ -1906,7 +1906,8 @@ function _funnel(step, gameType = null) {
 }
 const _tipoDaPartida = () => (telemetryGameContext.gameType === 'multiplayer' ? 'multiplayer' : 'single_player');
 // AQUISIÇÃO (019): 1x por navegador. referrer vira host (URL inteira pode carregar query
-// sensível); UTM e ?ref= lidos da URL de entrada. first-touch-wins no servidor.
+// sensível); UTM, click IDs (ttclid/fbclid/twclid) e ?ref= lidos da URL de entrada.
+// first-touch-wins no servidor.
 // A origem fica só em memória até a checagem de privacidade: o menu reescreve a URL antes dela.
 const _landingOrigem = (() => {
   const u = new URLSearchParams(location.search);
@@ -1915,7 +1916,8 @@ const _landingOrigem = (() => {
   return Object.freeze({
     referrer,
     utmSource: u.get('utm_source'), utmMedium: u.get('utm_medium'), utmCampaign: u.get('utm_campaign'),
-    utmContent: u.get('utm_content'), ref: u.get('ref') || u.get('treta'), landing: location.pathname,
+    utmContent: u.get('utm_content'), ttclid: u.get('ttclid'), fbclid: u.get('fbclid'), twclid: u.get('twclid'),
+    ref: u.get('ref') || u.get('treta'), landing: location.pathname,
   });
 })();
 let _acqSent = false;

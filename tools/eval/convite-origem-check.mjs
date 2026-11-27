@@ -44,11 +44,13 @@ cobra(link.searchParams.get('utm_source') === 'convite' && link.searchParams.get
 if (!lib) falhas.push('CO3 src/lib/convite-origem.mjs não existe — a página /sala não repassa a origem ao jogo');
 else {
   const { hrefEntrarNaSala, CHAVES_ORIGEM } = await importa('lib.mjs', lib);
-  const chegada = new URLSearchParams(`${link.search.slice(1)}&utm_campaign=lancamento&utm_content=video-curto&ref=AMIGO1&treta=00000000-0000-4000-8000-000000000001&token=segredo&sala=US-XXXX`);
+  const chegada = new URLSearchParams(`${link.search.slice(1)}&utm_campaign=lancamento&utm_content=video-curto&ttclid=tt-click-123&fbclid=fb-click-456&twclid=tw-click-789&ref=AMIGO1&treta=00000000-0000-4000-8000-000000000001&token=segredo&sala=US-XXXX`);
   const href = new URL(hrefEntrarNaSala('BR-7K3M', chegada), 'https://x');
   cobra(href.pathname === '/' && href.searchParams.get('sala') === 'BR-7K3M', `CO3 ENTRAR NA SALA perdeu ?sala (${href})`);
   cobra(href.searchParams.get('utm_source') === 'convite' && href.searchParams.get('utm_medium') === 'sala'
     && href.searchParams.get('utm_campaign') === 'lancamento' && href.searchParams.get('utm_content') === 'video-curto'
+    && href.searchParams.get('ttclid') === 'tt-click-123' && href.searchParams.get('fbclid') === 'fb-click-456'
+    && href.searchParams.get('twclid') === 'tw-click-789'
     && href.searchParams.get('ref') === 'AMIGO1'
     && href.searchParams.get('treta') === '00000000-0000-4000-8000-000000000001',
   `CO3 ENTRAR NA SALA não repassa a origem completa (${href})`);
