@@ -25,7 +25,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { classifyCrash, crashFingerprint } from '../../../src/lib/error-provenance.mjs';
+import { classifyCrash, crashFamily, crashFamilyKey, crashFingerprint } from '../../../src/lib/error-provenance.mjs';
 
 const ORIGEM = 'https://www.csbrasil.online';
 const raiz = (p) => fileURLToPath(new URL(`../../../${p}`, import.meta.url));
@@ -152,4 +152,48 @@ test('#798 (7): a EVAL_CSP_RE do servidor e a evalCsp do cliente têm a MESMA re
   assert.match(servidor, literal, 'EVAL_CSP_RE sumiu ou mudou em src/lib/error-provenance.mjs');
   assert.match(cliente, literal, 'evalCsp sumiu ou divergiu em src/pages/index.astro');
   assert.match(cliente, guarda, 'a guarda blob: do espelho sumiu em src/pages/index.astro');
+});
+
+/* ── FAMÍLIA: a mesma falha em cada língua do navegador é UMA issue ─────────────── */
+
+/* Mensagens literais de `js_error` (alpha.156/157) e das issues #1425 #1435 #1436 #1439 #1445. */
+const TRES_FORA_DO_MAPA = [
+  'TypeError: The specifier “three” was a bare specifier, but was not remapped to anything. Relative module specifiers must start with “./”, “../” or “/”.',
+  'Falha ao abrir a arena: O especificador “three” era um especificador simples, mas não foi remapeado para nada. Especificadores de módulo relativos devem começar com “./”, “../” ou “/”.',
+  'Falha ao abrir a arena: Le spécificateur « three » était un spécificateur simple, mais n’a pas été remappé. Les spécificateurs relatifs de modules doivent commencer par « ./ », « ../ » ou « / ».',
+  'Falha ao abrir a arena: “three” belirteci çıplak boş belirteçti ama hiçbir şeyle eşlenmedi. Göreli modül belirteçleri “./”, “../” veya “/” ile başlamalıdır.',
+  'Falha ao abrir a arena: O indicador «three» estaba baleiro, pero non se volveu asociar a nada. Os indicadores de módulo relativos deben comezar con «./», «../», ou «/».',
+  'TypeError: Спецификатор «three» являлся голым спецификатором, но не был переназначен на что-либо. Связанные спецификаторы модуля должны начинаться с «./», «../» или «/».',
+  'TypeError: “three”是一个裸说明符，但未重新进行任何映射。相对模块说明符必须以“./”、 “../”或 “/”开头。',
+  'Uncaught TypeError: Failed to resolve module specifier "three". Relative references must start with either "/", "./", or "../".',
+  'Uncaught TypeError: Failed to resolve module specifier "three/addons/loaders/GLTFLoader.js". Import Map: "three/addons/loaders/GLTFLoader.js" matches with "three/addons/" but is blocked by a null value',
+  "Falha ao abrir a arena: Module name, 'three' does not resolve to a valid URL.",
+];
+
+test('o `three` fora do import map é uma família só, em toda língua e engine', () => {
+  for (const message of TRES_FORA_DO_MAPA) assert.equal(crashFamily(message), 'modulo-nao-mapeado:three', message);
+  assert.equal(new Set(TRES_FORA_DO_MAPA.map(crashFamilyKey)).size, 1);
+});
+
+test('bare specifier sem import map é codigo: purga não resolve (alpha.157, 27/11)', () => {
+  for (const message of TRES_FORA_DO_MAPA) {
+    assert.equal(classifyCrash({ message, source: 'https://www.csbrasil.online/js/main.js', stack: '' }, ORIGEM), 'codigo', message);
+  }
+});
+
+test('o prefixo do launch watchdog não separa a família do erro cru', () => {
+  const cru = "Uncaught TypeError: Cannot read properties of null (reading 'update')";
+  const embrulhado = "Falha ao abrir partida: Cannot read properties of null (reading 'update')";
+  assert.equal(crashFamily(cru), crashFamily(embrulhado));
+  assert.notEqual(crashFamily(cru), crashFamily("Falha ao abrir partida: Cannot read properties of null (reading 'net')"));
+});
+
+test('caminho relativo citado num erro comum não vira módulo fora do mapa', () => {
+  assert.notEqual(crashFamily('Error: "./js/main.js" failed, see ../docs'), 'modulo-nao-mapeado:.');
+  assert.doesNotMatch(crashFamily("Cannot read properties of undefined (reading './x')"), /^modulo-nao-mapeado/);
+});
+
+test('a chave da família é estável e cabe na busca da issue', () => {
+  assert.equal(crashFamilyKey(TRES_FORA_DO_MAPA[0]), `familia-${crashFingerprint('familia', 'modulo-nao-mapeado:three', '')}`);
+  assert.match(crashFamilyKey('qualquer coisa'), /^familia-[0-9a-f]{8}$/);
 });
