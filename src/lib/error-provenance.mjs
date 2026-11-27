@@ -54,7 +54,7 @@ const AMBIENTE_RE = /^sem_webgl:/i;
 const CARTEIRA_RE = /\b(?:window|globalThis|self)\.(?:ethereum|solana|tronWeb|tronLink|phantom|keplr|BinanceChain|coinbaseWalletExtension|web3)\b|\bCannot redefine property:\s*(?:ethereum|solana|web3)\b|\bFailed to connect to MetaMask\b/i;
 // Ponte de navegador/WebView/extensão injetada no documento: o filename vira a própria
 // página, e same-origin não inocenta. Nome de terceiro, com a caixa dele (BUG-76).
-const PONTE_INJETADA_RE = /\b(?:__gCrWeb[A-Za-z0-9_$]*|__firefox__|DarkReader|__REACT_DEVTOOLS_GLOBAL_HOOK__|__VUE_DEVTOOLS_GLOBAL_HOOK__|webkit\.messageHandlers)\b/;
+const PONTE_INJETADA_RE = /\b(?:__gCrWeb[A-Za-z0-9_$]*|__firefox__|DarkReader|__REACT_DEVTOOLS_GLOBAL_HOOK__|__VUE_DEVTOOLS_GLOBAL_HOOK__|__XL_CALLBACK_xl(?:ReportStatistics|GetAppMetaData)_[0-9a-f]+|addEL_hook|webkit\.messageHandlers)\b/;
 
 const normalizedOrigin = (value, base) => {
   if (!value) return null;

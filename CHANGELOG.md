@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.155`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.157`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -309,6 +309,46 @@
 - A animação de recarga em terceira pessoa deixa de reiniciar ao terminar; o clipe ainda retoma quando uma reação de dano o interrompe.
 - As réguas de emote validam a composição exata dos 16 itens do menu, e os harnesses de snapshot injetam o catálogo v9 ao avaliar `netgame.js`.
 - Estados assados por personagem só entram quando não aumentam nenhum teto congelado de deformação; os offsets de pé e as catracas de chão são regenerados sobre o conjunto aprovado.
+
+## [2.1.0-alpha.157] — 2026-11-22
+
+### Mudado
+- hotfix: use character avatars and cache public counters (#1437)
+- fix(ranking): keep portrait selection on the server
+- fix(ranking): send the available portrait catalog
+- fix(cache): isolate public counter entries for rollback
+- fix(ranking): keep avatars visible during image loading
+- fix(ci): remove waivers for the withdrawn picomatch advisory
+- test(ranking): load portrait assets in profile fixtures
+- test(routing): use health as the direct route in the geo check
+- fix(ranking): serve character avatars and cache public counters
+
+## [2.1.0-alpha.156] — 2026-11-18
+
+### Mudado
+- fix(cf,eval): stop cross-request cache sharing in the Worker and retry transient viewmodel fetches in CI (#1415)
+- fix(flavio): VIP is an extra body on side B, N human slots per side (#1414)
+- Operação Flávio: queue, X-ray arch and luggage carts collide as drawn (#1416)
+- test(smoke): node-drop fixture over HTTPS/WSS (dev now serves production CSP) (#1419)
+- fix(eval): make the local pre-push green on Node 26 (#1418)
+- fix(geo): forward player geo from request.cf in the API proxy (#1417)
+- chore: sync main into staging before the 2026-11-18 release batch (#1420)
+- release: batch 2026-11-18 (night): Operação Flávio fixes, Worker single-flight 500s, Node 26 pre-push, node-drop smoke (#1421)
+- test(smoke): node-drop fixture over HTTPS/WSS on every base
+- fix(operacao-flavio): solid-props check covers the procedural fallback
+- fix(geo): forward player geo from request.cf in the API proxy
+- fix(operacao-flavio): queue, arch and luggage carts collide as drawn
+- fix(bots): regroup route starts at its exit node and stops at waypoints
+- docs(changelog): local pre-push green on Node 26
+- docs(weapons): regenerate matrix anchors
+- fix(eval): vm-serving SP3 measures the Cloudflare serving path
+- chore(docs): regenerate derived blocks (autofix)
+- fix(eval): retry transient failures in the published viewmodel fixture
+- fix(cf): stop sharing a request's Response and lifetime across cache waiters
+- fix(flavio): VIP is an extra body on side B, N human slots per side
+- fix(eval): run the Node22-pinned glove-origin gate under an installed Node 22
+- fix(eval): move tp-drip loader to module.registerHooks
+- test: pin TAP reporter for self-spawned mutant runs
 
 ## [2.1.0-alpha.155] — 2026-11-17
 
