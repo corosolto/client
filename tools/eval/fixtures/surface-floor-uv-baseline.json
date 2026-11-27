@@ -1,16 +1,16 @@
 {
   "schema": "surface-floor-uv-baseline/1",
-  "sourceRef": "416af25b2b491d8ffb9d068659a2c715f57db80f",
+  "sourceRef": "c8fe8742420d8ec2a38239f083f3e1c3dc5b2c95",
   "sourcePins": [
     {
       "path": "public/js/map_escadao.js",
-      "baseRef": "416af25b2b491d8ffb9d068659a2c715f57db80f",
-      "sha256": "73fc25eecd2f4befd18fc0007308b3c11f154b62b573820798b29bd5bcc16e81"
+      "baseRef": "c8fe8742420d8ec2a38239f083f3e1c3dc5b2c95",
+      "sha256": "ffb1e4d3b72f32380009d74204011c253e4ea117c5bd7df08660c07a2ebd5097"
     },
     {
       "path": "public/js/map_quebrada.js",
-      "baseRef": "416af25b2b491d8ffb9d068659a2c715f57db80f",
-      "sha256": "89b30c7dddce0350070fc16e86ffc73179fe374291783c53f80f3e72a902ae46"
+      "baseRef": "c8fe8742420d8ec2a38239f083f3e1c3dc5b2c95",
+      "sha256": "844d32aca7f47fa2951ddf55d90a5caa1f9d6043c6b61112fa4b2ede3fd48541"
     }
   ],
   "method": "Actual MAPS builders/harness, deterministic RNG1153; TextureLoader boundary delayed; no renderer/GLB/pixel approval. Hash excludes only the UV attributes of the three identified private floors.",
@@ -25,29 +25,29 @@
     },
     "escadao": {
       "fallback": {
-        "nonTargetUVGeometryAndMaterials": "e9b8e39d3e3b36c3c27dd1c2d2f2bb37ee5d8f686b54ed245d5e1dcdcc66f71e",
+        "nonTargetUVGeometryAndMaterials": "eded05d2a2272faf469a37a27feaae0cf5b52c784c4fdd5c86cd0d0b89b40e2c",
         "contracts": "1abf68cb19f71bda2c4e773b5bf214dbd4e15443f50ff9dee09130f1103fd390",
         "sharedGroundTextures": "018cc4fb3a4aa4c65e413052cb994f576b44a538bfc886fa7a925d1cc6846b6d",
-        "nextRandom": 0.5276809704955667
+        "nextRandom": 0.7503017822746187
       },
       "external": {
-        "nonTargetUVGeometryAndMaterials": "eefd125efbbbcfab6d51efa994f481179f07f58f9135476dcf4188a1abb5ff72",
+        "nonTargetUVGeometryAndMaterials": "9f5afc09ccf1ec655782e7950e2961b1888dce30347cda63cd13e9cd651d1a3e",
         "contracts": "1abf68cb19f71bda2c4e773b5bf214dbd4e15443f50ff9dee09130f1103fd390",
         "sharedGroundTextures": "018cc4fb3a4aa4c65e413052cb994f576b44a538bfc886fa7a925d1cc6846b6d",
-        "nextRandom": 0.5276809704955667
+        "nextRandom": 0.7503017822746187
       },
       "changedSampler": {
-        "nonTargetUVGeometryAndMaterials": "7bd57573e78269f6890defebcd5edadfbc625fb28439531b880babb543558ecc",
+        "nonTargetUVGeometryAndMaterials": "b4bbde1981f19667997b752fa1d6ab9a3e1a8b8d74bd8c77b140c821d245f659",
         "contracts": "1abf68cb19f71bda2c4e773b5bf214dbd4e15443f50ff9dee09130f1103fd390",
         "sharedGroundTextures": "018cc4fb3a4aa4c65e413052cb994f576b44a538bfc886fa7a925d1cc6846b6d",
-        "nextRandom": 0.5276809704955667
+        "nextRandom": 0.7503017822746187
       }
     }
   },
-  "previousSourceRef": "9414b56cedcdc80383becb448b6fc621ab6a3339",
-  "curationBaseline": {
-    "reason": "Global artwork ownership and rebake changed rendered graffiti and its RNG consumption. Actual comparison against db0cdee3ff83edc113aa97b2b02475d000edd4d9 reproduced the prior baseline exactly; all non-art geometry/material bytes, physics contracts and shared ground texture hashes remain identical. The original full-scene signature check is retained.",
-    "sourceRef": "416af25b2b491d8ffb9d068659a2c715f57db80f",
-    "artMerge": "75815ad3cb2bfd392577e72851b970b5bb8d6a5a"
+  "previousSourceRef": "416af25b2b491d8ffb9d068659a2c715f57db80f",
+  "rebaseline": {
+    "reason": "Escadão fixes: water-tank GLB fallback proxy recoloured 0x1a1a1a/0.8 -> 0x2f6fa8/0.6 and the unused azulejo material/canvas removed (fewer THREE UUIDs, so RNG consumption changes). A per-mesh dump of the built scene (type, name, position, vertex count, material colour/roughness/maps, instance count) against corosolto/staging differs only in that proxy mesh; physics contracts, shared ground textures and the Quebrada signatures are byte-identical.",
+    "sourceRef": "c8fe8742420d8ec2a38239f083f3e1c3dc5b2c95",
+    "base": "3f0feaab0b15d15037b684e01e94ca7854941a7c"
   }
 }
