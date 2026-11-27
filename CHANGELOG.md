@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.157`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.158`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -308,6 +308,71 @@
 - A animação de recarga em terceira pessoa deixa de reiniciar ao terminar; o clipe ainda retoma quando uma reação de dano o interrompe.
 - As réguas de emote validam a composição exata dos 16 itens do menu, e os harnesses de snapshot injetam o catálogo v9 ao avaliar `netgame.js`.
 - Estados assados por personagem só entram quando não aumentam nenhum teto congelado de deformação; os offsets de pé e as catracas de chão são regenerados sobre o conjunto aprovado.
+
+## [2.1.0-alpha.158] — 2026-11-27
+
+### Mudado
+- ci: drive monitoring cron from a Cloudflare Worker (vigia-cron), keep GitHub schedule as fallback (#1403)
+- Derive or ratchet the exact-count gates that fail unrelated PRs (#1404)
+- ci: native auto-merge with politica-merge status, drop dead deploy-prod and skipped bot runs (#1387)
+- fix(passe): stop the signup invite from reopening behind the pass login invite (portao-passe flake) (#1399)
+- fix(ci): stabilize pre-push budgets and Cloudflare release gates (#1422)
+- fix(ranking): validate portrait fallback and counter cache on staging (#1438)
+- release: daily batch 2026-11-18 (#1424)
+- fix(crash): group crash issues by crash family (#1460)
+- fix(crash): agrupa a issue pela família do crash
+- fix(ranking): keep portrait selection on the server
+- fix(ranking): send the available portrait catalog
+- fix(cache): isolate public counter entries for rollback
+- fix(ranking): keep avatars visible during image loading
+- fix(ci): remove waivers for the withdrawn picomatch advisory
+- test(ranking): load portrait assets in profile fixtures
+- test(routing): use health as the direct route in the geo check
+- fix(ranking): serve character avatars and cache public counters
+- fix(ci): keep lobby browser gate within deadline
+- fix(ci): preserve poster loads outside menu boot
+- test(passe): count only invite decisions that follow the held /api/treta
+- fix(ci): evaluate exported roster helpers in mythical gate
+- fix(ci): expose viewmodel network mutants to consistency gate
+- fix(ci): disarm auto-merge armed with a method other than merge commit
+- ci(vigia-cron): publish the Worker only from main
+- test(passe): register the invite decision listener before closing the prompt
+- fix(ci): keep politica-merge pending for sensitive paths without human labels
+- fix(ci): keep reconnect fixture inside CSP
+- fix(ci): stabilize boot and dual dev servers
+- fix(release): keep Cloudflare promotion authoritative
+- fix(ci): stabilize browser budget and LOD gates
+- ci(vigia-cron): prove dispatch permission with a real 204 before deploying
+- fix(vigia-cron): bound each GitHub dispatch with a 10 s AbortSignal
+- ci(vigia-cron): keep GitHub schedule as fallback, gate backend target on deploy
+- ci(vigia-cron): pass Worker secrets as JSON on stdin
+- ci(vigia-cron): run the cron contract test before deploying
+- docs(ops): add vigia-cron runbook
+- ci: deploy vigia-cron and drop GitHub schedule from prod-watch/ops-diag
+- feat(ops): add vigia-cron Worker that dispatches monitoring workflows
+- chore(assets): migrate asset inventory to v2
+- docs(changelog): note derived exact-count gates
+- fix(assets): migrate v1 inventory manifests in the generator
+- fix(assets): bind inventory to reviewed orphans, ratchet known set
+- test(eval): add frozen suite baseline fixture
+- test(eval): ratchet migrated suite order instead of exact count
+- fix(eval): derive AF7 call count from the parsed workflow
+- fix(eval): measure contagens-pr against base drift
+- fix(ci): leave open conversations to the native rule and survive disabled auto-merge
+- fix(passe): keep the signup invite from reopening behind the pass login invite
+- fix(ci): direct merge requires every target context present and green
+- fix(ci): read PR metadata with the repository token in automerge
+- fix(ci): require review-thread resolution rule before arming auto-merge
+- test(ci): pin the real rules/branches response shape in the automerge selftest
+- docs(arch): regenerate the game.js index for staging
+- fix(scripts): restore five eval scripts lost in the #1378 merge
+- docs: name cf-prod-deploy as the Worker production path
+- ci: skip the automerge dispatch for closed pull requests
+- ci: replace automerge polling with native GitHub auto-merge
+- ci: decide politica-merge and native auto-merge in check_automerge
+- ci: run pr-gates on pull requests to staging
+- ci: drop bot triggers that only produce skipped runs
+- ci: remove dead deploy-prod workflow
 
 ## [2.1.0-alpha.157] — 2026-11-22
 
