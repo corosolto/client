@@ -15,8 +15,8 @@
 
    ── COMO ELA MEDE ──────────────────────────────────────────────────────────
    Varre TODO arquivo versionado (`git ls-files`), não só public/docs/tools/scripts:
-   o registro pode nascer em qualquer pasta. Pula binário (byte NUL nos primeiros
-   8 KB, a mesma heurística do git) e arquivo acima de 2 MB. Reprova qualquer linha
+   o registro pode nascer em qualquer pasta, e de qualquer tamanho. Pula só binário
+   (byte NUL nos primeiros 8 KB, a mesma heurística do git). Reprova qualquer linha
    com parâmetro de assinatura de URL de CDN seguido de `=`: Key-Pair-Id (CloudFront),
    X-Amz-Signature (S3 SigV4 pré-assinado) e X-Goog-Signature (GCS V4).
    Cabeçalho `Authorization: AWS4-HMAC-SHA256 … Signature=` não é URL e não casa.
@@ -24,51 +24,67 @@
    A mensagem cita só `arquivo:linha` e o nome do parâmetro, NUNCA o trecho: se a
    URL ainda valer, o log do CI não pode virar o segundo vazamento.
 
-   ── O MUTANTE ──────────────────────────────────────────────────────────────
-   `--mutante=url-assinada` injeta em memória um task record com link pré-assinado
-   e exige vermelho (sai 0 só se a régua morder). `npm run eval:urlassinada` roda
-   os dois: árvore real verde e mutante mordido.
+   ── OS MUTANTES ────────────────────────────────────────────────────────────
+   Cada um exige vermelho (sai 0 só se a régua morder):
+   · `url-assinada` injeta em memória um task record com link pré-assinado;
+   · `url-assinada-grande` grava em tmp um registro de 3 MB com o link no fim e o
+     lê pela MESMA função da varredura: um teto de tamanho voltaria a ser ponto cego.
+   `npm run eval:urlassinada` roda a árvore real (verde) e os dois mutantes.
 
-   Uso: node tools/eval/url-assinada-check.mjs [--mutante=url-assinada]
+   Uso: node tools/eval/url-assinada-check.mjs [--mutante=url-assinada|url-assinada-grande]
    ============================================================================ */
 import { execFileSync } from 'node:child_process';
-import { openSync, readSync, closeSync, statSync, readFileSync } from 'node:fs';
+import { openSync, readSync, closeSync, statSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
+const MUTANTES = ['url-assinada', 'url-assinada-grande'];
 const mutante = process.argv.find((a) => a.startsWith('--mutante='))?.slice(10) || '';
-if (mutante && mutante !== 'url-assinada') {
+if (mutante && !MUTANTES.includes(mutante)) {
   console.error(`mutante desconhecido: ${mutante}`);
   process.exit(2);
 }
 
 const MARCAS = /\b(Key-Pair-Id|X-Amz-Signature|X-Goog-Signature)=/;
-const TETO_BYTES = 2 * 1024 * 1024;
 
-function binario(caminho) {
+/* Texto do arquivo, ou null se não for arquivo comum ou for binário. Sem teto de
+   tamanho: binário grande custa só a amostra de 8 KB. */
+function lerTexto(caminho) {
+  let st;
+  try { st = statSync(caminho); } catch { return null; } // apagado no worktree, submódulo
+  if (!st.isFile()) return null;
   const fd = openSync(caminho, 'r');
   try {
     const amostra = Buffer.alloc(8000);
     const lidos = readSync(fd, amostra, 0, amostra.length, 0);
-    return amostra.subarray(0, lidos).includes(0);
+    if (amostra.subarray(0, lidos).includes(0)) return null;
   } finally { closeSync(fd); }
+  return readFileSync(caminho, 'latin1');
 }
 
 const versionados = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
   .split('\0').filter(Boolean);
 const alvos = [];
 for (const rel of versionados) {
-  let st;
-  try { st = statSync(rel); } catch { continue; } // apagado no worktree, submódulo
-  if (!st.isFile() || st.size > TETO_BYTES || binario(rel)) continue;
-  alvos.push({ rel, texto: readFileSync(rel, 'latin1') });
+  const texto = lerTexto(rel);
+  if (texto !== null) alvos.push({ rel, texto });
 }
 if (!alvos.length) {
   console.error('url-assinada: nenhum arquivo de texto versionado lido — `git ls-files` fora de um checkout?');
   process.exit(2);
 }
+// Concatenada de propósito: a literal inteira no fonte faria a régua se flagrar.
+const falsa = `https://cdn.exemplo/x.glb?${['Key-Pair-', 'Id=K1&', 'Policy=eyJ9&', 'Signature=abc'].join('')}`;
 if (mutante === 'url-assinada') {
-  // Concatenada de propósito: a literal inteira no fonte faria a régua se flagrar.
-  const falsa = ['Key-Pair-', 'Id=K1&', 'Policy=eyJ9&', 'Signature=abc'].join('');
-  alvos.unshift({ rel: 'mutante://task-record.json', texto: `{"model":"https://cdn.exemplo/x.glb?${falsa}"}` });
+  alvos.unshift({ rel: 'mutante://task-record.json', texto: `{"model":"${falsa}"}` });
+} else if (mutante === 'url-assinada-grande') {
+  const dir = mkdtempSync(path.join(tmpdir(), 'url-assinada-'));
+  try {
+    const arquivo = path.join(dir, 'task-record.json');
+    writeFileSync(arquivo, `${'{"log":"lote"}\n'.repeat(200_000)}{"model":"${falsa}"}\n`); // ~3 MB
+    const texto = lerTexto(arquivo);
+    if (texto !== null) alvos.unshift({ rel: 'mutante://task-record-3mb.json', texto });
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 
 const achados = [];
@@ -82,10 +98,10 @@ for (const { rel, texto } of alvos) {
 
 if (mutante) {
   if (!achados.some((a) => a.startsWith('mutante://'))) {
-    console.error('✗ mutante url-assinada passou verde: a régua não morde');
+    console.error(`✗ mutante ${mutante} passou verde: a régua não morde`);
     process.exit(1);
   }
-  console.log('✓ mutante url-assinada reprovado');
+  console.log(`✓ mutante ${mutante} reprovado`);
 } else if (achados.length) {
   for (const a of achados) console.error(`✗ url-assinada: ${a} carrega link pré-assinado de CDN — strip da query antes de commitar o registro.`);
   console.error(`url-assinada: ${achados.length} linha(s) em ${alvos.length} arquivos de texto versionados.`);
