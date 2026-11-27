@@ -15,3 +15,27 @@ canvas gerados na hora.
 | Porta de enrolar e placas pintadas das bocas de comércio | tela canvas 1024 × 512 de `hd_cenografia_corrego.js` (`telaComercio`, letras de `pintaLetreiro`) | desenhado no kit |
 
 Peso novo em disco: 0 B. O resto da cenografia (`hd_cenografia_corrego.js`) é cor por vértice, sem textura.
+
+## Rodada 26: três conjuntos PBR gerados no Mint (mint.gg)
+
+Gerados por texto (sem imagem de referência) em 27/11/2026 na conta Pro do dono, projeto "CORO SOLTO — Mapas HD", 100 créditos
+cada. PNG 1024 px do Mint convertidos para WebP com `sharp`: cor (RGB) + rugosidade (alfa) num arquivo, normal em outro.
+Originais (cor, normal, rugosidade, altura, metalness) e manifestos em `scratchpad/lane/r26/mint-materiais/` (local).
+Licença: conteúdo gerado sob os termos de uso do Mint; **conferir os termos para repositório público AGPL antes de publicar**.
+
+| Arquivo | Material no Mint | ID do asset | Uso previsto | Peso |
+|---|---|---|---|---|
+| `bloco_cor_rug.webp` + `bloco_normal.webp` | "Bloco baiano 29x19" | `w178nvmvp7x1e727ytfv729gp98k16pk` | bloco cerâmico à vista (crítica A1) | 482 KB + 281 KB |
+| `fibro_cor_rug.webp` + `fibro_normal.webp` | "Telha de fibrocimento" | `w173zp2kj7ejyzkzn78x5kzpc98k09qq` | telhados (A2) | 521 KB + 98 KB |
+| `tabua_cor_rug.webp` + `tabua_normal.webp` | "Tapume de madeirite" | `w17cx36bd8mg91pcf63cg49rgd8k0m5g` | tábua vertical dos barracos (A4) | 294 KB + 123 KB |
+
+Cuidados medidos nos arquivos:
+- `bloco`: o ladrilho tem 2 blocos de largura por 6 fiadas de altura, com face 3:1. Para o bloco real de 29 x 19 cm projetar com
+  repetição anisotrópica: 1 ladrilho = 0,60 m de largura x 1,26 m de altura. Média da cor: sRGB 205/135/105 (linear 0,641 / 0,261 / 0,159).
+- `fibro`: ondas na vertical do ladrilho, linha de recobrimento horizontal 1 vez por ladrilho. Média sRGB 189/190/181.
+- `tabua`: tábuas na vertical. Média sRGB 167/165/162.
+- A rugosidade do Mint sai baixa (média 0,23–0,26): não usar o alfa direto; remapear para 0,7–1,0 ou fixar no material.
+- Normal usado como OpenGL (verde para cima); nas capturas de 27/11/2026 o relevo não leu invertido.
+
+A terra batida da rua (r26) reutiliza `hd_sertao/dry_ground_rocks_cor.webp` (Poly Haven, CC0; ver `hd_sertao/FONTE.md`), lida só em
+mips altos: entra a mancha de baixa frequência, sem a trinca do conjunto.

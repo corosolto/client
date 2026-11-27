@@ -5,9 +5,12 @@
 // (porta de enrolar + placa + freezer), portões/basculantes de tela nas fachadas livres, ferragem do portão do barraco, kit de
 // viela nos becos, guia de sarjeta nas fachadas de rua, guarda tubular das rampas da travessia (a pedido do kit) e skyline de SP.
 // Lê a planta pelos colisores do mundo (casas = caixas ≥ 2,6 m com base ≤ 1,1 m; postes = 0,26 m × 9,4 m).
+// r26 (opts.r26 do kit; some inteira com ?hdr26=0): tijolo = capa de argamassa da mureta; obra = guarda de uma cor (malha própria),
+// vigas, travessas, buzinotes e adutora da travessia; telha = caibros, mãos-francesas e lastro; tapume = quadro de caibro; estaca = palafitas.
 import * as THREE from 'three';
 import { soltaAoSubir } from './hd_cenografia_lajes.js';
 import { pintaLetreiro } from './hd_detalhes_lajes.js';
+import { RUIDO_GLSL } from './map_sertao_hd.js';
 
 function rngDe(semente) { let s = semente; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }
 const hash2 = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -15,18 +18,26 @@ const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const lerp = (a, b, t) => a + (b - a) * t;
 // Malha fundida com cor e normal por vértice (mesmo desenho do Lajes): caixas, tubos, sólidos de revolução e grades suaves
 // num draw call. A normal é explícita: a grade (pano com bojo) precisa de normal média, o resto leva a normal da face.
-function fundidor() {
-  const pos = [], cor = [], nrm = [], c = new THREE.Color(), m = new THREE.Matrix4(), e = new THREE.Euler(), q = new THREE.Quaternion();
+// comEixo: grava em hdEixo o deslocamento de cada vértice ao eixo da peça (caixa: aresta mais longa; tubo: o segmento), para o
+// material engrossar barra fina no vertex shader. Peça emitida por tri/quad/torno/grade/tuboG fica com zero (não engrossa).
+function fundidor(comEixo = false) {
+  const pos = [], cor = [], nrm = [], eix = [], c = new THREE.Color(), m = new THREE.Matrix4(), e = new THREE.Euler(), q = new THREE.Quaternion();
   const v = Array.from({ length: 8 }, () => new THREE.Vector3()), p3 = new THREE.Vector3(), s3 = new THREE.Vector3(), fn = new THREE.Vector3(), t1 = new THREE.Vector3(), t2 = new THREE.Vector3();
+  const ec = new THREE.Vector3(), eu = new THREE.Vector3(); let comLinha = false;
+  const desl = (p) => { if (!comLinha) { eix.push(0, 0, 0); return; } const k = (p.x - ec.x) * eu.x + (p.y - ec.y) * eu.y + (p.z - ec.z) * eu.z; eix.push(p.x - ec.x - eu.x * k, p.y - ec.y - eu.y * k, p.z - ec.z - eu.z * k); };
   const tri = (a, b, d, na, nb, nd) => {
     pos.push(a.x, a.y, a.z, b.x, b.y, b.z, d.x, d.y, d.z); for (let i = 0; i < 3; i++) cor.push(c.r, c.g, c.b);
+    if (comEixo) { desl(a); desl(b); desl(d); }
     if (na) nrm.push(na.x, na.y, na.z, nb.x, nb.y, nb.z, nd.x, nd.y, nd.z);
     else { fn.crossVectors(t1.subVectors(b, a), t2.subVectors(d, a)).normalize(); for (let i = 0; i < 3; i++) nrm.push(fn.x, fn.y, fn.z); }
   };
   const quad = (a, b, d, f) => { tri(a, b, d); tri(a, d, f); };
   const emite = () => {
     for (let i = 0; i < 8; i++) v[i].set((i & 1) - .5, (i >> 1) & 1, ((i >> 2) & 1) - .5).applyMatrix4(m);
+    if (comEixo) { const el = m.elements, l0 = Math.hypot(el[0], el[1], el[2]), l1 = Math.hypot(el[4], el[5], el[6]), l2 = Math.hypot(el[8], el[9], el[10]), k = l0 >= l1 && l0 >= l2 ? 0 : l1 >= l2 ? 4 : 8;
+      eu.set(el[k], el[k + 1], el[k + 2]).normalize(); ec.set(0, .5, 0).applyMatrix4(m); comLinha = true; }
     quad(v[0], v[2], v[3], v[1]); quad(v[5], v[7], v[6], v[4]); quad(v[4], v[6], v[2], v[0]); quad(v[1], v[3], v[7], v[5]); quad(v[2], v[6], v[7], v[3]); quad(v[4], v[0], v[1], v[5]);
+    comLinha = false;
   };
   const F = {
     cor(hex, ganho = 1) { c.setHex(hex).multiplyScalar(ganho); return F; },
@@ -46,7 +57,25 @@ function fundidor() {
         t.subVectors(pts[Math.min(pts.length - 1, i + 1)], pts[Math.max(0, i - 1)]).normalize();
         n.crossVectors(t, Math.abs(t.y) > .9 ? lado : cima).normalize(); b.crossVectors(t, n);
         const anel = []; for (let k = 0; k < lados; k++) { const a = k / lados * Math.PI * 2; anel.push(pts[i].clone().addScaledVector(n, Math.cos(a) * r).addScaledVector(b, Math.sin(a) * r)); }
-        if (ant) for (let k = 0; k < lados; k++) quad(ant[k], ant[(k + 1) % lados], anel[(k + 1) % lados], anel[k]);
+        if (ant) { if (comEixo) { ec.copy(pts[i - 1]); eu.subVectors(pts[i], pts[i - 1]).normalize(); comLinha = true; }
+          for (let k = 0; k < lados; k++) quad(ant[k], ant[(k + 1) % lados], anel[(k + 1) % lados], anel[k]);
+          comLinha = false; }
+        ant = anel;
+      }
+      return F;
+    },
+    // Tubo com raio e cor por anel (estaca de madeira: seca em cima, molhada e com limo na linha d'água).
+    tuboG(pts, raios, lados, cores) {
+      const t = new THREE.Vector3(), n = new THREE.Vector3(), b = new THREE.Vector3(), cima = new THREE.Vector3(0, 1, 0), lado = new THREE.Vector3(1, 0, 0), ca = new THREE.Color(), cb = new THREE.Color();
+      let ant = null;
+      for (let i = 0; i < pts.length; i++) {
+        t.subVectors(pts[Math.min(pts.length - 1, i + 1)], pts[Math.max(0, i - 1)]).normalize();
+        n.crossVectors(t, Math.abs(t.y) > .9 ? lado : cima).normalize(); b.crossVectors(t, n);
+        const anel = []; for (let k = 0; k < lados; k++) { const a = k / lados * Math.PI * 2; anel.push(pts[i].clone().addScaledVector(n, Math.cos(a) * raios[i]).addScaledVector(b, Math.sin(a) * raios[i])); }
+        if (ant) { ca.setHex(cores[i - 1]); cb.setHex(cores[i]);
+          for (let k = 0; k < lados; k++) { const k2 = (k + 1) % lados;
+            for (const [p, col] of [[ant[k], ca], [ant[k2], ca], [anel[k2], cb], [ant[k], ca], [anel[k2], cb], [anel[k], cb]]) { pos.push(p.x, p.y, p.z); cor.push(col.r, col.g, col.b); if (comEixo) eix.push(0, 0, 0); }
+            fn.crossVectors(t1.subVectors(ant[k2], ant[k]), t2.subVectors(anel[k2], ant[k])).normalize(); for (let j = 0; j < 6; j++) nrm.push(fn.x, fn.y, fn.z); } }
         ant = anel;
       }
       return F;
@@ -73,7 +102,9 @@ function fundidor() {
       return F;
     },
     tris: () => pos.length / 9,
-    geo() { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(cor, 3)); return soltaAoSubir(g); },
+    geo() { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(cor, 3));
+      if (comEixo) g.setAttribute('hdEixo', new THREE.Float32BufferAttribute(eix, 3));
+      return soltaAoSubir(g); },
   };
   return F;
 }
@@ -583,11 +614,11 @@ function guias(F, rng, casas, cols) {
 // a cada 14 cm e 7 montantes de 5 cm (o último em |x| 13,52, o mesmo do shader), seguindo pisoPass de |x| 5 ao pé; cinza-chumbo
 // com tinta azul descascada (por barra) e ferrugem nos 12 cm do pé. Sem placa de base aparafusada (lia como industrial). No vão
 // a mureta de bloco do shader ganha pingadeira de concreto de 16 × 5 cm. z −11 ± 1,25, como a caixa autoral.
-function guardaTravessia(F, rng) {
+function guardaTravessia(F, rng, { grade = true, capa = true, degraus = true } = {}) {
   let n = 0;
   const CHUMBO = 0x2e3136, AZUL = 0x27476a, FERRO_PE = 0x4a2e1e, L = PASS.x0 - PASS.x1, incl = Math.atan2(PASS.y, L), hip = Math.hypot(L - .14, PASS.y * (L - .14) / L);
   const tinta = () => (rng() < .4 ? AZUL : CHUMBO);
-  for (const lado of [-1, 1]) for (const dz of [-PASS.meiaL, PASS.meiaL]) {
+  if (grade) for (const lado of [-1, 1]) for (const dz of [-PASS.meiaL, PASS.meiaL]) {
     const z = PASS.z + dz, rz = -lado * incl, xm = lado * (PASS.x1 + PASS.x0) / 2, ym = pisoPass(xm);
     F.cor(tinta(), .9 + rng() * .2).caixa(xm, ym + .80, z, hip, .06, .025, 0, 0, rz).cor(tinta(), .9 + rng() * .2).caixa(xm, ym + .10, z, hip, .06, .025, 0, 0, rz);
     for (let ax = PASS.x1 + .15; ax < PASS.x0 - .1; ax += .20) {
@@ -599,16 +630,202 @@ function guardaTravessia(F, rng) {
       n++;
     }
   }
-  for (const dz of [-PASS.meiaL, PASS.meiaL]) F.cor(0x6b6a64, .95).caixa(0, PASS.y + .9, PASS.z + dz, PASS.x1 * 2 + .02, .05, .16);
+  if (capa) for (const dz of [-PASS.meiaL, PASS.meiaL]) F.cor(0x6b6a64, .95).caixa(0, PASS.y + .9, PASS.z + dz, PASS.x1 * 2 + .02, .05, .16);
   // Pilarete de concreto 20 × 20 × 0,95 arrematando a emenda mureta de bloco ↔ grade de ferro nas duas pontas do vão (|x| = 5).
   for (const lado of [-1, 1]) for (const dz of [-PASS.meiaL, PASS.meiaL]) F.cor(0x8b8983, .95).caixa(lado * 5.03, PASS.y, PASS.z + dz, .2, .95, .2).cor(0x6b6a64).caixa(lado * 5.03, PASS.y + .95, PASS.z + dz, .24, .03, .24);
   // Degraus de concreto no pé de cada rampa: 3 degraus de 46 × 30 cm (a inclinação 5,6/8,6 dá 0,30 de espelho por 0,46 de piso)
   // sobrepostos à laje — o topo coincide com a rampa no lado de cima e sobra o espelho no de baixo. Sem colisão (a rampa autoral manda).
-  for (const lado of [-1, 1]) for (let i = 0; i < 3; i++) {
+  if (degraus) for (const lado of [-1, 1]) for (let i = 0; i < 3; i++) {
     const x1 = PASS.x0 - .46 * i, yT = .3 * (i + 1);
     F.cor(0x8a8880, .9 + i * .04).caixa(lado * (x1 - .23), 0, PASS.z, .46, yT, PASS.meiaL * 2 - .1).cor(0x5f5e58).caixa(lado * (x1 - .015), yT - .01, PASS.z, .03, .012, PASS.meiaL * 2 - .1);
   }
   return n;
+}
+// ───────────── r26 (opts.r26.{tijolo,obra,telha,tapume,estaca}, vindas do kit; nada aqui tem colisão) ─────────────
+// Capa de argamassa da mureta do vão: peças de 1,5–3 m de 14 × 4–5 cm (pingadeira de 2 cm de cada lado da mureta de 10 cm), tom e
+// altura variando e uma falha de 4–14 cm em metade das emendas (lasca). Fica no lugar da pingadeira lisa de concreto.
+function capaMuretaR26(F, rng) {
+  for (const dz of [-PASS.meiaL, PASS.meiaL]) { let x = -PASS.x1;
+    while (x < PASS.x1 - .05) { const L = Math.min(1.5 + rng() * 1.5, PASS.x1 - x), falha = rng() < .5 ? .04 + rng() * .1 : 0;
+      F.cor(0x8c8983, .88 + rng() * .2).caixa(x + (L - falha) / 2, PASS.y + .9, PASS.z + dz, L - falha, .04 + rng() * .012, .14); x += L; } }
+}
+// Guarda das rampas, r26 (malha F2): tubo de 5 cm a 0,85–0,90 m, montantes de 4 cm, barras de 16 mm a cada 12 cm, 2 m remendados com
+// vergalhão em X; UMA cor por lance (oeste azul, leste cinza). Zarcão, ferrugem e corrimão polido são do shader de materialFerroR26.
+function guardaR26Cen(F2, rng) {
+  const L = PASS.x0 - PASS.x1, incl = Math.atan2(PASS.y, L), hip = Math.hypot(L - .14, PASS.y * (L - .14) / L);
+  let n = 0;
+  for (const lado of [-1, 1]) { const tinta = lado < 0 ? 0x4a6079 : 0x6b6f72;
+    for (const dz of [-PASS.meiaL, PASS.meiaL]) {
+      const z = PASS.z + dz, rz = -lado * incl, xm = lado * (PASS.x1 + PASS.x0) / 2, ym = pisoPass(xm), r0 = PASS.x1 + 1.2 + rng() * 4.5, r1 = r0 + 2;
+      F2.cor(tinta, .95).caixa(xm, ym + .85, z, hip, .05, .05, 0, 0, rz).cor(tinta, .9).caixa(xm, ym + .10, z, hip, .03, .03, 0, 0, rz);
+      for (let ax = PASS.x1 + .11; ax < PASS.x0 - .08; ax += .12) { if (ax > r0 && ax < r1) continue;
+        F2.cor(tinta, .88 + rng() * .2).caixa(lado * ax, pisoPass(lado * ax) + .12, z, .016, .74, .016); }
+      const P = (ax, h) => V(lado * ax, pisoPass(lado * ax) + h, z);
+      F2.cor(0x5a3a2a).tubo([P(r0, .14), P(r1, .84)], .008, 4).tubo([P(r0, .84), P(r1, .14)], .008, 4).tubo([P(r0, .5), P(r1, .5)], .008, 4);
+      for (let k = 0; k <= 6; k++) { const ax = PASS.x1 + .05 + (L - .13) * k / 6; F2.cor(tinta, .9 + rng() * .15).caixa(lado * ax, pisoPass(lado * ax), z, .04, .88, .04); n++; }
+    } }
+  return n;
+}
+function materialFerroR26(res) {
+  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .6, metalness: .25, side: THREE.DoubleSide, name: 'hd-ferro-r26' });
+  mat.onBeforeCompile = (s) => {
+    // Piso de 1,5 px de largura: barra de 16 mm a 15 m media 0,7 px e virava pontilhado que faz moiré sobre os degraus (mesma conta do hd-fios).
+    s.uniforms.hdRes = res;
+    s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vHdP; attribute vec3 hdEixo; uniform vec2 hdRes;').replace('#include <begin_vertex>', `#include <begin_vertex>
+      vHdP = (modelMatrix * vec4(position, 1.0)).xyz;
+      { float hdR = length(hdEixo); if (hdR > 1e-5) { float hdW = max(-(modelViewMatrix * vec4(position, 1.0)).z, 0.05);
+        transformed += hdEixo * max(0.0, 1.5 * hdW / (projectionMatrix[1][1] * hdRes.y * 0.71 * hdR) - 1.0); } }`);
+    s.fragmentShader = s.fragmentShader.replace('#include <common>', `#include <common>\nvarying vec3 vHdP;\n${RUIDO_GLSL}`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+      float hdRugF = 1.0, hdMetF = 1.0;
+      { float hdAx = abs(vHdP.x), hdAlt = vHdP.y - (hdAx <= 5.0 ? 5.6 : 5.6 * (1.0 - (hdAx - 5.0) / 8.6)); vec2 hdQ = vec2(vHdP.x + vHdP.z * 3.0, vHdP.y);
+        // Zarcão à mostra em ≈ 12 % da área; ferrugem marrom nos 10 cm do pé e nas soldas (0,13 e 0,84 m); topo do corrimão polido e escuro.
+        float hdZar = smoothstep(0.66, 0.72, hdN(hdQ * vec2(5.0, 9.0) + 2.0) * 0.6 + hdN(hdQ * 23.0) * 0.4);
+        float hdFer = max(1.0 - smoothstep(0.02, 0.12, hdAlt), max(1.0 - smoothstep(0.0, 0.035, abs(hdAlt - 0.13)), 1.0 - smoothstep(0.0, 0.03, abs(hdAlt - 0.84))) * smoothstep(0.35, 0.7, hdN(hdQ * 31.0)));
+        float hdCorr = smoothstep(0.885, 0.895, hdAlt) * (1.0 - hdZar);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.200, 0.085, 0.050), 0.85 * hdZar);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.198, 0.069, 0.025) * (0.8 + 0.4 * hdN(hdQ * 47.0)), 0.9 * hdFer);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.042, 0.061, 0.084), 0.8 * hdCorr);
+        hdRugF = 1.0 + 0.5 * hdFer + 0.2 * hdZar - 0.45 * hdCorr; hdMetF = (1.0 - hdFer) * (1.0 - 0.6 * hdZar); }`)
+      .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = min(1.0, roughness * hdRugF);')
+      .replace('#include <metalnessmap_fragment>', 'float metalnessFactor = metalness * hdMetF;');
+  };
+  mat.customProgramCacheKey = () => 'hd-ferro-r26-2';
+  return mat;
+}
+// Estrutura da travessia (longarinas, transversinas, travessa por par de pilares, buzinotes, adutora Ø 150 na lateral +z).
+// Invariante: tudo ≥ 1,9 m acima do piso de baixo — por isso a longarina da rampa pára em |x| 9,6 e o par de pilares do pé fica sem travessa.
+function obraTravessia(F, W, rng) {
+  const y0 = PASS.y - .18, L = PASS.x0 - PASS.x1, incl = Math.atan2(PASS.y, L), sn = Math.sin(incl), cs = Math.cos(incl), CONC = 0x86847d, x1 = 9.6;
+  for (const dz of [-1, 1]) { const z = PASS.z + dz * (PASS.meiaL - .125);
+    F.cor(CONC, .9 + rng() * .1).caixa(0, y0 - .5, z, PASS.x1 * 2, .5, .25);
+    for (const lado of [-1, 1]) { const xm = lado * (PASS.x1 + x1) / 2;
+      F.cor(CONC, .88 + rng() * .1).caixa(xm - lado * .35 * sn, pisoPass(xm) - .18 / cs - .35 * cs, z, (x1 - PASS.x1) / cs, .35, .25, 0, 0, -lado * incl); } }
+  for (const x of [-3, 0, 3]) F.cor(CONC, .86 + rng() * .1).caixa(x, y0 - .35, PASS.z, .2, .35, PASS.meiaL * 2 - .5);
+  // Travessa com marca de fôrma: 3 tábuas de ≈ 13 cm, rebaixo escuro de 6 mm entre elas, tom por tábua e escorrido (caixa lisa lia cubo chapado).
+  const travessa = (x, y, w, h) => { const d = PASS.meiaL * 2 + .34, hb = (h - .012) / 3;
+    for (let k = 0; k < 3; k++) { const yk = y + k * (hb + .006), sai = k === 1 ? .006 : 0;
+      F.cor(CONC, (.8 + rng() * .07) * [1, .93, 1.05][k]).caixa(x, yk, PASS.z, w + sai, hb, d + sai);
+      if (k < 2) F.cor(CONC, .5).caixa(x, yk + hb, PASS.z, w - .008, .006, d - .008); }
+    for (const sx of [-1, 1]) for (let j = 0; j < 2; j++) { const zc = PASS.z + (rng() - .5) * (d - .6), a = .05 + rng() * .05, hh = .16 + rng() * .2, xf = x + sx * (w / 2 + .005);
+      F.cor(0x4d4c46, .9 + rng() * .2).quad(V(xf, y + h, zc - a), V(xf, y + h, zc + a), V(xf, y + h - hh, zc + a * .5), V(xf, y + h - hh, zc - a * .4)); } };
+  for (const x of [-1.5, 1.5]) travessa(x, y0 - .4, .3, .4);
+  for (const lado of [-1, 1]) for (const t of [.25, .55]) travessa(lado * (PASS.x1 + L * t), PASS.y * (1 - t) - .53, .32, .42);
+  // Buzinote: toco de PVC saindo 12 cm da borda da laje e mancha escura em trapézio na longarina, 3 mm à frente dela.
+  for (const dz of [-1, 1]) for (const x of [-3.6, -.6, 2.4]) { const z = PASS.z + dz * PASS.meiaL, zf = z + dz * .004, a = .04 + rng() * .03, h = .3 + rng() * .25;
+    F.cor(0xb9b5a6, .9).tubo([V(x, y0 + .06, z - dz * .03), V(x, y0 + .04, z + dz * .12)], .025, 6);
+    F.cor(0x33362f, .9 + rng() * .2).quad(V(x - a, y0 + .02, zf), V(x + a, y0 + .02, zf), V(x + a * .5, y0 - h, zf), V(x - a * .4, y0 - h, zf)); }
+  { const z = PASS.z + PASS.meiaL + .14, y = PASS.y - .42;   // lateral +z: a que as poses `ponte` e `rua` veem
+    F.cor(0x2f4a6b, .9).tubo([V(-5.5, y, z), V(5.5, y, z)], .075, 8);
+    for (const e of [-1, 1]) F.cor(0x7c7a74, .95).caixa(e * 5.62, y - .2, z - .06, .34, .36, .34);
+    for (let x = -5; x <= 5; x += 2) F.cor(0x2a2c2e).caixa(x, y - .085, z, .04, .17, .17).caixa(x, y + .075, z - .07, .014, PASS.y - y - .2, .014);
+    for (const [o, r] of [[-.115, .012], [-.14, .01]]) { const pts = []; for (let i = 0; i <= 22; i++) { const x = -5.4 + i * 10.8 / 22; pts.push(V(x, y + o - .02 * Math.abs(Math.sin(i * 1.571)) - rng() * .01, z + (i % 2 ? .02 : -.02))); } W.cor(0x0b0b0d).fio(pts, r); } }
+  return 1;
+}
+// Placas de telhado autorais lidas da matriz de cada instância (addPlacaSB: geometria de referência 3,4 × 0,1 × 5,6; X atravessa a água
+// — é a direção do caimento —, Y é a normal, Z corre ao longo da casa). Só as de zinco (chave do kit ou arquivo do mapa) com ≥ 1,2 m.
+function placasDe(scene) {
+  const out = [], M = new THREE.Matrix4(), X = new THREE.Vector3(), Y = new THREE.Vector3(), Z = new THREE.Vector3();
+  const zinco = (m) => /tex_zinco/.test(m?.userData?.hdChave || '') || /tex_zinco/.test(m?.map?.source?.data?.currentSrc || m?.map?.source?.data?.src || '');
+  scene.traverse((o) => {
+    if (!o.isInstancedMesh || !o.geometry?.attributes?.position || !zinco(Array.isArray(o.material) ? o.material[0] : o.material)) return;
+    const g = o.geometry; if (!g.boundingBox) g.computeBoundingBox(); const b = g.boundingBox;
+    if (!b || Math.abs(b.max.x - b.min.x - 3.4) > .05 || Math.abs(b.max.y - b.min.y - .1) > .02 || Math.abs(b.max.z - b.min.z - 5.6) > .05) return;
+    o.updateMatrixWorld();
+    for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, M); M.premultiply(o.matrixWorld); M.extractBasis(X, Y, Z);
+      const w = X.length() * 3.4, h = Y.length() * .1, d = Z.length() * 5.6; if (w < 1.2 || d < 1.2 || !(h > .01)) continue;
+      const p = { c: new THREE.Vector3().setFromMatrixPosition(M), X: X.clone().normalize(), Y: Y.clone().normalize(), Z: Z.clone().normalize(), w, h, d };
+      if (p.Y.y < 0) { p.Y.negate(); p.X.negate(); }
+      if (p.Y.y > .5) out.push(p); }
+  });
+  return out;
+}
+// Faixa do corpo: devolve um teste (x, y0, y1, z) que é falso quando o trecho vertical [y0, y1] cai entre 0,6 e 1,9 m acima de algum
+// piso que o mapa conhece naquele ponto (groundHeightAt nas várias camadas: leito, rua, andar do sobrado, laje/travessia).
+const foraDaFaixa = (mundo) => { if (typeof mundo?.groundHeightAt !== 'function') return () => true;
+  return (x, y0, y1, z) => { for (const yr of [undefined, -1.6, .3, 3.2, 6]) { const f = mundo.groundHeightAt(x, z, yr); if (!Number.isFinite(f) || f > y1) continue; if (y1 - f > .6 && y0 - f < 1.9) return false; } return true; }; };
+// Telhados, r26: caibros de 5 × 6 a cada 55 cm sob cada água, mão-francesa onde ela passa ≥ 50 cm da parede, lastro (bloco, pedra,
+// pneu, tábua) nas águas com centro ≥ 4,4 m. Invariante: cada peça só entra fora da faixa do corpo de todo piso abaixo dela.
+function telhadosR26(F, rng, placas, casas, ceram, mundo) {
+  const MAD = [0x4b4238, 0x574c40, 0x3f382f], P = new THREE.Vector3(), Xh = new THREE.Vector3(), fora = foraDaFaixa(mundo);
+  const corpos = casas.map((k) => ({ x: k.x, z: k.z, hx: k.hx, hz: k.hz, topo: k.topo }));
+  for (const [x, z, w, d, h] of PALAFITAS) corpos.push({ x, z, hx: w / 2, hz: d / 2, topo: 1.8 + h });
+  const ceramica = (p) => (ceram || []).some((c) => { const dx = p.c.x - c.x, dz = p.c.z - c.z; return Math.abs(dx * c.cs - dz * c.sn) < c.ha && Math.abs(dx * c.sn + dz * c.cs) < c.hb; });
+  let caibros = 0, maos = 0, lastros = 0;
+  for (const p of placas) {
+    const cy = p.c.y, incl = Math.abs(p.X.y), sobra = .18 + rng() * .1;
+    if (cy - (p.w / 2 + sobra) * incl - p.h / 2 - .07 >= 1.95) for (let zo = -p.d / 2 + .22; zo <= p.d / 2 - .2; zo += .55) {
+      P.copy(p.c).addScaledVector(p.Z, zo + (rng() - .5) * .06).addScaledVector(p.Y, -p.h / 2 - .06); const m2 = p.w / 2 + sobra, tom = MAD[Math.floor(rng() * 3)], g = .85 + rng() * .3;
+      if (![-1, 0, 1].every((e) => fora(P.x + p.X.x * e * m2, P.y + p.X.y * e * m2, P.y + p.X.y * e * m2 + .06, P.z + p.X.z * e * m2))) continue;
+      F.cor(tom, g).caixaEixos(P, p.X, p.Y, p.Z, m2 * 2, .06, .05); caibros++; }
+    // Corpo sob a placa: o eixo a do corpo é a projeção horizontal de X; a placa passa da parede do lado em que está o seu centro.
+    Xh.set(p.X.x, 0, p.X.z).normalize();
+    for (const k of corpos) {
+      const dx = p.c.x - k.x, dz = p.c.z - k.z, a0 = dx * Xh.x + dz * Xh.z, b0 = dx * p.Z.x + dz * p.Z.z, s = Math.sign(a0) || 1, meia = p.w / 2 * Math.hypot(p.X.x, p.X.z);
+      if (Math.abs(a0) > k.hx || Math.abs(b0) > .6 || Math.abs(a0) + meia < k.hx + .5) continue;
+      for (let b = -k.hz + .35; b <= k.hz - .3; b += 1.1) {
+        const wx = k.x + Xh.x * s * (k.hx + .03) + p.Z.x * b, wz = k.z + Xh.z * s * (k.hx + .03) + p.Z.z * b, bx = wx + Xh.x * s * .45, bz = wz + Xh.z * s * .45;
+        const yB = cy - ((bx - p.c.x) * p.Y.x + (bz - p.c.z) * p.Y.z) / p.Y.y - (p.h / 2 + .06) / p.Y.y - .01, yA = Math.min(yB - .45, k.topo - .25);
+        if (yA < 1.95 || yB - yA > 1.3 || !fora(wx, yA, yA + .1, wz) || !fora(bx, yB - .1, yB, bz)) continue;
+        F.cor(MAD[Math.floor(rng() * 3)], .85 + rng() * .3).tubo([V(wx, yA, wz), V(bx, yB, bz)], .03, 4); maos++; }
+      break;
+    }
+    if (cy >= 4.4 && p.w > 2 && !ceramica(p) && fora(p.c.x, cy, cy + .3, p.c.z)) {
+      const sobre = (u, v, dy = 0) => P.copy(p.c).addScaledVector(p.X, u).addScaledVector(p.Z, v).addScaledVector(p.Y, p.h / 2 + dy);
+      for (let i = 0, m = 2 + Math.floor(rng() * 2); i < m; i++) { sobre((rng() - .5) * p.w * .7, (rng() - .5) * p.d * .8);
+        const bloco = rng() < .5; F.cor(bloco ? 0x77746e : 0x8a553c, .85 + rng() * .3).caixaEixos(P, p.X, p.Y, p.Z, bloco ? .39 : .19, bloco ? .14 : .09, .19); lastros++; }
+      for (let i = 0, m = 1 + Math.floor(rng() * 3); i < m; i++) { sobre((rng() - .5) * p.w * .7, (rng() - .5) * p.d * .8, -.03); const r = .1 + rng() * .1;
+        F.cor(0x6e6a62, .8 + rng() * .35).torno(P.x, P.y, P.z, [[r * .9, 0], [r, r * .35], [r * .7, r * .75], [r * .3, r * .9]], 6, rng() * 6.28); lastros++; }
+      if (rng() < .55) { sobre((rng() - .5) * p.w * .5, (rng() - .5) * p.d * .6, .07); const pts = [], c0 = P.clone();
+        for (let t = 0; t <= 12; t++) { const a = t / 12 * Math.PI * 2; pts.push(c0.clone().addScaledVector(p.X, Math.cos(a) * .24).addScaledVector(p.Z, Math.sin(a) * .24)); }
+        F.cor(0x16171a, .9 + rng() * .3).tubo(pts, .065, 5); lastros++; }
+      if (rng() < .6 && p.d > 2.6) { sobre((rng() - .5) * p.w * .4, (rng() - .5) * (p.d - 2.4));
+        F.cor(MAD[Math.floor(rng() * 3)], 1.1 + rng() * .3).caixaEixos(P, p.X, p.Y, p.Z, .2, .03, 2.0); lastros++; }
+    }
+  }
+  return { caibros, maosFrancesas: maos, lastroR26: lastros };
+}
+// Palafitas, r26: barrotes de 6 × 12 em balanço até a viga de borda em |x| 2,92; estacas de eucalipto com X de sarrafo no leito.
+// Invariante: as estacas ficam a 8 cm do muro e páram no topo dele (acima cruzariam a visada beira → leito); o resto respeita foraDaFaixa.
+function estacasR26(F, rng, cols, mundo) {
+  let n = 0;
+  const pil = (cols || []).filter((c) => c.minY < .05 && Math.abs(c.maxY - 2.2) < .06).map(caixaDe).filter((k) => k.hx < .12 && k.hz < .12);
+  const livre = (z, lado) => ![-22, 0, 22].some((b) => Math.abs(z - b) < 1.9) && !RAMPAS.some(([l, a, b]) => l === lado && z > a - .4 && z < b + .4) && Math.abs(z - PASS.z) > 1.9 && Math.abs(z) < 31.5;
+  const MAD = [0x4b4238, 0x574c40, 0x3f382f], fora = foraDaFaixa(mundo);
+  for (const [x, z, w, d] of PALAFITAS) {
+    const meus = pil.filter((p) => Math.hypot(p.x - x, p.z - z) < 3.2), tem = meus.length >= 3, cs = tem ? meus[0].cs : 1, sn = tem ? meus[0].sn : 0, k = { x, z, cs, sn }, s = Math.sign(x), ry = Math.atan2(sn, cs), xb = s * 2.92;
+    // Ponta de cada barrote do lado do canal: onde o eixo a do corpo cruza x = ±2,9 (ou a borda do corpo + 10 cm, se não houver estaca).
+    const bs = []; for (let b = -d / 2 + .25; b <= d / 2 - .2; b += .5) bs.push(b);
+    const zs = bs.map((b) => { const a = (s * 2.9 - x - b * sn) / cs; return z - a * sn + b * cs; }), zMin = Math.min(...zs), zMax = Math.max(...zs);
+    const postos = []; for (let zp = zMin + .15; zp <= zMax - .1; zp += 1.25) if (livre(zp, s)) postos.push(zp + (rng() - .5) * .2);
+    const comEstaca = postos.length >= 2;
+    bs.forEach((b, i) => { const aFim = comEstaca && livre(zs[i], s) ? (s * 2.9 - x - b * sn) / cs : -s * (w / 2 + .1), aIn = s * w * .38, len = Math.abs(aIn - aFim), tom = MAD[i % 3], g = .85 + rng() * .3;
+      if (![0, 1, 2, 3, 4, 5, 6, 7, 8].every((q) => [-.08, 0, .08].every((db) => { const [jx, jz] = mundoDe(k, aFim + (aIn - aFim) * q / 8, b + db); return fora(jx, 2.08, 2.2, jz); }))) return;
+      const [cx, cz] = mundoDe(k, (aIn + aFim) / 2, b); F.cor(tom, g).caixa(cx, 2.08, cz, len, .12, .06, ry); });
+    for (const p of tem ? meus : []) for (let j = 0; j < 2; j++) { const r = .1 + rng() * .08, a = rng() * 6.28, px = p.x + Math.cos(a) * .3, pz = p.z + Math.sin(a) * .3, g = .8 + rng() * .3;
+      if (fora(px, 0, r, pz)) F.cor(0x6e6a62, g).torno(px, 0, pz, [[r, 0], [r * 1.05, r * .4], [r * .6, r * .8]], 6, a); }
+    if (!comEstaca) { n++; continue; }
+    const z0 = postos[0] - .25, z1 = postos[postos.length - 1] + .25, gv = .9 + rng() * .2;
+    if ([z0, (z0 + z1) / 2, z1].every((zv) => fora(xb, 1.92, 2.08, zv))) F.cor(MAD[0], gv).caixa(xb, 1.92, (z0 + z1) / 2, .06, .16, z1 - z0);
+    const pes = postos.map((zp) => { const tomba = (rng() - .5) * .3, r = .055 + rng() * .015;
+      F.tuboG([V(xb, -1.85, zp), V(xb, -1.61, zp + tomba * .06), V(xb, -1.15, zp + tomba * .19), V(xb, -.5, zp + tomba * .36), V(xb, -.05, zp + tomba * .48)],
+        [r * 1.12, r * 1.1, r * 1.05, r, r * .97], 7, [0x3f3a33, 0x4c5a34, 0x3f3a33, 0x6e6256, 0x746a5c]).cor(0x8a8171).torno(xb, -.05, zp + tomba * .48, [[r * .97, 0], [r * .9, .012]], 7);
+      return [zp, tomba]; });
+    // Contraventamento em X entre estacas vizinhas, do lado do canal, só entre a lâmina e o topo do muro (y −1,45 … −0,2).
+    for (let i = 0; i + 1 < pes.length; i++) { const [za, ta] = pes[i], [zb, tb] = pes[i + 1], xc = xb - s * .075, em = (zp, t, y) => zp + t * (y + 1.85) / 3.77;
+      F.cor(MAD[1], .8 + rng() * .3).tubo([V(xc, -1.45, em(za, ta, -1.45)), V(xc, -.2, em(zb, tb, -.2))], .02, 4).tubo([V(xc - s * .03, -.2, em(za, ta, -.2)), V(xc - s * .03, -1.45, em(zb, tb, -1.45))], .02, 4); }
+    n++;
+  }
+  return n;
+}
+// Parede +z do barraco de passagem, r26 (no lugar do quadro de portão de portaoBarraco): caibro de 5 × 6 em cada emenda de pano (x
+// múltiplo de 1,10 m, como no shader hdTapumeR26), sarrafo de pé e de topo fora da faixa do corpo e mão-francesa curta só acima de 2,1 m.
+function quadroBarracoR26(F, rng) {
+  const x0 = -20.3, x1 = -16.1, zf = -8.62, MAD = 0x5a5148;
+  for (let x = Math.ceil(x0 / 1.1) * 1.1; x < x1; x += 1.1) F.cor(MAD, .85 + rng() * .3).caixa(x, .02, zf + .03, .05, 2.96, .06);
+  F.cor(MAD, .8).caixa((x0 + x1) / 2, .2, zf + .025, x1 - x0, .1, .025).cor(MAD, 1.05).caixa((x0 + x1) / 2, 2.78, zf + .025, x1 - x0, .1, .025);
+  for (let x = Math.ceil(x0 / 1.1) * 1.1; x < x1 - .7; x += 2.2) F.cor(MAD, .9 + rng() * .2).tubo([V(x + .03, 2.15, zf + .05), V(x + .6, 2.74, zf + .05)], .02, 4);
+  return 1;
 }
 // Palafitas (map_corrego.js: corpo a 2,2 m sobre 4 pilares de 18 cm em ±0,4·w/±0,4·d, colisores girados com maxY 2,2): cada grupo
 // de 4 pilares vira PILOTIS de concreto de 28 cm com sapata, e VIGA DE TRANSIÇÃO de 26 × 35 cm ligando os pilotis sob o corpo —
@@ -991,7 +1208,7 @@ export function cenografiaCorrego(scene, opts = {}) {
   const lig = (k) => opts[k] !== false, mundo = opts.mundo || (typeof window !== 'undefined' ? window.__game?.world : null);
   const cols = mundo?.colliders || [], casas = casasDe(cols), lista = postesDe(cols), info = { casas: casas.length, postes: lista.length };
   const grupo = new THREE.Group(); grupo.name = 'hd-cenografia';
-  const F = fundidor(), W = fiador(), T = texturador(), relogios = [], L = [];
+  const F = fundidor(), F2 = fundidor(true), W = fiador(), T = texturador(), relogios = [], L = [], r26 = opts.r26 || {};
   const topo = casas.length && (lig('lajes') || lig('telhados')) ? medidor(scene) : null;
   if (lig('postes') && lista.length) info.cabos = postes(F, W, rngDe(7717), lista, mundo?.ctfPoints);
   if (lig('postes')) info.cabosRua = postesRua(F, W, rngDe(6161), casas);
@@ -1010,11 +1227,19 @@ export function cenografiaCorrego(scene, opts = {}) {
   if (lig('toldos') && casas.length) info.toldos = toldos(F, rngDe(3307), casas);
   if (lig('comercio') && casas.length && typeof document !== 'undefined') info.comercio = comercio(F, T, rngDe(2719), casas);
   if (lig('portoes') && casas.length && typeof document !== 'undefined') { info.portoes = portoes(F, T, rngDe(6121), casas); info.basculantes = basculantes(F, T, rngDe(8431), casas); }
-  if (lig('portoes')) info.portaoBarraco = portaoBarraco(F, W, rngDe(6131));
+  if (lig('portoes')) info.portaoBarraco = r26.tapume ? quadroBarracoR26(F, rngDe(6131)) : portaoBarraco(F, W, rngDe(6131));
   if (lig('becos') && casas.length) info.becos = becos(F, rngDe(2213), casas);
-  if (opts.guarda) info.guarda = guardaTravessia(F, rngDe(3119));   // só a pedido do kit (travessia de concreto ligada)
+  // Só a pedido do kit (travessia de concreto ligada). r26: a grade e os 3 degraus do pé saem com `obra`, a pingadeira lisa com `tijolo`.
+  if (opts.guarda) info.guarda = guardaTravessia(F, rngDe(3119), { grade: !r26.obra, capa: !r26.tijolo, degraus: !r26.obra });
+  if (opts.guarda && r26.tijolo) capaMuretaR26(F, rngDe(3123));
+  if (opts.guarda && r26.obra) { info.guardaR26 = guardaR26Cen(F2, rngDe(3121)); info.obra = obraTravessia(F, W, rngDe(3127)); }
+  if (r26.telha && lig('telhados')) Object.assign(info, telhadosR26(F, rngDe(50891), placasDe(scene), casas, opts.ceramicos, mundo));
+  if (r26.estaca && lig('palafitas')) info.estacas = estacasR26(F, rngDe(8123), cols, mundo);
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .8, metalness: 0, side: THREE.DoubleSide, name: 'hd-cenografia' });
   if (F.tris()) { const malha = new THREE.Mesh(F.geo(), mat); malha.name = 'hd-cenografia-fundida'; malha.receiveShadow = true; grupo.add(malha); info.tris = F.tris(); }
+  if (F2.tris()) { const res = { value: new THREE.Vector2(1920, 1080) }, ferro = new THREE.Mesh(F2.geo(), materialFerroR26(res)); ferro.name = 'hd-cenografia-ferro-r26'; ferro.receiveShadow = true;
+    ferro.onBeforeRender = (r) => { const t = r.getRenderTarget(); if (t) res.value.set(t.width, t.height); else r.getDrawingBufferSize(res.value); };
+    grupo.add(ferro); info.trisFerro = F2.tris(); }
   if (W.n()) {
     const res = { value: new THREE.Vector2(1920, 1080) }, fios = new THREE.Mesh(W.geo(), materialFio(res));
     fios.name = 'hd-cenografia-fios'; fios.receiveShadow = false; fios.onBeforeRender = (r) => { const t = r.getRenderTarget(); if (t) res.value.set(t.width, t.height); else r.getDrawingBufferSize(res.value); };
