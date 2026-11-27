@@ -13,7 +13,8 @@
 //   casaAzul malha sob userData.casario === 'casa_favela_azul' (faces azul-marinho viram pintura azul lavada com reboco; r24)
 // Kill-switches: ?hdreboco=0 ?hdpiso=0 ?hdjanela=0 ?hdporta=0 ?hdtijolo=0 ?hdchapa=0 ?hdregua=0 (réguas de zinco da veneziana voltam)
 // ?hdlixeira=0 ?hdcasa=0 ?hdcasaazul=0 ?hdcoluna=1 (DESLIGADO por padrão: pilares do molde em caixa de concreto + ferragem; opts.colunas = true) ?hdr23=0 (cenografia r23: fios finos, parapeitos,
-// muretas, bicicleta, caixilhos, mão-francesa) ?hdr24=0 (cenografia r24: poste de laje, fachada do spawn, bueiro, sarjetas) ?hdcen=0[,item] e os mesmos em opts.
+// muretas, bicicleta, caixilhos, mão-francesa) ?hdr24=0 (cenografia r24: poste de laje, fachada do spawn, bueiro, sarjetas) ?hdr26=0 (casario
+// do morro volta do bloco cerâmico à vista ao reboco da r24e) ?hdcen=0[,item] e os mesmos em opts.
 import * as THREE from 'three';
 import { pbrTex, materiaisDe } from './map_sertao_hd.js';
 import { ruidoTex, RUIDO_PARS } from './hd_cenografia_lajes.js';
@@ -196,7 +197,7 @@ function comMundo(shader, U, metros = 0, extra = '', nrm = 1) {
 // Todas: respingo de barro < 0,42 m, sombra de contato sob beiral (hdCob, 0–30 cm, caixas ≥ 1,5 m) e no pé (≤ 22 cm), friso de
 // platibanda a 30 cm do topo (caixas ≥ 2,5 m), descascado da pintura lisa acima de 2,1 m. Guarda ≥ 1,4 m: marca de tábua + barbacãs (hdBarbaca).
 function rebocoHD(m, r, U, queiOk) {
-  m.onBeforeCompile = (shader) => { comMundo(shader, U, CONJ.reboco.metros, 'uniform vec4 hdRebP; uniform float hdQueiOk;', 8);
+  m.onBeforeCompile = (shader) => { comMundo(shader, U, CONJ.reboco.metros, 'uniform vec4 hdRebP; uniform float hdQueiOk; uniform float hdR26;', 8);
     shader.uniforms.hdRebP = { value: new THREE.Vector4(r.remendo, r.descasca, r.cru, r.umid) }; shader.uniforms.hdQueiOk = { value: queiOk };
     shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `${CABECA} { float hdY = hdAltura(vHdPos);
       vec3 hdGn = normalize(cross(dFdx(vHdPos), dFdy(vHdPos))); float hdCima = step(0.7, abs(hdGn.y));
@@ -289,6 +290,21 @@ function rebocoHD(m, r, U, queiOk) {
       // Tijolo exposto mais escuro e dessaturado (0,7× do 1,4 anterior) que o tijolo aparente autoral.
       vec4 hdTj = hdTijolo(hdQ + 3.7, hdM.r, 0.5); vec3 hdTjx = mix(vec3(dot(hdTj.rgb, ${LUMA})), hdTj.rgb, 0.6) * 0.98;
       diffuseColor.rgb = mix(diffuseColor.rgb, mix(hdTjx, hdEmboco, hdRim), hdPele);
+      // r26 (hdR26 = 0 desliga): o bairro instanciado fora da arena (|x| > 19,5 ou z > 43) deixa de ser todo pintado: 62 % das caixas em
+      // bloco cerâmico à vista e 16 % só no último pavimento. Esqueleto de concreto: viga de 22 cm a cada 2,9 m (laje) e pilar de 18 cm
+      // nas quinas e a cada ~3,1 m (as janelas autorais em u = −1,25 / 1,1 caem entre pilares). r26b: hdBaiano recebe hdCorpo: remendo
+      // e pó de argamassa ficam fora da faixa do corpo (na r26a um remendo cinza de 38 cm caía a 1,2–1,5 m no prédio do spawn).
+      float hdBairro = hdR26 * vHdInst * max(step(19.5, abs(vHdJc.x)), step(43.0, vHdJc.z)) * (1.0 - hdCima);
+      if (hdBairro > 0.5) { float hdHc = hdH(vec2(floor(hdS * 97.0), 61.0)), hdBy = vHdPos.y - (vHdJc.y - vHdJs.y);
+        float hdBx = abs(hdGn.x) > abs(hdGn.z) ? vHdPos.z - vHdJc.z : vHdPos.x - vHdJc.x, hdBm = abs(hdGn.x) > abs(hdGn.z) ? vHdJs.z : vHdJs.x;
+        float hdCer = max(step(hdHc, 0.62), step(hdHc, 0.78) * step(hdTopo, 2.9));
+        float hdNp = max(1.0, floor(2.0 * hdBm / 3.1 + 0.5)), hdPs = 2.0 * hdBm / hdNp, hdPd = abs(mod(hdBx + hdBm + 0.5 * hdPs, hdPs) - 0.5 * hdPs);
+        float hdEst = max(1.0 - smoothstep(0.11, 0.11 + hdWy, abs(mod(hdBy + 1.45, 2.9) - 1.45)), 1.0 - smoothstep(0.09, 0.09 + fwidth(hdBx) * 1.5, hdPd));
+        float hdJb; vec4 hdBai = hdBaiano(hdQ, hdS, hdCorpo, hdA, hdM, hdJb);
+        vec3 hdConc = vec3(0.33, 0.32, 0.30) * (0.82 + 0.36 * hdM.r) * mix(0.9, 1.08, hdA.r);
+        // Térreo chapiscado até ~2,1 m (borda solta): o bloco é da gama de pele e não pode cobrir a faixa do corpo à beira da arena.
+        float hdTer = 1.0 - smoothstep(2.0, 2.2, hdY + 0.3 * (hdA.g - 0.5)); vec3 hdTerC = hdEmboco * (0.9 + 0.2 * hdM.g);
+        diffuseColor.rgb = mix(diffuseColor.rgb, mix(mix(hdBai.rgb * mix(0.9, 1.15, hdHc), hdConc, hdEst), hdTerC, hdTer), hdCer); hdRel *= 1.0 - 0.6 * hdCer; }
       // Platibanda (caixa ≥ 2,5 m, sem tijolo exposto no topo): 30 cm de cima 3 % mais claros e friso de 1,5 cm em relevo na transição.
       float hdPlat = step(1.25, vHdJs.y) * (1.0 - hdBat) * (1.0 - hdCima) * hdNcru * (1.0 - hdPl);
       float hdPlL = (1.0 - smoothstep(0.008, 0.014 + hdWy, abs(hdTopo - 0.30 - 0.02 * (hdA.g - 0.5)))) * hdPlat * hdVis(0.012, hdQ);
@@ -348,7 +364,7 @@ function rebocoHD(m, r, U, queiOk) {
       diffuseColor.rgb *= mix(1.0, 0.74, hdCima);
       hdAlt += hdGv * 0.004 * (1.0 + 0.4 * hdChap) * (hdG - 0.5) + 0.004 * (hdMed - 0.5) * (1.0 - hdCru) * (1.0 - hdChapC * hdGv); }`);
     ganchos(shader); };
-  m.customProgramCacheKey = () => 'escadao-hd-reboco16';
+  m.customProgramCacheKey = () => 'escadao-hd-reboco18';
 }
 
 // Concreto serve piso e parede (orientação pela derivada da posição). Piso: cimentado concrete_floor_02, junta de desempenadeira
@@ -898,7 +914,7 @@ export function aplicaEscadaoHD(scene, renderer, opts = {}) {
   const ativa = { reboco: o.reboco, cimento: o.reboco, guarda: o.reboco, degrau: o.piso, concreto: o.piso, concretoEscuro: o.piso, tijolo: o.tijolo, vidro: o.janelas, porta: o.portas, ferro: o.portas, zinco: o.chapa };
   let vivo = true; const antes = [], criadas = [], timers = [], trocas = [], porRegra = new Map(), vistos = new Set(), props = [], tiraCaixas = [];
   const ruido = ruidoTex(); criadas.push(ruido);
-  const U = { hdRuido: { value: ruido }, hdCob: { value: null }, hdJanelas: { value: null }, hdPortas: { value: null } };
+  const U = { hdRuido: { value: ruido }, hdCob: { value: null }, hdJanelas: { value: null }, hdPortas: { value: null }, hdR26: { value: liga('r26', 'hdr26') ? 1 : 0 } };
   const atlasJ = () => { if (!U.hdJanelas.value) criadas.push(U.hdJanelas.value = atlasJanelas()); };
   const atlasP = () => { if (!U.hdPortas.value) criadas.push(U.hdPortas.value = atlasPortas()); };
   const DEFAULTS = { hdJc: [0, 0, 0], hdJs: [0, 0, 0], hdVar: [0, 0], hdCol: [0, 0, 0, 0] }, propMats = new Map(), colGeos = new Set(), ferrTopos = [];
@@ -938,7 +954,7 @@ export function aplicaEscadaoHD(scene, renderer, opts = {}) {
   const qCen = hdq.get('hdcen'), soEstes = qCen && qCen !== '0' && qCen !== '1' ? qCen.split(',') : null;
   const oCen = opts.cenografia === false || qCen === '0' ? null : { ...(opts.cenografia || {}) };
   if (oCen && soEstes) for (const k of ['morro', 'casario', 'mata', 'telhados', 'fachada', 'postes', 'vida']) if (!soEstes.includes(k)) oCen[k] = false;
-  const cen = oCen ? cenografiaEscadao(scene, { ...oCen, ruido: U.hdRuido, r23: liga('r23', 'hdr23'), r24: liga('r24', 'hdr24') }) : null;
+  const cen = oCen ? cenografiaEscadao(scene, { ...oCen, ruido: U.hdRuido, r23: liga('r23', 'hdr23'), r24: liga('r24', 'hdr24'), r26: liga('r26', 'hdr26') }) : null;
   return { alvos: () => Object.fromEntries([...porRegra].map(([k, s]) => [k, s.size])), lixeiras: () => trocas.length, cenografia: cen, cobertura: cob, desliga() {
     vivo = false; clearInterval(laco); timers.forEach(clearTimeout);
     for (const s of antes) { Object.assign(s.m, { map: s.map, normalMap: s.normalMap, roughnessMap: s.roughnessMap, roughness: s.roughness, metalness: s.metalness, onBeforeCompile: s.obc, customProgramCacheKey: s.key });

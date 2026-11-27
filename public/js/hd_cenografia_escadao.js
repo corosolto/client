@@ -137,8 +137,53 @@ const PAL = [[0xcfcabd, 0xc4bfb2, 0xb9b5aa, 0xc9c6bf, 0xbdb9b0], [0x9b7a6c, 0x8c
 // Atlas do horizonte (canvas 512, células de 128): linhas 0–1 = 8 fachadas de UM pavimento (parede branca tingida pelo instanceColor,
 // janelas escuras com caixilho, varanda com guarda-corpo em 3 variantes, marquise); linha 2 col 0 = laje (cinza com manchas); linha 3 =
 // 4 copas (alpha radial em cachos, miolo escuro e borda clara). Gerado em runtime, sem textura em disco.
-function atlasHorizonte(rng) {
-  const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d'); g.clearRect(0, 0, 512, 512);
+// r26 (opts.r26 === false / ?hdr26=0 volta ao reboco da r24e): morro de favela é bloco cerâmico à vista. Com r26 o atlas vira 1024
+// (células de 256, desenho em unidades de 512): linha 0 = 4 fachadas rebocadas (tingidas pela cor da casa), linha 1 = 3 frentes de bloco
+// e a empena cega de bloco, linha 2 = só a laje. As linhas 1–2 saem em cor própria no shader. r26c: as colunas 1–3 da linha 2 ficam
+// TRANSPARENTES como na r24e: células opacas ali vazavam, nos mips, para o topo das copas da linha 3 (alphaTest) = traços no céu.
+// Célula = 3,2 m x 2,9 m: viga de 20 cm no topo, meio pilar em cada borda (a repetição fecha um pilar a cada 3,2 m), 14 fiadas de 19 cm.
+const BLOCO = ['#b5673f', '#bd7248', '#aa5d39', '#b76c47', '#a35634', '#c17a50'], TIJOLO_LISO = [0x9a5c40, 0xa3654a, 0x8f553c], EMBOCO = [0x9a978f, 0x8f8c85, 0xa29f96];
+function alvenarias(g) {
+  const R = rngDe(2611), FI = 8.5, BL = 12, J = .75;
+  const cel = (k, desenha) => { const x0 = (k % 4) * 128, y0 = Math.floor(k / 4) * 128; g.save(); g.beginPath(); g.rect(x0, y0, 128, 128); g.clip(); desenha(x0, y0); g.restore(); };
+  const pontos = (x0, y0, w, h, n, cor) => { g.fillStyle = cor; for (let i = 0; i < n; i++) g.fillRect(x0 + R() * w, y0 + R() * h, .5 + R(), .5 + R()); };
+  const blocos = (x0, y0) => { g.fillStyle = '#8b857a'; g.fillRect(x0, y0, 128, 128);
+    for (let f = 0; f < 14; f++) { const y = y0 + 9 + f * FI, off = (f % 2) * BL / 2 + (R() - .5) * 1.5;
+      for (let x = -BL; x < 128 + BL; x += BL) { const r = R(), tom = BLOCO[Math.floor(R() * BLOCO.length)], xa = Math.max(x0, x0 + x + off + J / 2), xb = Math.min(x0 + 128, x0 + x + off + BL - J / 2); if (xb <= xa) continue;
+        g.fillStyle = r < .05 ? '#8a4a30' : r < .1 ? '#cb8a62' : tom; g.fillRect(xa, y + J / 2, xb - xa, FI - J);
+        g.fillStyle = 'rgba(70,30,12,.13)'; g.fillRect(xa, y + FI * .36, xb - xa, .5); g.fillRect(xa, y + FI * .68, xb - xa, .5); } }
+    for (let i = 0; i < 7; i++) { g.fillStyle = `rgba(150,145,135,${.08 + R() * .1})`; g.beginPath(); g.ellipse(x0 + R() * 128, y0 + 12 + R() * 110, 6 + R() * 14, 4 + R() * 9, R() * 3, 0, 6.3); g.fill(); }
+    pontos(x0, y0 + 9, 128, 119, 160, 'rgba(40,20,10,.22)'); };
+  // Viga, meios pilares, sombra sob a viga, escorridos de argamassa e pé úmido.
+  const estrutura = (x0, y0, escorre = 4) => { g.fillStyle = '#8e8c85'; g.fillRect(x0, y0, 128, 9); g.fillRect(x0, y0, 2.5, 128); g.fillRect(x0 + 125.5, y0, 2.5, 128);
+    pontos(x0, y0, 128, 9, 50, 'rgba(0,0,0,.14)'); g.fillStyle = 'rgba(0,0,0,.12)'; for (let x = 14 + R() * 8; x < 128; x += 18 + R() * 8) g.fillRect(x0 + x, y0, .5, 9);
+    g.fillStyle = 'rgba(0,0,0,.3)'; g.fillRect(x0, y0 + 9, 128, 1.5); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(x0, y0, 128, 1);
+    for (let i = 0; i < escorre; i++) { const x = x0 + 6 + R() * 116, w = 1.5 + R() * 4, h = 12 + R() * 40, gr = g.createLinearGradient(0, y0 + 9, 0, y0 + 9 + h); gr.addColorStop(0, 'rgba(35,30,25,.28)'); gr.addColorStop(1, 'rgba(35,30,25,0)'); g.fillStyle = gr; g.fillRect(x, y0 + 9, w, h); }
+    const gb = g.createLinearGradient(0, y0 + 112, 0, y0 + 128); gb.addColorStop(0, 'rgba(30,25,20,0)'); gb.addColorStop(1, 'rgba(30,25,20,.3)'); g.fillStyle = gb; g.fillRect(x0, y0 + 112, 128, 16); };
+  const chapisco = (x0, y0, topo) => { g.fillStyle = '#928f88'; g.beginPath(); g.moveTo(x0, y0 + 128); for (let x = 0; x <= 128; x += 8) g.lineTo(x0 + x, y0 + topo + (R() - .5) * 9); g.lineTo(x0 + 128, y0 + 128); g.closePath(); g.fill();
+    g.save(); g.clip(); pontos(x0, y0 + topo - 5, 128, 133 - topo, 260, 'rgba(0,0,0,.16)'); pontos(x0, y0 + topo - 5, 128, 133 - topo, 140, 'rgba(255,255,255,.12)'); g.restore(); };
+  const vao = (x, y, w, h, claro) => { const gv = g.createLinearGradient(0, y, 0, y + h); gv.addColorStop(0, claro ? '#415062' : '#16171a'); gv.addColorStop(.5, '#1d2024'); gv.addColorStop(1, '#101113'); g.fillStyle = gv; g.fillRect(x, y, w, h); };
+  // Janela com verga de concreto e peitoril: 'alu' (caixilho de alumínio), 'grade' (alumínio + grade de ferro), 'tabua' (vão fechado com tábua).
+  const janela = (x, y, w, h, tipo, requadro) => {
+    if (requadro) { g.fillStyle = '#99968e'; g.fillRect(x - 4, y - 5, w + 8, h + 10); }
+    g.fillStyle = '#97948c'; g.fillRect(x - 3, y - 3.5, w + 6, 3.5);
+    if (tipo === 'tabua') { g.fillStyle = '#6b5540'; g.fillRect(x, y, w, h); g.fillStyle = 'rgba(0,0,0,.3)'; for (let i = 1; i < 4; i++) g.fillRect(x + w * i / 4, y, .5, h); }
+    else { vao(x, y, w, h, true); g.strokeStyle = '#b4b7b8'; g.lineWidth = 1; g.strokeRect(x + .5, y + .5, w - 1, h - 1); g.fillStyle = '#b4b7b8'; g.fillRect(x + w / 2 - .5, y, 1, h); g.fillStyle = 'rgba(255,255,255,.16)'; g.fillRect(x + 2, y + 2, w / 2 - 4, h * .4);
+      if (tipo === 'grade') { g.fillStyle = '#2a2726'; for (let bx = 2.5; bx < w; bx += 3.5) g.fillRect(x + bx, y, .7, h); g.fillRect(x, y + h * .5, w, .7); } }
+    g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(x, y, w, 1.5); g.fillStyle = '#a9a69d'; g.fillRect(x - 2.5, y + h, w + 5, 1.5); g.fillStyle = 'rgba(0,0,0,.3)'; g.fillRect(x - 2.5, y + h + 1.5, w + 5, 1.5); };
+  // r26b: janelas de 0,9–1,0 m (36–40 un.); as de 0,5 m da r26a liam como seteira no morro (crítico cego: ~0,4 x 0,3 m).
+  cel(4, (x0, y0) => { blocos(x0, y0); estrutura(x0, y0); janela(x0 + 14, y0 + 44, 40, 38, 'alu'); janela(x0 + 74, y0 + 44, 40, 38, 'grade'); });
+  // Porta-balcão para a laje (vão de 2,1 m sem folha) com guarda-corpo de ferro e janela com requadro de emboço.
+  cel(5, (x0, y0) => { blocos(x0, y0); estrutura(x0, y0); janela(x0 + 12, y0 + 46, 36, 36, 'alu', true);
+    g.fillStyle = '#97948c'; g.fillRect(x0 + 69, y0 + 32, 36, 3.5); vao(x0 + 72, y0 + 35.5, 30, 92.5, false); g.fillStyle = '#8e8c85'; g.fillRect(x0 + 64, y0 + 124, 46, 4);
+    g.fillStyle = '#2a2726'; g.fillRect(x0 + 66, y0 + 84, 42, 1); for (let bx = 66; bx <= 108; bx += 4) g.fillRect(x0 + bx, y0 + 84, .7, 40); });
+  cel(6, (x0, y0) => { blocos(x0, y0); chapisco(x0, y0, 80); estrutura(x0, y0); janela(x0 + 44, y0 + 38, 40, 36, 'grade'); });
+  // Empena cega (célula 7): tubo de queda de PVC contínuo entre pavimentos e furos de andaime.
+  cel(7, (x0, y0) => { blocos(x0, y0); estrutura(x0, y0, 7); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x0 + 97.8, y0, 1, 128); g.fillStyle = '#c4c1b4'; g.fillRect(x0 + 96, y0, 1.8, 128);
+    g.fillStyle = '#1c1512'; for (const [bx, by] of [[30, 40], [66, 40], [30, 92], [66, 92]]) g.fillRect(x0 + bx, y0 + by, 2.5, 2.5); });
+}
+function atlasHorizonte(rng, tijolo = true) {
+  const S = tijolo ? 2 : 1, c = document.createElement('canvas'); c.width = c.height = 512 * S; const g = c.getContext('2d'); g.scale(S, S); g.clearRect(0, 0, 512, 512);
   const ruido = (x0, y0, w, h, n, a) => { g.fillStyle = `rgba(0,0,0,${a})`; for (let i = 0; i < n; i++) g.fillRect(x0 + rng() * w, y0 + rng() * h, 1 + rng() * 3, 1 + rng() * 2); };
   for (let k = 0; k < 8; k++) { const x0 = (k % 4) * 128, y0 = Math.floor(k / 4) * 128;
     g.fillStyle = '#ffffff'; g.fillRect(x0, y0, 128, 128); ruido(x0, y0, 128, 128, 90, .06);
@@ -153,6 +198,7 @@ function atlasHorizonte(rng) {
     if (k === 3 || k === 7) { g.fillStyle = '#7a7a76'; g.fillRect(x0, y0 + 36, 128, 5); }
     g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(x0, y0 + 122, 128, 6); g.fillStyle = 'rgba(0,0,0,.10)'; g.fillRect(x0, y0, 128, 4); }
   g.fillStyle = '#8c8c86'; g.fillRect(0, 256, 128, 128); ruido(0, 256, 128, 128, 120, .12); g.fillStyle = 'rgba(0,0,0,.18)'; for (let i = 0; i < 8; i++) { const r = 6 + rng() * 14; g.beginPath(); g.arc(10 + rng() * 108, 266 + rng() * 108, r, 0, 6.3); g.fill(); }
+  if (tijolo) alvenarias(g);
   // r24d: copas EXATAS da r23b (os tons escuros/dessaturados da r24 viravam pardo sob névoa quente + AgX).
   for (let k = 0; k < 4; k++) { const x0 = k * 128, y0 = 384;
     for (let i = 0; i < 26; i++) { const a = rng() * 6.28, d = rng() * 38 * (k === 3 ? .8 : 1), r = 12 + rng() * 16, cx = x0 + 64 + Math.cos(a) * d, cy = y0 + 58 + Math.sin(a) * d * .8;
@@ -190,8 +236,8 @@ function geoCopa() {
     nor.push(nx * .8, .5, nz * .8, nx * .8, .5, nz * .8, nx * .4, .9, nz * .4, nx * .4, .9, nz * .4); idx.push(k, k + 1, k + 2, k, k + 2, k + 3); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('hdFace', new THREE.Float32BufferAttribute(new Float32Array(12), 1)); g.setIndex(idx); return g;
 }
-function morro(grupo, rng, longe, { casario = true, mata = true } = {}) {
-  const rng2 = rngDe(31337);
+function morro(grupo, rng, longe, { casario = true, mata = true, tijolo = true } = {}) {
+  const rng2 = rngDe(31337), rng3 = rngDe(2612); let cruas = 0;
   // Terreno: anel polar 192 x 48 de 40 a 170 m, relevo fractal de 3 oitavas (11 / 5,5 / 2,7 m) e ravinas (cristas invertidas de 19 m)
   // crescendo com a encosta; normais suaves (indexado). Cor por vértice: mata verde-escura (H 83–87°), terra onde o casario adensa,
   // granito cinza por ruído de 17 m na metade de cima. O shader (longe.terreno) põe cachos de copas (fbm 3 oitavas a 2–4 m) e estrias.
@@ -231,18 +277,29 @@ function morro(grupo, rng, longe, { casario = true, mata = true } = {}) {
       const pCasa = casario && !rAlto && t <= .65 ? .85 * (1 - .3 * suave(.4, .65, t)) * (.8 + .2 * suave(.15, .35, d)) : 0;
       if (rng() < pCasa) { casas++;
         const ry = Math.atan2(x, z) + (rng() - .5) * .28, pv = rng(), pav = pv < (t < .3 ? .6 : .4) ? 2 : 1, h = 2.9 * pav + (rng2() - .5) * .8;
-        const pc = rng(), fam = pc < .7 ? 0 : pc < .9 ? 1 : 2, cor = PAL[fam][Math.floor(rng() * PAL[fam].length)];
+        // r26 (rng3 próprio; rng() e rng2() são chamados as mesmas vezes: o layout autorizado não muda). Acabamento: T = bloco à vista
+        // (48 %), M = térreo rebocado e pintado com o pavimento de cima em bloco (16 %), C = emboço cinza (10 %), P = pintada (26 %;
+        // r26a tinha 56 / 14 / 10 / 20 e o crítico leu monocultura de terracota); L = r24e. Empena (faces ±x) cega de bloco em tudo
+        // menos em 45 % das pintadas: "só a frente tem tinta".
+        const pc = rng(), pr = rng(), tipo = !tijolo ? 'L' : pc < .48 ? 'T' : pc < .64 ? 'M' : pc < .74 ? 'C' : 'P';
+        // r26c: emboço cinza (C) é fachada rebocada tingida de cimento (sem célula própria no atlas).
+        const fam = tipo === 'L' ? (pc < .7 ? 0 : pc < .9 ? 1 : 2) : pr < .55 ? 0 : pr < .8 ? 2 : 1, pal = tipo === 'T' ? TIJOLO_LISO : tipo === 'C' ? EMBOCO : PAL[fam], cor = pal[Math.floor((tipo === 'L' ? pr : rng3()) * pal.length)];
         // Embasamento: a caixa desce até o canto mais baixo do terreno (máx. 4 m: muro de arrimo; o fractal tem ravinas de 8 m+); os
         // pavimentos nominais contam do topo (shader) e o embasamento vira muro de concreto sem janela.
         let ymin = y; for (const [dx, dz] of [[-.5, -.5], [.5, -.5], [.5, .5], [-.5, .5]]) { const [px, pz] = rot(x, z, ry, dx * w, dz * dd); ymin = Math.min(ymin, alturaDe(px, pz)); }
         const base = Math.max(ymin, y - 4) - .3, ht = y + h - base; CC.setHex(cor).multiplyScalar(.86 + rng() * .14).lerp(NEVOA, .25 * suave(.1, .6, t));
-        cs.push({ x, y: base, z, w, h: ht, d: dd, ry, cor: CC.getHex(), g: 1, cel: Math.floor(rng() * 8), pav, nx: Math.max(1, Math.round(w / 3.2)) });
+        const cr = rng(), lado = 7, frente = tipo === 'L' ? Math.floor(cr * 8) : tipo === 'T' ? 4 + Math.floor(cr * 3) : Math.floor(cr * 4);
+        const topo = pav > 1 && (tipo === 'M' || (tipo === 'C' && rng3() < .3)) ? 4 + Math.floor(rng3() * 3) : frente, empena = tipo === 'L' || (tipo === 'P' && rng3() < .45) ? frente : lado;
+        if (tipo === 'T' || topo !== frente) cruas++;
+        cs.push({ x, y: base, z, w, h: ht, d: dd, ry, cor: CC.getHex(), g: 1, cel: frente, lado: empena, topo, pav, nx: Math.max(1, Math.round(w / 3.2)) });
         // r24e (rng2 próprio: o sorteio de posição não muda): altura ±0,4 m entre vizinhas (quebra a linha reta do telhado) e em 15 %
         // um volume secundário na laje (puxadinho 45 % x 50 % da planta, 2,4 m, num canto) para a silhueta; a laje vai no shader.
         if (rng2() < .15) { const w2 = w * .45, d2 = dd * .5, sx = rng2() < .5 ? 1 : -1, sz = rng2() < .5 ? 1 : -1, [px, pz] = rot(x, z, ry, sx * (w / 2 - w2 / 2 - .3), sz * (dd / 2 - d2 / 2 - .3));
-          cs.push({ x: px, y: y + h + .06, z: pz, w: w2, h: 2.4, d: d2, ry, cor: CC.getHex(), g: .94, cel: Math.floor(rng2() * 8), pav: 1, nx: 1 }); }
-        const yt = y + h + .06; C.cor(cor, .72 + rng() * .15);
-        for (const [dx, dz, ww, dd2] of [[0, dd / 2 - .06, w, .12], [0, -dd / 2 + .06, w, .12], [w / 2 - .06, 0, .12, dd], [-w / 2 + .06, 0, .12, dd]]) { const [px, pz] = rot(x, z, ry, dx, dz); C.caixa(px, yt, pz, ww, .45, dd2, ry); }
+          const cp = Math.floor(rng2() * 8), cb = tijolo ? 4 + cp % 3 : cp; cs.push({ x: px, y: y + h + .06, z: pz, w: w2, h: 2.4, d: d2, ry, cor: CC.getHex(), g: .94, cel: cb, lado: tijolo ? 7 : cp, topo: cb, pav: 1, nx: 1 }); }
+        // r26b: metade das casas com bloco em cima fica com a laje nua, sem platibanda (quebra a linha do telhado). As esperas de
+        // pilar da r26a (tocos de 16 cm) ficavam abaixo de 1 px no morro e saíam tracejadas contra o céu: fora.
+        const yt = y + h + .06, lajeNua = (tipo === 'T' || tipo === 'M') && rng3() < .5; C.cor(tipo === 'M' ? TIJOLO_LISO[0] : cor, .72 + rng() * .15);
+        if (!lajeNua) for (const [dx, dz, ww, dd2] of [[0, dd / 2 - .06, w, .12], [0, -dd / 2 + .06, w, .12], [w / 2 - .06, 0, .12, dd], [-w / 2 + .06, 0, .12, dd]]) { const [px, pz] = rot(x, z, ry, dx, dz); C.caixa(px, yt, pz, ww, .45, dd2, ry); }
         if (rng() < .25) { const [cx, cz] = rot(x, z, ry, (rng() - .5) * w * .5, (rng() - .5) * dd * .5), g = .5 + rng() * .2;
           C.cor(0x3b6a9e, .85 + rng() * .3).torno(cx, yt, cz, [[g * .95, 0], [g, g * 1.2], [g * .96, g * 1.28], [g * .3, g * 1.34]], 8, rng() * 3); }
         if (casas % 7 === 0) { const ax = x + (rng() - .5) * w * .6, az = z + (rng() - .5) * dd * .6, ah = 2.2 + rng() * 1.4;
@@ -259,10 +316,12 @@ function morro(grupo, rng, longe, { casario = true, mata = true } = {}) {
   const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(posA, 3)); tg.setAttribute('color', new THREE.Float32BufferAttribute(corA, 3)); tg.setIndex(idx); tg.computeVertexNormals();
   const terreno = new THREE.Mesh(soltaAoSubir(tg), longe.terreno); terreno.name = 'hd-morro'; grupo.add(terreno);
   const M4 = new THREE.Matrix4(), P3 = new THREE.Vector3(), Q4 = new THREE.Quaternion(), S3 = new THREE.Vector3(), E3 = new THREE.Euler(), COR = new THREE.Color();
-  if (cs.length) { const im = new THREE.InstancedMesh(geoCasa(), longe.casario, cs.length), cel = new Float32Array(cs.length * 2), rep = new Float32Array(cs.length * 2);
+  if (cs.length) { const im = new THREE.InstancedMesh(geoCasa(), longe.casario, cs.length), cel = new Float32Array(cs.length * 2), rep = new Float32Array(cs.length * 2), alt = new Float32Array(cs.length * 4);
+    const uvCel = (c) => [(c % 4) * .25, .75 - Math.floor(c / 4) * .25];
     cs.forEach((c, k) => { M4.compose(P3.set(c.x, c.y, c.z), Q4.setFromEuler(E3.set(0, c.ry, 0)), S3.set(c.w, c.h, c.d)); im.setMatrixAt(k, M4); im.setColorAt(k, COR.setHex(c.cor).multiplyScalar(c.g));
-      cel[k * 2] = (c.cel % 4) * .25; cel[k * 2 + 1] = .75 - Math.floor(c.cel / 4) * .25; rep[k * 2] = c.nx; rep[k * 2 + 1] = c.pav; });
+      cel.set(uvCel(c.cel), k * 2); alt.set([...uvCel(c.lado), ...uvCel(c.topo)], k * 4); rep[k * 2] = c.nx; rep[k * 2 + 1] = c.pav; });
     im.geometry.setAttribute('hdCel', new THREE.InstancedBufferAttribute(cel, 2)); im.geometry.setAttribute('hdRep', new THREE.InstancedBufferAttribute(rep, 2));
+    im.geometry.setAttribute('hdAlt', new THREE.InstancedBufferAttribute(alt, 4));
     im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; im.frustumCulled = false; im.name = 'hd-casario'; grupo.add(im); }
   if (ar.length) { const im = new THREE.InstancedMesh(geoCopa(), longe.mata, ar.length), cel = new Float32Array(ar.length * 2), rep = new Float32Array(ar.length * 2).fill(1);
     ar.forEach((c, k) => { M4.compose(P3.set(c.x, c.y, c.z), Q4.setFromEuler(E3.set(0, c.ry, 0)), S3.set(c.s, c.s * 1.05, c.s)); im.setMatrixAt(k, M4); im.setColorAt(k, COR.setHex(c.cor).multiplyScalar(c.g * 1.6));
@@ -270,7 +329,7 @@ function morro(grupo, rng, longe, { casario = true, mata = true } = {}) {
     im.geometry.setAttribute('hdCel', new THREE.InstancedBufferAttribute(cel, 2)); im.geometry.setAttribute('hdRep', new THREE.InstancedBufferAttribute(rep, 2));
     im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; im.frustumCulled = false; im.name = 'hd-mata'; grupo.add(im); }
   if (C.tris()) { const mc = new THREE.Mesh(C.geo(), longe.liso); mc.name = 'hd-casario-topo'; grupo.add(mc); }
-  return { casas, mata: blobs, tris: C.tris() + cs.length * 20 + ar.length * 6 + idx.length / 3 };
+  return { casas, cruas, mata: blobs, tris: C.tris() + cs.length * 20 + ar.length * 6 + idx.length / 3 };
 }
 // Materiais do fundo: a névoa autoral (bloom.js patcheia fog_fragment com `owfD`; d = 0,008, cor de deserto) entra a 55 % (exp2) /
 // 70 % (linear) — r21 substituía `vFogDepth`, que o chunk patcheado não tem: a névoa entrava inteira e o morro lia como serra de
@@ -284,10 +343,12 @@ const FBM_GLSL = `float hdHs(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7)
 // mundo; SOL vem da DirectionalLight da cena em cenografiaEscadao) e roda `corpo` depois de normal_fragment_maps com hdD = n·sol
 // (espaço de vista, normal já virada para a face vista). Multiplica diffuseColor (o albedo), nunca a névoa/exposição.
 const SOL = new THREE.Vector3(.49, .78, .39);
+// r26c: posto por cenografiaEscadao antes de montar a cena; a fachada do spawn lê para casar o relógio de luz com a parede de bloco.
+let R26 = true;
 const solFrag = (s, corpo) => { s.uniforms.hdSol = { value: SOL };
   s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 hdSol;')
     .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>\n{ float hdD = dot(normal, normalize((viewMatrix * vec4(hdSol, 0.0)).xyz)); ${corpo} }`); };
-function materiaisLonge(atlas) {
+function materiaisLonge(atlas, tijolo = true) {
   const nevoa = (s) => { s.fragmentShader = s.fragmentShader.replace('#include <fog_fragment>', THREE.ShaderChunk.fog_fragment
     .replace('owfD * owfD', '0.08 * owfD * owfD').replace('fogFar, owfD', 'fogFar, owfD * 0.4').replace('vFogDepth * vFogDepth', '0.08 * vFogDepth * vFogDepth').replace('fogFar, vFogDepth', 'fogFar, vFogDepth * 0.4')); };
   const base = (nome, extra = {}) => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, metalness: 0, side: THREE.DoubleSide, name: 'hd-longe-' + nome, ...extra });
@@ -304,25 +365,42 @@ function materiaisLonge(atlas) {
   // r23: fract(uv·hdRep) era feito no VÉRTICE (uv = 0/1 nos cantos → fract = 0: a face inteira amostrava o canto branco da célula = caixa
   // lisa laranja); agora o vértice passa uv·hdRep e a célula, e o fragmento faz o fract. Janelas do atlas com +50 % de contraste.
   // r24e: vHdX = (v da parede 0..1 da base ao topo, hdFace, −normal.y do objeto, altura da instância em m) para AO de base/beiral.
-  const atlasUV = (s) => { s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 hdCel; attribute vec2 hdRep; attribute float hdFace; varying vec2 vHdCel; varying vec4 vHdX;')
+  // r26: `cel` = expressão GLSL da célula amostrada, `antes` roda antes da amostra, `pos` trata a cor amostrada (contraste e lavagem).
+  const POS_REBOCO = `{ float hdL = dot(sampledDiffuseColor.rgb, vec3(0.3, 0.59, 0.11)), hdLonge = smoothstep(50.0, 140.0, length(vViewPosition));
+        sampledDiffuseColor.rgb = mix(sampledDiffuseColor.rgb, sampledDiffuseColor.rgb * mix(0.5, 1.08, smoothstep(0.1, 0.9, hdL)), 0.6 * (1.0 - hdLonge));
+        sampledDiffuseColor.rgb = mix(sampledDiffuseColor.rgb, vec3(0.8), 0.5 * hdLonge); }`;
+  const atlasUV = (s, cel = 'vHdCel', antes = '', pos = POS_REBOCO, vao = '0.238') => { s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 hdCel; attribute vec2 hdRep; attribute float hdFace; varying vec2 vHdCel; varying vec4 vHdX;')
     .replace('#include <uv_vertex>', `#include <uv_vertex>
       { vHdCel = hdFace > 0.5 ? vec2(0.0, 0.25) : hdCel; vMapUv = uv * (hdFace > 0.5 ? vec2(1.0) : hdRep); vHdX = vec4(uv.y, hdFace, -normal.y, 1.0); }`);
     // r24e: o `#include <map_fragment>` só expande DEPOIS do onBeforeCompile: trocar o texture2D direto nunca pegava e cada face/cartão
     // amostrava o ATLAS INTEIRO (casa de 4 andares + copinha embaixo = o "papel"). Expande o chunk aqui e troca dentro dele.
     s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vHdCel; varying vec4 vHdX;')
-      .replace('#include <map_fragment>', THREE.ShaderChunk.map_fragment.replace('vec4 sampledDiffuseColor = texture2D( map, vMapUv );', `vec4 sampledDiffuseColor = texture2D( map, vHdCel + 0.006 + fract(vMapUv) * 0.238 );
-      { float hdL = dot(sampledDiffuseColor.rgb, vec3(0.3, 0.59, 0.11)), hdLonge = smoothstep(50.0, 140.0, length(vViewPosition));
-        sampledDiffuseColor.rgb = mix(sampledDiffuseColor.rgb, sampledDiffuseColor.rgb * mix(0.5, 1.08, smoothstep(0.1, 0.9, hdL)), 0.6 * (1.0 - hdLonge));
-        sampledDiffuseColor.rgb = mix(sampledDiffuseColor.rgb, vec3(0.8), 0.5 * hdLonge); }`)); };
+      .replace('#include <map_fragment>', THREE.ShaderChunk.map_fragment.replace('vec4 sampledDiffuseColor = texture2D( map, vMapUv );', `${antes}vec4 sampledDiffuseColor = texture2D( map, ${cel} + 0.006 + fract(vMapUv) * ${vao} );
+      ${pos}`)); };
   const casario = base('casario', { map: atlas, vertexColors: false });
   // r24e: volume por casa. Vértice: a laje (hdFace = 1) vira METROS pela escala da instância (sai 20 cm, 15 cm abaixo e 6 cm acima do
   // topo, onde assenta a platibanda), vHdX.w = altura, e os pavimentos (hdRep.y = nº nominal) contam de CIMA para baixo em 2,9 m: o que
   // sobra abaixo (vMapUv.y < 0 = embasamento/muro de arrimo) vira concreto da célula da laje ×0,6, sem janela. Fragmento: face ao sol
   // ×1,0 → contra ×0,62; AO na base (15 % de baixo ×0,75) e sob o beiral (25 cm ×0,7, sombra da platibanda); face de baixo da laje ×0,7.
-  casario.onBeforeCompile = (s) => { nevoa(s); atlasUV(s);
+  // r26: hdAlt = célula da empena (xy) e do pavimento de cima (zw); vHdA = (célula de cima, nº de pavimentos, tom da casa 1,08–1,38:
+  // sob névoa + AgX o bloco do atlas saía vinho; com o ganho casa com o bloco do bairro autoral).
+  // Células das linhas 1–2 do atlas (v < 0,6: bloco, chapisco, emboço, laje) são "cruas": sem o contraste do reboco, lavagem de
+  // distância menor (30 %) e a tinta da casa (vColor) é desfeita e trocada pelo tom. hdR26 = 0 devolve a r24e.
+  casario.onBeforeCompile = (s) => { nevoa(s); s.uniforms.hdR26 = { value: tijolo ? 1 : 0 };
+    atlasUV(s, 'hdCelF', 'vec2 hdCelF = vHdX.y < 0.5 && vMapUv.y > vHdA.z - 1.0 ? vHdA.xy : vHdCel;\n', `{ float hdL = dot(sampledDiffuseColor.rgb, vec3(0.3, 0.59, 0.11)), hdLonge = smoothstep(50.0, 140.0, length(vViewPosition)), hdCru = hdR26 * step(hdCelF.y, 0.6);
+        sampledDiffuseColor.rgb = mix(sampledDiffuseColor.rgb, sampledDiffuseColor.rgb * mix(0.5, 1.08, smoothstep(0.1, 0.9, hdL)), 0.6 * (1.0 - hdLonge) * (1.0 - hdCru));
+        sampledDiffuseColor.rgb = mix(sampledDiffuseColor.rgb, vec3(0.8), mix(0.5, 0.3, hdCru) * hdLonge);
+        #ifdef USE_COLOR
+        sampledDiffuseColor.rgb *= mix(vec3(1.0), vec3(vHdA.w) / max(vColor.rgb, vec3(0.05)), hdCru);
+        #endif
+      }`);
+    s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 hdAlt; varying vec4 vHdA;');
+    s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nuniform float hdR26; varying vec4 vHdA;');
     s.vertexShader = s.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
       #ifdef USE_INSTANCING
       { vec3 hdS = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz)); vHdX.w = hdS.y;
+        vHdA = vec4(hdAlt.zw, hdRep.y, 1.08 + 0.30 * fract(sin(dot(instanceMatrix[3].xz, vec2(12.9898, 78.233))) * 43758.5453));
+        if (hdFace < 0.5 && abs(normal.x) > 0.5) { vHdCel = hdAlt.xy; vHdA.xy = hdAlt.xy; }
         if (hdFace > 0.5) { transformed.xz = sign(transformed.xz) * (0.5 + 0.2 / hdS.xz); transformed.y = transformed.y > 1.03 ? 1.0 + 0.06 / hdS.y : 1.0 - 0.15 / hdS.y; }
         else vMapUv.y = (uv.y - 1.0) * hdS.y / 2.9 + hdRep.y; }
       #endif`);
@@ -330,11 +408,13 @@ function materiaisLonge(atlas) {
       if (vHdX.y < 0.5) { hdAo *= mix(0.75, 1.0, smoothstep(0.0, 0.15, vHdX.x)) * mix(0.7, 1.0, smoothstep(0.0, 0.25 / max(vHdX.w, 1.0), 1.0 - vHdX.x));
         if (vMapUv.y < 0.0) diffuseColor.rgb = texture2D(map, vec2(0.006, 0.256) + fract(vMapUv * vec2(1.0, 0.5)) * 0.238).rgb * 0.6; }
       else hdAo *= mix(1.0, 0.7, smoothstep(0.3, 0.8, vHdX.z));
-      diffuseColor.rgb *= hdAo;`); }; casario.customProgramCacheKey = () => 'hd-longe-casario5';
+      diffuseColor.rgb *= hdAo;`); }; casario.customProgramCacheKey = () => 'hd-longe-casario6';
   // r24d: verdes, ganho ×1,6 e alphaTest .5 EXATOS da r23b (escuros/dessaturados viravam pardo na névoa quente + AgX).
   const mata = base('mata', { map: atlas, alphaTest: .5, vertexColors: false });
   // r24e: a normal do tufo (fora + cima) vale dos dois lados (sem virar: a copa é impostor) e cada quad recebe o sol ×0,6 → ×1,0.
-  mata.onBeforeCompile = (s) => { nevoa(s); atlasUV(s); solFrag(s, 'normal = normalize(vNormal); hdD = dot(normal, normalize((viewMatrix * vec4(hdSol, 0.0)).xyz)); diffuseColor.rgb *= mix(0.6, 1.0, smoothstep(-0.3, 0.5, hdD));'); }; mata.customProgramCacheKey = () => 'hd-longe-mata6';
+  // r26c: a copa amostra só até v = 0,228 da célula (22 px de folga no atlas 1024 até a laje opaca da linha 2): a cópia 0 das copas
+  // já saía com traço no topo na r24e pelo mesmo vazamento de mip.
+  mata.onBeforeCompile = (s) => { nevoa(s); atlasUV(s, 'vHdCel', '', POS_REBOCO, tijolo ? 'vec2(0.238, 0.222)' : '0.238'); solFrag(s, 'normal = normalize(vNormal); hdD = dot(normal, normalize((viewMatrix * vec4(hdSol, 0.0)).xyz)); diffuseColor.rgb *= mix(0.6, 1.0, smoothstep(-0.3, 0.5, hdD));'); }; mata.customProgramCacheKey = () => (tijolo ? 'hd-longe-mata7' : 'hd-longe-mata6');
   const liso = base('liso'); liso.onBeforeCompile = nevoa; liso.customProgramCacheKey = () => 'hd-longe-escadao4';
   return { terreno, casario, mata, liso, todos: [terreno, casario, mata, liso] };
 }
@@ -919,8 +999,10 @@ function fachadaSpawn(F, W, rng, por) {
   F.cor(0xbfc2bd).caixa(X - .20, 3.98, 27.6, .40, .40, .60).cor(0x8e918d).caixa(X - .405, 4.03, 27.6, .01, .30, .50).cor(0x6f726e).caixa(X - .2, 3.95, 27.6, .36, .03, .56);
   for (let k = 0; k < 6; k++) F.cor(0x5f625e).caixa(X - .412, 4.06 + k * .045, 27.6, .006, .012, .48);
   for (const z of [27.35, 27.85]) F.cor(0x3a3d3f).tubo([V(X, 3.95, z), V(X - .36, 3.95, z)], .012, 4).tubo([V(X, 3.6, z), V(X - .36, 3.95, z)], .012, 4);
-  relogio(F, X, 1.3, 24.3, -1, 0);
-  F.cor(0x767978).tubo([V(X - .055, 1.74, 24.3), V(X - .055, 3.3, 24.3)], .016, 4);
+  // r26: sobre o bloco a caixa do relógio lia como mancha de cabeça na faixa do corpo (cinza: ΔRGB 38; parda: ΔE 13). Sobe para
+  // 2,05 m (padrão alto, fora da faixa de 0,6–1,9 m) em chapa parda; sem r26 fica onde estava, a 1,3 m.
+  const yRel = R26 ? 2.05 : 1.3; relogio(F, X, yRel, 24.3, -1, 0, 1, R26 ? 0x6e5a4e : 0x8a8d8c, R26 ? 0x5a4a40 : 0x6f7271);
+  F.cor(0x767978).tubo([V(X - .055, yRel + .44, 24.3), V(X - .055, 3.3, 24.3)], .016, 4);
   const R = roldana(F, X, 3.3, 24.3, -1, 0, .03), A = por.A;
   if (A) { W.cor(ESCURO).cabo(R, V(A.x - .7, A.topo - .3, A.z), .5, .005); W.cor(QUENTE).cabo(V(R.x, R.y + .08, R.z), V(A.x + .7, A.topo - .3, A.z), .62, .005); }
   F.cor(0x3a2e26).caixa(X - .012, .15, 26.4, .024, 2.1, .9).cor(0x6e6a62).caixa(X - .03, .15, 25.93, .06, 2.14, .05).caixa(X - .03, .15, 26.87, .06, 2.14, .05).caixa(X - .03, 2.25, 26.4, .06, .05, 1.0);
@@ -1030,10 +1112,10 @@ export function cenografiaEscadao(scene, opts = {}) {
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .85, metalness: 0, side: THREE.DoubleSide, name: 'hd-cenografia' }); criadas.push(mat);
   // r24e: direção do sol do mapa (DirectionalLight → alvo) para o sombreado por face dos materiais HD (SOL é o uniform hdSol).
   scene.traverse((o) => { if (o.isDirectionalLight && o.intensity > 0) SOL.subVectors(o.position, o.target.position).normalize(); });
-  const atlasH = atlasHorizonte(rngDe(777)), longe = materiaisLonge(atlasH); criadas.push(atlasH, ...longe.todos);
+  const tijolo = lig('r26'), atlasH = atlasHorizonte(rngDe(777), tijolo), longe = materiaisLonge(atlasH, tijolo); criadas.push(atlasH, ...longe.todos); R26 = tijolo;
   const res = { value: new THREE.Vector2(1920, 1080) }, W = fiador();
   let voltaHorizonte = () => {};
-  if (lig('morro')) { voltaHorizonte = escondeHorizonte(scene); info.morro = morro(grupo, rngDe(opts.semente || 20261115), longe, { casario: lig('casario'), mata: lig('mata') }); }
+  if (lig('morro')) { voltaHorizonte = escondeHorizonte(scene); info.morro = morro(grupo, rngDe(opts.semente || 20261115), longe, { casario: lig('casario'), mata: lig('mata'), tijolo }); }
   const alvos = lig('telhados') || lig('vida') || lig('fachada') ? alvosDeRaio(scene) : [];
   const topos = lig('telhados') || lig('vida') ? telhosJogaveis(scene, mundo, alvos) : [];
   if (lig('telhados')) info.telhados = telhados(grupo, rngDe(7717), topos, mat, medidorDeTopo(alvos));

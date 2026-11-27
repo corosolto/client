@@ -11,3 +11,8 @@ Rodada 1: **nenhuma textura nova**. `public/js/map_escadao_hd.js` reutiliza os c
 
 Tijolo (`lajes_tijolo_baiano_color.webp`), zinco (`tex_zinco.webp`) e azulejo continuam os do mapa autoral; janelas e
 portas vêm dos atlas procedurais de `public/js/hd_detalhes_lajes.js`. Peso adicional em disco: 0 B.
+
+Rodada 26 (bloco cerâmico à vista no morro e no bairro): **nenhuma textura nova e nenhum modelo importado**. O casario do
+horizonte usa o atlas procedural `hd-horizonte` (canvas 1024 gerado em `atlasHorizonte`/`alvenarias`, ≈ 5,6 MB de GPU com
+mips, 0 B em disco); o bairro instanciado usa `hdBaiano` (GLSL) no material de reboco. Vídeos e modelos passados pelo dono
+em 27/11/2026 serviram só de referência de proporção e cor; nada deles entrou no jogo.
