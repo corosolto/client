@@ -79,7 +79,11 @@ export default defineConfig({
   /* Fase 6 da migração (docs/runbooks/MIGRACAO-CLOUDFLARE.md): a Vercel saiu do deploy;
      o alvo é o Workers, sem condicional de ADAPTER. A variável sobrevive só como rótulo
      de telemetria (__ADAPTADOR__ / RETRATOS_EM_ARQUIVO). */
-  adapter: cloudflare({ prerenderEnvironment: 'node', imageService: 'passthrough' }),
+  adapter: cloudflare({
+    prerenderEnvironment: 'node',
+    imageService: 'passthrough',
+    inspectorPort: process.env.CS_CF_INSPECTOR_PORT ? Number(process.env.CS_CF_INSPECTOR_PORT) : undefined,
+  }),
   session: false,
   server: {
     port: Number(process.env.PORT) || 4321,

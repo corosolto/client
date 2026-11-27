@@ -11,15 +11,15 @@
    WC1 · todo workflow de PR registrado em POR_PR declara `concurrency` no topo,
          com grupo que identifica o PR e `cancel-in-progress` que não é `false`.
    WC2 · os workflows registrados em NUNCA_CANCELA continuam com `concurrency` e
-         `cancel-in-progress: false`: deploy de produção, diagnóstico e conserto de
-         crash não podem morrer no meio porque chegou outro disparo, e também não
+         `cancel-in-progress: false`: diagnóstico e conserto de crash não podem
+         morrer no meio porque chegou outro disparo, e também não
          podem rodar dois ao mesmo tempo. Tirar o bloco inteiro é tão vermelho
          quanto ligar o cancelamento.
    WC0 · registro órfão (arquivo que não existe mais) é vermelho: régua que jura
          medir arquivo ausente vira verde calada.
 
-   Mutantes: sem-concurrency, sem-cancel, grupo-global, deploy-cancela,
-   deploy-sem-concurrency.
+   Mutantes: sem-concurrency, sem-cancel, grupo-global, classificador-autocancela,
+   classificador-inverte-operador, diag-cancela, diag-sem-concurrency.
 
    Uso: node tools/eval/workflow-concurrency-check.mjs [--mutante=<nome>]
    ============================================================================ */
@@ -27,7 +27,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const MUTANTES = ['sem-concurrency', 'sem-cancel', 'grupo-global', 'classificador-autocancela', 'classificador-inverte-operador', 'deploy-cancela', 'deploy-sem-concurrency'];
+const MUTANTES = ['sem-concurrency', 'sem-cancel', 'grupo-global', 'classificador-autocancela', 'classificador-inverte-operador', 'diag-cancela', 'diag-sem-concurrency'];
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 if (mutante && !MUTANTES.includes(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
 
@@ -43,7 +43,7 @@ const POR_PR = [
   'autofix.yml', 'csbrasil-bot-pr-classify.yml',
   'smoke-web.yml', 'pr-gates.yml', 'csbrasil-bot-automerge.yml',
 ];
-const NUNCA_CANCELA = ['ops-diag.yml', 'crash-fix.yml'];
+const NUNCA_CANCELA = ['ops-diag.yml', 'crash-fix.yml', 'vigia-cron-deploy.yml'];
 
 /* Bloco `concurrency:` na coluna 0 (nível do workflow), lido por indentação: a
    régua roda no check:deploy, que é node puro e sem dependência de YAML. */
@@ -65,6 +65,8 @@ function ler(arquivo) {
   if (mutante === 'classificador-inverte-operador' && arquivo === 'csbrasil-bot-pr-classify.yml') {
     fonte = fonte.replace("github.actor != 'csbrasil-BOT'", "github.actor == 'csbrasil-BOT'");
   }
+  if (mutante === 'diag-cancela' && arquivo === 'ops-diag.yml') fonte = fonte.replace(/^( {2}cancel-in-progress:).*$/m, '$1 true');
+  if (mutante === 'diag-sem-concurrency' && arquivo === 'ops-diag.yml') fonte = fonte.replace(/^concurrency:\s*\n(?: {2}\S[^\n]*\n?)+/m, '');
   return fonte;
 }
 

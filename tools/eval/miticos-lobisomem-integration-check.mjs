@@ -68,7 +68,7 @@ if (mutant === 'roster') game = change(game, 'const allies = CHARACTERS.filter(_
 const rosterSource = game.slice(game.indexOf('const _cyclePool ='), game.indexOf('/* Pool dos bots'));
 const linhaDe = (nome) => characters.split('\n').find((l) => l.startsWith(`export const ${nome} =`)).replace('export ', '');
 const podeNoLado = new Function(`${linhaDe('ladosDe')}\n${linhaDe('podeNoLado')}\nreturn podeNoLado;`)();
-const pickRoster = new Function('CHARACTERS', 'podeNoLado', `${rosterSource.replace('export function', 'function')}return pickMatchRoster;`)(defs, podeNoLado);
+const pickRoster = new Function('CHARACTERS', 'podeNoLado', `${rosterSource.replaceAll('export function', 'function')}return pickMatchRoster;`)(defs, podeNoLado);
 for (const dedicated of [false, true]) for (const size of [1, 5, 8]) {
   const result = pickRoster('M', 'B', size, 'lobisomem', dedicated);
   /* Com 7 candidatos o roster deixa de repetir o mesmo corpo: o que se cobra agora é que

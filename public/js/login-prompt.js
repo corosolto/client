@@ -169,13 +169,14 @@ export function initLoginPrompt({auth=null,config=null,accountBusy=()=>false,ski
   dialog.addEventListener('click',e=>{if(e.target===dialog)hide('backdrop');});
   dialog.addEventListener('close',()=>{pedido=null;settle();});
   /* Pedido explícito (abrirLoginPrompt): fora da regra pós-partida, mas sem empilhar nem abrir em partida.
-     Conta já autenticada sem nick ou e-mail não é caso de login: quem pediu cai no passo de entrada completo. */
+     Conta já autenticada sem nick ou e-mail não é caso de login: quem pediu cai no passo de entrada completo.
+     É o convite desta visita: fechado, o do bônus de cadastro (/api/treta tardio) não reabre logo atrás. */
   document.addEventListener('cs-login-prompt-open',e=>{
     if(auth?.authenticated || isEmbedded() || dialog.open || inMatch() || document.querySelector('dialog[open]'))return;
     if(!config?.providers?.length && !config?.email)return;
     pedido=e.detail?.motivo==='passe'?'passe':'conta';
     draw();drawTreta();previousFocus=document.activeElement;
-    dialog.showModal();
+    markSeen();dialog.showModal();
     list.querySelector('button')?.focus();
     e.detail.aberto=true;
     emit(track,'login_prompt_shown',{origem:pedido});

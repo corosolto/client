@@ -109,7 +109,7 @@ if (!temPurge) {
   falhas.push('EC3 cf-prod-deploy.yml promove produção sem purgar o prefixo /js/ do edge (guardado por CF_API_TOKEN)');
 }
 
-/* EC4 · todo caminho de deploy limpa o manifesto mutável preso no TTL de /models/. */
+/* EC4 · o caminho de produção limpa o manifesto mutável preso no TTL de /models/. */
 const MANIFESTO = /www\.corosolto\.com\.br\/models\/skins\/manifest\.json/;
 const purgeManifestoProd = /purge_cache/.test(cfProd) && MANIFESTO.test(cfProd);
 const purgeManifestoGit = /purge_cache/.test(prodWatch) && MANIFESTO.test(prodWatch);

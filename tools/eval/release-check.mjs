@@ -473,7 +473,7 @@ if (mutante) {
   else if (mutante === 'semdocs') docsRelease[0] = false;
   else if (mutante === 'semrollback') rollbackRelease = false;
   else if (mutante === 'deploy-duplo') {
-    workflowDeploy = workflowDeploy.replace('on:\n', 'on:\n  release:\n    types: [published]\n');
+    workflowSources.push(['deploy-prod.yml', 'on:\n  release:\n    types: [published]\njobs:\n  prod:\n    steps:\n      - run: vercel deploy --prebuilt --prod']);
     caminhoProdUnico = validaCaminhoProd();
   }
   else if (mutante === 'deploy-yaml') {

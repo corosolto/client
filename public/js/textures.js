@@ -361,7 +361,7 @@ function concreteBase(w = 256, h = 256, base = '#9a938a', dark = '#7d766d', peri
    nada a degradar em quality 'low'. */
 const TEX_SAT_HOT = new URLSearchParams(location.search).get('texsat') === '1';
 
-export function initTextures() {
+export function initTextures({ deferPosterImages = false } = {}) {
   const T = {};
 
   // --- ground / structure ---
@@ -567,25 +567,45 @@ export function initTextures() {
     ['or-quebrada-vive.jpg', 0.522], ['or-show-funk.jpg', 0.644],
   ];
   const _tl = new THREE.TextureLoader();
-  const _cartaz = (f) => {
-    const t = _tl.load('posters/' + f);
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.minFilter = THREE.LinearMipmapLinearFilter;
-    return t;
+  const _cartaz = (f, target = new THREE.Texture()) => {
+    target.colorSpace = THREE.SRGBColorSpace;
+    target.minFilter = THREE.LinearMipmapLinearFilter;
+    _posterImageLoader.load('posters/' + f, (image) => {
+      target.image = image;
+      target.needsUpdate = true;
+    });
+    return target;
   };
-  /* Sob demanda como os decals: o custo segue o uso do mapa da sessão, em vez de os 24 descerem
-     no boot. O getter se troca pela textura na 1ª leitura — spread ou .map() acorda o pacote. */
+  const _posterImageLoader = new THREE.ImageLoader(_tl.manager);
+  const _posterArquivosPendentes = [], _posterTexturasPendentes = [];
+  let _postersLiberados = !deferPosterImages;
+  /* O mapa recebe a Texture estável já na primeira montagem, mas a imagem só desce quando
+     loadMenuBackdrop libera o pacote após os props e o portão da splash. */
   T.posterImgs = [];
   POSTER_FILES.forEach(([f], i) => {
     Object.defineProperty(T.posterImgs, i, {
       enumerable: true, configurable: true,
       get() {
-        const t = _cartaz(f);
+        const t = new THREE.Texture();
+        t.colorSpace = THREE.SRGBColorSpace;
+        t.minFilter = THREE.LinearMipmapLinearFilter;
+        if (_postersLiberados) _cartaz(f, t);
+        else {
+          _posterArquivosPendentes.push(f);
+          _posterTexturasPendentes.push(t);
+        }
         Object.defineProperty(T.posterImgs, i, { value: t, enumerable: true, configurable: true, writable: true });
         return t;
       },
     });
   });
+  T.liberarPosterImgs = () => {
+    if (_postersLiberados) return;
+    _postersLiberados = true;
+    for (let i = 0; i < _posterArquivosPendentes.length; i++) _cartaz(_posterArquivosPendentes[i], _posterTexturasPendentes[i]);
+    _posterArquivosPendentes.length = 0;
+    _posterTexturasPendentes.length = 0;
+  };
   /* Nome do arquivo por índice — a passada de grafite guarda NOME no layout assado
      (índice desliza quando alguém mexe no POSTER_FILES, e aí o mapa cola outro
      cartaz sem erro nenhum; é a mesma lição do `decalFiles`). */

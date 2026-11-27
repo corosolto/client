@@ -1,7 +1,18 @@
 #!/usr/bin/env node
 /* Generates and checks the reviewed inventory of runtime models, textures and posters.
  * References use the same trusted source classes as tools/eval/lixo-check.mjs.
- * The checker never deletes an asset; new orphans require explicit review in the manifest. */
+ * The checker never deletes an asset; new orphans require explicit review in the manifest.
+ *
+ * What the manifest binds, and what it no longer binds (asset-inventory-v2):
+ * - `unreferenced` maps every reviewed orphan to the sha256 of the bytes that were reviewed.
+ *   A new orphan, or a reviewed orphan whose bytes changed, fails generation and check until
+ *   someone writes the path and hash by hand.
+ * - `referenced` is the known set of runtime assets. It is a ratchet: a known path that is
+ *   still referenced and disappears from disk fails. Adding a referenced asset, or editing
+ *   its bytes, needs no manifest change; the generator just refreshes the set when run.
+ * v1 stored a hash for every referenced file and failed on any byte change: 9 PR runs between
+ * 14/11 and 16/11 (e.g. 43542685520, 43765870187) failed only on `hash-changed` or
+ * `inventory-new` for assets the PR itself was editing. */
 import { createHash } from 'node:crypto';
 import { parse } from 'acorn';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -323,34 +334,54 @@ export function literalReferences(sources) {
   return refs;
 }
 
-export function emptyInventory() {
-  return { schema: 'asset-inventory-v1', roots: [...ROOTS], files: {}, unreferenced: [] };
+const SCHEMA = 'asset-inventory-v2';
+const SCHEMA_V1 = 'asset-inventory-v1';
+
+/* Branches cut before v2 still carry a v1 manifest (every file → sha256, orphan paths in a list).
+ * The generator migrates it keeping every reviewed orphan hash; --check fails until it is written. */
+export function upgradeInventory(data) {
+  if (data?.schema !== SCHEMA_V1) return data;
+  if (!data.files || Array.isArray(data.files) || typeof data.files !== 'object' || !Array.isArray(data.unreferenced)) {
+    throw new Error(`expected ${SCHEMA_V1} files object and unreferenced array`);
+  }
+  for (const path of data.unreferenced) {
+    if (typeof path !== 'string' || !HEX256.test(data.files[path] || '')) throw new Error(`invalid ${SCHEMA_V1} unreferenced entry: ${path}`);
+  }
+  const orphans = new Set(data.unreferenced);
+  return {
+    schema: SCHEMA,
+    roots: data.roots,
+    referenced: Object.keys(data.files).filter((path) => !orphans.has(path)).sort(),
+    unreferenced: Object.fromEntries([...orphans].sort().map((path) => [path, data.files[path]])),
+  };
 }
 
 export function validateInventory(data) {
-  if (!data || data.schema !== 'asset-inventory-v1' || !Array.isArray(data.roots)
+  if (!data || data.schema !== SCHEMA || !Array.isArray(data.roots)
     || JSON.stringify(data.roots) !== JSON.stringify(ROOTS)
-    || !data.files || Array.isArray(data.files) || typeof data.files !== 'object'
-    || !Array.isArray(data.unreferenced)) {
-    throw new Error('expected schema asset-inventory-v1, canonical roots, files object and unreferenced array');
+    || !Array.isArray(data.referenced)
+    || !data.unreferenced || Array.isArray(data.unreferenced) || typeof data.unreferenced !== 'object') {
+    throw new Error(`expected schema ${SCHEMA}, canonical roots, referenced array and unreferenced path→sha256 object`);
   }
-  const unreferenced = new Set();
-  for (const [path, hash] of Object.entries(data.files)) {
-    if (!inScope(path) || !HEX256.test(hash)) throw new Error(`invalid file entry: ${path}`);
-    if (path.startsWith('.') || path.split('/').some((part) => part === '..')) throw new Error(`unsafe file entry: ${path}`);
+  const safe = (path) => typeof path === 'string' && inScope(path) && !path.startsWith('.') && !path.split('/').some((part) => part === '..');
+  const referenced = new Set();
+  for (const path of data.referenced) {
+    if (!safe(path)) throw new Error(`invalid referenced entry: ${path}`);
+    if (referenced.has(path)) throw new Error(`duplicate referenced entry: ${path}`);
+    referenced.add(path);
   }
-  for (const path of data.unreferenced) {
-    if (typeof path !== 'string' || !Object.hasOwn(data.files, path)) throw new Error(`invalid unreferenced entry: ${path}`);
-    if (unreferenced.has(path)) throw new Error(`duplicate unreferenced entry: ${path}`);
-    unreferenced.add(path);
+  for (const [path, hash] of Object.entries(data.unreferenced)) {
+    if (!safe(path) || !HEX256.test(hash)) throw new Error(`invalid unreferenced entry: ${path}`);
+    if (referenced.has(path)) throw new Error(`entry is both referenced and unreferenced: ${path}`);
   }
   return data;
 }
 
 export function readInventory(path = MANIFEST) {
-  if (!existsSync(path)) return { data: null, raw: '' };
+  if (!existsSync(path)) return { data: null, raw: '', legacy: false };
   const raw = readFileSync(path, 'utf8');
-  return { data: validateInventory(JSON.parse(raw)), raw };
+  const parsed = JSON.parse(raw);
+  return { data: validateInventory(upgradeInventory(parsed)), raw, legacy: parsed?.schema === SCHEMA_V1 };
 }
 
 export function serializeInventory(data) {
@@ -369,11 +400,12 @@ export function measureInventory({ root = ROOT, previous = null } = {}) {
   const literal = literalReferences(sources);
   const disk = diskAssets(publicDir);
   const onDisk = new Set(disk);
-  const files = Object.fromEntries(disk.map((path) => [path, sha256(join(publicDir, ...path.split('/')))]));
-  const unreferenced = disk.filter((path) => !referencedRuntime(path));
-  const next = { schema: 'asset-inventory-v1', roots: [...ROOTS], files, unreferenced };
+  const unreferenced = Object.fromEntries(disk.filter((path) => !referencedRuntime(path))
+    .map((path) => [path, sha256(join(publicDir, ...path.split('/')))]));
+  const referenced = disk.filter((path) => !Object.hasOwn(unreferenced, path));
+  const next = { schema: SCHEMA, roots: [...ROOTS], referenced, unreferenced };
   const findings = [];
-  const add = (code, path) => findings.push({ code, path });
+  const add = (code, path, detail = '') => findings.push({ code, path, detail });
 
   for (const path of literal) {
     if (!onDisk.has(path)) add('referenced-file-lost', path);
@@ -382,22 +414,26 @@ export function measureInventory({ root = ROOT, previous = null } = {}) {
   for (const path of checkedReferences) {
     if (!onDisk.has(path)) add('referenced-file-lost', path);
   }
-  if (previous) {
-    for (const path of Object.keys(previous.files)) {
-      if (!onDisk.has(path) && referencedRuntime(path)) add('referenced-file-lost', path);
-    }
-    for (const [path, hash] of Object.entries(files)) {
-      if (!Object.hasOwn(previous.files, path)) add(referencedRuntime(path) ? 'inventory-new' : 'orphan-new', path);
-      else if (previous.files[path] !== hash) add('hash-changed', path);
-    }
+  const reviewed = previous?.unreferenced || {};
+  const known = new Set([...(previous?.referenced || []), ...Object.keys(reviewed)]);
+  for (const path of known) {
+    if (!onDisk.has(path) && referencedRuntime(path)) add('referenced-file-lost', path);
   }
+  for (const [path, hash] of Object.entries(unreferenced)) {
+    if (!Object.hasOwn(reviewed, path)) add('orphan-new', path, `sha256=${hash}`);
+    else if (reviewed[path] !== hash) add('orphan-new', path, `sha256=${hash} (reviewed bytes were ${reviewed[path]})`);
+  }
+  const refresh = referenced.filter((path) => !known.has(path)).length
+    + [...known].filter((path) => !onDisk.has(path) || (Object.hasOwn(reviewed, path) && !Object.hasOwn(unreferenced, path))).length;
   const unique = [...new Map(findings.map((finding) => [`${finding.code}:${finding.path}`, finding])).values()]
     .sort((a, b) => a.code.localeCompare(b.code) || a.path.localeCompare(b.path));
-  return { next, findings: unique, referenced: disk.length - unreferenced.length, sources: sourcePaths.length };
+  return { next, findings: unique, refresh, sources: sourcePaths.length };
 }
 
 function printFindings(findings) {
-  for (const finding of findings) console.error(`  ${finding.code}: ${finding.path}`);
+  for (const finding of findings) console.error(`  ${finding.code}: ${finding.path}${finding.detail ? ` ${finding.detail}` : ''}`);
+  if (findings.some((finding) => finding.code === 'referenced-file-lost')) console.error('ASSET-INVENTORY: a referenced file is gone; restore the file or remove its runtime reference first');
+  if (findings.some((finding) => finding.code === 'orphan-new')) console.error(`ASSET-INVENTORY: unreviewed orphan bytes; review each file, then write "<path>": "<sha256>" under unreferenced in ${relative(ROOT, MANIFEST)} (or delete the file, or reference it at runtime)`);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
@@ -410,31 +446,23 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
   }
   const result = measureInventory({ previous: published.data });
   const nextRaw = serializeInventory(result.next);
-  const stale = published.raw !== nextRaw;
-  console.log(`ASSET-INVENTORY  ${Object.keys(result.next.files).length} files · ${result.referenced} referenced · ${result.next.unreferenced.length} reviewed orphans · ${result.sources} trusted sources`);
+  console.log(`ASSET-INVENTORY  ${result.next.referenced.length + Object.keys(result.next.unreferenced).length} files · ${result.next.referenced.length} referenced · ${Object.keys(result.next.unreferenced).length} reviewed orphans · ${result.sources} trusted sources`);
+  if (!published.data) console.error(`ASSET-INVENTORY: missing ${relative(ROOT, MANIFEST)}; review every orphan listed below and write the manifest by hand`);
+  printFindings(result.findings);
 
   if (CHECK) {
-    if (!published.data) console.error(`ASSET-INVENTORY: missing ${relative(ROOT, MANIFEST)}; run node tools/gen-asset-inventory.mjs`);
-    printFindings(result.findings);
-    if (stale && published.data) console.error('ASSET-INVENTORY: inventory-stale; run node tools/gen-asset-inventory.mjs and review the diff');
-    if (!published.data || stale || result.findings.length) process.exit(1);
-    console.log('ASSET-INVENTORY: manifest and runtime references are intact');
+    if (published.legacy) console.error(`ASSET-INVENTORY: ${relative(ROOT, MANIFEST)} is still ${SCHEMA_V1}; run node tools/gen-asset-inventory.mjs to migrate it (reviewed orphan hashes are kept)`);
+    if (!published.data || published.legacy || result.findings.length) process.exit(1);
+    if (result.refresh) console.log(`ASSET-INVENTORY: ${result.refresh} known-set entr(ies) behind the disk (not a failure; optional refresh: node tools/gen-asset-inventory.mjs)`);
+    console.log('ASSET-INVENTORY: reviewed orphans and runtime references are intact');
     process.exit(0);
   }
 
-  const lost = result.findings.filter((finding) => finding.code === 'referenced-file-lost');
-  const reviewedUnreferenced = new Set(published.data?.unreferenced || []);
-  const newUnreviewed = result.next.unreferenced.filter((path) => !reviewedUnreferenced.has(path));
-  if (lost.length || newUnreviewed.length) {
-    printFindings([...lost, ...newUnreviewed.map((path) => ({ code: 'orphan-new', path }))]);
-    if (lost.length) console.error('ASSET-INVENTORY: refusing to erase a still-referenced file from the manifest; restore the file or remove its runtime reference first');
-    if (newUnreviewed.length) console.error('ASSET-INVENTORY: refusing to approve unreviewed orphans; add their reviewed file hashes and unreferenced paths to the manifest first');
-    process.exit(1);
-  }
+  if (result.findings.length) process.exit(1);
   mkdirSync(dirname(MANIFEST), { recursive: true });
-  if (!stale) console.log('ASSET-INVENTORY: already up to date');
+  if (published.raw === nextRaw) console.log('ASSET-INVENTORY: already up to date');
   else {
     writeFileSync(MANIFEST, nextRaw);
-    console.log(`ASSET-INVENTORY: wrote ${relative(ROOT, MANIFEST)}; review new hashes and unreferenced entries before committing`);
+    console.log(`ASSET-INVENTORY: wrote ${relative(ROOT, MANIFEST)}`);
   }
 }
