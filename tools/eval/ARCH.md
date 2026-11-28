@@ -3,13 +3,13 @@
 <!-- BEGIN:GERADO — não edite à mão, rode `npm run arch` -->
 
 > Gerado por `node tools/gen-arch.mjs`. **Não edite este bloco à mão.**
-> Versão do jogo: 2.1.0-alpha.158 · `npm run arch` para regenerar · `npm run arch:check` no CI.
+> Versão do jogo: 2.1.0-alpha.159 · `npm run arch` para regenerar · `npm run arch:check` no CI.
 
 ## Tamanho dos arquivos indexados
 
 | Arquivo | Linhas | Símbolos |
 |---|---:|---:|
-| `public/js/game.js` | 10301 | 438 |
+| `public/js/game.js` | 10303 | 438 |
 | `public/js/main.js` | 5804 | 449 |
 | `public/js/glbchars.js` | 2170 | 156 |
 | `public/js/characters.js` | 1243 | 40 |
@@ -19,7 +19,7 @@
 
 ## Maiores métodos de `game.js` — onde o conflito mora
 
-Os 15 maiores somam **3588 linhas (35% do arquivo)**. Método grande = PR irrevisável e merge conflitante.
+Os 15 maiores somam **3590 linhas (35% do arquivo)**. Método grande = PR irrevisável e merge conflitante.
 
 | Linhas | Início | Método | |
 |---:|---:|---|---|
@@ -34,7 +34,7 @@ Os 15 maiores somam **3588 linhas (35% do arquivo)**. Método grande = PR irrevi
 | 136 | 7300 | `_moveEntity()` |  |
 | 105 | 7074 | `_updatePlayerTPCamera()` |  |
 | 100 | 4191 | `_tryShoot()` |  |
-| 96 | 10128 | `update()` | 🔴 append-only |
+| 98 | 10128 | `update()` | 🔴 append-only |
 | 91 | 9736 | `_updateRadar()` |  |
 | 86 | 6052 | `_initCTF()` |  |
 | 80 | 3380 | `_endMatch()` |  |
@@ -56,11 +56,11 @@ faixas disjuntas simultaneamente com zero conflito de conteúdo.
 | **PERSONAGENS** | — | `public/js/characters.js` `public/js/glbchars.js` |
 | **SITE / BACKEND** | — | `src/` `supabase/` |
 
-**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 10128–10223 · `_dom()` 1473–1519 · `constructor()` 824–1472
+**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 10128–10225 · `_dom()` 1473–1519 · `constructor()` 824–1472
 
 Nenhuma sobreposição entre frentes — todas as faixas são disjuntas. ✓
 
-Cobertura: **4200 de 10301 linhas (41%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
+Cobertura: **4200 de 10303 linhas (41%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
 
 <details><summary><strong>Índice completo de <code>game.js</code> (todos os símbolos)</strong></summary>
 
@@ -438,8 +438,8 @@ Cobertura: **4200 de 10301 linhas (41%)** do `game.js` têm dono declarado. O re
 | 9884 | `_showScoreboard()` | 63 |
 | 9947 | `_updateWeaponHud()` | 43 |
 | 9990 | `_updateHud()` | 138 |
-| 10128 | `update()` | 96 |
-| 10224 | `dispose()` | 77 |
+| 10128 | `update()` | 98 |
+| 10226 | `dispose()` | 77 |
 
 </details>
 
