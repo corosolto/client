@@ -1067,6 +1067,8 @@ function pvSetFailureUi(active) {
 }
 function clearStaticPreview({finishPending=false}={}) {
   const my=++pvImageToken;pvStaticKey='';pvPosterFailure=null;pvSetFailureUi(false);
+  const placeholder = $('char-preview-placeholder');
+  if (placeholder) placeholder.hidden = true;
   const image=$('char-preview-static');
   if(image){
     const release=()=>{if(my!==pvImageToken)return;image.onload=image.onerror=null;image.removeAttribute('src');};
@@ -1127,6 +1129,8 @@ function pvSetVideo(def) {
     box.classList.add('has-video');
     pvSetFailureUi(false);
     video.classList.remove('hidden');
+    const placeholder = $('char-preview-placeholder');
+    if (placeholder) placeholder.hidden = true;
     const label=$('char-preview-skin');if(label){label.textContent=skin?.name || '';label.hidden=!skin;}
     if (hints) hints.classList.add('hidden');
   };
@@ -1143,6 +1147,11 @@ function showStaticPreview(def) {
   if(label){label.textContent=skin?.name || '';label.hidden=!skin;}
   if(weaponLabel){weaponLabel.textContent=paint?previewPaintCaption(weapon,paint):'';weaponLabel.hidden=!paint;}
   if (canvas) canvas.classList.add('hidden');
+  const placeholder = $('char-preview-placeholder');
+  if (placeholder) {
+    placeholder.textContent = skin?.name || def.name;
+    placeholder.hidden = false;
+  }
   if (image) {
     const my=++pvImageToken;
     image.onload=image.onerror=null;image.removeAttribute('src');image.classList.add('hidden');
@@ -1150,7 +1159,7 @@ function showStaticPreview(def) {
     const src=portraitUrl(def);
     image.alt = skin?.name || def.name;
     if(src){
-      image.onload=()=>{if(my!==pvImageToken)return;image.classList.remove('hidden');pvPosterFailure=null;pvSetFailureUi(false);if(label && !previewVideoVisible()){label.textContent=skin?.name || '';label.hidden=!skin;}};
+      image.onload=()=>{if(my!==pvImageToken)return;image.classList.remove('hidden');if(placeholder)placeholder.hidden=true;pvPosterFailure=null;pvSetFailureUi(false);if(label && !previewVideoVisible()){label.textContent=skin?.name || '';label.hidden=!skin;}};
       image.onerror = () => {if(my!==pvImageToken)return;image.onerror=null;if(skin)unavailable();else{image.onerror=()=>{if(my===pvImageToken)unavailable();};image.src=portraitFallbackUrl(def);}};
       image.src=src;
     }else unavailable();
@@ -1386,7 +1395,8 @@ function pvSetChar(def) {
   const p = ensurePreview();
   if (!p) { showStaticPreview(def); return; }
   const showCanvas=()=>{
-    p.renderDirty = true;
+    p.r.render(p.scene, p.cam);
+    p.renderDirty = false;
     clearStaticPreview({finishPending:true});pvStopVideo();
     $('char-preview')?.classList.remove('hidden');$('char-preview-static')?.classList.add('hidden');
     document.querySelector('.pv-hints')?.classList.remove('hidden');
@@ -1400,6 +1410,9 @@ function pvSetChar(def) {
     p.model = buildCharacter(def).group;
     p.model.rotation.y = -0.4;
     p.scene.add(p.model);
+    const { dataset } = $('char-preview');
+    delete dataset.glb;
+    dataset.character = def.id;
     showCanvas();
   };
   // ?nav=1 mantém o preview procedural; web-assets.spec.js cobre o GLB real.
@@ -1408,7 +1421,7 @@ function pvSetChar(def) {
     // O retrato mantém a identidade selecionada enquanto o GLB carrega ou falha.
     const arma = armaDoPreview(def.id);
     Promise.all([preloadCharacterAssets([def.id], { weapons:[arma.weaponId] }),preloadCosmeticAssets([def.skinId]),preloadEyewearAssets([def.eyewearId]),
-      preloadWeapons([arma.weaponId]),preloadWeaponSkinCandidate(arma.weaponSkinId)])
+      preloadWeaponSkinCandidate(arma.weaponSkinId)])
       .then(() => {
         const pending = arma.gloveSkinId ? getGloveHandle(def.id, def.skinId)?.preload() : null;
         return pending?.catch((e) => { if (!(e instanceof GloveManifestUnavailable)) throw e; e.warn(); });
@@ -1420,7 +1433,6 @@ function pvSetChar(def) {
       // nada muda.
       const m = hasModel(def.id, def.skinId) ? buildCharacterModel(def, { weaponId: arma.weaponId, weaponSkinId: arma.weaponSkinId, gloveSkinId: arma.gloveSkinId, preview: true }) : null;
       if (!m) return;
-      showCanvas();
       if (p.model) p.scene.remove(p.model);
       // Evidência do que foi montado na mão (régua LB20): os valores saem do objeto 3D,
       // não da intenção - canvas não se lê e intenção não prova nada.
@@ -1432,6 +1444,7 @@ function pvSetChar(def) {
         if (!luvaNaMao && o.userData?.gloveSkin) luvaNaMao = o.userData.gloveSkin;
       });
       cv.dataset.glb = '1';
+      cv.dataset.character = def.id;
       cv.dataset.skin = m.skinId || '';
       cv.dataset.arma = armaNaMao ? arma.weaponId : '';
       cv.dataset.armaSkin = pinturaNaMao;
@@ -1447,6 +1460,7 @@ function pvSetChar(def) {
       // ?pvcam=maos (régua): câmera na mão e idle congelado - com o preview animando, duas
       // capturas do MESMO equipamento já saem diferentes e nenhuma comparação vale.
       if (PV_CAM_MAOS) enquadrarMaos(p, m);
+      showCanvas();
     }).catch(() => { if (my === pvToken && previewHeroVisible()) showStaticPreview(def); });
   } else {
     showBox();
@@ -4344,57 +4358,46 @@ function pickTeam(faction) {
     if (b) b.setAttribute('aria-pressed', String(f.toUpperCase() === faction));
   }
   const chars = CHARACTERS.filter(c => (lado ? podeNoLado(c, lado) : c.team === faction));
-  // ?nav=1 pula o preload 3D do roster (lento) — thumbnails caem no fallback pvThumb, que
-  // nunca dispara GLB. A transição #char-select é o que o smoke de navegação quer provar.
-  const mountCharList = () => {
-    hideLoading();
-    const list = $('char-list');
-    list.innerHTML = '';
-    let firstRow = null, firstChar = null;
-    chars.forEach((c) => {
-      const row = document.createElement('button');
-      row.className = 'char-row';
-      // Avatar = busto cortado da ARTE APROVADA (molde/neutro), não do GLB low-poly —
-      // referência 03: a coluna da esquerda é uma fileira de retratos, não de modelos 3D.
-      const thumb0 = `/img/chars/avatars/${c.id}.webp?v=${VERSION}`;
-      row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false'); row.title = c.name;
-      row.innerHTML = `<img src="${thumb0}" alt="${c.name}" loading="lazy"><span>${c.name}</span>`;
-      if (personagemTravado(c)) {
-        row.classList.add('char-row--travado'); row.setAttribute('aria-disabled', 'true');
-        const trava = document.createElement('b'); trava.className = 'hub-roster-trava';
-        trava.dataset.passeNivel = String(nivelDoPersonagem(c) || '');
-        trava.innerHTML = ICONE_CADEADO_PASSE; trava.append(frase('passeTravado', nivelDoPersonagem(c) || '?'));
-        row.append(trava);
-      }
-      row.onmouseenter = () => ui.hover();
-      // A faixa é horizontal, mas ↑↓ continuam aceitos para quem já usava o fluxo antigo.
-      row.onkeydown = (e) => {
-        const rows = [...list.children];
-        const k = rows.indexOf(row);
-        let n = -1;
-        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') n = (k + 1) % rows.length;
-        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') n = (k - 1 + rows.length) % rows.length;
-        if (n < 0) return;
-        e.preventDefault(); rows[n].focus(); rows[n].click();
-      };
-      row.onclick = () => {
-        if (personagemTravado(c)) { $('char-info-blurb').textContent = frase('passeTravadoAviso', c.name, nivelDoPersonagem(c) || '?'); return; }
-        selectCharacterFromAvatar(c, row, chars);
-      };
-      list.appendChild(row);
-      if (!firstRow && !personagemTravado(c)) { firstRow = row; firstChar = c; }
-    });
-    // seleciona DEPOIS de gerar todos os thumbs — senão o preview fica com o último
-    show('char-select');
-    if (firstRow) selectChar(firstChar, firstRow);
-  };
-  if (navOnly || previewUsesStills()) { mountCharList(); return; }
-  // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
-  // nada de thumbnails de caixa montando aos poucos (o "minecraft" que o dono viu)
-  showLoading('CARREGANDO PERSONAGENS…');
-  /* Travado pelo passe não é escolhível (o clique só explica o nível): a fileira usa o avatar
-     estático e o pack Studio dele não é baixado aqui. */
-  preloadCharacterAssets(chars.filter(c => !personagemTravado(c)).map(c => c.id)).catch(() => {}).then(mountCharList);
+  hideLoading();
+  const list = $('char-list');
+  list.innerHTML = '';
+  let firstRow = null, firstChar = null;
+  for (const c of chars) {
+    const row = document.createElement('button');
+    row.className = 'char-row';
+    const thumb0 = `/img/chars/avatars/${c.id}.webp?v=${VERSION}`;
+    row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false'); row.title = c.name;
+    row.innerHTML = `<img src="${thumb0}" alt="${c.name}" loading="lazy"><span>${c.name}</span>`;
+    if (personagemTravado(c)) {
+      row.classList.add('char-row--travado'); row.setAttribute('aria-disabled', 'true');
+      const trava = document.createElement('b'); trava.className = 'hub-roster-trava';
+      trava.dataset.passeNivel = String(nivelDoPersonagem(c) || '');
+      trava.innerHTML = ICONE_CADEADO_PASSE; trava.append(frase('passeTravado', nivelDoPersonagem(c) || '?'));
+      row.append(trava);
+    }
+    row.onmouseenter = () => {
+      ui.hover();
+      if (navOnly || previewUsesStills() || !GLB_CHARS.has(c.id) || hasModel(c.id) || personagemTravado(c)) return;
+      void preloadCharacterAssets([c.id], { weapons: [] }).catch(() => {});
+    };
+    row.onkeydown = (e) => {
+      const rows = [...list.children];
+      const k = rows.indexOf(row);
+      let n = -1;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') n = (k + 1) % rows.length;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') n = (k - 1 + rows.length) % rows.length;
+      if (n < 0) return;
+      e.preventDefault(); rows[n].focus(); rows[n].click();
+    };
+    row.onclick = () => {
+      if (personagemTravado(c)) { $('char-info-blurb').textContent = frase('passeTravadoAviso', c.name, nivelDoPersonagem(c) || '?'); return; }
+      selectCharacterFromAvatar(c, row, chars);
+    };
+    list.appendChild(row);
+    if (!firstRow && !personagemTravado(c)) { firstRow = row; firstChar = c; }
+  }
+  show('char-select');
+  if (firstRow) selectChar(firstChar, firstRow);
 }
 /* Ficha do personagem (tela de seleção): raridade + atributos derivados da arma inicial
    (charWeapon) e de um hash estável do id. É FLAVOR de apresentação no estilo CS2/Valorant —

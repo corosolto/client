@@ -12,7 +12,7 @@ test.afterEach(async ({ page }, testInfo) => {
   });
 });
 
-test('preload 3D real do elenco termina e renderiza GLB na vitrine', async ({ page }, testInfo) => {
+test('preview 3D renderiza o GLB do personagem escolhido', async ({ page }, testInfo) => {
   test.slow();
   const base = process.env.BASE_URL || 'http://127.0.0.1:4321';
   const t0 = Date.now();
@@ -30,13 +30,20 @@ test('preload 3D real do elenco termina e renderiza GLB na vitrine', async ({ pa
   await expect(page.locator('#team-select')).toBeVisible({ timeout: 30_000 });
 
   await page.locator('#btn-team-e').click();
-  // A seleção só abre depois que o preload real do elenco termina.
-  await expect(page.locator('#char-select')).toBeVisible({ timeout: 360_000 });
+  await expect(page.locator('#char-select')).toBeVisible();
+
+  // A lista abre antes da carga. A marca pertence ao canvas já renderizado, não ao placeholder.
+  const preview = page.locator('#char-preview[data-glb="1"]');
+  await expect(preview).toBeVisible({ timeout: 60_000 });
+  const punk = page.locator('#char-list .char-row[title="Punk"]');
+  await expect(punk).toHaveAttribute('aria-selected', 'false');
+  await punk.click();
+  await expect(preview).toHaveAttribute('data-character', 'punk', { timeout: 60_000 });
+  await expect(preview).toBeVisible();
 
   const ficha = await page.evaluate(() => ({
     rows: document.querySelectorAll('#char-list .char-row').length,
-    // Somente o GLB real marca data-glb; o fallback procedural não marca.
-    preview_glb: document.getElementById('char-preview')?.dataset.glb === '1',
+    preview_character: document.getElementById('char-preview')?.dataset.character,
     info_name: document.getElementById('char-info-name')?.textContent || '',
   }));
   await testInfo.attach('asset-check.json', {
@@ -46,11 +53,10 @@ test('preload 3D real do elenco termina e renderiza GLB na vitrine', async ({ pa
   console.log('ASSETS', JSON.stringify(ficha));
 
   expect(ficha.rows).toBeGreaterThan(0);
-  expect(ficha.preview_glb).toBe(true);
-  expect(ficha.info_name.length).toBeGreaterThan(0);
+  expect(ficha.info_name).toBe('Punk');
   await expect(page.locator('#crash-overlay')).toBeHidden();
 
-  // partida também abre com o caminho real (já com elenco/modelos batidos em cache)
+  // Confirmar o personagem também precisa abrir a partida com o caminho real de assets.
   await page.locator('#char-confirm').click();
   await expect(page.locator('#hud')).toBeVisible({ timeout: 180_000 });
 });
