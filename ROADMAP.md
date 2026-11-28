@@ -53,7 +53,10 @@
 - **A real newsletter** — the funnel: export `feedback where newsletter=true`,
   choose a provider, publish the first issue (captures in `newsletter/`, outside git).
 - **Monetization** — donations + our own ads + portals (CrazyGames/itch:
-  `frame-ancestors` is already allowed; the submission package is still needed).
+  `frame-ancestors` is allowed and `tools/distribution-web/package.py` builds the upload
+  ZIP with the 250 MB ceiling. itch: wrapper ZIP ready, upload is the owner's call.
+  CrazyGames: Basic Launch via iframe URL, or a self-hosted build once #1110 brings it
+  under 250 MB).
 
 ## Block 1 — CLOSED on August 7
 
