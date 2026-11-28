@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /* Perfil móvel integrado no jogo real. O gate puro perfil-mobile-check cobre a política;
    este prova que main.js aplica a política antes do primeiro GLB e mantém o jogo nela. */
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const arg = (nome) => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=')[1] || '';
 const PORTA = arg('porta') || '9148';
@@ -17,16 +18,7 @@ const chromium = pw.chromium || pw.default?.chromium;
 const devices = pw.devices || pw.default?.devices;
 const fonteGlcontext = readFileSync(new URL('../../public/js/glcontext.js', import.meta.url), 'utf8');
 const fonteMain = readFileSync(new URL('../../public/js/main.js', import.meta.url), 'utf8');
-const servidor = BASE_EXTERNA ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
-process.on('exit', () => servidor?.kill());
-if (servidor) {
-  let pronto = false;
-  for (let i = 0; i < 60 && !pronto; i++) {
-    try { pronto = (await fetch(BASE)).ok; } catch { /* subindo */ }
-    if (!pronto) await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-  if (!pronto) throw new Error(`servidor não respondeu em ${BASE}`);
-}
+const servidor = BASE_EXTERNA ? null : await subirServe(PORTA, { url: BASE });
 
 const browser = await chromium.launch({
   ...(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : {}),

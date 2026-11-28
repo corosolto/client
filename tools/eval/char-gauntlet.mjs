@@ -20,10 +20,11 @@
      manifest.json (+ verdicts.json com --judge).
    - Zero é a régua numérica: este script é EVIDÊNCIA. Exit 1 só em erro
      de infra (servidor/browser/GLB que não carregou). */
-import { execSync, spawn, spawnSync } from 'node:child_process';
+import { execSync, spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const arg = (n, d = '') => {
@@ -45,16 +46,7 @@ const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
 
-const servidor = SEM_SERVIDOR ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
-process.on('exit', () => servidor?.kill());
-if (servidor) {
-  let pronto = false;
-  for (let i = 0; i < 60 && !pronto; i++) {
-    try { pronto = (await fetch(`${BASE}/eval-character.html`)).ok; } catch { /* subindo */ }
-    if (!pronto) await new Promise((r) => setTimeout(r, 500));
-  }
-  if (!pronto) throw new Error(`servidor não respondeu em ${BASE}`);
-}
+const servidor = SEM_SERVIDOR ? null : await subirServe(PORTA, { url: `${BASE}/eval-character.html` });
 
 const browser = await chromium.launch({
   ...(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : { executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' }),

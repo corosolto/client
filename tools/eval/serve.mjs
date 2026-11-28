@@ -4,7 +4,6 @@ import http from 'node:http';
 import net from 'node:net';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
-import { dev } from 'astro';
 import { moduleCacheManifest } from '../../scripts/module-cache.mjs';
 import { serveStudioPack } from '../../scripts/studio-pack-serving.mjs';
 import { rotaDoCaminho } from '../../public/js/rotas.js';
@@ -47,6 +46,13 @@ const completeModuleManifest = () => {
   const vendor = moduleCacheManifest('public/vendor');
   return { ...main, vendorModules: vendor.modules, vendorRevision: vendor.revision };
 };
+// Porta ocupada sai já, com código 1: o import do Astro (até 40 s) e o boot dele vêm depois da sonda.
+await new Promise((resolve) => {
+  const sonda = net.createServer();
+  sonda.once('error', (error) => { console.error(`[serve] porta ${PORT} indisponível: ${error.code || error.message}`); process.exit(1); });
+  sonda.listen(PORT, '127.0.0.1', () => sonda.close(resolve));
+});
+const { dev } = await import('astro');
 const initial = completeModuleManifest();
 let revision = `${initial.revision}:${initial.vendorRevision}`;
 let astro = await startAstro(initial);

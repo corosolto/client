@@ -10,13 +10,14 @@
 // --base serve vmhands/authoredvm/meleevm e os atlas daquele ref: é a auditoria do antes.
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { spawn, execFileSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { TEAM_HANDS, F_OPCOES, teamHandStyle } from '../../public/js/vmhands.js';
 import { gloveSkinStyle } from '../../public/js/data/glove-skin-definitions.js';
 import { FACTIONS } from '../../public/js/factions.js';
 import { WEAPON_IDS } from '../../public/js/weapons.js';
 import { VM_WEAPON, VM_FAMILY } from '../../public/js/data/vmconfig.js';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const args = new Map(process.argv.slice(2).map((a) => a.replace(/^--/, '').split('=')));
@@ -113,10 +114,7 @@ function julgar(amostras, time) {
 
 async function servidor() {
   try { if ((await fetch(base, { signal: AbortSignal.timeout(1500) })).ok) return null; } catch {}
-  const s = spawn(process.execPath, ['tools/eval/serve.mjs', String(port)], { cwd: root, stdio: 'ignore' });
-  process.on('exit', () => s.kill());
-  for (let i = 0; i < 80; i++) { try { if ((await fetch(base)).ok) return s; } catch {} await new Promise((r) => setTimeout(r, 250)); }
-  throw Error('servidor não subiu');
+  return subirServe(port, { url: base, cwd: root });
 }
 
 // No navegador: equipa, espera o mapa do time carregar e faz o passe de albedo.

@@ -3,7 +3,7 @@
 // O mutante apaga o viewmodel ao voltar para 1ª pessoa; a régua deve reprová-lo.
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { subirServe } from './lib/serve-eval.mjs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -18,7 +18,7 @@ fs.mkdirSync(captureDir, { recursive: true });
 const globalRoot = (await import('node:child_process')).execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim();
 const playwright = await import(pathToFileURL(path.join(globalRoot, 'playwright/index.js')).href);
 const chromium = playwright.chromium || playwright.default?.chromium;
-const server = spawn(process.execPath, ['tools/eval/serve.mjs', port], { cwd: ROOT, stdio: 'ignore' });
+let server = null;
 let browser;
 let page;
 const pageErrors = [];
@@ -46,12 +46,7 @@ const snapshot = async (page) => page.evaluate(() => {
 const settle = (page) => page.waitForTimeout(350);
 
 try {
-  let up = false;
-  for (let i = 0; i < 80; i += 1) {
-    try { up = (await fetch(base)).ok; if (up) break; } catch { /* servidor subindo */ }
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-  if (!up) throw new Error('servidor de revisão não subiu');
+  server = await subirServe(port, { url: base, cwd: ROOT });
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
   const context = await browser.newContext({ viewport: { width: 1200, height: 800 } });
   page = await context.newPage();
@@ -134,7 +129,7 @@ try {
   console.error('CAM diagnóstico', JSON.stringify({ overlay: overlay && withoutQueries(overlay), pageErrors: pageErrors.slice(0, 5).map(withoutQueries), networkErrors: networkErrors.slice(0, 12) }));
 } finally {
   await browser?.close();
-  server.kill();
+  server?.kill();
 }
 
 if (mutant) {

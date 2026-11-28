@@ -10,12 +10,13 @@
   `extravasar` amplia as imagens 2,4× e precisa deixar WB1 vermelho; mutante que não
   encontra imagem aborta a medição.
 */
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 import { WEAPON_SKINS } from '../../public/js/data/weapon-skin-definitions.js';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const arg = (name) => (process.argv.find((value) => value.startsWith(`--${name}=`)) || '').split('=')[1] || '';
@@ -40,18 +41,8 @@ if (!TARGETS.length) throw new Error('nenhuma skin com imagem para medir');
 const gRoot = execSync('npm root -g').toString().trim();
 const playwright = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = playwright.chromium || playwright.default?.chromium;
-const server = REMOTE ? null : spawn(process.execPath, ['tools/eval/serve.mjs', PORT], { cwd: ROOT, stdio: 'ignore' });
-const stopServer = () => {
-  if (server && server.exitCode === null) server.kill('SIGTERM');
-};
-process.on('exit', stopServer);
-for (let attempt = 0; attempt < 80; attempt += 1) {
-  try {
-    if ((await fetch(BASE)).ok) break;
-  } catch { /* subindo */ }
-  if (attempt === 79) throw new Error(`servidor de avaliação não respondeu em ${BASE}`);
-  await new Promise((resolve) => setTimeout(resolve, 250));
-}
+const server = REMOTE ? null : await subirServe(PORT, { url: BASE, cwd: ROOT });
+const stopServer = () => server?.kill();
 await mkdir(OUT, { recursive: true });
 
 const browser = await chromium.launch({

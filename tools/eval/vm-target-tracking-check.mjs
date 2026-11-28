@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import net from 'node:net';
-import { spawn } from 'node:child_process';
+import { subirServe } from './lib/serve-eval.mjs';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { chromium } from 'playwright';
@@ -40,7 +40,7 @@ const port = await new Promise((resolve, reject) => {
   });
 });
 const base = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['tools/eval/serve.mjs', String(port)], { cwd: root, stdio: 'ignore' });
+let server = null;
 let browser;
 const failures = [];
 const check = (name, ok, value) => {
@@ -56,12 +56,7 @@ const visibleTarget = async (png) => {
   return visible;
 };
 try {
-  let ready = false;
-  for (let i = 0; i < 80; i++) {
-    try { ready = (await fetch(base)).ok; if (ready) break; } catch { /* boot */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  if (!ready) throw new Error('jogo local não subiu');
+  server = await subirServe(port, { url: base, cwd: root });
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
   const page = await browser.newPage({ viewport: small ? { width: 900, height: 600 } : { width: 1500, height: 1000 } });
   let mutationApplied = false;
@@ -273,7 +268,7 @@ try {
   check('execução', false, error.stack || String(error));
 } finally {
   await browser?.close();
-  server.kill();
+  server?.kill();
 }
 console.log(`vm-target-tracking: ${failures.length} falha(s)`);
 process.exitCode = measure ? 0 : mutant ? Number(failures.length === 0) : Number(failures.length > 0);

@@ -26,8 +26,9 @@
 
    Uso: node tools/eval/entrada-check.mjs [--mutante=sem-guarda] [--porta=8131]
    ============================================================================ */
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const arg = (nome) => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=')[1] || '';
 const MUT = arg('mutante');
@@ -38,16 +39,8 @@ const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
-const srv = spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
-process.on('exit', () => srv.kill());
-const vivo = async () => {
-  for (let i = 0; i < 60; i++) {
-    try { if ((await fetch(BASE)).ok) return true; } catch { /* subindo */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  return false;
-};
-if (!(await vivo())) { console.log(`  \x1b[31m✗\x1b[0m ENTRADA1 servidor não subiu na ${PORTA} (porta ocupada?)`); process.exit(1); }
+let srv;
+try { srv = await subirServe(PORTA, { url: BASE }); } catch (e) { console.log(`  \x1b[31m✗\x1b[0m ENTRADA1 ${e.message}`); process.exit(1); }
 
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });

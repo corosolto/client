@@ -162,6 +162,7 @@ com mutante que restaura o raio central apesar do erro sorteado.
 | Arquivo | O que faz |
 |---|---|
 | `serve.mjs` | Servidor estático pro harness. `npm run eval:serve` |
+| `lib/serve-eval.mjs` | `subirServe(porta, { url })`: sobe o `serve.mjs` para a régua e espera responder num prazo único, `EVAL_BOOT_TIMEOUT_MS` (padrão 180000). Porta ocupada reprova antes do spawn; filho que sai antes de responder reprova na hora com o código de saída. Toda régua que sobe o próprio `serve.mjs` passa por aqui. |
 | `harness.mjs` | Base compartilhada dos capturadores com Chrome. |
 | `measure.mjs` | Utilitários de medição. |
 | `shot.mjs`, `vmshot.mjs` | Screenshot simples. |

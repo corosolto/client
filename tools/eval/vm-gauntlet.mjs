@@ -28,8 +28,9 @@
    ============================================================================ */
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { subirServe } from './lib/serve-eval.mjs';
 
 import sharp from 'sharp';
 import { summarizeMagazineSupportContact } from './lib/vm-contact-diagnostic.mjs';
@@ -81,12 +82,7 @@ const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
-const srv = spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore', cwd: ROOT });
-process.on('exit', () => srv.kill());
-for (let i = 0; i < 60; i++) {
-  try { if ((await fetch(BASE)).ok) break; } catch { /* subindo */ }
-  await new Promise((r) => setTimeout(r, 500));
-}
+const srv = await subirServe(PORTA, { url: BASE });
 
 await fs.mkdir(OUT, { recursive: true });
 

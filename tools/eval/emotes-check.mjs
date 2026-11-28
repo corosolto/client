@@ -40,8 +40,9 @@
 
    Uso: BASE=http://127.0.0.1:9321 node tools/eval/emotes-check.mjs
    ============================================================================ */
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const BASE_EXTERNA = process.env.BASE;
 const PORTA = process.env.PORTA || '9342';
@@ -60,16 +61,7 @@ const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
 
-const servidor = BASE_EXTERNA ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
-process.on('exit', () => servidor?.kill());
-if (servidor) {
-  let pronto = false;
-  for (let i = 0; i < 60 && !pronto; i++) {
-    try { pronto = (await fetch(BASE)).ok; } catch { /* subindo */ }
-    if (!pronto) await new Promise((r) => setTimeout(r, 500));
-  }
-  if (!pronto) throw new Error(`servidor não respondeu em ${BASE}`);
-}
+const servidor = BASE_EXTERNA ? null : await subirServe(PORTA, { url: BASE });
 
 const STUB = 'export default {};export const createHotContext=()=>({accept(){},dispose(){},prune(){},on(){},off(){},send(){},invalidate(){},data:{}});'
   + 'export const updateStyle=()=>{};export const removeStyle=()=>{};export const injectQuery=(u)=>u;export class ErrorOverlay{}';

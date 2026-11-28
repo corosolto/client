@@ -13,12 +13,13 @@
    ?vmauthored=1&vmqa=precision, relógio do controlador segurado e avançado em
    passos de 1/60 s — quadro determinístico sem pular a lógica real.
    ============================================================================ */
-import { execFileSync, execSync, spawn } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { pathToFileURL } from 'node:url';
+import { subirServe } from './serve-eval.mjs';
 
 // Quadro de referência do dono (3:2, como ele joga) e o 16:9 que já mordeu.
 export const ASPECTOS = { '3x2': [1440, 960], '16x9': [1440, 810] };
@@ -33,14 +34,9 @@ export async function abrirNavegador() {
 export async function subirServidor(porta) {
   const base = `http://127.0.0.1:${porta}`;
   try { if ((await fetch(base)).ok) return { base, kill: () => {} }; } catch { /* sobe */ }
-  const raiz = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../..');   // qa.mjs chama de qualquer cwd
-  const srv = spawn('node', ['tools/eval/serve.mjs', String(porta)], { stdio: 'ignore', cwd: raiz });
-  process.on('exit', () => srv.kill());
-  for (let i = 0; i < 60; i++) {
-    try { if ((await fetch(base)).ok) return { base, kill: () => srv.kill() }; } catch { /* subindo */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`servidor de eval não subiu na porta ${porta}`);
+  const srv = await subirServe(porta);
+  console.error(`servidor de eval na porta ${porta}: ${(srv.ms / 1000).toFixed(1)} s de boot`);
+  return { base, kill: srv.kill };
 }
 
 /* O catálogo pago (KINEMATION) vive em /private-assets e NÃO é versionado: sem ele

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { subirServe } from './lib/serve-eval.mjs';
 import { readFile } from 'node:fs/promises';
 import net from 'node:net';
 import vm from 'node:vm';
@@ -14,17 +14,7 @@ const PORT = reservation.address().port;
 await new Promise((resolve, reject) => reservation.close((error) => error ? reject(error) : resolve()));
 const ORIGIN = `http://127.0.0.1:${PORT}`;
 const networkFetch = globalThis.fetch;
-const server = spawn(process.execPath, ['tools/eval/serve.mjs', String(PORT)], { stdio: 'ignore' });
-process.on('exit', () => server.kill());
-let ready = false;
-for (let attempt = 0; attempt < 480 && !ready; attempt += 1) {
-  try {
-    ready = (await networkFetch(`${ORIGIN}/site.webmanifest`)).ok;
-  } catch {
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
-}
-if (!ready) throw new Error(`servidor real não respondeu em ${ORIGIN}`);
+const server = await subirServe(PORT, { url: `${ORIGIN}/site.webmanifest` });
 const renderedShell = await (await networkFetch(`${ORIGIN}/`)).text();
 const BUILD_REVISION = renderedShell.match(/data-pwa-rev="([^"]+)"/)?.[1];
 if (!BUILD_REVISION) throw new Error('shell real não declarou data-pwa-rev');

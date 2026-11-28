@@ -22,12 +22,13 @@
 
    Sem STUDIO_PACK_ROOT (ou sem o pacote instalado nele) sai 78 = NÃO MEDIDO, nunca
    verde. Porta: PORTA ou a 1ª livre a partir de 9461 (lane 9100-9900). Rode sob with-browser-lock.sh. */
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import net from 'node:net';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { CHARACTER_RELEASES, STUDIO_CHARACTER_STATES, STUDIO_SKELETON_JOINTS } from '../../public/js/data/content-releases.js';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const NAO_MEDIDO = 78;
 const ROOT = join(import.meta.dirname, '../..');
@@ -92,15 +93,7 @@ const gRoot = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = pw.chromium || pw.default?.chromium;
 
-const servidor = spawn(process.execPath, ['tools/eval/serve.mjs', PORTA], { cwd: ROOT, stdio: 'ignore', env: { ...process.env, STUDIO_PACK_ROOT: RAIZ } });
-const derruba = () => { try { servidor.kill(); } catch { /* já saiu */ } };
-process.on('exit', derruba);
-let pronto = false;
-for (let i = 0; i < 120 && !pronto; i++) {
-  try { pronto = (await fetch(`${BASE}/eval-character.html`)).ok; } catch { /* subindo */ }
-  if (!pronto) await new Promise((r) => setTimeout(r, 500));
-}
-if (!pronto) throw new Error(`servidor não respondeu em ${BASE}`);
+const { kill: derruba } = await subirServe(PORTA, { url: `${BASE}/eval-character.html`, cwd: ROOT, env: { ...process.env, STUDIO_PACK_ROOT: RAIZ } });
 
 const falhas = [];
 const falha = (m) => falhas.push(m);

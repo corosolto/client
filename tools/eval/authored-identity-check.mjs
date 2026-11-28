@@ -23,8 +23,9 @@
    Uso: node tools/eval/authored-identity-check.mjs [--armas=ak,akm] [--mutante=…] [--porta=8154]
    Requer private-assets (symlink public/private-assets) — régua LOCAL, fora do check:fast.
    ============================================================================ */
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { subirServe } from './lib/serve-eval.mjs';
 
 import { VM_WEAPON } from '../../public/js/data/vmconfig.js';
 import { weaponCFG } from '../../public/js/weapons.js';
@@ -41,12 +42,7 @@ const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
-const srv = spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
-process.on('exit', () => srv.kill());
-for (let i = 0; i < 60; i++) {
-  try { if ((await fetch(BASE)).ok) break; } catch { /* subindo */ }
-  await new Promise((r) => setTimeout(r, 500));
-}
+const srv = await subirServe(PORTA, { url: BASE });
 
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const falhas = [];

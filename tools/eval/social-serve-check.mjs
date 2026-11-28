@@ -1,6 +1,6 @@
 // CI PR807: a raiz precisa conter o componente social real, sem silenciar falhas de render.
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { subirServe } from './lib/serve-eval.mjs';
 import { readFile, writeFile, unlink, mkdtemp, mkdir, cp, readdir, symlink, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import net from 'node:net';
@@ -37,22 +37,11 @@ await cp('src', join(fixture, 'src'), { recursive: true });
 for (const name of ['package.json', 'astro.config.mjs']) await cp(name, join(fixture, name));
 for (const name of ['scripts', 'node_modules']) await symlink(resolve(name), join(fixture, name));
 for (const name of await readdir('public')) if (name !== 'js') await symlink(resolve('public', name), join(fixture, 'public', name));
-const child = spawn(process.execPath, [file.pathname, String(port)], { cwd: fixture, stdio: ['ignore', 'pipe', 'pipe'] });
-const exited = new Promise(resolve => child.once('exit', resolve));
-let log = '';
-child.stdout.on('data', c => { log = (log + c).slice(-5000); });
-child.stderr.on('data', c => { log = (log + c).slice(-5000); });
+let srv = null;
 try {
-  const deadline = Date.now() + 60_000;
-  let response;
-  while (Date.now() < deadline) {
-    if (child.exitCode !== null || child.signalCode !== null) break;
-    try { response = await fetch(`http://127.0.0.1:${port}/`, { signal: AbortSignal.timeout(60_000) }); break; }
-    catch { await new Promise(r => setTimeout(r, 250)); }
-  }
-  assert(response, `servidor não respondeu; exit=${child.exitCode}; ${log.slice(-1200)}`);
-  assert.equal(response.status, 200, `raiz HTTP ${response.status}; ${log.slice(-1200)}`);
-  const html = await response.text();
+  let response, html;
+  srv = await subirServe(port, { script: file.pathname, cwd: fixture, aceita: async (r) => { response = r; html = await r.text(); return true; } });
+  assert.equal(response.status, 200, `raiz HTTP ${response.status}; ${srv.stderr().slice(-1200)}`);
   for (const id of ['hub-community', 'community', 'social-account', 'social-content', 'social-unread', 'account-entry-dialog'])
     assert.match(html, new RegExp(`id="${id}"`), `componente real: ${id}`);
   assert(!html.includes('<Community'), 'componente Astro cru');
@@ -99,8 +88,8 @@ try {
   console.error(`RED social-serve: ${e.message}`);
   process.exitCode = 1;
 } finally {
-  child.kill('SIGTERM');
-  await exited;
+  srv?.kill();
+  await srv?.saiu;
   await rm(fixture, { recursive: true, force: true });
   if (mutant) await unlink(file);
 }
