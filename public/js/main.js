@@ -397,7 +397,7 @@ const _lo = {
 const loadingStage = new LoadingCharacterStage(document.getElementById('load-character-3d'), { compatibility: LEAN });
 if (!LEAN) loadingStage.show('B').catch(() => {});   // celular: nenhum GLB/renderer 3D escondido atrás da splash
 function dockLoadingCharacter() {
-  const canvas = document.getElementById('load-character-3d');
+  const canvas = loadingStage.canvas;
   const stage = document.getElementById('load-character-stage');
   if (canvas && stage && canvas.parentElement !== stage) stage.prepend(canvas);
 }
@@ -427,7 +427,7 @@ function _statusPorProgresso(p) {
   if (p < 0.72) return tr('POSICIONANDO OS BOTS…');
   return tr('AQUECENDO A TRETA…');
 }
-function showLoading(label, status = 'CARREGANDO MODELOS 3D…', mapName = '') {
+function showLoading(label, status = 'CARREGANDO MODELOS 3D…', mapName = '', vaiMostrarJogador = false) {
   dockLoadingCharacter();
   const kick = document.getElementById('load-kicker');
   if (kick) kick.textContent = tr(label);   // o rótulo ("CARREGANDO <MAPA>") virou o kicker do topo (tela 00B)
@@ -452,15 +452,36 @@ function showLoading(label, status = 'CARREGANDO MODELOS 3D…', mapName = '') {
   _loadWallFixa = (mapName && MAPS[currentMap]?.loadingWall) || loadingWallDoPersonagem(currentChar) || '';
   try { _lo.box.style.setProperty('--loading-wall', _loadWallFixa ? `url('${_loadWallFixa}')` : loadingWallUrl(_loadWallI++)); } catch {}
   _lo.box.classList.remove('hidden');
-  if (!LEAN) loadingStage.show(ehMapaJavaporcos(currentMap) ? 'J' : currentFaction).catch(() => {});   // mobile mantém a tela 2D; nenhum segundo renderer/GLB durante o boot
+  if (!LEAN && !vaiMostrarJogador) loadingStage.show(ehMapaJavaporcos(currentMap) ? 'J' : currentFaction).catch(() => {});
   _giraDica();
   clearInterval(_dicaT); _dicaT = setInterval(_giraDica, 5000);
   _mkPhase(_lo.fill, _lo.pct, _lo.status);
+}
+function loadingPortraits(def) {
+  if (!def.id) return [];
+  if (!def.skinId) return retratoFontes(def.id).map(url => `${url}?v=${VERSION}`);
+  const poster = portraitUrl(def);
+  return poster ? [poster] : [];
+}
+function showLoadingPortrait(fontes) {
+  const image = $('load-player-portrait');
+  let i = -1;
+  const next = () => {
+    const url = fontes[++i];
+    image.hidden = !url;
+    if (url) image.src = url;
+    else { image.onerror = null; image.removeAttribute('src'); }
+  };
+  image.onerror = next;
+  next();
 }
 function hideLoading() {
   _lstat.phase = null;
   clearInterval(_dicaT); _dicaT = null;   // sem isto o timer sobrevive à partida inteira
   loadingStage.hide();
+  dockLoadingCharacter();
+  window.__tpElenco = null;
+  showLoadingPortrait([]);
   _lo.box.classList.add('hidden');
 }
 function rebuildMenuBackdrop(mapa) {
@@ -2235,7 +2256,7 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   const _sp = document.getElementById('boot-splash'); if (_sp) _sp.remove();   // fluxo ?auto= pula a splash
   // LOADING REAL da partida: overlay opaco cobre TUDO enquanto os GLBs entram e o mundo
   // é construído — nada de cena parcial/"minecraft" aparecendo aos poucos
-  showLoading(frase('carregando', MAPS[currentMap].name.toUpperCase()), 'CARREGANDO MODELOS 3D…', MAPS[currentMap].name.toUpperCase());
+  showLoading(frase('carregando', MAPS[currentMap].name.toUpperCase()), 'CARREGANDO MODELOS 3D…', MAPS[currentMap].name.toUpperCase(), true);
   let mapaPartida;
   if (currentMap === 'loja_h') {
     const seedMapa = sessao ? (sessao.net.meta.mapSeed ?? 1) : (Math.random() * 1e9) | 0;
@@ -2276,20 +2297,24 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
   // Operação Flávio: VIP é corpo a mais em B; Zero Um escolhido no B é o próprio VIP. Só
   // offline — online o elenco do servidor já traz o VIP.
   if (!sessao && currentMap === 'operacao_flavio') elencoDaEscolta(matchRoster, side, charId);
-  /* Treta Pop: o carregamento VS mostra o elenco sorteado; o global cobre o ?auto=, que lança antes de tp/ligar.js chegar */
-  if (document.documentElement.dataset.ui === 'v3') {
-    window.__tpElenco = {
-      javaporcosTimes: cooperativo ? 2 : sessao || settingsDaPartida.javaporcos?.times === 3 ? 3 : 2,
-      lado: side, eu: CHARACTERS.find((c) => c.id === charId), aliados: matchRoster.allyDefs, inimigos: matchRoster.enemyDefs,
-      online: !!sessao, tamanho: tamanhoTime || 0, ctf: modoEfetivoAtual() === 'ctf', arena: !sessao && !MAPS[currentMap].objectiveMode && matchMode === 'arena', rounds: sessao ? sanitizeRounds(sessao.net.meta.roundsMax) : matchRounds(),
-      mapa: MAPS[currentMap].name, desc: MAP_DESC[currentMap] || '', arte: mapPreviewPoster(currentMap, VERSION) };
-    window.dispatchEvent(new CustomEvent('tp:elenco', { detail: window.__tpElenco }));
-  }
   await tretaStoreReady.catch(()=>{});
   if (lancamentoPerdeu(meuLancamento)) return;
   const playerSkinId = sessao
     ? sessao.net.meta.roster.find(r=>r.id===sessao.net.yourEnt)?.skinId || null
     : equippedTretaSkin(charId);
+  const loadingPlayer = { ...charDef, skinId: playerSkinId };
+  const retratos = loadingPortraits(loadingPlayer);
+  /* Treta Pop: o carregamento VS mostra o elenco sorteado; o global cobre o ?auto=, que lança antes de tp/ligar.js chegar */
+  if (document.documentElement.dataset.ui === 'v3') {
+    window.__tpElenco = {
+      javaporcosTimes: cooperativo ? 2 : sessao || settingsDaPartida.javaporcos?.times === 3 ? 3 : 2,
+      lado: side, eu: loadingPlayer, retratos, aliados: matchRoster.allyDefs, inimigos: matchRoster.enemyDefs,
+      online: !!sessao, tamanho: tamanhoTime || 0, ctf: modoEfetivoAtual() === 'ctf', arena: !sessao && !MAPS[currentMap].objectiveMode && matchMode === 'arena', rounds: sessao ? sanitizeRounds(sessao.net.meta.roundsMax) : matchRounds(),
+      mapa: MAPS[currentMap].name, desc: MAP_DESC[currentMap] || '', arte: mapPreviewPoster(currentMap, VERSION) };
+    window.dispatchEvent(new CustomEvent('tp:elenco', { detail: window.__tpElenco }));
+  } else {
+    showLoadingPortrait(retratos);
+  }
   const playerEyewearId = sessao ? sessao.net.meta.roster.find(r=>r.id===sessao.net.yourEnt)?.eyewearId || null : equippedTretaEyewear();
   const playerPack = tretaPack(equippedTretaPack());
   const playerGloveId = playerPack?.gloveSkin || equippedTretaGlove();
@@ -2338,6 +2363,9 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
         rs.forEach((r) => { if (r.status === 'rejected') console.error('preload da partida falhou parcialmente', r.reason); });
         return rs;
       });
+      if (!LEAN && loadingPlayer.id) {
+        void loadingStage.show(currentFaction, { player: loadingPlayer, assets: bodyPreloads, weaponId: _vmStartWeapon }).catch(() => {});
+      }
       await aguardarPreloads([
         bodyPreloads,
         preloadEyewearAssets(matchEyewear),

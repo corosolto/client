@@ -426,8 +426,8 @@ game = muta('mouse-invertido-ignorado', game,
   'const invertY = this.settings.invertY ? -1 : 1;',
   'const invertY = this.settings.invertY ? 1 : 1;');
 loading3d = muta('loading-vira-esquerda', loading3d,
-  'built.group.rotation.y = 0.42;',
-  'built.group.rotation.y = -0.42;');
+  'model.group.rotation.y = 0.42;',
+  'model.group.rotation.y = -0.42;');
 main = muta('idioma-por-navegador', main,
   'await resolveGeoLang();\n', '');
 astro = muta('idioma-prerender', astro,
@@ -936,7 +936,7 @@ const resultadoIntegrado = /\.me-hero\{[^}]*position:absolute[^}]*inset:2\.5% 0 
 const loadingStageCss = (css.match(/#load-character-stage\{([^}]*)\}/) || [])[1] || '';
 const loadingCompactoDireita = /width:min\(86px,6\.8vw\)/.test(loadingStageCss)
   && /height:min\(144px,15\.2vh\)/.test(loadingStageCss)
-  && /built\.group\.rotation\.y = 0\.42/.test(loading3d)
+  && /model\.group\.rotation\.y = 0\.42/.test(loading3d)
   && /#load-character-action\{[^}]*display:none/.test(css);
 const configuracoesReferencia = /id="settings-close"/.test(astro)
   && /id="settings-restore"/.test(astro) && /id="settings-apply"/.test(astro)

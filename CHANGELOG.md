@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.1.0-alpha.157`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.1.0-alpha.155`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -26,7 +26,7 @@
 ## Unreleased — 2026-11-04
 
 ### Added
-- Atirar em 3P durante caminhada, corrida, strafe ou recuo mantém a fase da passada; o tronco reage sem trocar o clipe das pernas. Parar com o disparo ainda em andamento retoma a pose de tiro na fase certa.
+- A linha **VOCÊ** do carregamento usa o retrato do personagem e da skin da partida, sem entrada atrasada. No desktop, o modelo toma o lugar do retrato depois do primeiro quadro.
 - Passe **Sessão da Treta**: a trilha virou uma grade de 5 colunas × 3 linhas (4/3/2 colunas em telas menores, sem rolagem lateral), com hover animado e estados claros (resgatado, resgatável pulsando, alcançado, travado). Personagens e skins de arma abrem uma prévia 3D girável (arrastar e auto-rotação) dentro da tela do passe, pelo mesmo pipeline do jogo, com o retrato como reserva. **RESGATAR TUDO** resgata os níveis em sequência (um pedido por nível, respeitando o limite do servidor) e mostra o resumo. Subida de nível — inclusive o presente de boas-vindas do nível 10 — abre uma celebração; missão concluída mostra "+XP · missão"; a tela de resultado mostra "+N XP do passe", consultando de novo ~8 s depois para o MP ingerido com atraso; a aba PASSE do lobby ganha um selo com os níveis para resgatar (`public/js/tp/passe.js`, `tp/passe-festa.js`, `tp/passe-modelo.js`, `public/js/passe.js`; réguas `eval:passe` PS11–PS14 e `eval:passe:browser` PB12–PB18).
 - Personagens 3P ganham locomoção 8-way, recarga/saque e reações com clipes de trem superior, arremesso, faca e cerimônia de rodada, servidos por um único `models/anims/extras.glb` lazy (21 clipes meshy-28, fallback procedural e LOD preservados). A recarga autorada termina uma vez, sem reiniciar o clipe no último quadro. Primeiro saque e primeira granada pedidos antes do pack carregar tocam quando ele chega (a granada em fase com o arremesso); pistolas e pack ausente preservam o saque procedural. O golpe local de faca chega ao corpo 3P, headshots remotos usam `hit_head`, e o fim autoritativo online inicia e encerra a cerimônia na rodada seguinte. Bots do single-player andando de lado tocam o strafe do lado certo (a lateral saía espelhada: à direita tocava `strafe_left`). O contrato `eval:estados3p` cobre 26 cláusulas (os call sites e o strafe do bot medidos no `Game` real) e 21 mutantes, 9 deles em `game.js`; `eval:remotos3p` cobre sete mutantes de eventos e transições online. A medição compartilhado×retarget em cinco rigs e as decisões de máscara estão em `docs/ANIM-3P.md`.
 - Multiplayer: snapshots v9 levam agachamento, recarga e os oito emotes procedurais dos corpos remotos, inclusive estados de bots. A nova v10 preserva os bytes v9 e publica os oito emotes de captura como IDs 9–16, com fase autoritativa para entrada no meio da dança e cancelamento por movimento, tiro ou morte. O input normal e o heartbeat usam o catálogo da versão negociada: v10 replica o clipe capturado; fallback v9 filtra só os IDs novos; v8 omite os estados sem perder a partida. O backend deve ser publicado primeiro com o mesmo `CLIENT_REF`, mantendo v10/v9/v8 por conexão. `eval:netcodecbin` cobre codec, negociação, input, heartbeat e mutantes que restauram o filtro v9 ou contaminam uma versão congelada; `eval:rede3p` mede codec → controlador/rig real. O fallback WebTransport → WebSocket renova o ticket de uso único e mantém o nó escolhido. Contrato e ordem de publicação em `docs/visual-consistency/CLIENT-SNAPSHOT-NEGOTIATION.md`.
@@ -309,46 +309,6 @@
 - A animação de recarga em terceira pessoa deixa de reiniciar ao terminar; o clipe ainda retoma quando uma reação de dano o interrompe.
 - As réguas de emote validam a composição exata dos 16 itens do menu, e os harnesses de snapshot injetam o catálogo v9 ao avaliar `netgame.js`.
 - Estados assados por personagem só entram quando não aumentam nenhum teto congelado de deformação; os offsets de pé e as catracas de chão são regenerados sobre o conjunto aprovado.
-
-## [2.1.0-alpha.157] — 2026-11-22
-
-### Mudado
-- hotfix: use character avatars and cache public counters (#1437)
-- fix(ranking): keep portrait selection on the server
-- fix(ranking): send the available portrait catalog
-- fix(cache): isolate public counter entries for rollback
-- fix(ranking): keep avatars visible during image loading
-- fix(ci): remove waivers for the withdrawn picomatch advisory
-- test(ranking): load portrait assets in profile fixtures
-- test(routing): use health as the direct route in the geo check
-- fix(ranking): serve character avatars and cache public counters
-
-## [2.1.0-alpha.156] — 2026-11-18
-
-### Mudado
-- fix(cf,eval): stop cross-request cache sharing in the Worker and retry transient viewmodel fetches in CI (#1415)
-- fix(flavio): VIP is an extra body on side B, N human slots per side (#1414)
-- Operação Flávio: queue, X-ray arch and luggage carts collide as drawn (#1416)
-- test(smoke): node-drop fixture over HTTPS/WSS (dev now serves production CSP) (#1419)
-- fix(eval): make the local pre-push green on Node 26 (#1418)
-- fix(geo): forward player geo from request.cf in the API proxy (#1417)
-- chore: sync main into staging before the 2026-11-18 release batch (#1420)
-- release: batch 2026-11-18 (night): Operação Flávio fixes, Worker single-flight 500s, Node 26 pre-push, node-drop smoke (#1421)
-- test(smoke): node-drop fixture over HTTPS/WSS on every base
-- fix(operacao-flavio): solid-props check covers the procedural fallback
-- fix(geo): forward player geo from request.cf in the API proxy
-- fix(operacao-flavio): queue, arch and luggage carts collide as drawn
-- fix(bots): regroup route starts at its exit node and stops at waypoints
-- docs(changelog): local pre-push green on Node 26
-- docs(weapons): regenerate matrix anchors
-- fix(eval): vm-serving SP3 measures the Cloudflare serving path
-- chore(docs): regenerate derived blocks (autofix)
-- fix(eval): retry transient failures in the published viewmodel fixture
-- fix(cf): stop sharing a request's Response and lifetime across cache waiters
-- fix(flavio): VIP is an extra body on side B, N human slots per side
-- fix(eval): run the Node22-pinned glove-origin gate under an installed Node 22
-- fix(eval): move tp-drip loader to module.registerHooks
-- test: pin TAP reporter for self-spawned mutant runs
 
 ## [2.1.0-alpha.155] — 2026-11-17
 

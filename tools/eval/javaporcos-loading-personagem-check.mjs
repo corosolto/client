@@ -9,8 +9,12 @@ const card=readFileSync('public/js/tp/carregamento.js','utf8');
 const mutant=process.argv.includes('--mutante=humano');
 if(mutant) src=src.replace("faction === 'J' ? 'javaporco' :",'');
 const definition=src.replace("import('./mode_javaporcos.js')",'carregarHorda()').replace(/^import .*;$/gm,'').replaceAll('export ','');
-const Stage=vm.runInNewContext(definition+'\nLoadingCharacterStage;', {THREE, carregarHorda:()=>Promise.resolve({preloadJavaporcos:()=>pendente,criarPreviewJavaporco:()=>new THREE.Group()})});
-let resolver,pendente=Promise.resolve();
+const Stage=vm.runInNewContext(definition+'\nLoadingCharacterStage;', {
+ THREE, carregarHorda:()=>Promise.resolve({preloadJavaporcos:()=>pendente,criarPreviewJavaporco:()=>new THREE.Group()}),
+ buildCharacterModel:(def,{preview}) => def.skinId === skinDisponivel && preview ? {group:new THREE.Group(),skinId:def.skinId,ctrl:{setCrouch(){},update(){},actions:{}}} : null,
+ document:{getElementById:()=>null},
+});
+let resolver,pendente=Promise.resolve(), skinDisponivel;
 const old={group:new THREE.Group()},group=new THREE.Group();
 const canvas={dataset:{}},scene=new THREE.Scene();scene.add(old.group);
 const stage=Object.assign(Object.create(Stage.prototype),{canvas,scene,cache:new Map([
@@ -41,6 +45,25 @@ try {
  stage.cache.delete('javaporco');pendente=new Promise(r=>resolver=r);
  const atrasado=stage.show('J');await Promise.resolve();await Promise.resolve();await stage.show('E');resolver();await atrasado;
  assert.equal(canvas.dataset.character,'gotinha');assert.equal(stage.current,stage.cache.get('gotinha'));
+ const punk = {id:'punk',skinId:'punk-selecionada'};
+ const assets = new Promise(r=>resolver=r);
+ const troca = stage.show('J', {player:punk,assets});
+ assert.equal(canvas.dataset.character,'punk');
+ assert.equal(canvas.dataset.ready,'0');
+ assert.equal(stage.current,null);
+ skinDisponivel=punk.skinId;resolver();await troca;
+ assert.equal(stage.current.skinId,punk.skinId);
+ assert.equal(canvas.dataset.skin,punk.skinId);
+ assert.equal(canvas.dataset.ready,'0');
+ stage._resize=()=>{};
+ stage.renderer.render=()=>assert.equal(canvas.dataset.ready,'0','a imagem ainda protege o quadro não pintado');
+ stage.update(.016);
+ assert.equal(canvas.dataset.ready,'1');
+ const antiga = stage.show('E', {player:{id:'punk',skinId:'outra-skin'},assets:new Promise(r=>resolver=r)});
+ await stage.show('J');
+ resolver();await antiga;
+ assert.equal(stage.current.javaporco,true);
+ assert.equal(canvas.dataset.character,'javaporco');
  console.log('✓ Loading real seleciona javaporco, retira humano e mantém facção nos outros mapas');
 } catch(e) {failed=true;console.log('✗ Loading personagem: '+e.message);}
 process.exitCode=mutant?(failed?0:1):(failed?1:0);

@@ -76,54 +76,70 @@ export class LoadingCharacterStage {
     this.scene.add(rim);
   }
 
-  async show(faction) {
+  async show(faction, { player, assets, weaponId } = {}) {
+    if (!this.canvas) return;
     this.active = true;
     this.elapsed = 0;
     this.currentAction = null;
     const token = ++this.token;
-    const id = faction === 'J' ? 'javaporco' : LOADING_CHARACTER_IDS[faction] || LOADING_CHARACTER_IDS.E;
+    const id = player?.id ?? (faction === 'J' ? 'javaporco' : LOADING_CHARACTER_IDS[faction] || LOADING_CHARACTER_IDS.E);
     this.canvas.dataset.character = id;
+    this.canvas.dataset.skin = '';
     this.canvas.dataset.ready = '0';
+    delete this.canvas.dataset.error;
     if (!this.renderer) return;
     if (this.current) this.scene.remove(this.current.group);
     this.current = null;
     this.ctrl = null;
     this.renderer.clear();
-    if (id === 'javaporco' && !this.cache.has(id)) {
-      const {preloadJavaporcos, criarPreviewJavaporco} = await import('./mode_javaporcos.js');
-      await preloadJavaporcos();
-      if (token !== this.token || !this.active) return;
-      this.cache.set(id, {group: criarPreviewJavaporco(), javaporco: true});
-    } else if (!this.cache.has(id)) {
-      /* Só a arma DESTE preview: sem a lista, o bootstrap puxava as 26 antes de a partida
-         existir — 7,5 MB e ~164 MB de VRAM na tela de carregamento. Régua: ARM1. */
-      await preloadCharacterAssets([id], { weapons: [charWeapon(id)] });
-      if (token !== this.token || !this.active) return;
-      const def = CHARACTERS.find((character) => character.id === id);
-      const built = def && hasModel(id)
-        ? buildCharacterModel(def, { weaponId: charWeapon(id), preview: true }) : null;
-      if (!built) {
-        this.canvas.dataset.error = 'modelo-ausente';
-        return;
+    let model;
+    if (player) {
+      model = buildCharacterModel(player, { weaponId, preview: true });
+      if (!model) {
+        await assets;
+        if (token !== this.token || !this.active) return;
+        model = buildCharacterModel(player, { weaponId, preview: true });
       }
-      built.group.rotation.y = 0.42;
-      this.cache.set(id, built);
+    } else {
+      model = this.cache.get(id);
+      if (!model) {
+        if (id === 'javaporco') {
+          const {preloadJavaporcos, criarPreviewJavaporco} = await import('./mode_javaporcos.js');
+          await preloadJavaporcos();
+          if (token !== this.token || !this.active) return;
+          model = { group: criarPreviewJavaporco(), javaporco: true };
+        } else {
+          await preloadCharacterAssets([id], { weapons: [charWeapon(id)] });
+          if (token !== this.token || !this.active) return;
+          const def = CHARACTERS.find((character) => character.id === id);
+          if (def && hasModel(id)) model = buildCharacterModel(def, { weaponId: charWeapon(id), preview: true });
+        }
+        if (model) this.cache.set(id, model);
+      }
     }
-    if (token !== this.token || !this.active) return;
-    if (this.current) this.scene.remove(this.current.group);
-    this.current = this.cache.get(id);
-    this.ctrl = this.current.ctrl;
-    this.current.group.rotation.y = 0.42;
-    this.camera.position.set(.12, 1.08, this.current.javaporco ? 6 : 3.9);
-    this.camera.lookAt(0, this.current.javaporco ? .7 : .92, 0);
-    this.scene.add(this.current.group);
-    this.canvas.dataset.ready = '1';
+    if (!model) {
+      this.canvas.dataset.error = 'modelo-ausente';
+      return;
+    }
+    this.current = model;
+    this.ctrl = model.ctrl;
+    model.group.rotation.y = 0.42;
+    this.camera.position.set(.12, 1.08, model.javaporco ? 6 : 3.9);
+    this.camera.lookAt(0, model.javaporco ? .7 : .92, 0);
+    this.scene.add(model.group);
+    this.canvas.dataset.skin = model.skinId || '';
+    if (!player) this.canvas.dataset.ready = '1';
   }
 
   hide() {
     this.active = false;
     this.token++;
-    if (this.canvas) { this.canvas.dataset.action = ''; this.canvas.dataset.clip = ''; }
+    if (this.current) this.scene.remove(this.current.group);
+    this.current = this.ctrl = null;
+    if (this.canvas) {
+      this.canvas.dataset.ready = '0';
+      this.canvas.dataset.action = this.canvas.dataset.clip = '';
+    }
   }
 
   _enter(action) {
@@ -176,5 +192,6 @@ export class LoadingCharacterStage {
     this.ctrl.update(dt, moving, hasTarget, speed);
     this.canvas.dataset.clip = Object.entries(this.ctrl.actions).find(([, clip]) => clip === this.ctrl.cur)?.[0] || '';
     this.renderer.render(this.scene, this.camera);
+    if (this.canvas.dataset.ready !== '1') this.canvas.dataset.ready = '1';
   }
 }
