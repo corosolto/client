@@ -125,6 +125,11 @@ jobs:
       - name: Réguas de workflow, release, privacidade e escolha (node puro)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: node tools/eval/runner.mjs eval:wfsecret eval:wflocal eval:wftimeout eval:wfconcurrency eval:deploygate eval:autofix eval:mutcega eval:portaointeiro eval:release eval:privacy eval:noescolha eval:contagens-pr eval:mergequeue eval:sondafilho eval:wfpurge
+      # Alerta #17: task record do Tripo com link de CloudFront assinado entrou versionado.
+      # Varre todo arquivo versionado (node puro, sem dist) e prova o mutante.
+      - name: Link pré-assinado de CDN não entra versionado (com mutante)
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run eval:urlassinada
       # Job que só lê histórico ou poucos arquivos faz checkout leve (CL1). Node puro.
       - name: Checkout leve nos jobs que só leem histórico
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
