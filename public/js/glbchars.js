@@ -1293,9 +1293,19 @@ export function buildCharacterModel(def, opts = {}) {
     if (twoHanded && lhandBone) {
       let lArm = null, lFore = null;
       model.traverse(o => { if (o.isBone) { if (o.name === 'LeftArm') lArm = o; if (o.name === 'LeftForeArm') lFore = o; } });
-      const gp = gripPoints(opts.weaponId || 'awp');
-      if (skin?.gripProfile === 'mint24-curl-v1' && gp.fore) { gp.fore.z *= 1.35; gp.fore.y += def.skinId === 'lula-drip' ? 0.07 : 0.035; }
-      if (lArm && lFore && gp.fore && gunObj && !IK_L_SKIP.has(def.id)) ctrl.ikL = { chain: [lArm, lFore], end: lhandBone, endOffset: measurePalmLocal(model, lhandBone, curlLs), gun: gunObj, fore: gp.fore.clone() };
+      const armId = opts.weaponId || 'awp';
+      const autorado = skin?.gripProfile === 'mint24-curl-v1';
+      const { fore } = gripPoints(armId, autorado ? 'fp' : 'tp');
+      if (fore && lArm && lFore && gunObj && !IK_L_SKIP.has(def.id)) {
+        if (autorado) {
+          fore.z *= 1.35;
+          fore.y += def.skinId === 'lula-drip' ? 0.07 : 0.035;
+        } else {
+          // O socket 3P está em metros; localToWorld reaplica a escala do GLB.
+          fore.divideScalar(gunObj.scale.x || 1);
+        }
+        ctrl.ikL = { chain: [lArm, lFore], end: lhandBone, endOffset: measurePalmLocal(model, lhandBone, curlLs), gun: gunObj, fore };
+      }
     }
     /* Overlay de tronco (recarga/lean): ossos Spine do rig doado + alvos da mão esquerda.
        2 mãos: a mão vai ao PENTE (abaixo do guarda-mão). 1 mão: ao porta-carregador no

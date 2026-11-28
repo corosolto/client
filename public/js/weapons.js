@@ -259,17 +259,19 @@ export const ONE_HANDED = new Set(['pistol', 'deagle', 'revolver38', 'knife']);
 // Sidearm slot (tecla 2). Everything else except the knife is a primary (tecla 1).
 export const PISTOLS = new Set(['pistol', 'deagle', 'revolver38']);
 
-// Pontos de empunhadura no espaço local do grupo do weaponModel() (grip na origem,
-// cano apontando +Z). ÚNICA FONTE usada por: alignHands (game.js, mãos procedurais),
-// IK dos braços FP (fparms.js) e IK da mão de apoio em 3ª pessoa (glbchars.js).
-// fore = ponto no guarda-mão, à frente do grip (fração do trecho grip→boca); null p/ 1 mão.
-// ATENÇÃO à convenção: no grupo da viewmodel (game.js) o GLB entra girado em π (cano -Z),
-// então lá o fore vira z' = GRIP_Z - fore.z; nos mounts de 3ª pessoa o cano é +Z direto.
-export function gripPoints(id) {
+const SUPPORT_FAMILY = {
+  awp:'sniper', mosin:'sniper', rem700:'sniper', svd:'sniper', g3sg1:'sniper', sks:'sniper',
+  mp5:'smg', uzi:'smg', p90:'smg', tavor:'bullpup', famas:'bullpup', shotgun:'shotgun', lmg:'heavy',
+};
+const SUPPORT_Z = { rifle:0.32, sniper:0.22, smg:0.29, bullpup:0.22, shotgun:0.22, heavy:0.25 };
+
+// Pontos em metros com cano +Z. O viewmodel mantém a calibração FP; o 3P mede a malha.
+export function gripPoints(id, view = 'fp') {
   const cfg = weaponCFG(id);
+  const support = view === 'tp' ? _metrics.get(id)?.support : null;
   return {
     grip: new THREE.Vector3(0, 0, 0),
-    fore: ONE_HANDED.has(id) ? null : new THREE.Vector3(0.005, -0.045, 0.82 * cfg.len * (1 - cfg.gripZ) * 0.72),
+    fore: ONE_HANDED.has(id) ? null : support?.clone() ?? new THREE.Vector3(0.005, -0.045, 0.82 * cfg.len * (1 - cfg.gripZ) * 0.72),
   };
 }
 
@@ -308,10 +310,20 @@ function measureGun(id, wrap) {
   let sx = 0, c = 0;
   for (const p of pts) if (p.z >= 0 && p.z <= z1 && p.y > top - 0.012) { sx += p.x; c++; }
   const sight = new THREE.Vector3(c ? sx / c : mz.x, top > -1e8 ? top : box.max.y, mz.z * 0.30);
+  let support = null;
+  if (!ONE_HANDED.has(id)) {
+    const z = Math.min(box.max.z - 0.02, L * SUPPORT_Z[SUPPORT_FAMILY[id] || 'rifle']);
+    const ray = new THREE.Raycaster(new THREE.Vector3(0.005, box.min.y - 0.02, z), new THREE.Vector3(0, 1, 0));
+    const hit = ray.intersectObject(wrap, true)[0];
+    if (hit) {
+      support = hit.point;
+      support.y -= 0.012;
+    }
+  }
   // norm = escala de normalização do wrap no momento da medida. box/muzzle/sight estão em
   // METROS REAIS (espaço do PAI do wrap); para usá-los com wrap.localToWorld é preciso
   // dividir por norm, senão a escala entra DUAS vezes e o flash nasce longe do cano.
-  const m = { box: box.clone(), muzzle: mz.clone(), sight, norm: wrap.scale.x || 1 };
+  const m = { box: box.clone(), muzzle: mz.clone(), sight, support, norm: wrap.scale.x || 1 };
   _metrics.set(id, m);
   return m;
 }
