@@ -365,8 +365,9 @@ export function pichacoes(scene, mundo, U, evita = [], janelas = [], opts = {}) 
     for (let i = fila.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [fila[i], fila[j]] = [fila[j], fila[i]]; }
     const postas = [], perto = (f, d) => postas.some((p) => Math.hypot(p.x - f.x, p.z - f.z) < d && Math.abs(p.b - f.b) < 1);
     const fogao = itens.find((q) => q.id === 'fogao'), merc = opts.loja ? itens.find((q) => q.id === 'mercadinho') : null;
-    // Letreiro fixo com op 1,25: passa pelo desbote em mancha do shader (com op 2 sai chapado).
-    if (fogao) for (const z of [-12.9, -12.3, -13.5, -11.7, -14.1]) if (cola(fogao, -5.2, 5.19, z, -1, 0, 2.5, 2.5 * fogao.h / fogao.w, 1.25)) { postas.push({ x: -5.2, z, b: 3.1 }); break; }
+    // Letreiro fixo com op 1,25 e margem entre os postes z = -13,1/-8,9; eles não entram nos raios de parede.
+    // Posição e desbote: docs/hd-kit/lajes.md#decalques.
+    if (fogao) for (const z of [-11.7, -11.4, -11.2]) if (cola(fogao, -5.2, 5.19, z, -1, 0, 2.1, 2.1 * fogao.h / fogao.w, 1.25)) { postas.push({ x: -5.2, z, b: 3.1 }); break; }
     if (merc) for (const z of [-9.85, -9.6, -10.1]) if (cola(merc, -14.85, 2.76, z, 1, 0, 2.3, 2.3 * merc.h / merc.w, 1.25)) { postas.push({ x: -14.85, z, b: 0 }); info.mercadinho = z; break; }
     // Grafite grande primeiro, em parede alta (acima de 2,1 m), antes que o resto ocupe o lugar.
     for (const it of itens.filter((q) => q.cat === 'graf')) achou: for (const f of faces) { if (f.teto < f.b + 4 || perto(f, 4)) continue;

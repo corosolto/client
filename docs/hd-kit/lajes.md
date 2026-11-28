@@ -80,6 +80,24 @@ Paleta do dono: reboco e cimento cinza de verdade (o sol é quente, então o alb
 frio) e tijolo. O tijolo não muda de escala nem de UV: medido 99 px por fiada em 1024 px com
 tile de 2 m = 19,3 cm.
 
+## contraste-material
+
+Revisão de legibilidade sem trocar textura, UV ou geometria:
+
+- Piso: as quatro variações de albedo perderam metade da amplitude sem mudar a média: placa
+  0,905–1,035, mancha 0,86–1,06, grão médio 0,91–1,05 e grão fino 0,96–1,04. A rugosidade do
+  alfa virou `mix(0.90, hdT.a, 0.35)`; poça, canaleta, juntas e manta continuam intactos.
+- Reboco: `hdFino` usa 0,975–1,015 (antes 0,95–1,03), `hdNvar` tem ganho 0,55 e a rugosidade usa
+  a mesma compressão do piso antes do ajuste do liso. Famílias, tintas, idade e rodapé continuam.
+- Concreto de parede: o conjunto de variação de albedo é misturado 60 % com o material e 40 % com
+  neutro; a ondulação e a rugosidade constante 0,92 não mudaram.
+- Aço: o albedo de base e os dois tons da chapa são convertidos à luminância antes do desgaste;
+  os tons neutros 0,78 e 1,00 preservam o contraste dos antigos pares sem a faixa verde. Ferrugem,
+  metalness 0,2, rugosidade 0,62 e relevo não mudaram.
+- Corrimão: os cilindros de raio 0,033 das escadas usam `adobe` no mapa, não `steel`; a tinta por
+  célula de `rebocoHD` deixava o tubo em sombra verde-menta. O recorte `corrimaoNeutro` dá somente
+  a esses cilindros um clone `hd-corrimao` com o PBR original e cor convertida à luminância linear.
+
 ## idade
 
 `idade()` é a idade comum a reboco, tijolo e concreto de parede: escorrido acima de 2 m, trinca,
@@ -412,3 +430,6 @@ porque com op 2 saía chapado, sem passar pelo desbote em mancha do shader.
 Cada lugar é conferido com raios a cada 12 cm de altura e 22 cm de largura, com 4 cm de folga:
 cinta, viga ou pilar no caminho recusa o lugar. `opts.loja`: placa pintada do mercadinho na
 fachada de entorno 41 (x = -14,85), entre o toldo (2,60 m) e a cinta do andar (2,95 m).
+O letreiro CONSERTA-SE FOGÃO tenta z = -11,7/-11,4/-11,2 na mesma parede x = -5,2: com 2,1 m de
+largura (antes 2,5 m) fica com margem entre os postes da cobertura em z = -13,1 e -8,9, que não
+participam desses raios.
