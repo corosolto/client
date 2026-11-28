@@ -2390,12 +2390,14 @@ async function _startGame(meuLancamento, team, charId, enemyFaction, online = fa
     onTrainingFrames: sendTrainingFrames,
   });
   window.__game = game;
-  // Demo de gráficos: kit HD por mapa só com ?hd=1 (map_*_hd.js); sem a flag nada carrega.
+  // Kit HD por mapa: carrega sempre (sem gate ?hd=1)
   const kitHD = {
     velho_oeste: ['./map_sertao_hd.js', 'aplicaSertaoHD', {}],
     lajes: ['./map_lajes_hd.js', 'aplicaLajesHD', {}],
+    corrego: ['./map_corrego_hd.js', 'aplicaCorregoHD', {}],
+    escadao: ['./map_escadao_hd.js', 'aplicaEscadaoHD', {}],
   }[game._mapId];
-  if (kitHD && new URLSearchParams(location.search).get('hd') === '1') {
+  if (kitHD) {
     void import(kitHD[0]).then((m) => { if (window.__game === game) window.__kitHD = m[kitHD[1]](game.scene, game.renderer, kitHD[2]); }).catch(() => {});
   }
   /* RÉGUA:launch-race nascimento fim */
