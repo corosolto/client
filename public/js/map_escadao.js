@@ -8,7 +8,7 @@ import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';
-import { detailFor } from './textures.js';
+import { detailFor, registerDetail } from './textures.js';
 import { planoUV, metrosPorUV } from './map_uv.js';
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
@@ -24,9 +24,11 @@ const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settin
 export const HALF_X = 18, HALF_Z = 40;
 export const ESCADAO_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'dog', 'cockroach', 'escadaoCat', 'sertaoHen']);
 
-export const ESCADAO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fusca',
-  'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_dagua', 'varal_roupas_01', 'varal_roupas_02',
-  'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas', 'samambaia', 'grama_corrego_02', 'escadao_casa_r3', 'escadao_varanda_r4', 'escadao_eletrica_r4'];
+// Só o que o mapa desenha: a lista é preload obrigatório (required) de toda partida.
+// tires, moto_cg, guarda_sol, stall, arara_roupas e escadao_casa_r3 saíram: nenhum placeProp.
+export const ESCADAO_PROPS = ['pilha_pneus', 'dumpster', 'fusca',
+  'mesa_guardasol', 'caixa_dagua', 'varal_roupas_01', 'varal_roupas_02',
+  'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas', 'samambaia', 'grama_corrego_02', 'escadao_varanda_r4', 'escadao_eletrica_r4'];
 
 /* bbox dos moldes (GLB em disco): é a razão entre eixos que decide o quanto cada
    instância estica. `eval:escala-casario` relê os arquivos e reprova se derivar. */
@@ -111,7 +113,7 @@ export function buildEscadao(scene, T) {
     m.position.set(x, y + h / 2, z); m.castShadow = opts.cast !== false; m.receiveShadow = true;
     if (opts.ry) m.rotation.y = opts.ry;
     if (solo && opts.skirt !== false) SKIRT.add(x, y, z, w, d, opts.ry || 0);
-    if (mat === MAT_AZ_LONG || mat.userData?.metricTile) {
+    if (mat.userData?.metricTile) {
       const uv = geo.attributes.uv, pos = geo.attributes.position, normal = geo.attributes.normal;
       for (let i = 0; i < uv.count; i++) {
         const axis = Math.abs(normal.getX(i)) > 0.5 ? pos.getZ(i) : pos.getX(i);
@@ -133,36 +135,7 @@ export function buildEscadao(scene, T) {
   const addFloor = (w, d, x, z, mat, y = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; };
 
   // ---- texturas procedurais ----
-  function azulejoTex(seed) {
-    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
-    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    const cores = ['#087fbd', '#20a6a1', '#f0c332', '#e56b43', '#1767a7', '#55a85a', '#f0e3a7', '#bd3f67'];
-    const az = 32;
-    for (let py = 0; py < S; py += az) for (let px = 0; px < S; px += az) {
-      x.fillStyle = cores[(rnd() * cores.length) | 0]; x.fillRect(px, py, az, az);
-      x.fillStyle = cores[(rnd() * cores.length) | 0];
-      x.beginPath(); x.arc(px + az / 2, py + az / 2, 6 + rnd() * 8, 0, 6.283); x.fill();
-      x.strokeStyle = 'rgba(255,255,255,0.55)'; x.lineWidth = 2; x.strokeRect(px, py, az, az);
-    }
-    for (let i = 0; i < 40; i++) { x.fillStyle = `rgba(60,55,45,${0.1 + rnd() * 0.2})`; x.beginPath(); x.arc(rnd() * S, rnd() * S, 2 + rnd() * 8, 0, 6.283); x.fill(); }
-    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    return lam({ map: tex });
-  }
-  const MAT_AZ_FALLBACK = azulejoTex(7019);
-  let MAT_AZ = MAT_AZ_FALLBACK, MAT_AZ_LONG;
-  if (typeof document !== 'undefined') {
-    const tex = new THREE.TextureLoader().load('/img/textures/escadao_streetart_azulejo.webp', undefined, undefined, () => {
-      MAT_AZ.map = MAT_AZ_FALLBACK.map; MAT_AZ.needsUpdate = true;
-      if (MAT_AZ_LONG) { MAT_AZ_LONG.map = MAT_AZ_FALLBACK.map; MAT_AZ_LONG.needsUpdate = true; }
-    });
-    tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    MAT_AZ = lam({ map: tex });
-  }
-  // Espelhos pontuais recebem UV em metros; pisos e muretas usam concreto.
-  const faixaAz = MAT_AZ.map.clone();
-  faixaAz.wrapS = faixaAz.wrapT = THREE.RepeatWrapping; faixaAz.repeat.set(1, 1);
-  faixaAz.needsUpdate = true;
-  MAT_AZ_LONG = lam({ map: faixaAz, emissive: 0x151006, emissiveIntensity: 0.12 });
+  // Azulejo (MAT_AZ/MAT_AZ_LONG) saiu: nenhum addBox o usava e o webp baixava à toa.
   const AZ_CAPS = [
     lam({ color: 0x657d7b, roughness: 0.95 }), lam({ color: 0xb7a16f, roughness: 0.95 }),
     lam({ color: 0xa87559, roughness: 0.95 }), lam({ color: 0xc5bca9, roughness: 0.95 }),
@@ -276,13 +249,30 @@ export function buildEscadao(scene, T) {
   // branca em erro; trocar só no onLoad evita que falha de asset apague a superfície.
   if (typeof document !== 'undefined') {
     const loader = new THREE.TextureLoader();
-    const external = (mat, url, rx, ry) => {
+    // O webp não passa pelo textures.js: sem derivar o relevo DELE, detailFor devolve null e
+    // o chão perde normal+roughness quando a textura chega. ?escrelevo=0 volta ao liso.
+    const RELEVO_WEBP = QP.get('escrelevo') !== '0';
+    // Sobel numa cópia reduzida: a ondulação do zinco é larga e some no Sobel de vizinho a 512.
+    const fonteRelevo = (img, res) => {
+      if (!res || !(img.width > res)) return img;
+      const c = document.createElement('canvas'); c.width = c.height = res;
+      c.getContext('2d').drawImage(img, 0, 0, res, res);
+      return c;
+    };
+    // relevo = [força Sobel, rough lo, rough hi, normalScale, resolução do Sobel]
+    const external = (mat, url, rx, ry, relevo = [2.2, .6, .98]) => {
+      const [forca, lo, hi, escala, res] = relevo;
       const tex = loader.load(url, () => {
         mat.map = tex;
+        if (RELEVO_WEBP && tex.image && !detailFor(tex)) registerDetail(tex, fonteRelevo(tex.image, res), forca, lo, hi);
         const det = detailFor(tex);
         mat.normalMap = det?.normalMap || null;
         mat.roughnessMap = det?.roughnessMap || null;
-        if (mat.normalMap) { const scale = mat.roughness >= .8 && mat.metalness < .2 ? .4 : .65; mat.normalScale.set(scale, scale); }
+        if (mat.normalMap) {
+          const scale = escala ?? (mat.roughness >= .8 && mat.metalness < .2 ? .4 : .65);
+          mat.normalScale.set(scale, scale);
+          mat.normalMap.anisotropy = tex.anisotropy;   // sem isso o relevo borra no chão rasante
+        }
         mat.userData?.onExternalTex?.(tex);
         mat.needsUpdate = true;
       });
@@ -290,10 +280,12 @@ export function buildEscadao(scene, T) {
       tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
       tex.repeat.set(rx, ry);
     };
-    external(MAT.asphalt, '/img/textures/asphalt_br.webp', 6, 6);
-    external(MAT.concrete, '/img/textures/concrete_br.webp', 4, 4);
-    external(MAT.concreteDark, '/img/textures/concrete_br.webp', 5, 5);
-    external(MAT_ZINCO, '/img/textures/tex_zinco.webp', 3, 3);
+    // Mesmos parâmetros do procedural de textures.js; zinco com rough perto de 1 para não lustrar.
+    // normalScale: menor valor com >= +15 % de contraste local ao sol rasante (?escrelevo=0 = liso).
+    external(MAT.asphalt, '/img/textures/asphalt_br.webp', 6, 6, [2.0, .66, .99, 3.2]);
+    external(MAT.concrete, '/img/textures/concrete_br.webp', 4, 4, [2.4, .58, .97, 2.4]);
+    external(MAT.concreteDark, '/img/textures/concrete_br.webp', 5, 5, [2.4, .60, .98, 2.4]);
+    external(MAT_ZINCO, '/img/textures/tex_zinco.webp', 3, 3, [1.8, .85, 1.0, 1.0, 128]);
 
   }
 
@@ -776,8 +768,9 @@ export function buildEscadao(scene, T) {
   /* ===================== TOPO (mirante) =====================
      Spawn B precisa de cobertura contra tiros da escada. */
   // Caixa d'água Tripo PBR: o proxy mantém o mesmo cover e é fallback se o GLB não carrega.
+  // Fallback azul de polietileno (não preto): sem GLB, ainda lê como caixa d'água.
   propAt('caixa_dagua', -12, -32, 3.0, 2.5, 2.5,
-    lam({ color: 0x1a1a1a, roughness: 0.8 }), 0, H_TOP);
+    lam({ color: 0x2f6fa8, roughness: 0.6 }), 0, H_TOP);
   /* Varais reais do acervo: roupa é silhueta leve no horizonte, nunca cover nem occluder. */
   const varal = (id, x, z, h, ry = 0, y = H_TOP) => {
     const o = GLB_ON ? placeProp(id, { x, y, z, targetH: h, ry }) : null;
