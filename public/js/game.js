@@ -10126,7 +10126,9 @@ export class Game {
 
   /* ================= main update ================= */
   update(dt, render = true) {
-    if (this.paused) return;
+    /* Descartado continua em `game` durante o preload do próximo ("jogar de novo"), e o rAF
+       segue chamando: sem esta saída o puffFx já nulo derrubava o loop (#1407/#1408). */
+    if (this.paused || this._disposed) return;
     /* O `dt` chega e vai embora inteiro: o hit-stop do headshot saiu com a replay cam,
        porque escalar o relógio vazava para física, tiro e rede (BUG-142). */
     this.time += dt;

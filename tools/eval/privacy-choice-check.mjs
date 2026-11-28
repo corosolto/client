@@ -4,6 +4,7 @@ import vm from 'node:vm';
 const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');
 let source;try{source=read('public/js/privacy-runtime.js');}catch{assert.fail('No runtime enforces optional analytics choice');}
 const mutant=process.argv.find(s=>s.startsWith('--mutant='))?.slice(9);
+if(mutant==='beacon-modulo')source=source.replace('script.defer=true;',"script.type='module';");
 if(mutant==='ignore-refusal')source=source.replace('return choice()?.analytics!==false;','return true;');
 if(mutant==='keep-optional-storage-on-refusal')source=source.replace('if(!analytics)clearOptionalStorage();','');
 if(mutant==='injects-third-party')source=source.replace("function allowed() {","document.head.appendChild(Object.assign(document.createElement('script'),{src:'/_vercel/insights/script.js'}));function allowed() {");
@@ -26,7 +27,7 @@ const {store,session,events,scripts,listeners,p,browserWindow}=boot();
 assert.equal(p.allowed(),true,'No choice means default allow (legitimate interest)');
 assert.equal(scripts.length,1,'Default allow injects Cloudflare once');
 assert.equal(scripts[0].src,'https://static.cloudflareinsights.com/beacon.min.js');
-assert.equal(scripts[0].type,'module');
+assert.notEqual(scripts[0].type,'module','Beacon module before the importmap makes Firefox drop the importmap (#1425)');
 assert.deepEqual(JSON.parse(scripts[0].dataset.cfBeacon),{token:'5f7f6c1ab01c4e2fb6b326dbab3e7197'});
 assert(store.has('cs_ops_last'),'Default allow keeps diagnostics');assert(store.has('cs_acq'),'Default allow keeps attribution');assert(session.has('cs_session'));assert(session.has('cs_invite_landing'));assert.equal(p.choice(),null,'Default allow is not written as a choice');p.set(true);assert.equal(p.allowed(),true);assert.equal(scripts.length,1,'Explicit allow does not duplicate Cloudflare');p.set(false);assert.equal(p.allowed(),false,'Explicit refusal wins');assert.equal(browserWindow.__cfBeacon,null,'Withdrawal disables the loaded beacon without interrupting the current flow');assert(!store.has('cs_ops_last'),'Refusal removes diagnostics');assert(!store.has('cs_acq'),'Refusal removes attribution');assert(!session.has('cs_session'));assert(!session.has('cs_invite_landing'));assert.equal(store.get('cs_anon'),'essential-guest-proof');assert.equal(store.get('awpbr_token'),'essential-token');
 store.set('cs_privacy','broken');assert.equal(p.allowed(),true,'Corrupt storage falls back to default allow');store.set('cs_privacy',JSON.stringify({version:'old',analytics:false}));assert.equal(p.choice(),null,'Old version is not a current choice');assert.equal(p.allowed(),true);store.delete('cs_privacy');listeners.storage({key:'cs_privacy'});assert.equal(events.at(-1).detail.analytics,true,'Cleared choice announces default allow');
