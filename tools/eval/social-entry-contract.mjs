@@ -120,6 +120,7 @@ async function ui(authenticated=false,{nick='Guest',bootSplash=false,runCommunit
   const privacySource=read(path.join(root,'public/js/privacy-preferences.js')).replace(/^import .*;\n/gm,'').replace(/export\s+/g,'');
   vm.runInContext(privacySource,context,{timeout:vmTimeout});
   if(entrySource){const names=[...entrySource.matchAll(/export\s+(?:async\s+)?(?:function|const)\s+(\w+)/g)].map(m=>m[1]);entry=vm.runInContext('(function(){'+entrySource.replace(/^import .*;\n/gm,'').replace(/export\s+/g,'')+`;return {${names.join(',')}}})()`,context,{timeout:vmTimeout});context.__entry=entry;}
+  vm.runInContext(read(path.join(root,'public/js/data/retratos.js')).replace(/export\s+/g,''),context,{timeout:vmTimeout});
   const rankingSource=read(path.join(root,'public/js/ranking-player.js')).replace(/^import .*;\n/gm,'').replace(/export\s+/g,'');
   context.__ranking=vm.runInContext('(function(){'+rankingSource+';return {rankingTable,profileSocialLinks,profileSocialLink};})()',context,{timeout:vmTimeout});
   if(runCommunity)vm.runInContext(community.replace(/^import .*(?:account-verified|community-inbox|profile-character)\.js.*\n/gm,'').replace(/import\s+\{([^}]+)\}\s+from\s+['"]\.\/ranking-player\.js['"];?/g,'const {$1}=__ranking;').replace(/import\s+\{([^}]+)\}\s+from\s+['"]\.\/account-entry\.js['"];?/g,'const {$1}=__entry;'),context,{timeout:vmTimeout});

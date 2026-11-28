@@ -1080,6 +1080,7 @@ export function buildCharacterModel(def, opts = {}) {
 
   // Skins assam contato no próprio clipe; offsets da base têm outro rig.
   const ctrl = new CharController(mixer, actions, group, headBone, head, skin ? def.skinId : def.id, model, def.id);
+  ctrl.previewWalkfire = opts.preview === true;
   ctrl.shadow = shadow;   // antes do settle loop abaixo (ctrl.update já a atualiza)
   // Arma de 1 mão (pistol/deagle/revolver38/knife): usa idle1h/walk1h quando carregados.
   ctrl.oneHanded = !!(opts.weaponId && ONE_HANDED.has(opts.weaponId));
@@ -1363,6 +1364,7 @@ export function setEmoteDriver(api) { _emoteDriver = (api && api.pose) ? api : n
 export function temEmoteDriver() { return !!_emoteDriver; }
 
 const FADE = 0.16;
+const SHOOT_FADE = 0.06;
 
 class CharController {
   constructor(mixer, actions, group, headBone, head, charId, model, bodyId = charId) {
@@ -1376,6 +1378,7 @@ class CharController {
     // Ref por clipe × escala do modelo (anim-speed-ref.js); clipe sem ref usa a global.
     this.refs = refsDoCorpo(actions, model ? model.scale.x : 0, REFS_GLOBAIS);
     this.cur = null; this.dead = false; this.shooting = false; this.crouch = false; this.jumping = false;
+    this._legsMoving = false; this._movingShot = false; this.previewWalkfire = false;
     this._reloadT = 0; this._reloadDur = 0; this.reloadK = 0; this._leanK = 0; this._porte1hK = 0;
     this._flinchT = 0; this._flinchDur = 0; this._flinchDir = null; this._fireT = 0; this._fireDur = 0;
     this._drawT = 0; this._drawBone = null; this._drawBase = new THREE.Quaternion();
@@ -1396,7 +1399,7 @@ class CharController {
     this._loco = 'idle'; // current locomotion state (hysteresis memory for walk/run choice)
     for (const name of EXTRA_STATES) if (_extraClips[name]) actions[name] = mixer.clipAction(_extraClips[name]);
     mixer.addEventListener('finished', (e) => {
-      if (e.action === actions.shoot) this.shooting = false;
+      if (e.action === actions.shoot && this.cur === e.action) this.shooting = false;
       if (e.action === actions.jump) this.jumping = false;
     });
     this._to('idle');
@@ -1525,14 +1528,14 @@ class CharController {
     if (!this._setLocoPar(nomes[setor], nomes[(setor + 1) % 4], mix)) this._to(base);
   }
 
-  _to(name, once = false, restart = true) {
+  _to(name, once = false, restart = true, fade = FADE) {
     const a = this.actions[name];
     if (!a || (this.cur === a && !this._locoA && !this._locoB)) return;
     // Sair do par 8-way para um clipe que já toca nele (fallback sem strafe, LOD≥2) segue a
     // fase: reiniciar ali congelava o ciclo de pernas a cada troca de setor.
     const herda = !once && (a === this._locoA || a === this._locoB) && a.isRunning();
-    if (this._locoA && this._locoA !== a) this._locoA.fadeOut(FADE);
-    if (this._locoB && this._locoB !== a) this._locoB.fadeOut(FADE);
+    if (this._locoA && this._locoA !== a) this._locoA.fadeOut(fade);
+    if (this._locoB && this._locoB !== a) this._locoB.fadeOut(fade);
     this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
     if (a !== this.actions.jump) this.jumping = false;
     // O par escreve `weight` (1−mix / mix): sem devolver 1, o clipe voltava com o peso velho
@@ -1544,9 +1547,9 @@ class CharController {
         a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
         a.clampWhenFinished = once;
       }
-      a.enabled = true; a.fadeIn(FADE); a.play();
+      a.enabled = true; a.fadeIn(fade); a.play();
     }
-    if (this.cur && this.cur !== a) this.cur.fadeOut(FADE);
+    if (this.cur && this.cur !== a) this.cur.fadeOut(fade);
     this.cur = a;
     this.curName = name;   // nome do estado atual — o clamp de frente do mount lê daqui
     // pé no chão: o offset do clipe que ENTRA (ver footOffset)
@@ -1714,20 +1717,26 @@ class CharController {
     // Agachado não troca de clipe (a pose já mira), mas ganha recuo aditivo: antes o
     // bot agachado atirava completamente imóvel. Ver docs/ANIM-3P.md.
     if (this.crouch || !this.actions.shoot) { this._fireDur = 0.12; this._fireT = 0; return; }
-    this.jumping = false;
-    if (this._locoA) this._locoA.fadeOut(0.06);
-    if (this._locoB) this._locoB.fadeOut(0.06);
-    this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
+    const shot = this.actions.shoot;
     this.shooting = true;
+    this._shootUntil = this.mixer.time + shot.getClip().duration;
+    shot.setLoop(THREE.LoopOnce, 1);
+    shot.clampWhenFinished = true;
+    this._movingShot = this._legsMoving && !this.previewWalkfire;
+    if (this._movingShot) {
+      this._fireDur = 0.12; this._fireT = 0;
+      return;
+    }
+    this.jumping = false;
+    if (this._locoA) this._locoA.fadeOut(SHOOT_FADE);
+    if (this._locoB) this._locoB.fadeOut(SHOOT_FADE);
+    this._locoA = null; this._locoB = null; this._locoAName = null; this._locoBName = null; this._locoMix = 0;
     this.curName = 'shoot';
-    this._shootUntil = this.mixer.time + this.actions.shoot.getClip().duration;
-    if (this.cur === this.actions.shoot) { this.cur.time = 0; this.cur.paused = false; return; }
-    this.actions.shoot.reset();
-    this.actions.shoot.setLoop(THREE.LoopOnce, 1);
-    this.actions.shoot.clampWhenFinished = true;
-    this.actions.shoot.enabled = true; this.actions.shoot.fadeIn(0.06).play();
-    if (this.cur && this.cur !== this.actions.shoot) this.cur.fadeOut(0.06);
-    this.cur = this.actions.shoot;
+    if (this.cur === shot) { shot.time = 0; shot.paused = false; return; }
+    shot.reset();
+    shot.enabled = true; shot.fadeIn(SHOOT_FADE).play();
+    if (this.cur && this.cur !== shot) this.cur.fadeOut(SHOOT_FADE);
+    this.cur = shot;
   }
 
   die(dir = null) {
@@ -1749,6 +1758,8 @@ class CharController {
     this._stopUpper(); this._ceremonyPending = null; this._drawPending = false; this._drawRequested = false; this._grenadePending = null;
     this._drawT = 0;
     this._flinchDur = 0;
+    this._fireDur = this._fireT = 0;
+    this._legsMoving = this._movingShot = false;
     this._leanK = 0;
     this.aimPitch = 0;
     this._to('death', true);
@@ -1782,6 +1793,7 @@ class CharController {
   // so the feet plant instead of ice-skating (root-motion-free clips have no built-in
   // stride, so we drive the cycle rate from how fast the body is really moving).
   update(dt, moving, hasTarget, speed = 0, back = false, lateral = 0) {
+    this._legsMoving = moving > 0.05;
     this._restaurarPoseMorte();
     if (this._drawBone) { this._drawBone.quaternion.copy(this._drawBase); this._drawBone = null; }
     this._drawT = Math.max(0, this._drawT - dt);
@@ -1790,7 +1802,7 @@ class CharController {
     if (freeHand?.applied) { freeHand.bone.quaternion.copy(freeHand.before); freeHand.applied = false; }
     this._tickUpper(dt);
     if (!this.dead) {
-      if (this.shooting && this.mixer.time >= (this._shootUntil || 0)) this.shooting = false;
+      if (this.shooting && this.mixer.time >= (this._shootUntil || 0)) this.shooting = this._movingShot = false;
       if (/^(victory|defeat)$/.test(this.curName || '')) {
         // A cerimônia segura o corpo inteiro até a próxima rodada.
       } else if (this._mantleF !== null && this.actions.jump) {
@@ -1806,15 +1818,16 @@ class CharController {
         else this._tocarEmoteClipe();
       } else if (this.crouch) {
         this._to(moving > 0.05 ? 'crouchwalk' : 'crouch');
-      } else if (this.shooting && moving > 0.05 && this.actions.walkfire) {
-        // Atirar EM MOVIMENTO: o clipe combinado (walk+fire) mantém as pernas andando —
-        // antes as pernas congelavam ~1s a cada disparo (usuário reprovou).
+      } else if (this.previewWalkfire && this.shooting && this._legsMoving && this.actions.walkfire) {
         this._to('walkfire');
-      } else if (this.shooting && moving <= 0.05
-        && this.cur === this.actions.walkfire && this.actions.shoot) {
+      } else if (this.shooting && !this._legsMoving
+        && (this._movingShot || this.cur === this.actions.walkfire) && this.actions.shoot) {
+        const fade = this._movingShot ? SHOOT_FADE : FADE;
+        this._movingShot = false;
+        this._fireDur = this._fireT = 0;
         this.actions.shoot.time = this.actions.shoot.getClip().duration - (this._shootUntil - this.mixer.time);
         this.actions.shoot.paused = false;
-        this._to('shoot', true, false);
+        this._to('shoot', true, false, fade);
       } else if (this._ar && this.actions.jump) {
         if (this.cur !== this.actions.jump) { this._to('jump'); this.jumping = false; }
         const jump = this.actions.jump;
@@ -1823,7 +1836,7 @@ class CharController {
       } else if (this._landT > 0 && this.actions.crouch) {
         this._landT = Math.max(0, this._landT - dt);
         this._to('crouch');
-      } else if (!this.shooting && !this.jumping) {
+      } else if ((!this.shooting || (this._legsMoving && !this.previewWalkfire)) && !this.jumping) {
         const usaClipe1h = this.oneHanded && !P1H_BASE_CLIP.has(this.bodyId);
         if (moving <= 0.05) {
           if (this.weaponId === 'knife' && this.lod < 2) this._requestExtras();
@@ -1832,6 +1845,10 @@ class CharController {
           if (this.weaponId === 'knife' && this.lod < 2 && this.actions.knife_idle && !this._upperName) this._playUpper('knife_idle', 0, true);
           this._loco = 'idle';
         } else {
+          if (this.shooting && !this._movingShot) {
+            this._movingShot = true;
+            this._fireDur = 0.12; this._fireT = 0;
+          }
           if (this._upperName === 'knife_idle') this._stopUpper();
           if (this._loco !== 'run' && speed > 1.45) this._loco = 'run';
           else if (this._loco !== 'walk' && speed < 1.15) this._loco = 'walk';
@@ -2116,7 +2133,7 @@ class CharController {
         _deltaMundo(torso.spines[0], -d.z / n, 0, d.x / n, fk * 0.26);
         if (torso.spines[1]) _deltaMundo(torso.spines[1], -d.z / n, 0, d.x / n, fk * 0.13);
       }
-      // RECUO AGACHADO: tiro agachado não troca de clipe, então o recuo é aditivo.
+      // Recuo aditivo: atirar andando ou agachado não toma o clipe das pernas.
       if (this._fireDur > 0) {
         this._fireT += dt;
         if (this._fireT >= this._fireDur) { this._fireDur = 0; this._fireT = 0; }

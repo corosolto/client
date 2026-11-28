@@ -2,6 +2,7 @@
    já mostrava o mesmo placar. Tudo vem de UMA chamada /api/social?action=ranking. */
 import { tr, LANG } from '../i18n.js';
 import { apiUrl } from '../apibase.js';
+import { rankingAvatar } from '../ranking-player.js';
 
 const ROTA = '/api/social?action=ranking&scope=global&period=all&mode=all&game_type=all&team=all';
 
@@ -16,19 +17,6 @@ function no(tag, cls = '', texto = '') {
   if (cls) e.className = cls;
   if (texto) e.textContent = texto;
   return e;
-}
-
-const iniciais = (nick) => String(nick || '?').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 2).toUpperCase() || '?';
-
-/* Mesmo rosto do tp/social: sem `avatar_url` o lugar não fica vazio nem ganha foto de outro — vão as iniciais. */
-function rosto(nick, url) {
-  const r = no('span', 'tp-rosto tp-rosto--mini');
-  if (url) {
-    const i = no('img');
-    i.src = url; i.alt = ''; i.loading = 'lazy'; i.decoding = 'async'; i.referrerPolicy = 'no-referrer';
-    r.appendChild(i);
-  } else r.appendChild(no('span', 'tp-disp', iniciais(nick)));
-  return r;
 }
 
 async function buscar() {
@@ -55,7 +43,7 @@ function itemFaixa(p) {
   const e = no(destino ? 'a' : 'span', 'tp-faixa__item');
   if (destino) e.href = destino;
   e.style.setProperty('--tp-faixa-grau', grau(p.position).toFixed(3));
-  e.append(no('span', 'tp-num tp-faixa__pos', `#${num(p.position)}`), rosto(p.nick, p.avatar_url),
+  e.append(no('span', 'tp-num tp-faixa__pos', `#${num(p.position)}`), rankingAvatar(p, { mini: true, size: 26 }),
     no('span', 'tp-faixa__nick', p.nick || '—'),
     no('span', 'tp-num tp-faixa__pts', `${num(p.points)} ${tr('pontos')}`));
   return e;
@@ -111,7 +99,9 @@ function desenharFaixa(faixa, dados) {
   trilho.appendChild(fila);
   /* fila mais curta que a janela abriria buraco no laço: repete o mesmo topo até cobrir a largura */
   do { for (const li of criar()) fila.appendChild(li); } while (fila.scrollWidth < janela.clientWidth && fila.children.length < 60);
-  const copia = fila.cloneNode(true);
+  // A cópia também precisa do fallback de imagem, que cloneNode não preserva.
+  const copia = no('ul', 'tp-faixa__fila');
+  for (let i = 0; i < fila.children.length; i += jogadores.length) copia.append(...criar());
   copia.setAttribute('aria-hidden', 'true');
   copia.inert = true;
   trilho.appendChild(copia);

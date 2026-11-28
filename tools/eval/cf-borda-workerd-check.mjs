@@ -153,5 +153,14 @@ const r2c = await ler(fetch(`${base}/mapa${w2}`, { signal: AbortSignal.timeout(1
 check(r2b.status === 200 && r2b.corpo === `origem${w2}` && idas.get(w2) === 1 && r2c.status === 200 && r2c.corpo === `origem${w2}`,
   'W2', `dona desconectou: espera=${resumo(r2b)} depois=${resumo(r2c)} idas=${idas.get(w2)}`);
 
+// W3: os contadores passam pelo mesmo preenchimento frio no workerd.
+for (const rota of ['online', 'map-plays']) {
+  const query = `?w3=${rota}&lento=300`;
+  const url = `${base}/api/${rota}${query}`;
+  const respostas = await Promise.all(Array.from({ length: 8 }, () => ler(fetch(url))));
+  check(respostas.every(resposta => resposta.status === 200 && resposta.corpo === `origem${query}`)
+    && idas.get(query) === 1, 'W3', `/api/${rota}: 8 GETs concorrentes, idas à origem=${idas.get(query)}`);
+}
+
 console.log(`cf-borda-workerd${MUTANTE ? ` [mutante ${MUTANTE}]` : ''}: ${falhas.length ? `${falhas.length} falha(s): ${falhas.join(', ')}` : 'PASS'}`);
 await encerrar(falhas.length ? 1 : 0);

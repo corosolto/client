@@ -79,8 +79,9 @@ type Produzida = { saida: Response; cliente: string; ttl: number; stale: number 
 // Operação compartilhada por URL; a dona segura o contexto (waitUntil) e quem espera nunca lê a
 // Response dela (workerd: I/O é da requisição dona). Ver MIGRACAO-CLOUDFLARE.md, "Cache".
 const OPERACOES_CACHE = new Map<string, Promise<Produzida>>();
+const rotaContador = (pathname: string) => pathname === '/api/online' || pathname === '/api/map-plays';
 const rotaTemCache = (pathname: string) =>
-  pathname === '/mapa' || pathname.startsWith('/api/og/') || pathname.startsWith(PREFIXO_VM);
+  rotaContador(pathname) || pathname === '/mapa' || pathname.startsWith('/api/og/') || pathname.startsWith(PREFIXO_VM);
 const podeGuardar = (saida: Response, ttl: number) =>
   ttl > 0 && saida.status === 200 && !saida.headers.has('set-cookie');
 const guardar = async (cache: Cache, request: Request, saida: Response, cliente: string, ttl: number, stale: number) => {
@@ -144,7 +145,11 @@ export default {
       return (prepararResposta(await astro.fetch(request, env, ctx), url.pathname)).saida;
     const apex = redirectDeHost(url);
     if (apex) return apex;
-    const cache = request.method === 'GET' ? cacheDaBorda.default : null;
+    let cache: Cache | null = null;
+    if (request.method === 'GET') {
+      // O Worker anterior só lê o cache padrão após um rollback.
+      cache = rotaContador(url.pathname) ? await cacheDaBorda.open('public-counters') : cacheDaBorda.default;
+    }
     const hit = cache ? await cache.match(request) : undefined;
     if (hit) {
       const agora = Date.now();

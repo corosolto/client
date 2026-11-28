@@ -84,7 +84,7 @@ async function abrir(community, pedido, { quem = 'eu', alvo = ALVO, relacao: rel
     mountAccountEntry() {}, mountProfilePreferences() {}, mountAccountIntegrations() {}, acceptAccount() {}, logoutAccount() {},
     loadAccount: async () => sessao(), loadAuthOptions: async () => ({ providers: [] }),
   });
-  for (const f of ['profile-character-catalog', 'career-rank', 'account-verified', 'community-inbox', 'profile-character', 'ranking-player']) carregar(ctx, read(`public/js/${f}.js`));
+  for (const f of ['profile-character-catalog', 'career-rank', 'account-verified', 'community-inbox', 'profile-character', 'data/retratos', 'ranking-player']) carregar(ctx, read(`public/js/${f}.js`));
   if (alvo !== EU || caminho.startsWith('/u/')) ids.community.dataset.profile = '';
   vm.runInContext(semImport(community).replace("profileId=root.dataset.profile || new URLSearchParams(location.search).get('perfil') || ''", `profileId=${JSON.stringify(alvo === EU && !caminho.startsWith('/u/') ? '' : alvo)}`), ctx, { timeout: 1000 });
   await esperar();
