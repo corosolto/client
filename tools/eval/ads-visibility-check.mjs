@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn, execFileSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import net from 'node:net';
 import os from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ASPECTOS, mascara, salvarMascaraPng } from './lib/vm-palco.mjs';
 import { ocupacao } from './lib/vm-analise.mjs';
 import * as L from './lib/vm-limiares.mjs';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const mutant = process.argv.includes('--mutante=ads-antigo');
@@ -41,7 +42,7 @@ const port = remote ? null : await new Promise((resolve, reject) => {
   });
 });
 const base = remote || `http://127.0.0.1:${port}`;
-const server = remote ? null : spawn(process.execPath, ['tools/eval/serve.mjs', String(port)], { cwd: root, stdio: 'ignore' });
+let server = null;
 let browser;
 const failures = [];
 const check = (name, pass, details) => {
@@ -49,12 +50,7 @@ const check = (name, pass, details) => {
   if (!pass) failures.push(name);
 };
 try {
-  let ready = false;
-  for (let i = 0; i < 80; i += 1) {
-    try { ready = (await fetch(base)).ok; if (ready) break; } catch { /* boot */ }
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-  if (!ready) throw new Error('servidor local não subiu');
+  if (!remote) server = await subirServe(port, { url: base, cwd: root });
   console.log(`jogo: ${base}`);
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
   const page = await browser.newPage({ viewport: { width: ASPECTOS[ASPECTO][0], height: ASPECTOS[ASPECTO][1] } });

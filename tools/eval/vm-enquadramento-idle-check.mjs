@@ -26,9 +26,10 @@
    ============================================================================ */
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { ASPECTOS, ENTRADAS, LIMIARES, MASCARA_SOBRE, PINTADAS, PLACAR_ARQ, REDUCAO, REFERENCIA_DA_PINTURA, SOBRE, comparar, hashDasEntradas, julgar, medir, pinturaDe } from './lib/vm-enquadramento.mjs';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const ROOT = process.cwd();
 const arg = (n, d = '') => { const h = process.argv.find((a) => a.startsWith(`--${n}=`)); return h ? h.slice(n.length + 3) : d; };
@@ -61,11 +62,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
 
   const PORTA = arg('porta', '8179');
   const base = `http://127.0.0.1:${PORTA}`;
-  const srv = spawn(process.execPath, ['tools/eval/serve.mjs', PORTA], { cwd: ROOT, stdio: 'ignore' });
-  process.on('exit', () => srv.kill());
-  let up = false;
-  for (let i = 0; i < 240 && !up; i++) { try { up = (await fetch(base)).ok; } catch { /* subindo */ } if (!up) await new Promise((r) => setTimeout(r, 250)); }
-  if (!up) throw new Error(`servidor de eval não subiu na porta ${PORTA}`);
+  const srv = await subirServe(PORTA, { url: base, cwd: ROOT });
   const pw = await import(pathToFileURL(`${execSync('npm root -g').toString().trim()}/playwright/index.js`).href);
   const chromium = pw.chromium || pw.default.chromium;
   const MAC_CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';

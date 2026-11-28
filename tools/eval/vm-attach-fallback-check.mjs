@@ -19,8 +19,9 @@
  * vermelha; se passar, ela e cega e sai 1 denunciando a si mesma.
  */
 import process from 'node:process';
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const arg = (n, d = '') => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `--${n}=${d}`).split('=').slice(1).join('=');
 const PORTA = arg('porta', '8157');
@@ -32,14 +33,7 @@ const BASE = `http://127.0.0.1:${PORTA}`;
 // Sobe o servidor como os irmaos do check:vm (authored-ads-check.mjs) — porta
 // propria, para nao brigar com bancada de lane que ja esteja de pe.
 let srv = null;
-if (!(await fetch(BASE).then((r) => r.ok).catch(() => false))) {
-  srv = spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
-  process.on('exit', () => srv?.kill());
-  for (let i = 0; i < 60; i++) {
-    try { if ((await fetch(BASE)).ok) break; } catch { /* subindo */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-}
+if (!(await fetch(BASE).then((r) => r.ok).catch(() => false))) srv = await subirServe(PORTA, { url: BASE });
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;

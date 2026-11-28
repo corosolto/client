@@ -12,10 +12,11 @@
      node tools/eval/bots-perf-browser.mjs --medir --maps=operacao_flavio,lajes,amazonia --bots=4,8,12 [--cpu=4] [--profile] [--alloc]
    Servidor: sobe tools/eval/serve.mjs na --porta (9613) ou usa --base/BASE. Rode com
    tools/eval/with-browser-lock.sh (um browser por vez). */
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const SELF = fileURLToPath(import.meta.url);
 const option = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
@@ -188,16 +189,7 @@ function resumoAlloc(p, seconds) {
   return { folha: top(folha), jogo: top(jogo) };
 }
 
-const servidor = baseExterna ? null : spawn(process.execPath, ['tools/eval/serve.mjs', porta], { stdio: 'ignore' });
-process.on('exit', () => servidor?.kill());
-if (servidor) {
-  let pronto = false;
-  for (let i = 0; i < 120 && !pronto; i++) {
-    try { pronto = (await fetch(base)).ok; } catch { /* subindo */ }
-    if (!pronto) await new Promise(r => setTimeout(r, 500));
-  }
-  if (!pronto) throw new Error(`servidor não respondeu em ${base}`);
-}
+const servidor = baseExterna ? null : await subirServe(porta, { url: base });
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio', '--enable-precise-memory-info'] });
 const linhas = [];

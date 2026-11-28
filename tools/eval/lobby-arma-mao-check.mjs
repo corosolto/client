@@ -50,7 +50,7 @@
    Um Chrome por vez na máquina: segure a trava antes (ver preâmbulo de PR). */
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { spawn } from 'node:child_process';
+import { subirServe } from './lib/serve-eval.mjs';
 import { cobertura, lobbyFalhas } from './gate-accept.mjs';
 const argvLobby = process.argv.slice(2);
 const MUT = (argvLobby.find((a) => a.startsWith('--mutante=')) || '').slice(10);
@@ -66,17 +66,9 @@ import { createServer } from 'node:net';
 // Porta LIVRE do sistema: porta fixa deixava a 2ª execução (mutante) cair no servidor alheio.
 const PORTA = process.env.PORTA || await new Promise((ok) => { const t = createServer().listen(0, () => { const p = t.address().port; t.close(() => ok(String(p))); }); });
 const BASE = process.env.BASE || `http://127.0.0.1:${PORTA}`;
-const servidor = process.env.BASE ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
-process.on('exit', () => servidor?.kill());
-let morreu = null;
-servidor?.on('exit', (c) => { morreu = c; });
-if (servidor) {
-  let pronto = false;
-  for (let i = 0; i < 120 && !pronto && morreu === null; i++) {
-    try { pronto = (await fetch(BASE)).ok; } catch { /* subindo */ }
-    if (!pronto) await new Promise((r) => setTimeout(r, 500));
-  }
-  if (!pronto || morreu !== null) { console.error(`infra: servidor próprio não subiu em ${BASE} (saída ${morreu})`); process.exit(78); }
+let servidor = null;
+if (!process.env.BASE) {
+  try { servidor = await subirServe(PORTA, { url: BASE }); } catch (e) { console.error(`infra: servidor próprio não subiu em ${BASE} (${e.message})`); process.exit(78); }
 }
 const JSON_OUT = process.argv.includes('--json');
 

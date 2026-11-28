@@ -14,9 +14,10 @@
    Original vem de git HEAD (nada convertido foi commitado); evidência em
    tools/eval/asset-evidence/meshopt-vms/<arma>-{antes,depois,diff}.png + meta.
    Sai 1 se alguma arma: falha a carregar, ou diff máximo > TETO. */
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const PORTA = arg('porta') || '9148';
@@ -29,9 +30,7 @@ const armas = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const TODAS = execSync("ls public/models/viewmodels/coro | grep -E '^[a-z0-9]+-hires.glb$' | sed 's/-hires.glb//'", { encoding: 'utf8' }).trim().split('\n');
 const lista = armas.length ? armas : TODAS;
 
-const srv = arg('base') ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
-process.on('exit', () => srv?.kill());
-if (srv) { await new Promise((r) => setTimeout(r, 800)); for (let i = 0; i < 60; i++) { try { const r = await fetch(`${BASE}/`); if (r.ok) break; } catch {} await new Promise((r) => setTimeout(r, 1000)); } }
+const srv = arg('base') ? null : await subirServe(PORTA, { url: `${BASE}/` });
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);

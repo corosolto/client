@@ -27,25 +27,17 @@
    USO: BASE=http://127.0.0.1:9347 node tools/eval/postura-check.mjs [ids]
         --mutante=morto (PS1) | atras (PS2) | tremor (PS6) | solto (PS4)
    ============================================================================ */
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const BASE = process.env.BASE || `http://127.0.0.1:${process.env.PORTA || 9362}`;
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const IDS = process.argv.slice(2).filter((a) => !a.startsWith('-') && !a.startsWith('--mutante'));
 const ARMAS = ['ak', 'pistol', 'knife'];
 
-const servidor = process.env.BASE ? null : spawn('node', ['tools/eval/serve.mjs', String(process.env.PORTA || 9362)], { stdio: 'ignore' });
-process.on('exit', () => servidor?.kill());
-if (servidor) {
-  let pronto = false;
-  for (let i = 0; i < 60 && !pronto; i++) {
-    try { pronto = (await fetch(BASE)).ok; } catch { /* subindo */ }
-    if (!pronto) await new Promise((r) => setTimeout(r, 500));
-  }
-  if (!pronto) throw new Error(`servidor não respondeu em ${BASE}`);
-}
+const servidor = process.env.BASE ? null : await subirServe(process.env.PORTA || 9362, { url: BASE });
 
 /* Corpos fora do padrão humano. NÃO é perdão: cada linha é uma exceção declarada
    com motivo, e a régua imprime a lista no veredito para ela nunca virar ruído. */

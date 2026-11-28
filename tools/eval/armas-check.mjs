@@ -28,10 +28,11 @@
    Mutantes: sem-lazy acende ARM3; awp-fallback acende ARM4; fallback-unshared acende ARM6.
    Uso: node tools/eval/armas-check.mjs [--mutante=sem-lazy|awp-fallback|fallback-unshared] [--porta=8137] [--foto=/tmp/armas.png]
    ============================================================================ */
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { probeSelectedWeapon } from './selected-weapon-probe.mjs';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const MUT = arg('mutante');
@@ -45,12 +46,7 @@ const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
-const srv = spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
-process.on('exit', () => srv.kill());
-for (let i = 0; i < 60; i++) {
-  try { if ((await fetch(BASE)).ok) break; } catch { /* subindo */ }
-  await new Promise((r) => setTimeout(r, 500));
-}
+const srv = await subirServe(PORTA, { url: BASE });
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 const ARMA_GLB = /\/models\/weapons\/([a-z0-9-]+)\.glb/;

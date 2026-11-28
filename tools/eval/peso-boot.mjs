@@ -30,10 +30,11 @@
    do jogo). Um browser por vez: rode sob tools/eval/with-browser-lock.sh.
    Mapa leve: piscina_treta · pesado: velho_oeste (Sertão, mais draw calls).
    ============================================================================ */
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { writeFileSync, existsSync } from 'node:fs';
 import { normalize as normPath, join as joinPath } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const arg = (nome) => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=')[1] || '';
 const CENARIO = arg('cenario') || 'ambos';
@@ -59,19 +60,14 @@ const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
-const srv = arg('base') ? null : spawn('node', ['tools/eval/serve.mjs', PORTA], { stdio: 'ignore' });
-process.on('exit', () => srv?.kill());
-if (srv) {
-  await new Promise((r) => setTimeout(r, 800));
-  // Aquecimento: a 1ª requisição compila o index.astro no dev server. `fetch` só
-  // lança em erro de REDE: sem o `ok`, um 500 do Astro vira "aquecido" e a
-  // jornada inteira mede uma página de erro (lição 5: falha silenciosa).
-  let pronta = false;
-  for (let i = 0; i < 60 && !pronta; i++) {
-    try { const resp = await fetch(`${BASE}/`); pronta = resp.ok && (await resp.text()).includes('importmap'); } catch {}
-    if (!pronta) await new Promise((r) => setTimeout(r, 1000));
-  }
-  if (!pronta) { console.error(`servidor não respondeu OK em ${BASE}/`); process.exit(1); }
+// Aquecimento: a 1ª requisição compila o index.astro no dev server. `fetch` só
+// lança em erro de REDE: sem o `ok`, um 500 do Astro vira "aquecido" e a
+// jornada inteira mede uma página de erro (lição 5: falha silenciosa).
+let srv = null;
+if (!arg('base')) {
+  try {
+    srv = await subirServe(PORTA, { url: `${BASE}/`, aceita: async (resp) => resp.ok && (await resp.text()).includes('importmap') });
+  } catch (e) { console.error(e.message); process.exit(1); }
 }
 
 const browser = await chromium.launch(

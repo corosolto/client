@@ -6,18 +6,17 @@
 //
 // Uso: node tools/eval/boot-waterfall.mjs
 //   Sobe tools/eval/serve.mjs sozinho na 8123 (mata ao sair). Um browser só — regra da casa.
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { subirServe } from './lib/serve-eval.mjs';
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
-const srv = spawn('node', ['tools/eval/serve.mjs', '8123'], { stdio: 'ignore' });
-process.on('exit', () => srv.kill());
-await new Promise((r) => setTimeout(r, 600));
+const srv = (await fetch(BASE).then((r) => r.ok, () => false)) ? null : await subirServe(8123, { url: BASE });
 
 const kind = (u) =>
   /\.glb(\?|$)/.test(u) ? 'glb' :
@@ -80,5 +79,5 @@ const quente = report('QUENTE (reload, cache on)', await pass(page, cdp, false))
 console.log(`\nRESUMO: fria ${(fria.bytes / 1e6).toFixed(1)}MB/${fria.reqs}req/${(fria.liveMs / 1000).toFixed(1)}s → quente ${(quente.bytes / 1e6).toFixed(1)}MB/${quente.reqs}req/${(quente.liveMs / 1000).toFixed(1)}s`);
 
 await browser.close();
-srv.kill();
+srv?.kill();
 process.exit(0);

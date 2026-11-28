@@ -27,7 +27,7 @@
    ============================================================================ */
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { subirServe } from './lib/serve-eval.mjs';
 import { fileURLToPath } from 'node:url';
 import net from 'node:net';
 import { miraVeredito } from './gate-accept.mjs';
@@ -67,15 +67,10 @@ const ASPECTOS = { '16x9': { w: 960, h: 540, k: 2 }, '3x2': { w: 900, h: 600, k:
 
 // Porta ocupada mediria a árvore de outra sessão (armadilha da 8123).
 if (!process.env.BASE) await new Promise((ok, falha) => { const s = net.createServer().once('error', () => falha(new Error(`porta ${PORTA} ocupada`))).listen(PORTA, '127.0.0.1', () => s.close(ok)); });
-const servidor = process.env.BASE ? null : spawn(process.execPath, ['tools/eval/serve.mjs', String(PORTA)], { cwd: root, stdio: 'ignore' });
-process.on('exit', () => servidor?.kill());
-let pronto = false;
-servidor?.once('exit', (c) => { if (!pronto) { console.error(`serve.mjs saiu (${c}) antes de responder`); process.exit(78); } });
-for (let i = 0; i < 120 && !pronto; i++) {
-  try { pronto = (await fetch(BASE)).ok; } catch { /* subindo */ }
-  if (!pronto) await new Promise((r) => setTimeout(r, 500));
+let servidor = null;
+if (!process.env.BASE) {
+  try { servidor = await subirServe(PORTA, { url: BASE, cwd: root }); } catch (e) { console.error(`infra: ${e.message}`); process.exit(78); }
 }
-if (!pronto) { console.error(`infra: servidor não respondeu em ${BASE}`); process.exit(78); }
 let browser;
 try {
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });

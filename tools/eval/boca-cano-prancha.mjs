@@ -14,7 +14,7 @@
    Uso: node tools/eval/boca-cano-prancha.mjs --porta=8512 [--saida=evidence/boca-cano] */
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { subirServe } from './lib/serve-eval.mjs';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import sharp from 'sharp';
@@ -27,7 +27,7 @@ const OUT = path.resolve(ROOT, arg('saida', 'evidence/boca-cano'));
 fs.mkdirSync(OUT, { recursive: true });
 const W = 1280, H = 720;
 const base = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['tools/eval/serve.mjs', String(port)], { cwd: ROOT, stdio: 'ignore' });
+let server = null;
 let browser;
 
 // roda DENTRO da página: helpers de medida + congelamento do laço
@@ -212,9 +212,7 @@ async function prancha(resAntes, resDepois) {
 }
 
 try {
-  let up = false;
-  for (let i = 0; i < 80 && !up; i++) { try { up = (await fetch(base)).ok; } catch { await new Promise((r) => setTimeout(r, 500)); } }
-  if (!up) throw new Error('servidor não subiu');
+  server = await subirServe(port, { url: base, cwd: ROOT });
   browser = await chromium.launch({ headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
   const antes = await lado('antes', '&bocacano=0');
   const depois = await lado('depois', '');
@@ -224,5 +222,5 @@ try {
   console.log('prancha:', path.join(OUT, 'prancha-boca-cano.png'));
 } finally {
   await browser?.close().catch(() => {});
-  server.kill();
+  server?.kill();
 }
