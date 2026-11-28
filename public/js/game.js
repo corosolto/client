@@ -13,6 +13,7 @@ import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon
 import { buildCharacterModel, hasModel, preloadCharacterAssets, setEmoteDriver, getGloveHandle, GloveManifestUnavailable } from './glbchars.js';
 import { weaponModel, weaponCFG, hasWeapon, preloadWeapons, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
+import { maosFpSuportadas } from './data/fp-maos.js';
 import { gloveSkinStyle } from './data/glove-skin-definitions.js';
 import { EMOTES_ENABLED } from './emote-features.js';
 import { VM_FRAME } from './vmattach.js';
@@ -1957,7 +1958,7 @@ export class Game {
     const _qsHands = new URLSearchParams(location.search).get('hands');
     // SÓ-ARMA por padrão, estilo UNREAL TOURNAMENT. Skins usam as mãos do viewmodel
     // autorado; o legado conserva as mãos procedurais apenas como fallback de carga.
-    const WEAPON_ONLY = _qsHands !== '1';
+    const WEAPON_ONLY = _qsHands !== '1' || !maosFpSuportadas(this.playerCharId);
     if (!FP_OFF && !WEAPON_ONLY) arms = buildFPArms({ id: this.playerCharId, team: this.playerFaction });
     if (arms) {
       root.add(arms.group);
