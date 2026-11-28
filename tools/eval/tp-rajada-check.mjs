@@ -13,10 +13,32 @@
      TPR3 · rajada MP na cadência da AK       idem
      TPR4 · tiro único: quadro a quadro igual ao shoot() antigo (o conserto só toca a rajada)
      TPR5 · idle/walk/run/death: peso ≥ 0,99 e mão L igual à da main
-   Mutante: `--mutante=fade` devolve o reset()+fadeIn por tiro e tem que reprovar TPR1-3.
-   Uso: node tools/eval/tp-rajada-check.mjs [--mutante=fade] */
+   Mutantes de rajada (fade) e de contato (empunhadura-legado, empunhadura-escala, empunhadura-familia).
+   Uso: npm run eval:tprajada */
 import fs from 'node:fs';
+import { registerHooks } from 'node:module';
 import path from 'node:path';
+
+const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+const MUTANTES_APOIO = {
+  'empunhadura-legado': ['glbchars.js', "gripPoints(armId, autorado ? 'fp' : 'tp')", 'gripPoints(armId)', ['m4', 'awp']],
+  'empunhadura-escala': ['glbchars.js', 'fore.divideScalar(gunObj.scale.x || 1);', '', ['m4', 'awp']],
+  'empunhadura-familia': ['weapons.js', "SUPPORT_Z[SUPPORT_FAMILY[id] || 'rifle']", 'SUPPORT_Z.rifle', ['awp']],
+};
+const mutanteApoio = Object.hasOwn(MUTANTES_APOIO, MUT) ? MUTANTES_APOIO[MUT] : null;
+if (MUT && MUT !== 'fade' && !mutanteApoio) throw new Error(`mutante desconhecido: ${MUT}`);
+let apoioMutado = false;
+if (mutanteApoio) {
+  const [arquivo, antes, depois] = mutanteApoio;
+  const alvo = new URL(`../../public/js/${arquivo}`, import.meta.url).href;
+  registerHooks({ load(url, contexto, seguinte) {
+    if (url !== alvo) return seguinte(url, contexto);
+    const original = fs.readFileSync(new URL(url), 'utf8');
+    if (original.split(antes).length !== 2) throw new Error(`âncora ausente ou ambígua: ${MUT}`);
+    apoioMutado = true;
+    return { format: 'module', source: original.replace(antes, depois), shortCircuit: true };
+  } });
+}
 
 const localFetch = async (url) => {
   const file = path.resolve('public', String(url).split('?')[0].replace(/^\//, ''));
@@ -43,13 +65,14 @@ const G = await import('../../public/js/glbchars.js');
 const { weaponModel } = await import('../../public/js/weapons.js');
 const { makeNetcode } = await import('../../public/js/netgame.js');
 
-const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-if (MUT && MUT !== 'fade') throw new Error(`mutante desconhecido: ${MUT}`);
 const CHAR = 'mst', ARMA = 'ak', DT = 1 / 60, PESO_MIN = 0.99, MAO_MAX_CM = 2;
 const CADENCIA_AK = 0.1;
 
-await G.preloadCharacterAssets([CHAR], { weapons: [ARMA, 'pistol', 'm4', 'awp'] });
-if (!G.hasModel(CHAR)) throw new Error(`${CHAR}.glb não carregou — a régua não sabe medir`);
+const corposApoio = [CHAR, 'mariabonita'];
+const armasApoio = [['m4', 0.25, 0.29], ['awp', 0.24, 0.28]];
+const corpos = MUT === 'fade' ? [CHAR] : corposApoio;
+await G.preloadCharacterAssets(corpos, { weapons: mutanteApoio ? ['m4', 'awp'] : [ARMA, 'pistol', 'm4', 'awp'] });
+for (const id of corpos) if (!G.hasModel(id)) throw new Error(`${id}.glb não carregou — a régua não sabe medir`);
 const def = CHARACTERS.find((c) => c.id === CHAR);
 
 function shootAntigo() {
@@ -84,25 +107,64 @@ function mede(m) {
   _b.copy(c.ikL.fore); c.ikL.gun.localToWorld(_b);
   return { peso, mao: _a.distanceTo(_b) * 100, clip: Object.keys(c.actions).find((k) => c.actions[k] === c.cur) };
 }
-for (const [weaponId, minZ, maxZ] of [['pistol',0,0], ['m4',0.25,0.29], ['awp',0.24,0.28]]) {
-  const { ctrl, group } = G.buildCharacterModel(def, {weaponId});
-  for (let i=0; i<36; i++) ctrl.update(DT, i<18 ? 0 : 1, false, i<18 ? 0 : 2.4);
-  if (weaponId === 'pistol') {
-    if (ctrl.ikL) throw Error('a pistola puxou a mão de apoio');
-    continue;
-  }
+function contatoApoio({ ctrl, group }, mesh, minZ, maxZ) {
   const { gun, end, endOffset } = ctrl.ikL;
   group.updateMatrixWorld(true);
   const palm = gun.worldToLocal(end.localToWorld(endOffset.clone())).multiplyScalar(gun.scale.x);
-  const mesh = weaponModel(weaponId);
-  mesh.updateMatrixWorld(true);
-  const touches = [-0.007,0,0.007].some(dz => {
-    const surface = new THREE.Raycaster(new THREE.Vector3(palm.x,-0.4,palm.z+dz),new THREE.Vector3(0,1,0)).intersectObject(mesh,true)[0];
+  const touches = [-0.007, 0, 0.007].some(dz => {
+    const surface = new THREE.Raycaster(new THREE.Vector3(palm.x, -0.4, palm.z + dz), new THREE.Vector3(0, 1, 0)).intersectObject(mesh, true)[0];
     return surface && Math.abs(palm.y - surface.point.y + 0.012) < 0.025;
   });
-  if (!(palm.z >= minZ && palm.z <= maxZ && touches)) {
-    throw Error(`${weaponId}: palma não toca o guarda-mão (${palm.toArray().map(v=>v.toFixed(3)).join(', ')} m)`);
+  return { palm, ok: palm.z >= minZ && palm.z <= maxZ && touches };
+}
+
+if (!mutanteApoio) {
+  for (const [weaponId, minZ, maxZ] of [['pistol', 0, 0], ...armasApoio]) {
+    const m = G.buildCharacterModel(def, {weaponId});
+    for (let i = 0; i < 36; i++) m.ctrl.update(DT, i < 18 ? 0 : 1, false, i < 18 ? 0 : 2.4);
+    if (weaponId === 'pistol') {
+      if (m.ctrl.ikL) throw Error('a pistola puxou a mão de apoio');
+      continue;
+    }
+    const mesh = weaponModel(weaponId);
+    mesh.updateMatrixWorld(true);
+    const { palm, ok } = contatoApoio(m, mesh, minZ, maxZ);
+    if (!ok) throw Error(`${weaponId}: palma não toca o guarda-mão (${palm.toArray().map(v => v.toFixed(3)).join(', ')} m)`);
   }
+}
+
+async function verificaRetornoApoio() {
+  if (mutanteApoio && !apoioMutado) throw Error(`mutante não aplicado: ${MUT}`);
+  for (const [weaponId, minZ, maxZ] of armasApoio) {
+    const mesh = weaponModel(weaponId);
+    mesh.updateMatrixWorld(true);
+    for (const id of corposApoio) {
+      const m = G.buildCharacterModel(CHARACTERS.find(c => c.id === id), {weaponId});
+      const c = m.ctrl;
+      c._requestExtras();
+      for (let i = 0; i < 100 && !c.actions.strafe_right; i++) await new Promise(resolve => setTimeout(resolve, 10));
+      const passo = () => c.update(DT, 1, true, 1.8, false, 1.8);
+      for (let i = 0; i < 30; i++) passo();
+      if (c.curName !== 'strafe_right') throw Error(`${id}/${weaponId}: strafe inicial ausente`);
+      c.reload(1.2);
+      let recarga = false;
+      for (let i = 0; i < 84; i++) {
+        passo();
+        recarga ||= c.reloadK > 0.2 || c._upperName?.startsWith('reload_') === true;
+      }
+      if (!recarga || c._reloadDur || c.reloadK || c._upperName?.startsWith('reload_') || c.curName !== 'strafe_right') {
+        throw Error(`${id}/${weaponId}: não completou recarga em strafe`);
+      }
+      const { palm, ok } = contatoApoio(m, mesh, minZ, maxZ);
+      const esperado = !mutanteApoio?.[3].includes(weaponId);
+      if (ok !== esperado) throw Error(`${id}/${weaponId}: contato ${ok ? 'preservado' : 'fora do guarda-mão'} com ${MUT || 'head'} (z=${palm.z.toFixed(3)} m)`);
+      console.log(`TPR-apoio · ${id}/${weaponId} · ${ok ? 'contato no retorno' : 'mutante detectado'}`);
+    }
+  }
+}
+if (mutanteApoio) {
+  await verificaRetornoApoio();
+  process.exit(0);
 }
 {
   const tardio = monta(), fallback = monta();
@@ -250,4 +312,6 @@ if (falhas.length) {
   console.error(`\n✗ TPR reprovado: ${falhas.join(', ')} — veja peso, clipe e distância da mão acima.`);
   process.exit(1);
 }
+// O pack de extras é compartilhado; o saque acima precisa começar sem ele.
+await verificaRetornoApoio();
 console.log('\n✓ TPR: rajada 3P segura peso e mão de apoio em SP e MP; tiro único, clipes e contato sem rajada preservados.');
