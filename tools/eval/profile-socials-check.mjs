@@ -51,7 +51,7 @@ function contexto(extra = {}) {
 }
 function helpers(b) {
   const ctx = contexto();
-  for (const f of ['account-verified', 'career-rank']) carregar(ctx, read(`public/js/${f}.js`));
+  for (const f of ['account-verified', 'career-rank', 'profile-character-catalog', 'data/retratos']) carregar(ctx, read(`public/js/${f}.js`));
   carregar(ctx, b.ranking);
   return ctx;
 }
@@ -63,7 +63,7 @@ async function noJogo(b) {
     fetch: async (alvo) => { const a = new URL(alvo, 'http://localhost').searchParams.get('action'); return { ok: true, json: async () => (a === 'profile' ? { profile: PERFIL } : {}) }; },
     mountAccountEntry() {}, mountProfilePreferences() {}, mountAccountIntegrations() {}, loadAccount: async () => ({ authenticated: false }), loadAuthOptions: async () => ({ providers: [] }), acceptAccount() {}, logoutAccount() {} });
   ctx.document.getElementById = (id) => ids[id] || null;
-  for (const f of ['profile-character-catalog', 'career-rank', 'account-verified', 'community-inbox', 'profile-character']) carregar(ctx, read(`public/js/${f}.js`));
+  for (const f of ['profile-character-catalog', 'career-rank', 'account-verified', 'community-inbox', 'profile-character', 'data/retratos']) carregar(ctx, read(`public/js/${f}.js`));
   carregar(ctx, b.ranking);
   vm.runInContext(semImport(b.community), ctx, { timeout: 1000 });
   for (let n = 0; n < 12; n++) await new Promise((r) => setImmediate(r));

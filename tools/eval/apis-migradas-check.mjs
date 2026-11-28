@@ -101,6 +101,18 @@ try {
 } finally {globalThis.fetch=fetchOriginal;}
 const locationOriginal = globalThis.location;
 try {
+  const targets = [
+    ['', 'www.csbrasil.online', ''],
+    ['', 'mirror.example', 'https://csbrasil-backend-hupd3weo5q-rj.a.run.app'],
+    ['?api=1', 'www.csbrasil.online', 'http://localhost:8080'],
+  ];
+  for (const [search, hostname, prefix] of targets) {
+    globalThis.location = { search, hostname };
+    const api = await importaFonte(jogo);
+    for (const endpoint of ['/api/online', '/api/map-plays?map=lajes']) {
+      if (api.apiUrl(endpoint) !== prefix + endpoint) falhas.push(`destino incorreto para ${endpoint} em ${hostname}${search}`);
+    }
+  }
   globalThis.location = { search: '', hostname: 'coro-solto-git-fix.vercel.app' };
   const apiPreview = await importaFonte(jogo);
   for(const endpoint of ['/api/telemetry','/api/map-plays']) {

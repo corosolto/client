@@ -105,7 +105,7 @@ for (let [nome, texto] of fontes) {
     falhas.push(`WSEC2 csbrasil-bot-automerge.yml acorda por [${gatilhos.join(', ')}] — esperado só workflow_dispatch (despachado pelo classify)`);
   }
   const ids = Object.keys(jobs);
-  const esperados = ['automerge'];
+  const esperados = ['automerge', 'sweep'];
   if (ids.length !== esperados.length || esperados.some((id) => !ids.includes(id))) {
     falhas.push(`WSEC2 csbrasil-bot-automerge.yml tem os jobs [${ids.join(', ')}] — esperados [${esperados.join(', ')}], cada um com guarda em passo`);
   }

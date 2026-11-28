@@ -5,7 +5,9 @@ const EXTENSION_RE = /(?:chrome|moz|safari-web|safari)-extension:\/\//i;
 const VENDOR_RE = /\/_vercel\//i;
 /* Uma redação por engine (e por língua: a #362 chegou em pt-BR) do MESMO split do BUG-39.
    Substrings literais de propósito — cache-split purga o edge, largo purga por engano (BUG-75). */
-const CACHE_SPLIT_RE = /does not provide an export|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Importing binding name|was a bare specifier, but was not remapped|era um especificador simples, mas não foi remapeado|Failed to resolve module specifier|Module specifier, .*? does not start with|prod-coherence/i;
+// Bare specifier saiu em 27/11: na alpha.157 somou 58 ocorrências com o edge coerente.
+// Purga não resolve isso, e como cache-split o crash-fix encerrava sem abrir issue.
+const CACHE_SPLIT_RE = /does not provide an export|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Importing binding name|prod-coherence/i;
 // Aviso RECUPERÁVEL do carregador do three: uma textura embutida (webp) do GLB não
 // decodifica em navegador minoritário (createImageBitmap), o three loga com console.error
 // mas o modelo CARREGA sem aquele mapa — o jogo não trava. É ambiental (não é defeito de
@@ -52,7 +54,7 @@ const AMBIENTE_RE = /^sem_webgl:/i;
 const CARTEIRA_RE = /\b(?:window|globalThis|self)\.(?:ethereum|solana|tronWeb|tronLink|phantom|keplr|BinanceChain|coinbaseWalletExtension|web3)\b|\bCannot redefine property:\s*(?:ethereum|solana|web3)\b|\bFailed to connect to MetaMask\b/i;
 // Ponte de navegador/WebView/extensão injetada no documento: o filename vira a própria
 // página, e same-origin não inocenta. Nome de terceiro, com a caixa dele (BUG-76).
-const PONTE_INJETADA_RE = /\b(?:__gCrWeb[A-Za-z0-9_$]*|__firefox__|DarkReader|__REACT_DEVTOOLS_GLOBAL_HOOK__|__VUE_DEVTOOLS_GLOBAL_HOOK__|webkit\.messageHandlers)\b/;
+const PONTE_INJETADA_RE = /\b(?:__gCrWeb[A-Za-z0-9_$]*|__firefox__|DarkReader|__REACT_DEVTOOLS_GLOBAL_HOOK__|__VUE_DEVTOOLS_GLOBAL_HOOK__|__XL_CALLBACK_xl(?:ReportStatistics|GetAppMetaData)_[0-9a-f]+|addEL_hook|webkit\.messageHandlers)\b/;
 
 const normalizedOrigin = (value, base) => {
   if (!value) return null;
@@ -131,6 +133,25 @@ export function isConsoleLog({ kind, stack } = {}) {
 // abrem bug do jogo: um não pertence ao jogo, o outro o jogo já contornou sozinho.
 export const shouldDispatchCrash = (classification) => classification !== 'externo'
   && classification !== 'recuperavel' && classification !== 'log';
+
+/* Família agrupa a issue: a mesma falha chega traduzida (#1425 GL, #1439 TR, #1445 FR) e com o
+   prefixo do launch watchdog. O fingerprint segue por mensagem, igual ao `index.astro`. */
+const PREFIXO_CRASH_RE = /^(?:falha ao abrir (?:a |o )?[^:]{1,40}:\s*|uncaught\s+|(?:type|reference|syntax|range)error:\s*)+/i;
+const ESPECIFICADOR_RE = /[“"'«‘]\s*([^”"'»’\s]+?)\s*[”"'»’]/;
+const NAO_MAPEADO_RE = /Failed to resolve module specifier|does not resolve to a valid URL|Module specifier, .*? does not start with/i;
+export function crashFamily(message = '') {
+  const texto = String(message ?? '').trim().replace(PREFIXO_CRASH_RE, '');
+  const especificador = ESPECIFICADOR_RE.exec(texto)?.[1];
+  // O Firefox localizado sempre termina citando "./" e "../", em qualquer língua.
+  const naoMapeado = NAO_MAPEADO_RE.test(texto) || (texto.includes('./') && texto.includes('../'));
+  if (especificador && naoMapeado && !/^[./]/.test(especificador))
+    return `modulo-nao-mapeado:${especificador.split('/')[0]}`;
+  return texto.toLowerCase().replace(/https?:\/\/\S+/g, '<url>').replace(/\d+/g, '<n>')
+    .replace(/\s+/g, ' ').slice(0, 160);
+}
+
+/* Marcador curto e buscável da família no corpo da issue (`gh issue list --search`). */
+export const crashFamilyKey = (message) => `familia-${crashFingerprint('familia', crashFamily(message), '')}`;
 
 /* Mesma receita do `digital()` de `index.astro`. A multiplicação é em ponto FLUTUANTE de
    propósito: passa de 2^53 e perde precisão — `Math.imul` daria outro número (BUG-71). */

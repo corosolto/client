@@ -57,7 +57,7 @@ async function noJogo(b, { perfil = PERFIL, eu = null, post = async () => ({ ok:
     mountAccountEntry() {}, mountProfilePreferences() {}, mountAccountIntegrations() {}, acceptAccount() {}, logoutAccount() {},
     loadAccount: async () => (eu ? { authenticated: true, profile: { id: eu, nick: 'Eu' } } : { authenticated: false }), loadAuthOptions: async () => ({ providers: [] }),
   });
-  for (const f of ['profile-character-catalog', 'career-rank', 'account-verified', 'community-inbox', 'profile-character', 'ranking-player']) carregar(ctx, read(`public/js/${f}.js`));
+  for (const f of ['profile-character-catalog', 'career-rank', 'account-verified', 'community-inbox', 'profile-character', 'data/retratos', 'ranking-player']) carregar(ctx, read(`public/js/${f}.js`));
   vm.runInContext(semImport(b.community), ctx, { timeout: 1000 });
   const esperar = async () => { for (let n = 0; n < 16; n++) await new Promise((r) => setImmediate(r)); };
   await esperar();
